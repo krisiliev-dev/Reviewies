@@ -13,7 +13,10 @@ exportable at any time, never hostage to someone else's business model.
 
 **Research phase.** No application code yet.
 
-Start here: [`docs/research/01-landscape-and-requirements.md`](docs/research/01-landscape-and-requirements.md)
+1. [`docs/research/01-landscape-and-requirements.md`](docs/research/01-landscape-and-requirements.md)
+   — competitive landscape, user demand, data-source licensing, iOS PWA constraints
+2. [`docs/research/02-decisions-and-revised-architecture.md`](docs/research/02-decisions-and-revised-architecture.md)
+   — decisions taken and the resulting architecture (supersedes §7 of the above)
 
 ## Repository layout
 
