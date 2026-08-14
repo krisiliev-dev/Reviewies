@@ -20,6 +20,9 @@ exportable at any time, never hostage to someone else's business model.
 3. [`docs/research/03-reddit-findings-and-new-features.md`](docs/research/03-reddit-findings-and-new-features.md)
    — Reddit community research, plus feasibility of the remote control and Watching Mode
    features. **Contains findings that materially revise 1 and 2** — read this one.
+4. [`docs/research/04-remote-architecture-and-feature-gaps.md`](docs/research/04-remote-architecture-and-feature-gaps.md)
+   — a PWA-compatible remote control architecture (revises §3 of the above), and feature
+   gaps mined from the Letterboxd, Serializd, Simkl and Trakt communities
 
 ## Repository layout
 
