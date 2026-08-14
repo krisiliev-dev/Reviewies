@@ -23,6 +23,9 @@ exportable at any time, never hostage to someone else's business model.
 4. [`docs/research/04-remote-architecture-and-feature-gaps.md`](docs/research/04-remote-architecture-and-feature-gaps.md)
    — a PWA-compatible remote control architecture (revises §3 of the above), and feature
    gaps mined from the Letterboxd, Serializd, Simkl and Trakt communities
+5. [`docs/research/05-universal-remote-and-timestamp-sync.md`](docs/research/05-universal-remote-and-timestamp-sync.md)
+   — whether universal device control is achievable, and every route to knowing the
+   current playback timestamp
 
 ## Repository layout
 
