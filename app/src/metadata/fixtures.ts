@@ -1,0 +1,134 @@
+import { makeId } from '../domain/types';
+import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
+import type { MetadataProvider, SearchResult } from './provider';
+
+/**
+ * Offline provider used when no TMDB token is configured.
+ *
+ * This exists so the app is runnable and testable without credentials, and so tests
+ * never depend on a live third-party service. It generates plausible episode data,
+ * including a deliberately long single-season show to exercise the anime case where
+ * TMDB collapses a series into one hundred-episode block.
+ */
+
+interface FixtureShow {
+  id: number;
+  kind: 'show' | 'film';
+  name: string;
+  year: number;
+  overview: string;
+  seasons?: Array<{ episodes: number; runtime: number }>;
+  runtime?: number;
+}
+
+const FIXTURES: FixtureShow[] = [
+  {
+    id: 1,
+    kind: 'show',
+    name: 'The Long Dark',
+    year: 2021,
+    overview: 'A survival drama set across three winters in a coastal town.',
+    seasons: [
+      { episodes: 8, runtime: 52 },
+      { episodes: 10, runtime: 55 },
+    ],
+  },
+  {
+    id: 2,
+    kind: 'show',
+    name: 'Kitchen Nightshift',
+    year: 2023,
+    overview: 'A half-hour comedy about the staff of an all-night diner.',
+    seasons: [{ episodes: 12, runtime: 22 }],
+  },
+  {
+    id: 3,
+    kind: 'show',
+    name: 'Hollow Crown Saga',
+    year: 2019,
+    // One long season on purpose: this is how TMDB renders many long-running anime.
+    overview: 'A long-running animated epic with continuous episode numbering.',
+    seasons: [{ episodes: 96, runtime: 24 }],
+  },
+  {
+    id: 4,
+    kind: 'film',
+    name: 'Quiet Harbour',
+    year: 2024,
+    overview: 'Two estranged siblings return to their father’s fishing village.',
+    runtime: 118,
+  },
+];
+
+const titleId = (f: FixtureShow) => makeId('tmdb', f.kind === 'show' ? 'tv' : 'movie', f.id);
+
+export class FixtureProvider implements MetadataProvider {
+  readonly name = 'fixtures';
+
+  async search(query: string): Promise<SearchResult[]> {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return FIXTURES.filter((f) => f.name.toLowerCase().includes(q)).map((f) => ({
+      id: titleId(f),
+      kind: f.kind,
+      name: f.name,
+      year: f.year,
+      overview: f.overview,
+    }));
+  }
+
+  async getTitle(id: string): Promise<CachedTitle | undefined> {
+    const f = FIXTURES.find((x) => titleId(x) === id);
+    if (!f) return undefined;
+    return {
+      id,
+      kind: f.kind,
+      name: f.name,
+      year: f.year,
+      overview: f.overview,
+      runtimeMin: f.runtime ?? f.seasons?.[0]?.runtime,
+      seasonCount: f.seasons?.length,
+      fetchedAt: Date.now(),
+    };
+  }
+
+  async getEpisodes(seriesId: string): Promise<CachedEpisode[]> {
+    const f = FIXTURES.find((x) => titleId(x) === seriesId);
+    if (!f?.seasons) return [];
+
+    const out: CachedEpisode[] = [];
+    // Weekly episodes counting back from today, so most have aired and the tail has not.
+    // That exercises the "don't offer unaired episodes" rule in Up Next.
+    const start = Date.now() - 40 * 7 * 24 * 60 * 60 * 1000;
+    let n = 0;
+
+    f.seasons.forEach((season, si) => {
+      for (let e = 1; e <= season.episodes; e++) {
+        const airedAt = start + n * 7 * 24 * 60 * 60 * 1000;
+        out.push({
+          id: makeId('tmdb', 'ep', `${f.id}-${si + 1}-${e}`),
+          seriesId,
+          season: si + 1,
+          number: e,
+          name: `Episode ${e}`,
+          airDate: new Date(airedAt).toISOString().slice(0, 10),
+          runtimeMin: season.runtime,
+          fetchedAt: Date.now(),
+        });
+        n++;
+      }
+    });
+    return out;
+  }
+
+  async getWatchProviders(id: string, country: string): Promise<CachedProviders | undefined> {
+    return {
+      id,
+      country,
+      flatrate: ['Example Streaming'],
+      rent: [],
+      buy: [],
+      fetchedAt: Date.now(),
+    };
+  }
+}
