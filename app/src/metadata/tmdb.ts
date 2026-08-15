@@ -21,8 +21,11 @@ const year = (date?: string | null) => (date ? Number(date.slice(0, 4)) || undef
  */
 export class TmdbProvider implements MetadataProvider {
   readonly name = 'tmdb';
+  private readonly token: string;
 
-  constructor(private readonly token: string) {}
+  constructor(token: string) {
+    this.token = token;
+  }
 
   private async get<T>(path: string, params: Record<string, string> = {}, signal?: AbortSignal) {
     const url = new URL(BASE + path);
