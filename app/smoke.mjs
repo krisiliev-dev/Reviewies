@@ -110,7 +110,17 @@ try {
 
   await page.getByRole('link', { name: /Watchlist/ }).click();
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
-  check('watchlist note is saved and shown', (await page.getByText('Ana recommended').count()) > 0);
+  const noteShown = await page
+    .getByText('Ana recommended')
+    .first()
+    .waitFor({ timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+  check(
+    'watchlist note is saved and shown',
+    noteShown,
+    noteShown ? '' : (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 200),
+  );
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
   // --- Export ----------------------------------------------------------------

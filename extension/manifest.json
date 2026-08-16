@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Reviewies",
+  "version": "0.1.0",
+  "description": "Exact playback sync for Reviewies Watching Mode, plus automatic scrobbling.",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://*.netflix.com/*",
+    "https://*.primevideo.com/*",
+    "https://*.disneyplus.com/*",
+    "https://*.max.com/*",
+    "https://*.hbomax.com/*",
+    "https://*.crunchyroll.com/*",
+    "https://*.youtube.com/*"
+  ],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.netflix.com/*",
+        "https://*.primevideo.com/*",
+        "https://*.disneyplus.com/*",
+        "https://*.max.com/*",
+        "https://*.hbomax.com/*",
+        "https://*.crunchyroll.com/*",
+        "https://*.youtube.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "options_page": "options.html"
+}
