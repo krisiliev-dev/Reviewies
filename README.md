@@ -23,8 +23,11 @@ Core loop works end to end. Running on sample data until a TMDB token is supplie
 | Up Next, mark watched, search, watchlist with notes | ✅ Built, smoke-tested |
 | Watching Mode (manual sync, reaction replay) | ✅ Built, local-only |
 | Import / export | ✅ Built, tested |
-| Backend, accounts, shared reactions | ⬜ Not started |
-| Browser extension, bridge, fingerprinting | ⬜ Not started |
+| Backend schema + RLS (spoiler gating in the database) | ✅ Written, verified against real Postgres |
+| Offline-first sync engine | ✅ Built, tested against a simulated server |
+| Browser extension (exact sync + scrobbling) | ✅ Built; site selectors unverified against live sites |
+| Deployed backend, accounts, shared reactions | ⬜ Not started |
+| Bridge (Cast/Roku), fingerprinting | ⬜ Not started |
 
 ## Running it
 
@@ -47,11 +50,20 @@ beyond six months, and forbids AI/ML use. See [research doc 01](docs/research/01
 ### Tests
 
 ```bash
-npm test              # 47 unit tests
+cd app
+npx vitest run        # 125 tests
 npm run build
-npm run preview &     # then, in another shell:
+npx vite preview &    # then, in another shell:
 node smoke.mjs        # 13 end-to-end checks in a real browser
 ```
+
+The suite includes 22 row-level-security tests that run the deployable migration SQL
+against real Postgres (via PGlite, Postgres compiled to WebAssembly) as an
+unprivileged role — Postgres bypasses RLS for superusers and table owners, so testing
+as the owner would make every policy assertion pass vacuously.
+
+The browser extension lives in [`extension/`](extension/README.md) and has its own
+build.
 
 ## Architecture in one paragraph
 
@@ -65,13 +77,16 @@ reorder episodes routinely — especially for anime.
 ## Repository layout
 
 ```
-app/              The PWA
-  src/domain/     Types, ID scheme
-  src/data/       Dexie schema, repository, import/export
-  src/metadata/   Provider abstraction, TMDB, fixtures
-  src/screens/    UI
-  src/watching/   Watching Mode: playback clock, reaction stream, emoji
-docs/research/    Research notes and decisions
+app/                    The PWA
+  src/domain/           Types, ID scheme
+  src/data/             Dexie schema, repository, import/export
+  src/metadata/         Provider abstraction, TMDB, fixtures
+  src/screens/          UI
+  src/watching/         Watching Mode: playback clock, reaction stream, emoji
+  src/sync/             Offline outbox and sync engine
+extension/              Browser extension (MV3)
+supabase/migrations/    Backend schema and RLS policies
+docs/research/          Research notes and decisions
 ```
 
 ## Research
