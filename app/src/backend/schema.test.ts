@@ -205,8 +205,8 @@ describe('blocking works in both directions', () => {
 
   it('hides blocked profiles', async () => {
     await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
-    const res = await asUser(BOB, 'select * from profiles');
-    expect(res.rows.map((r: never) => (r as { handle: string }).handle)).toEqual(['bob']);
+    const res = await asUser<{ handle: string }>(BOB, 'select * from profiles');
+    expect(res.rows.map((r) => r.handle)).toEqual(['bob']);
   });
 });
 

@@ -1,4 +1,5 @@
 import { db } from './db';
+import { enqueue } from '../sync/engine';
 import type {
   CachedEpisode,
   InternalId,
@@ -34,6 +35,9 @@ export async function markWatched(opts: {
     source: opts.source ?? 'manual',
   };
   await db.watches.add(event);
+  // Queued, not sent. The write above has already succeeded locally, so the UI
+  // updates whether or not there is a network.
+  await enqueue('watches', event as unknown as Record<string, unknown>);
   return event;
 }
 
@@ -43,6 +47,8 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   const latest = events.at(-1);
   if (!latest) return false;
   await db.watches.delete(latest.id);
+  // Deletes replicate as tombstones — otherwise the row returns on the next pull.
+  await enqueue('watches', { id: latest.id }, { deleted: true });
   return true;
 }
 
@@ -148,19 +154,26 @@ export async function addToWatchlist(
   kind: MediaKind,
   note?: string,
 ): Promise<void> {
-  await db.watchlist.put({ titleId, kind, addedAt: Date.now(), note });
+  const item = { titleId, kind, addedAt: Date.now(), note };
+  await db.watchlist.put(item);
+  await enqueue('watchlist', item);
 }
 
 export async function setWatchlistNote(titleId: InternalId, note: string): Promise<void> {
   await db.watchlist.update(titleId, { note });
+  const updated = await db.watchlist.get(titleId);
+  if (updated) await enqueue('watchlist', updated as unknown as Record<string, unknown>);
 }
 
 export async function removeFromWatchlist(titleId: InternalId): Promise<void> {
   await db.watchlist.delete(titleId);
+  await enqueue('watchlist', { titleId }, { deleted: true });
 }
 
 export async function rate(targetId: InternalId, value: number): Promise<void> {
-  await db.ratings.put({ targetId, value, ratedAt: Date.now() });
+  const rating = { targetId, value, ratedAt: Date.now() };
+  await db.ratings.put(rating);
+  await enqueue('ratings', rating);
 }
 
 // ---------------------------------------------------------------------------
