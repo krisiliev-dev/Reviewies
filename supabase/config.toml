@@ -1,0 +1,22 @@
+# Supabase project configuration.
+#
+# Required by the Supabase CLI and by the GitHub integration, which applies
+# everything in supabase/migrations/ on push.
+#
+# `project_id` is a local label, not a secret — the real project is selected by
+# `supabase link --project-ref <ref>`, and the ref is not stored here.
+
+project_id = "reviewies"
+
+[db]
+# Match the version of your Supabase project so local runs behave the same.
+major_version = 17
+
+[auth]
+enable_signup = true
+# Reviewies has no server-rendered pages; the PWA handles the callback.
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:4173"]
+
+[auth.email]
+enable_confirmations = true
