@@ -122,6 +122,27 @@ describe('Up Next', () => {
     expect(await getUpNext()).toHaveLength(0);
   });
 
+  it('never offers a special, even though season 0 sorts first', async () => {
+    await seedSeries(3);
+    await db.episodes.put({
+      id: makeId('tmdb', 'ep', 'special-1'),
+      seriesId: SERIES,
+      season: 0,
+      number: 1,
+      name: 'Recap Special',
+      airDate: '2020-01-01',
+      runtimeMin: 45,
+      fetchedAt: Date.now(),
+    });
+
+    const [entry] = await getUpNext();
+    // Without the season-0 filter this would be the recap special.
+    expect(entry.episode.name).toBe('Episode 1');
+    expect(entry.episode.season).toBe(1);
+    // The special must not inflate the remaining count either.
+    expect(entry.remaining).toBe(2);
+  });
+
   it('ignores shows that are not currently being watched', async () => {
     await seedSeries(3);
     await db.library.update(SERIES, { status: 'paused' });

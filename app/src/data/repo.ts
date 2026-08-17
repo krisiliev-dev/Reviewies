@@ -102,7 +102,10 @@ export async function getUpNext(now = Date.now()): Promise<UpNextEntry[]> {
     ]);
 
     const aired = episodes
-      .filter((e) => hasAired(e, now))
+      // Season 0 is specials — OVAs, recaps, Christmas episodes. They sort before
+      // season 1, so including them would make "Up Next" for One Piece a recap
+      // special rather than episode 1. They remain visible on the show page.
+      .filter((e) => e.season > 0 && hasAired(e, now))
       .sort((a, b) => a.season - b.season || a.number - b.number);
 
     const unwatched = aired.filter((e) => !watched.has(e.id));

@@ -116,8 +116,15 @@ export class TmdbProvider implements MetadataProvider {
 
   async getEpisodes(seriesId: string, signal?: AbortSignal): Promise<CachedEpisode[]> {
     const { raw } = split(seriesId);
-    const detail = await this.get<{ number_of_seasons?: number }>(`/tv/${raw}`, {}, signal);
-    const seasonCount = detail.number_of_seasons ?? 0;
+    // Iterate the seasons TMDB actually reports rather than assuming 1..N. Shows
+    // have a season 0 for specials, and long-running series have gaps; guessing the
+    // range either misses seasons or 404s on ones that do not exist.
+    const detail = await this.get<{ seasons?: Array<{ season_number: number }> }>(
+      `/tv/${raw}`,
+      {},
+      signal,
+    );
+    const seasonNumbers = (detail.seasons ?? []).map((s) => s.season_number).sort((a, b) => a - b);
 
     type Season = {
       episodes: Array<{
@@ -134,8 +141,8 @@ export class TmdbProvider implements MetadataProvider {
 
     const out: CachedEpisode[] = [];
     // Seasons are fetched sequentially rather than in parallel to stay well under
-    // TMDB's rate limit on shows with many seasons.
-    for (let s = 1; s <= seasonCount; s++) {
+    // TMDB's rate limit — One Piece alone has 23 seasons.
+    for (const s of seasonNumbers) {
       const season = await this.get<Season>(`/tv/${raw}/season/${s}`, {}, signal);
       for (const e of season.episodes ?? []) {
         out.push({

@@ -182,7 +182,43 @@ Build order is unchanged; the ceiling is higher than I thought.
 
 ---
 
-## 4. Sources (phase 6)
+## 4. Correction: TMDB anime structure (verified live, 16 Aug 2026)
+
+Phases 2 and 4 claimed TMDB flattens long-running anime into a single
+hundred-episode season, and treated that as a headline risk. **Checked against the
+live API, that is largely wrong** and the correction is worth recording.
+
+| Show | TMDB structure |
+|---|---|
+| One Piece (1999 anime, id 37854) | **23 seasons, 1181 episodes**, split by story arc — East Blue, Alabasta, and so on. Genuinely more useful than absolute numbering. |
+| Frieren (id 209867) | 1 season, 38 episodes — here the merging *does* happen |
+| Kaamelott (id 11466) | 6 seasons, 458 episodes. Strong coverage of a very French show. |
+| Detectorists (id 61828) | 3 seasons + specials |
+
+So the flattening is occasional rather than systemic. Storing progress against stable
+per-episode IDs still protects us when it happens, but AniList integration drops from
+"MVP requirement" to "worth doing when a specific show is wrong".
+
+**Two real issues surfaced instead, neither of which was in the original research:**
+
+1. **Search ranking, not coverage, is the anime problem.** Searching "One Piece"
+   returns the 2023 Netflix live-action first and the anime second. Nothing is
+   missing; the wrong thing is simply at the top. Showing the year in results (which
+   the search UI already does) is the cheap mitigation — 2023 versus 1999
+   disambiguates immediately.
+
+2. **Specials are season 0, and season 0 sorts before season 1.** One Piece has 39
+   specials, Frieren 26. Any naive "first unwatched episode" query offers a recap
+   special instead of episode 1. Fixed: Up Next excludes season 0, while specials
+   remain visible on the show page. Iterating TMDB's reported season list rather than
+   assuming `1..N` is also what makes specials fetchable at all.
+
+**Also verified live:** watch providers return sensible per-country data (GB, US, DE
+and BG all resolved for Breaking Bad), and niche/non-English titles — Detectorists,
+Kaamelott, Dark, The Bureau, Nathan for You — are all present. The "any and all
+series, no matter how niche" requirement holds up.
+
+## 5. Sources (phase 6)
 
 - [pychromecast](https://github.com/home-assistant-libs/pychromecast) · [README](https://github.com/home-assistant-libs/pychromecast/blob/master/README.rst)
 - [Chromecast protocol writeup](https://kyteinsky.github.io/p/chromecast-protocol/)
