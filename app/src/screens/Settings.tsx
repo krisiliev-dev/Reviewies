@@ -11,6 +11,7 @@ import {
   type ImportReport,
 } from '../data/transfer';
 import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '../metadata';
+import { AccountPanel } from './AccountPanel';
 
 export function Settings() {
   const [report, setReport] = useState<ImportReport>();
@@ -47,6 +48,8 @@ export function Settings() {
   return (
     <div className="flex flex-col gap-6 p-4">
       <h1 className="px-1 text-2xl font-semibold">Your data</h1>
+
+      <AccountPanel />
 
       <section className="rounded-2xl bg-surface p-4">
         <p className="text-sm text-muted">
