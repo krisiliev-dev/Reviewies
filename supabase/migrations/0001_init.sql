@@ -121,9 +121,16 @@ create table if not exists reactions (
   t_ms       int not null check (t_ms >= 0),
   emoji      text not null check (char_length(emoji) between 1 and 16),
   created_at timestamptz not null default now(),
+  -- Required by sync, like every other replicated table: pull filters on
+  -- updated_at, and last-write-wins needs a logical clock.
+  updated_at timestamptz not null default now(),
   deleted    boolean not null default false
 );
 create index if not exists reactions_target on reactions (target_id, t_ms) where not deleted;
+-- The updated_at index lives in 0002, not here. On an existing database
+-- `create table if not exists` above is a no-op, so the column would not yet
+-- exist and this file would fail to re-run. 0002 adds column and index together,
+-- idempotently, and is a no-op on a database created from this file.
 
 create table if not exists comments (
   id         uuid primary key,
@@ -200,57 +207,75 @@ alter table comments  enable row level security;
 alter table reports   enable row level security;
 
 -- Profiles are public, minus anyone you have blocked or who has blocked you.
+drop policy if exists profiles_select on profiles;
 create policy profiles_select on profiles for select
   using (id = auth.uid() or not is_blocked(id));
+drop policy if exists profiles_insert on profiles;
 create policy profiles_insert on profiles for insert
   with check (id = auth.uid());
+drop policy if exists profiles_update on profiles;
 create policy profiles_update on profiles for update
   using (id = auth.uid()) with check (id = auth.uid());
 
+drop policy if exists follows_select on follows;
 create policy follows_select on follows for select
   using (follower_id = auth.uid() or followee_id = auth.uid());
+drop policy if exists follows_write on follows;
 create policy follows_write on follows for all
   using (follower_id = auth.uid()) with check (follower_id = auth.uid());
 
+drop policy if exists blocks_all on blocks;
 create policy blocks_all on blocks for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Private history: owner only, in every direction.
+drop policy if exists watches_all on watches;
 create policy watches_all on watches for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists ratings_all on ratings;
 create policy ratings_all on ratings for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists watchlist_all on watchlist;
 create policy watchlist_all on watchlist for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists library_all on library;
 create policy library_all on library for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Reactions: readable by all (see the note on the table), writable only by author.
+drop policy if exists reactions_select on reactions;
 create policy reactions_select on reactions for select
   using (not deleted and not is_blocked(user_id));
+drop policy if exists reactions_insert on reactions;
 create policy reactions_insert on reactions for insert
   with check (user_id = auth.uid());
+drop policy if exists reactions_update on reactions;
 create policy reactions_update on reactions for update
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Comments: spoiler-gated by construction. You may read a comment on an episode
 -- only once you have watched that episode — or if you wrote it yourself.
+drop policy if exists comments_select on comments;
 create policy comments_select on comments for select
   using (
     not deleted
     and not is_blocked(user_id)
     and (user_id = auth.uid() or has_watched(target_id))
   );
+drop policy if exists comments_insert on comments;
 create policy comments_insert on comments for insert
   -- Posting about an episode you have not watched is both a spoiler risk and
   -- almost always a mistake.
   with check (user_id = auth.uid() and has_watched(target_id));
+drop policy if exists comments_update on comments;
 create policy comments_update on comments for update
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Reports are write-only for ordinary users; only moderators (service role,
 -- which bypasses RLS) read them.
+drop policy if exists reports_insert on reports;
 create policy reports_insert on reports for insert
   with check (reporter_id = auth.uid());
+drop policy if exists reports_select on reports;
 create policy reports_select on reports for select
   using (reporter_id = auth.uid());
