@@ -35,6 +35,8 @@ export class ReviewiesDB extends Dexie {
   titles!: EntityTable<CachedTitle, 'id'>;
   episodes!: EntityTable<CachedEpisode, 'id'>;
   providers!: EntityTable<CachedProviders, 'id'>;
+  /** Cross-database anime ID mappings, keyed `source:id`. */
+  animeIds!: EntityTable<{ id: string; ids: unknown; fetchedAt: number }, 'id'>;
 
   constructor(name = 'reviewies') {
     super(name);
@@ -50,13 +52,31 @@ export class ReviewiesDB extends Dexie {
       episodes: 'id, seriesId, [seriesId+season], fetchedAt',
       providers: 'id, fetchedAt',
     });
+
+    // v2 adds the anime ID mapping cache. Dexie applies this to existing
+    // databases without touching the tables above.
+    this.version(2).stores({
+      animeIds: 'id, fetchedAt',
+    });
   }
 
   /** Drop everything provider-derived. Safe to call at any time; user data is untouched. */
   async clearMetadataCache(): Promise<void> {
-    await this.transaction('rw', this.titles, this.episodes, this.providers, async () => {
-      await Promise.all([this.titles.clear(), this.episodes.clear(), this.providers.clear()]);
-    });
+    await this.transaction(
+      'rw',
+      this.titles,
+      this.episodes,
+      this.providers,
+      this.animeIds,
+      async () => {
+        await Promise.all([
+          this.titles.clear(),
+          this.episodes.clear(),
+          this.providers.clear(),
+          this.animeIds.clear(),
+        ]);
+      },
+    );
   }
 }
 
