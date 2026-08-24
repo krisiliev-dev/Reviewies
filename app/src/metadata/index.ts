@@ -1,6 +1,6 @@
 import { db } from '../data/db';
 import { isStale } from '../domain/types';
-import type { CachedEpisode, CachedTitle } from '../domain/types';
+import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
 import { FixtureProvider } from './fixtures';
 import type { MetadataProvider } from './provider';
 import { TmdbProvider } from './tmdb';
@@ -34,6 +34,34 @@ export async function getTitleCached(id: string): Promise<CachedTitle | undefine
     return fresh ?? cached;
   } catch {
     return cached;
+  }
+}
+
+/**
+ * Where a title can be watched, in one country.
+ *
+ * The cache table is keyed by title alone, so a row cached for a different country is
+ * treated as a miss rather than served — changing region has to change the answer, or
+ * the feature is actively misleading.
+ */
+export async function getProvidersCached(
+  id: string,
+  country: string,
+): Promise<CachedProviders | undefined> {
+  const cached = await db.providers.get(id);
+  if (cached && cached.country === country && !isStale(cached.fetchedAt)) return cached;
+
+  try {
+    const fresh = await provider.getWatchProviders(id, country);
+    if (fresh) {
+      await db.providers.put(fresh);
+      return fresh;
+    }
+    // A title genuinely unavailable in this country: cache nothing, and do not fall
+    // back to another country's answer.
+    return cached?.country === country ? cached : undefined;
+  } catch {
+    return cached?.country === country ? cached : undefined;
   }
 }
 

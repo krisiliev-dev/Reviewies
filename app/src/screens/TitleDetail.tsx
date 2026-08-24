@@ -9,6 +9,7 @@ import { Poster } from '../ui/Poster';
 import { StarRating } from '../ui/StarRating';
 import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
+import { WhereToWatch } from '../ui/WhereToWatch';
 import type { CachedEpisode } from '../domain/types';
 
 export function TitleDetail() {
@@ -115,6 +116,8 @@ export function TitleDetail() {
           )}
         </div>
       )}
+
+      <WhereToWatch titleId={titleId} />
 
       {/* Asked for repeatedly on r/Letterboxd and r/tvtime: a doesthedogdie-style
           heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}

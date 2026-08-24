@@ -58,6 +58,7 @@ makes a server mandatory regardless.
 | Progress keyed to provider episode IDs | Upstream reordering corrupts positional keys | Protects against the anime case when it does occur |
 | Watchlist notes | "I have ZERO memory for why they're there" (r/Letterboxd) | Nobody else ships it |
 | Spoiler-free quick log and catch-up | "It's a little hard to [avoid ratings] when I have to go to the page to add it" (doc 4 §2.2) | The catch-up picker renders numbers and nothing else |
+| Where to watch, per country | Doc 4 MVP item 3 | The country picker is load-bearing: one answer would be wrong for most of the world |
 | Free, complete, unauthenticated export | TV Time deleting 26M histories; r/Simkl asking whether paywalling export is even GDPR-compliant | |
 | Watching Mode with history replay | Comments, not tracking, were what people valued; danmaku prior art | Replay is what makes it work alone and for old shows |
 | Crowd drift correction | Own idea; reuses reaction data already collected | Median-based, silent below 2s |
@@ -122,7 +123,7 @@ user pushed back and was right to: two of those reasons did not hold up.
   advancement, error classification
 - TMDB coverage of niche and non-English television (Detectorists, Kaamelott, Dark, The
   Bureau, Nathan for You), stable episode IDs, per-country watch providers
-- The full app flow in a real browser: 34 checks, against a credential-free build
+- The full app flow in a real browser: 37 checks, against a credential-free build
 
 **Not proven:**
 - **The app calling TMDB or Supabase from a browser.** Headless Chromium in the build

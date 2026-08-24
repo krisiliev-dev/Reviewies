@@ -251,6 +251,21 @@ try {
   const cleared = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('tapping the same star clears the rating', !/4\.0/.test(cleared));
 
+  // --- Where to watch ----------------------------------------------------------
+  await page.waitForSelector('text=Where to watch', { timeout: 5000 });
+  const wtw = await page.locator('section', { hasText: 'Where to watch' }).first().innerText();
+  check('where-to-watch lists a service', /Example Streaming/.test(wtw), wtw.replace(/\s+/g, ' ').slice(0, 120));
+  // TMDB requires this wherever availability data appears; it is a licence condition.
+  check('JustWatch attribution appears with the data', /JustWatch/.test(wtw));
+
+  // Availability is per country, so answering for one silently would be confidently
+  // wrong for most of the world.
+  await page.getByRole('button', { name: 'United States', exact: true }).click();
+  await page.getByRole('button', { name: 'GB', exact: true }).click();
+  await page.waitForTimeout(400);
+  const afterRegion = await page.locator('section', { hasText: 'Where to watch' }).first().innerText();
+  check('the country can be changed', /United Kingdom/.test(afterRegion), afterRegion.replace(/\s+/g, ' ').slice(0, 90));
+
   check(
     'poster override is offered',
     (await page.getByText('Use a different poster').count()) > 0,
