@@ -7,6 +7,7 @@ import { getEpisodesCached, getTitleCached } from '../metadata';
 import { hasAired } from '../data/repo';
 import { Poster } from '../ui/Poster';
 import { StarRating } from '../ui/StarRating';
+import { AddToList } from '../social/AddToList';
 import type { CachedEpisode } from '../domain/types';
 
 export function TitleDetail() {
@@ -63,6 +64,8 @@ export function TitleDetail() {
           {title?.overview && (
             <p className="mt-2 line-clamp-3 text-sm text-muted">{title.overview}</p>
           )}
+
+          {title && <AddToList titleId={titleId} kind={title.kind} />}
 
           <div className="mt-2">
             <StarRating

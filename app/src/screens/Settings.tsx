@@ -11,6 +11,8 @@ import {
   type ImportReport,
 } from '../data/transfer';
 import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '../metadata';
+import { detectRescueFile, importRescueCsv, stripBom } from '../data/tvtimeRescue';
+import { parseCsv } from '../data/transfer';
 import { AccountPanel } from './AccountPanel';
 
 export function Settings() {
@@ -34,12 +36,34 @@ export function Settings() {
     setReport(undefined);
     try {
       const text = await file.text();
-      // A Reviewies export is JSON; anything else is treated as a CSV from
-      // another tracker.
-      const result = text.trimStart().startsWith('{')
-        ? await importBundle(JSON.parse(text))
-        : await importWatchHistoryCsv(text);
-      setReport(result);
+
+      if (text.trimStart().startsWith('{')) {
+        setReport(await importBundle(JSON.parse(text)));
+        return;
+      }
+
+      // Recognise the TV Time rescue tool's own files first: they carry richer data
+      // than a generic history CSV — rewatch counts, ratings, watchlist flags — and
+      // treating them generically would throw most of that away.
+      const header = parseCsv(stripBom(text))[0] ?? [];
+      if (detectRescueFile(header) !== 'unknown') {
+        const rescue = await importRescueCsv(text);
+        setReport({
+          watches: rescue.watches,
+          watchlist: rescue.watchlist,
+          skipped: rescue.skipped,
+          warnings: [
+            `Recognised as TV Time ${rescue.file}.csv.` +
+              (rescue.rewatches ? ` ${rescue.rewatches} rewatch(es) preserved.` : '') +
+              (rescue.ratings ? ` ${rescue.ratings} rating(s).` : '') +
+              (rescue.library ? ` ${rescue.library} show(s) added.` : ''),
+            ...rescue.warnings,
+          ],
+        });
+        return;
+      }
+
+      setReport(await importWatchHistoryCsv(text));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not read that file');
     }
@@ -103,8 +127,10 @@ export function Settings() {
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Import</h2>
         <p className="px-1 text-sm text-muted">
           A Reviewies export, or a CSV from the TV Time rescue tool, Trakt, Simkl or
-          Letterboxd. Column names are detected rather than assumed, and anything we cannot
-          read is reported rather than silently dropped.
+          Letterboxd. The rescue tool's own files — <code>episodes.csv</code>,{' '}
+          <code>movies.csv</code>, <code>series.csv</code> — are recognised specifically,
+          keeping rewatch counts, ratings and watchlist flags that a generic import would
+          discard. Anything we cannot read is reported rather than silently dropped.
         </p>
         <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-3 text-center">
           Choose a file

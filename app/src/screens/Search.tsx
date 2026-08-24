@@ -4,6 +4,7 @@ import { db } from '../data/db';
 import { addToLibrary, addToWatchlist } from '../data/repo';
 import { getEpisodesCached, provider, type SearchResult } from '../metadata';
 import { Poster } from '../ui/Poster';
+import { AddToList } from '../social/AddToList';
 
 export function Search() {
   const [query, setQuery] = useState('');
@@ -141,6 +142,8 @@ function ResultRow({ result }: { result: SearchResult }) {
             </button>
           </div>
         )}
+
+        {!noting && <AddToList titleId={result.id} kind={result.kind} />}
       </div>
     </li>
   );

@@ -216,6 +216,13 @@ try {
     'poster override is offered',
     (await page.getByText('Use a different poster').count()) > 0,
   );
+  // Lists need an account, so "Add to list" correctly hides itself in this
+  // credential-free build — same rule as the remote drawer. Its presence with sync
+  // configured is covered by the lists unit tests.
+  check(
+    'add-to-list is hidden without an account',
+    (await page.getByText('Add to list').count()) === 0,
+  );
   await page.screenshot({ path: OUT + '13-title.png' });
 
   // --- Remote drawer ---------------------------------------------------------
