@@ -13,6 +13,7 @@ import {
   type UpcomingEntry,
 } from '../calendar/upcoming';
 import { Poster } from '../ui/Poster';
+import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 
 const PREFS: Array<{ key: NotifyPreference; label: string; hint: string }> = [
   { key: 'off', label: 'Nothing', hint: 'No alerts at all.' },
@@ -31,10 +32,28 @@ export function Calendar() {
     typeof Notification !== 'undefined' ? Notification.permission : undefined,
   );
 
+  const [pushNote, setPushNote] = useState<string>();
+
   async function choose(next: NotifyPreference) {
     setPref(next);
     setPreference(next);
-    if (next !== 'off') setPermissionState(await requestPermission());
+    // Mirror the choice server-side so it can filter before spending a send.
+    void syncPreference(next);
+
+    if (next === 'off') {
+      await disablePush();
+      setPushNote(undefined);
+      return;
+    }
+
+    setPermissionState(await requestPermission());
+
+    // Only attempt a real subscription when push is actually configured; without
+    // a VAPID key this build can still show the calendar.
+    if (vapidPublicKey() && pushSupported()) {
+      const result = await enablePush();
+      setPushNote(result.ok ? undefined : result.reason);
+    }
   }
 
   const grouped = entries ? groupByDay(entries) : [];
@@ -65,6 +84,13 @@ export function Calendar() {
         {preference !== 'off' && !notificationsSupported() && (
           <p className="mt-2 text-xs text-accent">
             This browser cannot show notifications. The calendar below still works.
+          </p>
+        )}
+        {pushNote && <p className="mt-2 text-xs text-accent">{pushNote}</p>}
+        {preference !== 'off' && !vapidPublicKey() && (
+          <p className="mt-2 text-xs text-muted">
+            Push delivery is not configured on this build, so alerts will not arrive.
+            The calendar below still works.
           </p>
         )}
         {preference !== 'off' && permission === 'denied' && (

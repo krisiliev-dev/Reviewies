@@ -1,5 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -12,7 +12,11 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
  */
 
 const ROOT = resolve(__dirname, '../../..');
-const migration = readFileSync(resolve(ROOT, 'supabase/migrations/0001_init.sql'), 'utf8');
+const MIGRATIONS_DIR = resolve(ROOT, 'supabase/migrations');
+const migrations = readdirSync(MIGRATIONS_DIR)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .map((f) => readFileSync(resolve(MIGRATIONS_DIR, f), 'utf8'));
 const shim = readFileSync(resolve(ROOT, 'supabase/test/shim.sql'), 'utf8');
 
 const ALICE = '11111111-1111-1111-1111-111111111111';
@@ -40,14 +44,16 @@ async function asAdmin(sql: string, params: unknown[] = []) {
 beforeAll(async () => {
   db = await new PGlite();
   await db.exec(shim);
-  await db.exec(migration);
+  for (const sql of migrations) await db.exec(sql);
   // Grants must be re-applied: the shim runs before the tables exist.
   await db.exec('grant select, insert, update, delete on all tables in schema public to app_user');
   await db.exec('grant execute on all functions in schema public to app_user');
 }, 60_000);
 
 beforeEach(async () => {
-  await asAdmin('truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports cascade');
+  await asAdmin(
+    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes cascade',
+  );
   await asAdmin("insert into profiles (id, handle) values ($1,'alice'), ($2,'bob')", [ALICE, BOB]);
 });
 
@@ -207,6 +213,157 @@ describe('blocking works in both directions', () => {
     await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
     const res = await asUser<{ handle: string }>(BOB, 'select * from profiles');
     expect(res.rows.map((r) => r.handle)).toEqual(['bob']);
+  });
+});
+
+describe('push notifications', () => {
+  it('keeps a device subscription private to its owner', async () => {
+    await asUser(
+      ALICE,
+      "insert into push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example/a', 'k', 'a')",
+      [ALICE],
+    );
+    expect((await asUser(ALICE, 'select * from push_subscriptions')).rows).toHaveLength(1);
+    expect((await asUser(BOB, 'select * from push_subscriptions')).rows).toHaveLength(0);
+  });
+
+  it('refuses a subscription registered against another user', async () => {
+    await expect(
+      asUser(
+        BOB,
+        "insert into push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example/b', 'k', 'a')",
+        [ALICE],
+      ),
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('rejects a duplicate endpoint for the same user', async () => {
+    const insert = () =>
+      asUser(
+        ALICE,
+        "insert into push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example/dup', 'k', 'a')",
+        [ALICE],
+      );
+    await insert();
+    await expect(insert()).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('rejects an unknown notification preference', async () => {
+    await expect(
+      asUser(ALICE, "insert into notification_preferences (user_id, preference) values ($1, 'sometimes')", [ALICE]),
+    ).rejects.toThrow(/check constraint/i);
+  });
+
+  it('lets a user read their own queued notifications but not write them', async () => {
+    // A client that could enqueue its own notifications could enqueue them for
+    // anyone, so only the service role writes here.
+    await asAdmin(
+      "insert into notification_queue (user_id, target_id, title, body) values ($1, 'tmdb:ep:1', 'New episode', 'S1E1 is out')",
+      [ALICE],
+    );
+    expect((await asUser(ALICE, 'select * from notification_queue')).rows).toHaveLength(1);
+    expect((await asUser(BOB, 'select * from notification_queue')).rows).toHaveLength(0);
+
+    await expect(
+      asUser(
+        BOB,
+        "insert into notification_queue (user_id, target_id, title, body) values ($1, 'tmdb:ep:2', 'x', 'y')",
+        [BOB],
+      ),
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('allows only one queued notification per user and episode', async () => {
+    const enqueue = () =>
+      asAdmin(
+        "insert into notification_queue (user_id, target_id, title, body) values ($1, 'tmdb:ep:9', 'x', 'y')",
+        [ALICE],
+      );
+    await enqueue();
+    // Re-running the scheduler must not send the same thing twice.
+    await expect(enqueue()).rejects.toThrow(/duplicate key/i);
+  });
+});
+
+describe('notification scheduler', () => {
+  const SERIES = 'tmdb:tv:1';
+  const EP = 'tmdb:ep:today';
+
+  async function seedUpcoming(kind = 'premiere') {
+    await asAdmin(
+      `insert into upcoming_episodes (target_id, series_id, series_name, season, number, air_date, kind)
+       values ($1, $2, 'The Long Dark', 2, 1, current_date, $3)`,
+      [EP, SERIES, kind],
+    );
+    await asAdmin(
+      "insert into library (user_id, title_id, kind, status, added_at) values ($1, $2, 'show', 'watching', now())",
+      [ALICE, SERIES],
+    );
+  }
+
+  const queued = async () =>
+    (await asAdmin('select * from notification_queue')).rows as Array<Record<string, unknown>>;
+
+  it('queues a premiere for someone tracking the show', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin('select queue_todays_notifications()');
+
+    const rows = await queued();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].title).toBe('The Long Dark');
+    expect(String(rows[0].body)).toMatch(/Season 2 starts today/);
+  });
+
+  it('does not queue a regular episode on the milestones default', async () => {
+    await seedUpcoming('regular');
+    await asAdmin('select queue_todays_notifications()');
+    expect(await queued()).toHaveLength(0);
+  });
+
+  it('queues a regular episode when the user asked for everything', async () => {
+    await seedUpcoming('regular');
+    await asAdmin("insert into notification_preferences (user_id, preference) values ($1, 'all')", [ALICE]);
+    await asAdmin('select queue_todays_notifications()');
+    expect(await queued()).toHaveLength(1);
+  });
+
+  it('queues nothing when notifications are off', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin("insert into notification_preferences (user_id, preference) values ($1, 'off')", [ALICE]);
+    await asAdmin('select queue_todays_notifications()');
+    expect(await queued()).toHaveLength(0);
+  });
+
+  it('never announces an episode already watched', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin(
+      'insert into watches (id, user_id, target_id, watched_at) values (gen_random_uuid(), $1, $2, now())',
+      [ALICE, EP],
+    );
+    await asAdmin('select queue_todays_notifications()');
+    expect(await queued()).toHaveLength(0);
+  });
+
+  it('ignores shows the user paused', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin("update library set status = 'paused' where user_id = $1", [ALICE]);
+    await asAdmin('select queue_todays_notifications()');
+    expect(await queued()).toHaveLength(0);
+  });
+
+  it('is safe to run twice', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications()');
+    // The unique constraint means a re-run cannot double-send.
+    expect(await queued()).toHaveLength(1);
+  });
+
+  it('does not queue for users who are not tracking the show', async () => {
+    await seedUpcoming('premiere');
+    await asAdmin('select queue_todays_notifications()');
+    const rows = await queued();
+    expect(rows.every((r) => r.user_id === ALICE)).toBe(true);
   });
 });
 

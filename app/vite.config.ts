@@ -27,7 +27,10 @@ export default defineConfig({
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
+      // injectManifest would mean hand-writing the whole worker; importScripts
+      // keeps Workbox's generated precache and adds our push handlers on top.
       workbox: {
+        importScripts: ['sw-push.js'],
         // App shell only. Posters are streamed from the provider CDN — iOS caps the
         // Cache API at roughly 50 MB per partition, so bulk-caching artwork would
         // evict the things that actually need to persist.
