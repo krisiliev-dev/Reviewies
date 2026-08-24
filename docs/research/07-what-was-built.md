@@ -71,6 +71,9 @@ makes a server mandatory regardless.
 | Push delivery | Notification granularity is pointless without it | Idempotent claiming; granularity enforced twice |
 | Local bridge | Docs 4–6; the laptop case needs no extra hardware | Roku ECP and MPRIS behind one adapter interface |
 | Audio fingerprinting | Doc 6 sized it as feasible; the universal fallback | Refuses a wrong episode rather than guessing |
+| Lists mixing film and TV | The split between Letterboxd and TV Time is the complaint | Adding to one is offered wherever a title appears |
+| TV Time rescue CSV import | Doc 1: `tvtime-rescue-data` is the only surviving copy of many people's history | Written against the tool's source, not guessed at |
+| Community content warnings | Doc 4 §2.2, the doesthedogdie idea | Advisory only; a `no` vote can argue a wrong flag down |
 
 ---
 
@@ -117,7 +120,7 @@ user pushed back and was right to: two of those reasons did not hold up.
   advancement, error classification
 - TMDB coverage of niche and non-English television (Detectorists, Kaamelott, Dark, The
   Bureau, Nathan for You), stable episode IDs, per-country watch providers
-- The full app flow in a real browser: 23 checks
+- The full app flow in a real browser: 29 checks, against a credential-free build
 
 **Not proven:**
 - **The app calling TMDB or Supabase from a browser.** Headless Chromium in the build
@@ -126,18 +129,24 @@ user pushed back and was right to: two of those reasons did not hold up.
 - **The extension's per-site CSS selectors.** Written from documented selectors; streaming
   services redesign without notice. Breakage degrades to page-title parsing rather than
   failing.
+- **The content-warnings table in the live project.** Migration 0007 is tested against
+  real Postgres via PGlite but has not been applied to the deployed project, for the
+  same reason as push: the access token was rotated. Until it is applied the section
+  renders empty rather than failing.
 - **Push notification delivery end to end.** Schema and scheduler are tested against
   real Postgres and the edge function is written, but nothing has been deployed: the
   Supabase personal access token was rotated, as intended. Needs a fresh token, VAPID
   keys, and the pg_cron schedule in `supabase/README.md`.
 - **The bridge against live hardware.** Adapters are tested against captured protocol
   responses. ECP and MPRIS are stable, well-documented protocols, but no real Roku or
-  desktop player has been driven by this code. The relay server it dials is also not
-  written.
+  desktop player has been driven by this code. The relay it dials has since been built
+  and verified end to end over real WebSockets, so the untested surface is now only the
+  hardware conversation itself.
 - **Fingerprint accuracy on real audio.** The algorithm is tested on synthetic
   spectrograms including a deliberately degraded "microphone" case, and correctly
   refuses to match a different episode. Real rooms, real speakers and real compression
-  are a different test, and the crowd-sourced contribution flow has no UI yet.
+  are a different test. The contribution flow now has a UI, but no reference has been
+  built from a real recording.
 
 ---
 

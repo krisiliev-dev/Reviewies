@@ -15,9 +15,9 @@ replayed from everyone who watched that moment before you.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 342 app tests, 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 390 app tests, 43 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
-27 browser checks cover the full flow.
+29 browser checks cover the full flow.
 
 | Area | State |
 |---|---|
@@ -39,6 +39,8 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
 | Half-star ratings, poster overrides | ✅ Built |
 | Lists mixing film and TV | ✅ Built |
+| TV Time rescue CSV import | ✅ Built against the real tool's output |
+| Community-voted content warnings | ✅ Built (migration 0007 not yet applied) |
 
 ## Running it
 
@@ -76,12 +78,17 @@ filtering commonly blocks. Pasting the SQL into the dashboard's SQL Editor works
 
 ```bash
 cd app
-npx vitest run                        # 342 tests; live suites skip without credentials
+npx vitest run                        # 390 tests; live suites skip without credentials
 SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
 npm run build
 npx vite preview &
-node smoke.mjs                        # 27 end-to-end checks in a real browser
+node smoke.mjs                        # 29 end-to-end checks in a real browser
 ```
+
+The browser checks run against a build with no credentials, so they exercise the
+fixture provider and assert that account-only controls hide themselves rather than
+rendering dead buttons. Build with `app/.env` in place to point the same run at the
+real TMDB and Supabase.
 
 Row-level security is tested against real Postgres via PGlite, running the deployable
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
@@ -111,7 +118,7 @@ app/                    The PWA
   src/metadata/         Provider abstraction, TMDB, fixtures
   src/sync/             Auth, offline outbox, sync engine, Supabase adapter
   src/watching/         Playback clock, reaction stream, extension bridge
-  src/social/           Comments and the effort filter
+  src/social/           Comments, lists, content warnings
   src/stats/            Runtime-weighted stats
   src/discover/         Recommendations that exclude what you have seen
   src/calendar/         Upcoming episodes and notification granularity

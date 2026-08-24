@@ -8,6 +8,7 @@ import { hasAired } from '../data/repo';
 import { Poster } from '../ui/Poster';
 import { StarRating } from '../ui/StarRating';
 import { AddToList } from '../social/AddToList';
+import { ContentWarnings } from '../social/ContentWarnings';
 import type { CachedEpisode } from '../domain/types';
 
 export function TitleDetail() {
@@ -114,6 +115,10 @@ export function TitleDetail() {
           )}
         </div>
       )}
+
+      {/* Asked for repeatedly on r/Letterboxd and r/tvtime: a doesthedogdie-style
+          heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
+      <ContentWarnings titleId={titleId} />
 
       {loading && episodes.length === 0 && <p className="text-sm text-muted">Loading episodes…</p>}
 

@@ -223,6 +223,13 @@ try {
     'add-to-list is hidden without an account',
     (await page.getByText('Add to list').count()) === 0,
   );
+  // Content warnings are a community aggregate, so they need an account too. Their
+  // ordering and verdict logic is covered by unit tests; what matters here is that a
+  // credential-free build shows no dead control.
+  check(
+    'content warnings are hidden without an account',
+    (await page.getByRole('button', { name: 'Content warnings' }).count()) === 0,
+  );
   await page.screenshot({ path: OUT + '13-title.png' });
 
   // --- Remote drawer ---------------------------------------------------------

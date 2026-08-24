@@ -52,7 +52,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await asAdmin(
-    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references, lists, list_items cascade',
+    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references, lists, list_items, content_warning_votes cascade',
   );
   await asAdmin("insert into profiles (id, handle) values ($1,'alice'), ($2,'bob')", [ALICE, BOB]);
 });
@@ -536,6 +536,67 @@ describe('lists', () => {
     const id = await makeList(ALICE, true);
     await asAdmin('update lists set deleted = true where id = $1', [id]);
     expect((await asUser(BOB, 'select * from lists')).rows).toHaveLength(0);
+  });
+});
+
+describe('content warnings', () => {
+  const TITLE = 'tmdb:tv:1';
+
+  const vote = (user: string, warning: string, present = true) =>
+    asAdmin(
+      'insert into content_warning_votes (user_id, title_id, warning, present) values ($1,$2,$3,$4)',
+      [user, TITLE, warning, present],
+    );
+
+  it('aggregates yes and no votes', async () => {
+    await vote(ALICE, 'animal-harm', true);
+    await vote(BOB, 'animal-harm', false);
+
+    const rows = (await asAdmin('select * from content_warnings($1)', [TITLE])).rows as Array<{
+      warning: string;
+      yes_votes: string;
+      no_votes: string;
+    }>;
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0].yes_votes)).toBe(1);
+    expect(Number(rows[0].no_votes)).toBe(1);
+  });
+
+  it('keeps a contested warning visible rather than hiding it', async () => {
+    // Disappearing when disputed would be worse than showing the dispute.
+    await vote(ALICE, 'gore', true);
+    await vote(BOB, 'gore', false);
+    expect((await asAdmin('select * from content_warnings($1)', [TITLE])).rows).toHaveLength(1);
+  });
+
+  it('allows only one vote per user, title and warning', async () => {
+    await vote(ALICE, 'suicide');
+    await expect(vote(ALICE, 'suicide')).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('rejects a warning outside the vocabulary', async () => {
+    // Free text would become a second, unmoderated comment field.
+    await expect(vote(ALICE, 'anything-i-like')).rejects.toThrow(/check constraint/i);
+  });
+
+  it('refuses a vote cast as another user', async () => {
+    await expect(
+      asUser(
+        BOB,
+        'insert into content_warning_votes (user_id, title_id, warning) values ($1,$2,$3)',
+        [ALICE, TITLE, 'gore'],
+      ),
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('hides votes from someone you blocked', async () => {
+    await vote(ALICE, 'gore');
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+    expect((await asUser(BOB, 'select * from content_warning_votes')).rows).toHaveLength(0);
+  });
+
+  it('returns nothing for a title nobody has voted on', async () => {
+    expect((await asAdmin('select * from content_warnings($1)', ['tmdb:tv:none'])).rows).toHaveLength(0);
   });
 });
 
