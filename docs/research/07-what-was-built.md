@@ -75,6 +75,7 @@ makes a server mandatory regardless.
 | Audio fingerprinting | Doc 6 sized it as feasible; the universal fallback | Refuses a wrong episode rather than guessing |
 | Lists mixing film and TV | The split between Letterboxd and TV Time is the complaint | Adding to one is offered wherever a title appears |
 | TV Time rescue CSV import | Doc 1: `tvtime-rescue-data` is the only surviving copy of many people's history | Written against the tool's source, not guessed at |
+| GDPR zip and raw `DioCache.db` recovery | Doc 8 §3: the file every tracker is judged on, and most import badly | Merges the `-wal` the recommended tool ignores |
 | Community content warnings | Doc 4 §2.2, the doesthedogdie idea | Advisory only; a `no` vote can argue a wrong flag down |
 | Profiles, following, blocking | Social was chosen as day-one scope | No public follower count: the policy does not expose one |
 
@@ -116,6 +117,10 @@ user pushed back and was right to: two of those reasons did not hold up.
 ## 4. Verification status — what is proven and what is not
 
 **Proven against real systems:**
+- The write-ahead-log merge, against databases and logs produced by real SQLite —
+  including recovering rows written after a checkpoint, and refusing a corrupt or
+  foreign log rather than writing garbage over a good page. Exercised in a real
+  browser too, so SQLite-in-WebAssembly is verified, not assumed
 - Row-level security, including spoiler gating in both directions, via 10 end-to-end
   checks with real users and JWTs against the deployed project, plus 22 PGlite tests
   running the deployable SQL as an unprivileged role
@@ -123,7 +128,7 @@ user pushed back and was right to: two of those reasons did not hold up.
   advancement, error classification
 - TMDB coverage of niche and non-English television (Detectorists, Kaamelott, Dark, The
   Bureau, Nathan for You), stable episode IDs, per-country watch providers
-- The full app flow in a real browser: 42 checks, against a credential-free build
+- The full app flow in a real browser: 49 checks, against a credential-free build
 
 **Not proven:**
 - **The app calling TMDB or Supabase from a browser.** Headless Chromium in the build

@@ -1,7 +1,7 @@
 import { db } from './db';
 import { makeId } from '../domain/types';
 import { parseCsv } from './transfer';
-import type { LibraryItem, Rating, WatchEvent, WatchlistItem } from '../domain/types';
+import type { InternalId, LibraryItem, Rating, WatchEvent, WatchlistItem } from '../domain/types';
 
 /**
  * Import from the TV Time rescue tool.
@@ -84,8 +84,32 @@ function parseDate(value: string | undefined, fallback = Date.now()): number {
   return Number.isFinite(t) ? t : fallback;
 }
 
-const slug = (s: string) =>
+export const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/**
+ * Local IDs for recovered TV Time data.
+ *
+ * Shared with the DioCache importer on purpose: someone who recovers both the rescue
+ * tool's CSVs *and* the raw cache must end up with one history, not two overlapping
+ * copies. Keyed on TV Time's own IDs where they survive, and on a slug of the title
+ * where they do not.
+ */
+export const tvtimeSeriesId = (showId?: string | number, title = ''): InternalId =>
+  showId ? makeId('local', 'tv', `tvtime-${showId}`) : makeId('local', 'tv', slug(title));
+
+export const tvtimeEpisodeId = (
+  episodeId: string | number | undefined,
+  title: string,
+  season: number,
+  number: number,
+): InternalId =>
+  episodeId
+    ? makeId('local', 'ep', `tvtime-${episodeId}`)
+    : makeId('local', 'ep', `${slug(title)}-s${season}-e${number}`);
+
+export const tvtimeMovieId = (title: string): InternalId =>
+  makeId('local', 'movie', slug(title));
 
 /**
  * Import one rescue CSV.
@@ -143,12 +167,8 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
       const season = parseNumber(cell(row, 'season')) ?? 0;
       const number = parseNumber(cell(row, 'number')) ?? 0;
 
-      const seriesId = showId
-        ? makeId('local', 'tv', `tvtime-${showId}`)
-        : makeId('local', 'tv', slug(show));
-      const targetId = episodeId
-        ? makeId('local', 'ep', `tvtime-${episodeId}`)
-        : makeId('local', 'ep', `${slug(show)}-s${season}-e${number}`);
+      const seriesId = tvtimeSeriesId(showId, show);
+      const targetId = tvtimeEpisodeId(episodeId, show, season, number);
 
       const watchedAt = parseDate(cell(row, 'seen_date'));
       // times_watched carries rewatches. Recording only one would quietly discard
@@ -179,7 +199,7 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
         continue;
       }
 
-      const titleId = makeId('local', 'movie', slug(title));
+      const titleId = tvtimeMovieId(title);
       const runtime = parseNumber(cell(row, 'runtime_min'));
 
       if (parseBool(cell(row, 'watched'))) {
@@ -222,7 +242,7 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
         continue;
       }
 
-      const titleId = makeId('local', 'tv', slug(title));
+      const titleId = tvtimeSeriesId(undefined, title);
       const archived = parseBool(cell(row, 'archived'));
       const upToDate = parseBool(cell(row, 'up_to_date'));
 

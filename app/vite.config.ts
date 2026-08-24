@@ -42,5 +42,11 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    alias: {
+      // Vite's `?url` import gives a browser path that Node cannot open. Tests get a
+      // real filesystem path instead, so the SQLite importer can be exercised against
+      // actual DioCache.db files rather than mocked.
+      './sqlWasm': new URL('./src/test/sqlWasm.node.ts', import.meta.url).pathname,
+    },
   },
 });

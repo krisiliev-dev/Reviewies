@@ -9,10 +9,69 @@
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { strToU8, zipSync } from 'fflate';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const BASE = process.env.BASE ?? 'http://localhost:4173';
 const OUT = new URL('./screenshots/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
+
+/**
+ * A real DioCache.db with real write-ahead frames, built by real SQLite.
+ *
+ * The second film is written after a checkpoint, so it exists only in the -wal —
+ * which is the whole point. Both files are copied while the connection is still open,
+ * because closing SQLite checkpoints and deletes the log.
+ */
+function buildDioCache() {
+  const dir = mkdtempSync(join(tmpdir(), 'smoke-dio-'));
+  const path = join(dir, 'DioCache.db');
+
+  const movie = (uuid, name) => ({
+    status: 'success',
+    data: {
+      type: 'list',
+      objects: [
+        {
+          uuid,
+          entity_type: 'movie',
+          rewatch_count: 0,
+          watched_at: '2026-02-01T20:00:00Z',
+          filter: ['watched'],
+          extended: { is_watched: true },
+          meta: { uuid, name, runtime: 6000 },
+        },
+      ],
+    },
+  });
+
+  const script = [
+    "const fs = require('node:fs');",
+    "const { DatabaseSync } = require('node:sqlite');",
+    `const p = ${JSON.stringify(path)};`,
+    'const db = new DatabaseSync(p);',
+    'db.exec("pragma journal_mode = wal");',
+    'db.exec("create table cache_dio (key text, subKey text, max_age_date integer, ' +
+      'max_stale_date integer, content BLOB, statusCode integer, headers BLOB, ' +
+      'primary key (key, subKey))");',
+    'const put = (k, o) => db.prepare("insert into cache_dio values (?,?,?,?,?,?,?)")' +
+      '.run(k, "s", 0, 0, Buffer.from(JSON.stringify(o)), 200, Buffer.from("{}"));',
+    `put('checkpointed', ${JSON.stringify(movie('m1', 'Checkpointed Film'))});`,
+    // Padding, so the checkpoint has whole pages to move.
+    "for (let i = 0; i < 200; i++) put('pad' + i, { junk: 'x'.repeat(200) });",
+    'db.exec("pragma wal_checkpoint(full)");',
+    `put('walonly', ${JSON.stringify(movie('m2', 'Only In The Log'))});`,
+    "fs.copyFileSync(p, p + '.copy');",
+    "fs.copyFileSync(p + '-wal', p + '.copy-wal');",
+  ].join('\n');
+
+  execFileSync(process.execPath, ['-e', script], { stdio: 'pipe' });
+
+  return { db: readFileSync(path + '.copy'), wal: readFileSync(path + '.copy-wal'), dir };
+}
 
 const checks = [];
 const check = (name, ok, detail = '') => {
@@ -350,6 +409,83 @@ try {
     'remote drawer is hidden when no bridge is configured',
     (await page.getByRole('button', { name: 'Open remote' }).count()) === 0,
   );
+
+  // --- Importing an archive ----------------------------------------------------
+  // Doc 8 §3: the GDPR zip is how most people got their data out of TV Time, and
+  // every tracker in the field is judged on whether it can read one.
+  await page.getByRole('link', { name: /Data/ }).click();
+  await page.waitForSelector('text=Choose files', { timeout: 5000 });
+
+  const zip = Buffer.from(
+    zipSync({
+      'export/episodes.csv': strToU8(
+        'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id\n' +
+          'Rescued Show,1,1,Pilot,True,2026-01-05,2,2026-01-01,900,4001',
+      ),
+      'export/readme.txt': strToU8('not data'),
+    }),
+  );
+  await page.locator('input[type=file]').last().setInputFiles({
+    name: 'tvtime-export.zip',
+    mimeType: 'application/zip',
+    buffer: zip,
+  });
+  await page.waitForSelector('text=/Imported \\d+ watch/', { timeout: 10000 });
+
+  const importText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  // times_watched of 2 must survive: rewatch counts are the whole reason watches are
+  // modelled as events.
+  check('a GDPR-style zip imports', /Imported 2 watches/.test(importText), importText.slice(0, 160));
+  check(
+    'each file in the zip is accounted for',
+    /episodes\.csv/.test(importText) && /readme\.txt/.test(importText),
+  );
+  // Silence is the failure mode every competitor has: "imported!" while dropping half.
+  check('an unreadable file is named, not silently dropped', /Not recognised/.test(importText));
+  await page.getByText(/Imported \d+ watch/).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: OUT + '17-import.png' });
+
+  // --- Recovering a DioCache.db in the browser ---------------------------------
+  // This is the claim doc 8 §3.1 rests on, and the only place SQLite-in-WebAssembly
+  // is exercised in a real browser: rows written after a checkpoint live only in the
+  // -wal, so importing the pair must find them and the .db alone must not.
+  const dio = buildDioCache();
+  await page.locator('input[type=file]').last().setInputFiles([
+    { name: 'DioCache.db', mimeType: 'application/octet-stream', buffer: dio.db },
+    { name: 'DioCache.db-wal', mimeType: 'application/octet-stream', buffer: dio.wal },
+  ]);
+  await page.waitForSelector('text=/TV Time cache/', { timeout: 30000 });
+
+  const dioText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('a DioCache.db is read in the browser', /TV Time cache/.test(dioText), dioText.match(/DioCache\.db — [^\n]{0,60}/)?.[0]);
+  check(
+    'the write-ahead log is merged, not ignored',
+    /Recovered \d+ page\(s\) from the write-ahead log/.test(dioText),
+  );
+  check('the -wal was paired automatically, not asked for twice', !/No DioCache.db-wal was supplied/.test(dioText));
+
+  const recovered = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const req = indexedDB.open('reviewies');
+        req.onsuccess = () => {
+          const all = req.result.transaction('watches', 'readonly').objectStore('watches').getAll();
+          all.onsuccess = () =>
+            resolve(all.result.map((w) => w.targetId).filter((id) => id.startsWith('local:movie:')));
+        };
+      }),
+  );
+  // The film written after the checkpoint is the one the .db alone would lose.
+  check(
+    'a film that exists only in the -wal is recovered',
+    recovered.includes('local:movie:only-in-the-log'),
+    JSON.stringify(recovered),
+  );
+  await page.getByText(/TV Time cache/).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: OUT + '18-diocache.png' });
+  rmSync(dio.dir, { recursive: true, force: true });
 
   // --- Export ----------------------------------------------------------------
   await page.getByRole('link', { name: /Data/ }).click();

@@ -699,14 +699,15 @@ describe('comment images', () => {
     ]);
 
   it('creates the bucket with a size limit and an image-only allow list', async () => {
-    const res = await asAdmin<{ public: boolean; file_size_limit: string; allowed_mime_types: string[] }>(
+    const res = await asAdmin(
       "select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'comment-images'",
     );
-    expect(res.rows).toHaveLength(1);
-    expect(Number(res.rows[0].file_size_limit)).toBe(5 * 1024 * 1024);
+    const rows = res.rows as Array<{ file_size_limit: string; allowed_mime_types: string[] }>;
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0].file_size_limit)).toBe(5 * 1024 * 1024);
     // An open allow list would make the bucket a general file host.
-    expect(res.rows[0].allowed_mime_types).toContain('image/png');
-    expect(res.rows[0].allowed_mime_types).not.toContain('application/pdf');
+    expect(rows[0].allowed_mime_types).toContain('image/png');
+    expect(rows[0].allowed_mime_types).not.toContain('application/pdf');
   });
 
   it('lets a user upload under their own ID', async () => {
