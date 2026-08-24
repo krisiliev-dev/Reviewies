@@ -5,6 +5,7 @@ import { db } from '../data/db';
 import { formatTimecode, usePlaybackClock } from '../watching/usePlaybackClock';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, searchEmoji } from '../watching/emoji';
+import { addReaction, estimateDriftMs, fetchRemoteReactions } from '../watching/reactions';
 
 /**
  * Watching Mode — timestamped reactions to moments, on a second screen.
@@ -22,6 +23,7 @@ export function WatchingMode() {
   const clock = usePlaybackClock();
   const [density, setDensity] = useState(1);
   const [query, setQuery] = useState('');
+  const [dismissedDrift, setDismissedDrift] = useState(false);
 
   const episode = useLiveQuery(() => db.episodes.get(targetId), [targetId]);
   const series = useLiveQuery(
@@ -58,17 +60,23 @@ export function WatchingMode() {
     };
   }, [clock.running]);
 
+  // Pull everyone's reactions for this episode as soon as the screen opens, so the
+  // replay is populated before playback starts.
+  useEffect(() => {
+    void fetchRemoteReactions(targetId);
+  }, [targetId]);
+
+  // Offer a correction when your taps consistently trail or lead the crowd.
+  const drift = useMemo(() => {
+    const mine = reactions.filter((r) => r.mine);
+    const others = reactions.filter((r) => !r.mine);
+    return estimateDriftMs(mine, others);
+  }, [reactions]);
+
   const results = useMemo(() => (query.trim() ? searchEmoji(query) : []), [query]);
 
   async function react(emoji: string) {
-    await db.reactions.add({
-      id: globalThis.crypto?.randomUUID?.() ?? String(Math.random()),
-      targetId,
-      tMs: Math.round(clock.positionMs),
-      emoji,
-      createdAt: Date.now(),
-      mine: true,
-    });
+    await addReaction(targetId, clock.positionMs, emoji);
     navigator.vibrate?.(8);
     setQuery('');
   }
@@ -98,7 +106,20 @@ export function WatchingMode() {
       {!clock.running && clock.positionMs === 0 ? (
         <StartPanel onStart={() => clock.start(0)} />
       ) : (
-        <SyncBar clock={clock} density={density} onDensity={setDensity} />
+        <>
+          {drift !== undefined && (
+            <DriftHint
+              driftMs={drift}
+              onApply={() => {
+                clock.nudge(drift);
+                setDismissedDrift(true);
+              }}
+              onDismiss={() => setDismissedDrift(true)}
+              dismissed={dismissedDrift}
+            />
+          )}
+          <SyncBar clock={clock} density={density} onDensity={setDensity} />
+        </>
       )}
 
       {/* Most of the screen is big preselected buttons — this gets used in the dark,
@@ -161,8 +182,8 @@ function SyncBar({
       <button onClick={clock.toggle} className="rounded-lg bg-surface-2 px-3 py-2 text-sm">
         {clock.running ? 'Pause' : 'Resume'}
       </button>
-      {/* Manual drift correction. Crowd-based auto-correction — detecting that your
-          reactions land consistently after everyone else's — is the planned upgrade. */}
+      {/* Manual drift correction, always available. The crowd-derived estimate
+          above handles the common case; these cover the rest. */}
       <button onClick={() => clock.nudge(-5000)} className="rounded-lg bg-surface-2 px-3 py-2 text-sm">
         −5s
       </button>
@@ -181,6 +202,44 @@ function SyncBar({
           className="w-16"
         />
       </label>
+    </div>
+  );
+}
+
+/**
+ * Crowd-derived drift correction.
+ *
+ * If your reactions consistently trail everyone else's by the same amount, your
+ * manual sync started late. This is offered rather than applied automatically —
+ * silently moving someone's clock is disorienting, and the estimate can be wrong
+ * when few people have watched an episode.
+ */
+function DriftHint({
+  driftMs,
+  onApply,
+  onDismiss,
+  dismissed,
+}: {
+  driftMs: number;
+  onApply: () => void;
+  onDismiss: () => void;
+  dismissed: boolean;
+}) {
+  if (dismissed) return null;
+  const seconds = Math.round(Math.abs(driftMs) / 1000);
+  const behind = driftMs < 0;
+
+  return (
+    <div className="mx-3 mb-2 flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+      <span className="flex-1 text-muted">
+        Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
+      </span>
+      <button onClick={onApply} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-ink">
+        Fix
+      </button>
+      <button onClick={onDismiss} className="px-2 py-1.5 text-xs text-muted">
+        Ignore
+      </button>
     </div>
   );
 }
