@@ -1,4 +1,5 @@
 import { getClient, getSession } from '@reviewies/core/sync/auth';
+import { getConfig } from '@reviewies/core/config';
 import type { NotifyPreference } from '@reviewies/core/calendar/upcoming';
 
 /**
@@ -13,7 +14,7 @@ import type { NotifyPreference } from '@reviewies/core/calendar/upcoming';
 export function vapidPublicKey(): string | undefined {
   // An empty value is how an unfilled .env line arrives; treat it as absent rather
   // than handing an empty string to applicationServerKey, which throws.
-  const key = import.meta.env?.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  const key = getConfig().vapidPublicKey;
   return key?.trim() ? key : undefined;
 }
 

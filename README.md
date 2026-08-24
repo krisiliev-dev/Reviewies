@@ -100,6 +100,7 @@ and why that matters more than it sounds.
 ```bash
 npm test                              # 539 tests across core and app
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
+npm run test:sqlite --workspace core  # the same 386 core tests, against SQLite
 
 cd app && npm run build
 npx vite preview &
@@ -161,10 +162,14 @@ scripts/                Migration and function deployment
 docs/research/          Research notes and decisions
 ```
 
-The core reaches a platform through three bindings, injected at startup: a `Database`,
-a key/value store for preferences, and a file saver. Until they are bound, using them
-throws with a message saying so — rather than failing later in a way that looks like a
-data bug. See [`core/README.md`](core/README.md).
+The core reaches a platform through four bindings, injected at startup: configuration,
+a `Database`, a key/value store for preferences, and a file saver. Until they are
+bound, using them throws with a message saying so — rather than failing later in a way
+that looks like a data bug. See [`core/README.md`](core/README.md).
+
+Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 386
+core tests run against both**, so the SQLite one is proven by the suite that was
+written against Dexie rather than by a second suite written to agree with it.
 
 ## Research
 

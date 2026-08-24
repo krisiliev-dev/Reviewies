@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getConfig } from '../config';
 import { TmdbProvider } from './tmdb';
 
 /**
@@ -12,7 +13,7 @@ import { TmdbProvider } from './tmdb';
  *   npx vitest run src/metadata/tmdb.live.test.ts
  */
 
-const token = import.meta.env?.VITE_TMDB_TOKEN as string | undefined;
+const token = getConfig().tmdbToken;
 const describeLive = token ? describe : describe.skip;
 
 describeLive('TMDB coverage (live)', () => {

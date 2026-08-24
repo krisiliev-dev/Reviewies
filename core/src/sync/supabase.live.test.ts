@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getConfig } from '../config';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SupabaseBackend } from './supabaseBackend';
 import type { Change } from './types';
@@ -14,8 +15,8 @@ import type { Change } from './types';
  * row-level security deciding what comes back.
  */
 
-const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
-const pub = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+const url = getConfig().supabaseUrl;
+const pub = getConfig().supabaseAnonKey;
 const secret = process.env.SB_SECRET;
 
 const live = url && pub && secret ? describe : describe.skip;

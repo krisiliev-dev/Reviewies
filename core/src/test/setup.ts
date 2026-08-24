@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto';
+import { setConfig } from '../config';
 import { setDatabase } from '../data/db';
 import { createDexieDatabase } from '../data/adapters/dexie';
 import { setSqlJsLoader } from '../data/sqlWasm';
@@ -20,3 +21,17 @@ setDatabase(createDexieDatabase());
 
 // The DioCache importer needs real SQLite; see sqlLoader.node.ts.
 setSqlJsLoader(nodeSqlJsLoader);
+
+/**
+ * Credentials, from the workspace .env, through the same injection the apps use.
+ *
+ * Reading `import.meta.env` directly in the live suites would test a path no app
+ * takes — and would not compile, since the core deliberately has no Vite types.
+ */
+const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+setConfig({
+  tmdbToken: env.VITE_TMDB_TOKEN,
+  supabaseUrl: env.VITE_SUPABASE_URL,
+  supabaseAnonKey: env.VITE_SUPABASE_ANON_KEY,
+  vapidPublicKey: env.VITE_VAPID_PUBLIC_KEY,
+});

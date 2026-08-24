@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getConfig } from '../config';
 import { type Change, type PullResult, type SyncBackend, SyncError, type SyncTable } from './types';
 
 /**
@@ -85,8 +86,7 @@ export class SupabaseBackend implements SyncBackend {
   }
 
   static fromEnv(): SupabaseBackend | undefined {
-    const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
-    const key = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+    const { supabaseUrl: url, supabaseAnonKey: key } = getConfig();
     if (!url || !key) return undefined;
     return new SupabaseBackend(createClient(url, key));
   }

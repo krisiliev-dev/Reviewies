@@ -1,4 +1,5 @@
 import { db } from '../data/db';
+import { getConfig } from '../config';
 import { isStale } from '../domain/types';
 import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
 import { FixtureProvider } from './fixtures';
@@ -12,7 +13,7 @@ import { resolveFromTmdb } from './animeMapping';
  * rather than failing, so it is always launchable and testable.
  */
 function createProvider(): MetadataProvider {
-  const token = import.meta.env?.VITE_TMDB_TOKEN as string | undefined;
+  const token = getConfig().tmdbToken;
   return token ? new TmdbProvider(token) : new FixtureProvider();
 }
 

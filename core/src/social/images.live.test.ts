@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { getConfig } from '../config';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**
@@ -17,8 +18,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  *   SB_SECRET=sb_secret_... npx vitest run src/social/images.live.test.ts
  */
 
-const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
-const pub = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+const url = getConfig().supabaseUrl;
+const pub = getConfig().supabaseAnonKey;
 const secret = process.env.SB_SECRET;
 const live = url && pub && secret ? describe : describe.skip;
 

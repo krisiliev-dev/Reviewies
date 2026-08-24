@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { getConfig } from '../config';
 import { getClient, signIn, signOut } from '../sync/auth';
 import { fetchComments, postComment } from './comments';
 
@@ -19,8 +20,8 @@ import { fetchComments, postComment } from './comments';
  * claimed to. Using the real module removes the question.
  */
 
-const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
-const pub = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+const url = getConfig().supabaseUrl;
+const pub = getConfig().supabaseAnonKey;
 const secret = process.env.SB_SECRET;
 const live = url && pub && secret ? describe : describe.skip;
 

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient, type Session } from '@supabase/supabase-js';
+import { getConfig } from '../config';
 
 /**
  * Supabase auth, kept deliberately optional.
@@ -17,8 +18,7 @@ let client: SupabaseClient | undefined;
 export function getClient(): SupabaseClient | undefined {
   if (client) return client;
 
-  const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
-  const key = import.meta.env?.VITE_SUPABASE_ANON_KEY as string | undefined;
+  const { supabaseUrl: url, supabaseAnonKey: key } = getConfig();
   if (!url || !key) return undefined;
 
   // Guard against the secret key being pasted in by mistake — it would work, and

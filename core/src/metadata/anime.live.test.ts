@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getConfig } from '../config';
 import { getSeasonChain } from './anilist';
 import { resolveFromTmdb } from './animeMapping';
 import { TmdbProvider } from './tmdb';
@@ -9,7 +10,7 @@ import { db } from '../data/db';
  * Live verification that the anime correction fixes the case it was built for.
  * Skipped without a TMDB token.
  */
-const token = import.meta.env?.VITE_TMDB_TOKEN as string | undefined;
+const token = getConfig().tmdbToken;
 const live = token ? describe : describe.skip;
 
 live('anime season correction (live)', () => {

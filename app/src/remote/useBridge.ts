@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getConfig } from '@reviewies/core/config';
 
 /**
  * Client half of the bridge connection.
@@ -59,8 +60,7 @@ export interface BridgeConnection {
 }
 
 function config(): { url: string; token: string } | undefined {
-  const url = import.meta.env?.VITE_BRIDGE_RELAY as string | undefined;
-  const token = import.meta.env?.VITE_BRIDGE_TOKEN as string | undefined;
+  const { bridgeRelay: url, bridgeToken: token } = getConfig();
   if (!url || !token) return undefined;
   return { url, token };
 }
