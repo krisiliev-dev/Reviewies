@@ -242,3 +242,40 @@ describe('capture configuration', () => {
     expect(typeof micSupported()).toBe('boolean');
   });
 });
+
+describe('reference transport encoding', () => {
+  it('round-trips hashes through base64', async () => {
+    const { encodeHashes, decodeHashes } = await import('./references');
+    const original = Uint32Array.from([1, 2, 4_294_967_295, 0, 12345]);
+    expect(Array.from(decodeHashes(encodeHashes(original)))).toEqual(Array.from(original));
+  });
+
+  it('handles a large payload without overflowing the stack', async () => {
+    // A megabyte spread into String.fromCharCode in one call would throw.
+    const { encodeHashes, decodeHashes } = await import('./references');
+    const big = Uint32Array.from({ length: 200_000 }, (_, i) => i);
+    expect(decodeHashes(encodeHashes(big)).length).toBe(big.length);
+  });
+
+  it('handles an empty array', async () => {
+    const { encodeHashes, decodeHashes } = await import('./references');
+    expect(decodeHashes(encodeHashes(new Uint32Array(0))).length).toBe(0);
+  });
+
+  it('truncates a misaligned payload rather than misreading it', async () => {
+    // Uint32Array needs 4-byte alignment; a truncated transfer must not be read
+    // as wildly wrong numbers.
+    const { decodeHashes } = await import('./references');
+    const misaligned = btoa('abcdefg'); // 7 bytes
+    expect(decodeHashes(misaligned).length).toBe(1);
+  });
+
+  it('survives a round trip into a usable reference', async () => {
+    const { encodeHashes, decodeHashes } = await import('./references');
+    const episode = makeSpectrogram(300, 21);
+    const packed = serialiseReference(buildReference(fingerprint(episode)));
+    const restored = deserialiseReference(decodeHashes(encodeHashes(packed)));
+
+    expect(matchSample(fingerprint(episode.slice(120, 160)), restored)?.offsetFrames).toBe(120);
+  });
+});

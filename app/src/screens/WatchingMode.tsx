@@ -12,6 +12,7 @@ import {
   subscribeToPlayback,
   type PlaybackUpdate,
 } from '../watching/extensionBridge';
+import { ListenSync } from '../watching/ListenSync';
 
 /**
  * Watching Mode — timestamped reactions to moments, on a second screen.
@@ -146,6 +147,15 @@ export function WatchingMode() {
             />
           )}
           <SyncBar clock={clock} density={density} onDensity={setDensity} />
+          {/* Hidden when the extension already reports an exact position — there is
+              nothing for listening to improve. */}
+          {!autoSynced && (
+            <ListenSync
+              targetId={targetId}
+              positionMs={clock.positionMs}
+              onSynced={(ms) => clock.seek(ms)}
+            />
+          )}
         </>
       )}
 

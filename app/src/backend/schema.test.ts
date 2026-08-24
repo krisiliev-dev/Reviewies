@@ -52,7 +52,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await asAdmin(
-    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes cascade',
+    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references cascade',
   );
   await asAdmin("insert into profiles (id, handle) values ($1,'alice'), ($2,'bob')", [ALICE, BOB]);
 });
@@ -364,6 +364,103 @@ describe('notification scheduler', () => {
     await asAdmin('select queue_todays_notifications()');
     const rows = await queued();
     expect(rows.every((r) => r.user_id === ALICE)).toBe(true);
+  });
+});
+
+describe('fingerprint references', () => {
+  const TARGET = 'tmdb:ep:fp';
+
+  const contribute = (user: string, frames: number, hashes = 'AAAA') =>
+    asAdmin(
+      `insert into fingerprint_contributions (user_id, target_id, hashes, frame_count)
+       values ($1, $2, $3, $4)`,
+      [user, TARGET, hashes, frames],
+    );
+
+  it('lets a user manage their own contribution', async () => {
+    await asUser(
+      ALICE,
+      `insert into fingerprint_contributions (user_id, target_id, hashes, frame_count)
+       values ($1, $2, 'AAAA', 1000)`,
+      [ALICE, TARGET],
+    );
+    expect((await asUser(ALICE, 'select * from fingerprint_contributions')).rows).toHaveLength(1);
+  });
+
+  it('hides one user\'s contribution from another', async () => {
+    // A raw unvalidated timeline is exactly what a malicious client would want in
+    // order to forge agreement.
+    await contribute(ALICE, 1000);
+    expect((await asUser(BOB, 'select * from fingerprint_contributions')).rows).toHaveLength(0);
+  });
+
+  it('allows only one contribution per user, episode and audio track', async () => {
+    await contribute(ALICE, 1000);
+    // Repeated attempts must replace rather than stack, so one enthusiastic user
+    // cannot outvote everyone else.
+    await expect(contribute(ALICE, 1200)).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('treats different audio tracks as separate references', async () => {
+    await contribute(ALICE, 1000);
+    await asAdmin(
+      `insert into fingerprint_contributions (user_id, target_id, audio_track, hashes, frame_count)
+       values ($1, $2, 'dub-de', 'BBBB', 1000)`,
+      [ALICE, TARGET],
+    );
+    expect((await asAdmin('select * from fingerprint_contributions')).rows).toHaveLength(2);
+  });
+
+  it('does not promote a lone contribution', async () => {
+    await contribute(ALICE, 1000);
+    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
+    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
+    expect((await asAdmin('select * from fingerprint_references')).rows).toHaveLength(0);
+  });
+
+  it('promotes once two contributions agree on length', async () => {
+    await contribute(ALICE, 1000);
+    await contribute(BOB, 1005);
+    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
+    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(true);
+
+    const rows = (await asAdmin('select * from fingerprint_references')).rows as Array<{
+      agreement: number;
+    }>;
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0].agreement)).toBe(2);
+  });
+
+  it('does not promote when contributions disagree wildly', async () => {
+    // A mistimed or wrong-episode contribution would misplace every later viewer's
+    // reactions, which is worse than having no reference at all.
+    await contribute(ALICE, 1000);
+    await contribute(BOB, 9000);
+    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
+    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
+  });
+
+  it('returns false when there is nothing to promote', async () => {
+    const res = await asAdmin('select promote_fingerprint($1) as promoted', ['tmdb:ep:none']);
+    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
+  });
+
+  it('publishes accepted references to any signed-in user', async () => {
+    await contribute(ALICE, 1000);
+    await contribute(BOB, 1000);
+    await asAdmin('select promote_fingerprint($1)', [TARGET]);
+    // Bob can read the reference even though he cannot read Alice's contribution.
+    expect((await asUser(BOB, 'select * from fingerprint_references')).rows).toHaveLength(1);
+  });
+
+  it('refuses to let a client write a reference directly', async () => {
+    await expect(
+      asUser(
+        ALICE,
+        "insert into fingerprint_references (target_id, hashes, frame_count) values ($1, 'X', 10)",
+        [TARGET],
+      ),
+    ).rejects.toThrow(/row-level security/i);
   });
 });
 
