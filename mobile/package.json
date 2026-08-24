@@ -1,0 +1,42 @@
+{
+  "name": "@reviewies/mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@reviewies/core": "*",
+    "expo": "~57.0.16",
+    "expo-constants": "~57.0.14",
+    "expo-file-system": "~57.0.5",
+    "expo-haptics": "~57.0.1",
+    "expo-linking": "~57.0.7",
+    "expo-router": "~57.0.16",
+    "expo-sharing": "~57.0.15",
+    "expo-sqlite": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10",
+    "jsdom": "^30.0.1",
+    "playwright": "^1.62.1",
+    "serve": "^14.2.4"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "export:web": "expo export --platform web",
+    "test": "vitest run",
+    "smoke": "expo export --platform web && (npx serve dist -p 4200 --no-clipboard & sleep 6) && node smoke.mjs"
+  },
+  "private": true
+}

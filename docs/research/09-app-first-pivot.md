@@ -161,3 +161,31 @@ quietly rewriting history.
 
 Steps 1 and 2 are worth doing regardless of what happens next: they are what makes the
 core testable independently of any UI, and they are reversible.
+
+---
+
+## 6. Where it got to
+
+Steps 1–4 are done, and the thesis holds.
+
+`@reviewies/core` is 6,200 lines with no DOM, no React, and no `import.meta.env`. Its
+386 tests run against **both** database implementations — Dexie and SQLite — and pass
+identically. Since every assertion was written against Dexie's semantics, that is the
+port being proven rather than asserted.
+
+The Expo app boots, opens SQLite in WAL mode, and runs the loop the product is judged
+on: search, track, Up Next with a remaining count, mark watched, and the count moves.
+Eleven checks drive it through react-native-web on every change. What that cannot see
+is a device — haptics, the local-network entitlement, how any of it feels — and those
+are the next thing to find out.
+
+Two things worth recording because they were the parts that actually bit:
+
+- **Metro needs teaching about a workspace.** It does not follow symlinks out of the
+  project directory on its own, and it does not treat `.wasm` as an asset — which
+  expo-sqlite's web build imports directly. Both are one line in `metro.config.js` and
+  neither is discoverable from the error message.
+- **The screens are the real cost, and the estimate held.** Up Next and Search came to
+  roughly 350 lines of React Native against 3,700 lines of web UI still to port. The
+  logic behind them — `getUpNext`, `markWatched`, the metadata cache, the ID scheme —
+  was imported, not rewritten.

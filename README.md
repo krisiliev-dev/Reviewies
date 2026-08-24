@@ -1,7 +1,8 @@
 # Reviewies
 
-A TV series and movie companion app — tracker, diary, and discovery tool, built as a
-Progressive Web App with a path to a native iOS app later.
+A TV series and movie companion app — tracker, diary, and discovery tool. **An app
+first**, for iOS and Android, with the browser version falling out of the same
+codebase.
 
 It exists because [TV Time shut down on 15 July 2026](https://techcrunch.com/2026/07/02/popular-tv-tracking-app-tv-time-is-shutting-down-as-company-focuses-on-ai/),
 taking ~26 million people's watch histories with it. The goal is to combine what TV Time
@@ -134,7 +135,8 @@ comment is only selectable once you have watched that episode.
 ## Repository layout
 
 An npm workspace. The rule that shapes it: **anything that is not a screen lives in
-`core/`**, so a second app can be built without forking the logic.
+`core/`**, so the phone app and the web app run the same logic rather than two copies
+of it.
 
 ```
 core/                   @reviewies/core — no DOM, no React, no platform assumptions
@@ -148,6 +150,9 @@ core/                   @reviewies/core — no DOM, no React, no platform assump
   src/calendar/         Upcoming episodes and notification granularity
   src/fingerprint/      Landmark-hash fingerprinting
   src/watching/         Reactions, drift estimation, the emoji pad
+mobile/                 The iOS and Android app (Expo)
+  app/                  Screens, file-based routes
+  src/platform.ts       The only file that knows it is a phone
 app/                    The web app
   src/data/             Dexie adapter and the platform bindings
   src/screens/          UI
