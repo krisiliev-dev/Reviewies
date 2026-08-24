@@ -153,6 +153,10 @@ Read in order; later documents revise earlier ones where evidence changed.
 7. [What was actually built](docs/research/07-what-was-built.md) — reconciles the plan
    with the implementation: where the research turned out to be wrong, which decisions
    were reversed and why, and exactly which layers are and are not verified
+8. [Second Reddit sweep](docs/research/08-second-reddit-sweep.md) — five weeks after the
+   shutdown, once people had lived with fifteen replacements. **Withdraws doc 4's plan to
+   import the TV Time comment archive**, and finds the GDPR zip is the recovery path
+   everyone judges a tracker on
 
 ## Attribution
 

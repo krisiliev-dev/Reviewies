@@ -160,12 +160,15 @@ user pushed back and was right to: two of those reasons did not hold up.
 
 ## 5. The research gap that remains
 
-Reddit access succeeded via Arctic Shift after the direct routes failed, and it changed
-the plan substantially (doc 3). But the mining was targeted at r/tvtime, r/Letterboxd,
-r/Serializd, r/Simkl and r/trakt around the shutdown window. A broader or more recent
-sweep would likely surface more, particularly from the eleven successor apps that have
-launched since — several of which now have their own communities and complaint patterns
-worth reading.
+**Closed.** Doc 8 is the second sweep this section asked for, run five weeks after the
+shutdown once people had actually lived with the alternatives. It found the field had
+grown from eleven successors to fifteen, that none of them has its own subreddit (the
+conversation stayed in r/tvtime), and four concrete gaps in what we built. It also
+withdrew doc 4's plan to import the TV Time comment archive on consent grounds.
+
+What remains unmined: the non-English communities, and the trackers' own Discords —
+several apps now run support there rather than on Reddit, and the r/tvtime threads
+suggest that is where feature requests actually land.
 
 ---
 
