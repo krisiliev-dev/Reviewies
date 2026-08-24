@@ -13,6 +13,11 @@ local-first, exportable at any time, never hostage to someone else's business mo
 **The differentiator is Watching Mode:** timestamped emoji reactions on a second screen,
 replayed from everyone who watched that moment before you.
 
+**Live:** [reviewies-beryl.vercel.app](https://reviewies-beryl.vercel.app) — the web
+build. Open it in Safari on an iPhone and Share → Add to Home Screen; that is what
+exempts it from Safari's seven-day storage eviction, which matters because your history
+lives in IndexedDB.
+
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.

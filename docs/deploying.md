@@ -20,12 +20,24 @@ they just have a version of the app that quietly stops changing.
 
 ## Vercel
 
-1. [vercel.com/new](https://vercel.com/new) → import `krisiliev-dev/Reviewies`.
-2. Leave every build setting alone. `vercel.json` supplies them.
-3. Add the environment variables below, for **all** environments.
-4. Deploy.
+**Deployed:** https://reviewies-beryl.vercel.app
 
-Pushes to the branch redeploy automatically after that.
+The project lives under the **`reviewies` team**, not the personal scope. That is not a
+preference — this account is a "northstar" account whose personal scope reports
+`limited: true`, and deployments made there come back `BLOCKED` with no error message
+at all. The first deployment happened to succeed; every one after it was blocked. If
+deployments start failing silently, check which scope they are going to first.
+
+Redeploying from a checkout:
+
+```bash
+npx vercel deploy --prod --token=$VERCEL_TOKEN --scope=reviewies
+```
+
+**Pushes do not deploy automatically yet.** Linking the Git repository needs a GitHub
+login connection on the Vercel account, which can only be added from the dashboard:
+Project → Settings → Git → Connect Git Repository. Once that is done, every push to the
+branch deploys and the command above stops being necessary.
 
 ## Netlify
 
