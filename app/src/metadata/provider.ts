@@ -30,6 +30,10 @@ export interface MetadataProvider {
     country: string,
     signal?: AbortSignal,
   ): Promise<CachedProviders | undefined>;
+  /** Titles similar to one the user already likes. */
+  getRecommendations(id: string, signal?: AbortSignal): Promise<SearchResult[]>;
+  /** Broad popular titles, used to seed discovery for a near-empty library. */
+  getTrending(signal?: AbortSignal): Promise<SearchResult[]>;
 }
 
 /**

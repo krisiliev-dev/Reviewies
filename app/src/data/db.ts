@@ -60,4 +60,20 @@ export class ReviewiesDB extends Dexie {
   }
 }
 
-export const db = new ReviewiesDB();
+/**
+ * Namespace the database per test worker.
+ *
+ * Vitest runs test files across parallel workers that would otherwise share a
+ * single IndexedDB, so one file's `clear()` can wipe another file's fixtures
+ * mid-test. Files within a worker run sequentially, so per-worker is enough.
+ * In the browser this is always plain `reviewies`.
+ */
+export function databaseName(base: string): string {
+  // Reached via globalThis so the app build does not need Node types.
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+    ?.env;
+  const workerId = env?.VITEST_WORKER_ID;
+  return workerId ? `${base}-test-${workerId}` : base;
+}
+
+export const db = new ReviewiesDB(databaseName('reviewies'));

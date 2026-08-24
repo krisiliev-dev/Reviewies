@@ -205,6 +205,49 @@ export class TmdbProvider implements MetadataProvider {
       fetchedAt: Date.now(),
     };
   }
+
+  async getRecommendations(id: string, signal?: AbortSignal): Promise<SearchResult[]> {
+    const { type, raw } = split(id);
+    const data = await this.get<{ results: TmdbListItem[] }>(
+      `/${type === 'tv' ? 'tv' : 'movie'}/${raw}/recommendations`,
+      {},
+      signal,
+    );
+    return (data.results ?? []).map((r) => toResult(r, type === 'tv' ? 'tv' : 'movie'));
+  }
+
+  async getTrending(signal?: AbortSignal): Promise<SearchResult[]> {
+    const data = await this.get<{ results: Array<TmdbListItem & { media_type?: string }> }>(
+      '/trending/all/week',
+      {},
+      signal,
+    );
+    return (data.results ?? [])
+      .filter((r) => r.media_type === 'tv' || r.media_type === 'movie')
+      .map((r) => toResult(r, r.media_type === 'tv' ? 'tv' : 'movie'));
+  }
+}
+
+interface TmdbListItem {
+  id: number;
+  name?: string;
+  title?: string;
+  overview?: string;
+  poster_path?: string;
+  first_air_date?: string;
+  release_date?: string;
+}
+
+function toResult(r: TmdbListItem, type: 'tv' | 'movie'): SearchResult {
+  const isShow = type === 'tv';
+  return {
+    id: makeId('tmdb', isShow ? 'tv' : 'movie', r.id),
+    kind: isShow ? 'show' : 'film',
+    name: (isShow ? r.name : r.title) ?? 'Untitled',
+    year: year(isShow ? r.first_air_date : r.release_date),
+    posterUrl: poster(r.poster_path),
+    overview: r.overview,
+  };
 }
 
 function split(id: string) {

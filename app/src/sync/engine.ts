@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { db } from '../data/db';
+import { databaseName, db } from '../data/db';
 import { type Change, type SyncBackend, SyncError, type SyncTable } from './types';
 
 /**
@@ -36,7 +36,7 @@ class SyncDB extends Dexie {
   }
 }
 
-export const syncDb = new SyncDB();
+export const syncDb = new SyncDB(databaseName('reviewies-sync'));
 
 const PK_FIELDS: Record<SyncTable, string[]> = {
   watches: ['id'],

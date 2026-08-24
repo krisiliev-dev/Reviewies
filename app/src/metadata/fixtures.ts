@@ -121,6 +121,28 @@ export class FixtureProvider implements MetadataProvider {
     return out;
   }
 
+  async getRecommendations(id: string): Promise<SearchResult[]> {
+    // Everything except the title asked about, so discovery has something to
+    // filter and the exclusion logic is exercised offline.
+    return FIXTURES.filter((f) => titleId(f) !== id).map((f) => ({
+      id: titleId(f),
+      kind: f.kind,
+      name: f.name,
+      year: f.year,
+      overview: f.overview,
+    }));
+  }
+
+  async getTrending(): Promise<SearchResult[]> {
+    return FIXTURES.map((f) => ({
+      id: titleId(f),
+      kind: f.kind,
+      name: f.name,
+      year: f.year,
+      overview: f.overview,
+    }));
+  }
+
   async getWatchProviders(id: string, country: string): Promise<CachedProviders | undefined> {
     return {
       id,

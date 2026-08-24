@@ -123,6 +123,25 @@ try {
   );
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
+  // --- Discover --------------------------------------------------------------
+  await page.getByRole('link', { name: /Discover/ }).click();
+  await page.waitForSelector('text=Nothing you have already watched', { timeout: 5000 });
+  await page.waitForTimeout(800);
+  // Check the suggested titles specifically, not the whole page: a tracked show
+  // legitimately appears in the "Because you watched…" attribution.
+  const suggestedTitles = await page.locator('li p.font-medium').allInnerTexts();
+  check(
+    'discover excludes what you already track',
+    !suggestedTitles.includes('The Long Dark'),
+    suggestedTitles.join(', '),
+  );
+  check('discover suggests something', suggestedTitles.length > 0, `${suggestedTitles.length} suggested`);
+  check(
+    'discover explains why',
+    /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),
+  );
+  await page.screenshot({ path: OUT + '09-discover.png' });
+
   // --- Stats -----------------------------------------------------------------
   await page.getByRole('link', { name: /Stats/ }).click();
   await page.waitForSelector('text=Most watched', { timeout: 5000 });
