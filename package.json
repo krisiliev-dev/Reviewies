@@ -1,0 +1,9 @@
+{
+  "name": "reviewies",
+  "private": true,
+  "workspaces": ["core", "app", "mobile", "relay", "bridge"],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspace app"
+  }
+}

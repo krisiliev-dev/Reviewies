@@ -247,13 +247,29 @@ function slug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export function downloadFile(name: string, content: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(url);
+/**
+ * Hand a file to the user.
+ *
+ * Bound by the app, because "save this file" has no shared implementation: the web
+ * makes an object URL and clicks an anchor, a phone writes to the document directory
+ * and opens a share sheet. The export itself — which is the part that matters, and the
+ * promise the whole product rests on — is platform-agnostic and lives above this.
+ */
+export type FileSaver = (name: string, content: string, type: string) => void | Promise<void>;
+
+let saver: FileSaver | undefined;
+
+export function setFileSaver(save: FileSaver): void {
+  saver = save;
+}
+
+export async function downloadFile(name: string, content: string, type: string): Promise<void> {
+  if (!saver) {
+    throw new Error(
+      'This app has not set up file saving. Call setFileSaver() from your entry point.',
+    );
+  }
+  await saver(name, content, type);
 }
 
 export async function addWatchlistFromTitles(

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
-import { getStats } from '../data/repo';
-import { downloadFile, exportAll, exportWatchesCsv, type ImportReport } from '../data/transfer';
-import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '../metadata';
-import { importArchive, importArchiveEntry, pairWal } from '../data/archiveImport';
+import { getStats } from '@reviewies/core/data/repo';
+import { downloadFile, exportAll, exportWatchesCsv, type ImportReport } from '@reviewies/core/data/transfer';
+import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '@reviewies/core/metadata/index';
+import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
-import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '../data/prefs';
+import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 
 export function Settings() {
   const [report, setReport] = useState<ImportReport>();

@@ -5,9 +5,10 @@ this covers putting the front end on a URL you can install on a phone.
 
 ## Why the configuration looks the way it does
 
-The PWA lives in `app/` and there is **no `package.json` at the repository root**, so
-`vercel.json` points the build at the subdirectory explicitly. That means the project
-deploys with no dashboard settings at all — nothing to forget on the first attempt.
+The repository is an npm workspace: `npm ci` at the root installs everything and links
+`@reviewies/core` into the app, then `npm run build --workspace app` builds it.
+`vercel.json` says both, so the project deploys with no dashboard settings at all —
+nothing to forget on the first attempt.
 
 Rewrites run *after* the filesystem is checked, so real files (hashed assets, `sw.js`,
 the manifest, icons) are served as themselves and only unmatched paths fall through to

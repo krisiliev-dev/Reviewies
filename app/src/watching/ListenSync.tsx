@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { captureContribution, micSupported, syncByListening, HOP_SIZE } from '../fingerprint/capture';
-import { contributeReference, fetchReference } from '../fingerprint/references';
+import { contributeReference, fetchReference } from '@reviewies/core/fingerprint/references';
 
 /**
  * Listen-to-sync, and contributing the timeline that makes it possible.

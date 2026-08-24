@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '../metadata';
-import { getRegion, REGIONS, regionName, setRegion } from '../metadata/region';
-import type { CachedProviders } from '../domain/types';
+import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
+import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
+import type { CachedProviders } from '@reviewies/core/domain/types';
 
 /**
  * Where a title can be watched right now.

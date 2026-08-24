@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { syncConfigured } from '../sync/auth';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   CONTENT_WARNINGS,
   clearContentWarningVote,
@@ -9,7 +9,7 @@ import {
   voteContentWarning,
   type ContentWarningId,
   type WarningSummary,
-} from './contentWarnings';
+} from '@reviewies/core/social/contentWarnings';
 
 /**
  * Content warnings on a title, voted on by whoever has seen it.

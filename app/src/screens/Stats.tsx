@@ -6,7 +6,7 @@ import {
   getSummary,
   type StatsSummary,
   type Window,
-} from '../stats/compute';
+} from '@reviewies/core/stats/compute';
 
 /**
  * Stats and Year in Review.

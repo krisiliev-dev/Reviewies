@@ -1,4 +1,5 @@
 import { db } from '../data/db';
+import { readPreference, writePreference } from '../data/storage';
 import type { CachedEpisode } from '../domain/types';
 
 /**
@@ -117,22 +118,14 @@ export const KIND_LABEL: Record<EpisodeKind, string> = {
 const PREF_KEY = 'reviewies.notify';
 
 export function getPreference(): NotifyPreference {
-  try {
-    const stored = localStorage.getItem(PREF_KEY);
-    if (stored === 'off' || stored === 'milestones' || stored === 'all') return stored;
-  } catch {
-    // Private browsing or blocked storage; the default is fine.
-  }
+  const stored = readPreference(PREF_KEY);
+  if (stored === 'off' || stored === 'milestones' || stored === 'all') return stored;
   // Milestones by default: useful without being the thing people complain about.
   return 'milestones';
 }
 
 export function setPreference(preference: NotifyPreference): void {
-  try {
-    localStorage.setItem(PREF_KEY, preference);
-  } catch {
-    /* Non-fatal. */
-  }
+  writePreference(PREF_KEY, preference);
 }
 
 /**

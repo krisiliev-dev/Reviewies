@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../data/db';
-import { syncDb } from '../sync/engine';
 import { addReaction, estimateDriftMs } from './reactions';
+
+/** The outbox lives in the main database now; see sync/engine.ts. */
+const outbox = db.outbox as unknown as import('../data/store').Table<{
+  key: string;
+  row: Record<string, unknown>;
+  attempts: number;
+}>;
 
 beforeEach(async () => {
   await db.reactions.clear();
-  await syncDb.outbox.clear();
+  await outbox.clear();
 });
 
 describe('adding a reaction', () => {
@@ -14,7 +20,7 @@ describe('adding a reaction', () => {
 
     expect((await db.reactions.get(r.id))?.emoji).toBe('😮');
     // Queued, not sent — tapping an emoji must not wait on the network.
-    expect(await syncDb.outbox.get(`reactions:${r.id}`)).toBeDefined();
+    expect(await outbox.get(`reactions:${r.id}`)).toBeDefined();
   });
 
   it('marks your own reactions as yours', async () => {

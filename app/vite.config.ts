@@ -38,6 +38,9 @@ export default defineConfig({
       },
     }),
   ],
+  // One .env at the workspace root: the app and the core need the same values,
+  // and two copies drifting apart is a debugging session nobody enjoys.
+  envDir: '..',
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

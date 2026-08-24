@@ -1,8 +1,8 @@
 # Alternative to vercel.json, kept in step with it.
 
 [build]
-  base = "app"
-  command = "npm run build"
+  # A workspace root: install once, build the app package.
+  command = "npm ci && npm run build --workspace app"
   publish = "app/dist"
 
 # Client-side routing: every path that is not a real file serves the shell.

@@ -1,26 +1,13 @@
+import { readPreference, writePreference } from './storage';
+
 /**
  * Small on-device preferences.
  *
- * Deliberately localStorage rather than the database: these are per-device display
- * choices, not user data, and nothing here is worth syncing or exporting. Every read
- * is guarded, because private browsing can make storage throw rather than return null.
+ * Deliberately key/value rather than the database: these are per-device display
+ * choices, not user data, and nothing here is worth syncing or exporting. The store
+ * itself is injected and every access is guarded, because private browsing can make
+ * web storage throw rather than return null.
  */
-
-function read(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    /* Non-fatal: the default applies. */
-  }
-}
 
 const OPEN_COMMENTS = 'reviewies.openCommentsAfterWatch';
 
@@ -37,9 +24,9 @@ const OPEN_COMMENTS = 'reviewies.openCommentsAfterWatch';
  * catching up in bulk has its own control that never navigates.
  */
 export function openCommentsAfterWatch(): boolean {
-  return read(OPEN_COMMENTS) !== 'off';
+  return readPreference(OPEN_COMMENTS) !== 'off';
 }
 
 export function setOpenCommentsAfterWatch(on: boolean): void {
-  write(OPEN_COMMENTS, on ? 'on' : 'off');
+  writePreference(OPEN_COMMENTS, on ? 'on' : 'off');
 }

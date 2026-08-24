@@ -1,3 +1,5 @@
+import { readPreference, writePreference } from '../data/storage';
+
 /**
  * Which country's streaming availability to show.
  *
@@ -67,21 +69,13 @@ export function detectRegion(
 }
 
 export function getRegion(): string {
-  try {
-    const stored = localStorage.getItem(KEY);
-    if (stored && /^[A-Z]{2}$/.test(stored)) return stored;
-  } catch {
-    // Private browsing or blocked storage; the guess is fine.
-  }
+  const stored = readPreference(KEY);
+  if (stored && /^[A-Z]{2}$/.test(stored)) return stored;
   return detectRegion();
 }
 
 export function setRegion(code: string): void {
-  try {
-    localStorage.setItem(KEY, code.toUpperCase());
-  } catch {
-    /* Non-fatal. */
-  }
+  writePreference(KEY, code.toUpperCase());
 }
 
 export function regionName(code: string): string {

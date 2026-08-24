@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
-import { watchCount } from '../data/repo';
-import { syncConfigured } from '../sync/auth';
+import { watchCount } from '@reviewies/core/data/repo';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   EFFORT_LEVELS,
   IMAGE_TYPES,
@@ -12,7 +12,7 @@ import {
   postComment,
   uploadCommentImage,
   type Comment,
-} from '../social/comments';
+} from '@reviewies/core/social/comments';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();

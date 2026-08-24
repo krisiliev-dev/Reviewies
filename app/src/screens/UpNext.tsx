@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate } from 'react-router-dom';
-import { getUpNext, markWatched, type UpNextEntry } from '../data/repo';
+import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/repo';
 import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
 import { CatchUp } from '../ui/CatchUp';
-import { openCommentsAfterWatch } from '../data/prefs';
-import { syncConfigured } from '../sync/auth';
+import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 
 /**
  * The home screen, and the one the whole product is judged on.

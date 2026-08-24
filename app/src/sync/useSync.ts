@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { getSession, onAuthChange, syncConfigured, ensureProfile } from './auth';
-import { pendingCount, syncOnce, type SyncResult } from './engine';
-import { SupabaseBackend } from './supabaseBackend';
+import { getSession, onAuthChange, syncConfigured, ensureProfile } from '@reviewies/core/sync/auth';
+import { pendingCount, syncOnce, type SyncResult } from '@reviewies/core/sync/engine';
+import { SupabaseBackend } from '@reviewies/core/sync/supabaseBackend';
 
 export interface SyncStatus {
   configured: boolean;

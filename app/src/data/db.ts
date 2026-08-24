@@ -1,99 +1,18 @@
-import Dexie, { type EntityTable } from 'dexie';
-import type {
-  CachedEpisode,
-  CachedProviders,
-  CachedTitle,
-  LibraryItem,
-  Rating,
-  Reaction,
-  WatchEvent,
-  WatchlistItem,
-} from '../domain/types';
+import { createDexieDatabase } from '@reviewies/core/data/adapters/dexie';
+import { db, setDatabase } from '@reviewies/core/data/db';
 
 /**
- * Local-first store. IndexedDB is the source of truth for user data — reads and
- * writes never wait on the network, so marking an episode watched is instant and
- * works offline.
+ * The web app's database: Dexie over IndexedDB.
  *
- * The two groups of tables are deliberately separate:
+ * The schema and the adapter live in the core, because the core's tests run against
+ * them. What belongs here is only the choice — this app runs in a browser, so it uses
+ * the IndexedDB implementation.
  *
- *   user data      yours, permanent, exported in full
- *   metadata cache TMDB's, TTL'd, disposable, never exported
- *
- * Keeping them apart is what lets us honour TMDB's 6-month caching limit and still
- * promise you a complete export of your own history.
+ * Bound at import time rather than from `main.tsx`, because several screens import
+ * `db` directly and a missed initialisation would surface as a confusing runtime error
+ * deep in a component rather than here.
  */
-export class ReviewiesDB extends Dexie {
-  // User data
-  library!: EntityTable<LibraryItem, 'titleId'>;
-  watches!: EntityTable<WatchEvent, 'id'>;
-  ratings!: EntityTable<Rating, 'targetId'>;
-  watchlist!: EntityTable<WatchlistItem, 'titleId'>;
-  reactions!: EntityTable<Reaction, 'id'>;
+setDatabase(createDexieDatabase());
 
-  // Metadata cache
-  titles!: EntityTable<CachedTitle, 'id'>;
-  episodes!: EntityTable<CachedEpisode, 'id'>;
-  providers!: EntityTable<CachedProviders, 'id'>;
-  /** Cross-database anime ID mappings, keyed `source:id`. */
-  animeIds!: EntityTable<{ id: string; ids: unknown; fetchedAt: number }, 'id'>;
-
-  constructor(name = 'reviewies') {
-    super(name);
-    this.version(1).stores({
-      library: 'titleId, kind, status, addedAt',
-      // targetId is not unique — repeat entries are rewatches, which is the point.
-      watches: 'id, targetId, seriesId, watchedAt',
-      ratings: 'targetId, ratedAt',
-      watchlist: 'titleId, kind, addedAt',
-      reactions: 'id, targetId, tMs, [targetId+tMs]',
-
-      titles: 'id, kind, fetchedAt',
-      episodes: 'id, seriesId, [seriesId+season], fetchedAt',
-      providers: 'id, fetchedAt',
-    });
-
-    // v2 adds the anime ID mapping cache. Dexie applies this to existing
-    // databases without touching the tables above.
-    this.version(2).stores({
-      animeIds: 'id, fetchedAt',
-    });
-  }
-
-  /** Drop everything provider-derived. Safe to call at any time; user data is untouched. */
-  async clearMetadataCache(): Promise<void> {
-    await this.transaction(
-      'rw',
-      this.titles,
-      this.episodes,
-      this.providers,
-      this.animeIds,
-      async () => {
-        await Promise.all([
-          this.titles.clear(),
-          this.episodes.clear(),
-          this.providers.clear(),
-          this.animeIds.clear(),
-        ]);
-      },
-    );
-  }
-}
-
-/**
- * Namespace the database per test worker.
- *
- * Vitest runs test files across parallel workers that would otherwise share a
- * single IndexedDB, so one file's `clear()` can wipe another file's fixtures
- * mid-test. Files within a worker run sequentially, so per-worker is enough.
- * In the browser this is always plain `reviewies`.
- */
-export function databaseName(base: string): string {
-  // Reached via globalThis so the app build does not need Node types.
-  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
-    ?.env;
-  const workerId = env?.VITEST_WORKER_ID;
-  return workerId ? `${base}-test-${workerId}` : base;
-}
-
-export const db = new ReviewiesDB(databaseName('reviewies'));
+export { db };
+export type { Database } from '@reviewies/core/data/store';

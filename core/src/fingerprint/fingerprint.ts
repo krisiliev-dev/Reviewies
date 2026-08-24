@@ -16,6 +16,19 @@
  * reproduction of the work.
  */
 
+/**
+ * Analysis parameters, shared by every capture implementation.
+ *
+ * They live with the algorithm rather than with the microphone because a reference
+ * built at one FFT size cannot be matched against a sample taken at another — so a
+ * web recorder and a phone recorder disagreeing here would produce silent, total
+ * match failure. Sized in doc 6.
+ */
+export const FFT_SIZE = 2048;
+export const HOP_SIZE = 512;
+/** Enough audio to be distinctive; short enough not to feel like surveillance. */
+export const CAPTURE_MS = 6000;
+
 export interface Peak {
   /** Frame index — time, in units of the hop size. */
   frame: number;

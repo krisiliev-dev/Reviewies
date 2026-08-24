@@ -1,4 +1,4 @@
-import { sqlWasmUrl } from './sqlWasm';
+import { getSqlJsLoader, type SqlJsLoader } from './sqlWasm';
 import { db } from './db';
 import { applyWal } from './sqliteWal';
 import { parseDioCache, type DioLibrary } from './diocacheParse';
@@ -28,17 +28,17 @@ export interface DioImportReport {
   warnings: string[];
 }
 
-let sqlPromise: Promise<import('sql.js').SqlJsStatic> | undefined;
+let sqlPromise: ReturnType<SqlJsLoader> | undefined;
 
 /**
  * Load SQLite lazily.
  *
  * Both the loader and its WebAssembly are pulled in only when someone actually imports
- * a cache, which is a once-ever act. A dynamic import is what keeps them out of the
- * bundle everyone else downloads.
+ * a cache, which is a once-ever act. The app supplies the loader because how the
+ * binary is resolved differs per bundler; see `sqlWasm.ts`.
  */
 function getSql() {
-  sqlPromise ??= import('sql.js').then((m) => m.default({ locateFile: () => sqlWasmUrl }));
+  sqlPromise ??= getSqlJsLoader()();
   return sqlPromise;
 }
 

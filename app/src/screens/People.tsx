@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { syncConfigured } from '../sync/auth';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
 import {
   blockPerson,
@@ -13,7 +13,7 @@ import {
   unfollow,
   updateProfile,
   type Person,
-} from '../social/people';
+} from '@reviewies/core/social/people';
 
 /**
  * Your profile, who you follow, and who you have blocked.

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../data/db';
-import { addToLibrary, addToWatchlist, markWatched } from '../data/repo';
-import { getEpisodesCached, getTitleCached, provider, type SearchResult } from '../metadata';
+import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
+import { getEpisodesCached, getTitleCached, provider, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 

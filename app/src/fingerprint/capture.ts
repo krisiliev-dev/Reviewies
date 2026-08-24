@@ -1,4 +1,15 @@
-import { fingerprint, matchSample, framesToMs, type Reference } from './fingerprint';
+import {
+  CAPTURE_MS,
+  FFT_SIZE,
+  HOP_SIZE,
+  fingerprint,
+  framesToMs,
+  matchSample,
+  type Reference,
+} from '@reviewies/core/fingerprint/fingerprint';
+
+// Re-exported for the screens that show what the capture will do.
+export { CAPTURE_MS, FFT_SIZE, HOP_SIZE };
 
 /**
  * Microphone capture for automatic sync.
@@ -14,11 +25,6 @@ import { fingerprint, matchSample, framesToMs, type Reference } from './fingerpr
  *    listening, and the track is stopped the moment the sample is taken.
  *  - **Consent is per-use and specific**, not buried in a policy.
  */
-
-export const FFT_SIZE = 2048;
-export const HOP_SIZE = 512;
-/** Enough audio to be distinctive; short enough not to feel like surveillance. */
-export const CAPTURE_MS = 6000;
 
 export interface CaptureResult {
   positionMs: number;

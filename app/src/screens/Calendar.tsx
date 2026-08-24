@@ -11,7 +11,7 @@ import {
   setPreference,
   type NotifyPreference,
   type UpcomingEntry,
-} from '../calendar/upcoming';
+} from '@reviewies/core/calendar/upcoming';
 import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 

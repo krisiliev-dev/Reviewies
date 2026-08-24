@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Reaction } from '../domain/types';
+import type { Reaction } from '@reviewies/core/domain/types';
 
 const LANES = 4;
 const TRAVEL_MS = 7000;

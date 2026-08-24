@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../data/db';
-import { enqueue, pendingCount, resetSyncState, syncOnce, syncDb } from './engine';
+import { enqueue, pendingCount, resetSyncState, syncOnce } from './engine';
 import { MemoryBackend } from './memoryBackend';
 import { SyncError } from './types';
+
+/** The outbox lives in the main database now; see sync/engine.ts. */
+const outbox = db.outbox as unknown as import('../data/store').Table<{
+  key: string;
+  row: Record<string, unknown>;
+  attempts: number;
+}>;
 
 /**
  * The sync engine is where a bug quietly loses somebody's watch history, so these
@@ -47,7 +54,7 @@ describe('local writes never depend on the network', () => {
     await enqueue('watchlist', { titleId: 'x', note: 'new' }, { updatedAt: 500 });
     await enqueue('watchlist', { titleId: 'x', note: 'old' }, { updatedAt: 100 });
 
-    const entry = await syncDb.outbox.get('watchlist:x');
+    const entry = await outbox.get('watchlist:x');
     expect(entry?.row.note).toBe('new');
   });
 });
@@ -87,7 +94,7 @@ describe('push', () => {
     backend.failNextPush = new SyncError('flaky', true);
     await syncOnce(backend);
 
-    expect((await syncDb.outbox.get('watches:a'))?.attempts).toBe(1);
+    expect((await outbox.get('watches:a'))?.attempts).toBe(1);
   });
 
   it('drops a permanently rejected change instead of blocking the queue forever', async () => {
@@ -115,7 +122,7 @@ describe('push', () => {
 
     // The newer edit must survive rather than being cleared with the batch.
     expect(await pendingCount()).toBe(1);
-    expect((await syncDb.outbox.get('watchlist:x'))?.row.note).toBe('during');
+    expect((await outbox.get('watchlist:x'))?.row.note).toBe('during');
   });
 
   it('is safe to push the same change twice after an ambiguous response', async () => {

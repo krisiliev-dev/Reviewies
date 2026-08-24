@@ -1,5 +1,5 @@
-import { getClient, getSession } from '../sync/auth';
-import type { NotifyPreference } from './upcoming';
+import { getClient, getSession } from '@reviewies/core/sync/auth';
+import type { NotifyPreference } from '@reviewies/core/calendar/upcoming';
 
 /**
  * Web Push subscription management.

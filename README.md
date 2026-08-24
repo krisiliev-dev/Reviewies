@@ -15,7 +15,8 @@ replayed from everyone who watched that moment before you.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 538 app tests (with credentials; 523 without), 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 386 core tests, 153 app tests, 43 bridge tests
+and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
 49 browser checks cover the full flow.
 
@@ -51,9 +52,8 @@ pass, including live tests against a real Supabase project and the real TMDB API
 ## Running it
 
 ```bash
-cd app
-npm install
-npm run dev
+npm install          # from the repository root; it is a workspace
+npm run dev --workspace app
 ```
 
 Without credentials the app runs on built-in sample data, so it is always launchable.
@@ -98,18 +98,18 @@ and why that matters more than it sounds.
 ### Tests
 
 ```bash
-cd app
-npx vitest run                        # 538 tests; live suites skip without credentials
-SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
-npm run build
+npm test                              # 539 tests across core and app
+SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
+
+cd app && npm run build
 npx vite preview &
 node smoke.mjs                        # 49 end-to-end checks in a real browser
 ```
 
 The browser checks run against a build with no credentials, so they exercise the
 fixture provider and assert that account-only controls hide themselves rather than
-rendering dead buttons. Build with `app/.env` in place to point the same run at the
-real TMDB and Supabase.
+rendering dead buttons. Build with `.env` in place at the repository root to point
+the same run at the real TMDB and Supabase.
 
 Row-level security is tested against real Postgres via PGlite, running the deployable
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
@@ -132,27 +132,39 @@ comment is only selectable once you have watched that episode.
 
 ## Repository layout
 
+An npm workspace. The rule that shapes it: **anything that is not a screen lives in
+`core/`**, so a second app can be built without forking the logic.
+
 ```
-app/                    The PWA
+core/                   @reviewies/core — no DOM, no React, no platform assumptions
   src/domain/           Types, ID scheme
-  src/data/             Dexie schema, repository, import/export
-  src/metadata/         Provider abstraction, TMDB, fixtures
+  src/data/             Repository, importers, the injectable Database interface
+  src/metadata/         Provider abstraction, TMDB, AniList, fixtures
   src/sync/             Auth, offline outbox, sync engine, Supabase adapter
-  src/watching/         Playback clock, reaction stream, extension bridge
-  src/social/           Comments, lists, content warnings
+  src/social/           Comments, lists, people, content warnings
   src/stats/            Runtime-weighted stats
   src/discover/         Recommendations that exclude what you have seen
   src/calendar/         Upcoming episodes and notification granularity
+  src/fingerprint/      Landmark-hash fingerprinting
+  src/watching/         Reactions, drift estimation, the emoji pad
+app/                    The web app
+  src/data/             Dexie adapter and the platform bindings
   src/screens/          UI
-  src/fingerprint/      Landmark-hash fingerprinting and microphone capture
+  src/watching/         Playback clock, reaction stream, extension bridge
   src/remote/           Remote drawer and bridge connection
+  src/fingerprint/      Microphone capture
 extension/              Browser extension (MV3)
 bridge/                 Local companion for device control (Roku ECP, MPRIS)
 relay/                  WebSocket relay pairing the app to a bridge
-supabase/               Schema, RLS policies, push edge function
-scripts/                Migration runner
+supabase/               Schema, RLS policies, edge functions
+scripts/                Migration and function deployment
 docs/research/          Research notes and decisions
 ```
+
+The core reaches a platform through three bindings, injected at startup: a `Database`,
+a key/value store for preferences, and a file saver. Until they are bound, using them
+throws with a message saying so — rather than failing later in a way that looks like a
+data bug. See [`core/README.md`](core/README.md).
 
 ## Research
 

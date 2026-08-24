@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { airedSeasonSizes, catchUpTo } from '../data/repo';
+import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.

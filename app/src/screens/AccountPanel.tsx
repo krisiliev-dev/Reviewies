@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signIn, signOut, signUp } from '../sync/auth';
+import { signIn, signOut, signUp } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
 
 /**

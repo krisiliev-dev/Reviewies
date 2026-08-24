@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { syncConfigured } from '../sync/auth';
-import { addToList, createList, fetchLists, type ListSummary } from './lists';
-import type { MediaKind } from '../domain/types';
+import { syncConfigured } from '@reviewies/core/sync/auth';
+import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
+import type { MediaKind } from '@reviewies/core/domain/types';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.

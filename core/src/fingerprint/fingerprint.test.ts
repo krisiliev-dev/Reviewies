@@ -229,7 +229,7 @@ describe('frame conversion', () => {
 
 describe('capture configuration', () => {
   it('uses a hop and FFT size consistent with the sizing work', async () => {
-    const { FFT_SIZE, HOP_SIZE, CAPTURE_MS } = await import('./capture');
+    const { FFT_SIZE, HOP_SIZE, CAPTURE_MS } = await import('./fingerprint');
     expect(FFT_SIZE).toBe(2048);
     expect(HOP_SIZE).toBe(512);
     // Long enough to be distinctive, short enough not to feel like surveillance.
@@ -237,10 +237,6 @@ describe('capture configuration', () => {
     expect(CAPTURE_MS).toBeLessThanOrEqual(10_000);
   });
 
-  it('reports the microphone as unavailable in jsdom rather than throwing', async () => {
-    const { micSupported } = await import('./capture');
-    expect(typeof micSupported()).toBe('boolean');
-  });
 });
 
 describe('reference transport encoding', () => {

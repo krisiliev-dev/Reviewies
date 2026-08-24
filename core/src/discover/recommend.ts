@@ -1,5 +1,5 @@
 import { db } from '../data/db';
-import { provider } from '../metadata';
+import { provider } from '../metadata/index';
 import type { SearchResult } from '../metadata/provider';
 
 /**

@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useParams } from 'react-router-dom';
 import { db } from '../data/db';
-import { markWatched, rate, setPosterOverride, unwatchLatest, watchedEpisodeIds } from '../data/repo';
-import { getEpisodesCached, getTitleCached } from '../metadata';
-import { hasAired } from '../data/repo';
+import { markWatched, rate, setPosterOverride, unwatchLatest, watchedEpisodeIds } from '@reviewies/core/data/repo';
+import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
+import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
 import { StarRating } from '../ui/StarRating';
 import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
 import { WhereToWatch } from '../ui/WhereToWatch';
-import type { CachedEpisode } from '../domain/types';
+import type { CachedEpisode } from '@reviewies/core/domain/types';
 
 export function TitleDetail() {
   const { id = '' } = useParams();

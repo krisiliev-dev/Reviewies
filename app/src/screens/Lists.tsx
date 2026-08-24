@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { syncConfigured } from '../sync/auth';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   createList,
   describeMix,
@@ -10,7 +10,7 @@ import {
   setListVisibility,
   type ListItem,
   type ListSummary,
-} from '../social/lists';
+} from '@reviewies/core/social/lists';
 
 /**
  * Lists, mixing film and television freely — the thing r/Simkl called a "severe

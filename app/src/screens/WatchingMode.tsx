@@ -4,8 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import { formatTimecode, usePlaybackClock } from '../watching/usePlaybackClock';
 import { ReactionStream } from '../watching/ReactionStream';
-import { EMOJI_PAD, searchEmoji } from '../watching/emoji';
-import { addReaction, estimateDriftMs, fetchRemoteReactions } from '../watching/reactions';
+import { EMOJI_PAD, searchEmoji } from '@reviewies/core/watching/emoji';
+import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
 import {
   isStale,
   matchesEpisode,

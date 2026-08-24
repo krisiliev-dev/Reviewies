@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatTimecode, usePlaybackClock } from './usePlaybackClock';
-import { searchEmoji, EMOJI_PAD } from './emoji';
 
 describe('formatTimecode', () => {
   it('formats under an hour as m:ss', () => {
@@ -90,42 +89,5 @@ describe('playback clock', () => {
     // One long jump, as happens when a tab is backgrounded and timers coalesce.
     act(() => void vi.advanceTimersByTime(60_000));
     expect(result.current.positionMs).toBeGreaterThanOrEqual(59_000);
-  });
-});
-
-describe('emoji search', () => {
-  it('returns nothing for an empty query', () => {
-    expect(searchEmoji('')).toEqual([]);
-  });
-
-  it('matches on label', () => {
-    expect(searchEmoji('cliff')[0].emoji).toBe('🧗');
-  });
-
-  it('matches on keyword rather than only the visible label', () => {
-    expect(searchEmoji('twist')[0].emoji).toBe('🤯');
-  });
-
-  it('ranks exact label matches above partial ones', () => {
-    expect(searchEmoji('love')[0].label).toBe('Love');
-  });
-
-  it('is case insensitive', () => {
-    expect(searchEmoji('FUNNY')[0].emoji).toBe('😂');
-  });
-
-  it('passes through a pasted emoji even if we do not know it', () => {
-    const results = searchEmoji('🦩');
-    expect(results[0].emoji).toBe('🦩');
-  });
-
-  it('includes thumbs up and down on the default pad as permanent fixtures', () => {
-    const emojis = EMOJI_PAD.map((e) => e.emoji);
-    expect(emojis).toContain('👍');
-    expect(emojis).toContain('👎');
-  });
-
-  it('returns an empty list for nonsense rather than throwing', () => {
-    expect(searchEmoji('zzzqqq')).toEqual([]);
   });
 });

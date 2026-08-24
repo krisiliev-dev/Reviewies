@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../data/db';
-import { addToLibrary, addToWatchlist } from '../data/repo';
-import { getEpisodesCached } from '../metadata';
-import { getSuggestions, type Suggestion } from '../discover/recommend';
+import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
+import { getEpisodesCached } from '@reviewies/core/metadata/index';
+import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import { Poster } from '../ui/Poster';
 
 /**
