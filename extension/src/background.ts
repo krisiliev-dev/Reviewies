@@ -60,6 +60,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       await relay('position', detection);
     }
 
+    if (message?.type === 'get-playback') {
+      const state = await getState();
+      sendResponse?.({ detection: state.detection, updatedAt: state.updatedAt });
+      return;
+    }
+
     if (message?.type === 'playback-stopped') {
       const state = await getState();
       await setState({ ...state, detection: undefined, updatedAt: Date.now() });

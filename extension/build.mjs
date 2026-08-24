@@ -5,7 +5,7 @@ const outdir = new URL('./dist/', import.meta.url).pathname;
 mkdirSync(outdir, { recursive: true });
 
 await build({
-  entryPoints: ['src/content.ts', 'src/background.ts', 'src/options.ts'],
+  entryPoints: ['src/content.ts', 'src/background.ts', 'src/options.ts', 'src/inject.ts'],
   bundle: true,
   format: 'esm',
   target: 'chrome110',

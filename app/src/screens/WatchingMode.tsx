@@ -6,6 +6,12 @@ import { formatTimecode, usePlaybackClock } from '../watching/usePlaybackClock';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, searchEmoji } from '../watching/emoji';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '../watching/reactions';
+import {
+  isStale,
+  matchesEpisode,
+  subscribeToPlayback,
+  type PlaybackUpdate,
+} from '../watching/extensionBridge';
 
 /**
  * Watching Mode — timestamped reactions to moments, on a second screen.
@@ -24,6 +30,7 @@ export function WatchingMode() {
   const [density, setDensity] = useState(1);
   const [query, setQuery] = useState('');
   const [dismissedDrift, setDismissedDrift] = useState(false);
+  const [autoSynced, setAutoSynced] = useState(false);
 
   const episode = useLiveQuery(() => db.episodes.get(targetId), [targetId]);
   const series = useLiveQuery(
@@ -59,6 +66,20 @@ export function WatchingMode() {
       void sentinel?.release().catch(() => {});
     };
   }, [clock.running]);
+
+  // The browser extension, when present, reports the real playback position. It
+  // supersedes the manual clock entirely: exact, continuous, no drift. Absent an
+  // extension nothing changes and manual sync stands.
+  useEffect(() => {
+    return subscribeToPlayback((update: PlaybackUpdate) => {
+      if (isStale(update)) return;
+      if (!matchesEpisode(update, { season: episode?.season, episode: episode?.number })) return;
+
+      clock.seek(update.positionMs);
+      if (update.paused) clock.pause();
+      setAutoSynced(true);
+    });
+  }, [clock, episode?.season, episode?.number]);
 
   // Pull everyone's reactions for this episode as soon as the screen opens, so the
   // replay is populated before playback starts.
@@ -103,11 +124,17 @@ export function WatchingMode() {
       {/* Other viewers' reactions, drifting right to left as you reach their moments. */}
       <ReactionStream reactions={reactions} positionMs={clock.positionMs} density={density} />
 
-      {!clock.running && clock.positionMs === 0 ? (
+      {!clock.running && clock.positionMs === 0 && !autoSynced ? (
         <StartPanel onStart={() => clock.start(0)} />
       ) : (
         <>
-          {drift !== undefined && (
+          {autoSynced && (
+            <p className="px-4 pb-1 text-xs text-muted">
+              Synced automatically from your browser.
+            </p>
+          )}
+          {/* Drift correction is meaningless when the position is exact. */}
+          {!autoSynced && drift !== undefined && (
             <DriftHint
               driftMs={drift}
               onApply={() => {
@@ -129,7 +156,7 @@ export function WatchingMode() {
           <button
             key={e.emoji + e.label}
             onClick={() => react(e.emoji)}
-            disabled={!clock.running && clock.positionMs === 0}
+            disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
             className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl bg-surface text-3xl active:scale-90 disabled:opacity-30"
             aria-label={e.label}
           >

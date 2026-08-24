@@ -19,6 +19,20 @@ Developer mode → Load unpacked). Set a relay URL in the extension's options if
 want playback forwarded to a running Reviewies instance; leave it blank to send
 nothing.
 
+## Driving Watching Mode
+
+A second content script runs on the Reviewies app page itself and relays the current
+playback position into it, so Watching Mode syncs automatically instead of needing a
+manual start. Delivery is by `window.postMessage`, so the app needs no knowledge of
+the extension's ID and behaves the same locally, self-hosted, or deployed.
+
+The app ignores readings older than 15 seconds — a crashed or reloading extension
+must not freeze the clock at its last known position — and ignores readings for a
+different episode, so a show left playing in another tab cannot drag the timeline.
+
+The manifest currently matches `localhost` and `127.0.0.1`. Add your deployed origin
+to that content script entry when you host the app somewhere.
+
 ## What it reads
 
 Only the title of what is playing and the current playback position. Nothing on the

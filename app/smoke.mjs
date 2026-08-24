@@ -99,6 +99,44 @@ try {
   check('emoji search filters the pad', (await page.getByRole('button', { name: 'Mind blown' }).count()) > 0);
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
+  // --- Extension auto-sync ---------------------------------------------------
+  // Simulate what the extension's content script posts into the page and confirm
+  // the clock follows it instead of needing a manual start.
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  await page.getByRole('link', { name: 'Watch along' }).first().click();
+  await page.waitForSelector('text=Start watching', { timeout: 5000 });
+
+  await page.evaluate(() => {
+    window.postMessage(
+      {
+        type: 'reviewies:playback',
+        payload: { positionMs: 754000, durationMs: 3000000, paused: false, at: Date.now() },
+      },
+      window.location.origin,
+    );
+  });
+  await page.waitForTimeout(600);
+
+  const syncedText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('extension position drives the clock', /12:3\d/.test(syncedText), syncedText.slice(0, 90));
+  check('auto-sync replaces the manual start prompt', !/Start watching/.test(syncedText));
+  await page.screenshot({ path: OUT + '11-autosync.png' });
+
+  await page.evaluate(() => {
+    // A stale reading must be ignored rather than freezing the clock.
+    window.postMessage(
+      {
+        type: 'reviewies:playback',
+        payload: { positionMs: 1000, durationMs: 3000000, paused: false, at: Date.now() - 60000 },
+      },
+      window.location.origin,
+    );
+  });
+  await page.waitForTimeout(400);
+  const afterStale = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('stale readings are ignored', !/0:0\d/.test(afterStale), afterStale.slice(0, 90));
+
   // --- Watchlist with notes --------------------------------------------------
   await page.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('link', { name: /Search/ }).click();
