@@ -18,8 +18,13 @@ headline risk, and made AniList integration an MVP requirement on that basis.
 
 Checked against the live API, **One Piece is split across 23 seasons by story arc** —
 more useful than absolute numbering, not less. Frieren does show merging, so the problem
-is real but occasional. AniList consequently drops from "MVP requirement" to "worth doing
-when a specific show is wrong", and is **not built**.
+is real but occasional rather than systemic.
+
+That downgraded AniList from "MVP requirement" to "worth doing when a specific show is
+wrong" — and an earlier revision of this document then used that as grounds to skip it
+entirely. That was a step too far, and §3 records the reversal: occasional is not never,
+Frieren is a real show someone actually watches, and the correction is now built and
+verified live.
 
 Two genuine problems surfaced instead, neither anticipated:
 
@@ -62,6 +67,10 @@ makes a server mandatory regardless.
 | Discovery excluding watched | Most repeated Trakt complaint | Exclusion is the module's purpose, not a filter |
 | Notification granularity | Top Trakt roadmap request | Premieres/finales as the default |
 | Browser extension | Cleanest sync mechanism for browser watching; Universal Trakt Scrobbler prior art | Exact position, no hardware |
+| AniList season correction | TMDB merges some anime; anime is core to this user | Episode IDs preserved, so history survives the re-cut |
+| Push delivery | Notification granularity is pointless without it | Idempotent claiming; granularity enforced twice |
+| Local bridge | Docs 4–6; the laptop case needs no extra hardware | Roku ECP and MPRIS behind one adapter interface |
+| Audio fingerprinting | Doc 6 sized it as feasible; the universal fallback | Refuses a wrong episode rather than guessing |
 
 ---
 
