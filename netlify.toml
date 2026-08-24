@@ -1,0 +1,29 @@
+# Alternative to vercel.json, kept in step with it.
+
+[build]
+  base = "app"
+  command = "npm run build"
+  publish = "app/dist"
+
+# Client-side routing: every path that is not a real file serves the shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# The worker and the manifest must never be served stale, or an install pins
+# itself to an old build.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

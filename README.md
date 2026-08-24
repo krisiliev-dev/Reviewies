@@ -88,6 +88,13 @@ API key.
 
 Then schedule the sender — see [`supabase/README.md`](supabase/README.md).
 
+### Hosting the app
+
+`vercel.json` and `netlify.toml` are set up so importing the repository deploys it with
+no build settings to configure. Add the `VITE_` variables above and it is live. See
+[docs/deploying.md](docs/deploying.md), which also covers installing it on an iPhone —
+and why that matters more than it sounds.
+
 ### Tests
 
 ```bash
