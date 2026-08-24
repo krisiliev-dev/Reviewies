@@ -52,7 +52,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await asAdmin(
-    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references cascade',
+    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references, lists, list_items cascade',
   );
   await asAdmin("insert into profiles (id, handle) values ($1,'alice'), ($2,'bob')", [ALICE, BOB]);
 });
@@ -461,6 +461,81 @@ describe('fingerprint references', () => {
         [TARGET],
       ),
     ).rejects.toThrow(/row-level security/i);
+  });
+});
+
+describe('lists', () => {
+  const makeList = (owner: string, isPublic = false) =>
+    asAdmin(
+      "insert into lists (user_id, name, is_public) values ($1, 'Best of 2026', $2) returning id",
+      [owner, isPublic],
+    ).then((r) => (r.rows[0] as { id: string }).id);
+
+  it('mixes film and television in one list', async () => {
+    // The unmet need r/Simkl named. Costs us nothing, since we are unified.
+    const id = await makeList(ALICE);
+    await asUser(
+      ALICE,
+      "insert into list_items (list_id, title_id, kind) values ($1,'tmdb:tv:1','show'), ($1,'tmdb:movie:4','film')",
+      [id],
+    );
+    expect((await asUser(ALICE, 'select * from list_items')).rows).toHaveLength(2);
+  });
+
+  it('keeps a private list private', async () => {
+    await makeList(ALICE, false);
+    expect((await asUser(BOB, 'select * from lists')).rows).toHaveLength(0);
+  });
+
+  it('shows a published list to others', async () => {
+    await makeList(ALICE, true);
+    expect((await asUser(BOB, 'select * from lists')).rows).toHaveLength(1);
+  });
+
+  it('hides items of a private list, not just the list itself', async () => {
+    // The obvious leak: hiding the container but leaving its contents readable.
+    const id = await makeList(ALICE, false);
+    await asAdmin("insert into list_items (list_id, title_id, kind) values ($1,'tmdb:tv:1','show')", [id]);
+    expect((await asUser(BOB, 'select * from list_items')).rows).toHaveLength(0);
+  });
+
+  it('reveals items once the list is published', async () => {
+    const id = await makeList(ALICE, true);
+    await asAdmin("insert into list_items (list_id, title_id, kind) values ($1,'tmdb:tv:1','show')", [id]);
+    expect((await asUser(BOB, 'select * from list_items')).rows).toHaveLength(1);
+  });
+
+  it('hides a published list from someone who blocked its owner', async () => {
+    await makeList(ALICE, true);
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+    expect((await asUser(BOB, 'select * from lists')).rows).toHaveLength(0);
+  });
+
+  it('refuses to let someone add items to another user\'s list', async () => {
+    const id = await makeList(ALICE, true);
+    await expect(
+      asUser(BOB, "insert into list_items (list_id, title_id, kind) values ($1,'tmdb:tv:9','show')", [id]),
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('rejects an empty list name', async () => {
+    await expect(
+      asUser(ALICE, "insert into lists (user_id, name) values ($1, '')", [ALICE]),
+    ).rejects.toThrow(/check constraint/i);
+  });
+
+  it('rejects a duplicate title in the same list', async () => {
+    const id = await makeList(ALICE);
+    const add = () =>
+      asUser(ALICE, "insert into list_items (list_id, title_id, kind) values ($1,'tmdb:tv:1','show')", [id]);
+    await add();
+    await expect(add()).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('hides a soft-deleted list', async () => {
+    const id = await makeList(ALICE, true);
+    await asAdmin('update lists set deleted = true where id = $1', [id]);
+    expect((await asUser(BOB, 'select * from lists')).rows).toHaveLength(0);
   });
 });
 

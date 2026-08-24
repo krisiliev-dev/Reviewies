@@ -196,6 +196,28 @@ try {
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
   await page.screenshot({ path: OUT + '08-stats.png' });
 
+  // --- Ratings and poster override -------------------------------------------
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  await page.locator('li').filter({ hasText: 'The Long Dark' }).first().locator('a').first().click();
+  await page.waitForSelector('text=Season 1', { timeout: 8000 });
+
+  await page.getByRole('button', { name: '4 stars' }).first().click();
+  await page.waitForTimeout(400);
+  const rated = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('title can be rated in half stars', /4\.0/.test(rated), rated.slice(0, 80));
+
+  // Tapping the same star again clears it — the escape from a mis-tap.
+  await page.getByRole('button', { name: '4 stars' }).first().click();
+  await page.waitForTimeout(400);
+  const cleared = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('tapping the same star clears the rating', !/4\.0/.test(cleared));
+
+  check(
+    'poster override is offered',
+    (await page.getByText('Use a different poster').count()) > 0,
+  );
+  await page.screenshot({ path: OUT + '13-title.png' });
+
   // --- Remote drawer ---------------------------------------------------------
   // With no relay configured the drawer must not appear at all: an inert remote
   // is worse than none.
