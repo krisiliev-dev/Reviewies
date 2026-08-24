@@ -13,6 +13,7 @@ import {
 import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '../metadata';
 import { detectRescueFile, importRescueCsv, stripBom } from '../data/tvtimeRescue';
 import { parseCsv } from '../data/transfer';
+import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
 
 export function Settings() {
@@ -74,6 +75,20 @@ export function Settings() {
       <h1 className="px-1 text-2xl font-semibold">Your data</h1>
 
       <AccountPanel />
+
+      {/* People-management lives one level down rather than in the tab bar: the bar
+          already carries eight destinations, and simplicity was the loudest single
+          demand in the research. */}
+      <Link
+        to="/people"
+        className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3.5"
+      >
+        <span>
+          <span className="font-semibold">People</span>
+          <span className="block text-sm text-muted">Your handle, following, blocking</span>
+        </span>
+        <span aria-hidden className="text-muted">›</span>
+      </Link>
 
       <section className="rounded-2xl bg-surface p-4">
         <p className="text-sm text-muted">

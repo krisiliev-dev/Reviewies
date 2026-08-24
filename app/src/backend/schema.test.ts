@@ -209,10 +209,75 @@ describe('blocking works in both directions', () => {
     expect(res.rows).toHaveLength(0);
   });
 
-  it('hides blocked profiles', async () => {
-    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+  it('hides the profile of someone who blocked you', async () => {
+    await asUser(ALICE, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [ALICE, BOB]);
     const res = await asUser<{ handle: string }>(BOB, 'select * from profiles');
     expect(res.rows.map((r) => r.handle)).toEqual(['bob']);
+  });
+
+  it('still shows you the profile of someone you blocked', async () => {
+    // Migration 0008. Hiding them from the blocker too made the block list a column
+    // of UUIDs with no way to tell who they were or to undo anything.
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+    const res = await asUser<{ handle: string }>(BOB, 'select * from profiles order by handle');
+    expect(res.rows.map((r) => r.handle)).toEqual(['alice', 'bob']);
+  });
+
+  it('does not make that exception reciprocal', async () => {
+    // The carve-out is one-directional on purpose: blocking someone must not hand
+    // them a way to see you again.
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+    const res = await asUser<{ handle: string }>(ALICE, 'select * from profiles');
+    expect(res.rows.map((r) => r.handle)).toEqual(['alice']);
+  });
+
+  it('keeps blocked users out of everything else', async () => {
+    // The profile carve-out must not leak into the content policies: reactions,
+    // comments and lists all stay hidden.
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+    expect((await asUser(BOB, 'select * from reactions')).rows).toHaveLength(0);
+  });
+});
+
+describe('following', () => {
+  it('lets a user follow someone', async () => {
+    await asUser(ALICE, 'insert into follows (follower_id, followee_id) values ($1,$2)', [
+      ALICE,
+      BOB,
+    ]);
+    expect((await asUser(ALICE, 'select * from follows')).rows).toHaveLength(1);
+  });
+
+  it('refuses a follow attributed to someone else', async () => {
+    await expect(
+      asUser(BOB, 'insert into follows (follower_id, followee_id) values ($1,$2)', [ALICE, BOB]),
+    ).rejects.toThrow();
+  });
+
+  it('refuses following yourself', async () => {
+    await expect(
+      asUser(ALICE, 'insert into follows (follower_id, followee_id) values ($1,$2)', [
+        ALICE,
+        ALICE,
+      ]),
+    ).rejects.toThrow();
+  });
+
+  it('shows a user who follows them', async () => {
+    await asUser(ALICE, 'insert into follows (follower_id, followee_id) values ($1,$2)', [
+      ALICE,
+      BOB,
+    ]);
+    expect((await asUser(BOB, 'select * from follows')).rows).toHaveLength(1);
+  });
+
+  it('does not expose follow edges between other people', async () => {
+    // follows_select is deliberately narrow, which is why no public follower count
+    // is offered anywhere in the app.
+    const carol = '33333333-3333-3333-3333-333333333333';
+    await asAdmin("insert into profiles (id, handle) values ($1,'carol')", [carol]);
+    await asAdmin('insert into follows (follower_id, followee_id) values ($1,$2)', [carol, BOB]);
+    expect((await asUser(ALICE, 'select * from follows')).rows).toHaveLength(0);
   });
 });
 

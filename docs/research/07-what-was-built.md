@@ -74,6 +74,7 @@ makes a server mandatory regardless.
 | Lists mixing film and TV | The split between Letterboxd and TV Time is the complaint | Adding to one is offered wherever a title appears |
 | TV Time rescue CSV import | Doc 1: `tvtime-rescue-data` is the only surviving copy of many people's history | Written against the tool's source, not guessed at |
 | Community content warnings | Doc 4 §2.2, the doesthedogdie idea | Advisory only; a `no` vote can argue a wrong flag down |
+| Profiles, following, blocking | Social was chosen as day-one scope | No public follower count: the policy does not expose one |
 
 ---
 
@@ -120,7 +121,7 @@ user pushed back and was right to: two of those reasons did not hold up.
   advancement, error classification
 - TMDB coverage of niche and non-English television (Detectorists, Kaamelott, Dark, The
   Bureau, Nathan for You), stable episode IDs, per-country watch providers
-- The full app flow in a real browser: 29 checks, against a credential-free build
+- The full app flow in a real browser: 30 checks, against a credential-free build
 
 **Not proven:**
 - **The app calling TMDB or Supabase from a browser.** Headless Chromium in the build
@@ -129,10 +130,15 @@ user pushed back and was right to: two of those reasons did not hold up.
 - **The extension's per-site CSS selectors.** Written from documented selectors; streaming
   services redesign without notice. Breakage degrades to page-title parsing rather than
   failing.
-- **The content-warnings table in the live project.** Migration 0007 is tested against
-  real Postgres via PGlite but has not been applied to the deployed project, for the
-  same reason as push: the access token was rotated. Until it is applied the section
-  renders empty rather than failing.
+- **Migrations 0007 and 0008 in the live project.** Both are tested against real
+  Postgres via PGlite but neither has been applied to the deployed project, for the
+  same reason as push: the access token was rotated. Until they are, content warnings
+  render empty and the block list cannot show handles — neither fails, but neither
+  works.
+- **The signed-in People screen.** The signed-out and unconfigured branches are
+  checked in a real browser; following, blocking and handle changes have only been
+  exercised against Postgres directly, because the sandbox browser cannot reach
+  Supabase.
 - **Push notification delivery end to end.** Schema and scheduler are tested against
   real Postgres and the edge function is written, but nothing has been deployed: the
   Supabase personal access token was rotated, as intended. Needs a fresh token, VAPID

@@ -232,6 +232,17 @@ try {
   );
   await page.screenshot({ path: OUT + '13-title.png' });
 
+  // --- People ----------------------------------------------------------------
+  await page.getByRole('link', { name: /Data/ }).click();
+  await page.getByRole('link', { name: /People/ }).click();
+  await page.waitForSelector('h1:text("People")', { timeout: 5000 });
+  const peopleText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  // Without sync configured the screen must say why it is empty rather than showing
+  // a search box that can never return anything.
+  check('people screen explains what it needs', /works without it/.test(peopleText), peopleText.slice(0, 140));
+  await page.screenshot({ path: OUT + '14-people.png' });
+  await page.goBack();
+
   // --- Remote drawer ---------------------------------------------------------
   // With no relay configured the drawer must not appear at all: an inert remote
   // is worse than none.

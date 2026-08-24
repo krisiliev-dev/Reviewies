@@ -10,6 +10,7 @@ import { Stats } from './screens/Stats';
 import { Discover } from './screens/Discover';
 import { Calendar } from './screens/Calendar';
 import { Lists } from './screens/Lists';
+import { People } from './screens/People';
 import { RemoteDrawer } from './remote/RemoteDrawer';
 
 export default function App() {
@@ -38,6 +39,7 @@ function Shell() {
           <Route path="/discover" element={<Discover />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/lists" element={<Lists />} />
+          <Route path="/people" element={<People />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

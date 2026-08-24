@@ -15,9 +15,9 @@ replayed from everyone who watched that moment before you.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 390 app tests, 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 413 app tests, 43 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
-29 browser checks cover the full flow.
+30 browser checks cover the full flow.
 
 | Area | State |
 |---|---|
@@ -41,6 +41,7 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Lists mixing film and TV | ✅ Built |
 | TV Time rescue CSV import | ✅ Built against the real tool's output |
 | Community-voted content warnings | ✅ Built (migration 0007 not yet applied) |
+| Profiles, following, blocking | ✅ Built (migration 0008 not yet applied) |
 
 ## Running it
 
@@ -78,11 +79,11 @@ filtering commonly blocks. Pasting the SQL into the dashboard's SQL Editor works
 
 ```bash
 cd app
-npx vitest run                        # 390 tests; live suites skip without credentials
+npx vitest run                        # 413 tests; live suites skip without credentials
 SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
 npm run build
 npx vite preview &
-node smoke.mjs                        # 29 end-to-end checks in a real browser
+node smoke.mjs                        # 30 end-to-end checks in a real browser
 ```
 
 The browser checks run against a build with no credentials, so they exercise the
