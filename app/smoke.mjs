@@ -196,6 +196,14 @@ try {
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
   await page.screenshot({ path: OUT + '08-stats.png' });
 
+  // --- Remote drawer ---------------------------------------------------------
+  // With no relay configured the drawer must not appear at all: an inert remote
+  // is worse than none.
+  check(
+    'remote drawer is hidden when no bridge is configured',
+    (await page.getByRole('button', { name: 'Open remote' }).count()) === 0,
+  );
+
   // --- Export ----------------------------------------------------------------
   await page.getByRole('link', { name: /Data/ }).click();
   await page.waitForSelector('text=Export everything (JSON)', { timeout: 5000 });

@@ -9,6 +9,7 @@ import { EpisodeComments } from './screens/EpisodeComments';
 import { Stats } from './screens/Stats';
 import { Discover } from './screens/Discover';
 import { Calendar } from './screens/Calendar';
+import { RemoteDrawer } from './remote/RemoteDrawer';
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ function Shell() {
         </Routes>
       </main>
       {!immersive && <TabBar />}
+      <RemoteDrawer />
     </div>
   );
 }
