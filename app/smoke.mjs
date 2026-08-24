@@ -123,6 +123,14 @@ try {
   );
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
+  // --- Upcoming --------------------------------------------------------------
+  await page.getByRole('link', { name: /Upcoming/ }).click();
+  await page.waitForSelector('text=Tell me about', { timeout: 5000 });
+  const upcomingText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
+  check('milestones is the default', /The moments worth knowing about/.test(upcomingText));
+  await page.screenshot({ path: OUT + '10-upcoming.png' });
+
   // --- Discover --------------------------------------------------------------
   await page.getByRole('link', { name: /Discover/ }).click();
   await page.waitForSelector('text=Nothing you have already watched', { timeout: 5000 });
