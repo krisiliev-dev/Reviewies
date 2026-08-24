@@ -52,7 +52,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await asAdmin(
-    'truncate profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references, lists, list_items, content_warning_votes cascade',
+    'truncate storage.objects, profiles, follows, blocks, watches, ratings, watchlist, library, reactions, comments, reports, push_subscriptions, notification_preferences, notification_queue, upcoming_episodes, fingerprint_contributions, fingerprint_references, lists, list_items, content_warning_votes cascade',
   );
   await asAdmin("insert into profiles (id, handle) values ($1,'alice'), ($2,'bob')", [ALICE, BOB]);
 });
@@ -688,5 +688,58 @@ describe('data integrity', () => {
     await asUser(ALICE, "insert into reports (reporter_id, subject_type, subject_id, reason) values ($1,'comment','abc','spoiler')", [ALICE]);
     expect((await asUser(ALICE, 'select * from reports')).rows).toHaveLength(1);
     expect((await asUser(BOB, 'select * from reports')).rows).toHaveLength(0);
+  });
+});
+
+describe('comment images', () => {
+  const upload = (who: string, path: string) =>
+    asUser(who, "insert into storage.objects (bucket_id, name, owner) values ('comment-images', $1, $2)", [
+      path,
+      who,
+    ]);
+
+  it('creates the bucket with a size limit and an image-only allow list', async () => {
+    const res = await asAdmin<{ public: boolean; file_size_limit: string; allowed_mime_types: string[] }>(
+      "select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'comment-images'",
+    );
+    expect(res.rows).toHaveLength(1);
+    expect(Number(res.rows[0].file_size_limit)).toBe(5 * 1024 * 1024);
+    // An open allow list would make the bucket a general file host.
+    expect(res.rows[0].allowed_mime_types).toContain('image/png');
+    expect(res.rows[0].allowed_mime_types).not.toContain('application/pdf');
+  });
+
+  it('lets a user upload under their own ID', async () => {
+    await expect(upload(ALICE, `${ALICE}/shot.png`)).resolves.toBeTruthy();
+  });
+
+  it('refuses an upload under someone else\'s ID', async () => {
+    // The path layout is only meaningful because this is enforced: otherwise one
+    // user could overwrite another's screenshots.
+    await expect(upload(BOB, `${ALICE}/shot.png`)).rejects.toThrow();
+  });
+
+  it('refuses an upload with no user folder at all', async () => {
+    await expect(upload(ALICE, 'shot.png')).rejects.toThrow();
+  });
+
+  it('lets anyone signed in read an image, because the comment gate already decided', async () => {
+    await upload(ALICE, `${ALICE}/shot.png`);
+    expect((await asUser(BOB, "select * from storage.objects where bucket_id = 'comment-images'")).rows)
+      .toHaveLength(1);
+  });
+
+  it('lets the owner delete their own image', async () => {
+    await upload(ALICE, `${ALICE}/shot.png`);
+    await asUser(ALICE, "delete from storage.objects where name = $1", [`${ALICE}/shot.png`]);
+    expect((await asAdmin('select * from storage.objects')).rows).toHaveLength(0);
+  });
+
+  it('refuses to let anyone delete someone else\'s image', async () => {
+    await upload(ALICE, `${ALICE}/shot.png`);
+    await asUser(BOB, 'delete from storage.objects where name = $1', [`${ALICE}/shot.png`]);
+    // Postgres deletes zero rows rather than erroring when the policy excludes them,
+    // so the assertion has to be that the row survived.
+    expect((await asAdmin('select * from storage.objects')).rows).toHaveLength(1);
   });
 });

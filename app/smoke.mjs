@@ -68,6 +68,14 @@ try {
   const now = Number(after?.match(/(\d+)/)?.[1]);
   check('remaining count decrements', now === before - 1, `${before} → ${now}`);
 
+  // Without an account there is no conversation, so marking watched must not
+  // navigate anywhere — an empty comments page would be a dead end.
+  check('marking watched stays put without an account', page.url().endsWith('/'), page.url());
+  await page.getByRole('link', { name: /Data/ }).click();
+  await page.waitForSelector('text=Open the conversation after marking watched', { timeout: 5000 });
+  check('the preference for it is offered', true);
+  await page.getByRole('link', { name: /Up Next/ }).click();
+
   // --- Watching Mode ---------------------------------------------------------
   await page.getByRole('link', { name: 'Watch along' }).first().click();
   await page.waitForSelector('text=Start watching', { timeout: 5000 });
@@ -199,6 +207,44 @@ try {
 
   const afterCatchUp = await page.locator('text=/more episodes|Last one/').first().textContent();
   check('Up Next moves on after catching up', /more episodes|Last one/.test(afterCatchUp ?? ''), afterCatchUp?.trim());
+
+  // --- A finished show completes itself ----------------------------------------
+  // r/serializd, about a competitor: "I have over 100 shows stuck in Currently
+  // Watching." Kitchen Nightshift is the ended fixture.
+  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByPlaceholder('Shows, films, anime…').fill('kitchen');
+  await page.waitForSelector('text=Kitchen Nightshift', { timeout: 5000 });
+  await page.getByRole('button', { name: 'Track', exact: true }).first().click();
+  await page.waitForSelector('text=Tracking', { timeout: 5000 });
+
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  const kitchen = page.locator('li').filter({ hasText: 'Kitchen Nightshift' }).first();
+  await kitchen.waitFor({ timeout: 5000 });
+  await kitchen.getByRole('button', { name: 'Caught up further?' }).click();
+  await page.waitForSelector('text=/Last episode you watched/', { timeout: 5000 });
+  await page.getByRole('button', { name: '12', exact: true }).first().click();
+  // Completing the show removes its Up Next row. The confirmation must outlive that,
+  // or the sheet just disappears and nothing tells you it worked.
+  await page.waitForSelector('text=/Marked \\d+ episode/', { timeout: 5000 });
+  check('the catch-up confirmation survives the row disappearing', true);
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.waitForTimeout(400);
+
+  const libStatus = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const req = indexedDB.open('reviewies');
+        req.onsuccess = () => {
+          const store = req.result.transaction('library', 'readonly').objectStore('library');
+          const all = store.getAll();
+          all.onsuccess = () =>
+            resolve(all.result.filter((r) => r.kind === 'show').map((r) => r.status).sort());
+        };
+      }),
+  );
+  check('a finished show completes itself', libStatus.includes('completed'), JSON.stringify(libStatus));
+  // The one still airing must not be swept up with it.
+  check('a show still airing stays in watching', libStatus.includes('watching'), JSON.stringify(libStatus));
 
   // --- Upcoming --------------------------------------------------------------
   await page.getByRole('link', { name: /Upcoming/ }).click();

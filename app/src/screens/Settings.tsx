@@ -15,10 +15,12 @@ import { detectRescueFile, importRescueCsv, stripBom } from '../data/tvtimeRescu
 import { parseCsv } from '../data/transfer';
 import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
+import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '../data/prefs';
 
 export function Settings() {
   const [report, setReport] = useState<ImportReport>();
   const [error, setError] = useState<string>();
+  const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
 
   const stats = useLiveQuery(() => getStats('all'), [], undefined);
   const counts = useLiveQuery(
@@ -175,6 +177,29 @@ export function Settings() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+          Watching
+        </h2>
+        <label className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3.5">
+          <span className="min-w-0">
+            <span className="block">Open the conversation after marking watched</span>
+            {/* Off is offered because anyone working through several episodes wants to
+                stay put. Catching up in bulk has its own control, which never moves. */}
+            <span className="block text-sm text-muted">How TV Time worked. Needs an account.</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={openComments}
+            onChange={(e) => {
+              setOpenComments(e.target.checked);
+              setOpenCommentsAfterWatch(e.target.checked);
+            }}
+            className="size-5 shrink-0 accent-accent"
+          />
+        </label>
       </section>
 
       <section className="flex flex-col gap-2">

@@ -19,6 +19,8 @@ interface FixtureShow {
   overview: string;
   seasons?: Array<{ episodes: number; runtime: number }>;
   runtime?: number;
+  /** Ended shows exercise the auto-complete path; the others must not trigger it. */
+  ended?: boolean;
 }
 
 const FIXTURES: FixtureShow[] = [
@@ -40,6 +42,7 @@ const FIXTURES: FixtureShow[] = [
     year: 2023,
     overview: 'A half-hour comedy about the staff of an all-night diner.',
     seasons: [{ episodes: 12, runtime: 22 }],
+    ended: true,
   },
   {
     id: 3,
@@ -88,6 +91,7 @@ export class FixtureProvider implements MetadataProvider {
       overview: f.overview,
       runtimeMin: f.runtime ?? f.seasons?.[0]?.runtime,
       seasonCount: f.seasons?.length,
+      ended: f.kind === 'show' ? Boolean(f.ended) : undefined,
       fetchedAt: Date.now(),
     };
   }

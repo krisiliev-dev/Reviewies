@@ -123,7 +123,7 @@ user pushed back and was right to: two of those reasons did not hold up.
   advancement, error classification
 - TMDB coverage of niche and non-English television (Detectorists, Kaamelott, Dark, The
   Bureau, Nathan for You), stable episode IDs, per-country watch providers
-- The full app flow in a real browser: 37 checks, against a credential-free build
+- The full app flow in a real browser: 42 checks, against a credential-free build
 
 **Not proven:**
 - **The app calling TMDB or Supabase from a browser.** Headless Chromium in the build
@@ -132,11 +132,13 @@ user pushed back and was right to: two of those reasons did not hold up.
 - **The extension's per-site CSS selectors.** Written from documented selectors; streaming
   services redesign without notice. Breakage degrades to page-title parsing rather than
   failing.
-- **Migrations 0007 and 0008 in the live project.** Both are tested against real
-  Postgres via PGlite but neither has been applied to the deployed project, for the
-  same reason as push: the access token was rotated. Until they are, content warnings
-  render empty and the block list cannot show handles — neither fails, but neither
-  works.
+- **Migrations 0007, 0008 and 0009 in the live project.** All three are tested
+  against real Postgres via PGlite but none has been applied to the deployed project,
+  for the same reason as push: the access token was rotated. Until they are, content
+  warnings render empty, the block list cannot show handles, and attaching a
+  screenshot fails on upload — none of them crashes, none of them works. 0009's
+  storage policies are exercised against a `storage` schema stood up in the test shim,
+  so they are tested, not merely written.
 - **The signed-in People screen.** The signed-out and unconfigured branches are
   checked in a real browser; following, blocking and handle changes have only been
   exercised against Postgres directly, because the sandbox browser cannot reach

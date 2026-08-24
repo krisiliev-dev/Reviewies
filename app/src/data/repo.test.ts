@@ -314,3 +314,68 @@ describe('season sizes for a nameless picker', () => {
     expect(await airedSeasonSizes(SERIES)).toEqual([]);
   });
 });
+
+describe('a finished show leaves "watching" on its own', () => {
+  /** From r/serializd: "I have over 100 shows stuck in Currently Watching." */
+  const status = async () => (await db.library.get(SERIES))?.status;
+
+  async function seedEnded(episodes = 3, ended = true) {
+    await seedSeries(episodes);
+    await db.titles.update(SERIES, { ended });
+  }
+
+  it('completes an ended show once every aired episode is watched', async () => {
+    await seedEnded(3);
+    await catchUpTo(SERIES, 1, 3);
+    expect(await status()).toBe('completed');
+  });
+
+  it('leaves it alone while episodes remain', async () => {
+    await seedEnded(3);
+    await catchUpTo(SERIES, 1, 2);
+    expect(await status()).toBe('watching');
+  });
+
+  it('does not complete a show that is still airing', async () => {
+    // Caught up is not the same as finished, and claiming otherwise would quietly
+    // stop the calendar mattering for that show.
+    await seedEnded(3, false);
+    await catchUpTo(SERIES, 1, 3);
+    expect(await status()).toBe('watching');
+  });
+
+  it('treats unknown status as still running rather than guessing', async () => {
+    await seedSeries(3);
+    await catchUpTo(SERIES, 1, 3);
+    expect(await status()).toBe('watching');
+  });
+
+  it('ignores episodes that have not aired yet', async () => {
+    // Otherwise an ended show with a dated-but-unreleased final episode would never
+    // complete, or would complete too early.
+    await seedEnded(6);
+    await db.episodes.update(ep(6), {
+      airDate: new Date(Date.now() + 30 * DAY).toISOString().slice(0, 10),
+    });
+    await catchUpTo(SERIES, 1, 5);
+    expect(await status()).toBe('completed');
+  });
+
+  it('reopens the show when an episode is unwatched again', async () => {
+    // Without this, unwatching one episode of a completed show would leave it out of
+    // Up Next forever — a convenience turned into a trap.
+    await seedEnded(3);
+    await catchUpTo(SERIES, 1, 3);
+    await unwatchLatest(ep(3));
+
+    expect(await status()).toBe('watching');
+    expect(await getUpNext()).toHaveLength(1);
+  });
+
+  it('does not override a show the user paused or dropped', async () => {
+    await seedEnded(3);
+    await db.library.update(SERIES, { status: 'dropped' });
+    await catchUpTo(SERIES, 1, 3);
+    expect(await status()).toBe('dropped');
+  });
+});

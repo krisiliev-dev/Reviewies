@@ -25,6 +25,8 @@ export async function markWatched(opts: {
   runtimeMin?: number;
   watchedAt?: number;
   source?: WatchEvent['source'];
+  /** Set by bulk callers, which run the status check once at the end instead. */
+  skipStatusSync?: boolean;
 }): Promise<WatchEvent> {
   const event: WatchEvent = {
     id: uid(),
@@ -38,6 +40,9 @@ export async function markWatched(opts: {
   // Queued, not sent. The write above has already succeeded locally, so the UI
   // updates whether or not there is a network.
   await enqueue('watches', event as unknown as Record<string, unknown>);
+  // Checked here rather than in the UI so every path that records a watch — Up Next,
+  // the title page, an import — gets the same housekeeping.
+  if (opts.seriesId && !opts.skipStatusSync) await syncSeriesStatus(opts.seriesId);
   return event;
 }
 
@@ -85,8 +90,12 @@ export async function catchUpTo(
       seriesId,
       runtimeMin: episode.runtimeMin,
       watchedAt: now,
+      // Re-scanning every episode and watch after each of a hundred inserts would
+      // make catching up on a long series crawl; once at the end is equivalent.
+      skipStatusSync: true,
     });
   }
+  await syncSeriesStatus(seriesId, now);
 
   return due.length;
 }
@@ -114,6 +123,48 @@ export async function airedSeasonSizes(
     .sort((a, b) => a.season - b.season);
 }
 
+/**
+ * Keep a series' library status in step with its episodes.
+ *
+ * From r/serializd, about a competitor: *"Even after I finish a show and mark all of
+ * its episodes as watched, it still stays in the Currently Watching section […] Right
+ * now I have over 100 shows stuck."* Housekeeping the user should never have to do.
+ *
+ * It runs in both directions. Completing is only ever automatic for shows TMDB reports
+ * as ended or cancelled — being caught up on something still airing is not the same as
+ * being finished with it. But *un*-completing has no such condition: without it,
+ * unwatching one episode of a completed show would leave it out of Up Next forever,
+ * which turns a convenience into a trap.
+ *
+ * `paused` and `dropped` are left alone in both directions. Those are decisions the
+ * user made, and overriding them is not housekeeping.
+ */
+export async function syncSeriesStatus(seriesId: InternalId, now = Date.now()): Promise<boolean> {
+  const item = await db.library.get(seriesId);
+  if (!item || (item.status !== 'watching' && item.status !== 'completed')) return false;
+
+  const [title, episodes, watched] = await Promise.all([
+    db.titles.get(seriesId),
+    db.episodes.where('seriesId').equals(seriesId).toArray(),
+    watchedEpisodeIds(seriesId),
+  ]);
+
+  // Specials are excluded for the same reason Up Next excludes them: nobody considers
+  // a show unfinished because they skipped a recap.
+  const aired = episodes.filter((e) => e.season > 0 && hasAired(e, now));
+  const allWatched = aired.length > 0 && aired.every((e) => watched.has(e.id));
+
+  if (item.status === 'watching' && allWatched && title?.ended) {
+    await db.library.update(seriesId, { status: 'completed' });
+    return true;
+  }
+  if (item.status === 'completed' && !allWatched) {
+    await db.library.update(seriesId, { status: 'watching' });
+    return true;
+  }
+  return false;
+}
+
 /** Undo the most recent watch of a target. Leaves earlier rewatches intact. */
 export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   const events = await db.watches.where('targetId').equals(targetId).sortBy('watchedAt');
@@ -122,6 +173,7 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   await db.watches.delete(latest.id);
   // Deletes replicate as tombstones — otherwise the row returns on the next pull.
   await enqueue('watches', { id: latest.id }, { deleted: true });
+  if (latest.seriesId) await syncSeriesStatus(latest.seriesId);
   return true;
 }
 

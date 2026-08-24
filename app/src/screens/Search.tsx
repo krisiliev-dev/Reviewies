@@ -68,7 +68,21 @@ function ResultRow({ result }: { result: SearchResult }) {
   const [note, setNote] = useState('');
   const [noting, setNoting] = useState(false);
 
+  /**
+   * Cache the full title, not just the search result.
+   *
+   * Search does not return runtime, external IDs, or whether a show has ended — only
+   * the detail endpoint does — and `ended` is what lets a finished show complete
+   * itself later. The detail call has to come *first*: writing the thin search row
+   * would leave a fresh cache entry that `getTitleCached` then happily serves instead
+   * of fetching, so the missing fields would never arrive.
+   */
   async function cacheTitle() {
+    const detail = await getTitleCached(result.id).catch(() => undefined);
+    if (detail) return;
+
+    // Offline, or the provider does not know it: keep what search gave us rather
+    // than losing the title entirely.
     await db.titles.put({
       id: result.id,
       kind: result.kind,
@@ -89,11 +103,12 @@ function ResultRow({ result }: { result: SearchResult }) {
    * opinions of it first, so this deliberately does not navigate.
    */
   async function log() {
-    await cacheTitle();
     // Search results carry no runtime — only the detail endpoint does — and stats are
-    // runtime-weighted, so a film logged without one would be counted as a 30-minute
-    // default. Fetch it first; if that fails the watch is still recorded.
-    const detail = await getTitleCached(result.id).catch(() => undefined);
+    // runtime-weighted, so a film logged without one would be counted as a
+    // 30-minute default. cacheTitle fetches it; if that fails the watch is still
+    // recorded, just unweighted.
+    await cacheTitle();
+    const detail = await db.titles.get(result.id);
     await markWatched({ targetId: result.id, runtimeMin: detail?.runtimeMin });
     await addToLibrary(result.id, result.kind, 'completed');
     navigator.vibrate?.(10);

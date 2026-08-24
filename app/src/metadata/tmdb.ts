@@ -86,6 +86,8 @@ export class TmdbProvider implements MetadataProvider {
       runtime?: number;
       episode_run_time?: number[];
       number_of_seasons?: number;
+      status?: string;
+      in_production?: boolean;
       external_ids?: { imdb_id?: string; tvdb_id?: number };
     };
 
@@ -105,6 +107,9 @@ export class TmdbProvider implements MetadataProvider {
       backdropUrl: backdrop(d.backdrop_path),
       runtimeMin: d.runtime ?? d.episode_run_time?.[0],
       seasonCount: d.number_of_seasons,
+      // TMDB's tv status is one of Returning Series / Planned / In Production /
+      // Ended / Canceled / Pilot. Only the last two mean no more episodes.
+      ended: isShow ? d.status === 'Ended' || d.status === 'Canceled' : undefined,
       externalIds: {
         tmdb: d.id,
         imdb: d.external_ids?.imdb_id,

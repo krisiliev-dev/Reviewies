@@ -134,6 +134,12 @@ export interface CachedTitle {
   backdropUrl?: string;
   runtimeMin?: number;
   seasonCount?: number;
+  /**
+   * Whether the show has finished airing. Undefined means unknown, which is treated
+   * as "still running" — a show wrongly marked finished silently stops asking for
+   * new episodes, which is worse than one that keeps asking.
+   */
+  ended?: boolean;
   externalIds?: ExternalIds;
   fetchedAt: number;
 }

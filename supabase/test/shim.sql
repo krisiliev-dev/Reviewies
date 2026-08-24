@@ -32,3 +32,42 @@ grant usage on schema public, auth to app_user;
 grant execute on all functions in schema auth to app_user;
 grant execute on all functions in schema public to app_user;
 grant select, insert, update, delete on all tables in schema public to app_user;
+
+-- Minimal stand-in for Supabase Storage.
+--
+-- Storage is a real Postgres schema in Supabase: `storage.buckets` and
+-- `storage.objects`, with row-level security on objects like any other table. That is
+-- what makes the migration's storage policies testable here rather than only in
+-- production. Only the columns and the one helper the policies actually reference are
+-- reproduced; this is a test double, not an emulation.
+create schema if not exists storage;
+
+create table if not exists storage.buckets (
+  id                 text primary key,
+  name               text not null,
+  public             boolean not null default false,
+  file_size_limit    bigint,
+  allowed_mime_types text[]
+);
+
+create table if not exists storage.objects (
+  id       uuid primary key default gen_random_uuid(),
+  bucket_id text not null references storage.buckets(id),
+  name     text not null,
+  owner    uuid,
+  unique (bucket_id, name)
+);
+
+-- Splits an object name on "/", the way Supabase's own helper does. The policies use
+-- it to read the owning user's ID out of the first path segment.
+create or replace function storage.foldername(name text)
+returns text[]
+language sql
+immutable
+as $$
+  select string_to_array(name, '/');
+$$;
+
+grant usage on schema storage to app_user;
+grant select, insert, update, delete on all tables in schema storage to app_user;
+grant execute on all functions in schema storage to app_user;

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getUpNext, markWatched, type UpNextEntry } from '../data/repo';
 import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
 import { CatchUp } from '../ui/CatchUp';
+import { openCommentsAfterWatch } from '../data/prefs';
+import { syncConfigured } from '../sync/auth';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -20,6 +22,12 @@ export function UpNext() {
   // the list with no manual invalidation.
   const entries = useLiveQuery(() => getUpNext(), [], undefined);
   const libraryCount = useLiveQuery(() => db.library.count(), [], 0);
+  /**
+   * The catch-up sheet lives here rather than inside a row, because catching up to
+   * the end removes that row from Up Next — and a sheet owned by the row would
+   * vanish mid-confirmation, leaving no sign that anything happened.
+   */
+  const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
 
   if (entries === undefined) {
     return <p className="p-6 text-muted">Loading…</p>;
@@ -49,16 +57,30 @@ export function UpNext() {
       <h1 className="mb-4 px-1 text-2xl font-semibold">Up Next</h1>
       <ul className="flex flex-col gap-2">
         {entries.map((entry) => (
-          <UpNextRow key={entry.seriesId} entry={entry} />
+          <UpNextRow key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
         ))}
       </ul>
+
+      {catchingUp && (
+        <CatchUp
+          seriesId={catchingUp.seriesId}
+          seriesName={catchingUp.seriesName}
+          onDone={() => setCatchingUp(undefined)}
+        />
+      )}
     </div>
   );
 }
 
-function UpNextRow({ entry }: { entry: UpNextEntry }) {
+function UpNextRow({
+  entry,
+  onCatchUp,
+}: {
+  entry: UpNextEntry;
+  onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
+}) {
   const { episode } = entry;
-  const [catchingUp, setCatchingUp] = useState(false);
+  const navigate = useNavigate();
 
   async function onWatched() {
     // Optimistic by construction: the write goes to IndexedDB and useLiveQuery
@@ -69,6 +91,14 @@ function UpNextRow({ entry }: { entry: UpNextEntry }) {
       runtimeMin: episode.runtimeMin,
     });
     navigator.vibrate?.(10);
+
+    // How TV Time worked, and named as a failing in two of its successors. Only when
+    // there is an account behind it — otherwise there is no conversation to open and
+    // this would be a dead end. Catching up in bulk uses its own control, which never
+    // navigates, so this cannot interrupt a run of episodes.
+    if (openCommentsAfterWatch() && syncConfigured()) {
+      navigate(`/comments/${encodeURIComponent(episode.id)}`);
+    }
   }
 
   return (
@@ -96,7 +126,7 @@ function UpNextRow({ entry }: { entry: UpNextEntry }) {
             which lists the name of every episode ahead of you. */}
         {entry.remaining > 0 && (
           <button
-            onClick={() => setCatchingUp(true)}
+            onClick={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
             className="mt-1 text-xs text-muted underline"
           >
             Caught up further?
@@ -120,14 +150,6 @@ function UpNextRow({ entry }: { entry: UpNextEntry }) {
           Watch along
         </Link>
       </div>
-
-      {catchingUp && (
-        <CatchUp
-          seriesId={entry.seriesId}
-          seriesName={entry.seriesName}
-          onDone={() => setCatchingUp(false)}
-        />
-      )}
     </li>
   );
 }

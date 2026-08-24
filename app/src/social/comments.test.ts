@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EFFORT_LEVELS, filterByEffort, type Comment } from './comments';
+import { EFFORT_LEVELS, commentBody, filterByEffort, type Comment } from './comments';
 
 const make = (over: Partial<Comment> = {}): Comment => ({
   id: crypto.randomUUID(),
@@ -54,5 +54,25 @@ describe('effort filter', () => {
     const lengths = EFFORT_LEVELS.map((l) => l.minLength);
     expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
     expect(lengths[0]).toBe(0);
+  });
+});
+
+describe('what gets stored as a comment body', () => {
+  it('keeps what was typed', () => {
+    expect(commentBody('  That ending.  ')).toBe('That ending.');
+  });
+
+  it('lets a screenshot stand alone', () => {
+    // Most of what people posted on TV Time was a picture with no words, but
+    // comments.body is not null with a length check — so it needs something.
+    expect(commentBody('', 'https://example.test/a.png')).toBe('📷');
+  });
+
+  it('prefers real words over the placeholder', () => {
+    expect(commentBody('look at this', 'https://example.test/a.png')).toBe('look at this');
+  });
+
+  it('rejects an empty comment with no image', () => {
+    expect(commentBody('   ')).toBe('');
   });
 });

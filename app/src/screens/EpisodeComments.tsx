@@ -6,9 +6,11 @@ import { watchCount } from '../data/repo';
 import { syncConfigured } from '../sync/auth';
 import {
   EFFORT_LEVELS,
+  IMAGE_TYPES,
   fetchComments,
   filterByEffort,
   postComment,
+  uploadCommentImage,
   type Comment,
 } from '../social/comments';
 
@@ -21,6 +23,8 @@ export function EpisodeComments() {
   const [loading, setLoading] = useState(true);
   const [effort, setEffort] = useState(0);
   const [draft, setDraft] = useState('');
+  const [image, setImage] = useState<string>();
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>();
 
   const episode = useLiveQuery(() => db.episodes.get(targetId), [targetId]);
@@ -45,12 +49,22 @@ export function EpisodeComments() {
     void load();
   }, [load]);
 
+  async function attach(file: File) {
+    setError(undefined);
+    setUploading(true);
+    const result = await uploadCommentImage(file);
+    setUploading(false);
+    if (result.ok) setImage(result.url);
+    else setError(result.reason);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(undefined);
     try {
-      await postComment(targetId, draft);
+      await postComment(targetId, draft, image);
       setDraft('');
+      setImage(undefined);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not post that');
@@ -107,17 +121,55 @@ export function EpisodeComments() {
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              // Pasting a screenshot straight in is the actual flow — people
+              // screenshot the scene and paste it, they do not go via a file picker.
+              onPaste={(e) => {
+                const file = [...e.clipboardData.files][0];
+                if (file) void attach(file);
+              }}
               placeholder="What did you think?"
               rows={3}
               className="w-full resize-y rounded-xl bg-surface px-3 py-2.5 text-base outline-none placeholder:text-muted"
             />
-            <button
-              type="submit"
-              disabled={!draft.trim()}
-              className="self-start rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:opacity-40"
-            >
-              Post
-            </button>
+
+            {image && (
+              <div className="flex items-center gap-2">
+                <img src={image} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImage(undefined)}
+                  className="text-xs text-muted underline"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={(!draft.trim() && !image) || uploading}
+                className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:opacity-40"
+              >
+                Post
+              </button>
+
+              {/* Screenshots were core to TV Time's comment culture and are named
+                  most often as the thing successors dropped. */}
+              <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-2 text-sm text-muted">
+                {uploading ? 'Uploading…' : image ? 'Replace image' : 'Add a screenshot'}
+                <input
+                  type="file"
+                  accept={IMAGE_TYPES.join(',')}
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void attach(file);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
             {error && <p className="text-sm text-accent">{error}</p>}
           </form>
 
