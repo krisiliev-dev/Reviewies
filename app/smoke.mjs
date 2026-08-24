@@ -123,6 +123,14 @@ try {
   );
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
+  // --- Stats -----------------------------------------------------------------
+  await page.getByRole('link', { name: /Stats/ }).click();
+  await page.waitForSelector('text=Most watched', { timeout: 5000 });
+  const statsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
+  check('stats list the most-watched title', /The Long Dark/.test(statsText));
+  await page.screenshot({ path: OUT + '08-stats.png' });
+
   // --- Export ----------------------------------------------------------------
   await page.getByRole('link', { name: /Data/ }).click();
   await page.waitForSelector('text=Export everything (JSON)', { timeout: 5000 });

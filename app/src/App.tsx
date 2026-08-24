@@ -6,6 +6,7 @@ import { Settings } from './screens/Settings';
 import { WatchingMode } from './screens/WatchingMode';
 import { Watchlist } from './screens/Watchlist';
 import { EpisodeComments } from './screens/EpisodeComments';
+import { Stats } from './screens/Stats';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ function Shell() {
           <Route path="/title/:id" element={<TitleDetail />} />
           <Route path="/watching/:targetId" element={<WatchingMode />} />
           <Route path="/comments/:targetId" element={<EpisodeComments />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
@@ -42,6 +44,7 @@ const TABS = [
   { to: '/', label: 'Up Next', icon: '▶' },
   { to: '/search', label: 'Search', icon: '⌕' },
   { to: '/watchlist', label: 'Watchlist', icon: '☰' },
+  { to: '/stats', label: 'Stats', icon: '◔' },
   { to: '/settings', label: 'Data', icon: '⚙' },
 ];
 
