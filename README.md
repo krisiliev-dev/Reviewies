@@ -14,10 +14,10 @@ replayed from everyone who watched that moment before you.
 
 ## Status
 
-Core loop, social layer, backend, device bridge and fingerprinting are all built.
-**Nothing is deliberately skipped.** 313 app tests plus 43 bridge tests pass, including
-live tests against a real Supabase project and the real TMDB API; 23 browser checks
-cover the full flow.
+Core loop, social layer, backend, remote control and fingerprinting are all built.
+**Nothing is deliberately skipped.** 342 app tests, 43 bridge tests and 19 relay tests
+pass, including live tests against a real Supabase project and the real TMDB API;
+27 browser checks cover the full flow.
 
 | Area | State |
 |---|---|
@@ -35,7 +35,10 @@ cover the full flow.
 | Anime season correction via AniList | ✅ Verified live |
 | Push notification delivery | ✅ Built, not yet deployed |
 | Local bridge (Roku ECP, desktop MPRIS) | ✅ Built, not verified on hardware |
-| Audio fingerprinting core | ✅ Built, accuracy unverified on real audio |
+| Remote drawer + relay server | ✅ Built, relay verified end to end |
+| Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
+| Half-star ratings, poster overrides | ✅ Built |
+| Lists mixing film and TV | ✅ Built |
 
 ## Running it
 
@@ -113,8 +116,10 @@ app/                    The PWA
   src/calendar/         Upcoming episodes and notification granularity
   src/screens/          UI
   src/fingerprint/      Landmark-hash fingerprinting and microphone capture
+  src/remote/           Remote drawer and bridge connection
 extension/              Browser extension (MV3)
 bridge/                 Local companion for device control (Roku ECP, MPRIS)
+relay/                  WebSocket relay pairing the app to a bridge
 supabase/               Schema, RLS policies, push edge function
 scripts/                Migration runner
 docs/research/          Research notes and decisions

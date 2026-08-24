@@ -1,0 +1,143 @@
+import { getClient, getSession } from '../sync/auth';
+import type { MediaKind } from '../domain/types';
+
+/**
+ * User lists, mixing film and television freely.
+ *
+ * Server-backed rather than local-first, unlike watch history: a list is meaningful
+ * mainly when it can be shared, and visibility is enforced by row-level security
+ * rather than by this module.
+ */
+
+export interface ListSummary {
+  id: string;
+  name: string;
+  description?: string;
+  isPublic: boolean;
+  itemCount: number;
+  mine: boolean;
+}
+
+export interface ListItem {
+  titleId: string;
+  kind: MediaKind;
+  note?: string;
+  rank: number;
+}
+
+export async function fetchLists(): Promise<ListSummary[]> {
+  const client = getClient();
+  const session = await getSession();
+  if (!client || !session) return [];
+
+  const { data, error } = await client
+    .from('lists')
+    .select('id, user_id, name, description, is_public, list_items(count)')
+    .eq('deleted', false)
+    .order('updated_at', { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => {
+    // PostgREST returns an aggregate as a one-element array.
+    const counts = row.list_items as Array<{ count: number }> | null;
+    return {
+      id: String(row.id),
+      name: String(row.name),
+      description: row.description ? String(row.description) : undefined,
+      isPublic: Boolean(row.is_public),
+      itemCount: counts?.[0]?.count ?? 0,
+      mine: row.user_id === session.user.id,
+    };
+  });
+}
+
+export async function createList(name: string, isPublic = false): Promise<string | undefined> {
+  const client = getClient();
+  const session = await getSession();
+  if (!client || !session) return undefined;
+
+  const trimmed = name.trim();
+  if (!trimmed) return undefined;
+
+  const { data, error } = await client
+    .from('lists')
+    .insert({ user_id: session.user.id, name: trimmed.slice(0, 120), is_public: isPublic })
+    .select('id')
+    .single();
+
+  return error || !data ? undefined : String(data.id);
+}
+
+export async function fetchListItems(listId: string): Promise<ListItem[]> {
+  const client = getClient();
+  if (!client) return [];
+
+  const { data, error } = await client
+    .from('list_items')
+    .select('title_id, kind, note, rank')
+    .eq('list_id', listId)
+    .order('rank')
+    .order('added_at');
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    titleId: String(row.title_id),
+    kind: row.kind as MediaKind,
+    note: row.note ? String(row.note) : undefined,
+    rank: Number(row.rank),
+  }));
+}
+
+export async function addToList(
+  listId: string,
+  titleId: string,
+  kind: MediaKind,
+  note?: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const client = getClient();
+  if (!client) return { ok: false, reason: 'Sign in to use lists.' };
+
+  const { error } = await client
+    .from('list_items')
+    .insert({ list_id: listId, title_id: titleId, kind, note });
+
+  if (error) {
+    // The unique key is what stops a title appearing twice; translate it rather
+    // than showing a Postgres error.
+    if (error.code === '23505') return { ok: false, reason: 'Already on that list.' };
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true };
+}
+
+export async function removeFromList(listId: string, titleId: string): Promise<void> {
+  const client = getClient();
+  if (!client) return;
+  await client.from('list_items').delete().eq('list_id', listId).eq('title_id', titleId);
+}
+
+export async function setListVisibility(listId: string, isPublic: boolean): Promise<void> {
+  const client = getClient();
+  if (!client) return;
+  await client
+    .from('lists')
+    .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+    .eq('id', listId);
+}
+
+/**
+ * Summarise a list's contents for display.
+ *
+ * Worth showing explicitly because mixing the two is the point — a list that is half
+ * films should say so rather than looking like a broken TV list.
+ */
+export function describeMix(items: ListItem[]): string {
+  const shows = items.filter((i) => i.kind === 'show').length;
+  const films = items.length - shows;
+  if (items.length === 0) return 'Empty';
+  if (films === 0) return `${shows} ${shows === 1 ? 'series' : 'series'}`;
+  if (shows === 0) return `${films} ${films === 1 ? 'film' : 'films'}`;
+  return `${shows} series · ${films} ${films === 1 ? 'film' : 'films'}`;
+}

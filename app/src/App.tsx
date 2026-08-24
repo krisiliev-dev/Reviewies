@@ -9,6 +9,7 @@ import { EpisodeComments } from './screens/EpisodeComments';
 import { Stats } from './screens/Stats';
 import { Discover } from './screens/Discover';
 import { Calendar } from './screens/Calendar';
+import { Lists } from './screens/Lists';
 import { RemoteDrawer } from './remote/RemoteDrawer';
 
 export default function App() {
@@ -36,6 +37,7 @@ function Shell() {
           <Route path="/comments/:targetId" element={<EpisodeComments />} />
           <Route path="/discover" element={<Discover />} />
           <Route path="/calendar" element={<Calendar />} />
+          <Route path="/lists" element={<Lists />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
@@ -52,6 +54,7 @@ const TABS = [
   { to: '/discover', label: 'Discover', icon: '✦' },
   { to: '/calendar', label: 'Upcoming', icon: '▦' },
   { to: '/watchlist', label: 'Watchlist', icon: '☰' },
+  { to: '/lists', label: 'Lists', icon: '❏' },
   { to: '/stats', label: 'Stats', icon: '◔' },
   { to: '/settings', label: 'Data', icon: '⚙' },
 ];
