@@ -76,19 +76,20 @@ filtering commonly blocks. Pasting the SQL into the dashboard's SQL Editor works
 
 ```bash
 cd app
-npx vitest run                        # 249 tests; live suites skip without credentials
+npx vitest run                        # 342 tests; live suites skip without credentials
 SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
 npm run build
 npx vite preview &
-node smoke.mjs                        # 23 end-to-end checks in a real browser
+node smoke.mjs                        # 27 end-to-end checks in a real browser
 ```
 
 Row-level security is tested against real Postgres via PGlite, running the deployable
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
 owners, so testing as the owner would make every assertion pass vacuously.
 
-The browser extension lives in [`extension/`](extension/README.md) and the device bridge
-in [`bridge/`](bridge/README.md); both have their own builds and tests.
+The browser extension ([`extension/`](extension/README.md)), device bridge
+([`bridge/`](bridge/README.md)) and relay ([`relay/`](relay/README.md)) each have their
+own build and tests.
 
 ## Architecture in one paragraph
 
@@ -140,8 +141,8 @@ Read in order; later documents revise earlier ones where evidence changed.
 6. [Cast/AirPlay and fingerprint sizing](docs/research/06-cast-airplay-and-fingerprint-sizing.md) —
    includes a live-verified correction to the anime claims in 2 and 4
 7. [What was actually built](docs/research/07-what-was-built.md) — reconciles the plan
-   with the implementation, including where the research turned out to be wrong, what was
-   deliberately skipped, and exactly which layers are and are not verified
+   with the implementation: where the research turned out to be wrong, which decisions
+   were reversed and why, and exactly which layers are and are not verified
 
 ## Attribution
 
