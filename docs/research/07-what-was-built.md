@@ -65,19 +65,36 @@ makes a server mandatory regardless.
 
 ---
 
-## 3. Deliberately not built
+## 3. Nothing is deliberately skipped any more
 
-- **AniList integration** — see §1.1. Occasional, not systemic.
-- **Push notification *delivery*** — the preference model, classification and calendar
-  ship; sending needs a server component.
-- **The TV device bridge** (Cast session observation, Roku ECP, pyatv) — designed in docs
-  4–6, not implemented. It needs an always-on machine on the user's network, which is a
-  real adoption cost for a feature that works acceptably without it.
-- **Crowd-sourced audio fingerprinting** — sized and judged feasible in doc 6, but manual
-  sync plus drift correction plus the extension covers the realistic cases. Revisit only
-  if those prove insufficient.
-- **Automatic scrobbling from Plex/Kodi** — listed as a non-goal in doc 2. The extension
-  delivers most of the value for browser watching at a fraction of the cost.
+An earlier version of this document listed four features as deliberately skipped. The
+user pushed back and was right to: two of those reasons did not hold up.
+
+**Reversed, because the reasoning was wrong:**
+
+- **AniList integration.** Skipped on the grounds that TMDB handles most anime well.
+  "Most" was doing a lot of work — Frieren is reported as one 38-episode season when
+  its first season is 28 — and anime is central to how this app gets used. Now built
+  and verified live.
+- **Push delivery.** Called "needs a server we do not have" when Supabase edge
+  functions *are* that server. The missing piece was schema plus a handler, not
+  infrastructure. Now built.
+
+**Reversed, because it was not my decision to make:**
+
+- **The device bridge.** Deferred over adoption cost — it needs a machine on the user's
+  network. That cost is real, but whether to pay it is the user's call, and it is moot
+  in the laptop case where the machine running the bridge is the one playing the video.
+  Now built, with Roku and MPRIS adapters.
+- **Audio fingerprinting.** Judged unnecessary because other mechanisms cover the
+  realistic cases. They do, but "sufficient" is not the same as "complete", and the
+  sizing work in doc 6 had already shown it feasible. Now built.
+
+**Still genuinely out of scope:**
+
+- **Automatic scrobbling from Plex/Kodi** — a non-goal since doc 2, and unchanged. The
+  browser extension delivers most of the value at a fraction of the maintenance, and
+  Trakt and Simkl have years of head start on the media-server treadmill.
 
 ---
 
@@ -100,7 +117,18 @@ makes a server mandatory regardless.
 - **The extension's per-site CSS selectors.** Written from documented selectors; streaming
   services redesign without notice. Breakage degrades to page-title parsing rather than
   failing.
-- **Push notification delivery** — not built.
+- **Push notification delivery end to end.** Schema and scheduler are tested against
+  real Postgres and the edge function is written, but nothing has been deployed: the
+  Supabase personal access token was rotated, as intended. Needs a fresh token, VAPID
+  keys, and the pg_cron schedule in `supabase/README.md`.
+- **The bridge against live hardware.** Adapters are tested against captured protocol
+  responses. ECP and MPRIS are stable, well-documented protocols, but no real Roku or
+  desktop player has been driven by this code. The relay server it dials is also not
+  written.
+- **Fingerprint accuracy on real audio.** The algorithm is tested on synthetic
+  spectrograms including a deliberately degraded "microphone" case, and correctly
+  refuses to match a different episode. Real rooms, real speakers and real compression
+  are a different test, and the crowd-sourced contribution flow has no UI yet.
 
 ---
 

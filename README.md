@@ -14,9 +14,10 @@ replayed from everyone who watched that moment before you.
 
 ## Status
 
-Core loop, social layer and backend all work end to end. 249 tests pass, including live
-tests against a real Supabase project and the real TMDB API; 23 browser checks cover the
-full flow.
+Core loop, social layer, backend, device bridge and fingerprinting are all built.
+**Nothing is deliberately skipped.** 313 app tests plus 43 bridge tests pass, including
+live tests against a real Supabase project and the real TMDB API; 23 browser checks
+cover the full flow.
 
 | Area | State |
 |---|---|
@@ -29,10 +30,12 @@ full flow.
 | Offline-first sync with outbox | ✅ Built, live round-trip tested |
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
-| Upcoming calendar + notification granularity | ✅ Built (delivery needs a server) |
+| Upcoming calendar + notification granularity | ✅ Built |
 | Browser extension + automatic Watching Mode sync | ✅ Built (site selectors unverified) |
-| Push notification delivery | ⬜ Needs a server to send |
-| Bridge for TV devices (Cast/Roku), fingerprinting | ⬜ Not started |
+| Anime season correction via AniList | ✅ Verified live |
+| Push notification delivery | ✅ Built, not yet deployed |
+| Local bridge (Roku ECP, desktop MPRIS) | ✅ Built, not verified on hardware |
+| Audio fingerprinting core | ✅ Built, accuracy unverified on real audio |
 
 ## Running it
 
@@ -81,7 +84,8 @@ Row-level security is tested against real Postgres via PGlite, running the deplo
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
 owners, so testing as the owner would make every assertion pass vacuously.
 
-The browser extension lives in [`extension/`](extension/README.md) and has its own build.
+The browser extension lives in [`extension/`](extension/README.md) and the device bridge
+in [`bridge/`](bridge/README.md); both have their own builds and tests.
 
 ## Architecture in one paragraph
 
@@ -108,8 +112,10 @@ app/                    The PWA
   src/discover/         Recommendations that exclude what you have seen
   src/calendar/         Upcoming episodes and notification granularity
   src/screens/          UI
+  src/fingerprint/      Landmark-hash fingerprinting and microphone capture
 extension/              Browser extension (MV3)
-supabase/migrations/    Backend schema and RLS policies
+bridge/                 Local companion for device control (Roku ECP, MPRIS)
+supabase/               Schema, RLS policies, push edge function
 scripts/                Migration runner
 docs/research/          Research notes and decisions
 ```
