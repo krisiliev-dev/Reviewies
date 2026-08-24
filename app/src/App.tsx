@@ -5,6 +5,7 @@ import { TitleDetail } from './screens/TitleDetail';
 import { Settings } from './screens/Settings';
 import { WatchingMode } from './screens/WatchingMode';
 import { Watchlist } from './screens/Watchlist';
+import { EpisodeComments } from './screens/EpisodeComments';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ function Shell() {
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/title/:id" element={<TitleDetail />} />
           <Route path="/watching/:targetId" element={<WatchingMode />} />
+          <Route path="/comments/:targetId" element={<EpisodeComments />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

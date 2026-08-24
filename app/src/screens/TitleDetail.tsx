@@ -116,6 +116,13 @@ function EpisodeRow({
         React
       </Link>
 
+      <Link
+        to={`/comments/${encodeURIComponent(episode.id)}`}
+        className="shrink-0 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
+      >
+        Talk
+      </Link>
+
       <button
         onClick={() =>
           watched
