@@ -11,7 +11,10 @@ import type { NotifyPreference } from './upcoming';
 
 /** Base64url VAPID public key, safe to ship: it is the public half. */
 export function vapidPublicKey(): string | undefined {
-  return import.meta.env?.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  // An empty value is how an unfilled .env line arrives; treat it as absent rather
+  // than handing an empty string to applicationServerKey, which throws.
+  const key = import.meta.env?.VITE_VAPID_PUBLIC_KEY as string | undefined;
+  return key?.trim() ? key : undefined;
 }
 
 export function pushSupported(): boolean {

@@ -15,7 +15,7 @@ replayed from everyone who watched that moment before you.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 523 app tests, 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 538 app tests (with credentials; 523 without), 43 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
 49 browser checks cover the full flow.
 
@@ -30,23 +30,23 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Where to watch, per country | ✅ Built, verified live |
 | Watching Mode: shared reactions, replay, drift correction | ✅ Built |
 | Episode comments, spoiler-gated in the database | ✅ Verified live |
-| Screenshots in comments | ✅ Built (migration 0009 not yet applied) |
-| Backend schema + row-level security | ✅ Deployed and verified |
+| Screenshots in comments | ✅ Deployed and verified live |
+| Backend schema + row-level security | ✅ Deployed, all 9 migrations, RLS on every table |
 | Offline-first sync with outbox | ✅ Built, live round-trip tested |
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
 | Upcoming calendar + notification granularity | ✅ Built |
 | Browser extension + automatic Watching Mode sync | ✅ Built (site selectors unverified) |
 | Anime season correction via AniList | ✅ Verified live |
-| Push notification delivery | ✅ Built, not yet deployed |
+| Push notification delivery | ✅ Deployed and verified |
 | Local bridge (Roku ECP, desktop MPRIS) | ✅ Built, not verified on hardware |
 | Remote drawer + relay server | ✅ Built, relay verified end to end |
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
 | Half-star ratings, poster overrides | ✅ Built |
 | Lists mixing film and TV | ✅ Built |
 | TV Time rescue CSV import | ✅ Built against the real tool's output |
-| Community-voted content warnings | ✅ Built (migration 0007 not yet applied) |
-| Profiles, following, blocking | ✅ Built (migration 0008 not yet applied) |
+| Community-voted content warnings | ✅ Deployed |
+| Profiles, following, blocking | ✅ Deployed |
 
 ## Running it
 
@@ -73,18 +73,26 @@ six months, and forbids AI/ML use. See [research doc 01](docs/research/01-landsc
 
 ```bash
 SUPABASE_ACCESS_TOKEN=sbp_... SUPABASE_PROJECT_REF=... node scripts/apply-migrations.mjs
+SUPABASE_ACCESS_TOKEN=sbp_... SUPABASE_PROJECT_REF=... \
+  VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:you@example.com \
+  CRON_SECRET=... node scripts/deploy-functions.mjs --secrets
 ```
 
-Applies `supabase/migrations/` over HTTPS via the Management API, then verifies the
-tables landed and reports any table left without RLS. This route exists because the
-direct database host is IPv6-only and the IPv4 poolers listen on ports that egress
-filtering commonly blocks. Pasting the SQL into the dashboard's SQL Editor works too.
+The first applies `supabase/migrations/` over HTTPS via the Management API, then
+verifies the tables landed and reports any table left without RLS. The second deploys
+`supabase/functions/` the same way. Both routes exist because the direct database host
+is IPv6-only, the IPv4 poolers listen on ports that egress filtering commonly blocks,
+and the Supabase CLI wants Docker. `SUPABASE_ACCESS_TOKEN` is a personal access token
+from [account settings](https://supabase.com/dashboard/account/tokens), not a project
+API key.
+
+Then schedule the sender — see [`supabase/README.md`](supabase/README.md).
 
 ### Tests
 
 ```bash
 cd app
-npx vitest run                        # 523 tests; live suites skip without credentials
+npx vitest run                        # 538 tests; live suites skip without credentials
 SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
 npm run build
 npx vite preview &

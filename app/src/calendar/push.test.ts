@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { decodeVapidKey, pushSupported, subscriptionKeys, vapidPublicKey } from './push';
 
 describe('VAPID key decoding', () => {
@@ -54,6 +54,17 @@ describe('capability detection', () => {
   });
 
   it('returns undefined when no key is configured', () => {
+    // Stubbed rather than relying on the ambient environment. Asserting that a real
+    // .env happens to lack the key made this pass until the key was actually set,
+    // then fail for a reason that had nothing to do with the code.
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', '');
     expect(vapidPublicKey()).toBeUndefined();
+    vi.unstubAllEnvs();
+  });
+
+  it('returns the key when one is configured', () => {
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'BExample');
+    expect(vapidPublicKey()).toBe('BExample');
+    vi.unstubAllEnvs();
   });
 });

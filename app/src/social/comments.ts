@@ -89,11 +89,15 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
  * Doc 8 §4: screenshots were core to TV Time's comment culture and are the thing
  * people name most often as missing from its successors.
  *
- * The path is `<user-id>/<random>.<ext>`, which is not cosmetic — the storage policy
- * only permits writes under your own ID, so the layout is what stops one person
- * overwriting another's images. Size and type are checked here as well as in the
- * bucket so the failure is a sentence rather than an opaque rejection after a slow
- * upload.
+ * This goes through the `upload-comment-image` edge function rather than straight to
+ * storage. Not a preference — `storage.objects` on this project is owned by a role we
+ * cannot become, so the policies that would confine a browser write to the user's own
+ * folder cannot be created (migration 0009 explains it). The function runs with the
+ * service role, establishes the user from their JWT, and derives the path itself.
+ *
+ * Size and type are still checked here so a mistake costs a sentence rather than a
+ * slow upload followed by a rejection. The function checks them again, because a
+ * client-side check is a courtesy and not a control.
  */
 export async function uploadCommentImage(
   file: File,
@@ -109,17 +113,30 @@ export async function uploadCommentImage(
     return { ok: false, reason: 'That image is over 5 MB.' };
   }
 
-  const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-  const path = `${session.user.id}/${crypto.randomUUID()}.${ext}`;
+  const body = new FormData();
+  body.append('file', file);
 
-  const { error } = await client.storage
-    .from('comment-images')
-    .upload(path, file, { contentType: file.type, upsert: false });
+  const { data, error } = await client.functions.invoke('upload-comment-image', { body });
 
-  if (error) return { ok: false, reason: error.message };
+  if (error) {
+    // The function answers with a sentence; surface that rather than "non-2xx".
+    const said = await readFunctionError(error);
+    return { ok: false, reason: said ?? 'Could not upload that image.' };
+  }
+  const url = (data as { url?: string } | null)?.url;
+  return url ? { ok: true, url } : { ok: false, reason: 'Upload returned no URL.' };
+}
 
-  const { data } = client.storage.from('comment-images').getPublicUrl(path);
-  return { ok: true, url: data.publicUrl };
+/** supabase-js hides the response body on a non-2xx; dig the message back out. */
+async function readFunctionError(error: unknown): Promise<string | undefined> {
+  const response = (error as { context?: Response }).context;
+  if (!(response instanceof Response)) return undefined;
+  try {
+    const body = (await response.json()) as { error?: string };
+    return body.error;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function postComment(

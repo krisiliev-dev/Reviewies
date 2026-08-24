@@ -692,12 +692,6 @@ describe('data integrity', () => {
 });
 
 describe('comment images', () => {
-  const upload = (who: string, path: string) =>
-    asUser(who, "insert into storage.objects (bucket_id, name, owner) values ('comment-images', $1, $2)", [
-      path,
-      who,
-    ]);
-
   it('creates the bucket with a size limit and an image-only allow list', async () => {
     const res = await asAdmin(
       "select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'comment-images'",
@@ -710,37 +704,18 @@ describe('comment images', () => {
     expect(rows[0].allowed_mime_types).not.toContain('application/pdf');
   });
 
-  it('lets a user upload under their own ID', async () => {
-    await expect(upload(ALICE, `${ALICE}/shot.png`)).resolves.toBeTruthy();
-  });
-
-  it('refuses an upload under someone else\'s ID', async () => {
-    // The path layout is only meaningful because this is enforced: otherwise one
-    // user could overwrite another's screenshots.
-    await expect(upload(BOB, `${ALICE}/shot.png`)).rejects.toThrow();
-  });
-
-  it('refuses an upload with no user folder at all', async () => {
-    await expect(upload(ALICE, 'shot.png')).rejects.toThrow();
-  });
-
-  it('lets anyone signed in read an image, because the comment gate already decided', async () => {
-    await upload(ALICE, `${ALICE}/shot.png`);
-    expect((await asUser(BOB, "select * from storage.objects where bucket_id = 'comment-images'")).rows)
-      .toHaveLength(1);
-  });
-
-  it('lets the owner delete their own image', async () => {
-    await upload(ALICE, `${ALICE}/shot.png`);
-    await asUser(ALICE, "delete from storage.objects where name = $1", [`${ALICE}/shot.png`]);
-    expect((await asAdmin('select * from storage.objects')).rows).toHaveLength(0);
-  });
-
-  it('refuses to let anyone delete someone else\'s image', async () => {
-    await upload(ALICE, `${ALICE}/shot.png`);
-    await asUser(BOB, 'delete from storage.objects where name = $1', [`${ALICE}/shot.png`]);
-    // Postgres deletes zero rows rather than erroring when the policy excludes them,
-    // so the assertion has to be that the row survived.
-    expect((await asAdmin('select * from storage.objects')).rows).toHaveLength(1);
-  });
+  /**
+   * There are deliberately no policy tests here.
+   *
+   * An earlier version of migration 0009 confined uploads to `<user-id>/` with
+   * policies on `storage.objects`, and this suite asserted them. That migration
+   * cannot be applied: the table is owned by `supabase_storage_admin`, and the role
+   * the Management API and SQL editor both run as cannot become it. The rules now
+   * live in the `upload-comment-image` edge function instead.
+   *
+   * Testing them against the shim's stand-in table would have been worse than not
+   * testing them: the assertions would pass against a fixture that no longer
+   * resembles production. They are covered by `src/social/images.live.test.ts`,
+   * which drives the deployed function.
+   */
 });

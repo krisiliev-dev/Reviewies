@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { getClient, signIn, signOut } from '../sync/auth';
 import { fetchComments, postComment } from './comments';
 
 /**
@@ -9,6 +9,14 @@ import { fetchComments, postComment } from './comments';
  * database. Skipped unless credentials are supplied:
  *
  *   SB_SECRET=sb_secret_... npx vitest run src/social/comments.live.test.ts
+ *
+ * These sign in through the real auth module rather than mocking it. An earlier
+ * version built its own client and mocked `../sync/auth` to return it — but the
+ * module under test is imported statically at the top of this file, so the mock never
+ * applied. It passed anyway, because both clients happened to share one localStorage
+ * key and the real client therefore found the session. Namespacing that key per
+ * worker broke the coincidence and revealed the test had never exercised what it
+ * claimed to. Using the real module removes the question.
  */
 
 const url = import.meta.env?.VITE_SUPABASE_URL as string | undefined;
@@ -42,35 +50,28 @@ live('comments (live)', () => {
     }).then((r) => r.json());
     userId = created.id;
 
-    const client = createClient(url!, pub!);
-    await client.auth.signInWithPassword({ email, password });
-    await client.from('profiles').insert({ id: userId, handle: `c${Date.now()}`.slice(0, 28) });
-
-    // The module reads its client from the auth module, which builds one from env.
-    // Point it at this signed-in session.
-    vi.doMock('../sync/auth', () => ({
-      getClient: () => client,
-      getSession: async () => (await client.auth.getSession()).data.session,
-      syncConfigured: () => true,
-    }));
+    await signIn(email, password);
+    await adminFetch('/rest/v1/profiles', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates' },
+      body: JSON.stringify({ id: userId, handle: `c${Date.now()}`.slice(0, 28) }),
+    });
   }, 30_000);
 
   afterAll(async () => {
+    await signOut();
     if (userId) {
       await adminFetch(`/auth/v1/admin/users/${userId}`, { method: 'DELETE' }).catch(() => {});
     }
-    vi.doUnmock('../sync/auth');
   });
 
   it('refuses a comment on an episode you have not watched', async () => {
-    const { postComment: post } = await import('./comments');
     // The database policy is what refuses this; the module translates the raw
     // policy violation into something actionable.
-    await expect(post(EPISODE, 'spoiler bait')).rejects.toThrow(/Mark this episode watched/i);
+    await expect(postComment(EPISODE, 'spoiler bait')).rejects.toThrow(/Mark this episode watched/i);
   }, 30_000);
 
   it('accepts and returns a comment once the episode is watched', async () => {
-    const { getClient } = await import('../sync/auth');
     const client = getClient()!;
 
     await client.from('watches').insert({
@@ -80,10 +81,9 @@ live('comments (live)', () => {
       watched_at: new Date().toISOString(),
     });
 
-    const { postComment: post, fetchComments: fetchAll } = await import('./comments');
-    await post(EPISODE, 'The pacing in the back half finally earns the slow start.');
+    await postComment(EPISODE, 'The pacing in the back half finally earns the slow start.');
 
-    const result = await fetchAll(EPISODE, true);
+    const result = await fetchComments(EPISODE, true);
     expect(result.comments).toHaveLength(1);
     expect(result.comments[0].mine).toBe(true);
     expect(result.comments[0].body).toMatch(/back half/);

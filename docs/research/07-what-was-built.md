@@ -114,9 +114,37 @@ user pushed back and was right to: two of those reasons did not hold up.
 
 ---
 
+### 3.1 One design reversed by the platform, late
+
+Migration 0009 originally enabled row-level security on `storage.objects` and added
+three policies confining a browser's upload to `<user-id>/`. It has seven passing
+tests against PGlite. It cannot be applied:
+
+    ERROR: 42501: must be owner of table objects
+
+`storage.objects` is owned by `supabase_storage_admin`; RLS is already enabled on it;
+and the `postgres` role that both the Management API and the dashboard SQL editor run
+as is not a member of that role and cannot become one. No SQL gets round it.
+
+So uploads no longer go direct from the browser. They go through an edge function
+running with the service role, which verifies the caller's JWT and derives the storage
+path itself. That is better than what it replaced rather than merely equivalent: the
+limits are enforced before any bytes are stored, the browser never holds write access
+to storage at all, and the rules sit in code that can be tested — which they now are,
+live, against the deployed function.
+
+The PGlite policy tests were deleted rather than pointed at the shim. Assertions that
+pass against a fixture production no longer resembles are worse than no assertions.
+
+---
+
 ## 4. Verification status — what is proven and what is not
 
 **Proven against real systems:**
+- The whole backend, deployed: nine migrations applied, row-level security confirmed
+  on every table, both edge functions live, and eight live tests driving the deployed
+  upload function — including that it files an image under the uploader's own ID,
+  keeps two users apart, and refuses a script, an oversized file and an empty one
 - The write-ahead-log merge, against databases and logs produced by real SQLite —
   including recovering rows written after a checkpoint, and refusing a corrupt or
   foreign log rather than writing garbage over a good page. Exercised in a real
@@ -137,21 +165,15 @@ user pushed back and was right to: two of those reasons did not hold up.
 - **The extension's per-site CSS selectors.** Written from documented selectors; streaming
   services redesign without notice. Breakage degrades to page-title parsing rather than
   failing.
-- **Migrations 0007, 0008 and 0009 in the live project.** All three are tested
-  against real Postgres via PGlite but none has been applied to the deployed project,
-  for the same reason as push: the access token was rotated. Until they are, content
-  warnings render empty, the block list cannot show handles, and attaching a
-  screenshot fails on upload — none of them crashes, none of them works. 0009's
-  storage policies are exercised against a `storage` schema stood up in the test shim,
-  so they are tested, not merely written.
 - **The signed-in People screen.** The signed-out and unconfigured branches are
   checked in a real browser; following, blocking and handle changes have only been
   exercised against Postgres directly, because the sandbox browser cannot reach
   Supabase.
-- **Push notification delivery end to end.** Schema and scheduler are tested against
-  real Postgres and the edge function is written, but nothing has been deployed: the
-  Supabase personal access token was rotated, as intended. Needs a fresh token, VAPID
-  keys, and the pg_cron schedule in `supabase/README.md`.
+- **Push reaching an actual device.** The function is deployed, authenticates against
+  its cron secret, refuses a request without one, and drains an empty queue correctly;
+  pg_cron runs it every fifteen minutes. What has not happened is a real browser
+  subscribing and a notification arriving on a phone — that needs a device, and it is
+  the last untested link in that chain.
 - **The bridge against live hardware.** Adapters are tested against captured protocol
   responses. ECP and MPRIS are stable, well-documented protocols, but no real Roku or
   desktop player has been driven by this code. The relay it dials has since been built

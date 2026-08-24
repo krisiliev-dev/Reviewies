@@ -31,9 +31,29 @@ export function getClient(): SupabaseClient | undefined {
   }
 
   client = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: authStorageKey(),
+    },
   });
   return client;
+}
+
+/**
+ * Where the session is kept.
+ *
+ * One key in the browser, but one *per worker* under test. Live suites run in
+ * parallel against the same project, and a shared key means whichever file signs in
+ * last silently signs the others out — a flake that looks like a policy failure and
+ * is not.
+ */
+export function authStorageKey(base = 'reviewies-auth'): string {
+  const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+    ?.env;
+  const worker = env?.VITEST_WORKER_ID;
+  return worker ? `${base}-test-${worker}` : base;
 }
 
 export const syncConfigured = (): boolean => {
