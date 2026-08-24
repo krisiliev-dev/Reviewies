@@ -148,6 +148,22 @@ describe('against the database', () => {
     expect((await getSummary('all', { now })).episodes).toBe(2);
   });
 
+  it('includes an event watched in this exact millisecond', async () => {
+    // Regression: windowEnd used to be `now`, with a strict `<` comparison, so an
+    // event timestamped in the same tick as the query vanished from the summary.
+    const now = Date.now();
+    await db.watches.add(ev({ watchedAt: now }));
+    expect((await getSummary('all', { now })).episodes).toBe(1);
+  });
+
+  it('includes an event timestamped slightly in the future', async () => {
+    // Imported history can carry mild clock skew; dropping it would be worse than
+    // showing it.
+    const now = Date.now();
+    await db.watches.add(ev({ watchedAt: now + 5000 }));
+    expect((await getSummary('all', { now })).episodes).toBe(1);
+  });
+
   it('resolves series names', async () => {
     await db.watches.add(ev({ watchedAt: Date.now() }));
     expect((await getSummary('all')).topTitles[0].name).toBe('The Long Dark');

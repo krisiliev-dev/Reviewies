@@ -48,7 +48,11 @@ export function windowStart(window: Window, now: number, year?: number): number 
 
 export function windowEnd(window: Window, now: number, year?: number): number {
   if (window === 'year') return new Date((year ?? new Date(now).getFullYear()) + 1, 0, 1).getTime();
-  return now;
+  // Unbounded, not `now`. Bounding at the current millisecond drops an event
+  // watched in this exact tick — mark an episode watched, open stats, and it
+  // would be missing. It also drops imported rows whose timestamps sit slightly
+  // in the future through clock skew.
+  return Infinity;
 }
 
 const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
