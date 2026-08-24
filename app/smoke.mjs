@@ -161,6 +161,45 @@ try {
   );
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
+  // --- Spoiler-free quick log --------------------------------------------------
+  // Logging a film must not require opening its page, which is covered in other
+  // people's ratings and its own synopsis.
+  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
+  await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
+  const beforeUrl = page.url();
+  await page.getByRole('button', { name: 'Seen it' }).first().click();
+  await page.waitForSelector('text=Logged', { timeout: 5000 });
+  check('a film can be logged without leaving search', page.url() === beforeUrl, page.url());
+
+  // --- Spoiler-free catch-up ---------------------------------------------------
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
+  await page.getByRole('button', { name: 'Caught up further?' }).first().click();
+  // Two-season fixture, so the season step comes first.
+  await page.waitForSelector('text=/^Season$/', { timeout: 5000 });
+  const sheet = await page.locator('div.rounded-t-3xl').innerText();
+  // The whole point of the control: numbers, and no episode names anywhere.
+  check(
+    'catch-up picker shows no episode names',
+    !/Pilot|Thaw|Episode \d/.test(sheet),
+    sheet.replace(/\s+/g, ' ').slice(0, 140),
+  );
+  await page.screenshot({ path: OUT + '15-catchup.png' });
+
+  await page.getByRole('button', { name: '2', exact: true }).first().click();
+  await page.waitForSelector('text=/Last episode you watched in season 2/', { timeout: 5000 });
+  await page.screenshot({ path: OUT + '16-catchup-episodes.png' });
+  await page.getByRole('button', { name: '4', exact: true }).first().click();
+  await page.waitForSelector('text=/Marked \\d+ episode/', { timeout: 5000 });
+  const markedText = (await page.locator('text=/Marked/').first().innerText()).replace(/\s+/g, ' ');
+  // 18 aired episodes; one was already watched above, so 11 of the first 12 remain.
+  check('catching up marks the whole run at once', /Marked 11 episodes/.test(markedText), markedText);
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  const afterCatchUp = await page.locator('text=/more episodes|Last one/').first().textContent();
+  check('Up Next moves on after catching up', /more episodes|Last one/.test(afterCatchUp ?? ''), afterCatchUp?.trim());
+
   // --- Upcoming --------------------------------------------------------------
   await page.getByRole('link', { name: /Upcoming/ }).click();
   await page.waitForSelector('text=Tell me about', { timeout: 5000 });

@@ -41,6 +41,79 @@ export async function markWatched(opts: {
   return event;
 }
 
+/**
+ * Mark everything up to and including a point in a series as watched.
+ *
+ * The spoiler-free half of quick logging (research doc 4 §2.2). Catching up any other
+ * way means opening the show page and reading the names and synopses of episodes you
+ * have not reached yet — which is exactly what someone avoiding spoilers is trying not
+ * to do. Callers pass season and episode *numbers*, so nothing has to be rendered.
+ *
+ * Only aired, unwatched, non-special episodes are touched. Re-marking something
+ * already watched would fabricate a rewatch, which is the one thing the event model
+ * must never do by accident.
+ *
+ * Every event is stamped now, because the app does not know when these were really
+ * watched and inventing plausible past dates would be worse than an honest one. The
+ * UI says so.
+ */
+export async function catchUpTo(
+  seriesId: InternalId,
+  season: number,
+  number: number,
+  now = Date.now(),
+): Promise<number> {
+  const [episodes, watched] = await Promise.all([
+    db.episodes.where('seriesId').equals(seriesId).toArray(),
+    watchedEpisodeIds(seriesId),
+  ]);
+
+  const due = episodes
+    .filter(
+      (e) =>
+        // Specials sort before season 1 and are not part of a linear catch-up.
+        e.season > 0 &&
+        hasAired(e, now) &&
+        !watched.has(e.id) &&
+        (e.season < season || (e.season === season && e.number <= number)),
+    )
+    .sort((a, b) => a.season - b.season || a.number - b.number);
+
+  for (const episode of due) {
+    await markWatched({
+      targetId: episode.id,
+      seriesId,
+      runtimeMin: episode.runtimeMin,
+      watchedAt: now,
+    });
+  }
+
+  return due.length;
+}
+
+/**
+ * Seasons and how many episodes each has aired, for a picker that shows no names.
+ *
+ * Numbers only, on purpose: this is what a catch-up control renders instead of the
+ * episode list.
+ */
+export async function airedSeasonSizes(
+  seriesId: InternalId,
+  now = Date.now(),
+): Promise<Array<{ season: number; episodes: number }>> {
+  const episodes = await db.episodes.where('seriesId').equals(seriesId).toArray();
+  const counts = new Map<number, number>();
+
+  for (const e of episodes) {
+    if (e.season <= 0 || !hasAired(e, now)) continue;
+    counts.set(e.season, Math.max(counts.get(e.season) ?? 0, e.number));
+  }
+
+  return [...counts.entries()]
+    .map(([season, episodes]) => ({ season, episodes }))
+    .sort((a, b) => a.season - b.season);
+}
+
 /** Undo the most recent watch of a target. Leaves earlier rewatches intact. */
 export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   const events = await db.watches.where('targetId').equals(targetId).sortBy('watchedAt');

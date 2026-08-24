@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../data/db';
-import { addToLibrary, addToWatchlist } from '../data/repo';
-import { getEpisodesCached, provider, type SearchResult } from '../metadata';
+import { addToLibrary, addToWatchlist, markWatched } from '../data/repo';
+import { getEpisodesCached, getTitleCached, provider, type SearchResult } from '../metadata';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 
@@ -64,11 +64,11 @@ export function Search() {
 }
 
 function ResultRow({ result }: { result: SearchResult }) {
-  const [added, setAdded] = useState<'library' | 'watchlist'>();
+  const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
   const [note, setNote] = useState('');
   const [noting, setNoting] = useState(false);
 
-  async function track() {
+  async function cacheTitle() {
     await db.titles.put({
       id: result.id,
       kind: result.kind,
@@ -78,6 +78,30 @@ function ResultRow({ result }: { result: SearchResult }) {
       posterUrl: result.posterUrl,
       fetchedAt: Date.now(),
     });
+  }
+
+  /**
+   * Log a film as watched without opening its page.
+   *
+   * Research doc 4 §2.2: *"I try to avoid seeing reviews and ratings of movies before
+   * I see them for myself. It's a little hard to do that when I have to go to the page
+   * to add it."* Nothing about recording a watch requires reading other people's
+   * opinions of it first, so this deliberately does not navigate.
+   */
+  async function log() {
+    await cacheTitle();
+    // Search results carry no runtime — only the detail endpoint does — and stats are
+    // runtime-weighted, so a film logged without one would be counted as a 30-minute
+    // default. Fetch it first; if that fails the watch is still recorded.
+    const detail = await getTitleCached(result.id).catch(() => undefined);
+    await markWatched({ targetId: result.id, runtimeMin: detail?.runtimeMin });
+    await addToLibrary(result.id, result.kind, 'completed');
+    navigator.vibrate?.(10);
+    setAdded('logged');
+  }
+
+  async function track() {
+    await cacheTitle();
     await addToLibrary(result.id, result.kind);
     // Episodes are needed before Up Next can offer anything for this show.
     if (result.kind === 'show') await getEpisodesCached(result.id);
@@ -140,6 +164,17 @@ function ResultRow({ result }: { result: SearchResult }) {
             >
               {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
             </button>
+            {/* Films only: "watched" is not a thing you can say about a whole series
+                in one tap without lying about which episodes. */}
+            {result.kind === 'film' && (
+              <button
+                onClick={log}
+                disabled={added === 'logged'}
+                className="rounded-lg bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
+              >
+                {added === 'logged' ? 'Logged' : 'Seen it'}
+              </button>
+            )}
           </div>
         )}
 

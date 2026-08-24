@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db';
 import {
   addToLibrary,
+  airedSeasonSizes,
+  catchUpTo,
   getStats,
   getUpNext,
   markWatched,
@@ -193,5 +195,122 @@ describe('stats are runtime-weighted', () => {
 
     expect((await getStats('30d')).episodes).toBe(1);
     expect((await getStats('all')).episodes).toBe(2);
+  });
+});
+
+describe('spoiler-free catch-up', () => {
+  /** Multi-season, so the "everything before this season" case is covered. */
+  async function seedTwoSeasons() {
+    await db.titles.put({ id: SERIES, kind: 'show', name: 'The Long Dark', fetchedAt: Date.now() });
+    const rows = [];
+    for (const [season, count] of [
+      [0, 2],
+      [1, 6],
+      [2, 6],
+    ] as const) {
+      for (let n = 1; n <= count; n++) {
+        rows.push({
+          id: makeId('tmdb', 'ep', `1-${season}-${n}`),
+          seriesId: SERIES,
+          season,
+          number: n,
+          name: `S${season}E${n}`,
+          airDate: new Date(Date.now() - (20 - season * 6 - n) * DAY).toISOString().slice(0, 10),
+          runtimeMin: 50,
+          fetchedAt: Date.now(),
+        });
+      }
+    }
+    await db.episodes.bulkPut(rows);
+    await addToLibrary(SERIES, 'show');
+  }
+
+  const at = (season: number, n: number) => makeId('tmdb', 'ep', `1-${season}-${n}`);
+
+  it('marks everything up to and including the chosen episode', async () => {
+    await seedTwoSeasons();
+    expect(await catchUpTo(SERIES, 2, 3)).toBe(9);
+
+    const watched = await watchedEpisodeIds(SERIES);
+    expect(watched.has(at(1, 6))).toBe(true);
+    expect(watched.has(at(2, 3))).toBe(true);
+  });
+
+  it('leaves later episodes alone', async () => {
+    await seedTwoSeasons();
+    await catchUpTo(SERIES, 2, 3);
+
+    const watched = await watchedEpisodeIds(SERIES);
+    expect(watched.has(at(2, 4))).toBe(false);
+  });
+
+  it('does not sweep up specials', async () => {
+    // Season 0 sorts before season 1, so a naive comparison would mark every OVA
+    // and recap as watched on any catch-up at all.
+    await seedTwoSeasons();
+    await catchUpTo(SERIES, 2, 3);
+    expect((await watchedEpisodeIds(SERIES)).has(at(0, 1))).toBe(false);
+  });
+
+  it('does not fabricate a rewatch for something already watched', async () => {
+    // The one thing an event model must never do by accident.
+    await seedTwoSeasons();
+    await markWatched({ targetId: at(1, 1), seriesId: SERIES });
+    await catchUpTo(SERIES, 1, 3);
+
+    expect(await watchCount(at(1, 1))).toBe(1);
+  });
+
+  it('reports how many it actually marked, not how many it considered', async () => {
+    await seedTwoSeasons();
+    await markWatched({ targetId: at(1, 1), seriesId: SERIES });
+    expect(await catchUpTo(SERIES, 1, 3)).toBe(2);
+  });
+
+  it('refuses to mark episodes that have not aired', async () => {
+    await seedSeries(6, { futureFrom: 4 });
+    expect(await catchUpTo(SERIES, 1, 6)).toBe(3);
+  });
+
+  it('does nothing when you are already caught up', async () => {
+    await seedTwoSeasons();
+    await catchUpTo(SERIES, 2, 6);
+    expect(await catchUpTo(SERIES, 2, 6)).toBe(0);
+  });
+
+  it('clears the show out of Up Next when it catches up to the end', async () => {
+    await seedTwoSeasons();
+    await catchUpTo(SERIES, 2, 6);
+    expect(await getUpNext()).toHaveLength(0);
+  });
+});
+
+describe('season sizes for a nameless picker', () => {
+  it('reports aired seasons and their lengths without any titles', async () => {
+    await seedSeries(6);
+    expect(await airedSeasonSizes(SERIES)).toEqual([{ season: 1, episodes: 6 }]);
+  });
+
+  it('counts only what has aired, so the picker cannot offer the future', async () => {
+    await seedSeries(6, { futureFrom: 4 });
+    expect(await airedSeasonSizes(SERIES)).toEqual([{ season: 1, episodes: 3 }]);
+  });
+
+  it('omits specials, which are not part of a linear catch-up', async () => {
+    await seedSeries(3);
+    await db.episodes.put({
+      id: makeId('tmdb', 'ep', '1-0-1'),
+      seriesId: SERIES,
+      season: 0,
+      number: 1,
+      name: 'Recap',
+      airDate: '2020-01-01',
+      fetchedAt: Date.now(),
+    });
+    expect((await airedSeasonSizes(SERIES)).map((s) => s.season)).toEqual([1]);
+  });
+
+  it('returns nothing for a show with no cached episodes', async () => {
+    expect(await airedSeasonSizes(SERIES)).toEqual([]);
   });
 });

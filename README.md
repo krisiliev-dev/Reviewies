@@ -15,15 +15,16 @@ replayed from everyone who watched that moment before you.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 413 app tests, 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 425 app tests, 43 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
-30 browser checks cover the full flow.
+34 browser checks cover the full flow.
 
 | Area | State |
 |---|---|
 | Local data layer (watches as events, stable IDs) | ✅ Built, tested |
 | Metadata: TMDB + fixtures behind a provider interface | ✅ Verified live |
 | Up Next, mark watched, search, watchlist with notes | ✅ Built, smoke-tested |
+| Spoiler-free quick log and catch-up | ✅ Built, smoke-tested |
 | Watching Mode: shared reactions, replay, drift correction | ✅ Built |
 | Episode comments, spoiler-gated in the database | ✅ Verified live |
 | Backend schema + row-level security | ✅ Deployed and verified |
@@ -79,11 +80,11 @@ filtering commonly blocks. Pasting the SQL into the dashboard's SQL Editor works
 
 ```bash
 cd app
-npx vitest run                        # 413 tests; live suites skip without credentials
+npx vitest run                        # 425 tests; live suites skip without credentials
 SB_SECRET=sb_secret_... npx vitest run # includes live Supabase round-trips
 npm run build
 npx vite preview &
-node smoke.mjs                        # 30 end-to-end checks in a real browser
+node smoke.mjs                        # 34 end-to-end checks in a real browser
 ```
 
 The browser checks run against a build with no credentials, so they exercise the

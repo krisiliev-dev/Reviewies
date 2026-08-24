@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { getUpNext, markWatched, type UpNextEntry } from '../data/repo';
 import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
+import { CatchUp } from '../ui/CatchUp';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -56,6 +58,7 @@ export function UpNext() {
 
 function UpNextRow({ entry }: { entry: UpNextEntry }) {
   const { episode } = entry;
+  const [catchingUp, setCatchingUp] = useState(false);
 
   async function onWatched() {
     // Optimistic by construction: the write goes to IndexedDB and useLiveQuery
@@ -89,6 +92,16 @@ function UpNextRow({ entry }: { entry: UpNextEntry }) {
             ? 'Last one'
             : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`}
         </p>
+        {/* For anyone who binged away from the app. The alternative is the show page,
+            which lists the name of every episode ahead of you. */}
+        {entry.remaining > 0 && (
+          <button
+            onClick={() => setCatchingUp(true)}
+            className="mt-1 text-xs text-muted underline"
+          >
+            Caught up further?
+          </button>
+        )}
       </div>
 
       <div className="flex shrink-0 flex-col items-stretch gap-1.5">
@@ -107,6 +120,14 @@ function UpNextRow({ entry }: { entry: UpNextEntry }) {
           Watch along
         </Link>
       </div>
+
+      {catchingUp && (
+        <CatchUp
+          seriesId={entry.seriesId}
+          seriesName={entry.seriesName}
+          onDone={() => setCatchingUp(false)}
+        />
+      )}
     </li>
   );
 }
