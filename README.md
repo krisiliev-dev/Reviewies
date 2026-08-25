@@ -60,7 +60,7 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
 | Upcoming calendar + notification granularity | ✅ Built |
-| Browser extension + automatic Watching Mode sync | ✅ Built (site selectors unverified) |
+| Browser extension + automatic Watching Mode sync | ✅ Built, deployed origin now reachable (site selectors unverified) |
 | Anime season correction via AniList | ✅ Verified live |
 | Push notification delivery (web) | ✅ Deployed and verified |
 | Push notification delivery (phone) | ⚠️ Built and deployed; needs a device to obtain a token |

@@ -5,8 +5,26 @@ Pairs an app session with a bridge by shared token and forwards bytes between th
 ## Why it exists
 
 The bridge dials **outbound** to this relay rather than the app finding it on the LAN.
-That inversion is what makes the remote work from a PWA: no mixed-content blocking, no
-mDNS the browser cannot do, no port forwarding, and it works off-network unchanged.
+That inversion is what makes the remote work from a browser: no mixed-content blocking,
+no mDNS a page cannot do, no port forwarding, and it works off-network unchanged.
+
+## Does this still have a job, now the app talks to a television directly?
+
+Yes, for laptops — and only for laptops, which is a narrower job than it was built for.
+
+The phone reaches a Roku over the LAN by itself now: ECP is plain HTTP on port 8060, so
+there is nothing to relay. That was the original reason this existed and it is gone.
+
+What has not changed is a laptop. Controlling media playing on a computer means MPRIS,
+which is a D-Bus interface — a local IPC bus with no network protocol at all. There is
+nothing on the other end for an app to connect to, with or without a local-network
+entitlement, so something has to run on that machine and dial out. That is the bridge,
+and this is what it dials.
+
+So the relay was not made redundant by going app-first; it was made *specific*. Research
+doc 9 §4 predicted it would be deleted once the television case went direct. The
+television case did go direct, and the prediction was still wrong, because it assumed
+televisions were the only thing worth controlling.
 
 ## Deliberately dumb
 

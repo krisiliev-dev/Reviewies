@@ -6,6 +6,26 @@ This is the cleanest sync mechanism available for browser-based watching — exa
 continuous, no drift, no microphone, no extra hardware. For a laptop it is better than
 any remote-control approach, and it gives automatic scrobbling as a side effect.
 
+## Does this still have a job?
+
+Yes, and the question is worth answering here rather than in a research note, because
+the product went app-first and this is a browser extension.
+
+The phone now syncs Watching Mode by listening to the room. That solves a different
+problem: watching on a *television*, where nothing is instrumentable and the only signal
+available is sound. This solves watching in a *browser*, where the position is sitting
+right there on a DOM element. Where both could apply, this one is strictly better —
+exact rather than approximate, and it needs no crowd-contributed reference timeline at
+all, which is the listening path's real weakness. An episode nobody has mapped cannot be
+listened to; every episode can be read off a `<video>`.
+
+It is also the only thing in the product that marks an episode watched without anybody
+tapping anything.
+
+So it stays. What is *not* claimed for it: that its selectors work today (see below),
+that it will ever cover more than a handful of services, or that it is the primary way
+anyone uses Reviewies. It is the laptop case, done properly.
+
 ## Build and install
 
 ```bash
@@ -30,8 +50,11 @@ The app ignores readings older than 15 seconds — a crashed or reloading extens
 must not freeze the clock at its last known position — and ignores readings for a
 different episode, so a show left playing in another tab cannot drag the timeline.
 
-The manifest currently matches `localhost` and `127.0.0.1`. Add your deployed origin
-to that content script entry when you host the app somewhere.
+The manifest matches `localhost`, `127.0.0.1`, and the deployed origin. Add your own to
+that content script entry if you host the app somewhere else — until an origin is listed
+there, the extension cannot reach the app page at all, which is a silent nothing rather
+than an error. That was true of the deployed app for some weeks: the manifest listed only
+localhost while the app it was meant to drive lived on Vercel.
 
 ## What it reads
 

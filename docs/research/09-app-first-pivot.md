@@ -145,6 +145,10 @@ Nothing is deleted in the same change that adds its replacement. Doc 7's rule st
 where the research turned out to be wrong, say so and show the reversal, rather than
 quietly rewriting history.
 
+> **Nothing on this list was deleted, and the reasoning was wrong in all three cases.**
+> Applying the rule above to the section that states it — see §6.13, written once the
+> work was done rather than predicted.
+
 ---
 
 ## 5. Order of work
@@ -757,3 +761,52 @@ places. There is a smoke check for the message, which is the odd position of ass
 that a feature correctly reports its own absence. That is the right thing to assert: the
 alternative is a control that does nothing, and the whole point of this section is that
 silently doing nothing is the failure.
+
+### 6.13 Nothing on the deletion list was deleted
+
+§4 predicted three things would become redundant. None did, and each was wrong for a
+different reason worth naming, because the errors are more instructive than the list.
+
+**The relay was not made redundant, it was made specific.** §4 said it goes "once the TV
+case goes direct". The television case did go direct — ECP is plain HTTP, so the phone
+talks to a Roku with nothing in between — and the relay still earns its place, because
+the prediction assumed televisions were the only thing worth controlling. Controlling
+media on a *laptop* means MPRIS, a D-Bus interface with no network protocol at all: there
+is nothing for an app to connect to, entitlement or no entitlement, so something must run
+on that machine and dial out. That is what the relay is for now, and it is a narrower job
+than the one it was built for.
+
+**Web Push was joined, not replaced.** §4 said APNs and FCM through Expo would replace
+it. They did not, because the web app still exists and a browser cannot receive an Expo
+push any more than a phone can receive a Web Push. The sender now speaks both (§6.12).
+The error was reading "the phone becomes primary" as "the web goes away", which was never
+the plan and is contradicted by the pivot brief itself — the browser version was always
+meant to be a bonus, and a bonus that stops receiving notifications is a regression.
+
+**The install-me onboarding defends something that still matters.** Safari evicts
+IndexedDB after seven days of not being opened, unless the site is on the home screen.
+That is still true, still bites, and still applies to everyone using the web app.
+
+**And the browser extension**, which §4 did not list but left unresolved, stays for the
+clearest reason of the four: it does a job the phone cannot. The phone syncs Watching
+Mode by *listening*, which solves watching on a television, where nothing is
+instrumentable. The extension reads `currentTime` off a `<video>`, which solves watching
+in a browser. Where both could apply the extension is strictly better — exact rather
+than approximate, and needing no crowd-contributed reference at all, which is the
+listening path's real weakness. An episode nobody has mapped cannot be listened to; every
+episode can be read off a video element. It is also the only thing in the product that
+marks an episode watched without anyone tapping anything.
+
+Its selectors remain unverified against live sites, which its own README has said since
+it shipped and which is honest rather than resolvable from here.
+
+One real defect turned up while deciding: the extension's app-side content script matched
+`localhost` and `127.0.0.1` only, so it could not reach the deployed app at all. Not an
+error anybody would see — a content script that does not match simply never runs — which
+is the same shape as everything else in §6.10 and §6.12. The deployed origin is in the
+manifest now.
+
+The general lesson is about where a decision like this is written down. All four verdicts
+now live in the READMEs of the things they are about, because "does this still have a
+job" is asked by someone looking at the component, not by someone reading a numbered
+research document from a month earlier.
