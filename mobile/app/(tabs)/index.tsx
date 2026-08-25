@@ -15,6 +15,7 @@ import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
+import { CatchUp } from '../../src/ui/CatchUp';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
@@ -31,6 +32,10 @@ import { useLive } from '../../src/useLive';
 export default function UpNextScreen() {
   const entries = useLive(() => getUpNext(), []);
   const libraryCount = useLive(() => db.library.count(), []);
+  // Owned by the screen rather than by the row that opens it. A catch-up completes by
+  // removing its own row from Up Next, so a sheet living inside that row unmounts at
+  // the exact moment it has something to tell you.
+  const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
 
   if (entries === undefined) {
     return (
@@ -59,14 +64,30 @@ export default function UpNextScreen() {
             </Link>
           </View>
         ) : (
-          entries.map((entry) => <Row key={entry.seriesId} entry={entry} />)
+          entries.map((entry) => (
+            <Row key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
+          ))
         )}
       </ScrollView>
+
+      {catchingUp && (
+        <CatchUp
+          seriesId={catchingUp.seriesId}
+          seriesName={catchingUp.seriesName}
+          onDone={() => setCatchingUp(undefined)}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
-function Row({ entry }: { entry: UpNextEntry }) {
+function Row({
+  entry,
+  onCatchUp,
+}: {
+  entry: UpNextEntry;
+  onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
+}) {
   const { episode } = entry;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -118,6 +139,16 @@ function Row({ entry }: { entry: UpNextEntry }) {
             ? 'Last one'
             : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`}
         </Text>
+
+        {/* Quiet, because it is the exception. Coming back to a show after a week away
+            and marking six episodes one at a time is the thing this avoids. */}
+        <Pressable
+          onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
+          hitSlop={8}
+          accessibilityLabel={`Catch up on ${entry.seriesName}`}
+        >
+          <Text style={styles.catchUp}>Caught up further?</Text>
+        </Pressable>
       </View>
 
       <Pressable
@@ -161,6 +192,7 @@ const styles = StyleSheet.create({
   rowBody: { flex: 1, minWidth: 0, gap: 2 },
   title: { color: theme.text, fontSize: 16, fontWeight: '600' },
   subtitle: { color: theme.muted, fontSize: 14 },
+  catchUp: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
   remaining: { color: theme.muted, fontSize: 12 },
 
   watched: {

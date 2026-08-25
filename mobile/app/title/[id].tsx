@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +15,7 @@ import {
   hasAired,
   markWatched,
   rate,
+  setPosterOverride,
   unwatchLatest,
   watchedEpisodeIds,
 } from '@reviewies/core/data/repo';
@@ -21,6 +23,8 @@ import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/inde
 import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { Poster } from '../../src/ui/Poster';
 import { ContentWarnings } from '../../src/ui/ContentWarnings';
+import { WhereToWatch } from '../../src/ui/WhereToWatch';
+import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
@@ -37,6 +41,9 @@ export default function TitleScreen() {
   );
   const watched = useLive(() => watchedEpisodeIds(titleId), [titleId]);
   const rating = useLive(() => db.ratings.get(titleId), [titleId]);
+  const libraryItem = useLive(() => db.library.get(titleId), [titleId]);
+  /** `undefined` means not editing; a string means the field is open with that draft. */
+  const [posterDraft, setPosterDraft] = useState<string>();
 
   /** Rewatch counts, which is the whole reason watches are events and not booleans. */
   const counts = useLive(async () => {
@@ -88,6 +95,51 @@ export default function TitleScreen() {
         </View>
 
         {title?.overview ? <Text style={styles.overview}>{title.overview}</Text> : null}
+
+        {title && <AddToList titleId={titleId} kind={title.kind} />}
+
+        {/* Only for something you are tracking: an override is stored on the library
+            row, so there is nowhere to put one otherwise. */}
+        {libraryItem && (
+          <View style={styles.posterEdit}>
+            {posterDraft === undefined ? (
+              <Pressable onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')} hitSlop={8}>
+                <Text style={styles.posterToggle}>
+                  {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.posterRow}>
+                <TextInput
+                  value={posterDraft}
+                  onChangeText={setPosterDraft}
+                  placeholder="Image URL"
+                  placeholderTextColor={theme.muted}
+                  autoFocus
+                  autoCapitalize="none"
+                  style={styles.posterInput}
+                  accessibilityLabel="Poster image URL"
+                />
+                <Pressable
+                  onPress={async () => {
+                    await setPosterOverride(titleId, posterDraft.trim() || undefined);
+                    setPosterDraft(undefined);
+                  }}
+                  style={styles.posterSave}
+                >
+                  <Text style={styles.posterSaveText}>Save</Text>
+                </Pressable>
+                <Pressable onPress={() => setPosterDraft(undefined)} hitSlop={8}>
+                  <Text style={styles.posterCancel}>Cancel</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Above the episode list on purpose. Someone who has decided what to watch and
+            not how is asking one question, and it should not be below a hundred rows. */}
+        <WhereToWatch titleId={titleId} />
 
         {/* Asked for repeatedly: a doesthedogdie-style heads-up inside the tracker.
             Collapsed, so it spoils nothing unasked. */}
@@ -201,6 +253,27 @@ function EpisodeRow({
 }
 
 const styles = StyleSheet.create({
+  posterEdit: { marginBottom: 12 },
+  posterToggle: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
+  posterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  posterInput: {
+    flex: 1,
+    minWidth: 0,
+    color: theme.text,
+    fontSize: 14,
+    backgroundColor: theme.surface,
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  posterSave: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: radius.sm,
+    backgroundColor: theme.accent,
+  },
+  posterSaveText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  posterCancel: { color: theme.muted, fontSize: 14 },
   content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },

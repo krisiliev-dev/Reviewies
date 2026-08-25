@@ -197,7 +197,56 @@ try {
   const title = await text();
   check('the title page opens rather than dead-ending', /survival drama/i.test(title), title.slice(0, 100));
   check('the episode list renders', /season 1/i.test(title), title.slice(0, 130));
+  // Availability is why people open a tracker once they have decided what to watch and
+  // not how, and the phone had none of it until the parity audit.
+  check('where to watch lists a service', /Where to watch/i.test(title) && /Stream/.test(title));
+  check(
+    'JustWatch attribution appears with the data',
+    /JustWatch/.test(title),
+    'licence condition, not a courtesy',
+  );
+
+  // The override lives on the library row, so it only appears for something tracked.
+  check(
+    'a custom poster can be set',
+    (await page.getByText('Use a different poster').count()) > 0,
+  );
+
   await page.screenshot({ path: OUT + '5-title.png' });
+
+  // --- Catching up in bulk ----------------------------------------------------
+  // Coming back to a show after a week away and marking six episodes one at a time is
+  // what this avoids. It shows numbers and nothing else: an episode list would spoil
+  // exactly the person using it.
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.waitForSelector('text=The Long Dark', { timeout: 20000 });
+  await page.getByText('Caught up further?').first().click();
+  await page.waitForSelector('text=How far have you got?', { timeout: 15000 });
+  const sheet = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('the catch-up sheet opens', true);
+  check(
+    'and shows numbers rather than episode names',
+    !/Episode \d/.test(sheet.split('How far have you got?')[1] ?? ''),
+  );
+
+  // Two seasons in the fixture, so the season comes first — one season would skip
+  // straight to episodes, which is why the sheet chooses rather than always asking.
+  await page.getByLabel('Season: 1').click();
+  await page.waitForSelector('text=/Last episode you watched/', { timeout: 15000 });
+  await page.getByLabel(/^Last episode you watched in season 1: 5$/).click();
+  await page.waitForTimeout(1500);
+  const confirmed = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  // The confirmation has to survive the row it came from disappearing, which is why the
+  // sheet belongs to the screen and not to the row.
+  check('the confirmation survives the row disappearing', /Marked \d+ episodes? as watched/.test(confirmed), confirmed.slice(0, 80));
+  await page.getByText('Done', { exact: true }).click();
+  await page.waitForTimeout(1000);
+
+  // Back to the title page, which is where the next section starts from. Catching up
+  // navigated here from Up Next, so without this the Watching Mode step would be
+  // looking for a control on a screen it is no longer on.
+  await page.getByText('The Long Dark').first().click();
+  await page.waitForTimeout(2000);
 
   // --- Watching Mode ---------------------------------------------------------
   // The reason this app exists rather than another tracker.

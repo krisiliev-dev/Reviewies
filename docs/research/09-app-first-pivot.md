@@ -690,3 +690,30 @@ That is a sprint of its own, and one that cannot be finished here: a push token 
 a real device and a real build. But offering someone a choice about notifications they
 can never receive is worse than offering nothing, so until it is built the phone should
 say so rather than presenting settings that do nothing.
+
+### 6.11 The other four
+
+All four closed, and none of them needed new logic: every one already existed in
+`@reviewies/core`, written for the web and never called from the phone. That is what the
+core extraction was for, and it is also why the gaps were invisible — nothing was broken,
+some screens simply never grew a control.
+
+- **Where to watch**, with the country picker. Placed *above* the episode list rather
+  than below it: someone who has decided what to watch and not how is asking one
+  question, and it should not be under a hundred rows. The JustWatch attribution renders
+  whenever any availability does, because it is a licence condition of TMDB's data.
+- **Catching up in bulk.** Numbers and nothing else — no episode titles, no synopses, no
+  air dates — because the person using it is precisely the person who must not see what
+  is ahead of them. The sheet belongs to the screen, not to the row that opens it: a
+  catch-up completes by removing its own row from Up Next, so a sheet inside that row
+  unmounts at the moment it has something to say. The web learned that the hard way and
+  the phone inherited the lesson rather than the bug.
+- **Adding to a list**, which lists needed to be worth having at all.
+- **A custom poster**, only for something tracked, since the override is stored on the
+  library row.
+
+`mobile/smoke.mjs` is 36 checks, up from 27 at the start of the audit. Two of the new
+ones were written and then rewritten after the app disagreed with them: the fixture show
+has two seasons, so the catch-up sheet asks which one before it asks how far — which is
+the behaviour, not a detail — and the grid cells needed accessibility labels before a
+test could name one number among forty-eight.
