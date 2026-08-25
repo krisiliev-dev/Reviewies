@@ -3,19 +3,15 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
-import { downloadFile, exportAll, exportWatchesCsv, type ImportReport } from '@reviewies/core/data/transfer';
+import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
 import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '@reviewies/core/metadata/index';
-import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
+import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 
 export function Settings() {
-  const [report, setReport] = useState<ImportReport>();
-  const [error, setError] = useState<string>();
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
-  const [files, setFiles] = useState<Array<{ name: string; outcome: string }>>();
-  const [busy, setBusy] = useState(false);
 
   const stats = useLiveQuery(() => getStats('all'), [], undefined);
   const counts = useLiveQuery(
@@ -28,68 +24,6 @@ export function Settings() {
     [],
     undefined,
   );
-
-  /**
-   * Import whatever the user has.
-   *
-   * One routing decision, made on contents rather than filenames, in
-   * `archiveImport` — so a zip, a loose CSV and a recovered `DioCache.db` cannot be
-   * treated inconsistently. Multiple files are accepted at once because the SQLite
-   * recovery route produces a `DioCache.db` and a `DioCache.db-wal` that only mean
-   * something together.
-   */
-  async function onImport(files: FileList) {
-    setError(undefined);
-    setReport(undefined);
-    setFiles(undefined);
-    setBusy(true);
-
-    try {
-      const picked = [...files];
-
-      // A zip is the common case: TV Time's GDPR export.
-      const zip = picked.find((f) => /\.zip$/i.test(f.name));
-      if (zip) {
-        const archive = await importArchive(new Uint8Array(await zip.arrayBuffer()));
-        setReport(archive);
-        setFiles(archive.files);
-        return;
-      }
-
-      const wals = pairWal(picked.map((f) => f.name));
-      const walNames = new Set(wals.values());
-      const combined: ImportReport = { watches: 0, watchlist: 0, skipped: 0, warnings: [] };
-      const outcomes: Array<{ name: string; outcome: string }> = [];
-
-      for (const file of picked) {
-        // A log is imported with its database, never alone.
-        if (walNames.has(file.name)) continue;
-
-        const walFile = wals.has(file.name)
-          ? picked.find((f) => f.name === wals.get(file.name))
-          : undefined;
-
-        const { report: partial, outcome } = await importArchiveEntry(
-          file.name,
-          new Uint8Array(await file.arrayBuffer()),
-          walFile ? new Uint8Array(await walFile.arrayBuffer()) : undefined,
-        );
-
-        combined.watches += partial.watches ?? 0;
-        combined.watchlist += partial.watchlist ?? 0;
-        combined.skipped += partial.skipped ?? 0;
-        combined.warnings.push(...(partial.warnings ?? []));
-        outcomes.push({ name: file.name, outcome });
-      }
-
-      setReport(combined);
-      setFiles(outcomes);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -163,55 +97,9 @@ export function Settings() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Import</h2>
-        <p className="px-1 text-sm text-muted">
-          A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt,
-          Simkl or Letterboxd — or a recovered <code>DioCache.db</code> straight off your
-          phone. Files are recognised by what is in them, not what they are called, and
-          anything we cannot read is listed rather than silently dropped.
-        </p>
-        {/* The -wal is the difference between a complete history and one quietly
-            missing its most recent months, so it has to be asked for by name. */}
-        <p className="px-1 text-sm text-muted">
-          If you have a <code>DioCache.db</code>, select its <code>DioCache.db-wal</code>{' '}
-          at the same time. TV Time wrote its most recent months there, and importing the
-          database alone loses them without telling you.
-        </p>
-        <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-3 text-center">
-          {busy ? 'Reading…' : 'Choose files'}
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.length) void onImport(e.target.files);
-              e.target.value = '';
-            }}
-          />
-        </label>
+        <ImportFormats />
+        <ImportFiles />
 
-        {error && <p className="px-1 text-sm text-accent">{error}</p>}
-        {report && (
-          <div className="rounded-xl bg-surface p-3 text-sm">
-            <p>
-              Imported {report.watches} watch{report.watches === 1 ? '' : 'es'}
-              {report.watchlist > 0 && `, ${report.watchlist} watchlist items`}.
-            </p>
-            {files && files.length > 0 && (
-              <ul className="mt-2 flex flex-col gap-1">
-                {files.map((f) => (
-                  <li key={f.name} className="text-xs text-muted">
-                    <span className="font-medium">{f.name}</span> — {f.outcome}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {report.warnings.map((w) => (
-              <p key={w} className="mt-1 text-muted">
-                {w}
-              </p>
-            ))}
-          </div>
-        )}
       </section>
 
       <section className="flex flex-col gap-2">

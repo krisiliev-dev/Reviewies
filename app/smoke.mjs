@@ -197,10 +197,30 @@ async function scaled(screen) {
 }
 
 try {
-  // --- Empty state -----------------------------------------------------------
+  // --- The first minute ------------------------------------------------------
+  // This app exists because TV Time shut down. For a long time the first thing it said
+  // to somebody arriving with years of history in a zip was "Nothing tracked yet" and a
+  // search box, with the import that would have rescued all of it two taps away behind
+  // a tab called Data.
   await page.goto(BASE, { waitUntil: 'networkidle' });
-  check('app loads', await page.getByRole('heading', { name: 'Up Next' }).isVisible());
-  check('empty state explains itself', (await page.getByText('Nothing tracked yet.').count()) > 0);
+  check(
+    'app loads',
+    await page.getByRole('heading', { name: 'Bring your history with you' }).isVisible(),
+  );
+  check(
+    'the first screen offers the migration, not a search box',
+    (await page.getByText('Import from TV Time').count()) > 0,
+  );
+  // Three different things arrive under the name "my TV Time data", and someone holding
+  // one of them has to see their own case named before they will believe it works.
+  const firstRun = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  for (const format of ['GDPR zip', 'CSV', 'DioCache.db']) {
+    check(`and names the ${format}`, firstRun.includes(format));
+  }
+  check(
+    'searching is still offered, as the alternative',
+    (await page.getByRole('link', { name: /Find something to watch/i }).count()) > 0,
+  );
   await page.screenshot({ path: OUT + '01-empty.png' });
 
   // --- Reaching things without a pointer ---------------------------------------
@@ -820,6 +840,64 @@ try {
   const exported = await page.waitForEvent('download', { timeout: 5000 }).catch(() => download);
   check('export produces a file', Boolean(exported), exported?.suggestedFilename?.());
   await page.screenshot({ path: OUT + '07-data.png' });
+
+  // --- The migration, end to end ------------------------------------------------
+  // A fresh profile, because this is about somebody's first minute and the rest of
+  // this suite has spent the last five hundred lines filling a library.
+  //
+  // What it caught: importing a history wrote the watches and nothing else. No library
+  // rows, no names. So a successful rescue of everything somebody had left the app
+  // saying "Nothing tracked yet" over a set of IDs with no titles attached, which looks
+  // exactly like an import that silently failed.
+  const arrival = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const fresh = await arrival.newPage();
+  try {
+    await fresh.goto(BASE, { waitUntil: 'networkidle' });
+    await fresh.waitForSelector('text=Bring your history with you', { timeout: 10000 });
+
+    const history = Buffer.from(
+      zipSync({
+        'export/episodes.csv': strToU8(
+          'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id\n' +
+            'Rescued Show,1,1,Pilot,True,2026-01-05,2,2026-01-01,900,4001',
+        ),
+      }),
+    );
+    await fresh.locator('input[type=file]').last().setInputFiles({
+      name: 'tvtime-export.zip',
+      mimeType: 'application/zip',
+      buffer: history,
+    });
+
+    // The confirmation has to survive the import changing what this screen renders.
+    // Putting shows in the library is exactly what stops it being the empty state.
+    await fresh.waitForSelector('text=Your history is in', { timeout: 15000 });
+    const landed = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
+    check('the import confirms itself where it was started', /Imported 2 watches/.test(landed), landed.slice(0, 120));
+    // An export carries names and dates and nothing else, so these shows have no
+    // episode lists until something matches them to a provider — which is not built.
+    // Saying "all caught up" instead would be a lie that reads as a broken app.
+    check('and says plainly what is not built yet', /not built yet/.test(landed));
+
+    await fresh.getByRole('button', { name: 'Continue' }).click();
+    await fresh.waitForTimeout(600);
+    check(
+      'Up Next explains its own silence rather than claiming you are caught up',
+      /no episode lists until they are matched/.test(
+        (await fresh.locator('body').innerText()).replace(/\s+/g, ' '),
+      ),
+    );
+
+    await fresh.goto(new URL('stats', BASE + '/').href, { waitUntil: 'networkidle' });
+    await fresh.waitForTimeout(1200);
+    const rescued = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
+    // The name is the proof the import wrote a title and not just an identifier.
+    check('the rescued history is visible by name', /Rescued Show/.test(rescued), rescued.slice(0, 140));
+    check('and counted', /Episodes 2/.test(rescued), rescued.slice(0, 140));
+    await fresh.screenshot({ path: OUT + '18-migration.png' });
+  } finally {
+    await arrival.close();
+  }
 } catch (err) {
   check('smoke run completed', false, err.message);
 } finally {

@@ -16,6 +16,8 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { CatchUp } from '../../src/ui/CatchUp';
+import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
+import type { ImportReport } from '@reviewies/core/data/transfer';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
@@ -36,6 +38,11 @@ export default function UpNextScreen() {
   // removing its own row from Up Next, so a sheet living inside that row unmounts at
   // the exact moment it has something to tell you.
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
+  // Held until dismissed rather than swapped out the moment the library stops being
+  // empty. Importing puts shows in the library, which is exactly what stops this being
+  // the first-run screen — and took the confirmation with it.
+  const [imported, setImported] = useState<ImportReport>();
+  const episodeCount = useLive(() => db.episodes.count(), []);
 
   if (entries === undefined) {
     return (
@@ -50,11 +57,63 @@ export default function UpNextScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Up Next</Text>
 
-        {entries.length === 0 ? (
+        {imported ? (
+          <View style={styles.empty}>
+            <Text style={styles.firstHeading}>Your history is in</Text>
+            <Text style={styles.emptyText}>
+              Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
+              {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
+            </Text>
+            {/* Said rather than hidden. An export carries names and dates and nothing
+                else, so these shows have no episode lists, no artwork and no air dates
+                until they are matched against a metadata provider — which is not built
+                yet. "All caught up" instead would be a lie that reads as a broken app. */}
+            <Text style={styles.emptyText}>
+              They are in your library under the names your export carried. Matching them
+              to artwork and episode lists is not built yet, so Up Next will stay quiet
+              about them until it is — your history is safe in the meantime, and Stats
+              already counts it.
+            </Text>
+            <Pressable
+              style={styles.cta}
+              onPress={() => setImported(undefined)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.ctaText}>Continue</Text>
+            </Pressable>
+          </View>
+        ) : entries.length === 0 && libraryCount === 0 ? (
+          /**
+           * The first minute.
+           *
+           * This app exists because TV Time shut down, and what it said to someone
+           * arriving with years of history in a zip was "Nothing tracked yet" and a
+           * search box — the import that would have rescued all of it two taps away
+           * behind a tab called Data. So the migration is the offer, and searching is
+           * the alternative rather than the other way round.
+           */
+          <View style={styles.empty}>
+            <Text style={styles.firstHeading}>Bring your history with you</Text>
+            <Text style={styles.emptyText}>
+              TV Time is gone. If you got your data out — or pulled it off your phone —
+              this reads it and picks up where you left off.
+            </Text>
+            <ImportFormats />
+            <ImportFiles label="Import from TV Time" onImported={setImported} />
+            <Text style={styles.emptyText}>
+              Nothing to import? Search for a show and start from there.
+            </Text>
+            <Link href="/search" asChild>
+              <Pressable style={styles.cta} accessibilityRole="link">
+                <Text style={styles.ctaText}>Find something to watch</Text>
+              </Pressable>
+            </Link>
+          </View>
+        ) : entries.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              {libraryCount === 0
-                ? 'Nothing tracked yet.'
+              {episodeCount === 0
+                ? 'Nothing here yet. The shows in your library came from an import and have no episode lists until they are matched to a provider.'
                 : 'All caught up — nothing has aired that you have not seen.'}
             </Text>
             <Link href="/search" asChild>
@@ -180,7 +239,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 8 },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
-  empty: { gap: 20, paddingTop: 8 },
+  empty: { gap: 14, paddingTop: 8 },
+  firstHeading: { color: theme.text, fontSize: 20, fontWeight: '700' },
   emptyText: { color: theme.muted, fontSize: 16 },
   cta: {
     alignSelf: 'flex-start',

@@ -111,7 +111,24 @@ try {
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=Up Next', { timeout: 20000 });
   check('app boots and binds SQLite', true);
-  check('empty state explains itself', (await text()).includes('Nothing tracked yet.'));
+  // The first minute. This app exists because TV Time shut down, and what it said to
+  // someone arriving with years of history was "Nothing tracked yet" and a search box,
+  // with the import that would have rescued all of it behind a tab called Data.
+  const firstRun = await text();
+  check(
+    'the first screen offers the migration, not a search box',
+    /Bring your history with you/.test(firstRun) && /Import from TV Time/.test(firstRun),
+    firstRun.slice(0, 90),
+  );
+  // Three different things arrive under the name "my TV Time data", and someone holding
+  // one of them has to see their own case named before they will believe it works.
+  for (const format of ['GDPR zip', 'CSV', 'DioCache.db']) {
+    check(`and names the ${format}`, firstRun.includes(format));
+  }
+  check(
+    'searching is still offered, as the alternative',
+    /Find something to watch/.test(firstRun),
+  );
   await page.screenshot({ path: OUT + '1-empty.png' });
 
   // --- Search and track ------------------------------------------------------

@@ -3,7 +3,14 @@ import { db } from './db';
 import { applyWal } from './sqliteWal';
 import { parseDioCache, type DioLibrary } from './diocacheParse';
 import { tvtimeEpisodeId, tvtimeMovieId, tvtimeSeriesId } from './tvtimeRescue';
-import type { LibraryItem, Rating, WatchEvent, WatchlistItem } from '../domain/types';
+import type {
+  CachedTitle,
+  InternalId,
+  LibraryItem,
+  Rating,
+  WatchEvent,
+  WatchlistItem,
+} from '../domain/types';
 
 /**
  * Recover a TV Time library straight from `DioCache.db`.
@@ -88,6 +95,9 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
   const watchlist: WatchlistItem[] = [];
   const ratings: Rating[] = [];
   const libraryItems: LibraryItem[] = [];
+  /** Names and library rows implied by the history — see tvtimeRescue for the why. */
+  const titles = new Map<InternalId, CachedTitle>();
+  const derived = new Map<InternalId, LibraryItem>();
 
   const DAY = 86_400_000;
   const dateOf = (value?: string) => {
@@ -134,6 +144,9 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
 
   for (const show of library.series) {
     const titleId = tvtimeSeriesId(show.id, show.title);
+    // fetchedAt of 0 marks this stale from the moment it is written, so the first
+    // screen that asks a provider about the show replaces the placeholder.
+    titles.set(titleId, { id: titleId, kind: 'show', name: show.title, fetchedAt: 0 });
     libraryItems.push({
       titleId,
       kind: 'show',
@@ -162,6 +175,18 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
     const times = Math.max(1, episode.timesWatched);
     const watchedAt = dateOf(episode.seenDate);
 
+    // A cache can hold episodes of a show whose own row did not survive, and without
+    // this the history for it lands under an ID with no name and nothing tracking it.
+    titles.set(seriesId, { id: seriesId, kind: 'show', name: episode.show, fetchedAt: 0 });
+    derived.set(seriesId, {
+      titleId: seriesId,
+      kind: 'show',
+      // Watching, not completed: the cache says what was seen, never whether the show
+      // has finished, and completed would drop a live one out of Up Next for good.
+      status: 'watching',
+      addedAt: Date.now(),
+    });
+
     for (let i = 0; i < times; i++) {
       watches.push({
         id: `${targetId}#${i}`,
@@ -177,12 +202,42 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
     report.rewatches += times - 1;
   }
 
-  await db.transaction('rw', db.watches, db.watchlist, db.ratings, db.library, async () => {
-    if (watches.length) await db.watches.bulkPut(watches);
-    if (watchlist.length) await db.watchlist.bulkPut(watchlist);
-    if (ratings.length) await db.ratings.bulkPut(ratings);
-    if (libraryItems.length) await db.library.bulkPut(libraryItems);
-  });
+  await db.transaction(
+    'rw',
+    db.watches,
+    db.watchlist,
+    db.ratings,
+    db.library,
+    db.titles,
+    async () => {
+      if (watches.length) await db.watches.bulkPut(watches);
+      if (watchlist.length) await db.watchlist.bulkPut(watchlist);
+      if (ratings.length) await db.ratings.bulkPut(ratings);
+      // An explicit series row is a statement about status and wins over one derived
+      // from a watch.
+      if (libraryItems.length) await db.library.bulkPut(libraryItems);
+
+      // Added where absent, never over the top: re-importing must not reset a status
+      // somebody has changed, or replace a title a provider has since filled in.
+      const missingLibrary: LibraryItem[] = [];
+      for (const [titleId, item] of derived) {
+        if (libraryItems.some((row) => row.titleId === titleId)) continue;
+        if (await db.library.get(titleId)) continue;
+        missingLibrary.push(item);
+      }
+      if (missingLibrary.length) {
+        await db.library.bulkPut(missingLibrary);
+        report.library += missingLibrary.length;
+      }
+
+      const missingTitles: CachedTitle[] = [];
+      for (const [id, title] of titles) {
+        if (await db.titles.get(id)) continue;
+        missingTitles.push(title);
+      }
+      if (missingTitles.length) await db.titles.bulkPut(missingTitles);
+    },
+  );
 
   return report;
 }

@@ -1,7 +1,14 @@
 import { db } from './db';
 import { makeId } from '../domain/types';
 import { parseCsv } from './transfer';
-import type { InternalId, LibraryItem, Rating, WatchEvent, WatchlistItem } from '../domain/types';
+import type {
+  CachedTitle,
+  InternalId,
+  LibraryItem,
+  Rating,
+  WatchEvent,
+  WatchlistItem,
+} from '../domain/types';
 
 /**
  * Import from the TV Time rescue tool.
@@ -150,6 +157,21 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
   const ratings: Rating[] = [];
   const library: LibraryItem[] = [];
 
+  /**
+   * What was watched is also what is being tracked, and what it is called.
+   *
+   * Neither of these was written before, and the effect was that a successful import
+   * left the app looking untouched: the watches were all there, and Up Next still said
+   * "Nothing tracked yet" because nothing had been added to the library, over a set of
+   * IDs with no names attached. The history was rescued and invisible.
+   *
+   * A watched episode means the show belongs in your library; the name from the export
+   * is the only name anyone has until a provider is asked. Both are recorded here and
+   * neither overwrites anything already known — see the transaction at the bottom.
+   */
+  const titles = new Map<InternalId, CachedTitle>();
+  const derived = new Map<InternalId, LibraryItem>();
+
   for (const row of rows.slice(1)) {
     if (file === 'episodes') {
       const show = cell(row, 'show')?.trim();
@@ -169,6 +191,20 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
 
       const seriesId = tvtimeSeriesId(showId, show);
       const targetId = tvtimeEpisodeId(episodeId, show, season, number);
+
+      // fetchedAt of 0 marks this as stale from the moment it is written, so the first
+      // screen that asks a provider about this show replaces the placeholder rather
+      // than trusting it.
+      titles.set(seriesId, { id: seriesId, kind: 'show', name: show, fetchedAt: 0 });
+      derived.set(seriesId, {
+        titleId: seriesId,
+        kind: 'show',
+        // Watching, not completed: an export says what was seen, never whether the
+        // show is finished. Marking a live show completed would drop it out of Up Next
+        // permanently, which is the one mistake that cannot be noticed.
+        status: 'watching',
+        addedAt: Date.now(),
+      });
 
       const watchedAt = parseDate(cell(row, 'seen_date'));
       // times_watched carries rewatches. Recording only one would quietly discard
@@ -203,6 +239,13 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
       const runtime = parseNumber(cell(row, 'runtime_min'));
 
       if (parseBool(cell(row, 'watched'))) {
+        titles.set(titleId, { id: titleId, kind: 'film', name: title, runtimeMin: runtime, fetchedAt: 0 });
+        derived.set(titleId, {
+          titleId,
+          kind: 'film',
+          status: 'completed',
+          addedAt: Date.now(),
+        });
         const times = Math.max(1, (parseNumber(cell(row, 'rewatch_count')) ?? 0) + 1);
         const watchedAt = parseDate(cell(row, 'watched_at'));
         for (let i = 0; i < times; i++) {
@@ -246,6 +289,8 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
       const archived = parseBool(cell(row, 'archived'));
       const upToDate = parseBool(cell(row, 'up_to_date'));
 
+      titles.set(titleId, { id: titleId, kind: 'show', name: title, fetchedAt: 0 });
+
       library.push({
         titleId,
         kind: 'show',
@@ -263,12 +308,43 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
     }
   }
 
-  await db.transaction('rw', db.watches, db.watchlist, db.ratings, db.library, async () => {
-    if (watches.length) await db.watches.bulkPut(watches);
-    if (watchlist.length) await db.watchlist.bulkPut(watchlist);
-    if (ratings.length) await db.ratings.bulkPut(ratings);
-    if (library.length) await db.library.bulkPut(library);
-  });
+  await db.transaction(
+    'rw',
+    db.watches,
+    db.watchlist,
+    db.ratings,
+    db.library,
+    db.titles,
+    async () => {
+      if (watches.length) await db.watches.bulkPut(watches);
+      if (watchlist.length) await db.watchlist.bulkPut(watchlist);
+      if (ratings.length) await db.ratings.bulkPut(ratings);
+      // An explicit `series` row is a statement about status and wins; the rows
+      // derived from watches are a guess and must not overwrite one.
+      if (library.length) await db.library.bulkPut(library);
+
+      // Added where absent, never over the top. Re-importing the same export must not
+      // reset a status somebody has since changed, and must not replace a title a
+      // provider has since filled in with the bare name from a CSV.
+      const missingLibrary: LibraryItem[] = [];
+      for (const [titleId, item] of derived) {
+        if (library.some((row) => row.titleId === titleId)) continue;
+        if (await db.library.get(titleId)) continue;
+        missingLibrary.push(item);
+      }
+      if (missingLibrary.length) {
+        await db.library.bulkPut(missingLibrary);
+        report.library += missingLibrary.length;
+      }
+
+      const missingTitles: CachedTitle[] = [];
+      for (const [id, title] of titles) {
+        if (await db.titles.get(id)) continue;
+        missingTitles.push(title);
+      }
+      if (missingTitles.length) await db.titles.bulkPut(missingTitles);
+    },
+  );
 
   if (report.skipped) {
     report.warnings.push(`${report.skipped} row(s) had no title and were skipped.`);

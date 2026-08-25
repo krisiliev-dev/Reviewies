@@ -20,7 +20,71 @@ beforeEach(async () => {
     db.watchlist.clear(),
     db.ratings.clear(),
     db.library.clear(),
+    db.titles.clear(),
   ]);
+});
+
+/**
+ * What the import leaves behind, from the app's point of view rather than the data's.
+ *
+ * The watches all landed and nothing else did: no library rows, no names. So a
+ * successful rescue of somebody's entire history left the app saying "Nothing tracked
+ * yet" over a set of IDs with no titles attached, which is indistinguishable from an
+ * import that silently failed. Watching an episode of a show means the show belongs in
+ * your library, and the name in the export is the only name anyone has until a provider
+ * is asked.
+ */
+describe('what the app can show afterwards', () => {
+  it('puts a show you have watched into your library', async () => {
+    const csv = `${EPISODES_HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`;
+    const report = await importRescueCsv(csv);
+
+    expect(await db.library.count()).toBe(1);
+    expect(report.library).toBe(1);
+    const [item] = await db.library.toArray();
+    // Watching, not completed: an export says what was seen, never whether the show has
+    // finished. Completed would drop a live show out of Up Next for good.
+    expect(item.status).toBe('watching');
+  });
+
+  it('keeps the name, so the library is not a list of identifiers', async () => {
+    const csv = `${EPISODES_HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`;
+    await importRescueCsv(csv);
+
+    const [title] = await db.titles.toArray();
+    expect(title.name).toBe('The Long Dark');
+    // Stale from the moment it is written, so the first screen that asks a provider
+    // about this show replaces the placeholder rather than trusting it.
+    expect(title.fetchedAt).toBe(0);
+  });
+
+  it('records a film the same way', async () => {
+    const csv = `${MOVIES_HEADER}\nQuiet Harbour,2024,Drama,True,False,2026-02-01,0,8,104,tt1,`;
+    await importRescueCsv(csv);
+
+    const [item] = await db.library.toArray();
+    expect(item.kind).toBe('film');
+    expect(item.status).toBe('completed');
+    expect((await db.titles.toArray())[0].name).toBe('Quiet Harbour');
+  });
+
+  it('does not overwrite what is already known', async () => {
+    const csv = `${EPISODES_HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`;
+    await importRescueCsv(csv);
+
+    const [item] = await db.library.toArray();
+    await db.library.put({ ...item, status: 'dropped' });
+    await db.titles.put({ ...(await db.titles.toArray())[0], name: 'The Long Dark (2021)', fetchedAt: 1 });
+
+    // Re-importing the same export is a normal thing to do — twice from two devices,
+    // or after adding a second file. It must not reset a status somebody has changed
+    // or replace a title a provider has since filled in.
+    await importRescueCsv(csv);
+
+    expect((await db.library.toArray())[0].status).toBe('dropped');
+    expect((await db.titles.toArray())[0].name).toBe('The Long Dark (2021)');
+    expect(await db.library.count()).toBe(1);
+  });
 });
 
 describe('file detection', () => {

@@ -5,6 +5,8 @@ import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/r
 import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
 import { CatchUp } from '../ui/CatchUp';
+import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
+import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 
@@ -28,23 +30,98 @@ export function UpNext() {
    * vanish mid-confirmation, leaving no sign that anything happened.
    */
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
+  const [imported, setImported] = useState<ImportReport>();
+  const episodeCount = useLiveQuery(() => db.episodes.count(), [], undefined);
 
   if (entries === undefined) {
     return <p className="p-6 text-muted">Loading…</p>;
   }
 
-  if (entries.length === 0) {
+  /**
+   * Just imported.
+   *
+   * Held until dismissed rather than swapped out the moment the library is no longer
+   * empty. The import puts shows in the library, which used to change what this screen
+   * renders mid-write and take the result with it — you got no confirmation that the
+   * thing you came here to do had worked.
+   */
+  if (imported) {
+    return (
+      <div className="flex flex-col gap-3 p-6">
+        <h1 className="text-2xl font-semibold">Your history is in</h1>
+        <p>
+          Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
+          {imported.watchlist > 0 && `, ${imported.watchlist} watchlist items`}.
+        </p>
+        {/* Said rather than hidden. An export carries names and dates and nothing else,
+            so these shows have no episode lists, no artwork and no air dates until they
+            are matched against a metadata provider — which is not built yet. Telling
+            someone their library is "all caught up" instead would be a lie that makes
+            the app look broken rather than unfinished. */}
+        <p className="text-muted">
+          They are in your library under the names your export carried. Matching them to
+          artwork and episode lists is not built yet, so Up Next will stay quiet about
+          them until it is — your history is safe in the meantime, and Stats already
+          counts it.
+        </p>
+        <button
+          onClick={() => setImported(undefined)}
+          className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  }
+
+  // Caught up is a different screen from never started, and only one of them is
+  // somebody's first minute with the app.
+  if (entries.length === 0 && libraryCount !== 0) {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Up Next</h1>
         <p className="text-muted">
-          {libraryCount === 0
-            ? 'Nothing tracked yet.'
+          {episodeCount === 0
+            ? 'Nothing here yet. The shows in your library came from an import and have no episode lists until they are matched to a provider.'
             : 'All caught up — nothing has aired that you have not seen.'}
         </p>
         <Link
           to="/search"
           className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+        >
+          Find something to watch
+        </Link>
+      </div>
+    );
+  }
+
+  /**
+   * The first minute.
+   *
+   * This app exists because TV Time shut down, and for a long time the first thing it
+   * said to somebody arriving with years of history in a zip file was "Nothing tracked
+   * yet" and a search box. The import that would have rescued all of it was two taps
+   * away on a tab called Data — a word nobody in that position would think to open.
+   *
+   * So the migration is the offer, and searching is the alternative rather than the
+   * other way round.
+   */
+  if (entries.length === 0) {
+    return (
+      <div className="flex flex-col gap-3 p-6">
+        <h1 className="text-2xl font-semibold">Bring your history with you</h1>
+        <p className="text-muted">
+          TV Time is gone. If you got your data out — or pulled it off your phone — this
+          reads it and picks up where you left off.
+        </p>
+        <ImportFormats />
+        <ImportFiles label="Import from TV Time" onImported={setImported} />
+        <p className="mt-2 px-1 text-sm text-muted">
+          Nothing to import? Search for a show and start from there.
+        </p>
+        <Link
+          to="/search"
+          className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
         >
           Find something to watch
         </Link>
