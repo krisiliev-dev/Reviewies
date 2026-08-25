@@ -849,3 +849,35 @@ and `reactions_sample` present, the SPA rewrite and both cache-control rules int
 a prebuilt deploy that could easily have dropped them.
 
 Both are now in `docs/deploying.md`, next to the command, rather than here.
+
+### 6.15 The check that would have caught it
+
+§6.14 ends with the deployed site fixed and the procedure written down. Writing a
+procedure down is the weakest available fix: it converts "nobody knew" into "nobody
+remembered", and the failure it was addressing was three weeks long precisely because
+there was no moment at which anyone would think to look.
+
+So two commands now exist.
+
+`npm run deploy:web` does the sequence — build, stage outside the repository, carry
+`vercel.json`'s serving rules across, deploy, and then confirm the site is serving the
+bundle it just built rather than trusting a READY. Each of those steps was something to
+remember, and one of them (the rewrites) fails in a way that only shows up on a deep link
+somebody else follows.
+
+`npm run whats-live` is the more useful of the two, because it answers a question rather
+than performing an action: *is anything deployed behind the repository?* Web bundle by
+content-hashed filename, migrations against a ledger, edge functions by slug. Non-zero
+exit if anything is behind, so it can gate a release.
+
+The migration ledger is new, and it is the part that makes the schema question answerable
+at all. `apply-migrations.mjs` now records each file with a SHA of its contents. The hash
+rather than just the name matters: a migration **edited after being applied** is applied
+*and* wrong, and reads as perfectly healthy on every other check there is.
+
+Both checks were tested against a deliberately broken state before being believed — a
+migration added but not applied, and one edited after applying. Both were caught, the
+exit code was 1, and the exit code with everything current was 0. That verification step
+is not diligence for its own sake: three separate times this week, a test written to catch
+something specific passed against the unfixed code, and a monitoring script that always
+says "fine" is the same failure with a longer blast radius.

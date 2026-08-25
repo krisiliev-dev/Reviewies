@@ -13,6 +13,11 @@ The token is a **personal access token** from
 not a project API key — project keys cannot run DDL. Migrations are idempotent, so
 re-running is safe. Pasting them into the dashboard's SQL Editor works too.
 
+Applying also records each file, with a hash of its contents, in a `schema_migrations`
+table. Nothing here needs that to decide what to run — the migrations are idempotent — but
+it is what makes `npm run whats-live` able to answer whether the deployed schema matches
+the repository, which was unanswerable before and stayed unasked for weeks.
+
 ### What each one does
 
 Listed because "the schema is deployed" is not a fact anyone can check by looking, and

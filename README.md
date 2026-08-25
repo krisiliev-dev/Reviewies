@@ -121,13 +121,22 @@ Then schedule the sender — see [`supabase/README.md`](supabase/README.md).
 `vercel.json` and `netlify.toml` are set up so importing the repository deploys it with
 no build settings to configure. Add the `VITE_` variables above and it is live.
 
-The existing Vercel project has **no Git connection**, so nothing deploys on push and
-every release is a manual step — which is exactly how the deployed site came to sit
-several weeks behind the repository without anything reporting a problem. See
-[docs/deploying.md](docs/deploying.md) for the command that actually works, why deploying
-from inside the checkout fails with an error that names the wrong cause, and how to ask
-the live site which bundle it is serving. It also covers installing it on an iPhone —
-and why that matters more than it sounds.
+The existing Vercel project has **no Git connection**, so nothing deploys on push:
+
+```bash
+VERCEL_TOKEN=…                                       npm run deploy:web
+SUPABASE_ACCESS_TOKEN=sbp_… SUPABASE_PROJECT_REF=…   npm run whats-live
+```
+
+The first builds, deploys, and then checks the site is serving the bundle it just built.
+The second compares everything deployed against the repository — web bundle, migrations,
+edge functions — and exits non-zero if anything is behind. It exists because the deployed
+site once sat three weeks behind without anything reporting a problem, not because a
+warning was ignored but because there was no way to ask.
+
+[docs/deploying.md](docs/deploying.md) has the reasoning behind each step, including why
+deploying from inside the checkout fails with an error naming the wrong cause. It also
+covers installing it on an iPhone — and why that matters more than it sounds.
 
 ### Tests
 

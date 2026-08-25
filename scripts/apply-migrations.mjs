@@ -17,6 +17,7 @@
  * is safe.
  */
 import { readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -58,10 +59,41 @@ async function runSql(query) {
   }
 }
 
+/**
+ * A ledger of what has been applied.
+ *
+ * Migrations here are idempotent, so re-running everything is safe and this is not
+ * needed to decide *what* to run. It is needed to answer a question nothing could
+ * answer before: whether the deployed schema matches the repository. That question went
+ * unasked for weeks while the deployed web app drifted three versions behind, and the
+ * reason nobody noticed is that there was no way to look.
+ *
+ * The hash is of the file's contents, so editing a migration after applying it shows up
+ * as drift rather than as agreement — which is the case most likely to be wrong and
+ * least likely to be noticed.
+ */
+await runSql(`
+  create table if not exists schema_migrations (
+    filename    text primary key,
+    sha256      text not null,
+    applied_at  timestamptz not null default now()
+  );
+  alter table schema_migrations enable row level security;
+`);
+
+const sha = (text) => createHash('sha256').update(text).digest('hex');
+
 for (const file of files) {
   process.stdout.write(`applying ${file} ... `);
   try {
-    await runSql(readFileSync(join(dir, file), 'utf8'));
+    const sql = readFileSync(join(dir, file), 'utf8');
+    await runSql(sql);
+    await runSql(`
+      insert into schema_migrations (filename, sha256, applied_at)
+      values ('${file}', '${sha(sql)}', now())
+      on conflict (filename) do update
+        set sha256 = excluded.sha256, applied_at = now();
+    `);
     console.log('ok');
   } catch (err) {
     console.log('FAILED');

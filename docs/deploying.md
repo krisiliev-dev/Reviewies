@@ -30,6 +30,17 @@ deployments start failing silently, check which scope they are going to first.
 
 ### Redeploying
 
+```bash
+VERCEL_TOKEN=… npm run deploy:web
+```
+
+That is the whole thing: it builds, stages the output outside the repository, carries the
+serving rules across, deploys, and then checks the site is actually serving the bundle it
+just built. The rest of this section is why each of those steps exists — worth reading
+once, and not worth remembering, which is the point of the script.
+
+### What the script is working around
+
 Deploying from inside the checkout **fails**, and it fails in a way worth writing down
 because the error is nowhere near the cause. Vercel attributes a CLI deployment to the
 git commit author it finds, and this repository's commits are authored by
@@ -64,6 +75,22 @@ rewrite every deep link 404s, because a static host has no `/stats` file to serv
 Two things about this environment: the Vercel CLI uses Node's built-in `fetch`, which
 ignores `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` is set, and the CA bundle needs
 `NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt`.
+
+### Checking whether anything has drifted
+
+```bash
+SUPABASE_ACCESS_TOKEN=sbp_… SUPABASE_PROJECT_REF=… npm run whats-live
+```
+
+Compares the deployed everything against the repository: the web bundle by its
+content-hashed filename, migrations against a ledger recording a hash of each file as it
+was applied, and edge functions by slug. It exits non-zero when anything is behind, so it
+can gate a release.
+
+The migration ledger is what makes "is the schema current" answerable at all — and
+because it stores a hash of the file rather than just its name, a migration edited *after*
+being applied reads as drift rather than as agreement. That is the case most likely to be
+wrong and least likely to be noticed.
 
 ### Verifying, rather than assuming
 
