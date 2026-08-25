@@ -147,6 +147,51 @@ try {
   check('empty state explains itself', (await page.getByText('Nothing tracked yet.').count()) > 0);
   await page.screenshot({ path: OUT + '01-empty.png' });
 
+  // --- Reaching things without a pointer ---------------------------------------
+  // The navigation is the last thing in the document, which is right for a thumb and
+  // wrong for a keyboard: a season of eighteen episodes puts fifty-four controls in
+  // front of it.
+  await page.keyboard.press('Tab');
+  const firstStop = await page.evaluate(() => document.activeElement?.textContent?.trim());
+  check('the first tab stop is a way past the page', firstStop === 'Skip to navigation', firstStop);
+
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Tab');
+  check(
+    'and it lands on the navigation',
+    await page.evaluate(() => !!document.activeElement?.closest('nav')),
+    await page.evaluate(() => document.activeElement?.textContent?.trim() ?? ''),
+  );
+
+  // A focus ring that cannot be seen is the same as no focus ring. The browser's
+  // default computed to rgb(16, 16, 16) against a #0b0b0f background — a contrast of
+  // about 1.03 — so every control in this app was reachable and none of them showed
+  // where you were.
+  const ring = await page.evaluate(() => {
+    const style = getComputedStyle(document.activeElement);
+    const rgb = (value) => value.match(/\d+/g).slice(0, 3).map(Number);
+    const lum = (c) => {
+      const [r, g, b] = c
+        .map((v) => v / 255)
+        .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const behind = getComputedStyle(document.body).backgroundColor;
+    const [hi, lo] = [lum(rgb(style.outlineColor)), lum(rgb(behind))].sort((a, b) => b - a);
+    return {
+      width: parseFloat(style.outlineWidth),
+      style: style.outlineStyle,
+      contrast: (hi + 0.05) / (lo + 0.05),
+    };
+  });
+  check(
+    'the focused control is visibly ringed',
+    // 3:1 and 2px: the thresholds WCAG sets for a non-text indicator.
+    ring.contrast >= 3 && ring.width >= 2 && ring.style !== 'none',
+    `${ring.style} ${ring.width}px at ${ring.contrast.toFixed(2)}:1`,
+  );
+
   // --- Is this build signed in to anything? -----------------------------------
   //
   // Several checks below are about what an account-gated control does, and the answer
@@ -355,6 +400,44 @@ try {
   );
   await audit('the catch-up sheet', 4);
   await page.screenshot({ path: OUT + '15-catchup.png' });
+
+  // --- The sheet, without a pointer --------------------------------------------
+  // Naming a control does not mean anyone can reach it. This sheet was openable,
+  // readable and correctly labelled, and a keyboard opening it was left standing
+  // outside: focus stayed on the button behind, Tab walked into the page underneath,
+  // and Escape did nothing.
+  const inDialog = () =>
+    page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+
+  check('opening the sheet moves focus into it', await inDialog());
+
+  // Ten is more stops than the sheet holds at this step, so at least one wrap happens.
+  let escaped = false;
+  for (let i = 0; i < 10; i++) {
+    await page.keyboard.press('Tab');
+    if (!(await inDialog())) escaped = true;
+  }
+  check('Tab stays inside the sheet', !escaped, escaped ? 'focus left the dialog' : '10 stops');
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(400);
+  check(
+    'Escape closes the sheet',
+    (await page.locator('[role="dialog"]').count()) === 0,
+  );
+  check(
+    'and focus goes back to the button that opened it',
+    await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') === 'Catch up on The Long Dark',
+    ),
+    await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName,
+    ),
+  );
+
+  // Reopen for the rest of the section, which drives it by pointer.
+  await page.getByRole('button', { name: 'Catch up on The Long Dark' }).click();
+  await page.waitForSelector('text=/^Season$/', { timeout: 5000 });
 
   await page.getByRole('button', { name: 'Season: 2' }).click();
   await page.waitForSelector('text=/Last episode you watched in season 2/', { timeout: 5000 });

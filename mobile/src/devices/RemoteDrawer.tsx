@@ -74,6 +74,13 @@ export function RemoteDrawer() {
         // the closed drawer's thirteen keys sat in the reading order the whole time. This
         // one prop maps to both of them natively and to aria-hidden on the web, which is
         // the only place the bug existed. The smoke suite now checks it.
+        //
+        // Not fixed, deliberately: under react-native-web the closed drawer's keys are
+        // still in the Tab order, because React Native has no `inert` and taking them
+        // out means threading a `focusable` prop through every control in the panel.
+        // That build is a test artifact — only app/dist is deployed — and on a device
+        // there is no Tab key, so this would be work for nobody. The equivalent bug in
+        // the web app, which people do use, is fixed there with `inert`.
         pointerEvents={open ? 'auto' : 'none'}
         aria-hidden={!open}
       >

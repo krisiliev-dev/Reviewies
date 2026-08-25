@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
+import { useDialog } from '../ui/useDialog';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -54,15 +55,9 @@ export function RemoteDrawer() {
   const [open, setOpen] = useState(false);
   const bridge = useBridge();
 
-  // Escape closes it, like any other drawer.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  // Escape, focus in on open, focus back to the tab on close, and nothing behind it
+  // reachable by Tab while it is up.
+  const drawer = useDialog<HTMLElement>(open, () => setOpen(false));
 
   // Nothing configured means no tab at all — an inert control would be worse than
   // no control.
@@ -75,17 +70,22 @@ export function RemoteDrawer() {
 
   return (
     <>
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="Open remote"
-          className="fixed top-1/2 right-0 z-40 -translate-y-1/2 rounded-l-xl bg-surface-2/90 py-4 pr-1 pl-1.5 text-muted backdrop-blur"
-        >
-          <span aria-hidden="true" className="block text-lg leading-none">
-            ⇤
-          </span>
-        </button>
-      )}
+      {/* Mounted whether or not the drawer is open, and merely hidden while it is.
+          Unmounting it destroyed the element focus was supposed to come back to: by
+          the time the drawer closed there was nothing left to return focus to, so it
+          fell to the body and a keyboard was dropped at the top of the page. */}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Open remote"
+        inert={open}
+        className={`fixed top-1/2 right-0 z-40 -translate-y-1/2 rounded-l-xl bg-surface-2/90 py-4 pr-1 pl-1.5 text-muted backdrop-blur transition-opacity ${
+          open ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <span aria-hidden="true" className="block text-lg leading-none">
+          ⇤
+        </span>
+      </button>
 
       {open && (
         <div
@@ -96,11 +96,18 @@ export function RemoteDrawer() {
       )}
 
       <aside
+        ref={drawer}
         // Always mounted so the connection is not torn down each time it closes.
-        className={`safe-top safe-bottom fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-edge bg-ink p-4 transition-transform duration-200 ${
+        className={`safe-top safe-bottom fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-edge bg-ink p-4 transition-transform duration-200 outline-none ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
-        aria-hidden={!open}
+        role="dialog"
+        aria-modal={open}
+        tabIndex={-1}
+        // `inert` rather than `aria-hidden`: it was hidden from the reading order and
+        // left in the tab order, so a keyboard walked into a dozen remote buttons that
+        // were sitting off the right-hand edge of the screen.
+        inert={!open}
         aria-label="Remote control"
       >
         <div className="flex items-center justify-between">

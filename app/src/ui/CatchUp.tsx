@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
+import { useDialog } from './useDialog';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -23,6 +24,7 @@ export function CatchUp({
   seriesName: string;
   onDone: () => void;
 }) {
+  const dialog = useDialog<HTMLDivElement>(true, onDone);
   const [seasons, setSeasons] = useState<Array<{ season: number; episodes: number }>>();
   const [season, setSeason] = useState<number>();
   const [marked, setMarked] = useState<number>();
@@ -48,10 +50,12 @@ export function CatchUp({
       {/* The backdrop dismisses on click, which is what a sheet does; the sheet itself
           is the dialog, and Cancel is the route to the same place without a pointer. */}
       <div
+        ref={dialog}
         role="dialog"
         aria-modal="true"
         aria-label={`Catch up on ${seriesName}`}
-        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-3xl bg-surface p-4"
+        tabIndex={-1}
+        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-3xl bg-surface p-4 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-baseline justify-between gap-3">

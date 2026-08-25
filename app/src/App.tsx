@@ -28,6 +28,17 @@ function Shell() {
 
   return (
     <div className="flex h-full flex-col">
+      {/* The navigation is at the end of the document, which is right for a phone and
+          wrong for a keyboard: a season of eighteen episodes puts fifty-four controls
+          between the top of the page and the tab bar. Visible only when focused. */}
+      {!immersive && (
+        <a
+          href="#tabs"
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-50 focus-visible:rounded-lg focus-visible:bg-surface-2 focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
+        >
+          Skip to navigation
+        </a>
+      )}
       <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-20'}>
         <Routes>
           <Route path="/" element={<UpNext />} />
@@ -63,7 +74,14 @@ const TABS = [
 
 function TabBar() {
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink/95 backdrop-blur">
+    <nav
+      id="tabs"
+      // Focusable only as a jump target, so the skip link lands here rather than
+      // merely scrolling and leaving focus where it was.
+      tabIndex={-1}
+      aria-label="Sections"
+      className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink/95 backdrop-blur"
+    >
       <ul className="mx-auto flex max-w-lg">
         {TABS.map((tab) => (
           <li key={tab.to} className="flex-1">
