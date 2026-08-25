@@ -1687,11 +1687,54 @@ that escapes an effect.
 Written down as a correction rather than quietly fixed, because the caveat had already
 gone into the record as a limit of the platform when it was a limit of how hard I looked.
 
+### 6.37 Reading the record back, and checking it
+
+Two sprints running had found something written here was wrong. §6.35 recorded a limit of
+React Native that turned out to be a limit of how hard I looked, and a commit said both
+error boundaries were proven against a real build when one of them had not been. So this
+is §6.27's question — what does this claim out loud — pointed at the record instead of
+the app's copy.
+
+Seven checkable, load-bearing claims, run rather than reasoned about. All seven held.
+
+- **"Fifty-odd places start async work without catching"** (§6.35). Fifty-three, by the
+  same grep that produced the original number. A looser one says seventy, which is worth
+  noting only because a re-count with a different query is not a check.
+- **"The phone's comments screen reaches its sealed state in the smoke, so the composer
+  has never rendered there"** (§6.29). The suite mentions the sealed state once and the
+  attach control not at all.
+- **"Text on the phone export renders at a fixed size whatever is asked of it"** (§6.21).
+  The one worth the most, because it is a platform limit that excuses a missing
+  accessibility test — the same shape as the caveat §6.36 had to correct. Measured: a
+  heading is 30px with the root font at 16px and 30px with it at 32px. React Native's
+  styles compile to a class with a pixel value, and nothing reaches them.
+- **"A plain object appended to a browser FormData goes out as the string
+  `[object Object]`"** (§6.29). It does, exactly.
+- **"The extension's site selectors have never met a real streaming site"** (§7). They are
+  still there to have not met one — `adapters.ts` and `content.ts` both still query the
+  document.
+- **"The live suites need a service key this checkout has none of"** (§7), and **"the
+  deploy needs a Vercel token that is not in this container"**. Neither is in `.env`, and
+  `npm run whats-live` reports the site still serving an older bundle.
+
+One claim in §6.17 was **not** checked and should not be read as though it were: that iOS
+has no public API for acting as a Bluetooth HID peripheral, which is the reason the remote
+works over Wi-Fi. It is a statement about Apple's platform that cannot be settled from
+inside this container, and it is load-bearing for a whole subsystem's design. Named here
+so the next person knows which of these is reasoning and which is measurement.
+
+Nothing needed correcting, which is a different result from the last two sprints and is
+worth recording as such rather than turning into a finding. What the exercise is for is
+the ratio: seven checks, seven held, one honestly unverifiable — and the two that failed
+last time were both found the same way, by running the thing rather than re-reading it.
+
 ---
 
 ## 7. What is still not known
 
-Unchanged from §6 and worth restating in one place, because the list has not shortened:
+Unchanged from §6 and worth restating in one place, because the list has not shortened.
+Every item below was checked rather than carried forward — see §6.37 for what that meant
+and which single claim in this document could not be checked at all:
 
 - **Nothing has run on a physical device.** The phone's smoke suite drives the
   react-native-web export, which is a real build and not a real phone. `getExpoPushTokenAsync`
