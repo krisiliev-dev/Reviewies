@@ -1,10 +1,19 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Stack } from 'expo-router';
 import { pairWal, importArchive, importArchiveEntry } from '@reviewies/core/data/archiveImport';
 import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
 import type { ImportReport } from '@reviewies/core/data/transfer';
+import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { radius, theme } from '../src/ui/theme';
 
 /**
@@ -22,6 +31,9 @@ export default function DataScreen() {
   const [report, setReport] = useState<ImportReport>();
   const [files, setFiles] = useState<Array<{ name: string; outcome: string }>>();
   const [busy, setBusy] = useState(false);
+  // Read once: the preference lives in the key/value store the platform binds at
+  // startup, so it is available synchronously and does not need a subscription.
+  const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
   const [error, setError] = useState<string>();
 
   async function pickAndImport() {
@@ -156,6 +168,25 @@ export default function DataScreen() {
             </View>
           )}
         </Section>
+
+        <Section heading="Watching">
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleText}>
+              <Text style={styles.toggleLabel}>Open the conversation after marking watched</Text>
+              {/* Off is offered because anyone working through several episodes wants to
+                  stay put. Catching up in bulk has its own control, which never moves. */}
+              <Text style={styles.toggleHint}>How TV Time worked. Needs an account.</Text>
+            </View>
+            <Switch
+              value={openComments}
+              onValueChange={(on) => {
+                setOpenComments(on);
+                setOpenCommentsAfterWatch(on);
+              }}
+              accessibilityLabel="Open the conversation after marking watched"
+            />
+          </View>
+        </Section>
       </ScrollView>
     </>
   );
@@ -173,6 +204,18 @@ function Section({ heading, children }: { heading: string; children: React.React
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 24, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   section: { gap: 10 },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: theme.surface,
+    borderRadius: radius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  toggleText: { flex: 1, minWidth: 0, gap: 2 },
+  toggleLabel: { color: theme.text, fontSize: 15 },
+  toggleHint: { color: theme.muted, fontSize: 13 },
   sectionHeading: {
     color: theme.muted,
     fontSize: 12,

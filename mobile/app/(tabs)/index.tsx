@@ -11,6 +11,8 @@ import * as Haptics from 'expo-haptics';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/repo';
+import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { radius, theme } from '../../src/ui/theme';
@@ -80,6 +82,17 @@ function Row({ entry }: { entry: UpNextEntry }) {
         runtimeMin: episode.runtimeMin,
       });
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // How TV Time worked, and named as a failing in two of its successors. Only when
+      // there is an account behind it — otherwise there is no conversation to open and
+      // this would be a dead end. Catching up in bulk uses its own control, which never
+      // navigates, so this cannot interrupt a run of episodes.
+      //
+      // The web has done this since it shipped; the phone, which is the platform this
+      // product is now built around, quietly did not.
+      if (openCommentsAfterWatch() && syncConfigured()) {
+        router.push(`/comments/${encodeURIComponent(episode.id)}`);
+      }
     } finally {
       setBusy(false);
     }

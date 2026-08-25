@@ -138,9 +138,14 @@ function ResultRow({ result }: { result: SearchResult }) {
         </Text>
 
         <View style={styles.actions}>
+          {/* Labelled with the title, because "Watchlist" on its own is what the tab
+              bar also says — ambiguous to a screen reader working down the page, and
+              ambiguous to anything else trying to name one particular control. */}
           <Pressable
             onPress={track}
             disabled={added === 'library'}
+            accessibilityRole="button"
+            accessibilityLabel={`Track ${result.name}`}
             style={[styles.primary, added === 'library' && styles.disabled]}
           >
             <Text style={styles.primaryText}>
@@ -150,6 +155,8 @@ function ResultRow({ result }: { result: SearchResult }) {
           <Pressable
             onPress={watchlist}
             disabled={added === 'watchlist'}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${result.name} to watchlist`}
             style={[styles.secondary, added === 'watchlist' && styles.disabled]}
           >
             <Text style={styles.secondaryText}>

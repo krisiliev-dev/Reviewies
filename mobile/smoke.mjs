@@ -78,6 +78,38 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 20000 });
   check('progress survives a reload', /S1E2\b/.test(await text()));
 
+  // --- The watchlist note ----------------------------------------------------
+  // The reason for saving something is the whole value of a watchlist — "I have ZERO
+  // memory for why they're there" is the quote the screen was built around. The phone
+  // could display a note the web had written and never write one, which is a note
+  // nobody has.
+  await page.getByText('Search', { exact: true }).first().click();
+  await page.getByPlaceholder('Shows, films, anime…').fill('hollow');
+  await page.waitForSelector('text=Hollow Crown Saga', { timeout: 20000 });
+  await page.getByLabel('Add Hollow Crown Saga to watchlist').click();
+  await page.waitForSelector('text=On watchlist', { timeout: 15000 });
+
+  await page.getByText('Watchlist', { exact: true }).first().click();
+  await page.waitForSelector('text=Add a note', { timeout: 15000 });
+  check('a watchlist note can be written on the phone', true);
+
+  await page.getByText('Add a note').first().click();
+  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam.');
+  await page.getByText('Save', { exact: true }).first().click();
+  await page.waitForTimeout(1200);
+  check(
+    'and the note survives being written',
+    (await text()).includes('Recommended by Sam.'),
+  );
+
+  // Back where the rest of this script expects to be. Leaving the app on another tab
+  // makes every later step depend on the order these blocks happen to sit in. A reload
+  // rather than a tab tap, because "Up Next" is also the heading of the screen it names
+  // and picking the wrong one of those is not a failure worth debugging twice.
+
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.waitForSelector('text=The Long Dark', { timeout: 20000 });
+
   // --- Tabs ------------------------------------------------------------------
   // Five, and no more: the web app's eight is already too many for a phone, and
   // simplicity was the loudest single finding in the research.
@@ -103,6 +135,19 @@ try {
     await page.goBack();
     await page.waitForTimeout(1000);
   }
+
+  // --- The watching preference -------------------------------------------------
+  // The web has offered this since it shipped. The phone did the opposite of what the
+  // toggle describes — it never opened the conversation — which is a worse kind of
+  // missing than an absent control, because nothing said so.
+  await page.getByText('Import from TV Time, export everything').click();
+  await page.waitForTimeout(1500);
+  check(
+    'the phone offers the open-the-conversation preference',
+    (await page.getByText('Open the conversation after marking watched').count()) > 0,
+  );
+  await page.goBack();
+  await page.waitForTimeout(1000);
 
   // --- Account ---------------------------------------------------------------
   await page.getByText('Optional — adds sync and the shared layer').click();

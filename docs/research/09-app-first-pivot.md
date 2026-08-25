@@ -643,3 +643,50 @@ fifteen hundred rows fit inside its two-thousand-row limit. An assertion that th
 came back well under the number seeded was needed to tell the two apart. Same lesson as
 §6.5 from the other direction: a fixture has to be sized so the wrong answer is visibly
 wrong, not merely so the right answer passes.
+
+### 6.10 What the phone was missing, once anyone checked properly
+
+Parity between the two apps had only ever been checked screen by screen, as each was
+ported. Checked systematically — every route, then every control on every screen — the
+routes were complete and the controls were not.
+
+Six real gaps, on the platform this product is now built around:
+
+| Missing on the phone | Why it matters |
+|---|---|
+| Writing a watchlist note | The note *is* the watchlist. The phone could display one the web had written and never write one |
+| Opening the conversation after marking watched | How TV Time worked, named as a failing in two of its successors, and the web has done it since it shipped |
+| Catching up in bulk | Marking a run of episodes at once, which is what people do after a week away |
+| Where to watch | "Can I watch this tonight" is a phone question above all others |
+| Adding a title to a list | Lists exist on the phone; nothing can be put in one from a title |
+| A custom poster | Cosmetic, but shipped on the web |
+
+And one that is not a gap: Discover on the phone opens the title page rather than
+offering Track and Watchlist inline. One large target instead of three small ones, with
+the actions where they already live, on a screen people scroll one-handed. Recorded so it
+is not "fixed" later by someone reading this table as a to-do list.
+
+The first two are closed. The watchlist note is editable in place, and marking watched
+opens the conversation under exactly the web's rule — the shared preference, and only
+when there is an account behind it, since an empty comments page is a dead end. The
+preference now has a control on the phone too; it had been honoured by neither.
+
+Both are covered by new checks in `mobile/smoke.mjs`, which is now 30 checks rather than
+27. Writing them turned up something worth keeping: `getByText('Watchlist')` matches the
+tab bar and the button in a search result equally, and picking between them by document
+order is a coin flip that a later layout change re-tosses. The search controls now carry
+`accessibilityLabel`s naming the title they act on — better for anything reading the
+screen aloud, and the reason the test can say which control it means.
+
+#### Still missing, and the largest of them
+
+The phone cannot deliver a notification at all. It offers the same granularity
+settings as the web — premieres and finales, milestones, every episode — and nothing
+exists that could ever act on them. Web Push is what the backend speaks, and a phone
+needs `expo-notifications`, an APNs key, and a delivery path that sends to Expo push
+tokens rather than Web Push subscriptions.
+
+That is a sprint of its own, and one that cannot be finished here: a push token requires
+a real device and a real build. But offering someone a choice about notifications they
+can never receive is worse than offering nothing, so until it is built the phone should
+say so rather than presenting settings that do nothing.
