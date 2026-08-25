@@ -4,6 +4,7 @@ import { applyWal } from './sqliteWal';
 import { parseDioCache, type DioLibrary } from './diocacheParse';
 import { tvtimeEpisodeId, tvtimeMovieId, tvtimeSeriesId } from './tvtimeRescue';
 import type {
+  CachedEpisode,
   CachedTitle,
   InternalId,
   LibraryItem,
@@ -98,6 +99,9 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
   /** Names and library rows implied by the history — see tvtimeRescue for the why. */
   const titles = new Map<InternalId, CachedTitle>();
   const derived = new Map<InternalId, LibraryItem>();
+  /** Watched episodes as episodes, so a title page has content and a later match has
+   *  season and number to map by — see tvtimeRescue for the full reasoning. */
+  const episodes = new Map<InternalId, CachedEpisode>();
 
   const DAY = 86_400_000;
   const dateOf = (value?: string) => {
@@ -178,6 +182,14 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
     // A cache can hold episodes of a show whose own row did not survive, and without
     // this the history for it lands under an ID with no name and nothing tracking it.
     titles.set(seriesId, { id: seriesId, kind: 'show', name: episode.show, fetchedAt: 0 });
+    episodes.set(targetId, {
+      id: targetId,
+      seriesId,
+      season: episode.season,
+      number: episode.number,
+      name: episode.name?.trim() || `Episode ${episode.number}`,
+      fetchedAt: 0,
+    });
     derived.set(seriesId, {
       titleId: seriesId,
       kind: 'show',
@@ -209,6 +221,7 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
     db.ratings,
     db.library,
     db.titles,
+    db.episodes,
     async () => {
       if (watches.length) await db.watches.bulkPut(watches);
       if (watchlist.length) await db.watchlist.bulkPut(watchlist);
@@ -236,6 +249,13 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
         missingTitles.push(title);
       }
       if (missingTitles.length) await db.titles.bulkPut(missingTitles);
+
+      const missingEpisodes: CachedEpisode[] = [];
+      for (const [id, episode] of episodes) {
+        if (await db.episodes.get(id)) continue;
+        missingEpisodes.push(episode);
+      }
+      if (missingEpisodes.length) await db.episodes.bulkPut(missingEpisodes);
     },
   );
 

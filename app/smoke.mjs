@@ -894,6 +894,19 @@ try {
     // The name is the proof the import wrote a title and not just an identifier.
     check('the rescued history is visible by name', /Rescued Show/.test(rescued), rescued.slice(0, 140));
     check('and counted', /Episodes 2/.test(rescued), rescued.slice(0, 140));
+
+    // The title page for an imported show used to be a name over an empty season list:
+    // the only record of an episode was a watch event keyed by an opaque ID, so there
+    // was nothing to render. What was watched is now written as episodes — which is
+    // also the only thing that will make matching them to a provider possible, since
+    // that has to be done by season and number.
+    await fresh.goto(new URL('title/local%3Atv%3Atvtime-900', BASE + '/').href, {
+      waitUntil: 'networkidle',
+    });
+    await fresh.waitForTimeout(1500);
+    const page18 = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
+    check('an imported show has its watched episodes on it', /Pilot/.test(page18), page18.slice(0, 150));
+    check('under the name from the export', /Rescued Show/.test(page18));
     await fresh.screenshot({ path: OUT + '18-migration.png' });
   } finally {
     await arrival.close();

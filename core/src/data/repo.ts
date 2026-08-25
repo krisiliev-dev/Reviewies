@@ -213,6 +213,23 @@ export interface UpNextEntry {
  * "Aired" is deliberate: users reported Trakt offering episodes marked as not yet
  * released, which destroys trust in the list.
  */
+/**
+ * How much of the library came from an import and has never been matched.
+ *
+ * An export carries names and dates; it has no provider IDs, so those rows land under
+ * local ones and the provider knows nothing about them. Until they are matched there
+ * are no episode lists beyond what was watched, no artwork and no air dates, and Up
+ * Next has nothing to offer for them.
+ *
+ * The screens use this to explain their own silence. Saying "all caught up" to somebody
+ * who has just rescued two hundred shows reads as a broken app rather than an
+ * unfinished one, and the difference matters most in the first five minutes.
+ */
+export async function unmatchedImportCount(): Promise<number> {
+  const rows = await db.library.toArray();
+  return rows.filter((row) => row.titleId.startsWith('local:')).length;
+}
+
 export async function getUpNext(now = Date.now()): Promise<UpNextEntry[]> {
   const shows = await db.library.where('status').equals('watching').toArray();
   const entries: UpNextEntry[] = [];

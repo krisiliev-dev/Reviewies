@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db';
 import { detectRescueFile, importRescueCsv, parseBool, stripBom } from './tvtimeRescue';
+import { getUpNext, unmatchedImportCount } from './repo';
 
 /**
  * Fixtures use the exact headers the rescue tool emits, taken from its source
@@ -21,6 +22,7 @@ beforeEach(async () => {
     db.ratings.clear(),
     db.library.clear(),
     db.titles.clear(),
+    db.episodes.clear(),
   ]);
 });
 
@@ -66,6 +68,37 @@ describe('what the app can show afterwards', () => {
     expect(item.kind).toBe('film');
     expect(item.status).toBe('completed');
     expect((await db.titles.toArray())[0].name).toBe('Quiet Harbour');
+  });
+
+  it('records the episodes themselves, not just that they were watched', async () => {
+    const csv =
+      `${EPISODES_HEADER}\n` +
+      'The Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001\n' +
+      'The Long Dark,2,3,Thaw,True,2026-01-06,1,2026-01-02,900,4002';
+    await importRescueCsv(csv);
+
+    const episodes = await db.episodes.toArray();
+    expect(episodes).toHaveLength(2);
+    // Season and number are the whole point. Matching these shows to a provider later
+    // means mapping each watched episode onto the provider's own episode ID, and the
+    // only way across is season and number — TV Time's episode_id survives in the local
+    // ID and says nothing about where in the run it sits.
+    expect(episodes.map((e) => `s${e.season}e${e.number} ${e.name}`).sort()).toEqual([
+      's1e1 Pilot',
+      's2e3 Thaw',
+    ]);
+    expect(episodes.every((e) => e.fetchedAt === 0)).toBe(true);
+  });
+
+  it('does not turn an imported show into an Up Next entry', async () => {
+    // Only watched episodes are recorded, so these are not a catalogue. A show whose
+    // every known episode is watched must not surface as "next" — and must not be
+    // mistaken for a finished one either.
+    const csv = `${EPISODES_HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`;
+    await importRescueCsv(csv);
+
+    expect(await getUpNext()).toEqual([]);
+    expect(await unmatchedImportCount()).toBe(1);
   });
 
   it('does not overwrite what is already known', async () => {

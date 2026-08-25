@@ -10,7 +10,12 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/repo';
+import {
+  getUpNext,
+  markWatched,
+  unmatchedImportCount,
+  type UpNextEntry,
+} from '@reviewies/core/data/repo';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '@reviewies/core/data/db';
@@ -42,7 +47,9 @@ export default function UpNextScreen() {
   // empty. Importing puts shows in the library, which is exactly what stops this being
   // the first-run screen — and took the confirmation with it.
   const [imported, setImported] = useState<ImportReport>();
-  const episodeCount = useLive(() => db.episodes.count(), []);
+  // Not an episode count: an import now writes the episodes it knows were watched, so
+  // "no episodes" stopped meaning "nothing matched" the moment that landed.
+  const unmatched = useLive(() => unmatchedImportCount(), []);
 
   if (entries === undefined) {
     return (
@@ -112,8 +119,8 @@ export default function UpNextScreen() {
         ) : entries.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              {episodeCount === 0
-                ? 'Nothing here yet. The shows in your library came from an import and have no episode lists until they are matched to a provider.'
+              {unmatched
+                ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched to a provider.`
                 : 'All caught up — nothing has aired that you have not seen.'}
             </Text>
             <Link href="/search" asChild>

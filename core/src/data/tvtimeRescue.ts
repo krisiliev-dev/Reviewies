@@ -2,6 +2,7 @@ import { db } from './db';
 import { makeId } from '../domain/types';
 import { parseCsv } from './transfer';
 import type {
+  CachedEpisode,
   CachedTitle,
   InternalId,
   LibraryItem,
@@ -172,6 +173,22 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
   const titles = new Map<InternalId, CachedTitle>();
   const derived = new Map<InternalId, LibraryItem>();
 
+  /**
+   * The episodes themselves, from the export rather than from a provider.
+   *
+   * Two reasons, and the second is the load-bearing one. A title page for an imported
+   * show had nothing on it — a name and an empty season list — because the only record
+   * of an episode was a watch event keyed by an opaque ID. And matching these shows to
+   * a provider later means mapping each watched episode onto the provider's own episode
+   * ID, which can only be done by season and number: TV Time's `episode_id` survives in
+   * the local ID and tells you nothing about where in the run it sits. Without this the
+   * history could be matched at the series level and never at the episode level.
+   *
+   * Only what was watched, so these are not a catalogue and Up Next must not read them
+   * as one.
+   */
+  const episodes = new Map<InternalId, CachedEpisode>();
+
   for (const row of rows.slice(1)) {
     if (file === 'episodes') {
       const show = cell(row, 'show')?.trim();
@@ -196,6 +213,15 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
       // screen that asks a provider about this show replaces the placeholder rather
       // than trusting it.
       titles.set(seriesId, { id: seriesId, kind: 'show', name: show, fetchedAt: 0 });
+      episodes.set(targetId, {
+        id: targetId,
+        seriesId,
+        season,
+        number,
+        name: cell(row, 'name')?.trim() || `Episode ${number}`,
+        airDate: cell(row, 'air_date')?.trim() || undefined,
+        fetchedAt: 0,
+      });
       derived.set(seriesId, {
         titleId: seriesId,
         kind: 'show',
@@ -315,6 +341,7 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
     db.ratings,
     db.library,
     db.titles,
+    db.episodes,
     async () => {
       if (watches.length) await db.watches.bulkPut(watches);
       if (watchlist.length) await db.watchlist.bulkPut(watchlist);
@@ -343,6 +370,13 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
         missingTitles.push(title);
       }
       if (missingTitles.length) await db.titles.bulkPut(missingTitles);
+
+      const missingEpisodes: CachedEpisode[] = [];
+      for (const [id, episode] of episodes) {
+        if (await db.episodes.get(id)) continue;
+        missingEpisodes.push(episode);
+      }
+      if (missingEpisodes.length) await db.episodes.bulkPut(missingEpisodes);
     },
   );
 

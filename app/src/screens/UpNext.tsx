@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate } from 'react-router-dom';
-import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/repo';
+import {
+  getUpNext,
+  markWatched,
+  unmatchedImportCount,
+  type UpNextEntry,
+} from '@reviewies/core/data/repo';
 import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
 import { CatchUp } from '../ui/CatchUp';
@@ -31,7 +36,9 @@ export function UpNext() {
    */
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
   const [imported, setImported] = useState<ImportReport>();
-  const episodeCount = useLiveQuery(() => db.episodes.count(), [], undefined);
+  // Not an episode count: an import now writes the episodes it knows were watched, so
+  // "no episodes" stopped meaning "nothing matched" the moment that landed.
+  const unmatched = useLiveQuery(() => unmatchedImportCount(), [], undefined);
 
   if (entries === undefined) {
     return <p className="p-6 text-muted">Loading…</p>;
@@ -81,8 +88,8 @@ export function UpNext() {
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Up Next</h1>
         <p className="text-muted">
-          {episodeCount === 0
-            ? 'Nothing here yet. The shows in your library came from an import and have no episode lists until they are matched to a provider.'
+          {unmatched
+            ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched to a provider.`
             : 'All caught up — nothing has aired that you have not seen.'}
         </p>
         <Link
