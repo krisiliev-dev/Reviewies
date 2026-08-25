@@ -31,6 +31,7 @@ const PATHS: Record<string, string> = {
   // security, and the tab is where your history is exported, imported and accounted
   // for — which is a filing cabinet, not a guard.
   data: 'M3 4h18v4H3V4zm1 6h16v10H4V10zm5 2v2h6v-2H9z',
+  more: 'M6 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4z',
 };
 
 /**

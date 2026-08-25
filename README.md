@@ -91,6 +91,7 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Reduced motion, and a way to stop the reaction stream | ✅ Built on both platforms |
 | 24px targets and 200% text without losing a control | ✅ Built, measured per screen |
 | The reaction stream summarised rather than read out one by one | ✅ Built on both platforms |
+| The same five tabs on both platforms, everything else behind More | ✅ Built — one row at the default size and at 200% |
 | The calendar refreshes itself, so a new season appears | ✅ Built on both platforms — nothing refetched a tracked show before |
 | Cached metadata expires and can be cleared, keeping imported names | ✅ Built on both platforms |
 | Deleting your own comment | ✅ Built on both platforms |
@@ -314,7 +315,7 @@ mobile/                 The iOS and Android app (Expo)
   src/comments/         The image picker, and the one branch no browser run reaches
   src/platform.ts       The only file that knows it is a phone
 app/                    The web app
-  src/screens/          UI
+  src/screens/          UI — the same five tabs the phone has, and a More behind the fifth
   src/ui/               Shared controls: posters, importers, catch-up, dialogs, palette
   src/data/             Dexie adapter and the platform bindings
   src/watching/         Playback clock, reaction stream, extension bridge

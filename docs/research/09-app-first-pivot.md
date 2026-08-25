@@ -1488,6 +1488,35 @@ meeting its own edge. And the tab bar's translucency looked like a rendering fau
 — it was `bg-ink/95`, and five per cent of a screen's worth of text behind a bar that
 covers half the display is legible. That one *was* a defect, and it is opaque now.
 
+### 6.32 Five tabs, which the phone had all along
+
+§6.31 measured the tab bar and left it alone: eight tabs across a phone-width bar wraps
+to two rows and takes 183 of 844 pixels once the labels are allowed to respond to the
+reader's text setting. How many tabs a product has is a decision about the product rather
+than a layout bug to fix while passing a check, so it was written down and not done.
+
+Doing it turned out not to be a decision at all. The phone has had five since it was
+built — Up Next, Search, Discover, Watchlist, More — and the web simply never followed.
+The web's More screen lists what the phone's does, in the phone's order, minus the two
+destinations the web has no route for: Upcoming, Lists, People, Stats, Your data.
+
+Measured rather than assumed, which is the whole reason for the change:
+
+| | rows at 100% | height | rows at 200% | height |
+|---|---|---|---|---|
+| eight tabs | 1 | 58px | 2 | 183px |
+| five tabs | 1 | 58px | **1** | 117px |
+
+Nothing moved URL. `/calendar`, `/lists`, `/people`, `/stats` and `/settings` are where
+they were, which is what in-app links, the skip link and anybody's bookmark rely on — only
+what the bar offers changed.
+
+The smoke suite needed the same change, and that is the part worth keeping. It reached
+five of those screens by clicking their tab, and the honest fix was not to navigate
+straight to the address: it takes the route a person takes, through More, in a helper that
+says so. A suite that jumps to a URL the navigation no longer offers is testing that the
+router still works and nothing else.
+
 ---
 
 ## 7. What is still not known

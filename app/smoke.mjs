@@ -99,6 +99,20 @@ page.on('pageerror', (e) => check('no page errors', false, e.message));
  * The count is asserted too. Half the ways to lose a name also lose the role, and a
  * screen reporting no controls has not passed — it has failed to be looked at.
  */
+/**
+ * Reach something that is no longer a tab.
+ *
+ * The bar is the phone's five now — Up Next, Search, Discover, Watchlist, More — and
+ * Upcoming, Lists, People, Stats and Your data live behind the last one. Their URLs did
+ * not change; only the route somebody takes to them did, and this suite takes the same
+ * route a person would rather than jumping straight to the address.
+ */
+async function viaMore(name) {
+  await page.getByRole('link', { name: /^More$/ }).click();
+  await page.getByRole('navigation', { name: 'More sections' }).waitFor({ timeout: 5000 });
+  await page.getByRole('link', { name }).click();
+}
+
 async function audit(screen, atLeast) {
   const found = await page.evaluate(() => {
     const ROLES = ['button', 'link', 'radio', 'checkbox', 'switch', 'tab', 'menuitem'];
@@ -345,7 +359,7 @@ try {
   const before = Number(remainingText?.match(/(\d+)/)?.[1]);
   const now = Number(after?.match(/(\d+)/)?.[1]);
   check('remaining count decrements', now === before - 1, `${before} → ${now}`);
-  await page.getByRole('link', { name: /Data/ }).click();
+  await viaMore(/Your data/);
   await page.waitForSelector('text=Open the conversation after marking watched', { timeout: 5000 });
   check('the preference for it is offered', true);
   await page.getByRole('link', { name: /Up Next/ }).click();
@@ -639,7 +653,8 @@ try {
   check('a show still airing stays in watching', libStatus.includes('watching'), JSON.stringify(libStatus));
 
   // --- Upcoming --------------------------------------------------------------
-  await page.getByRole('link', { name: /Upcoming/ }).click();
+  // Through More, which is where it lives now — the tab bar is the phone's five.
+  await viaMore(/Upcoming/);
   await page.waitForSelector('text=Tell me about', { timeout: 5000 });
   const upcomingText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
@@ -670,7 +685,7 @@ try {
   await page.screenshot({ path: OUT + '09-discover.png' });
 
   // --- Stats -----------------------------------------------------------------
-  await page.getByRole('link', { name: /Stats/ }).click();
+  await viaMore(/Stats/);
   await page.waitForSelector('text=Most watched', { timeout: 5000 });
   const statsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
@@ -736,8 +751,8 @@ try {
   await page.screenshot({ path: OUT + '13-title.png' });
 
   // --- People ----------------------------------------------------------------
-  await page.getByRole('link', { name: /Data/ }).click();
-  await page.getByRole('link', { name: /People/ }).click();
+  // Directly from More now, rather than through the data screen's own People row.
+  await viaMore(/People/);
   await page.waitForSelector('h1:text("People")', { timeout: 5000 });
   const peopleText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   // Empty either way, and it must say which kind of empty rather than showing a search
@@ -765,7 +780,7 @@ try {
   // --- Importing an archive ----------------------------------------------------
   // Doc 8 §3: the GDPR zip is how most people got their data out of TV Time, and
   // every tracker in the field is judged on whether it can read one.
-  await page.getByRole('link', { name: /Data/ }).click();
+  await viaMore(/Your data/);
   await page.waitForSelector('text=Choose files', { timeout: 5000 });
 
   const zip = Buffer.from(
@@ -840,7 +855,7 @@ try {
   rmSync(dio.dir, { recursive: true, force: true });
 
   // --- Export ----------------------------------------------------------------
-  await page.getByRole('link', { name: /Data/ }).click();
+  await viaMore(/Your data/);
   await page.waitForSelector('text=Export everything (JSON)', { timeout: 5000 });
 
   const download = await Promise.race([
