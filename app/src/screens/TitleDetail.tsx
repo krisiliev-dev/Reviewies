@@ -68,16 +68,20 @@ export function TitleDetail() {
           )}
 
           {title && <AddToList titleId={titleId} kind={title.kind} />}
-
-          <div className="mt-2">
-            <StarRating
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
-              }
-            />
-          </div>
         </div>
+      </div>
+
+      {/* Its own line, not beside the poster. Ten targets at 24px each is 240 wide and
+          does not bend: in the column left of the poster it was pushed off the right of
+          the screen once the text around it grew, taking two stars through five with
+          it. A rating you cannot reach is a rating you cannot give. */}
+      <div className="mb-5">
+        <StarRating
+          value={rating?.value}
+          onChange={(value) =>
+            value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
+          }
+        />
       </div>
 
       {/* Poster override. From r/Serializd and r/Letterboxd: people resent being at
@@ -87,7 +91,7 @@ export function TitleDetail() {
           {posterDraft === undefined ? (
             <button
               onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-              className="text-xs text-muted underline"
+              className="tap text-xs text-muted underline"
             >
               {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
             </button>
@@ -167,7 +171,7 @@ function EpisodeRow({
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
 
   return (
-    <li className="flex items-center gap-3 rounded-xl bg-surface px-3 py-2.5">
+    <li className="flex flex-wrap items-center gap-3 rounded-xl bg-surface px-3 py-2.5">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm">
           <span className="text-muted">{episode.number}.</span> {episode.name}
@@ -180,17 +184,6 @@ function EpisodeRow({
         </p>
         {/* Episode-level ratings: "a series of 8 television episodes is really just a
             series of 8 films" — r/Letterboxd. Only offered once watched. */}
-        {watched && (
-          <div className="mt-1">
-            <StarRating
-              size="sm"
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
-              }
-            />
-          </div>
-        )}
       </div>
 
       {/* Every row carries the same three words. Read down a season they are "React,
@@ -230,6 +223,21 @@ function EpisodeRow({
       >
         {watched ? 'Watched' : 'Mark'}
       </button>
+
+      {/* A line of its own, below the row rather than squeezed into the column beside
+          three buttons — same reason as the title's. "A series of 8 television episodes
+          is really just a series of 8 films" (r/Letterboxd), and a film's rating does
+          not get the leftovers. Only offered once watched. */}
+      {watched && (
+        <div className="w-full">
+          <StarRating
+            value={rating?.value}
+            onChange={(value) =>
+              value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
+            }
+          />
+        </div>
+      )}
     </li>
   );
 }

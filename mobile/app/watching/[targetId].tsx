@@ -22,7 +22,7 @@ import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePl
 import { ReactionStream } from '../../src/ui/ReactionStream';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
-import { radius, theme } from '../../src/ui/theme';
+import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
 /**
@@ -108,6 +108,7 @@ export default function WatchingScreen() {
             // and the remote drawer. Ambiguous to a screen reader and ambiguous to a
             // test, which is how the ambiguity got noticed.
             accessibilityLabel="Leave Watching Mode"
+            style={tap}
           >
             <Text style={styles.close}>Close</Text>
           </Pressable>
@@ -324,8 +325,13 @@ const styles = StyleSheet.create({
   densityChip: {
     backgroundColor: theme.surface2,
     borderRadius: 999,
+    // 24x24 is the floor WCAG 2.5.8 sets, and three numbers in a row is exactly the
+    // shape that ends up under it.
+    minWidth: 26,
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 9,
-    paddingVertical: 4,
   },
   densityChipOn: { backgroundColor: theme.accent },
   densityText: { color: theme.muted, fontSize: 11 },

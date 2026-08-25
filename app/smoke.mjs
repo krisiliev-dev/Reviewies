@@ -105,6 +105,7 @@ async function audit(screen, atLeast) {
     const selector = ROLES.map((r) => `[role="${r}"]`).join(',') + ',button,a[href]';
     let named = 0;
     const nameless = [];
+    const small = [];
     for (const el of document.querySelectorAll(selector)) {
       if (el.closest('[aria-hidden="true"], [inert]')) continue;
       const labelledBy = (el.getAttribute('aria-labelledby') ?? '')
@@ -124,8 +125,19 @@ async function audit(screen, atLeast) {
       ).trim();
       if (name) named++;
       else nameless.push(el.outerHTML.slice(0, 90));
+
+      // WCAG 2.5.8 asks for 24x24 CSS pixels of target. Measured on the box the
+      // pointer actually has to hit, so padding counts and a bare line of text does
+      // not. Zero-sized elements are not on screen; the skip link is one pixel by
+      // design and is a keyboard affordance, not a pointer one.
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 && box.height === 0) continue;
+      if (box.width < 1.5 && box.height < 1.5) continue;
+      if (box.width < 24 || box.height < 24) {
+        small.push(`${name || el.tagName} ${Math.round(box.width)}x${Math.round(box.height)}`);
+      }
     }
-    return { named, nameless };
+    return { named, nameless, small };
   });
 
   check(
@@ -137,6 +149,50 @@ async function audit(screen, atLeast) {
     `${screen}: and the screen reports its controls`,
     found.named >= atLeast,
     `${found.named} found, expected at least ${atLeast}`,
+  );
+  check(
+    `${screen}: every control is big enough to hit`,
+    found.small.length === 0,
+    found.small.join(' | '),
+  );
+}
+
+/**
+ * The same screen with the text at twice the size.
+ *
+ * WCAG 1.4.4 asks for 200% without loss of content or function. Everything here is
+ * sized in rem, so doubling the root size is the honest simulation — and the shape this
+ * app is full of, a fixed-width control beside text that grows, is exactly the one that
+ * pushes a page sideways. A phone that scrolls horizontally has lost the layout.
+ */
+async function scaled(screen) {
+  await page.addStyleTag({ content: 'html { font-size: 32px !important; }' });
+  await page.waitForTimeout(400);
+
+  const result = await page.evaluate(() => {
+    const clipped = [];
+    for (const el of document.querySelectorAll('button,a[href],[role="button"],[role="radio"]')) {
+      if (el.closest('[aria-hidden="true"],[inert]')) continue;
+      const box = el.getBoundingClientRect();
+      // Pushed off the side, or squashed out of existence by a neighbour that grew.
+      if (box.width > 0 && (box.left > innerWidth || box.right < 0)) {
+        clipped.push((el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30));
+      }
+    }
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      clipped,
+    };
+  });
+
+  await page.evaluate(() => document.querySelectorAll('style')[document.querySelectorAll('style').length - 1]?.remove());
+  await page.waitForTimeout(300);
+
+  check(
+    `${screen}: holds together at 200% text`,
+    result.scrollWidth <= result.viewport + 1 && result.clipped.length === 0,
+    `${result.scrollWidth} wide in ${result.viewport}${result.clipped.length ? `, off screen: ${result.clipped.join(', ')}` : ''}`,
   );
 }
 
@@ -213,6 +269,7 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   check('search returns results', true);
   await audit('Search', 8);
+  await scaled('Search');
   await page.screenshot({ path: OUT + '02-search.png' });
 
   await page.getByRole('button', { name: 'Track The Long Dark' }).click();
@@ -230,6 +287,7 @@ try {
   const remainingText = await page.locator('text=/more episodes/').first().textContent();
   check('shows a remaining count, not a vague badge', /\d+ more episodes/.test(remainingText ?? ''), remainingText?.trim());
   await audit('Up Next', 10);
+  await scaled('Up Next');
   await page.screenshot({ path: OUT + '03-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
@@ -366,6 +424,7 @@ try {
   // is aria-hidden and the caption is the whole name, so each of these announces once,
   // as a word a person would say rather than as a Unicode description.
   await audit('Watching Mode', 23);
+  await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
   // --- Extension auto-sync ---------------------------------------------------
@@ -429,6 +488,7 @@ try {
     noteShown ? '' : (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 200),
   );
   await audit('Watchlist', 9);
+  await scaled('Watchlist');
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
   // --- Spoiler-free quick log --------------------------------------------------
@@ -456,6 +516,7 @@ try {
     sheet.replace(/\s+/g, ' ').slice(0, 140),
   );
   await audit('the catch-up sheet', 4);
+  await scaled('the catch-up sheet');
   await page.screenshot({ path: OUT + '15-catchup.png' });
 
   // --- The sheet, without a pointer --------------------------------------------
@@ -554,6 +615,7 @@ try {
   check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
   check('milestones is the default', /The moments worth knowing about/.test(upcomingText));
   await audit('Upcoming', 9);
+  await scaled('Upcoming');
   await page.screenshot({ path: OUT + '10-upcoming.png' });
 
   // --- Discover --------------------------------------------------------------
@@ -574,6 +636,7 @@ try {
     /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),
   );
   await audit('Discover', 9);
+  await scaled('Discover');
   await page.screenshot({ path: OUT + '09-discover.png' });
 
   // --- Stats -----------------------------------------------------------------
@@ -583,6 +646,7 @@ try {
   check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
   await audit('Stats', 9);
+  await scaled('Stats');
   await page.screenshot({ path: OUT + '08-stats.png' });
 
   // --- Ratings and poster override -------------------------------------------
@@ -638,6 +702,7 @@ try {
   );
   // Eighteen episodes, each with React, Talk and Mark, plus the stars and the rest.
   await audit('the title page', 30);
+  await scaled('the title page');
   await page.screenshot({ path: OUT + '13-title.png' });
 
   // --- People ----------------------------------------------------------------
@@ -655,6 +720,7 @@ try {
     peopleText.slice(0, 140),
   );
   await audit('People', 6);
+  await scaled('People');
   await page.screenshot({ path: OUT + '14-people.png' });
   await page.goBack();
 

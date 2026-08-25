@@ -80,7 +80,7 @@ export function AccountPanel() {
 
         <button
           onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
-          className="mt-2 text-sm text-muted underline"
+          className="tap mt-2 text-sm text-muted underline"
         >
           {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
         </button>

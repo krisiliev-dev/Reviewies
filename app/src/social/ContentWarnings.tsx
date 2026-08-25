@@ -103,7 +103,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           <button
             onClick={() => setVoting(!voting)}
-            className="text-xs text-muted underline"
+            className="tap text-xs text-muted underline"
             aria-expanded={voting}
             aria-label={voting ? 'Done flagging' : 'Flag something'}
           >

@@ -132,7 +132,7 @@ function UpNextRow({
           <button
             onClick={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
             aria-label={`Catch up on ${entry.seriesName}`}
-            className="mt-1 text-xs text-muted underline"
+            className="tap mt-1 text-xs text-muted underline"
           >
             Caught up further?
           </button>

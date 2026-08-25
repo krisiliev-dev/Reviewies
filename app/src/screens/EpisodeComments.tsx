@@ -146,7 +146,7 @@ export function EpisodeComments() {
                   type="button"
                   onClick={() => setImage(undefined)}
                   aria-label="Remove the attached screenshot"
-                  className="text-xs text-muted underline"
+                  className="tap text-xs text-muted underline"
                 >
                   Remove
                 </button>

@@ -48,6 +48,7 @@ async function audit(screen, atLeast) {
     const selector = ROLES.map((r) => `[role="${r}"]`).join(',');
     const named = [];
     const nameless = [];
+    const small = [];
     for (const el of document.querySelectorAll(selector)) {
       if (el.closest('[aria-hidden="true"]')) continue;
       // Off-screen but mounted: the remote drawer is always in the tree, and its keys
@@ -69,8 +70,19 @@ async function audit(screen, atLeast) {
         ''
       ).trim();
       (name ? named : nameless).push(name || el.outerHTML.slice(0, 80));
+
+      // WCAG 2.5.8 asks for 24x24 CSS pixels of target. Measured on the box the
+      // pointer actually has to hit, so padding counts and a bare line of text does
+      // not. Zero-sized elements are not on screen; the skip link is one pixel by
+      // design and is a keyboard affordance, not a pointer one.
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 && box.height === 0) continue;
+      if (box.width < 1.5 && box.height < 1.5) continue;
+      if (box.width < 24 || box.height < 24) {
+        small.push(`${name || el.tagName} ${Math.round(box.width)}x${Math.round(box.height)}`);
+      }
     }
-    return { named: named.length, nameless };
+    return { named: named.length, nameless, small };
   });
 
   check(
@@ -84,6 +96,11 @@ async function audit(screen, atLeast) {
     `${screen}: and the screen reports its controls`,
     found.named >= atLeast,
     `${found.named} found, expected at least ${atLeast}`,
+  );
+  check(
+    `${screen}: every control is big enough to hit`,
+    found.small.length === 0,
+    found.small.join(' | '),
   );
 }
 

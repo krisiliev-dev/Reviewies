@@ -3,7 +3,7 @@ import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View } from 
 import { ScrollView } from 'react-native';
 import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
-import { radius, theme } from '../ui/theme';
+import { radius, tap, theme } from '../ui/theme';
 import { useReducedMotion } from '../ui/useReducedMotion';
 
 /**
@@ -96,6 +96,7 @@ export function RemoteDrawer() {
             accessibilityRole="button"
             // Named, because "Close" on its own is what half the sheets in this app say.
             accessibilityLabel="Close remote"
+            style={tap}
           >
             <Text style={styles.close}>Close</Text>
           </Pressable>
@@ -115,6 +116,10 @@ const styles = StyleSheet.create({
     top: '45%',
     paddingVertical: 16,
     paddingHorizontal: 6,
+    // The handle is a thin tab by design; 24 wide is the floor for it still being a
+    // target rather than a decoration.
+    minWidth: 24,
+    alignItems: 'center',
     backgroundColor: theme.surface2,
     borderTopLeftRadius: radius.md,
     borderBottomLeftRadius: radius.md,

@@ -45,7 +45,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="text-xs text-muted underline"
+        className="tap text-xs text-muted underline"
       >
         {open ? 'Cancel' : 'Add to list'}
       </button>

@@ -113,7 +113,7 @@ function Row({
             onClick={() => setEditing(true)}
             // Every row says "Add a note…". Which row is a visual fact only.
             aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
-            className="mt-1.5 block text-left text-sm text-muted italic"
+            className="tap mt-1.5 text-left text-sm text-muted italic"
           >
             {/* "The amount of things I have in my wishlist that i have ZERO memory for
                 why they're there" — r/Letterboxd. */}

@@ -20,3 +20,15 @@ export const theme = {
 } as const;
 
 export const radius = { sm: 8, md: 12, lg: 16, xl: 24 } as const;
+
+/**
+ * The minimum a control can be and still be a target.
+ *
+ * WCAG 2.5.8 asks for 24x24 CSS pixels. Several controls here are a line of text and
+ * nothing else — "Caught up further?", "Remove", "Use a different poster" — and came out
+ * fourteen to seventeen pixels tall. `hitSlop` was doing the work, which is real on a
+ * device and invisible to layout: two hitSlop targets next to each other overlap, and
+ * nothing can measure them. This gives them the height for real, and keeps the hitSlop
+ * on top of it.
+ */
+export const tap = { minHeight: 24, justifyContent: 'center' } as const;

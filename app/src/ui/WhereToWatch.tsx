@@ -50,7 +50,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
           aria-label={`Change country — currently ${regionName(region)}`}
-          className="shrink-0 text-xs text-muted underline"
+          className="tap shrink-0 text-xs text-muted underline"
         >
           {regionName(region)}
         </button>
@@ -96,7 +96,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               href={providers.link}
               target="_blank"
               rel="noreferrer noopener"
-              className="mt-2 inline-block text-xs text-muted underline"
+              className="tap mt-2 inline-block text-xs text-muted underline"
             >
               Open on JustWatch
             </a>

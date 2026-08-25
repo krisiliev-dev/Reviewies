@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
-import { radius, theme } from './theme';
+import { radius, tap, theme } from './theme';
 import { useReducedMotion } from './useReducedMotion';
 
 /**
@@ -72,7 +72,7 @@ export function CatchUp({
           <Text numberOfLines={1} style={styles.title}>
             {seriesName}
           </Text>
-          <Pressable onPress={onDone} hitSlop={8} accessibilityRole="button">
+          <Pressable onPress={onDone} hitSlop={8} accessibilityRole="button" style={tap}>
             <Text style={styles.done}>{marked === undefined ? 'Cancel' : 'Done'}</Text>
           </Pressable>
         </View>

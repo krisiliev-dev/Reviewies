@@ -3,7 +3,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { radius, theme } from './theme';
+import { radius, tap, theme } from './theme';
 
 /**
  * Where a title can be watched right now.
@@ -58,6 +58,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           // The label belonged to the Text, which is not the thing you press.
           accessibilityLabel={`Change country — currently ${regionName(region)}`}
           accessibilityState={{ expanded: picking }}
+          style={tap}
         >
           <Text style={styles.region}>{regionName(region)}</Text>
         </Pressable>

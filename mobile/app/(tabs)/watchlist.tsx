@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../../src/ui/Poster';
-import { radius, theme } from '../../src/ui/theme';
+import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
 /**
@@ -104,6 +104,7 @@ function Row({
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={`Save note for ${name}`}
+              style={tap}
             >
               <Text style={styles.save}>Save</Text>
             </Pressable>
@@ -120,6 +121,7 @@ function Row({
             // Every row on this screen says "Add a note". Which show is only knowable
             // from what is above it, which a screen reader does not read along with it.
             accessibilityLabel={note ? `Edit note for ${name}` : `Add a note for ${name}`}
+            style={tap}
           >
             <Text style={note ? styles.note : styles.addNote}>
               {note || 'Add a note'}
@@ -132,6 +134,7 @@ function Row({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Remove ${name} from your watchlist`}
+          style={tap}
         >
           <Text style={styles.remove}>Remove</Text>
         </Pressable>

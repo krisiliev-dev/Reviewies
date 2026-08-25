@@ -16,7 +16,7 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { CatchUp } from '../../src/ui/CatchUp';
-import { radius, theme } from '../../src/ui/theme';
+import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
 /**
@@ -153,6 +153,7 @@ function Row({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Catch up on ${entry.seriesName}`}
+          style={tap}
         >
           <Text style={styles.catchUp}>Caught up further?</Text>
         </Pressable>

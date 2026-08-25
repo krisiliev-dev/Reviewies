@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
 import type { Remote } from './useRemote';
-import { radius, theme } from '../ui/theme';
+import { radius, tap, theme } from '../ui/theme';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -42,6 +42,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
               accessibilityRole="button"
               accessibilityLabel="Scan the Wi-Fi for a device"
               accessibilityState={{ disabled: remote.scanning, busy: remote.scanning }}
+              style={tap}
             >
               <Text style={styles.scan}>{remote.scanning ? 'Scanning…' : 'Scan Wi-Fi'}</Text>
             </Pressable>

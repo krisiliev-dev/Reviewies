@@ -63,7 +63,7 @@ export function CatchUp({
           <button
             onClick={onDone}
             aria-label={marked === undefined ? 'Cancel catching up' : 'Done catching up'}
-            className="shrink-0 text-sm text-muted"
+            className="tap shrink-0 text-sm text-muted"
           >
             {marked === undefined ? 'Cancel' : 'Done'}
           </button>
@@ -102,7 +102,7 @@ export function CatchUp({
                 {seasons.length > 1 && (
                   <button
                     onClick={() => setSeason(undefined)}
-                    className="mt-3 text-xs text-muted underline"
+                    className="tap mt-3 text-xs text-muted underline"
                   >
                     Pick a different season
                   </button>

@@ -131,7 +131,7 @@ export function WatchingMode() {
         {/* Two things on this screen say "Close": this and the remote drawer. */}
         <button
           onClick={() => navigate(-1)}
-          className="text-sm text-muted"
+          className="tap text-sm text-muted"
           aria-label="Leave Watching Mode"
         >
           Close

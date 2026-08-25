@@ -26,7 +26,7 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { radius, theme } from '../../src/ui/theme';
+import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
 export default function TitleScreen() {
@@ -85,14 +85,19 @@ export default function TitleScreen() {
           <View style={styles.headerBody}>
             <Text style={styles.title}>{title?.name ?? 'Loading…'}</Text>
             {title?.year ? <Text style={styles.year}>{title.year}</Text> : null}
-            <StarRating
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
-              }
-            />
           </View>
         </View>
+
+        {/* Its own line rather than the column beside the poster. Ten targets at 24
+            points each is 240 wide and does not bend; in a column narrowed by a poster
+            and by whatever the system font scale is doing, the last stars fall off the
+            end. A rating you cannot reach is a rating you cannot give. */}
+        <StarRating
+          value={rating?.value}
+          onChange={(value) =>
+            value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
+          }
+        />
 
         {title?.overview ? <Text style={styles.overview}>{title.overview}</Text> : null}
 
@@ -107,6 +112,7 @@ export default function TitleScreen() {
                 onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')}
                 hitSlop={8}
                 accessibilityRole="button"
+                style={tap}
               >
                 <Text style={styles.posterToggle}>
                   {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
@@ -223,17 +229,6 @@ function EpisodeRow({
 
         {/* "A series of 8 television episodes is really just a series of 8 films"
             — r/Letterboxd. Only offered once watched. */}
-        {watched && (
-          <View style={styles.episodeRating}>
-            <StarRating
-              size={18}
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
-              }
-            />
-          </View>
-        )}
       </View>
 
       <Pressable
@@ -272,6 +267,20 @@ function EpisodeRow({
           {watched ? 'Watched' : 'Mark'}
         </Text>
       </Pressable>
+
+      {/* Same reason as the title's, and the same quote behind it: "a series of 8
+          television episodes is really just a series of 8 films". A film's rating does
+          not get whatever space three buttons leave over. */}
+      {watched && (
+        <View style={styles.episodeRating}>
+          <StarRating
+            value={rating?.value}
+            onChange={(value) =>
+              value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
+            }
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -318,6 +327,7 @@ const styles = StyleSheet.create({
 
   episode: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 8,
     backgroundColor: theme.surface,
@@ -329,7 +339,7 @@ const styles = StyleSheet.create({
   episodeName: { color: theme.text, fontSize: 14 },
   episodeNumber: { color: theme.muted },
   episodeMeta: { color: theme.muted, fontSize: 11 },
-  episodeRating: { marginTop: 2 },
+  episodeRating: { width: '100%', marginTop: 4 },
 
   react: {
     backgroundColor: theme.surface2,

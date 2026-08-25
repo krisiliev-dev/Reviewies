@@ -25,6 +25,20 @@ body {
 }
 
 /*
+ * A text button that is still a target.
+ *
+ * Several controls in this app are a line of text and nothing else — "Add to list",
+ * "Caught up further?", "Use a different poster". Sized by the text, they came out
+ * sixteen to twenty pixels tall against the 24 CSS pixels WCAG 2.5.8 asks for. This
+ * gives them the height without giving them a box, so they still read as text.
+ */
+.tap {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+/*
  * The focus ring, because there was not one.
  *
  * The browser's default `outline: auto` computed to rgb(16, 16, 16) here — a contrast

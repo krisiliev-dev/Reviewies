@@ -146,7 +146,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
               setDisplayName(me?.displayName ?? '');
             }}
             disabled={!me}
-            className="mt-2 text-xs text-muted underline disabled:opacity-40"
+            className="tap mt-2 text-xs text-muted underline disabled:opacity-40"
           >
             Change how you appear
           </button>
