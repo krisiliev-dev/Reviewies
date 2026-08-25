@@ -554,3 +554,55 @@ tab loses its audio graph, so the web could only ever do it while someone is loo
 it — which is not when a second-screen app is useful. Correct positions from a one-shot
 sync was the actual bug; continuous listening on the web would be a feature that quietly
 stops working the moment it matters, and §1.3 is the reason the app exists.
+
+### 6.8 The deployment gap, closed
+
+Several sections above end with the same caveat: the edge function has never been
+deployed, the live project is on migration 0009 while the code expects 0011, none of it
+is fixable from here because there are no credentials.
+
+That last part was wrong. There were credentials all along — a check of the repository's
+`.env` printed only the variable names, not their values, and "the values are empty" got
+written down and then repeated in four separate notes as though it had been established.
+Correcting it is worth recording because the failure was not the mistake, it was that
+nothing afterwards re-tested the assumption; it simply propagated.
+
+With that cleared up, everything that had been deferred as unverifiable was done:
+
+- **All eleven migrations applied**, and checked afterwards rather than assumed:
+  `promote_fingerprint` is gone, `record_fingerprint_reference` exists with definer
+  rights and `EXECUTE` granted to `service_role` alone, `reactions_sample` exists as
+  SECURITY INVOKER — which is the property the reaction sampling depends on for blocking
+  to keep working.
+- **The `promote-fingerprint` function deployed and invoked**, returning
+  `{"considered":0,"promoted":0,"rejected":0}` — correct, since nobody has contributed a
+  timeline yet. That closes the specific unknown §6.4 flagged.
+- **31 live tests run against the migrated project** — TMDB, AniList, the sync
+  round-trip, comments, and the image upload path — all passing.
+- **A cron job schedules promotion hourly**, so contributions are cross-validated
+  without anyone remembering to ask.
+
+#### The deploy script was not a bundler, and it needed to be
+
+`promote-fingerprint` imports the matcher from `@reviewies/core`. The Management API
+takes the files it is handed and puts them on the edge — it resolves nothing. The
+function would have deployed cleanly and failed on its first request, which is a
+miserable way to find out.
+
+`deploy-functions.mjs` now bundles each entrypoint with esbuild before uploading, keeping
+`jsr:`, `npm:` and `node:` specifiers external because the edge runtime resolves those
+itself. Sharing the matcher rather than copying it to the server is not a convenience: a
+server and a client that disagree about what a fingerprint means produce references that
+silently never match, which is the failure mode §6.2, §6.3 and §6.7 are all about.
+
+#### And a secret went into a transcript
+
+Reading the existing cron job to reuse its shared secret, the redaction pattern assumed
+hex and the secret was base64url, so it printed in full. It was rotated immediately: a
+new secret generated, pushed, both cron jobs rewritten to use it, and the old one
+confirmed dead — the leaked value now returns 403. `promote-fingerprint` was then invoked
+with the new one and returned 200.
+
+The lesson is the ordinary one about redaction being a guess unless you know the format.
+The better habit is the one used for the service-role key ten minutes later: fetch it to
+a file, pass it by reference, and never let it near a command line or an output stream.

@@ -94,6 +94,21 @@ try {
   check('empty state explains itself', (await page.getByText('Nothing tracked yet.').count()) > 0);
   await page.screenshot({ path: OUT + '01-empty.png' });
 
+  // --- Is this build signed in to anything? -----------------------------------
+  //
+  // Several checks below are about what an account-gated control does, and the answer
+  // differs depending on whether the build has Supabase credentials. Asserting the
+  // credential-free answer unconditionally used to look fine, because it was written
+  // against a build with no `.env` — and `vite.config.ts` sets `envDir: '..'`, so an
+  // ordinary build in this repository picks up the root `.env` and takes the other
+  // branch. The run then failed on a correct app.
+  //
+  // So ask the app, once, and hold the answer.
+  await page.goto(new URL('account', BASE + '/').href, { waitUntil: 'networkidle' });
+  const configured = !/not configured on this build/i.test(await page.locator('body').innerText());
+  console.log(`(build is ${configured ? 'configured for sync' : 'credential-free'})`);
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+
   // --- Search and track ------------------------------------------------------
   await page.getByRole('link', { name: /Find something to watch/i }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
@@ -119,6 +134,22 @@ try {
 
   // --- Mark watched ----------------------------------------------------------
   await page.getByRole('button', { name: /Mark The Long Dark S1E1 watched/i }).click();
+
+  // Opening the conversation after marking watched is how TV Time worked and was named
+  // as a failing in two of its successors — but only when there is an account behind
+  // it, because an empty comments page is a dead end. Both halves of that rule are
+  // worth asserting; which one applies depends on the build, and the check has to come
+  // before anything that looks at Up Next, because in one of the two it is no longer
+  // the page being looked at.
+  if (configured) {
+    await page.waitForURL(/\/comments\//, { timeout: 5000 });
+    check('marking watched opens the conversation when there is one', true, page.url());
+    await page.getByRole('link', { name: /Up Next/ }).click();
+    await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
+  } else {
+    check('marking watched stays put without an account', page.url().endsWith('/'), page.url());
+  }
+
   await page.waitForSelector('text=/S1E2/', { timeout: 5000 });
   check('marking watched advances to the next episode', true);
 
@@ -126,10 +157,6 @@ try {
   const before = Number(remainingText?.match(/(\d+)/)?.[1]);
   const now = Number(after?.match(/(\d+)/)?.[1]);
   check('remaining count decrements', now === before - 1, `${before} → ${now}`);
-
-  // Without an account there is no conversation, so marking watched must not
-  // navigate anywhere — an empty comments page would be a dead end.
-  check('marking watched stays put without an account', page.url().endsWith('/'), page.url());
   await page.getByRole('link', { name: /Data/ }).click();
   await page.waitForSelector('text=Open the conversation after marking watched', { timeout: 5000 });
   check('the preference for it is offered', true);
@@ -379,15 +406,17 @@ try {
   // credential-free build — same rule as the remote drawer. Its presence with sync
   // configured is covered by the lists unit tests.
   check(
-    'add-to-list is hidden without an account',
-    (await page.getByText('Add to list').count()) === 0,
+    configured ? 'add-to-list is offered when signed in' : 'add-to-list is hidden without an account',
+    ((await page.getByText('Add to list').count()) > 0) === configured,
   );
   // Content warnings are a community aggregate, so they need an account too. Their
   // ordering and verdict logic is covered by unit tests; what matters here is that a
   // credential-free build shows no dead control.
   check(
-    'content warnings are hidden without an account',
-    (await page.getByRole('button', { name: 'Content warnings' }).count()) === 0,
+    configured
+      ? 'content warnings are offered when signed in'
+      : 'content warnings are hidden without an account',
+    ((await page.getByRole('button', { name: 'Content warnings' }).count()) > 0) === configured,
   );
   await page.screenshot({ path: OUT + '13-title.png' });
 
@@ -396,9 +425,15 @@ try {
   await page.getByRole('link', { name: /People/ }).click();
   await page.waitForSelector('h1:text("People")', { timeout: 5000 });
   const peopleText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
-  // Without sync configured the screen must say why it is empty rather than showing
-  // a search box that can never return anything.
-  check('people screen explains what it needs', /works without it/.test(peopleText), peopleText.slice(0, 140));
+  // Empty either way, and it must say which kind of empty rather than showing a search
+  // box that can never return anything. The two reasons are different — the feature is
+  // unavailable in this build, or it is available and you are signed out — and telling
+  // someone the wrong one sends them looking for a setting that is not there.
+  check(
+    'people screen explains what it needs',
+    configured ? /Sign in/i.test(peopleText) : /works without it/.test(peopleText),
+    peopleText.slice(0, 140),
+  );
   await page.screenshot({ path: OUT + '14-people.png' });
   await page.goBack();
 

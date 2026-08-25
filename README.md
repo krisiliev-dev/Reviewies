@@ -20,11 +20,25 @@ lives in IndexedDB.
 
 ## Status
 
-Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 434 core tests (run twice, against both database
-implementations), 142 app tests, 24 bridge tests and 19 relay tests
-pass, including live tests against a real Supabase project and the real TMDB API;
-49 browser checks cover the full flow.
+Core loop, social layer, backend, remote control and fingerprinting are all built and
+deployed. 497 core tests (run twice, against both database implementations), 157 app
+tests, 24 bridge tests and 19 relay tests pass, plus 31 live tests against the real
+Supabase project and the real TMDB and AniList APIs. 49 browser checks cover the web
+app end to end and 27 drive the phone app through react-native-web.
+
+**What is deliberately not built**, so the table below is not read as a to-do list:
+
+- **Continuous listening in the browser.** The phone corrects its clock every few
+  seconds while backgrounded; a browser tab loses its audio graph when it stops being
+  looked at, so the web would have a feature that stops working exactly when a
+  second-screen app is useful. The web syncs by listening once, accurately.
+- **Cast and AirPlay.** Both need native SDKs and a custom development build. Roku is
+  reachable over plain HTTP and works today; the rest is [doc 6](docs/research/06-cast-airplay-and-fingerprint-sizing.md) §2.
+
+**What is built but has never met reality**, which is a different thing from untested:
+nothing has run on a physical phone, so haptics, the local-network entitlement and how
+any of it feels are unknown; the fingerprinter has never heard a real television through
+a real microphone; and the Roku and MPRIS adapters have never spoken to hardware.
 
 | Area | State |
 |---|---|
@@ -36,9 +50,10 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Finished shows complete themselves | ✅ Built, smoke-tested |
 | Where to watch, per country | ✅ Built, verified live |
 | Watching Mode: shared reactions, replay, drift correction | ✅ Built |
+| Reactions sampled across the episode, not its first minutes | ✅ Deployed |
 | Episode comments, spoiler-gated in the database | ✅ Verified live |
 | Screenshots in comments | ✅ Deployed and verified live |
-| Backend schema + row-level security | ✅ Deployed, all 9 migrations, RLS on every table |
+| Backend schema + row-level security | ✅ Deployed, all 11 migrations, RLS on every table |
 | Offline-first sync with outbox | ✅ Built, live round-trip tested |
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
@@ -50,6 +65,9 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Local bridge for a laptop (MPRIS) | ✅ Built, not verified on hardware |
 | Remote drawer + relay server | ✅ Built, relay verified end to end |
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
+| Continuous listening in the background (phone) | ✅ Built, unverified on a device |
+| Mapping a whole episode from the phone | ✅ Built |
+| Contributions cross-validated by content before promotion | ✅ Deployed and invoked live |
 | Half-star ratings, poster overrides | ✅ Built |
 | Lists mixing film and TV | ✅ Built |
 | TV Time rescue CSV import | ✅ Built against the real tool's output |
@@ -105,19 +123,25 @@ and why that matters more than it sounds.
 ### Tests
 
 ```bash
-npm test                              # 539 tests across core and app
+npm test                              # 654 tests across core and app
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
-npm run test:sqlite --workspace core  # the same 386 core tests, against SQLite
+npm run test:sqlite --workspace core  # the same 497 core tests, against SQLite
 
 cd app && npm run build
 npx vite preview &
 node smoke.mjs                        # 49 end-to-end checks in a real browser
+
+cd mobile && npx expo export --platform web
+npx serve dist &
+node smoke.mjs                        # 27 checks driving the phone app
 ```
 
-The browser checks run against a build with no credentials, so they exercise the
-fixture provider and assert that account-only controls hide themselves rather than
-rendering dead buttons. Build with `.env` in place at the repository root to point
-the same run at the real TMDB and Supabase.
+The browser checks work either way. They ask the app once whether it has credentials and
+then assert the correct behaviour for that build — an account-only control has to hide
+itself when there is no account behind it and appear when there is, and both are worth
+checking. Asserting only the credential-free answer is what they used to do, and since
+`vite.config.ts` reads `.env` from the repository root, an ordinary build took the other
+branch and the run failed against a perfectly correct app.
 
 Row-level security is tested against real Postgres via PGlite, running the deployable
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
@@ -180,7 +204,7 @@ a `Database`, a key/value store for preferences, and a file saver. Until they ar
 bound, using them throws with a message saying so — rather than failing later in a way
 that looks like a data bug. See [`core/README.md`](core/README.md).
 
-Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 386
+Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 497
 core tests run against both**, so the SQLite one is proven by the suite that was
 written against Dexie rather than by a second suite written to agree with it.
 
@@ -205,6 +229,11 @@ Read in order; later documents revise earlier ones where evidence changed.
    shutdown, once people had lived with fifteen replacements. **Withdraws doc 4's plan to
    import the TV Time comment archive**, and finds the GDPR zip is the recovery path
    everyone judges a tracker on
+9. [Going app-first](docs/research/09-app-first-pivot.md) — **reverses the PWA decision in
+   docs 1 and 2.** Why Expo rather than Capacitor, what the pivot costs, and a running
+   account of what was built afterwards: continuous listening, mapping episodes from the
+   phone, cross-validating contributions, and a run of bugs that all turned out to share
+   one cause — test fixtures smaller than the values production produces
 
 ## Attribution
 

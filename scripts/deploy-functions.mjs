@@ -13,6 +13,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const ref = process.env.SUPABASE_PROJECT_REF;
@@ -28,11 +29,15 @@ if (!token?.startsWith('sbp_') || !ref) {
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'supabase', 'functions');
 
 /**
- * `send-notifications` is called by pg_cron, which cannot present a user JWT, so it
- * authenticates with a shared secret of its own instead. Everything else verifies the
- * caller's token the normal way.
+ * Functions called by pg_cron, which cannot present a user JWT, so they authenticate
+ * with a shared secret of their own instead. Everything else verifies the caller's
+ * token the normal way.
+ *
+ * Both of these refuse any request without a matching `x-cron-secret`, so skipping JWT
+ * verification does not make them openly callable — it swaps one credential for another
+ * that a scheduler can actually supply.
  */
-const NO_JWT = new Set(['send-notifications']);
+const NO_JWT = new Set(['send-notifications', 'promote-fingerprint']);
 
 async function api(path, init = {}) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}${path}`, {
@@ -44,6 +49,42 @@ async function api(path, init = {}) {
   return text ? JSON.parse(text) : undefined;
 }
 
+/**
+ * Specifiers Deno resolves for itself and a bundler must not touch.
+ *
+ * `jsr:` and `npm:` are fetched by the edge runtime at deploy time; inlining them would
+ * mean shipping a copy of the Supabase client with every function, and `node:` builtins
+ * cannot be bundled at all.
+ */
+const RUNTIME_SPECIFIERS = ['jsr:*', 'npm:*', 'node:*', 'https://*', 'http://*'];
+
+/**
+ * Flatten a function to a single file before uploading.
+ *
+ * The Management API is not a bundler — it takes the files it is handed and puts them
+ * on the edge. A function importing anything outside its own directory therefore
+ * deploys successfully and then fails at runtime on the first request, which is a
+ * miserable way to find out. `promote-fingerprint` imports the matcher from
+ * `@reviewies/core`, deliberately: the alternative is a second copy of the matcher on
+ * the server, which is how a server and a client come to disagree about what a
+ * fingerprint means.
+ */
+async function bundle(entry) {
+  const result = await build({
+    entryPoints: [entry],
+    bundle: true,
+    format: 'esm',
+    platform: 'neutral',
+    target: 'esnext',
+    external: RUNTIME_SPECIFIERS,
+    write: false,
+    // The core is written for bundlers that resolve extensionless relative imports,
+    // which is every bundler this repository already uses.
+    resolveExtensions: ['.ts', '.js', '.mjs'],
+  });
+  return result.outputFiles[0].text;
+}
+
 async function deploy(slug) {
   const dir = join(root, slug);
   const files = readdirSync(dir).filter((f) => statSync(join(dir, f)).isFile());
@@ -53,7 +94,13 @@ async function deploy(slug) {
     'metadata',
     JSON.stringify({ name: slug, entrypoint_path: 'index.ts', verify_jwt: !NO_JWT.has(slug) }),
   );
-  for (const file of files) {
+
+  const bundled = await bundle(join(dir, 'index.ts'));
+  form.append('file', new File([bundled], 'index.ts', { type: 'application/typescript' }));
+
+  // Anything else in the directory rides along unbundled — config the runtime reads
+  // rather than code the entrypoint imports.
+  for (const file of files.filter((f) => f !== 'index.ts')) {
     form.append(
       'file',
       new File([readFileSync(join(dir, file))], file, { type: 'application/typescript' }),
