@@ -365,6 +365,51 @@ try {
   });
   check('the clock runs once started', stored);
 
+  // WCAG 2.2.2: anything that moves by itself for longer than five seconds needs a way
+  // to stop. Density thinned the stream; nothing halted it.
+  const hold = page.getByLabel(/reactions (still|move again)/);
+  check('the stream can be held still', (await hold.count()) === 1);
+  await hold.click();
+  await page.waitForTimeout(400);
+  check(
+    'holding it does not stop the clock',
+    /Pause/.test(await text()),
+    'the timecode is the point of the screen',
+  );
+  await hold.click();
+  await page.waitForTimeout(400);
+
+  // The hook claims AccessibilityInfo covers all three platforms because
+  // react-native-web implements it on top of prefers-reduced-motion. That is the sort
+  // of claim worth checking rather than asserting in a comment.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForTimeout(600);
+  // Something has to be in the stream to look at, and a tap of the pad puts it there:
+  // your own reactions replay alongside everyone else's.
+  await page.getByLabel('React with funny').click();
+  // Far enough into the four-second lifetime that a drifting one would have moved a
+  // long way. Position is the discriminator, not presence: the animated version is
+  // still on screen at this point, just somewhere else.
+  await page.waitForTimeout(2200);
+  const calm = await page.evaluate(() => {
+    const stream = document.querySelector('[aria-label="Reactions from other viewers"]');
+    const emoji = stream?.querySelector('div');
+    if (!emoji) return { shown: false };
+    return {
+      shown: true,
+      onScreen: emoji.getBoundingClientRect().width > 0,
+      // react-native-web writes Animated's translateX into an inline transform.
+      transform: getComputedStyle(emoji).transform,
+    };
+  });
+  check(
+    'the phone reads the reduced-motion setting through react-native-web',
+    calm.shown && calm.onScreen && (calm.transform === 'none' || /matrix\(1, 0, 0, 1, 0, 0\)/.test(calm.transform)),
+    JSON.stringify(calm),
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.waitForTimeout(400);
+
   await page.screenshot({ path: OUT + '8-watching.png' });
 
   await page.getByPlaceholder('Search any emoji…').fill('twist');

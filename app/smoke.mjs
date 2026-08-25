@@ -288,6 +288,63 @@ try {
   );
   check('reactions persist to IndexedDB', reactionCount === 2, `${reactionCount} stored`);
 
+  // --- Holding the stream still --------------------------------------------------
+  // WCAG 2.2.2 asks for a way to stop anything that moves by itself for more than five
+  // seconds. This drifts for the length of an episode, and density only thinned it.
+  const hold = page.getByRole('button', { name: /reactions (still|move again)/ });
+  check('the stream can be held', (await hold.count()) === 1);
+  await hold.click();
+  check(
+    'and says so',
+    (await hold.getAttribute('aria-pressed')) === 'true',
+    (await hold.getAttribute('aria-label')) ?? '',
+  );
+  // Held is not the same as paused: the timecode is the point of the screen.
+  check(
+    'the clock keeps running while it is held',
+    (await page.getByRole('button', { name: 'Pause the clock' }).count()) === 1,
+  );
+  await hold.click();
+
+  // --- Less motion, not less feature ---------------------------------------------
+  // index.css flattens every animation under prefers-reduced-motion, which is right for
+  // everything except the one component whose animation *is* the feature: the drift ran
+  // straight to its end state, off the left-hand edge, so the setting emptied the top of
+  // the screen entirely. It has to change how reactions are presented, not how fast.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  // Back before the two reactions recorded above, then let the clock reach them again.
+  await page.getByRole('button', { name: 'Move the clock back 5 seconds' }).click();
+  await page.waitForTimeout(4000);
+
+  const stillThere = await page.evaluate(() => {
+    const stream = document.querySelector('[aria-label="Reactions from other viewers"]');
+    const first = stream?.querySelector('span');
+    if (!first) return { inDom: false };
+    const box = first.getBoundingClientRect();
+    const style = getComputedStyle(first);
+    return {
+      inDom: true,
+      // Where it actually is, not whether it exists. The broken version left the span
+      // in the document and ran the animation instantly to its end state, which is
+      // translateX(-20vw) — present, and a fifth of a screen past the left edge.
+      onScreen: box.right > 0 && box.left < innerWidth,
+      left: Math.round(box.left),
+      animated: style.animationName !== 'none',
+    };
+  });
+  check(
+    'reactions still appear when less motion is asked for',
+    stillThere.inDom && stillThere.onScreen,
+    JSON.stringify(stillThere),
+  );
+  check(
+    'and they are placed rather than animated',
+    stillThere.inDom && !stillThere.animated,
+    JSON.stringify(stillThere),
+  );
+  await page.screenshot({ path: OUT + '17-reduced-motion.png' });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+
   await page.getByPlaceholder('Search any emoji…').fill('twist');
   await page.waitForTimeout(300);
   check(

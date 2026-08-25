@@ -4,6 +4,7 @@ import { ScrollView } from 'react-native';
 import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
 import { radius, theme } from '../ui/theme';
+import { useReducedMotion } from '../ui/useReducedMotion';
 
 /**
  * The remote, hidden in a drawer to the side — which is what the brief asked for.
@@ -25,15 +26,18 @@ export function RemoteDrawer() {
   const [open, setOpen] = useState(false);
   const slide = useRef(new Animated.Value(0)).current;
   const remote = useRemote();
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     Animated.timing(slide, {
       toValue: open ? 1 : 0,
-      duration: 200,
+      // Reduced motion means it is simply there or not there. A slide across most of
+      // the screen is exactly the kind of movement the setting is asking about.
+      duration: reduced ? 0 : 200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [open, slide]);
+  }, [open, slide, reduced]);
 
   return (
     <>

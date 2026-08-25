@@ -47,6 +47,10 @@ export function WatchingMode() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [clock]);
   const [density, setDensity] = useState(1);
+  // Separate from the clock on purpose: wanting the timecode to keep running while the
+  // top of the screen holds still is a reasonable thing to want, and WCAG 2.2.2 asks
+  // for a way to stop anything that moves by itself for longer than five seconds.
+  const [streamPaused, setStreamPaused] = useState(false);
   const [query, setQuery] = useState('');
   const [dismissedDrift, setDismissedDrift] = useState(false);
   const [autoSynced, setAutoSynced] = useState(false);
@@ -146,7 +150,12 @@ export function WatchingMode() {
       </header>
 
       {/* Other viewers' reactions, drifting right to left as you reach their moments. */}
-      <ReactionStream reactions={reactions} positionMs={clock.positionMs} density={density} />
+      <ReactionStream
+        reactions={reactions}
+        positionMs={clock.positionMs}
+        density={density}
+        paused={streamPaused}
+      />
 
       {!clock.running && clock.positionMs === 0 && !autoSynced ? (
         <StartPanel onStart={() => clock.start(0)} />
@@ -169,7 +178,13 @@ export function WatchingMode() {
               dismissed={dismissedDrift}
             />
           )}
-          <SyncBar clock={clock} density={density} onDensity={setDensity} />
+          <SyncBar
+            clock={clock}
+            density={density}
+            onDensity={setDensity}
+            streamPaused={streamPaused}
+            onStreamPaused={setStreamPaused}
+          />
           {/* Hidden when the extension already reports an exact position — there is
               nothing for listening to improve. */}
           {!autoSynced && (
@@ -234,10 +249,14 @@ function SyncBar({
   clock,
   density,
   onDensity,
+  streamPaused,
+  onStreamPaused,
 }: {
   clock: ReturnType<typeof usePlaybackClock>;
   density: number;
   onDensity: (v: number) => void;
+  streamPaused: boolean;
+  onStreamPaused: (v: boolean) => void;
 }) {
   return (
     <div className="flex items-center gap-2 px-3 pb-2">
@@ -264,6 +283,18 @@ function SyncBar({
         className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
       >
         +5s
+      </button>
+      <button
+        onClick={() => onStreamPaused(!streamPaused)}
+        aria-pressed={streamPaused}
+        aria-label={
+          streamPaused ? 'Let other people’s reactions move again' : 'Hold other people’s reactions still'
+        }
+        className={`rounded-lg px-3 py-2 text-sm ${
+          streamPaused ? 'bg-accent text-ink' : 'bg-surface-2'
+        }`}
+      >
+        {streamPaused ? 'Held' : 'Hold'}
       </button>
       <label className="ml-auto flex items-center gap-1.5 text-xs text-muted">
         Density

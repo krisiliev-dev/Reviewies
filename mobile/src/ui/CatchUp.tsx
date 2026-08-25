@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import * as Haptics from 'expo-haptics';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 import { radius, theme } from './theme';
+import { useReducedMotion } from './useReducedMotion';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -31,6 +32,7 @@ export function CatchUp({
   seriesName: string;
   onDone: () => void;
 }) {
+  const reduced = useReducedMotion();
   const [seasons, setSeasons] = useState<Array<{ season: number; episodes: number }>>();
   const [season, setSeason] = useState<number>();
   const [marked, setMarked] = useState<number>();
@@ -52,7 +54,12 @@ export function CatchUp({
   const chosen = seasons?.find((s) => s.season === season);
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onDone}>
+    <Modal
+      visible
+      transparent
+      animationType={reduced ? 'none' : 'slide'}
+      onRequestClose={onDone}
+    >
       {/* Tapping the dimmed area closes it, which is what a sheet on a phone does. */}
       <Pressable
         style={styles.backdrop}

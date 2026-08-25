@@ -46,6 +46,10 @@ export default function WatchingScreen() {
   const clock = usePlaybackClock();
   const [query, setQuery] = useState('');
   const [density, setDensity] = useState(24);
+  // Separate from the clock: the timecode can keep running while the top of the screen
+  // holds still, which is what WCAG 2.2.2 asks for and what someone who finds the
+  // drift distracting actually wants.
+  const [streamHeld, setStreamHeld] = useState(false);
 
   const episode = useLive(() => db.episodes.get(targetId), [targetId]);
   const series = useLive(
@@ -126,6 +130,7 @@ export default function WatchingScreen() {
           reactions={reactions ?? []}
           positionMs={clock.positionMs}
           density={density}
+          paused={streamHeld}
         />
 
         {!clock.running && clock.positionMs === 0 ? (
@@ -144,6 +149,16 @@ export default function WatchingScreen() {
         ) : (
           <View style={styles.controls}>
             <Control label={clock.running ? 'Pause' : 'Resume'} onPress={clock.toggle} />
+            <Control
+              label={streamHeld ? 'Held' : 'Hold'}
+              name={
+                streamHeld
+                  ? 'Let other people’s reactions move again'
+                  : 'Hold other people’s reactions still'
+              }
+              selected={streamHeld}
+              onPress={() => setStreamHeld(!streamHeld)}
+            />
             {/* "−5s" is a minus sign, a digit and a letter. Named, because what it does
                 is a sentence and what it shows is three characters. */}
             <Control
@@ -253,20 +268,23 @@ export default function WatchingScreen() {
 function Control({
   label,
   name,
+  selected,
   onPress,
 }: {
   label: string;
   name?: string;
+  selected?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={styles.control}
+      style={[styles.control, selected && styles.controlOn]}
       accessibilityRole="button"
+      accessibilityState={selected === undefined ? undefined : { selected }}
       accessibilityLabel={name ?? label}
     >
-      <Text style={styles.controlText}>{label}</Text>
+      <Text style={[styles.controlText, selected && styles.controlTextOn]}>{label}</Text>
     </Pressable>
   );
 }
@@ -297,7 +315,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  controlOn: { backgroundColor: theme.accent },
   controlText: { color: theme.text, fontSize: 14 },
+  controlTextOn: { color: theme.ink, fontWeight: '600' },
   densityBlock: { marginLeft: 'auto', alignItems: 'flex-end', gap: 3 },
   densityLabel: { color: theme.muted, fontSize: 10 },
   densityRow: { flexDirection: 'row', gap: 4 },
