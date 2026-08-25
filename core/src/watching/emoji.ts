@@ -109,7 +109,7 @@ export function loadEmojiIndex(): Promise<void> {
  * Only used for comparing. The curated spelling is the one that gets stored, because it
  * is the one already in the database.
  */
-const bare = (emoji: string): string => emoji.replace(/\uFE0F/g, '');
+export const bare = (emoji: string): string => emoji.replace(/\uFE0F/g, '');
 
 function parseIndex(raw: string): PadEmoji[] {
   const curatedChars = new Set(CURATED.map((e) => bare(e.emoji)));

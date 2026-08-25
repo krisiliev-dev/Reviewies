@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from './useReducedMotion';
+import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
 
 /**
  * Other people's reactions, arriving as you reach their moment.
@@ -40,6 +41,21 @@ export function ReactionStream({
 }) {
   const reduced = useReducedMotion();
 
+  /**
+   * What this says out loud, which on the phone was nothing at all.
+   *
+   * The web's stream announced every reaction as it drifted past, which is twenty-four
+   * interruptions a minute; the phone's announced none, which removes the feature
+   * outright for anyone who cannot see it. Neither is the answer. A burst is collected
+   * and summarised once — "four laughing" at the punchline — and between moments it is
+   * quiet. Held stops the talking with the movement, because somebody who asked the
+   * screen to hold still has asked for quiet.
+   */
+  const [announcement, setAnnouncement] = useState('');
+  const pending = useRef<string[]>([]);
+  const spokeAt = useRef(0);
+  const lastAt = useRef(0);
+
   // Which reactions belong on screen right now: those whose moment has just passed.
   // Held, the position stops advancing as far as this is concerned, so what is on
   // screen stays on screen and nothing new arrives.
@@ -51,6 +67,28 @@ export function ReactionStream({
     .filter((r) => r.tMs <= at && at - r.tMs < LIFETIME_MS)
     .slice(0, density);
 
+  // Collected as their moment passes, from the same set that is shown — density thins
+  // what is announced exactly as it thins what drifts.
+  if (at > lastAt.current) {
+    for (const reaction of visible) {
+      if (reaction.tMs > lastAt.current && reaction.tMs <= at) pending.current.push(reaction.emoji);
+    }
+    lastAt.current = at;
+  }
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      if (pending.current.length === 0) return;
+      const now = Date.now();
+      if (now - spokeAt.current < ANNOUNCE_EVERY_MS) return;
+      spokeAt.current = now;
+      setAnnouncement(summarise(pending.current));
+      pending.current = [];
+    }, 1000);
+    return () => clearInterval(id);
+  }, [paused]);
+
   return (
     <View
       style={styles.stream}
@@ -59,7 +97,19 @@ export function ReactionStream({
       // that emoji appear inside of.
       accessibilityLabel="Reactions from other viewers"
     >
+      {/* The only thing here that speaks. The emoji are a visual swell; read one at a
+          time they are noise. */}
+      <Text
+        accessibilityLiveRegion="polite"
+        style={styles.announcement}
+        // Off-screen rather than invisible: react-native has no equivalent of sr-only,
+        // and display:none would take it out of the accessibility tree with it.
+      >
+        {announcement}
+      </Text>
       {visible.map((reaction, index) => (
+        // aria-hidden: they are a visual swell, and swiping through them one at a
+        // time is the noise the summary above exists to replace.
         <Floater
           key={reaction.id}
           emoji={reaction.emoji}
@@ -111,7 +161,7 @@ function Floater({
     // Placed rather than travelled, spread across the width so several at once do not
     // land on top of each other.
     return (
-      <View style={[styles.floater, { top: lane * 34, right: 8 + slot * 64 }]}>
+      <View aria-hidden style={[styles.floater, { top: lane * 34, right: 8 + slot * 64 }]}>
         <Text style={styles.emoji}>{emoji}</Text>
       </View>
     );
@@ -119,6 +169,7 @@ function Floater({
 
   return (
     <Animated.View
+      aria-hidden
       style={[
         styles.floater,
         { top: lane * 34 },
@@ -144,4 +195,5 @@ const styles = StyleSheet.create({
   stream: { height: LANES * 34, overflow: 'hidden' },
   floater: { position: 'absolute', right: 0 },
   emoji: { fontSize: 26 },
+  announcement: { position: 'absolute', left: -10000, width: 1, height: 1 },
 });

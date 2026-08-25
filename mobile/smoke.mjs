@@ -448,6 +448,36 @@ try {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.waitForTimeout(400);
 
+  // What the stream says out loud. The web's announced every reaction — twenty-four a
+  // minute at the default density — and the phone's announced nothing at all, which
+  // removes the feature outright for anyone who cannot see it. Both are wrong; it
+  // summarises a moment now, and the emoji themselves are out of the reading order.
+  const spoken = await page.evaluate(() => {
+    const stream = document.querySelector('[aria-label="Reactions from other viewers"]');
+    if (!stream) return { found: false };
+    const live = stream.querySelector('[aria-live="polite"]');
+    return {
+      found: true,
+      speaks: Boolean(live),
+      // A live region announces its whole subtree, so an emoji inside one is announced
+      // whatever else is done to it.
+      saysEmoji: /\p{Extended_Pictographic}/u.test(live?.textContent ?? ''),
+      emojiHidden: [...stream.querySelectorAll('div')]
+        .filter((el) => /\p{Extended_Pictographic}/u.test(el.textContent ?? ''))
+        .every((el) => el.closest('[aria-hidden="true"]')),
+    };
+  });
+  check(
+    'the stream has a voice that is not the emoji',
+    spoken.found && spoken.speaks && !spoken.saysEmoji,
+    JSON.stringify(spoken),
+  );
+  check(
+    'and the emoji are out of the reading order',
+    spoken.emojiHidden,
+    JSON.stringify(spoken),
+  );
+
   await page.screenshot({ path: OUT + '8-watching.png' });
 
   await page.getByPlaceholder('Search any emoji…').fill('twist');

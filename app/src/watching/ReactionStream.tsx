@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from '../ui/useReducedMotion';
+import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
 
 const LANES = 4;
 const TRAVEL_MS = 7000;
@@ -47,6 +48,18 @@ export function ReactionStream({
   const lane = useRef(0);
   const seq = useRef(0);
 
+  /**
+   * What this says out loud, which is moments rather than reactions.
+   *
+   * The container used to be the live region, so every emoji that drifted past was
+   * announced — twenty-four a minute at the default density, on a screen somebody is
+   * holding while watching television. Now a burst is collected and summarised once,
+   * and between moments it says nothing.
+   */
+  const [announcement, setAnnouncement] = useState('');
+  const pending = useRef<string[]>([]);
+  const spokeAt = useRef(0);
+
   useEffect(() => {
     const from = lastPos.current;
     const to = positionMs;
@@ -63,6 +76,8 @@ export function ReactionStream({
     const shown = density >= 1 ? due : due.filter(() => Math.random() < density);
     if (shown.length === 0) return;
 
+    pending.current.push(...shown.map((r) => r.emoji));
+
     setFlying((current) => [
       ...current,
       ...shown.map((r) => {
@@ -77,6 +92,25 @@ export function ReactionStream({
     ]);
   }, [positionMs, reactions, density, paused]);
 
+  /**
+   * Speak at most one summary per window, and only while the stream is moving.
+   *
+   * Held is the control that stops the drift; it stops the talking with it, because
+   * somebody who has asked the screen to hold still has asked for quiet.
+   */
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      if (pending.current.length === 0) return;
+      const now = Date.now();
+      if (now - spokeAt.current < ANNOUNCE_EVERY_MS) return;
+      spokeAt.current = now;
+      setAnnouncement(summarise(pending.current));
+      pending.current = [];
+    }, 1000);
+    return () => clearInterval(id);
+  }, [paused]);
+
   // Retire finished reactions in one sweep rather than a timer per element.
   useEffect(() => {
     if (flying.length === 0 || paused) return;
@@ -87,12 +121,17 @@ export function ReactionStream({
   return (
     <div
       className="pointer-events-none relative h-32 overflow-hidden"
-      aria-live="polite"
       aria-label="Reactions from other viewers"
     >
+      {/* The only thing here that speaks. The emoji themselves are hidden from a screen
+          reader: they are a visual swell, and read one at a time they are noise. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
       {flying.map((f, index) => (
         <span
           key={f.key}
+          aria-hidden="true"
           className="absolute text-3xl will-change-transform"
           style={{
             top: `${f.lane * 26 + 4}px`,
