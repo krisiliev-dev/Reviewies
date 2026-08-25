@@ -476,46 +476,78 @@ describe('fingerprint references', () => {
     expect((await asAdmin('select * from fingerprint_contributions')).rows).toHaveLength(2);
   });
 
-  it('does not promote a lone contribution', async () => {
-    await contribute(ALICE, 1000);
-    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
-    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
+  const record = (agreement: number, hashes = 'AAAA', frames = 1000) =>
+    asAdmin(
+      'select record_fingerprint_reference($1, $2, $3, $4, 512, 22050, $5) as written',
+      [TARGET, 'default', hashes, frames, agreement],
+    );
+
+  it('no longer promotes on frame count alone', async () => {
+    // The old `promote_fingerprint` agreed two contributions if their lengths were
+    // within two percent, and never looked at the audio. Two episodes of the same show
+    // are usually the same length, so it corroborated wrong-episode contributions. It
+    // is gone rather than tightened: whether two recordings are of the same audio is
+    // not a question SQL can answer.
+    await expect(
+      asAdmin('select promote_fingerprint($1) as promoted', [TARGET]),
+    ).rejects.toThrow(/does not exist/i);
+  });
+
+  it('records a verified reference and publishes it to any signed-in user', async () => {
+    const res = await record(2);
+    expect((res.rows[0] as { written: boolean }).written).toBe(true);
+
+    // Bob can read the reference even though he cannot read Alice's contribution.
+    expect((await asUser(BOB, 'select * from fingerprint_references')).rows).toHaveLength(1);
+  });
+
+  it('refuses to record a reference nobody corroborated', async () => {
+    await expect(record(1)).rejects.toThrow(/at least two contributors/i);
     expect((await asAdmin('select * from fingerprint_references')).rows).toHaveLength(0);
   });
 
-  it('promotes once two contributions agree on length', async () => {
-    await contribute(ALICE, 1000);
-    await contribute(BOB, 1005);
-    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
-    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(true);
+  it('never replaces a reference with a less-supported one', async () => {
+    await record(5, 'WELL-SUPPORTED');
+    const res = await record(2, 'WEAKER');
+    expect((res.rows[0] as { written: boolean }).written).toBe(false);
 
-    const rows = (await asAdmin('select * from fingerprint_references')).rows as Array<{
-      agreement: number;
-    }>;
-    expect(rows).toHaveLength(1);
-    expect(Number(rows[0].agreement)).toBe(2);
+    const rows = (await asAdmin('select hashes, agreement from fingerprint_references'))
+      .rows as Array<{ hashes: string; agreement: number }>;
+    expect(rows[0].hashes).toBe('WELL-SUPPORTED');
+    expect(Number(rows[0].agreement)).toBe(5);
   });
 
-  it('does not promote when contributions disagree wildly', async () => {
-    // A mistimed or wrong-episode contribution would misplace every later viewer's
-    // reactions, which is worse than having no reference at all.
-    await contribute(ALICE, 1000);
-    await contribute(BOB, 9000);
-    const res = await asAdmin('select promote_fingerprint($1) as promoted', [TARGET]);
-    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
+  it('accepts a replacement with at least as much support', async () => {
+    await record(2, 'FIRST');
+    await record(3, 'BETTER');
+    const rows = (await asAdmin('select hashes, agreement from fingerprint_references'))
+      .rows as Array<{ hashes: string; agreement: number }>;
+    expect(rows[0].hashes).toBe('BETTER');
+    expect(Number(rows[0].agreement)).toBe(3);
   });
 
-  it('returns false when there is nothing to promote', async () => {
-    const res = await asAdmin('select promote_fingerprint($1) as promoted', ['tmdb:ep:none']);
-    expect((res.rows[0] as { promoted: boolean }).promoted).toBe(false);
-  });
+  it('is callable only by the service role', async () => {
+    // It writes the table every client reads for automatic sync, and it is SECURITY
+    // DEFINER, so the EXECUTE grant is the only thing standing between a client and
+    // skipping cross-validation entirely.
+    //
+    // Asserted against the catalogue rather than by trying the call, because the test
+    // harness re-grants execute on every function in `public` to `app_user` after the
+    // migrations run — which would make any such attempt succeed here regardless of
+    // what the migration says. These are the roles that actually exist in production.
+    const signature =
+      'record_fingerprint_reference(text, text, text, int, int, int, int)';
+    const { rows } = (await asAdmin(
+      `select
+         has_function_privilege('service_role', $1, 'EXECUTE') as service,
+         has_function_privilege('authenticated', $1, 'EXECUTE') as signed_in,
+         has_function_privilege('anon', $1, 'EXECUTE') as anonymous`,
+      [signature],
+    )) as { rows: Array<{ service: boolean; signed_in: boolean; anonymous: boolean }> };
 
-  it('publishes accepted references to any signed-in user', async () => {
-    await contribute(ALICE, 1000);
-    await contribute(BOB, 1000);
-    await asAdmin('select promote_fingerprint($1)', [TARGET]);
-    // Bob can read the reference even though he cannot read Alice's contribution.
-    expect((await asUser(BOB, 'select * from fingerprint_references')).rows).toHaveLength(1);
+    expect(rows[0].service).toBe(true);
+    expect(rows[0].signed_in).toBe(false);
+    expect(rows[0].anonymous).toBe(false);
   });
 
   it('refuses to let a client write a reference directly', async () => {

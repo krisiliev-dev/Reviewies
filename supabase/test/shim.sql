@@ -33,6 +33,26 @@ grant execute on all functions in schema auth to app_user;
 grant execute on all functions in schema public to app_user;
 grant select, insert, update, delete on all tables in schema public to app_user;
 
+-- The roles Supabase provides, which migrations grant to by name.
+--
+-- Nothing here runs as them — app_user is still what the policy tests use, because it
+-- is unprivileged in the way that makes RLS assertions mean something. They exist so
+-- that a migration granting execute to `service_role` is exercised rather than skipped,
+-- and so a typo in one of those names fails here instead of at deploy time.
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated nologin;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nologin;
+  end if;
+end
+$$;
+
 -- Minimal stand-in for Supabase Storage.
 --
 -- Storage is a real Postgres schema in Supabase: `storage.buckets` and

@@ -1,0 +1,4 @@
+{
+  "//": "Shared by every function in this directory. sloppy-imports lets Deno follow the extensionless relative imports inside @reviewies/core, which is written for Vite, Metro and Vitest - all of which resolve them. Without it a function that imports the core cannot be bundled, and the alternative is duplicating the matcher on the server, which is precisely how a server and a client come to disagree about what a fingerprint means.",
+  "unstable": ["sloppy-imports"]
+}

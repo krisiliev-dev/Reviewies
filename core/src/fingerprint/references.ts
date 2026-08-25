@@ -1,5 +1,10 @@
 import { getClient, getSession } from '../sync/auth';
 import { deserialiseReference, type Reference } from './fingerprint';
+import { decodeHashes, encodeHashes } from './wire';
+
+// Re-exported because callers have always imported them from here, and the split is an
+// implementation detail of where the code can run rather than a change to the API.
+export { decodeHashes, encodeHashes };
 
 /**
  * Fetching and contributing fingerprint reference timelines.
@@ -8,27 +13,6 @@ import { deserialiseReference, type Reference } from './fingerprint';
  * download whole and match entirely in the browser. That is what removes the need for
  * a global index, which is the genuinely expensive part of a Shazam-style system.
  */
-
-/** Pack a Uint32Array into base64 for transport. */
-export function encodeHashes(hashes: Uint32Array): string {
-  const bytes = new Uint8Array(hashes.buffer, hashes.byteOffset, hashes.byteLength);
-  let binary = '';
-  // Chunked: spreading a megabyte into String.fromCharCode overflows the stack.
-  const CHUNK = 0x8000;
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-}
-
-export function decodeHashes(encoded: string): Uint32Array {
-  const binary = atob(encoded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  // Uint32Array needs 4-byte alignment; a truncated payload would misread wildly.
-  const usable = bytes.byteLength - (bytes.byteLength % 4);
-  return new Uint32Array(bytes.buffer.slice(0, usable));
-}
 
 export interface StoredReference {
   reference: Reference;

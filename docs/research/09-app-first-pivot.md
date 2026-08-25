@@ -345,3 +345,67 @@ Mapping is deliberately the quieter of the two controls, and disabled until the 
 running — with the reason said out loud rather than left as a greyed-out button. A
 contribution is only as accurate as the clock it was recorded against, and an
 enthusiastic badly-timed one misplaces everyone else's reactions.
+
+### 6.4 Promotion now looks at the audio, and the harness had a blind spot
+
+`promote_fingerprint` decided that two contributions described the same audio if their
+frame counts were within two percent, and never looked at the landmarks. The comment in
+migration 0005 admitted this and called it deliberately crude, which was fair while
+contributions were thirty-second browser fragments. It is not fair now, and the failure
+it permits is not adversarial — it is ordinary.
+
+Two episodes of the same show are usually the same length. So someone who maps the
+wrong episode is corroborated by everyone who maps the right one; and because the
+*earliest* contribution was always the candidate, that one mistake owned the episode
+permanently while every correct contribution afterwards voted for it. The result is a
+reference that misplaces every viewer's reactions, confidently, with nothing anywhere
+reporting a problem.
+
+Since contributions now carry episode-absolute frames (§6.3), a real test is available
+from code that already exists: locate one contribution inside the other and require
+them to land at the same place. Same episode shares landmarks at an offset near zero;
+anything else does not. `chooseReference` also picks the *most corroborated*
+contribution rather than the earliest, so a majority can outvote a mistake instead of
+ratifying it.
+
+Three things that took more than one attempt:
+
+- **A prominence metric that the data refused.** The first idea was to score the
+  winning offset against the best rival offset, on the theory that a true match spikes
+  and a coincidence spreads. Measured, the ratio was 1.53 for matching episodes and
+  1.53 for unrelated ones — no separation at all, because the synthetic fixture is
+  repetitive enough that the background scales with the signal. It was removed rather
+  than kept as decoration.
+- **Agreement was not symmetric, and not for the reason it looked like.** A five-minute
+  contribution and a whole-episode one agreed one way round and disagreed the other. The
+  first guess was length. It was noise: confidence is the share of *matched* landmarks
+  agreeing on one offset, so when the noisier recording is the reference side its
+  spurious landmarks give the other's hashes somewhere meaningless to land, inflating
+  the denominator. Two recordings of the same audio measured 0.46 one way and 0.17 the
+  other purely because one microphone was worse. The `score` is identical in both
+  directions — 2081 either way — so the fix is to evaluate both and take the stronger,
+  and there is now a test asserting symmetry, because `chooseReference` compares every
+  pair and would otherwise return different winners depending on iteration order.
+- **The schema harness cannot see function grants.** It re-grants `execute on all
+  functions in schema public` to its unprivileged role *after* the migrations run, so a
+  test that tries to call a locked-down function as that role succeeds no matter what
+  the migration says. The grant is asserted against `has_function_privilege` for the
+  real Supabase roles instead. Worth knowing: no migration's function-level grant in
+  this repo is verifiable by calling it.
+
+The old function is dropped, not tightened — whether two recordings are of the same
+audio is not a question SQL can answer. Cross-validation runs in a `promote-fingerprint`
+edge function holding the service role, because RLS deliberately stops any client from
+reading someone else's raw contribution, which is exactly what forging agreement would
+need. Until that function is deployed, nothing is promoted at all. That is the intended
+direction to fail in: no reference means Watching Mode falls back to syncing by hand,
+which works, while a wrong reference means everyone is confidently wrong.
+
+**Unverified.** There is no Deno or Supabase CLI in this environment and no
+credentials, so the edge function has never been deployed or run. Its decision-making is
+entirely in `chooseReference`, which is tested; what is untested is the deployment —
+specifically whether the Supabase bundler follows `@reviewies/core`'s extensionless
+imports with `sloppy-imports` set in `supabase/functions/deno.json`. If it does not, the
+fallback is explicit `.ts` extensions across the core rather than a second copy of the
+matcher on the server: a server and a client that disagree about what a fingerprint
+means is the failure this whole section is about.

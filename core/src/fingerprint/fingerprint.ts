@@ -196,6 +196,21 @@ export function deserialiseReference(packed: Uint32Array): Reference {
   return reference;
 }
 
+/**
+ * Read packed (hash, frame) pairs back as a sample rather than as a reference.
+ *
+ * The same bytes serve both roles: a stored contribution is a reference when something
+ * is being located *in* it, and a sample when it is being located *in something else*.
+ * Cross-validating two contributions needs both directions.
+ */
+export function unpackHashes(packed: Uint32Array): Hash[] {
+  const hashes: Hash[] = [];
+  for (let i = 0; i + 1 < packed.length; i += 2) {
+    hashes.push({ hash: packed[i], frame: packed[i + 1] });
+  }
+  return hashes;
+}
+
 export interface MatchResult {
   /** Frame offset of the sample within the reference. */
   offsetFrames: number;
