@@ -171,13 +171,21 @@ async function fetchEdge(column: 'follower_id' | 'followee_id'): Promise<Person[
   const session = await getSession();
   if (!client || !session) return [];
 
-  // Two foreign keys point at profiles, so the join needs naming explicitly —
-  // PostgREST cannot guess which side is wanted.
-  const other = column === 'follower_id' ? 'followee_id' : 'follower_id';
-  const { data, error } = await client
-    .from('follows')
-    .select(`profiles!follows_${other}_fkey (id, handle, display_name)`)
-    .eq(column, session.user.id);
+  // Two foreign keys point at profiles, so the join needs naming explicitly — PostgREST
+  // cannot guess which side is wanted. The names are Postgres's own, derived from the
+  // inline `references` in migration 0001 rather than declared anywhere.
+  //
+  // Written out rather than assembled from `column`, which is what this was. A name
+  // built at runtime cannot be checked against the schema by anything — and a wrong one
+  // does not throw, it returns `{ data: null, error }` and every caller here reads that
+  // as "you follow nobody". backendQueries.test.ts checks these two against the
+  // migrations, and could not have checked the interpolated form.
+  const embed =
+    column === 'follower_id'
+      ? 'profiles!follows_followee_id_fkey (id, handle, display_name)'
+      : 'profiles!follows_follower_id_fkey (id, handle, display_name)';
+
+  const { data, error } = await client.from('follows').select(embed).eq(column, session.user.id);
 
   if (error || !data) return [];
 
