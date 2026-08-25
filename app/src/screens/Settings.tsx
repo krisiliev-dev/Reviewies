@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
 import { getStats } from '@reviewies/core/data/repo';
+import { formatDuration } from '@reviewies/core/stats/compute';
 import { downloadFile, exportAll, exportWatchesCsv, type ImportReport } from '@reviewies/core/data/transfer';
 import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '@reviewies/core/metadata/index';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
@@ -125,7 +126,9 @@ export function Settings() {
         )}
         {stats && stats.minutes > 0 && (
           <p className="mt-3 text-sm text-muted">
-            {Math.round(stats.minutes / 60)} hours watched, counted by actual runtime.
+            {/* formatDuration rather than minutes/60: 90 minutes was rendering as
+                "1 hours watched", which is wrong twice over. */}
+            {formatDuration(stats.minutes)} watched, counted by actual runtime.
           </p>
         )}
       </section>

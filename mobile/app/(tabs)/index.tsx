@@ -12,9 +12,9 @@ import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getUpNext, markWatched, type UpNextEntry } from '@reviewies/core/data/repo';
 import { db } from '@reviewies/core/data/db';
-import { Poster } from '../src/ui/Poster';
-import { radius, theme } from '../src/ui/theme';
-import { useLive } from '../src/useLive';
+import { Poster } from '../../src/ui/Poster';
+import { radius, theme } from '../../src/ui/theme';
+import { useLive } from '../../src/useLive';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -41,14 +41,7 @@ export default function UpNextScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.headingRow}>
-          <Text style={styles.heading}>Up Next</Text>
-          <Link href="/search" asChild>
-            <Pressable hitSlop={12} accessibilityLabel="Search">
-              <Text style={styles.headingAction}>Search</Text>
-            </Pressable>
-          </Link>
-        </View>
+        <Text style={styles.heading}>Up Next</Text>
 
         {entries.length === 0 ? (
           <View style={styles.empty}>
@@ -131,14 +124,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ink },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
-  headingRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700' },
-  headingAction: { color: theme.accent, fontSize: 16, fontWeight: '600' },
+  heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
   empty: { gap: 20, paddingTop: 8 },
   emptyText: { color: theme.muted, fontSize: 16 },

@@ -19,7 +19,7 @@ Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser.
 ```bash
 npx expo export --platform web
 npx serve dist -p 4200 &
-node smoke.mjs         # 10 checks against a real SQLite database
+node smoke.mjs         # 19 checks against a real SQLite database
 ```
 
 This drives the app through react-native-web. It cannot see haptics, the local-network
@@ -49,6 +49,15 @@ sample data, so it is always launchable.
 
 ## What is built
 
-Up Next and Search, backed by SQLite, with a placeholder title page. The rest of the
-screens port in the order doc 9 §5 sets out — Watching Mode next, then direct device
-control, which is the thing going native actually unlocks.
+Five tabs — Up Next, Search, Discover, Watchlist, More — plus the title page with its
+episode list and half-star ratings, Stats, the import/export screen, and **Watching
+Mode**.
+
+Five and no more is deliberate. The web app carries eight, which is already too many
+for a phone: iOS collapses a tab bar past five, and simplicity was the loudest single
+finding in the research. The four things done daily get a tab; everything else is one
+level down under More.
+
+Still to come, in doc 9 §5's order: direct device control — the thing going native
+actually unlocks — then a background audio session for fingerprinting, then the social
+screens.

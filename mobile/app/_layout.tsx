@@ -51,10 +51,8 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: theme.ink },
         }}
       >
-        {/* These two draw their own headings, so the navigator's would stack a second
-            title above the first. */}
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="search" options={{ headerShown: false }} />
+        {/* The tab group draws its own chrome. */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </>
   );

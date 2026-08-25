@@ -13,8 +13,8 @@
     "dexie": "^4.4.5",
     "dexie-react-hooks": "^4.4.0",
     "pg": "^8.23.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-router-dom": "^7.18.2",
     "sql.js": "^1.14.2",
     "@reviewies/core": "*"

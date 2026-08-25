@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
-import { formatTimecode, usePlaybackClock } from '../watching/usePlaybackClock';
+import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, searchEmoji } from '@reviewies/core/watching/emoji';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
@@ -28,6 +28,17 @@ export function WatchingMode() {
   const { targetId = '' } = useParams();
   const navigate = useNavigate();
   const clock = usePlaybackClock();
+
+  // The hook no longer listens for this itself — it has no business knowing it is in
+  // a browser — so the web app supplies its own source. Timers are throttled in a
+  // background tab, and a returning user should not be shown a stale timecode.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') clock.resync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [clock]);
   const [density, setDensity] = useState(1);
   const [query, setQuery] = useState('');
   const [dismissedDrift, setDismissedDrift] = useState(false);

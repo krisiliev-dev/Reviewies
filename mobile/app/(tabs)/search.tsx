@@ -18,8 +18,8 @@ import {
   provider,
 } from '@reviewies/core/metadata/index';
 import type { SearchResult } from '@reviewies/core/metadata/provider';
-import { Poster } from '../src/ui/Poster';
-import { radius, theme } from '../src/ui/theme';
+import { Poster } from '../../src/ui/Poster';
+import { radius, theme } from '../../src/ui/theme';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');

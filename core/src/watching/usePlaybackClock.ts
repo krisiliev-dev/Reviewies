@@ -20,6 +20,16 @@ export interface PlaybackClock {
   toggle: () => void;
   /** Shift the clock. Negative means "I am behind what I thought". */
   nudge: (deltaMs: number) => void;
+  /**
+   * Recompute the position now rather than on the next tick.
+   *
+   * Called when the app returns to the foreground: a browser throttles timers in a
+   * background tab and a phone suspends them outright, so the first thing a returning
+   * user would otherwise see is a stale timecode. Each app wires its own source for
+   * that (visibilitychange on the web, AppState on a phone), because the hook has no
+   * business knowing which one it is running on.
+   */
+  resync: () => void;
   seek: (ms: number) => void;
   reset: () => void;
 }
@@ -42,16 +52,6 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
     return () => clearInterval(id);
   }, [running, tickMs]);
 
-  // Recompute immediately on returning to the tab, rather than waiting a tick.
-  useEffect(() => {
-    function onVisible() {
-      if (running && document.visibilityState === 'visible') {
-        setPositionMs(anchorMedia.current + (Date.now() - anchorWall.current));
-      }
-    }
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [running]);
 
   const start = useCallback((atMs?: number) => {
     anchorMedia.current = atMs ?? 0;
@@ -102,7 +102,11 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
     setRunning(false);
   }, []);
 
-  return { positionMs, running, start, pause, toggle, nudge, seek, reset };
+  const resync = useCallback(() => {
+    if (running) setPositionMs(anchorMedia.current + (Date.now() - anchorWall.current));
+  }, [running]);
+
+  return { positionMs, running, start, pause, toggle, nudge, seek, reset, resync };
 }
 
 export function formatTimecode(ms: number): string {

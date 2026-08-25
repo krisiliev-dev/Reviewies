@@ -78,6 +78,28 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 20000 });
   check('progress survives a reload', /S1E2\b/.test(await text()));
 
+  // --- Tabs ------------------------------------------------------------------
+  // Five, and no more: the web app's eight is already too many for a phone, and
+  // simplicity was the loudest single finding in the research.
+  for (const tab of ['Discover', 'Watchlist', 'More']) {
+    await page.getByText(tab, { exact: true }).first().click();
+    await page.waitForTimeout(1200);
+    check(`the ${tab} tab opens`, (await text()).includes(tab));
+  }
+  await page.screenshot({ path: OUT + '6-more.png' });
+
+  // --- Stats -----------------------------------------------------------------
+  await page.getByText('Runtime-weighted, and your year in review').click();
+  await page.waitForTimeout(2000);
+  const stats = await text();
+  check('stats are runtime-weighted', /Watched/.test(stats) && /Episodes/.test(stats), stats.slice(0, 110));
+  await page.screenshot({ path: OUT + '7-stats.png' });
+  await page.goBack();
+  await page.waitForTimeout(800);
+  // Back on More; the title page is reached from Up Next.
+  await page.getByText('Up Next', { exact: true }).last().click();
+  await page.waitForTimeout(1200);
+
   // --- The title page --------------------------------------------------------
   // Both other screens link here. This check exists because the file once failed to
   // write and nothing noticed until the link was followed by hand.
@@ -85,7 +107,35 @@ try {
   await page.waitForTimeout(2000);
   const title = await text();
   check('the title page opens rather than dead-ending', /survival drama/i.test(title), title.slice(0, 100));
+  check('the episode list renders', /season 1/i.test(title), title.slice(0, 130));
   await page.screenshot({ path: OUT + '5-title.png' });
+
+  // --- Watching Mode ---------------------------------------------------------
+  // The reason this app exists rather than another tracker.
+  await page.getByText('React', { exact: true }).first().click();
+  await page.waitForTimeout(2000);
+  check('Watching Mode opens', (await text()).includes('Start watching'));
+
+  await page.getByText('Start watching').click();
+  await page.waitForTimeout(1500);
+  await page.getByText('Cliffhanger').click();
+  await page.waitForTimeout(1200);
+
+  const stored = await page.evaluate(async () => {
+    const response = await fetch('/');
+    void response;
+    return document.body.innerText.includes('Pause');
+  });
+  check('the clock runs once started', stored);
+
+  await page.screenshot({ path: OUT + '8-watching.png' });
+
+  await page.getByPlaceholder('Search any emoji…').fill('twist');
+  await page.waitForTimeout(800);
+  check('emoji search filters the pad', (await text()).includes('Mind blown'));
+  await page.screenshot({ path: OUT + '9-emoji-search.png' });
+  await page.getByText('Close').click();
+  await page.waitForTimeout(1000);
 
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } catch (err) {

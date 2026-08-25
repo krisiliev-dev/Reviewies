@@ -21,8 +21,8 @@ lives in IndexedDB.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 386 core tests, 153 app tests, 43 bridge tests
-and 19 relay tests
+**Nothing is deliberately skipped.** 397 core tests (run twice, against both database
+implementations), 142 app tests, 43 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
 49 browser checks cover the full flow.
 
@@ -156,7 +156,8 @@ core/                   @reviewies/core — no DOM, no React, no platform assump
   src/fingerprint/      Landmark-hash fingerprinting
   src/watching/         Reactions, drift estimation, the emoji pad
 mobile/                 The iOS and Android app (Expo)
-  app/                  Screens, file-based routes
+  app/(tabs)/           Up Next, Search, Discover, Watchlist, More
+  app/watching/         Watching Mode
   src/platform.ts       The only file that knows it is a phone
 app/                    The web app
   src/data/             Dexie adapter and the platform bindings
