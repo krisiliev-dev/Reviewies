@@ -1,11 +1,46 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
+import { reportFailure } from '@reviewies/core/data/failure';
+import type { ErrorBoundaryProps } from 'expo-router';
+
+/**
+ * Keep one broken screen from taking the app with it.
+ *
+ * expo-router uses a component exported under this name as the boundary for everything
+ * below it, so exporting it from the root layout covers the whole app. There was none,
+ * on either platform — a thrown error in any component took the tree down to a blank
+ * screen with nothing on it, on an app whose premise is that your history is safe here.
+ *
+ * `retry` is expo-router's: it remounts the subtree, which is the right offer because
+ * most of what lands here is one screen's load rather than a broken app.
+ *
+ * What this does *not* cover, said plainly rather than left to look handled: an
+ * unhandled promise rejection on a device. React Native's promise implementation does
+ * not surface those the way a browser's `unhandledrejection` does, and the ways to hook
+ * it are internal to the runtime and change between versions. The web export gets them
+ * through the same listener the web app uses; a device does not.
+ */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  reportFailure(error);
+  return (
+    <View style={styles.centre}>
+      <Text style={styles.title}>This screen stopped</Text>
+      <Text style={styles.detail}>
+        Something on it went wrong. Everything you have tracked is still here — it lives
+        on this device and nothing was lost.
+      </Text>
+      <Pressable style={styles.retry} accessibilityRole="button" onPress={() => void retry()}>
+        <Text style={styles.retryText}>Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 /**
  * Nothing renders until the platform is bound.
@@ -89,6 +124,14 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  retry: {
+    marginTop: 16,
+    backgroundColor: theme.accent,
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  retryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
   centre: {
     flex: 1,
     alignItems: 'center',

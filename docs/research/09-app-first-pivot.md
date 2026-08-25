@@ -1592,6 +1592,48 @@ the function the *parser* reports rather than the name a person guessed, because
 hand-written name and a found one drift apart and the list stops describing the code it
 claims to — which had already happened to four entries by the time this was checked.
 
+### 6.35 The app had no answer for a failure nobody caught
+
+The sweep of §6.33 and §6.34 covered `core/`. Asking the same question one layer up
+started with a check rather than a fix: does either smoke suite even *notice* an
+unhandled promise rejection? Playwright's `pageerror` catches uncaught exceptions, and a
+rejection is a different event. Fired one at a running build and it does — both suites
+would see it, so there was nothing to fix there. Worth the two minutes: the alternative
+was rebuilding something that already worked.
+
+What the survey found instead was larger. **There was no error boundary anywhere, on
+either platform, and no global rejection handler.** Fifty-odd places start async work
+without catching, which is mostly harmless because the core functions they call cannot
+reject — but a thrown error in any component unmounted the whole React tree to a blank
+page. No message, no navigation, no way back but a reload, on an app whose entire premise
+is that your history is safe on this device.
+
+A bus rather than a wrapper at every call site. Wrapping fifty call sites would be a
+large diff to make a rare failure visible and would still miss the next one; one place
+that hears everything nobody else did is smaller and catches more. The web reports into
+it from `unhandledrejection` and `error`, and shows a dismissible banner. The phone uses
+expo-router's boundary, exported from the root layout so it covers everything below.
+
+Both were proven against a real build rather than a test double: a screen made to throw
+shows the message, the five tabs survive it, and navigating away recovers — the boundary
+clears when its children change, because one that latches forever turns a broken screen
+into a permanently broken tab. A rejection fired at the running app raises the banner
+with its message in it.
+
+Two things this does **not** do, said plainly. An unhandled rejection on a device is not
+caught: React Native's promise implementation does not surface those the way a browser
+does, and the ways to hook it are internal to the runtime and change between versions.
+The web export gets them through the same listener the web app uses; a device does not.
+And the guard from §6.34 was not extended to `app/src` — the shape there is an unhandled
+promise rather than a returned empty, and there is no useful mechanical check for it that
+would fail on anything real. Saying so is the same call §6.26 made when it threw away a
+test that could not fail.
+
+The wiring check from §6.27 caught the new module before the tests did — `resetFailures`
+reached by nothing, and `onFailure` imported by one app and not the other. Both are
+explained now rather than quietly exempted: the phone reports *into* the bus and never
+reads back out of it, because expo-router hands its boundary the error directly.
+
 ---
 
 ## 7. What is still not known

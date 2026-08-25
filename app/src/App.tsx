@@ -4,6 +4,8 @@ import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { TabIcon } from './ui/TabIcon';
 import { More } from './screens/More';
+import { ErrorBoundary } from './ui/ErrorBoundary';
+import { FailureBanner } from './ui/FailureBanner';
 import { UpNext } from './screens/UpNext';
 import { Search } from './screens/Search';
 import { TitleDetail } from './screens/TitleDetail';
@@ -73,8 +75,10 @@ function Shell() {
           Skip to navigation
         </a>
       )}
+      <FailureBanner />
       <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-[calc(var(--tabbar,5rem)+1rem)]'}>
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           <Route path="/" element={<UpNext />} />
           <Route path="/search" element={<Search />} />
           <Route path="/watchlist" element={<Watchlist />} />
@@ -88,7 +92,8 @@ function Shell() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/more" element={<More />} />
-        </Routes>
+          </Routes>
+        </ErrorBoundary>
       </main>
       {!immersive && <TabBar />}
       <RemoteDrawer />
