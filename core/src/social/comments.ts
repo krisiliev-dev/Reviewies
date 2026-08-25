@@ -84,6 +84,22 @@ export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 /**
+ * One image, described in a way both platforms can produce.
+ *
+ * The browser has a `File`, which carries its own type and size. React Native has no
+ * `File` at all: its `FormData` takes `{ uri, name, type }` and its runtime turns that
+ * into the multipart part, with the type and the size known only to whoever picked the
+ * image. So neither the part nor its metadata can be derived from the other, and the
+ * caller supplies both.
+ */
+export interface ImageUpload {
+  /** Whatever `FormData.append` should be given — a `File`, or RN's `{uri, name, type}`. */
+  part: unknown;
+  type: string;
+  size: number;
+}
+
+/**
  * Upload a screenshot for a comment.
  *
  * Doc 8 §4: screenshots were core to TV Time's comment culture and are the thing
@@ -98,23 +114,29 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
  * Size and type are still checked here so a mistake costs a sentence rather than a
  * slow upload followed by a rejection. The function checks them again, because a
  * client-side check is a courtesy and not a control.
+ *
+ * It took a `File` until the phone needed it, which is why the phone could show other
+ * people's screenshots and never post one.
  */
 export async function uploadCommentImage(
-  file: File,
+  image: ImageUpload,
 ): Promise<{ ok: true; url: string } | { ok: false; reason: string }> {
   const client = getClient();
   const session = await getSession();
   if (!client || !session) return { ok: false, reason: 'Sign in to attach an image.' };
 
-  if (!IMAGE_TYPES.includes(file.type)) {
+  if (!IMAGE_TYPES.includes(image.type)) {
     return { ok: false, reason: 'Images only — JPEG, PNG, WebP or GIF.' };
   }
-  if (file.size > MAX_IMAGE_BYTES) {
+  if (image.size > MAX_IMAGE_BYTES) {
     return { ok: false, reason: 'That image is over 5 MB.' };
   }
+  // The function rejects an empty file, and a picker that hands back a zero-byte asset
+  // is a thing that happens. Saying so here costs nothing.
+  if (image.size === 0) return { ok: false, reason: 'That file is empty.' };
 
   const body = new FormData();
-  body.append('file', file);
+  body.append('file', image.part as Blob);
 
   const { data, error } = await client.functions.invoke('upload-comment-image', { body });
 

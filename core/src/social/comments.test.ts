@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { EFFORT_LEVELS, commentBody, filterByEffort, type Comment } from './comments';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  EFFORT_LEVELS,
+  MAX_IMAGE_BYTES,
+  commentBody,
+  filterByEffort,
+  uploadCommentImage,
+  type Comment,
+} from './comments';
+import * as auth from '../sync/auth';
 
 const make = (over: Partial<Comment> = {}): Comment => ({
   id: crypto.randomUUID(),
@@ -74,5 +82,86 @@ describe('what gets stored as a comment body', () => {
 
   it('rejects an empty comment with no image', () => {
     expect(commentBody('   ')).toBe('');
+  });
+});
+
+describe('attaching a screenshot, from either platform', () => {
+  /** Captures the multipart body the edge function would receive. */
+  function stubClient() {
+    const sent: FormData[] = [];
+    vi.spyOn(auth, 'getSession').mockResolvedValue({ user: { id: 'u1' } } as never);
+    vi.spyOn(auth, 'getClient').mockReturnValue({
+      functions: {
+        invoke: async (_name: string, options: { body: FormData }) => {
+          sent.push(options.body);
+          return { data: { url: 'https://example.test/i.png' }, error: null };
+        },
+      },
+    } as never);
+    return sent;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('sends a browser File as the file part', async () => {
+    const sent = stubClient();
+    const file = new File([new Uint8Array([1, 2, 3])], 'shot.png', { type: 'image/png' });
+
+    const result = await uploadCommentImage({ part: file, type: file.type, size: file.size });
+
+    expect(result).toEqual({ ok: true, url: 'https://example.test/i.png' });
+    expect(sent[0].get('file')).toBe(file);
+  });
+
+  it('sends React Native’s uri object through untouched', async () => {
+    // The phone has no `File`. Its FormData takes `{ uri, name, type }` and its runtime
+    // reads the bytes off disk — so this has to reach `append` as the object it is.
+    // Asserted at `append` rather than by reading the entry back, because jsdom's
+    // FormData stringifies a plain object to "[object Object]" on the way in and there
+    // would be nothing left to recognise.
+    stubClient();
+    const appended: unknown[] = [];
+    const append = vi
+      .spyOn(FormData.prototype, 'append')
+      .mockImplementation((...args: unknown[]) => void appended.push(args[1]));
+
+    const part = { uri: 'file:///tmp/shot.jpg', name: 'shot.jpg', type: 'image/jpeg' };
+    const result = await uploadCommentImage({ part, type: 'image/jpeg', size: 4096 });
+    append.mockRestore();
+
+    expect(result.ok).toBe(true);
+    expect(appended).toEqual([part]);
+    expect(appended[0]).toBe(part);
+  });
+
+  it('refuses a type the bucket does not allow, before spending the upload', async () => {
+    const sent = stubClient();
+
+    const result = await uploadCommentImage({ part: {}, type: 'image/heic', size: 100 });
+
+    expect(result).toEqual({ ok: false, reason: 'Images only — JPEG, PNG, WebP or GIF.' });
+    expect(sent).toHaveLength(0);
+  });
+
+  it('refuses one over the size the function will accept', async () => {
+    const sent = stubClient();
+
+    const result = await uploadCommentImage({
+      part: {},
+      type: 'image/png',
+      size: MAX_IMAGE_BYTES + 1,
+    });
+
+    expect(result).toEqual({ ok: false, reason: 'That image is over 5 MB.' });
+    expect(sent).toHaveLength(0);
+  });
+
+  it('refuses an empty one, which a picker can hand back', async () => {
+    const sent = stubClient();
+
+    const result = await uploadCommentImage({ part: {}, type: 'image/png', size: 0 });
+
+    expect(result).toEqual({ ok: false, reason: 'That file is empty.' });
+    expect(sent).toHaveLength(0);
   });
 });

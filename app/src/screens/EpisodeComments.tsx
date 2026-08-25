@@ -53,7 +53,9 @@ export function EpisodeComments() {
   async function attach(file: File) {
     setError(undefined);
     setUploading(true);
-    const result = await uploadCommentImage(file);
+    // A browser File is both the multipart part and its own metadata; the phone has to
+    // supply the two separately, which is why core takes them apart.
+    const result = await uploadCommentImage({ part: file, type: file.type, size: file.size });
     setUploading(false);
     if (result.ok) setImage(result.url);
     else setError(result.reason);

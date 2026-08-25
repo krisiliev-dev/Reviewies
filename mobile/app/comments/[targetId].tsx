@@ -19,8 +19,10 @@ import {
   fetchComments,
   filterByEffort,
   postComment,
+  uploadCommentImage,
   type Comment,
 } from '@reviewies/core/social/comments';
+import { pickCommentImage } from '../../src/comments/pickImage';
 import { radius, theme } from '../../src/ui/theme';
 
 /**
@@ -44,6 +46,8 @@ export default function CommentsScreen() {
   const [effort, setEffort] = useState(0);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string>();
+  const [image, setImage] = useState<string>();
+  const [uploading, setUploading] = useState(false);
 
   const [episode, setEpisode] = useState<{ season: number; number: number; name: string }>();
 
@@ -70,11 +74,28 @@ export default function CommentsScreen() {
     void load();
   }, [load]);
 
+  async function attach() {
+    setError(undefined);
+    const picked = await pickCommentImage();
+    // A cancelled picker says nothing at all; a rejected one says why.
+    if (!picked.ok) {
+      if (picked.reason) setError(picked.reason);
+      return;
+    }
+
+    setUploading(true);
+    const result = await uploadCommentImage(picked.image);
+    setUploading(false);
+    if (result.ok) setImage(result.url);
+    else setError(result.reason);
+  }
+
   async function submit() {
     setError(undefined);
     try {
-      await postComment(targetId, draft);
+      await postComment(targetId, draft, image);
       setDraft('');
+      setImage(undefined);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not post that');
@@ -140,13 +161,43 @@ export default function CommentsScreen() {
               multiline
               style={styles.input}
             />
+            {image && (
+              <View style={styles.attached}>
+                <Image source={{ uri: image }} style={styles.attachedImage} resizeMode="cover" />
+                <Pressable
+                  onPress={() => setImage(undefined)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove the attached screenshot"
+                  hitSlop={8}
+                  style={styles.removeAttached}
+                >
+                  <Text style={styles.deleteCommentText}>Remove</Text>
+                </Pressable>
+              </View>
+            )}
+
             <Pressable
-              style={[styles.primary, !draft.trim() && styles.disabled]}
-              onPress={submit}
-              disabled={!draft.trim()}
+              style={styles.secondary}
+              onPress={attach}
+              disabled={uploading}
               accessibilityRole="button"
-              accessibilityState={{ disabled: !draft.trim() }}
+              accessibilityLabel={image ? 'Replace the attached screenshot' : 'Attach a screenshot'}
+              accessibilityState={{ disabled: uploading }}
             >
+              <Text style={styles.secondaryText}>
+                {uploading ? 'Uploading…' : image ? 'Replace screenshot' : 'Attach a screenshot'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.primary, (!draft.trim() && !image) || uploading ? styles.disabled : null]}
+              onPress={submit}
+              disabled={(!draft.trim() && !image) || uploading}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: (!draft.trim() && !image) || uploading }}
+            >
+              {/* An image on its own is a post: core turns an empty body into 📷, the
+                  same as the web. */}
               <Text style={styles.primaryText}>Post</Text>
             </Pressable>
             {error && <Text style={styles.error}>{error}</Text>}
@@ -202,6 +253,9 @@ export default function CommentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  attached: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  attachedImage: { width: 72, height: 72, borderRadius: radius.lg, backgroundColor: theme.surface2 },
+  removeAttached: { minHeight: 24, minWidth: 44, justifyContent: 'center' },
   commentHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   commentWho: { flex: 1, minWidth: 0 },
   // 24px is the WCAG 2.5.8 minimum, and it is a CSS pixel count rather than a font
@@ -243,6 +297,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
+  secondary: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.surface2,
+    borderRadius: radius.md,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  secondaryText: { color: theme.text, fontSize: 14 },
   disabled: { opacity: 0.4 },
   error: { color: theme.accent, fontSize: 13 },
 

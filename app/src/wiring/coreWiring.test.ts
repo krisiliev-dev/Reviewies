@@ -62,8 +62,6 @@ const LOPSIDED: Record<string, string> = {
     'The phone holds a background audio session and corrects for drift as it goes. The web takes one bounded capture with the microphone on only for those few seconds, which is a privacy decision rather than a missing feature.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',
   'mobile only: fingerprint/continuous#shouldCorrect': 'Part of the same continuous session.',
-  'app only: social/comments#uploadCommentImage':
-    'A real gap, not a decision: the phone renders images other people post and cannot attach one. It needs an image picker and a native upload path, which is its own piece of work.',
 };
 
 const explain = (entries: string[], allowed: Record<string, string>) =>

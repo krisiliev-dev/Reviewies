@@ -38,6 +38,12 @@
       "expo-sqlite",
       "expo-sharing",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Reviewies asks for a photo only when you tap to attach a screenshot to a comment. Nothing else in your library is read."
+        }
+      ],
+      [
         "expo-audio",
         {
           "microphonePermission": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded — it is never recorded, saved, or sent anywhere.",
