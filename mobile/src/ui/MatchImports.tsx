@@ -25,13 +25,24 @@ export function MatchImports({ onDone }: { onDone?: () => void }) {
   const [progress, setProgress] = useState<RunProgress>();
   const [running, setRunning] = useState(false);
   const [asks, setAsks] = useState<Proposal[]>([]);
+  const [error, setError] = useState<string>();
 
   async function start() {
     setRunning(true);
+    setError(undefined);
     setAsks([]);
     try {
       const result = await runMatching({ onProgress: setProgress });
+      // From the result, not only from the progress callback. A run with nothing left
+      // to do never enters its loop, so nothing was ever reported and the screen went
+      // back to offering the button as though it had not been pressed.
+      setProgress(result);
       setAsks(result.asks);
+    } catch (e) {
+      // Said rather than thrown out of a handler: silently returning to the button
+      // looks identical to a run that found nothing, and nothing said the provider
+      // was unreachable.
+      setError(e instanceof Error ? e.message : 'Could not reach the metadata provider');
     } finally {
       setRunning(false);
       onDone?.();
@@ -65,6 +76,8 @@ export function MatchImports({ onDone }: { onDone?: () => void }) {
           {asks.length > 0 ? ` ${asks.length} need a decision.` : ''}
         </Text>
       )}
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {asks.map((ask) => (
         <View key={ask.localId} style={styles.card}>
@@ -123,6 +136,7 @@ const styles = StyleSheet.create({
   },
   primaryText: { color: theme.ink, fontSize: 15, fontWeight: '700' },
   status: { color: theme.muted, fontSize: 13, lineHeight: 18 },
+  error: { color: theme.accent, fontSize: 13 },
   card: { backgroundColor: theme.surface, borderRadius: radius.lg, padding: 12, gap: 8 },
   name: { color: theme.text, fontSize: 15, fontWeight: '600' },
   candidate: {

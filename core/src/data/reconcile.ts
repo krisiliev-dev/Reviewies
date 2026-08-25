@@ -212,13 +212,23 @@ export interface Lookup {
   episodes: (id: InternalId) => Promise<CachedEpisode[]>;
 }
 
-const CACHED: Lookup = { title: getTitleCached, episodes: getEpisodesCached };
+/**
+ * Exported so a test can assert which episode listing this remaps against, which is not
+ * a detail for anime.
+ *
+ * TMDB flattens some series into one long season; `getEpisodesCached` re-cuts those
+ * using AniList before returning them, and `provider.getEpisodes` does not. An imported
+ * anime history carries the seasons the way an anime fan counts them — season 2, episode
+ * 1 — so remapping it against the flattened listing would place nothing at all and
+ * orphan an entire history in one go.
+ */
+export const DEFAULT_LOOKUP: Lookup = { title: getTitleCached, episodes: getEpisodesCached };
 
 export async function acceptMatch(
   localId: InternalId,
   providerId: InternalId,
   /** Injected for the same reason `proposeMatch` takes its search: no live calls. */
-  lookup: Lookup = CACHED,
+  lookup: Lookup = DEFAULT_LOOKUP,
 ): Promise<MigrationReport> {
   const report: MigrationReport = {
     watches: 0,

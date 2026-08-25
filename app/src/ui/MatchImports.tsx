@@ -20,17 +20,42 @@ import { Poster } from './Poster';
  * leaves the rest here as questions — and the questions are shown as a choice with
  * posters and years, not as a yes/no on a name.
  */
-export function MatchImports({ onDone }: { onDone?: () => void }) {
+export function MatchImports({
+  onDone,
+  /**
+   * The two things this screen does, injectable for the same reason the core's are:
+   * their real implementations talk to the provider, and this component's whole job is
+   * the wiring between a person's choice and an irreversible write. A test that cannot
+   * see which ID was accepted is not testing the part that matters.
+   */
+  run = runMatching,
+  accept = acceptMatch,
+}: {
+  onDone?: () => void;
+  run?: typeof runMatching;
+  accept?: typeof acceptMatch;
+}) {
   const [progress, setProgress] = useState<RunProgress>();
   const [running, setRunning] = useState(false);
   const [asks, setAsks] = useState<Proposal[]>([]);
+  const [error, setError] = useState<string>();
 
   async function start() {
     setRunning(true);
+    setError(undefined);
     setAsks([]);
     try {
-      const result = await runMatching({ onProgress: setProgress });
+      const result = await run({ onProgress: setProgress });
+      // From the result, not only from the progress callback. A run with nothing left
+      // to do never enters its loop, so nothing was ever reported and the screen went
+      // back to offering the button as though it had not been pressed.
+      setProgress(result);
       setAsks(result.asks);
+    } catch (e) {
+      // Caught and said, rather than thrown out of an event handler. Without this the
+      // screen quietly went back to offering the button, which looks identical to a run
+      // that found nothing to do — and nothing anywhere said the provider was down.
+      setError(e instanceof Error ? e.message : 'Could not reach the metadata provider');
     } finally {
       setRunning(false);
       onDone?.();
@@ -38,7 +63,7 @@ export function MatchImports({ onDone }: { onDone?: () => void }) {
   }
 
   async function choose(proposal: Proposal, providerId: string) {
-    await acceptMatch(proposal.localId, providerId);
+    await accept(proposal.localId, providerId);
     setAsks((current) => current.filter((a) => a.localId !== proposal.localId));
     onDone?.();
   }
@@ -73,6 +98,8 @@ export function MatchImports({ onDone }: { onDone?: () => void }) {
           {asks.length > 0 && ` ${asks.length} need a decision.`}
         </p>
       )}
+
+      {error && <p className="text-sm text-accent">{error}</p>}
 
       {asks.map((ask) => (
         <div key={ask.localId} className="rounded-2xl bg-surface p-3">

@@ -11,6 +11,8 @@ import {
   unmatchedTitles,
 } from './reconcile';
 import { importRescueCsv } from './tvtimeRescue';
+import { DEFAULT_LOOKUP } from './reconcile';
+import { getEpisodesCached } from '../metadata/index';
 import type { MatchCandidate } from './reconcile';
 
 /**
@@ -331,6 +333,44 @@ describe('working through a library', () => {
     // A provider will rate-limit a burst of two hundred, and the honest response is to
     // go slower rather than lose the tail of somebody's library.
     expect(waits).toEqual([350]);
+  });
+});
+
+describe('anime, whose seasons TMDB flattens', () => {
+  const HEADER =
+    'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id';
+
+  it('remaps against the corrected listing, not the provider\'s raw one', () => {
+    // Not a detail. TMDB reports some anime as one hundred-episode season;
+    // getEpisodesCached re-cuts those with AniList and provider.getEpisodes does not.
+    // An imported anime history counts seasons the way a fan does — season 2, episode 1
+    // — so remapping against the flattened listing would place nothing and orphan the
+    // whole history in one go.
+    expect(DEFAULT_LOOKUP.episodes).toBe(getEpisodesCached);
+  });
+
+  it('places a season-two watch when the listing has seasons', async () => {
+    await importRescueCsv(
+      `${HEADER}\nFrieren,2,3,Aussterben,True,2026-01-05,1,2026-01-01,700,7003`,
+    );
+    const [title] = await unmatchedTitles();
+
+    const report = await acceptMatch(title.id, 'tmdb:tv:209867', {
+      title: async () => undefined,
+      episodes: async () => [
+        {
+          id: 'tmdb:ep:1',
+          seriesId: 'tmdb:tv:209867',
+          season: 2,
+          number: 3,
+          name: 'Aussterben',
+          fetchedAt: Date.now(),
+        },
+      ],
+    });
+
+    expect(report.watches).toBe(1);
+    expect(report.orphanedWatches).toBe(0);
   });
 });
 
