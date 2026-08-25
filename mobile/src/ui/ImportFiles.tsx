@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import * as DocumentPicker from 'expo-document-picker';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
+import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { radius, theme } from './theme';
 
 /**
@@ -29,6 +30,8 @@ export function ImportFiles({
   const [files, setFiles] = useState<Array<{ name: string; outcome: string }>>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [restored, setRestored] = useState<RestoreReport>();
+  const [restoring, setRestoring] = useState(false);
 
   async function pickAndImport() {
     setError(undefined);
@@ -77,6 +80,7 @@ export function ImportFiles({
         combined.watchlist += partial.watchlist ?? 0;
         combined.skipped += partial.skipped ?? 0;
         combined.warnings.push(...(partial.warnings ?? []));
+        combined.account ??= partial.account;
         outcomes.push({ name: file.name, outcome });
       }
 
@@ -126,6 +130,40 @@ export function ImportFiles({
               {warning}
             </Text>
           ))}
+
+          {/* The second step, offered where the first one landed. */}
+          {report.account && !restored && (
+            <Pressable
+              style={styles.restore}
+              disabled={restoring}
+              accessibilityRole="button"
+              accessibilityLabel="Restore lists and follows"
+              accessibilityState={{ disabled: restoring }}
+              onPress={async () => {
+                setRestoring(true);
+                setRestored(await restoreAccount(report.account!));
+                setRestoring(false);
+              }}
+            >
+              <Text style={styles.restoreText}>
+                {restoring ? 'Restoring…' : 'Restore lists and follows'}
+              </Text>
+            </Pressable>
+          )}
+          {restored && (
+            <View accessibilityLiveRegion="polite">
+              <Text style={styles.reportHead}>
+                Restored {restored.lists} list{restored.lists === 1 ? '' : 's'} with{' '}
+                {restored.listItems} item{restored.listItems === 1 ? '' : 's'}, and{' '}
+                {restored.follows} follow{restored.follows === 1 ? '' : 's'}.
+              </Text>
+              {restored.skipped.map((line) => (
+                <Text key={line} style={styles.reportLine}>
+                  {line}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
       )}
     </>
@@ -172,4 +210,15 @@ const styles = StyleSheet.create({
   reportHead: { color: theme.text, fontSize: 14 },
   reportLine: { color: theme.muted, fontSize: 12 },
   reportName: { color: theme.text },
+  restore: {
+    marginTop: 8,
+    backgroundColor: theme.surface2,
+    borderRadius: radius.md,
+    // 44 rather than 24: this is a primary action in a report, not a link beside text.
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  restoreText: { color: theme.text, fontSize: 14 },
 });

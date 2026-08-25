@@ -166,6 +166,14 @@ export interface ImportReport {
   watchlist: number;
   skipped: number;
   warnings: string[];
+  /**
+   * The account half of a restored export, handed on rather than consumed.
+   *
+   * The local import cannot put it back — it needs a network and an account — so it
+   * comes out here for the screen to offer as a second step. Without this the data
+   * would be sitting in a file the app had just read and thrown away.
+   */
+  account?: AccountExport;
 }
 
 /** Restore a Reviewies export. Additive — existing data is preserved. */
@@ -209,22 +217,26 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
   report.watches = bundle.watches.length;
   report.watchlist = bundle.watchlist.length;
 
-  // Carried, and deliberately not restored. Lists and follows would need an account and
-  // a round of handle resolution, and re-posting old comments would put them back into
-  // other people's threads with today's timestamps. Saying so is the standard the
-  // importer already holds itself to everywhere else: nothing is silently dropped.
+  // The account half needs a network and an account, so it cannot happen inside this
+  // transaction. Named rather than dropped: `restoreAccount` is the second step, and
+  // the screens offer it once this one has landed.
   const account = bundle.account;
   if (account) {
     const carried = [
       account.lists.length && `${account.lists.length} list(s)`,
       account.following.length && `${account.following.length} follow(s)`,
-      account.comments.length && `${account.comments.length} comment(s)`,
     ].filter(Boolean);
     if (carried.length) {
       report.warnings.push(
-        `The file also holds ${carried.join(', ')} from an account. They are kept in the file and were not restored here.`,
+        `The file also holds ${carried.join(' and ')} from an account. Sign in and restore them separately.`,
       );
     }
+    if (account.comments.length) {
+      report.warnings.push(
+        `${account.comments.length} comment(s) are kept in the file and are not posted again.`,
+      );
+    }
+    if (account.lists.length || account.following.length) report.account = account;
   }
 
   return report;

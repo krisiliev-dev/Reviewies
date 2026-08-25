@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ImportReport } from '@reviewies/core/data/transfer';
+import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 
 /**
@@ -20,6 +21,8 @@ export function ImportFiles({
   onImported?: (report: ImportReport) => void;
 }) {
   const [report, setReport] = useState<ImportReport>();
+  const [restored, setRestored] = useState<RestoreReport>();
+  const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState<string>();
   const [files, setFiles] = useState<Array<{ name: string; outcome: string }>>();
   const [busy, setBusy] = useState(false);
@@ -75,6 +78,7 @@ export function ImportFiles({
         combined.watchlist += partial.watchlist ?? 0;
         combined.skipped += partial.skipped ?? 0;
         combined.warnings.push(...(partial.warnings ?? []));
+        combined.account ??= partial.account;
         outcomes.push({ name: file.name, outcome });
       }
 
@@ -124,6 +128,37 @@ export function ImportFiles({
               {w}
             </p>
           ))}
+
+          {/* The second step, offered where the first one landed. It needs an account
+              and a network, so it cannot be part of the local import — but a file the
+              app has just read and thrown the lists out of is not a restore. */}
+          {report.account && !restored && (
+            <button
+              onClick={async () => {
+                setRestoring(true);
+                setRestored(await restoreAccount(report.account!));
+                setRestoring(false);
+              }}
+              disabled={restoring}
+              className="mt-3 min-h-[44px] w-full rounded-xl bg-surface-2 px-4 py-3 disabled:opacity-50"
+            >
+              {restoring ? 'Restoring…' : 'Restore lists and follows'}
+            </button>
+          )}
+          {restored && (
+            <div className="mt-3" role="status">
+              <p>
+                Restored {restored.lists} list{restored.lists === 1 ? '' : 's'} with{' '}
+                {restored.listItems} item{restored.listItems === 1 ? '' : 's'}, and{' '}
+                {restored.follows} follow{restored.follows === 1 ? '' : 's'}.
+              </p>
+              {restored.skipped.map((s) => (
+                <p key={s} className="mt-1 text-muted">
+                  {s}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </>

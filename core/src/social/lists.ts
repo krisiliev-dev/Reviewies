@@ -52,7 +52,11 @@ export async function fetchLists(): Promise<ListSummary[]> {
   });
 }
 
-export async function createList(name: string, isPublic = false): Promise<string | undefined> {
+export async function createList(
+  name: string,
+  isPublic = false,
+  description?: string,
+): Promise<string | undefined> {
   const client = getClient();
   const session = await getSession();
   if (!client || !session) return undefined;
@@ -62,7 +66,14 @@ export async function createList(name: string, isPublic = false): Promise<string
 
   const { data, error } = await client
     .from('lists')
-    .insert({ user_id: session.user.id, name: trimmed.slice(0, 120), is_public: isPublic })
+    .insert({
+      user_id: session.user.id,
+      name: trimmed.slice(0, 120),
+      is_public: isPublic,
+      // The column caps at 2000 and a restore should not fail on a description the
+      // person already had; truncating is the lesser loss.
+      description: description ? description.slice(0, 2000) : null,
+    })
     .select('id')
     .single();
 

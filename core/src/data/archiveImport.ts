@@ -152,6 +152,9 @@ export async function importArchive(zip: Uint8Array): Promise<ArchiveReport> {
     report.watchlist += partial.watchlist ?? 0;
     report.skipped += partial.skipped ?? 0;
     report.warnings.push(...(partial.warnings ?? []));
+    // A zip normally holds one export; if it somehow held two, the first one's lists
+    // are the ones offered rather than a silent merge of both.
+    report.account ??= partial.account;
     report.files.push({ name, outcome });
   }
 

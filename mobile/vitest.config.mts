@@ -10,10 +10,10 @@ import { defineConfig } from 'vitest/config';
  * first, because the branch that matters is the one the web export never takes.
  */
 export default defineConfig({
+  // One .env at the workspace root, as everywhere else in this repository.
+  envDir: '..',
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
-    // One .env at the workspace root, as everywhere else.
-    envDir: '..',
   },
 });

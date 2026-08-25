@@ -121,6 +121,30 @@ export async function updateProfile(changes: {
  * search has to drop them explicitly — otherwise blocking someone would fail to
  * remove them from the one place you are most likely to run into them again.
  */
+/**
+ * One person, by their exact handle.
+ *
+ * `searchPeople` is a substring match built for a search box, which is the wrong tool
+ * for restoring a follow list: "ana" would match "ana", "anastasia" and "banana", and
+ * picking the first is how a restore follows a stranger.
+ */
+export async function findByHandle(handle: string): Promise<Person | undefined> {
+  const client = getClient();
+  if (!client) return undefined;
+
+  const normalised = normaliseHandle(handle);
+  if (!HANDLE_RE.test(normalised)) return undefined;
+
+  const { data, error } = await client
+    .from('profiles')
+    .select('id, handle, display_name')
+    .eq('handle', normalised)
+    .maybeSingle();
+
+  if (error || !data) return undefined;
+  return toPerson(data);
+}
+
 export async function searchPeople(query: string): Promise<Person[]> {
   const client = getClient();
   const session = await getSession();

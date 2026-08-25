@@ -79,8 +79,10 @@ describe('"Everything, in full, with no account and no upsell. It is yours."', (
     expect(bundle.account?.comments[0].body).toBe('the best one');
   });
 
-  it('says so when it cannot put the account half back', async () => {
+  it('points at the second step rather than dropping the account half', async () => {
     // The importer's own standard, applied to itself: nothing is silently dropped.
+    // Lists and follows go back through `restoreAccount`, which needs an account and a
+    // network and so cannot happen inside the local transaction.
     const bundle = await exportAll({
       account: async () => ({
         lists: [{ name: 'A list', isPublic: true, createdAt: 'x', items: [] }],
@@ -91,7 +93,9 @@ describe('"Everything, in full, with no account and no upsell. It is yours."', (
 
     const report = await importBundle(bundle);
 
-    expect(report.warnings.join(' ')).toMatch(/1 list\(s\), 2 follow\(s\)/);
+    expect(report.warnings.join(' ')).toMatch(/1 list\(s\) and 2 follow\(s\)/);
+    expect(report.warnings.join(' ')).toMatch(/restore them separately/);
+    // Nothing about comments, because this file carries none.
     expect(report.warnings.join(' ')).not.toMatch(/comment/);
   });
 
