@@ -128,12 +128,19 @@ export async function updateProfile(changes: {
  * for restoring a follow list: "ana" would match "ana", "anastasia" and "banana", and
  * picking the first is how a restore follows a stranger.
  */
-export async function findByHandle(handle: string): Promise<Person | undefined> {
+export interface HandleResult {
+  person?: Person;
+  /** Set when the lookup could not be run. Absent means it ran and found nobody. */
+  failed?: string;
+}
+
+export async function findByHandle(handle: string): Promise<HandleResult> {
   const client = getClient();
-  if (!client) return undefined;
+  if (!client) return {};
 
   const normalised = normaliseHandle(handle);
-  if (!HANDLE_RE.test(normalised)) return undefined;
+  // Not a failure: that is not a handle, so there is nothing to look up.
+  if (!HANDLE_RE.test(normalised)) return {};
 
   const { data, error } = await client
     .from('profiles')
@@ -141,17 +148,35 @@ export async function findByHandle(handle: string): Promise<Person | undefined> 
     .eq('handle', normalised)
     .maybeSingle();
 
-  if (error || !data) return undefined;
-  return toPerson(data);
+  // The distinction matters to `restoreAccount`, which reports "could not be found" —
+  // a statement about somebody else's account, and the wrong one to make because a
+  // request failed.
+  if (error) return { failed: error.message };
+  if (!data) return {};
+  return { person: toPerson(data) };
 }
 
-export async function searchPeople(query: string): Promise<Person[]> {
+/**
+ * What came back, and whether asking worked.
+ *
+ * A failed search returning an empty array reads as "no such person", and somebody
+ * would conclude a friend is not on the service and stop looking. §6.33 named this as
+ * wrong and unfinished rather than deliberate; this finishes it.
+ */
+export interface PeopleResult {
+  people: Person[];
+  /** Set when the search could not be run. Absent means it ran and matched nobody. */
+  failed?: string;
+}
+
+export async function searchPeople(query: string): Promise<PeopleResult> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return [];
+  // Neither of these is a failure: there is nothing to ask, or nothing to ask about.
+  if (!client || !session) return { people: [] };
 
   const q = normaliseHandle(query);
-  if (q.length < 2) return [];
+  if (q.length < 2) return { people: [] };
 
   const { data, error } = await client
     .from('profiles')
@@ -160,10 +185,11 @@ export async function searchPeople(query: string): Promise<Person[]> {
     .neq('id', session.user.id)
     .limit(20);
 
-  if (error || !data) return [];
+  if (error) return { people: [], failed: error.message };
+  if (!data) return { people: [] };
 
   const blocked = new Set((await fetchBlocked()).map((p) => p.id));
-  return data.map(toPerson).filter((p) => !blocked.has(p.id));
+  return { people: data.map(toPerson).filter((p) => !blocked.has(p.id)) };
 }
 
 async function fetchEdge(column: 'follower_id' | 'followee_id'): Promise<Person[]> {

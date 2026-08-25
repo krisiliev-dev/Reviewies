@@ -120,7 +120,14 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
   try {
     const trending = await provider.getTrending();
     return mergeSuggestions([{ seedName: 'Trending now', results: trending }], excluded, limit);
-  } catch {
-    return [];
+  } catch (e) {
+    // Rethrown rather than swallowed. Both screens already have an error slot and were
+    // never given anything to put in it, so a provider outage showed "Nothing new to
+    // suggest yet. Track a few things and come back." — which is not only the wrong
+    // sentence but the wrong instruction: tracking more will not help.
+    //
+    // Only the last resort throws. A seed that fails above is one of several and the
+    // rest still make a suggestion; this is the point where there is nothing left.
+    throw e instanceof Error ? e : new Error('Could not reach the metadata provider');
   }
 }

@@ -28,12 +28,26 @@ export interface StoredReference {
  * Undefined is the normal answer for anything nobody has contributed yet, which will
  * be most episodes for a long time. Callers fall back to manual sync.
  */
+export interface ReferenceResult {
+  reference?: StoredReference;
+  /** Set when the timeline could not be read. Absent means it was read and there is none. */
+  failed?: string;
+}
+
+/**
+ * The timeline for an episode, if anybody has mapped it.
+ *
+ * `undefined` for both "nobody has mapped this" and "we could not ask" sent the screen
+ * to say the first — which is a statement about the world, and it sends somebody off to
+ * spend an episode recording a timeline that may already exist.
+ */
 export async function fetchReference(
   targetId: string,
   audioTrack = 'default',
-): Promise<StoredReference | undefined> {
+): Promise<ReferenceResult> {
   const client = getClient();
-  if (!client || !(await getSession())) return undefined;
+  // Not a failure: signed out, this feature is not offered at all.
+  if (!client || !(await getSession())) return {};
 
   const { data, error } = await client
     .from('fingerprint_references')
@@ -42,19 +56,23 @@ export async function fetchReference(
     .eq('audio_track', audioTrack)
     .maybeSingle();
 
-  if (error || !data) return undefined;
+  if (error) return { failed: error.message };
+  if (!data) return {};
 
   try {
     return {
-      reference: deserialiseReference(decodeHashes(String(data.hashes))),
-      frameCount: Number(data.frame_count),
-      hopSize: Number(data.hop_size),
-      sampleRate: Number(data.sample_rate),
-      agreement: Number(data.agreement),
+      reference: {
+        reference: deserialiseReference(decodeHashes(String(data.hashes))),
+        frameCount: Number(data.frame_count),
+        hopSize: Number(data.hop_size),
+        sampleRate: Number(data.sample_rate),
+        agreement: Number(data.agreement),
+      },
     };
   } catch {
-    // A corrupt payload should degrade to manual sync, not crash Watching Mode.
-    return undefined;
+    // A corrupt payload should degrade to manual sync, not crash Watching Mode — and
+    // it is a failure rather than an absence: there *is* a timeline, it is unreadable.
+    return { failed: 'The stored timeline could not be read.' };
   }
 }
 

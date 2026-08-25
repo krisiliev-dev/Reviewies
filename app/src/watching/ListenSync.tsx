@@ -35,7 +35,14 @@ export function ListenSync({
     setBusy('listening');
     setNote(undefined);
     try {
-      const stored = await fetchReference(targetId);
+      const found = await fetchReference(targetId);
+      // Two different things to say, and the wrong one sends somebody off to spend an
+      // episode recording a timeline that may already exist.
+      if (found.failed) {
+        setNote(`Could not check for a timeline (${found.failed}). Sync by hand for now.`);
+        return;
+      }
+      const stored = found.reference;
       if (!stored) {
         setNote('Nobody has mapped this episode yet. Sync by hand and you can contribute one.');
         return;

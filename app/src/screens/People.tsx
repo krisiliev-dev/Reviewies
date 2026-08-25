@@ -208,6 +208,7 @@ function FindPeople({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Person[]>([]);
   const [searched, setSearched] = useState(false);
+  const [searchFailed, setSearchFailed] = useState<string>();
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -221,7 +222,8 @@ function FindPeople({
     const timer = setTimeout(async () => {
       const found = await searchPeople(query);
       if (!cancelled) {
-        setResults(found);
+        setResults(found.people);
+        setSearchFailed(found.failed);
         setSearched(true);
       }
     }, 300);
@@ -241,7 +243,15 @@ function FindPeople({
         className="w-full rounded-xl bg-surface px-4 py-3 outline-none placeholder:text-muted"
       />
 
-      {searched && results.length === 0 && (
+      {/* "Nobody by that name" was said for both no match and no answer, and somebody
+          would conclude a friend is not here and stop looking. */}
+      {searchFailed && (
+        <p className="px-1 text-sm text-accent" role="status">
+          Could not search right now ({searchFailed}). This says nothing about whether
+          they are here.
+        </p>
+      )}
+      {!searchFailed && searched && results.length === 0 && (
         <p className="px-1 text-sm text-muted">Nobody by that name.</p>
       )}
 

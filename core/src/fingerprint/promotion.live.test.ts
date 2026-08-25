@@ -158,7 +158,7 @@ live('fingerprint promotion (live)', () => {
     expect(result.body.promoted).toBe(0);
 
     // And a client sees nothing, so Watching Mode falls back to syncing by hand.
-    expect(await fetchReference(AGREED)).toBeUndefined();
+    expect((await fetchReference(AGREED)).reference).toBeUndefined();
   }, 120_000);
 
   it('promotes once a second person hears the same thing', async () => {
@@ -182,7 +182,7 @@ live('fingerprint promotion (live)', () => {
     expect(result.status).toBe(200);
     expect(result.body.promoted).toBe(1);
 
-    const stored = await fetchReference(AGREED);
+    const stored = (await fetchReference(AGREED)).reference;
     expect(stored).toBeDefined();
     expect(stored!.agreement).toBe(2);
     expect(stored!.sampleRate).toBe(SAMPLE_RATE);
@@ -222,6 +222,6 @@ live('fingerprint promotion (live)', () => {
 
     // No reference at all is the right answer. A wrong one would place every later
     // viewer's reactions confidently in the wrong place.
-    expect(await fetchReference(DISPUTED)).toBeUndefined();
+    expect((await fetchReference(DISPUTED)).reference).toBeUndefined();
   }, 120_000);
 });

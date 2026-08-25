@@ -1553,6 +1553,45 @@ two empties — `gated` says whether the server withheld the comments or there w
 and it is the shape everything else is being brought to. It was written that way from the
 start.
 
+### 6.34 Finishing it, and finding two more on the way out
+
+§6.33 left an exemption list with two entries saying, in as many words, that the read was
+wrong and unfinished. That is honest and it is debt, so it was paid: `searchPeople` no
+longer reads as "no such person" when the search failed, and `findByHandle` no longer
+makes `restoreAccount` say "@name could not be found" — a statement about somebody else's
+account, and the wrong one to make because a request did not arrive. Removing their
+entries from the list is what finishing them looked like, which is the staleness check
+earning its place.
+
+Widening the guard past `social/` found two more of the same shape.
+
+**"Nobody has mapped this episode yet"** was said when the timeline fetch failed. Worse
+than the usual version of this: it sends somebody off to spend a whole episode recording
+a timeline that may already exist. And a corrupt stored payload was treated as an absence
+too, when there *is* a timeline and it is unreadable — a different sentence again.
+
+**"Nothing new to suggest yet. Track a few things and come back."** was shown when the
+provider was unreachable. Not only the wrong sentence but the wrong instruction: tracking
+more will not help. Both Discover screens already had an error slot and had never been
+given anything to put in it, because the last-resort fetch swallowed its failure. It
+throws now, and only at the point where there is nothing left — a seed that fails earlier
+is one of several and the rest still make a suggestion.
+
+The widening itself is the part worth recording. The pattern is not written the same way
+everywhere: `social/` checks supabase-js's `error` and returns, and everything else
+catches and returns. Extending the glob without extending the pattern would have matched
+almost nothing outside `social/` and read as a clean sweep. So the check now asserts, per
+directory, that it found something there at all — and it was verified by removing one
+exemption and by adding a swallowed failure to `stats/`, which had none.
+
+Most of what widening found is correct and now says why. The metadata cache falling back
+to stale data on a network error is the design and is documented as such: offline should
+degrade to slightly-old artwork, never to an error. A television that does not answer and
+a network with none on it are the same empty list to look at. The keys in that list are
+the function the *parser* reports rather than the name a person guessed, because a
+hand-written name and a found one drift apart and the list stops describing the code it
+claims to — which had already happened to four entries by the time this was checked.
+
 ---
 
 ## 7. What is still not known

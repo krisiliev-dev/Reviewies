@@ -194,6 +194,7 @@ function FindPeople({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Person[]>([]);
   const [searched, setSearched] = useState(false);
+  const [searchFailed, setSearchFailed] = useState<string>();
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -207,7 +208,8 @@ function FindPeople({
     const timer = setTimeout(async () => {
       const found = await searchPeople(query);
       if (!cancelled) {
-        setResults(found);
+        setResults(found.people);
+        setSearchFailed(found.failed);
         setSearched(true);
       }
     }, 300);
@@ -229,7 +231,17 @@ function FindPeople({
         autoCorrect={false}
         style={styles.input}
       />
-      {searched && results.length === 0 && <Text style={styles.blurb}>Nobody by that name.</Text>}
+      {/* See the web's copy: "Nobody by that name" was said for both no match and no
+          answer, and somebody would conclude a friend is not here and stop looking. */}
+      {searchFailed && (
+        <Text style={styles.searchFailed} accessibilityLiveRegion="polite">
+          Could not search right now ({searchFailed}). This says nothing about whether they
+          are here.
+        </Text>
+      )}
+      {!searchFailed && searched && results.length === 0 && (
+        <Text style={styles.blurb}>Nobody by that name.</Text>
+      )}
 
       {results.map((person) => {
         const already = following.some((f) => f.id === person.id);
@@ -330,6 +342,7 @@ function PersonName({ person }: { person: Person }) {
 }
 
 const styles = StyleSheet.create({
+  searchFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
   content: { padding: 16, gap: 18, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },

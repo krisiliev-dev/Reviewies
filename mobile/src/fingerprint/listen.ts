@@ -221,13 +221,22 @@ export function useListenSync({
 
     let reference: Reference;
     try {
-      const stored = await fetchReference(targetId);
-      if (!stored) {
+      const found = await fetchReference(targetId);
+      // The phone already had a 'failed' state for a thrown fetch; what it could not
+      // see was a request that came back empty *because* it failed. Two different
+      // things to say, and the wrong one sends somebody off to spend an episode
+      // recording a timeline that may already exist.
+      if (found.failed) {
+        setState('failed');
+        setNote(`Could not check for a timeline (${found.failed}). Sync by hand for now.`);
+        return;
+      }
+      if (!found.reference) {
         setState('no-reference');
         setNote('Nobody has mapped this episode yet — you could be the first.');
         return;
       }
-      reference = stored.reference;
+      reference = found.reference.reference;
     } catch {
       setState('failed');
       setNote('Could not fetch this episode’s timeline.');

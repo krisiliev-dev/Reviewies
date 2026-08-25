@@ -44,7 +44,7 @@ beforeEach(() => {
     return { ok: true };
   });
   vi.spyOn(people, 'findByHandle').mockImplementation(async (handle) =>
-    handle === 'gone' ? undefined : { id: `id-${handle}`, handle },
+    handle === 'gone' ? {} : { person: { id: `id-${handle}`, handle } },
   );
   vi.spyOn(people, 'follow').mockImplementation(async (id) => {
     followed.push(id);
@@ -143,6 +143,17 @@ describe('restoring what the local import could not', () => {
 
     expect(report.follows).toBe(0);
     expect(report.skipped).toEqual(['@gone could not be found.']);
+  });
+
+  it('says a handle could not be looked up, rather than that it does not exist', async () => {
+    // Different sentences for different facts: the first sends somebody looking for a
+    // deleted account, the second tells them to try again.
+    vi.spyOn(people, 'findByHandle').mockResolvedValue({ failed: 'network' });
+
+    const report = await restoreAccount(bundle({ following: ['ana'] }));
+
+    expect(report.follows).toBe(0);
+    expect(report.skipped).toEqual(['@ana could not be looked up (network). Try again.']);
   });
 
   it('reports an item that could not be added, and keeps going', async () => {

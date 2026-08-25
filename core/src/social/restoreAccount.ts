@@ -85,14 +85,21 @@ export async function restoreAccount(account: AccountExport): Promise<RestoreRep
   }
 
   for (const handle of account.following) {
-    const person = await findByHandle(handle);
-    if (!person) {
+    const found = await findByHandle(handle);
+    // Two different things to say. "Could not be found" is a statement about somebody
+    // else's account and the wrong one to make because a request failed — the first
+    // sends you looking for a deleted account, the second tells you to try again.
+    if (found.failed) {
+      report.skipped.push(`@${handle} could not be looked up (${found.failed}). Try again.`);
+      continue;
+    }
+    if (!found.person) {
       // Named rather than dropped: an account that has gone, or been renamed, is
       // something the person can go and look for.
       report.skipped.push(`@${handle} could not be found.`);
       continue;
     }
-    const followed = await follow(person.id);
+    const followed = await follow(found.person.id);
     if (followed.ok) report.follows++;
     else report.skipped.push(`@${handle} could not be followed: ${followed.reason}`);
   }
