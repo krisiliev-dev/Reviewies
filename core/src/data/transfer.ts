@@ -1,4 +1,5 @@
 import { db } from './db';
+import { enqueueAll } from '../sync/engine';
 import { makeId } from '../domain/types';
 import type { MediaKind, WatchEvent } from '../domain/types';
 
@@ -140,13 +141,30 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
     );
   }
 
-  await db.transaction('rw', db.library, db.watches, db.ratings, db.watchlist, db.reactions, async () => {
-    await db.library.bulkPut(bundle.library as never[]);
-    await db.watches.bulkPut(bundle.watches as never[]);
-    await db.ratings.bulkPut(bundle.ratings as never[]);
-    await db.watchlist.bulkPut(bundle.watchlist as never[]);
-    await db.reactions.bulkPut(bundle.reactions as never[]);
-  });
+  await db.transaction(
+    'rw',
+    db.library,
+    db.watches,
+    db.ratings,
+    db.watchlist,
+    db.reactions,
+    db.outbox,
+    async () => {
+      await db.library.bulkPut(bundle.library as never[]);
+      await db.watches.bulkPut(bundle.watches as never[]);
+      await db.ratings.bulkPut(bundle.ratings as never[]);
+      await db.watchlist.bulkPut(bundle.watchlist as never[]);
+      await db.reactions.bulkPut(bundle.reactions as never[]);
+
+      // Restoring your own backup is a write like any other. Without this it landed on
+      // one device and reached no other, which is a strange thing for a restore to do.
+      await enqueueAll('library', bundle.library as Array<Record<string, unknown>>);
+      await enqueueAll('watches', bundle.watches as Array<Record<string, unknown>>);
+      await enqueueAll('ratings', bundle.ratings as Array<Record<string, unknown>>);
+      await enqueueAll('watchlist', bundle.watchlist as Array<Record<string, unknown>>);
+      await enqueueAll('reactions', bundle.reactions as Array<Record<string, unknown>>);
+    },
+  );
 
   report.watches = bundle.watches.length;
   report.watchlist = bundle.watchlist.length;
@@ -228,7 +246,10 @@ export async function importWatchHistoryCsv(text: string): Promise<ImportReport>
     });
   }
 
-  if (events.length) await db.watches.bulkPut(events);
+  if (events.length) {
+    await db.watches.bulkPut(events);
+    await enqueueAll('watches', events as unknown as Array<Record<string, unknown>>);
+  }
   report.watches = events.length;
 
   if (report.skipped) {
@@ -275,8 +296,13 @@ export async function downloadFile(name: string, content: string, type: string):
 export async function addWatchlistFromTitles(
   titles: Array<{ id: string; kind: MediaKind; note?: string }>,
 ): Promise<number> {
-  await db.watchlist.bulkPut(
-    titles.map((t) => ({ titleId: t.id, kind: t.kind, addedAt: Date.now(), note: t.note })),
-  );
+  const rows = titles.map((t) => ({
+    titleId: t.id,
+    kind: t.kind,
+    addedAt: Date.now(),
+    note: t.note,
+  }));
+  await db.watchlist.bulkPut(rows);
+  await enqueueAll('watchlist', rows as unknown as Array<Record<string, unknown>>);
   return titles.length;
 }

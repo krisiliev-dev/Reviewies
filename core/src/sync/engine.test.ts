@@ -3,14 +3,26 @@ import { db } from '../data/db';
 import { enqueue, pendingCount, resetSyncState, syncOnce } from './engine';
 import { MemoryBackend } from './memoryBackend';
 import { importRescueCsv } from '../data/tvtimeRescue';
+import {
+  addToLibrary,
+  clearRating,
+  markWatched,
+  rate,
+  setPosterOverride,
+  syncSeriesStatus,
+} from '../data/repo';
 import { SyncError } from './types';
 
 /** The outbox lives in the main database now; see sync/engine.ts. */
-const outbox = db.outbox as unknown as import('../data/store').Table<{
+const outboxTable = db.outbox as unknown as import('../data/store').Table<{
   key: string;
+  table: string;
+  pk: string;
   row: Record<string, unknown>;
+  deleted: boolean;
   attempts: number;
 }>;
+const outbox = () => outboxTable;
 
 /**
  * The sync engine is where a bug quietly loses somebody's watch history, so these
@@ -50,6 +62,77 @@ beforeEach(async () => {
  * thirty-two round trips, which is what the push loop was rewritten for; this is the
  * test that says both halves hold together.
  */
+/**
+ * The writes that were reaching one device and no other.
+ *
+ * Each of these is a row somebody would swear they had changed, on a second device that
+ * disagreed — and the local behaviour was perfect throughout, which is why none of it
+ * showed up until something looked at the queue.
+ */
+describe('everyday writes reaching the server', () => {
+  it('tracking a show', async () => {
+    await addToLibrary('tmdb:tv:1', 'show');
+    expect((await outbox().toArray()).filter((r) => r.table === 'library')).toHaveLength(1);
+  });
+
+  it('a poster somebody chose because they disliked the provider’s', async () => {
+    await addToLibrary('tmdb:tv:1', 'show');
+    await db.outbox.clear();
+
+    await setPosterOverride('tmdb:tv:1', 'https://example.test/poster.jpg');
+
+    const [queued] = await outbox().toArray();
+    expect((queued?.row as { posterOverride?: string })?.posterOverride).toBe(
+      'https://example.test/poster.jpg',
+    );
+  });
+
+  it('a show completing itself', async () => {
+    await addToLibrary('tmdb:tv:1', 'show');
+    await db.titles.put({
+      id: 'tmdb:tv:1',
+      kind: 'show',
+      name: 'Done',
+      ended: true,
+      fetchedAt: 0,
+    });
+    await db.episodes.put({
+      id: 'tmdb:ep:1',
+      seriesId: 'tmdb:tv:1',
+      season: 1,
+      number: 1,
+      name: 'Only',
+      airDate: '2020-01-01',
+      fetchedAt: 0,
+    });
+    // skipStatusSync, because markWatched runs the check itself — without this the
+    // status has already changed by the time the call below is made, and it correctly
+    // reports that there was nothing left to do.
+    await markWatched({ targetId: 'tmdb:ep:1', seriesId: 'tmdb:tv:1', skipStatusSync: true });
+    await db.outbox.clear();
+
+    expect(await syncSeriesStatus('tmdb:tv:1')).toBe(true);
+
+    // Housekeeping the user never asked for still has to reach their other devices, or
+    // the show they finished is still sitting in Up Next everywhere else.
+    const [queued] = (await outbox().toArray()).filter((r) => r.table === 'library');
+    expect((queued?.row as { status?: string })?.status).toBe('completed');
+  });
+
+  it('clearing a rating, which used to come straight back', async () => {
+    await rate('tmdb:tv:1', 4);
+    await db.outbox.clear();
+
+    await clearRating('tmdb:tv:1');
+
+    // Deleted locally and never told the server, so the next pull put it back: tapping
+    // the same star to clear appeared to work and then quietly undid itself.
+    const [queued] = await outbox().toArray();
+    expect(queued?.deleted).toBe(true);
+    expect(queued?.pk).toBe('tmdb:tv:1');
+  });
+});
+
 describe('a rescued library reaching the server', () => {
   it('drains in one sync rather than one batch', async () => {
     const header =
@@ -130,7 +213,7 @@ describe('local writes never depend on the network', () => {
     await enqueue('watchlist', { titleId: 'x', note: 'new' }, { updatedAt: 500 });
     await enqueue('watchlist', { titleId: 'x', note: 'old' }, { updatedAt: 100 });
 
-    const entry = await outbox.get('watchlist:x');
+    const entry = await outbox().get('watchlist:x');
     expect(entry?.row.note).toBe('new');
   });
 });
@@ -170,7 +253,7 @@ describe('push', () => {
     backend.failNextPush = new SyncError('flaky', true);
     await syncOnce(backend);
 
-    expect((await outbox.get('watches:a'))?.attempts).toBe(1);
+    expect((await outbox().get('watches:a'))?.attempts).toBe(1);
   });
 
   it('drops a permanently rejected change instead of blocking the queue forever', async () => {
@@ -198,7 +281,7 @@ describe('push', () => {
 
     // The newer edit must survive rather than being cleared with the batch.
     expect(await pendingCount()).toBe(1);
-    expect((await outbox.get('watchlist:x'))?.row.note).toBe('during');
+    expect((await outbox().get('watchlist:x'))?.row.note).toBe('during');
   });
 
   it('is safe to push the same change twice after an ambiguous response', async () => {

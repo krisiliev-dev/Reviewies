@@ -94,6 +94,9 @@ export async function fetchRemoteReactions(targetId: string, limit = 2000): Prom
 
   // bulkPut is keyed on id, so re-fetching is idempotent and cannot duplicate a
   // reaction that is already queued locally but not yet uploaded.
+  // Deliberately not queued: these came *from* the server. Sending them back is a loop
+  // nobody notices until it has spent somebody's data allowance, and the rows are
+  // already there.
   await db.reactions.bulkPut(incoming);
   return incoming.length;
 }

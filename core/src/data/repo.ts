@@ -156,10 +156,12 @@ export async function syncSeriesStatus(seriesId: InternalId, now = Date.now()): 
 
   if (item.status === 'watching' && allWatched && title?.ended) {
     await db.library.update(seriesId, { status: 'completed' });
+    await queueLibrary(seriesId);
     return true;
   }
   if (item.status === 'completed' && !allWatched) {
     await db.library.update(seriesId, { status: 'watching' });
+    await queueLibrary(seriesId);
     return true;
   }
   return false;
@@ -285,13 +287,44 @@ export async function addToLibrary(
   const existing = await db.library.get(titleId);
   if (existing) {
     await db.library.update(titleId, { status });
+    await queueLibrary(titleId);
     return;
   }
-  await db.library.add({ titleId, kind, status, addedAt: Date.now() });
+  const item = { titleId, kind, status, addedAt: Date.now() };
+  await db.library.add(item);
+  await enqueue('library', item);
+}
+
+/**
+ * Queue whatever the library row now says.
+ *
+ * `update` is a patch, and the outbox sends whole rows, so the row has to be read back
+ * rather than reconstructed from the patch. Every path that changes a library row goes
+ * through here — tracking something, a status change, a poster override — because until
+ * recently none of them did, and a library that does not replicate is the one table
+ * whose absence makes a second device look empty.
+ */
+async function queueLibrary(titleId: InternalId): Promise<void> {
+  const row = await db.library.get(titleId);
+  if (row) await enqueue('library', row as unknown as Record<string, unknown>);
 }
 
 export async function setPosterOverride(titleId: InternalId, url?: string): Promise<void> {
   await db.library.update(titleId, { posterOverride: url });
+  await queueLibrary(titleId);
+}
+
+/**
+ * Clear a rating.
+ *
+ * Here rather than in the screens, which were calling `db.ratings.delete` directly and
+ * so deleted the row locally and told the server nothing. With sync configured the next
+ * pull put it straight back: tapping the same star to clear it appeared to work and then
+ * quietly undid itself.
+ */
+export async function clearRating(targetId: InternalId): Promise<void> {
+  await db.ratings.delete(targetId);
+  await enqueue('ratings', { targetId }, { deleted: true });
 }
 
 export async function addToWatchlist(

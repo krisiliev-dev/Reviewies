@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
 import {
+  clearRating,
   hasAired,
   markWatched,
   rate,
@@ -95,7 +96,7 @@ export default function TitleScreen() {
         <StarRating
           value={rating?.value}
           onChange={(value) =>
-            value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
+            value === undefined ? clearRating(titleId) : rate(titleId, value)
           }
         />
 
@@ -276,7 +277,7 @@ function EpisodeRow({
           <StarRating
             value={rating?.value}
             onChange={(value) =>
-              value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
+              value === undefined ? clearRating(episode.id) : rate(episode.id, value)
             }
           />
         </View>

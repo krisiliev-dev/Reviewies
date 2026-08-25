@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useParams } from 'react-router-dom';
 import { db } from '../data/db';
-import { markWatched, rate, setPosterOverride, unwatchLatest, watchedEpisodeIds } from '@reviewies/core/data/repo';
+import {
+  clearRating,
+  markWatched,
+  rate,
+  setPosterOverride,
+  unwatchLatest,
+  watchedEpisodeIds,
+} from '@reviewies/core/data/repo';
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
@@ -79,7 +86,7 @@ export function TitleDetail() {
         <StarRating
           value={rating?.value}
           onChange={(value) =>
-            value === undefined ? db.ratings.delete(titleId) : rate(titleId, value)
+            value === undefined ? clearRating(titleId) : rate(titleId, value)
           }
         />
       </div>
@@ -233,7 +240,7 @@ function EpisodeRow({
           <StarRating
             value={rating?.value}
             onChange={(value) =>
-              value === undefined ? db.ratings.delete(episode.id) : rate(episode.id, value)
+              value === undefined ? clearRating(episode.id) : rate(episode.id, value)
             }
           />
         </div>
