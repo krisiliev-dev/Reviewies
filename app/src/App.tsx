@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { UpNext } from './screens/UpNext';
 import { Search } from './screens/Search';
 import { TitleDetail } from './screens/TitleDetail';
@@ -14,6 +16,30 @@ import { People } from './screens/People';
 import { RemoteDrawer } from './remote/RemoteDrawer';
 
 export default function App() {
+  /**
+   * Sync runs for the app, not for a screen.
+   *
+   * It used to live in the hook the account panel and the people screen happened to
+   * call, so the queue drained only while one of those was on screen — and every write
+   * in the app happens somewhere else. Started here it runs wherever somebody is.
+   */
+  useEffect(() => {
+    const stop = startSyncDriver();
+    // Coming back online, and coming back to the tab, are the two moments a queued
+    // change is most likely to succeed.
+    const wake = () => void requestSync();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') wake();
+    };
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stop();
+      window.removeEventListener('online', wake);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <Shell />

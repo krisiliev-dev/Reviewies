@@ -1,79 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { onSyncStatus, requestSync, syncStatus, type SyncStatus } from '@reviewies/core/sync/driver';
+import { getSession, onAuthChange } from '@reviewies/core/sync/auth';
 import type { Session } from '@supabase/supabase-js';
-import { getSession, onAuthChange, syncConfigured, ensureProfile } from '@reviewies/core/sync/auth';
-import { pendingCount, syncOnce, type SyncResult } from '@reviewies/core/sync/engine';
-import { SupabaseBackend } from '@reviewies/core/sync/supabaseBackend';
-
-export interface SyncStatus {
-  configured: boolean;
-  session: Session | null;
-  pending: number;
-  busy: boolean;
-  lastResult?: SyncResult;
-  lastRunAt?: number;
-  sync: () => Promise<void>;
-}
 
 /**
- * Drives sync from the UI.
+ * Read the driver's status. Do not own it.
  *
- * Sync is opportunistic on purpose: it runs on sign-in, on reconnect, and on a slow
- * timer. It is never on the critical path of a user action — marking an episode
- * watched completes locally and the upload follows whenever it can.
+ * This hook used to *be* the driver, and a hook runs for as long as its component is
+ * mounted — which meant the queue drained only while somebody was looking at the account
+ * panel or the people screen, and every write in the app happens somewhere else. The
+ * loop now belongs to the app (see App.tsx and core/sync/driver.ts); this reports on it.
  */
-export function useSync(intervalMs = 60_000): SyncStatus {
+export function useSync(): SyncStatus & { session: Session | null; sync: () => Promise<void> } {
+  const [status, setStatus] = useState<SyncStatus>(syncStatus);
   const [session, setSession] = useState<Session | null>(null);
-  const [pending, setPending] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [lastResult, setLastResult] = useState<SyncResult>();
-  const [lastRunAt, setLastRunAt] = useState<number>();
 
-  const configured = syncConfigured();
+  useEffect(() => onSyncStatus(setStatus), []);
 
+  // The panels want the session object itself, not just whether there is one.
   useEffect(() => {
-    if (!configured) return;
     void getSession().then(setSession);
     return onAuthChange(setSession);
-  }, [configured]);
-
-  // Keep the pending badge honest even when sync is not running.
-  useEffect(() => {
-    const tick = () => void pendingCount().then(setPending);
-    tick();
-    const id = setInterval(tick, 2000);
-    return () => clearInterval(id);
   }, []);
 
-  const sync = useCallback(async () => {
-    if (!configured || !session || busy) return;
-    setBusy(true);
-    try {
-      const backend = SupabaseBackend.fromEnv();
-      if (!backend) return;
-      await ensureProfile();
-      setLastResult(await syncOnce(backend));
-      setLastRunAt(Date.now());
-    } finally {
-      setBusy(false);
-      setPending(await pendingCount());
-    }
-  }, [configured, session, busy]);
-
-  useEffect(() => {
-    if (!session) return;
-    void sync();
-    const id = setInterval(() => void sync(), intervalMs);
-    // Coming back online is the moment a queued change is most likely to succeed.
-    const onOnline = () => void sync();
-    window.addEventListener('online', onOnline);
-    return () => {
-      clearInterval(id);
-      window.removeEventListener('online', onOnline);
-    };
-    // `sync` is intentionally excluded: it changes identity on every busy toggle,
-    // which would tear down and rebuild the interval mid-run.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, intervalMs]);
-
-  return { configured, session, pending, busy, lastResult, lastRunAt, sync };
+  return { ...status, session, sync: requestSync };
 }

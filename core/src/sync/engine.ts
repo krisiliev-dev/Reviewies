@@ -75,6 +75,29 @@ export async function enqueue(
     deleted: opts.deleted ?? false,
     attempts: existing?.attempts ?? 0,
   });
+
+  notifyQueued();
+}
+
+/**
+ * Tell the driver, from outside whatever transaction just wrote.
+ *
+ * `setTimeout` rather than a direct call, and that is load-bearing rather than
+ * defensive. Every bulk writer queues from inside a Dexie transaction, and Dexie binds
+ * promises to the transaction's zone — so a listener that reads the outbox or starts a
+ * sync from here joins the caller's transaction and hangs it. An import of six thousand
+ * rows stopped part-way through with no error at all, which is how this was found.
+ *
+ * What catches it is app/smoke.mjs, at the step that imports a GDPR zip: the report
+ * never appears, because the transaction never commits. A unit test for it was written
+ * and thrown away — fake-indexeddb does not reproduce the zone binding, so it passed
+ * with the fix removed, and a guard that cannot fail is worse than none.
+ */
+function notifyQueued(): void {
+  if (enqueueListeners.size === 0) return;
+  setTimeout(() => {
+    for (const listener of enqueueListeners) listener();
+  }, 0);
 }
 
 /**
@@ -97,6 +120,20 @@ export async function enqueueAll(
   opts: { deleted?: boolean; updatedAt?: number } = {},
 ): Promise<void> {
   for (const row of rows) await enqueue(table, row, opts);
+}
+
+/**
+ * Told when something joins the queue.
+ *
+ * The driver listens so a write can be followed by an upload rather than by a wait for
+ * the next tick — which after an import is the difference between six thousand rows
+ * leaving now and leaving in a minute.
+ */
+const enqueueListeners = new Set<() => void>();
+
+export function onEnqueue(fn: () => void): () => void {
+  enqueueListeners.add(fn);
+  return () => enqueueListeners.delete(fn);
 }
 
 export async function pendingCount(): Promise<number> {

@@ -19,6 +19,7 @@ import {
   signUp,
   syncConfigured,
 } from '@reviewies/core/sync/auth';
+import { onSyncStatus, syncStatus } from '@reviewies/core/sync/driver';
 import { radius, theme } from '../src/ui/theme';
 
 /**
@@ -30,6 +31,9 @@ import { radius, theme } from '../src/ui/theme';
  * the thing this app exists in opposition to.
  */
 export default function AccountScreen() {
+  const [status, setStatus] = useState(syncStatus);
+  useEffect(() => onSyncStatus(setStatus), []);
+
   const [session, setSession] = useState<Session | null>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,6 +91,17 @@ export default function AccountScreen() {
           <View style={styles.card}>
             <Text style={styles.cardHeading}>Signed in</Text>
             <Text style={styles.blurb}>{session.user.email}</Text>
+            {/* The screen said an account adds sync while nothing on this platform ever
+                pushed a row. Now it does, and it says what it is doing rather than
+                leaving somebody to guess whether their history has gone anywhere. */}
+            <Text style={styles.blurb}>
+              {status.busy
+                ? 'Syncing…'
+                : status.pending > 0
+                  ? `${status.pending} change${status.pending === 1 ? '' : 's'} waiting to upload.`
+                  : 'Everything is uploaded.'}
+              {status.lastError ? ` Last attempt failed: ${status.lastError}` : ''}
+            </Text>
             <Pressable
               style={styles.secondary}
               onPress={() => void signOut()}

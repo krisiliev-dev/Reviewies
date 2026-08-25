@@ -64,6 +64,7 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Screenshots in comments | ✅ Deployed and verified live |
 | Backend schema + row-level security | ✅ Deployed, all 12 migrations, RLS on every table |
 | Offline-first sync with outbox | ✅ Built, live round-trip tested |
+| Sync that actually runs, on both platforms | ✅ Built — it used to belong to one screen on the web and not exist at all on the phone |
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
 | Upcoming calendar + notification granularity | ✅ Built |

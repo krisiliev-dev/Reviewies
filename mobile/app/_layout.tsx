@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
 
@@ -22,6 +23,31 @@ export default function RootLayout() {
       (error: unknown) => setFailed(error instanceof Error ? error.message : String(error)),
     );
   }, []);
+
+  /**
+   * Sync, which this app has never done.
+   *
+   * Nothing in here imported the engine: you could sign in, read "an account adds sync
+   * across devices" on the account screen, and never have a single row leave the phone.
+   * The driver runs for the app rather than for a screen, so it does not matter where
+   * somebody is when they mark an episode watched.
+   *
+   * After the platform is bound, because the driver reads the outbox and the database
+   * is not there yet.
+   */
+  useEffect(() => {
+    if (!ready) return;
+    const stop = startSyncDriver();
+    // Coming back to the app is the moment a queue built on a train is most likely to
+    // move, and a phone suspends timers outright while it is backgrounded.
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void requestSync();
+    });
+    return () => {
+      stop();
+      subscription.remove();
+    };
+  }, [ready]);
 
   if (failed) {
     return (

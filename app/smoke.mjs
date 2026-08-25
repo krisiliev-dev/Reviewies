@@ -924,7 +924,13 @@ try {
     await arrival.close();
   }
 } catch (err) {
-  check('smoke run completed', false, err.message);
+  check(
+    'smoke run completed',
+    false,
+    `${err.message} — at ${page.url()} :: ${(await page.locator('body').innerText().catch(() => ''))
+      .replace(/\s+/g, ' ')
+      .slice(0, 200)}`,
+  );
 } finally {
   await browser.close();
 }
