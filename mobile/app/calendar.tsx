@@ -11,6 +11,13 @@ import {
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
 import { radius, theme } from '../src/ui/theme';
+import {
+  pushSupported,
+  registerForPush,
+  syncPreference,
+  unregisterFromPush,
+  whyNotSupported,
+} from '../src/notifications';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -32,6 +39,8 @@ const OPTIONS: Array<{ key: NotifyPreference; label: string; detail: string }> =
 export default function CalendarScreen() {
   const [entries, setEntries] = useState<UpcomingEntry[]>();
   const [preference, setPref] = useState<NotifyPreference>(getPreference);
+  const [delivery, setDelivery] = useState<string>();
+  const [registered, setRegistered] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,7 +59,10 @@ export default function CalendarScreen() {
             key={option.key}
             onPress={() => {
               setPref(option.key);
-              setPreference(option.key);
+              // Mirrored to the server, which filters before sending — a stale setting
+              // there would cost a delivery, or send one nobody asked for.
+              void syncPreference(option.key);
+              if (option.key === 'off') void unregisterFromPush();
             }}
             style={[styles.option, preference === option.key && styles.optionOn]}
           >
@@ -61,6 +73,43 @@ export default function CalendarScreen() {
             {preference === option.key && <Text style={styles.tick}>✓</Text>}
           </Pressable>
         ))}
+
+        {/* Choosing a granularity used to be the whole of it: the phone offered the
+            same three options as the web and had nothing that could ever act on them,
+            which is worse than offering none. This is where that stops being true. */}
+        {preference !== 'off' && (
+          <View style={styles.delivery}>
+            {pushSupported() ? (
+              <>
+                <Pressable
+                  onPress={async () => {
+                    const result = await registerForPush();
+                    setRegistered(result.ok);
+                    setDelivery(
+                      result.ok
+                        ? 'This device will be notified.'
+                        : result.reason,
+                    );
+                  }}
+                  style={[styles.enable, registered && styles.enableOn]}
+                >
+                  <Text style={[styles.enableText, registered && styles.enableTextOn]}>
+                    {registered ? 'Notifications on' : 'Notify this device'}
+                  </Text>
+                </Pressable>
+                {delivery && <Text style={styles.deliveryNote}>{delivery}</Text>}
+              </>
+            ) : (
+              // Said plainly rather than left as a control that does nothing. The
+              // reason differs — a simulator, the web build, a build with no project
+              // id — and each sends someone looking in a different place.
+              <Text style={styles.deliveryNote}>
+                Nothing can be delivered to this device yet. {whyNotSupported()} Your
+                choice above is saved and will apply once it can.
+              </Text>
+            )}
+          </View>
+        )}
 
         <Text style={[styles.sectionHeading, styles.spaced]}>Next 30 days</Text>
         {entries === undefined && <ActivityIndicator color={theme.accent} />}
@@ -102,6 +151,18 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  delivery: { marginTop: 10, gap: 8 },
+  enable: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    backgroundColor: theme.surface,
+  },
+  enableOn: { backgroundColor: theme.accent },
+  enableText: { color: theme.text, fontSize: 14 },
+  enableTextOn: { color: theme.ink, fontWeight: '600' },
+  deliveryNote: { color: theme.muted, fontSize: 13, lineHeight: 19 },
   content: { padding: 16, gap: 8, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   sectionHeading: {
     color: theme.muted,

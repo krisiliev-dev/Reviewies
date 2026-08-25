@@ -21,12 +21,12 @@ lives in IndexedDB.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built and
-deployed. 497 core tests (run twice, against both database implementations), 159 app
+deployed. 510 core tests (run twice, against both database implementations), 165 app
 tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the real
 Supabase project and the real TMDB and AniList APIs — including the whole
 listen-to-sync pipeline end to end: two people contribute timelines, the promoter
 cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
-app end to end and 36 drive the phone app through react-native-web.
+app end to end and 38 drive the phone app through react-native-web.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
 
@@ -55,14 +55,15 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Reactions sampled across the episode, not its first minutes | ✅ Deployed |
 | Episode comments, spoiler-gated in the database | ✅ Verified live |
 | Screenshots in comments | ✅ Deployed and verified live |
-| Backend schema + row-level security | ✅ Deployed, all 11 migrations, RLS on every table |
+| Backend schema + row-level security | ✅ Deployed, all 12 migrations, RLS on every table |
 | Offline-first sync with outbox | ✅ Built, live round-trip tested |
 | Stats and Year in Review | ✅ Built |
 | Discovery excluding already-watched | ✅ Built |
 | Upcoming calendar + notification granularity | ✅ Built |
 | Browser extension + automatic Watching Mode sync | ✅ Built (site selectors unverified) |
 | Anime season correction via AniList | ✅ Verified live |
-| Push notification delivery | ✅ Deployed and verified |
+| Push notification delivery (web) | ✅ Deployed and verified |
+| Push notification delivery (phone) | ⚠️ Built and deployed; needs a device to obtain a token |
 | Direct TV control from the app (Roku ECP over the LAN) | ✅ Built, not verified on hardware |
 | Local bridge for a laptop (MPRIS) | ✅ Built, not verified on hardware |
 | Remote drawer + relay server | ✅ Built, relay verified end to end |
@@ -125,9 +126,9 @@ and why that matters more than it sounds.
 ### Tests
 
 ```bash
-npm test                              # 656 tests across core and app
+npm test                              # 675 tests across core and app
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
-npm run test:sqlite --workspace core  # the same 497 core tests, against SQLite
+npm run test:sqlite --workspace core  # the same 510 core tests, against SQLite
 
 cd app && npm run build
 npx vite preview &
@@ -135,7 +136,7 @@ node smoke.mjs                        # 49 end-to-end checks in a real browser
 
 cd mobile && npx expo export --platform web
 npx serve dist &
-node smoke.mjs                        # 36 checks driving the phone app
+node smoke.mjs                        # 38 checks driving the phone app
 ```
 
 The browser checks work either way. They ask the app once whether it has credentials and
@@ -206,7 +207,7 @@ a `Database`, a key/value store for preferences, and a file saver. Until they ar
 bound, using them throws with a message saying so — rather than failing later in a way
 that looks like a data bug. See [`core/README.md`](core/README.md).
 
-Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 497
+Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 510
 core tests run against both**, so the SQLite one is proven by the suite that was
 written against Dexie rather than by a second suite written to agree with it.
 

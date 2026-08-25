@@ -543,6 +543,64 @@ describe('sampling an episode\'s reactions', () => {
   });
 });
 
+describe('push tokens', () => {
+  const token = (user: string, value: string) =>
+    asAdmin(
+      "insert into push_tokens (user_id, token, platform) values ($1, $2, 'ios')",
+      [user, value],
+    );
+
+  it('lets a user register their own device', async () => {
+    await asUser(
+      ALICE,
+      "insert into push_tokens (user_id, token, platform) values ($1, 'ExponentPushToken[a]', 'ios')",
+      [ALICE],
+    );
+    expect((await asUser(ALICE, 'select * from push_tokens')).rows).toHaveLength(1);
+  });
+
+  it("hides one user's token from another", async () => {
+    // A push token is a capability, not merely private data: anyone holding one can
+    // send a notification to that device through Expo.
+    await token(ALICE, 'ExponentPushToken[a]');
+    expect((await asUser(BOB, 'select * from push_tokens')).rows).toHaveLength(0);
+  });
+
+  it('refuses to let a user register a device against someone else', async () => {
+    await expect(
+      asUser(
+        BOB,
+        "insert into push_tokens (user_id, token, platform) values ($1, 'ExponentPushToken[x]', 'ios')",
+        [ALICE],
+      ),
+    ).rejects.toThrow(/row-level security/i);
+  });
+
+  it('replaces a repeat registration rather than stacking them', async () => {
+    // The same device registering twice would otherwise receive every notification
+    // twice, which is exactly what makes people turn them off.
+    await token(ALICE, 'ExponentPushToken[a]');
+    await expect(token(ALICE, 'ExponentPushToken[a]')).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('accepts only platforms that exist', async () => {
+    await expect(
+      asAdmin(
+        "insert into push_tokens (user_id, token, platform) values ($1, 'ExponentPushToken[a]', 'blackberry')",
+        [ALICE],
+      ),
+    ).rejects.toThrow(/violates check constraint/i);
+  });
+
+  it('keeps an expired token rather than deleting it mid-send', async () => {
+    await token(ALICE, 'ExponentPushToken[a]');
+    await asAdmin("update push_tokens set expired_at = now() where user_id = $1", [ALICE]);
+    // Still there, and still the user's own, so a send in flight is not reading a row
+    // that vanished underneath it.
+    expect((await asUser(ALICE, 'select * from push_tokens')).rows).toHaveLength(1);
+  });
+});
+
 describe('fingerprint references', () => {
   const TARGET = 'tmdb:ep:fp';
 

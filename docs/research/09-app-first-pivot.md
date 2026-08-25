@@ -717,3 +717,43 @@ ones were written and then rewritten after the app disagreed with them: the fixt
 has two seasons, so the catch-up sheet asks which one before it asks how far — which is
 the behaviour, not a detail — and the grid cells needed accessibility labels before a
 test could name one number among forty-eight.
+
+### 6.12 A setting that could never do anything
+
+The phone offered the same three notification granularities as the web — nothing,
+premieres and finales, every episode — and there was no mechanism anywhere that could
+act on any of them. Not a bug in the usual sense: everything worked, the preference
+saved, the server even filtered on it. There was simply nothing that could reach a
+phone, because the backend speaks Web Push and a phone cannot receive one.
+
+That is worse than the feature being absent. Someone who chooses "premieres and finales"
+has been told they will hear about premieres and finales.
+
+Three of the four pieces are built, and can be:
+
+- **`push_tokens`**, a second table rather than more columns on `push_subscriptions`. A
+  Web Push subscription is an endpoint plus a keypair; an Expo token is a string. One
+  table with half its columns null each time would make every reader work out which kind
+  of row it was holding. Its policy is stricter than "private data" deserves because a
+  push token is a *capability* — anyone holding one can notify that device.
+- **`expoPush.ts` in the core**, holding every decision: which messages to build, how to
+  batch them, and which failures mean stop rather than retry. `DeviceNotRegistered` is
+  the one that means stop; treating it as transient is how a queue fills with sends that
+  can never succeed. A missing ticket is read as unaccounted for rather than as silent
+  success, because Expo returns one per message and anything else is not evidence of
+  delivery.
+- **The sender**, which now consults both tables. Someone with a browser and a phone gets
+  one notification on each, so "no device" means neither rather than no browser. Deployed
+  and confirmed still running.
+
+The fourth is `getExpoPushTokenAsync`, which needs a real device and a real build. It is
+written, and it is the only part of this that has never executed. Written to fail into an
+explanation rather than an exception, because the state it will most often be in during
+development is "not possible here".
+
+Until then the calendar screen says so, and says *which* reason applies — the web build,
+a simulator, or a build without an Expo project id all send someone looking in different
+places. There is a smoke check for the message, which is the odd position of asserting
+that a feature correctly reports its own absence. That is the right thing to assert: the
+alternative is a control that does nothing, and the whole point of this section is that
+silently doing nothing is the failure.

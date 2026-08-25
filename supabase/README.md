@@ -33,6 +33,7 @@ directory.
 | `0009_comment_images.sql` | The screenshot bucket (rules live in an edge function — see below) |
 | `0010_promotion_by_content.sql` | Drops length-only promotion; adds `record_fingerprint_reference` |
 | `0011_reaction_sampling.sql` | `reactions_sample`, so a busy episode returns a spread rather than its first minutes |
+| `0012_expo_push_tokens.sql` | `push_tokens`, so a phone can be notified at all — Web Push cannot reach one |
 
 ## Push notifications
 

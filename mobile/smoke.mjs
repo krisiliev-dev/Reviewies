@@ -136,6 +136,26 @@ try {
     await page.waitForTimeout(1000);
   }
 
+  // --- Notifications say what they can actually do -----------------------------
+  // The phone offered the same three granularity settings as the web and had nothing
+  // that could act on them. Under react-native-web there is still nothing — the web
+  // build gets its notifications from the browser — so what must be true here is that
+  // the screen says so rather than showing a control that does nothing.
+  await page.getByText('What is airing, and what to be told about').click();
+  await page.waitForSelector('text=/Tell me about/i', { timeout: 15000 });
+  const upcoming = await text();
+  check(
+    'the calendar is honest about what it can deliver',
+    /Nothing can be delivered to this device yet/i.test(upcoming),
+    upcoming.slice(0, 120),
+  );
+  check(
+    'and says which reason applies',
+    /browser|simulator|project id/i.test(upcoming),
+  );
+  await page.goBack();
+  await page.waitForTimeout(1000);
+
   // --- The watching preference -------------------------------------------------
   // The web has offered this since it shipped. The phone did the opposite of what the
   // toggle describes — it never opened the conversation — which is a worse kind of

@@ -13,8 +13,61 @@
  */
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
+import {
+  EXPO_PUSH_URL,
+  batch,
+  buildMessages,
+  mergeOutcomes,
+  readTickets,
+  type DeliveryOutcome,
+  type Notification,
+} from '../../../core/src/calendar/expoPush.ts';
 
 const BATCH = 100;
+
+/**
+ * Send to Expo, in batches it will accept.
+ *
+ * The decisions are all in `@reviewies/core` — which messages to build, how to read the
+ * tickets, which failures mean stop rather than retry — so this is transport and
+ * nothing else, and the part that cannot be tested without a real push service is the
+ * part with no logic in it.
+ */
+async function sendExpo(tokens: string[], notification: Notification): Promise<DeliveryOutcome> {
+  const outcomes: DeliveryOutcome[] = [];
+
+  for (const group of batch(tokens)) {
+    try {
+      const response = await fetch(EXPO_PUSH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(buildMessages(group, notification)),
+      });
+
+      if (!response.ok) {
+        outcomes.push({
+          delivered: false,
+          expired: [],
+          errors: [`expo returned ${response.status}`],
+        });
+        continue;
+      }
+
+      const body = (await response.json()) as { data?: unknown };
+      outcomes.push(readTickets(group, Array.isArray(body.data) ? body.data : []));
+    } catch (err) {
+      // A network failure is transient: no token is retired over it, and the queue item
+      // is released for another attempt by the caller.
+      outcomes.push({
+        delivered: false,
+        expired: [],
+        errors: [err instanceof Error ? err.message : String(err)],
+      });
+    }
+  }
+
+  return mergeOutcomes(outcomes);
+}
 
 Deno.serve(async (req) => {
   // The function runs with the service role, so it must not be openly callable.
@@ -85,7 +138,16 @@ Deno.serve(async (req) => {
       .eq('user_id', item.user_id)
       .is('expired_at', null);
 
-    if (!subs?.length) {
+    // A phone cannot receive a Web Push, so its devices live in their own table and are
+    // sent to through Expo. Someone with a browser and a phone should get one
+    // notification on each, which means both are consulted before anything is skipped.
+    const { data: tokens } = await supabase
+      .from('push_tokens')
+      .select('id, token')
+      .eq('user_id', item.user_id)
+      .is('expired_at', null);
+
+    if (!subs?.length && !tokens?.length) {
       skipped++;
       continue;
     }
@@ -99,7 +161,7 @@ Deno.serve(async (req) => {
 
     let anyDelivered = false;
 
-    for (const sub of subs) {
+    for (const sub of subs ?? []) {
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
@@ -116,6 +178,25 @@ Deno.serve(async (req) => {
             .update({ expired_at: new Date().toISOString() })
             .eq('id', sub.id);
         }
+      }
+    }
+
+    if (tokens?.length) {
+      const outcome = await sendExpo(
+        tokens.map((t) => t.token as string),
+        { title: item.title, body: item.body, url: item.url ?? undefined, targetId: item.target_id },
+      );
+      if (outcome.delivered) anyDelivered = true;
+
+      // Expo says these will never work again — the app was uninstalled, or the token
+      // was replaced. Marked rather than deleted, for the same reason as a dead Web
+      // Push endpoint: a send in flight should not be reading a row that vanished.
+      for (const token of outcome.expired) {
+        await supabase
+          .from('push_tokens')
+          .update({ expired_at: new Date().toISOString() })
+          .eq('user_id', item.user_id)
+          .eq('token', token);
       }
     }
 
