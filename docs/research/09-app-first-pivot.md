@@ -881,3 +881,50 @@ exit code was 1, and the exit code with everything current was 0. That verificat
 is not diligence for its own sake: three separate times this week, a test written to catch
 something specific passed against the unfixed code, and a monitoring script that always
 says "fine" is the same failure with a longer blast radius.
+
+### 6.16 Re-reading the brief, a week later
+
+A week went into Watching Mode's plumbing — continuous listening, contribution,
+cross-validation, sampling, the frame-accurate capture — without anyone re-reading what
+was actually asked for. So, clause by clause:
+
+> *"Any emojis can be used by simply searching in the search bar."*
+
+Searched thirty-two. The module said so itself — "a proper emoji index is a later
+refinement" — which is an honest comment on a line that has been shipping for weeks in
+the feature the whole product is built around. Typing "taco" found nothing.
+
+It now searches every emoji Unicode defines, generated from emojibase into a committed
+index and loaded as its own chunk when Watching Mode opens. The curated pad still ranks
+above the index, because someone typing "eyes" part-way through an episode means 👀
+rather than one of the dozen other emoji filed under that word.
+
+> *"Most of the screen will be preselected big buttons of emojis, some of which will be
+> the thumbs up and thumbs down emoji."*
+
+Holds. Twenty buttons in a grid taking the bulk of the screen, 👍 and 👎 first.
+
+> *"Other people's reactions … appearing as the user comes to that timestamp … and then
+> fading off to the left of the screen."*
+
+Holds on both platforms — right-to-left drift with the opacity falling away, the web by
+keyframes and the phone by an animated transform.
+
+Two things worth keeping from the work.
+
+**The bundle.** A hundred and twenty kilobytes of emoji names is not obviously worth
+putting in front of everyone who opens the app, most of whom never touch the search bar.
+It is a dynamic import, so it is a separate chunk on the web and merely deferred parsing
+on the phone, started when Watching Mode opens and long finished before anyone taps the
+search field. Until it resolves, search answers from the curated set — which is the
+design rather than a fallback: "fire" finds 🔥 either way, and the long tail arrives well
+before anybody types "saxophone". The main bundle came back to within a kilobyte of where
+it started.
+
+**The variation selector.** The index spells thumbs-up `👍️` and the pad spells it `👍` —
+U+FE0F, the character asking for a colourful glyph rather than a monochrome one.
+Identical on screen, different strings. A reaction is stored *as its string*, so without
+deduplicating on the bare form both would have appeared in the pad, and the crowd's count
+for a single moment would have split between two entries nobody could tell apart. Caught
+by a test asserting the ranking, which failed with `expected '👍️' to be '👍'` — a
+character difference invisible in the diff and obvious in the assertion.

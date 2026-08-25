@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
 import { ReactionStream } from '../watching/ReactionStream';
-import { EMOJI_PAD, searchEmoji } from '@reviewies/core/watching/emoji';
+import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from '@reviewies/core/watching/emoji';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
 import {
   isStale,
@@ -25,6 +25,13 @@ import { ListenSync } from '../watching/ListenSync';
  * timestamps you have already reached.
  */
 export function WatchingMode() {
+  // Fetched here rather than when someone starts typing: the chunk is a hundred and
+  // twenty kilobytes and the search bar is two taps away, so it arrives long before it
+  // is wanted. Search falls back to the curated pad until it does.
+  useEffect(() => {
+    void loadEmojiIndex();
+  }, []);
+
   const { targetId = '' } = useParams();
   const navigate = useNavigate();
   const clock = usePlaybackClock();

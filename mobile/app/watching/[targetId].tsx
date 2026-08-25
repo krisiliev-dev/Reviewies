@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
-import { EMOJI_PAD, searchEmoji } from '@reviewies/core/watching/emoji';
+import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from '@reviewies/core/watching/emoji';
 import {
   addReaction,
   estimateDriftMs,
@@ -32,6 +32,12 @@ import { useLive } from '../../src/useLive';
  * a moment, and the moments other people tapped drift past the top as you reach them.
  */
 export default function WatchingScreen() {
+  // Started when the screen opens, so the long tail of emoji is parsed before anybody
+  // reaches for the search bar. Until then search answers from the curated pad.
+  useEffect(() => {
+    void loadEmojiIndex();
+  }, []);
+
   const { targetId: raw } = useLocalSearchParams<{ targetId: string }>();
   const targetId = decodeURIComponent(raw ?? '');
   const router = useRouter();

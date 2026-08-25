@@ -21,12 +21,12 @@ lives in IndexedDB.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built and
-deployed. 510 core tests (run twice, against both database implementations), 165 app
+deployed. 516 core tests (run twice, against both database implementations), 165 app
 tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the real
 Supabase project and the real TMDB and AniList APIs — including the whole
 listen-to-sync pipeline end to end: two people contribute timelines, the promoter
 cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
-app end to end and 38 drive the phone app through react-native-web.
+app end to end and 39 drive the phone app through react-native-web.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
 
@@ -141,17 +141,17 @@ covers installing it on an iPhone — and why that matters more than it sounds.
 ### Tests
 
 ```bash
-npm test                              # 675 tests across core and app
+npm test                              # 681 tests across core and app
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
-npm run test:sqlite --workspace core  # the same 510 core tests, against SQLite
+npm run test:sqlite --workspace core  # the same 516 core tests, against SQLite
 
 cd app && npm run build
 npx vite preview &
-node smoke.mjs                        # 49 end-to-end checks in a real browser
+node smoke.mjs                        # 50 end-to-end checks in a real browser
 
 cd mobile && npx expo export --platform web
 npx serve dist &
-node smoke.mjs                        # 38 checks driving the phone app
+node smoke.mjs                        # 39 checks driving the phone app
 ```
 
 The browser checks work either way. They ask the app once whether it has credentials and
@@ -222,7 +222,7 @@ a `Database`, a key/value store for preferences, and a file saver. Until they ar
 bound, using them throws with a message saying so — rather than failing later in a way
 that looks like a data bug. See [`core/README.md`](core/README.md).
 
-Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 510
+Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 516
 core tests run against both**, so the SQLite one is proven by the suite that was
 written against Dexie rather than by a second suite written to agree with it.
 

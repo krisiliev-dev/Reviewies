@@ -299,6 +299,15 @@ try {
   await page.getByPlaceholder('Search any emoji…').fill('twist');
   await page.waitForTimeout(800);
   check('emoji search filters the pad', (await text()).includes('Mind blown'));
+
+  // "Any emojis can be used by simply searching in the search bar." For a while that
+  // meant thirty-two of them, so a taco did not exist as far as the app was concerned.
+  await page.getByPlaceholder('Search any emoji…').fill('taco');
+  await page.waitForTimeout(800);
+  check('search reaches emoji outside the curated pad', (await text()).includes('🌮'));
+
+  await page.getByPlaceholder('Search any emoji…').fill('');
+  await page.waitForTimeout(500);
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
   await page.getByText('Close').click();
   await page.waitForTimeout(1500);

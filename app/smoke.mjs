@@ -191,6 +191,17 @@ try {
   await page.getByPlaceholder('Search any emoji…').fill('twist');
   await page.waitForTimeout(300);
   check('emoji search filters the pad', (await page.getByRole('button', { name: 'Mind blown' }).count()) > 0);
+
+  // "Any emojis can be used by simply searching in the search bar." The index arrives as
+  // its own chunk once Watching Mode opens, so this also proves that chunk loads.
+  await page.getByPlaceholder('Search any emoji…').fill('taco');
+  await page.waitForTimeout(800);
+  check(
+    'search reaches emoji outside the curated pad',
+    (await page.locator('body').innerText()).includes('🌮'),
+  );
+  await page.getByPlaceholder('Search any emoji…').fill('');
+  await page.waitForTimeout(400);
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
   // --- Extension auto-sync ---------------------------------------------------
