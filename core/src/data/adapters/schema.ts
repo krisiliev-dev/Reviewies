@@ -35,7 +35,6 @@ export const TABLES: TableSpec[] = [
   { name: 'syncState', primaryKey: 'key', indexed: [] },
 ];
 
-export const METADATA_TABLES = ['titles', 'episodes', 'providers', 'animeIds'];
 
 /** `table` is a reserved word in SQL, and one of our columns is called that. */
 export const quote = (identifier: string): string => `"${identifier.replace(/"/g, '""')}"`;

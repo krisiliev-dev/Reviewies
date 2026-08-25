@@ -10,6 +10,7 @@ import {
 import { Stack } from 'expo-router';
 import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
+import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
 
@@ -28,6 +29,7 @@ export default function DataScreen() {
   // Read once: the preference lives in the key/value store the platform binds at
   // startup, so it is available synchronously and does not need a subscription.
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
+  const [cleared, setCleared] = useState<number>();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -85,6 +87,30 @@ export default function DataScreen() {
               accessibilityLabel="Open the conversation after marking watched"
             />
           </View>
+        </Section>
+
+        {/* The web has offered this since the settings screen existed and the phone
+            never has, which is the same shape as everything else found in this pass:
+            the core could do it and one platform simply never asked. */}
+        <Section heading="Metadata cache">
+          <Text style={styles.blurb}>
+            Artwork and episode listings are cached from the metadata provider and expire
+            automatically. Clearing them never touches your own history, and shows carried
+            over from an import keep their names.
+          </Text>
+          <Pressable
+            style={styles.secondary}
+            accessibilityRole="button"
+            accessibilityLabel="Clear cached metadata"
+            onPress={() => void clearMetadataCache().then(setCleared)}
+          >
+            <Text style={styles.secondaryText}>Clear cached metadata</Text>
+          </Pressable>
+          {cleared !== undefined && (
+            <Text style={styles.blurb} accessibilityLiveRegion="polite">
+              {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
+            </Text>
+          )}
         </Section>
       </ScrollView>
     </>

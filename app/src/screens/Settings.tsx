@@ -4,7 +4,12 @@ import { db } from '../data/db';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
-import { JUSTWATCH_ATTRIBUTION, TMDB_ATTRIBUTION, usingFixtures } from '@reviewies/core/metadata/index';
+import {
+  clearMetadataCache,
+  JUSTWATCH_ATTRIBUTION,
+  TMDB_ATTRIBUTION,
+  usingFixtures,
+} from '@reviewies/core/metadata/index';
 import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
@@ -12,6 +17,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
+  const [cleared, setCleared] = useState<number>();
 
   const stats = useLiveQuery(() => getStats('all'), [], undefined);
   const counts = useLiveQuery(
@@ -131,14 +137,20 @@ export function Settings() {
         </h2>
         <p className="px-1 text-sm text-muted">
           Artwork and episode listings are cached from the metadata provider and expire
-          automatically. Clearing them never touches your own history.
+          automatically. Clearing them never touches your own history, and shows carried
+          over from an import keep their names.
         </p>
         <button
-          onClick={() => db.clearMetadataCache()}
+          onClick={() => void clearMetadataCache().then((n) => setCleared(n))}
           className="rounded-xl bg-surface-2 px-4 py-3"
         >
           Clear cached metadata
         </button>
+        {cleared !== undefined && (
+          <p className="px-1 text-sm text-muted" role="status">
+            {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
+          </p>
+        )}
       </section>
 
       <footer className="px-1 pb-4 text-xs leading-relaxed text-muted">

@@ -10,6 +10,7 @@ import {
   type NotifyPreference,
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
+import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { radius, theme } from '../src/ui/theme';
 import {
   pushSupported,
@@ -45,6 +46,12 @@ export default function CalendarScreen() {
 
   useEffect(() => {
     void getUpcoming().then(setEntries);
+    // Opening the calendar is the one moment somebody definitely wants it current.
+    // Throttled in the core, so arriving here repeatedly costs nothing; the list is
+    // re-read after, because nothing on this platform is watching the table.
+    void requestRefresh().then((report) => {
+      if (report?.refreshed) void getUpcoming().then(setEntries);
+    });
   }, []);
 
   const days = groupByDay(entries ?? []);

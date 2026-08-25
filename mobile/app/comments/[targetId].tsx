@@ -14,6 +14,7 @@ import { db } from '@reviewies/core/data/db';
 import { watchCount } from '@reviewies/core/data/repo';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
+  deleteComment,
   EFFORT_LEVELS,
   fetchComments,
   filterByEffort,
@@ -164,10 +165,25 @@ export default function CommentsScreen() {
 
             {visible.map((comment) => (
               <View key={comment.id} style={styles.comment}>
-                <Text style={styles.handle}>
-                  {comment.handle ?? 'someone'}
-                  {comment.mine ? ' · you' : ''}
-                </Text>
+                <View style={styles.commentHead}>
+                  <Text style={[styles.handle, styles.commentWho]}>
+                    {comment.handle ?? 'someone'}
+                    {comment.mine ? ' · you' : ''}
+                  </Text>
+                  {/* Same reason as the web: the core has been able to do this since
+                      comments existed and nothing offered it. */}
+                  {comment.mine && (
+                    <Pressable
+                      onPress={() => void deleteComment(comment.id).then(load)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete your comment"
+                      hitSlop={8}
+                      style={styles.deleteComment}
+                    >
+                      <Text style={styles.deleteCommentText}>Delete</Text>
+                    </Pressable>
+                  )}
+                </View>
                 <Text style={styles.body}>{comment.body}</Text>
                 {comment.imageUrl && (
                   <Image
@@ -186,6 +202,12 @@ export default function CommentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  commentHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  commentWho: { flex: 1, minWidth: 0 },
+  // 24px is the WCAG 2.5.8 minimum, and it is a CSS pixel count rather than a font
+  // size, so it must not be expressed in anything that scales with text.
+  deleteComment: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
+  deleteCommentText: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
   content: { padding: 16, gap: 10, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   episode: { color: theme.muted, fontSize: 14 },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },

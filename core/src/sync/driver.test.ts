@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../data/db';
 import { enqueue, resetSyncState } from './engine';
+import { setStorage } from '../data/storage';
 import { MemoryBackend } from './memoryBackend';
 import { onSyncStatus, requestSync, resetSyncDriver, startSyncDriver, syncStatus } from './driver';
 import * as auth from './auth';
@@ -20,6 +21,7 @@ beforeEach(async () => {
   resetSyncDriver();
   await resetSyncState();
   await Promise.all([db.watches.clear(), db.outbox.clear()]);
+  emptyStorage();
   vi.spyOn(auth, 'syncConfigured').mockReturnValue(true);
   vi.spyOn(auth, 'ensureProfile').mockResolvedValue(undefined as never);
 });
@@ -30,9 +32,19 @@ afterEach(() => {
 });
 
 /** A signed-in session, without a network. */
-function signedIn() {
-  vi.spyOn(auth, 'getSession').mockResolvedValue({ user: { id: 'u1' } } as never);
+function signedIn(userId = 'u1') {
+  vi.spyOn(auth, 'getSession').mockResolvedValue({ user: { id: userId } } as never);
   vi.spyOn(auth, 'onAuthChange').mockImplementation(() => () => {});
+}
+
+/** A fresh key/value store, so one case's recorded owner does not reach the next. */
+function emptyStorage() {
+  const values = new Map<string, string>();
+  setStorage({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => void values.set(key, value),
+    removeItem: (key) => void values.delete(key),
+  });
 }
 
 const watch = (id: string) => ({
@@ -155,3 +167,60 @@ describe('the sync driver', () => {
   });
 });
 
+
+describe('whose queue it is', () => {
+  it('sends a second account nothing the first one left behind', async () => {
+    // Sign out on a shared device, sign in as somebody else, and the first sync used to
+    // push whatever the previous person had not managed to upload — into the new
+    // account. `resetSyncState` existed for exactly this and had no callers.
+    signedIn('first');
+    startSyncDriver({ backend: () => backend, intervalMs: 60_000 });
+    await vi.waitFor(() => expect(syncStatus().signedIn).toBe(true));
+    await enqueue('watches', watch('a'));
+    await vi.waitFor(() => expect(backend.snapshot()).toHaveLength(1), { timeout: 3000 });
+
+    // The first person queues one more thing and closes the app before it goes.
+    resetSyncDriver();
+    await enqueue('watches', watch('b'));
+
+    const second = new MemoryBackend();
+    signedIn('second');
+    startSyncDriver({ backend: () => second, intervalMs: 60_000 });
+    await vi.waitFor(() => expect(syncStatus().signedIn).toBe(true));
+    await requestSync();
+
+    expect(second.snapshot()).toHaveLength(0);
+  });
+
+  it('keeps the queue when the same person signs back in', async () => {
+    signedIn('first');
+    startSyncDriver({ backend: () => backend, intervalMs: 60_000 });
+    await vi.waitFor(() => expect(syncStatus().signedIn).toBe(true));
+    await requestSync();
+
+    resetSyncDriver();
+    await enqueue('watches', watch('a'));
+
+    const again = new MemoryBackend();
+    signedIn('first');
+    startSyncDriver({ backend: () => again, intervalMs: 60_000 });
+    await vi.waitFor(() => expect(syncStatus().signedIn).toBe(true));
+    await requestSync();
+
+    // Signing out and back in is not a reason to lose a write made in between.
+    expect(again.snapshot()).toHaveLength(1);
+  });
+
+  it('does not discard a queue built before anyone signed in at all', async () => {
+    // The migration's whole flow: import a history offline, then make an account. The
+    // rows were queued with no owner recorded, and they belong to whoever signs in.
+    await enqueue('watches', watch('a'));
+
+    signedIn('first');
+    startSyncDriver({ backend: () => backend, intervalMs: 60_000 });
+    await vi.waitFor(() => expect(syncStatus().signedIn).toBe(true));
+    await requestSync();
+
+    expect(backend.snapshot()).toHaveLength(1);
+  });
+});

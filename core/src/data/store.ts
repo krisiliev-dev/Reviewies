@@ -116,5 +116,4 @@ export interface Database {
   table(name: string): Table<Record<string, unknown>>;
 
   /** Drop cached provider metadata, leaving user data alone. */
-  clearMetadataCache(): Promise<void>;
 }

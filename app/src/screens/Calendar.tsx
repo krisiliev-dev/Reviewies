@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import {
@@ -12,6 +12,7 @@ import {
   type NotifyPreference,
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
+import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 
@@ -27,6 +28,11 @@ const PREFS: Array<{ key: NotifyPreference; label: string; hint: string }> = [
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(60), [], undefined);
+
+  // Opening the calendar is the one moment somebody definitely wants it current. The
+  // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
+  // the live query picks up whatever it writes without this screen waiting on it.
+  useEffect(() => void requestRefresh(), []);
   const [preference, setPref] = useState<NotifyPreference>(getPreference());
   const [permission, setPermissionState] = useState<NotificationPermission | undefined>(
     typeof Notification !== 'undefined' ? Notification.permission : undefined,

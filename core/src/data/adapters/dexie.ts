@@ -76,25 +76,6 @@ export class ReviewiesDB extends Dexie {
       syncState: 'key',
     });
   }
-
-  /** Drop everything provider-derived. Safe at any time; user data is untouched. */
-  async clearMetadataCache(): Promise<void> {
-    await this.transaction(
-      'rw',
-      this.titles,
-      this.episodes,
-      this.providers,
-      this.animeIds,
-      async () => {
-        await Promise.all([
-          this.titles.clear(),
-          this.episodes.clear(),
-          this.providers.clear(),
-          this.animeIds.clear(),
-        ]);
-      },
-    );
-  }
 }
 
 /**

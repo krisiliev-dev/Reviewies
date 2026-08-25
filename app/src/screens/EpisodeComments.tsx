@@ -11,6 +11,7 @@ import {
   filterByEffort,
   postComment,
   uploadCommentImage,
+  deleteComment,
   type Comment,
 } from '@reviewies/core/social/comments';
 
@@ -199,9 +200,24 @@ export function EpisodeComments() {
           <ul className="mt-4 flex flex-col gap-2">
             {visible.map((c) => (
               <li key={c.id} className="rounded-2xl bg-surface p-3">
-                <p className="text-xs text-muted">
-                  {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}
-                  {c.mine && ' · you'}
+                <p className="flex items-center gap-2 text-xs text-muted">
+                  <span className="min-w-0 flex-1">
+                    {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}
+                    {c.mine && ' · you'}
+                  </span>
+                  {/* Posting something you regret and having no way to take it back is
+                      the sort of thing that stops people posting at all. The core has
+                      had `deleteComment` since comments existed and neither platform
+                      called it. */}
+                  {c.mine && (
+                    <button
+                      onClick={() => void deleteComment(c.id).then(load)}
+                      className="min-h-[24px] shrink-0 rounded-lg px-2 text-muted underline"
+                      aria-label="Delete your comment"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </p>
                 <p className="mt-1 text-sm whitespace-pre-wrap">{c.body}</p>
                 {c.imageUrl && (

@@ -66,9 +66,23 @@ export async function getProvidersCached(
   }
 }
 
-export async function getEpisodesCached(seriesId: string): Promise<CachedEpisode[]> {
+/**
+ * A series' episodes, from the cache when they are fresh enough.
+ *
+ * `maxAgeMs` exists for the calendar. The default — TMDB's caching limit — is right for
+ * a screen showing a season you are part-way through, and wrong for "what airs next
+ * week": a show whose episodes were cached two months ago is well inside the TTL and has
+ * had a new season announced since. The calendar's refresh passes a much shorter age, so
+ * it fetches; everything else keeps the cheap read.
+ */
+export async function getEpisodesCached(
+  seriesId: string,
+  maxAgeMs?: number,
+): Promise<CachedEpisode[]> {
   const cached = await db.episodes.where('seriesId').equals(seriesId).toArray();
-  const fresh = cached.length > 0 && cached.every((e) => !isStale(e.fetchedAt));
+  const stale = (fetchedAt: number) =>
+    maxAgeMs === undefined ? isStale(fetchedAt) : Date.now() - fetchedAt > maxAgeMs;
+  const fresh = cached.length > 0 && cached.every((e) => !stale(e.fetchedAt));
   if (fresh) return cached;
 
   try {
@@ -137,6 +151,42 @@ async function correctAnimeSeasons(
   );
 
   return [...specials, ...recut];
+}
+
+/**
+ * Drop everything derived from the metadata provider.
+ *
+ * The domain types say the cache is kept in physically separate tables so that this is
+ * "a single operation" — and it was not an operation at all until someone went looking:
+ * nothing anywhere could clear it. TMDB's terms cap caching at six months, the tables
+ * grow without bound as a library does, and a person who wants their device to stop
+ * holding third-party data had no way to say so.
+ *
+ * Titles imported from a rescued history are kept. They live in the same table but they
+ * are not the provider's — they are the only record of a show TMDB has never heard of,
+ * and dropping them would take the watch history's names with it and undo any matching
+ * already accepted.
+ *
+ * That last part is why this is a function rather than the `db.clearMetadataCache()` it
+ * replaces. Both adapters implemented that by emptying the tables, and the web's
+ * settings screen has offered it as "Clearing them never touches your own history" —
+ * which was true when it was written and stopped being true when imported placeholders
+ * started living in `titles`. Pressing it after a TV Time import erased the name of
+ * every show TMDB does not have, and every match already accepted with it.
+ */
+export async function clearMetadataCache(): Promise<number> {
+  const titles = await db.titles.toArray();
+  const providerTitles = titles.filter((t) => !t.id.startsWith('local:'));
+
+  const episodes = await db.episodes.toArray();
+  const providerEpisodes = episodes.filter((e) => !e.id.startsWith('local:'));
+
+  for (const title of providerTitles) await db.titles.delete(title.id);
+  for (const episode of providerEpisodes) await db.episodes.delete(episode.id);
+  await db.providers.clear();
+  await db.animeIds.clear();
+
+  return providerTitles.length + providerEpisodes.length;
 }
 
 export * from './provider';

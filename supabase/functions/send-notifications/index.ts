@@ -22,6 +22,7 @@ import {
   type DeliveryOutcome,
   type Notification,
 } from '../../../core/src/calendar/expoPush.ts';
+import { shouldNotify } from '../../../core/src/calendar/upcoming.ts';
 
 const BATCH = 100;
 
@@ -123,11 +124,12 @@ Deno.serve(async (req) => {
       .eq('user_id', item.user_id)
       .maybeSingle();
 
+    // The same rule the client applies, imported rather than restated. It was written
+    // out by hand here and `shouldNotify` sat in the core with a test and no callers,
+    // which is two copies of one decision and only one of them under test.
     const preference = pref?.preference ?? 'milestones';
-    const wanted =
-      preference === 'all' || (preference === 'milestones' && item.kind !== 'regular');
 
-    if (!wanted) {
+    if (!shouldNotify(item.kind, preference)) {
       skipped++;
       continue;
     }

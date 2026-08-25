@@ -1,5 +1,5 @@
 import type { Database, Query, Table, WhereClause } from '../store';
-import { METADATA_TABLES, TABLES, createTableSql, quote, type TableSpec } from './schema';
+import { TABLES, createTableSql, quote, type TableSpec } from './schema';
 
 /**
  * SQLite implementation of the core's `Database`.
@@ -315,9 +315,4 @@ export class SqliteDatabase implements Database {
     }
   }
 
-  async clearMetadataCache(): Promise<void> {
-    await this.transaction('rw', async () => {
-      for (const name of METADATA_TABLES) await this.table(name).clear();
-    });
-  }
 }

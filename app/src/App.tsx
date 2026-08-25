@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
+import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { UpNext } from './screens/UpNext';
 import { Search } from './screens/Search';
 import { TitleDetail } from './screens/TitleDetail';
@@ -25,6 +26,10 @@ export default function App() {
    */
   useEffect(() => {
     const stop = startSyncDriver();
+    // The calendar reads a cache that only screens ever filled, so a show you were
+    // simply watching never learned about its next season. This keeps it current for
+    // the app rather than for whoever happens to open a title.
+    const stopRefresh = startCalendarRefresh();
     // Coming back online, and coming back to the tab, are the two moments a queued
     // change is most likely to succeed.
     const wake = () => void requestSync();
@@ -35,6 +40,7 @@ export default function App() {
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       stop();
+      stopRefresh();
       window.removeEventListener('online', wake);
       document.removeEventListener('visibilitychange', onVisible);
     };

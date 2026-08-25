@@ -3,6 +3,7 @@ import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-nativ
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
+import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
 
@@ -38,6 +39,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!ready) return;
     const stop = startSyncDriver();
+    // Same reason as sync: this belongs to the app, not to whichever screen was open.
+    const stopRefresh = startCalendarRefresh();
     // Coming back to the app is the moment a queue built on a train is most likely to
     // move, and a phone suspends timers outright while it is backgrounded.
     const subscription = AppState.addEventListener('change', (state) => {
@@ -45,6 +48,7 @@ export default function RootLayout() {
     });
     return () => {
       stop();
+      stopRefresh();
       subscription.remove();
     };
   }, [ready]);

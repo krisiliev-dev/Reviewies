@@ -1,5 +1,6 @@
+import { readPreference, writePreference } from '../data/storage';
 import { ensureProfile, getSession, onAuthChange, syncConfigured } from './auth';
-import { onEnqueue, pendingCount, syncOnce, type SyncResult } from './engine';
+import { onEnqueue, pendingCount, resetSyncState, syncOnce, type SyncResult } from './engine';
 import { SupabaseBackend } from './supabaseBackend';
 import type { SyncBackend } from './types';
 
@@ -51,6 +52,36 @@ export function onSyncStatus(fn: (status: SyncStatus) => void): () => void {
 let running: Promise<void> | undefined;
 let makeBackend: () => SyncBackend | undefined = () => SupabaseBackend.fromEnv();
 
+/** Who the outbox and the pull cursor belong to. */
+const OWNER_KEY = 'reviewies.sync.owner';
+
+/**
+ * Refuse to sync one person's queue into another person's account.
+ *
+ * The outbox and the cursor are per-account and nothing said so. Sign out on a shared
+ * device, sign in as somebody else, and the first sync pushed whatever the previous
+ * person had not managed to upload — into the new account — and then pulled from a
+ * cursor that belonged to a different history, so the new account's older rows never
+ * arrived at all. `resetSyncState` existed for exactly this and had no callers.
+ *
+ * The queue is discarded rather than held, and that is a real cost: writes the previous
+ * person made offline and never uploaded are gone. It is the lesser loss. Those writes
+ * are still in the local database, where they always were; sending them to the wrong
+ * account cannot be undone by anyone but the person who received them.
+ *
+ * This does not make one device sensible for two people — the local library is still
+ * shared, which is a design question and not this one. It stops the part that reaches
+ * someone else's server.
+ */
+let currentUserId: string | undefined;
+
+async function claimFor(userId: string): Promise<void> {
+  const owner = readPreference(OWNER_KEY);
+  if (owner === userId) return;
+  if (owner !== null) await resetSyncState();
+  writePreference(OWNER_KEY, userId);
+}
+
 /**
  * Run one cycle, or join the one already running.
  *
@@ -66,6 +97,10 @@ export async function requestSync(): Promise<void> {
     try {
       const backend = makeBackend();
       if (!backend) return;
+      // From the auth events the driver is already listening to, rather than a fresh
+      // `getSession()`: the two must agree about who is signed in, and asking twice is
+      // a way for them to disagree.
+      if (currentUserId) await claimFor(currentUserId);
       await ensureProfile();
       const result = await syncOnce(backend);
       update({ lastResult: result, lastRunAt: Date.now(), lastError: result.error });
@@ -106,12 +141,14 @@ export function startSyncDriver(options: {
   let stopped = false;
 
   const unsubscribeAuth = onAuthChange((session) => {
+    currentUserId = session?.user.id;
     update({ signedIn: Boolean(session) });
     // Signing in is the moment a queue built up offline is most likely to move.
     if (session) void requestSync();
   });
 
   void getSession().then((session) => {
+    currentUserId ??= session?.user.id;
     update({ signedIn: Boolean(session) });
     if (session) void requestSync();
   });
@@ -143,5 +180,6 @@ export function resetSyncDriver(): void {
   stopCurrent = undefined;
   listeners.clear();
   makeBackend = () => SupabaseBackend.fromEnv();
+  currentUserId = undefined;
   status = { configured: false, signedIn: false, pending: 0, busy: false };
 }
