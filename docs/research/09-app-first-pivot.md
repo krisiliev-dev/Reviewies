@@ -504,3 +504,53 @@ confirm the new tests fail there. That is now standard practice here rather than
 two tests written this week to catch a specific bug passed against the unfixed code — one
 because a mock never applied, one because an option the test passed was silently ignored
 by a constructor that did not yet accept it.
+
+### 6.7 The browser was measuring time with the wrong clock
+
+The web's capture polled `AnalyserNode.getFloatFrequencyData` on a `setTimeout` loop set
+to the hop interval. Short, readable, and wrong in a way that never shows up locally.
+
+An analyser hands back whatever its buffer holds at the moment it is asked. It has no
+notion of a caller wanting consecutive, evenly-spaced frames. A timer that fires late
+duplicates a frame; one that catches up fires twice and skips audio; a throttled tab does
+both for minutes together. Meanwhile `framesToMs` — the function that turns a match into
+a timecode — assumes every frame is exactly one hop after the one before it. So the
+position the browser derived drifted with timer jitter, and a reference contributed from
+a browser encoded that drift permanently for everyone who later matched against it.
+
+This is the failure mode documented three times in the sections above — a reference built
+one way and a sample taken another way share no landmarks, and nothing reports an error —
+sitting in the path that was, until §6.3, the only way anybody could contribute a
+reference at all.
+
+The browser now reads raw PCM through an AudioWorklet and feeds the same
+`SpectrogramStream` the phone uses, so both platforms turn identical audio into identical
+frames. A `ScriptProcessorNode` fallback covers older Safari, which is deprecated and
+still the only thing that works there. The worklet is loaded from a blob URL rather than
+shipped as an asset: an `addModule` path otherwise has to survive the dev server, the
+production build and whatever base path the app is deployed under, and none of that is
+the recorder's business.
+
+Two things fell out of writing it:
+
+- **The recorder has to be connected to something to be pulled at all**, and the obvious
+  something is `context.destination` — which routes the microphone to the speakers, in a
+  room with a television playing. It goes through a gain node pinned to zero, and there
+  is a test asserting the gain is zero, because "it currently happens to output silence"
+  is not a property worth relying on.
+- **The sample rate cannot be read off the returned handle.** The audio graph is
+  connected before `openMicrophone` resolves, so the first buffers can arrive while the
+  caller is still awaiting the promise. The rate travels with each buffer instead.
+
+The tests fake a Web Audio graph, because jsdom has no audio and the alternative is not
+testing this seam — which is how the old version shipped. They feed a known signal in
+deliberately uneven pieces and assert the frames are exactly `spectrogramFromPcm` of that
+signal. That assertion could not have been written against the old design at all, which
+is the clearest statement of what was wrong with it.
+
+**Deliberately not done: continuous listening on the web.** The core has everything
+needed, and a focused tab could correct drift the way the phone does. But a backgrounded
+tab loses its audio graph, so the web could only ever do it while someone is looking at
+it — which is not when a second-screen app is useful. Correct positions from a one-shot
+sync was the actual bug; continuous listening on the web would be a feature that quietly
+stops working the moment it matters, and §1.3 is the reason the app exists.
