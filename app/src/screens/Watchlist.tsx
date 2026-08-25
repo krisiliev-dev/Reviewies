@@ -79,7 +79,11 @@ function Row({
 
   return (
     <li className="flex items-start gap-3 rounded-2xl bg-surface p-2.5">
-      <Link to={`/title/${encodeURIComponent(titleId)}`} className="shrink-0">
+      <Link
+        to={`/title/${encodeURIComponent(titleId)}`}
+        aria-label={`Open ${name}`}
+        className="shrink-0"
+      >
         <Poster url={posterUrl} name={name} className="h-24 w-16 rounded-lg" />
       </Link>
 
@@ -96,13 +100,19 @@ function Row({
               className="min-w-0 flex-1 rounded-lg bg-surface-2 px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
               autoFocus
             />
-            <button onClick={save} className="rounded-lg bg-accent px-3 text-sm font-medium text-ink">
+            <button
+              onClick={save}
+              aria-label={`Save note for ${name}`}
+              className="rounded-lg bg-accent px-3 text-sm font-medium text-ink"
+            >
               Save
             </button>
           </div>
         ) : (
           <button
             onClick={() => setEditing(true)}
+            // Every row says "Add a note…". Which row is a visual fact only.
+            aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
             className="mt-1.5 block text-left text-sm text-muted italic"
           >
             {/* "The amount of things I have in my wishlist that i have ZERO memory for

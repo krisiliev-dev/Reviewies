@@ -58,7 +58,7 @@ export default function UpNextScreen() {
                 : 'All caught up — nothing has aired that you have not seen.'}
             </Text>
             <Link href="/search" asChild>
-              <Pressable style={styles.cta}>
+              <Pressable style={styles.cta} accessibilityRole="link">
                 <Text style={styles.ctaText}>Find something to watch</Text>
               </Pressable>
             </Link>
@@ -121,7 +121,13 @@ function Row({
 
   return (
     <View style={styles.row}>
-      <Pressable onPress={() => router.push(`/title/${encodeURIComponent(entry.seriesId)}`)}>
+      <Pressable
+        onPress={() => router.push(`/title/${encodeURIComponent(entry.seriesId)}`)}
+        accessibilityRole="link"
+        // A poster is an image with no text in it. Without this the control announces
+        // as nothing at all, which is what a tappable View amounts to.
+        accessibilityLabel={`Open ${entry.seriesName}`}
+      >
         <Poster url={entry.posterUrl} name={entry.seriesName} />
       </Pressable>
 
@@ -145,6 +151,7 @@ function Row({
         <Pressable
           onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
           hitSlop={8}
+          accessibilityRole="button"
           accessibilityLabel={`Catch up on ${entry.seriesName}`}
         >
           <Text style={styles.catchUp}>Caught up further?</Text>
@@ -156,6 +163,8 @@ function Row({
         disabled={busy}
         // Large target: this gets tapped in the dark, one-handed.
         style={({ pressed }) => [styles.watched, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: busy }}
         accessibilityLabel={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
       >
         <Text style={styles.watchedText}>Watched</Text>

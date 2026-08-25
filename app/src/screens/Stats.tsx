@@ -38,7 +38,11 @@ export function Stats() {
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Stats</h1>
 
-      <div className="mb-5 flex flex-wrap gap-1.5">
+      <div
+        role="radiogroup"
+        aria-label="Which stretch of time these figures cover"
+        className="mb-5 flex flex-wrap gap-1.5"
+      >
         {WINDOWS.map((w) => (
           <button
             key={w.key}
@@ -46,6 +50,8 @@ export function Stats() {
               setWindow(w.key);
               setYear(undefined);
             }}
+            role="radio"
+            aria-checked={!year && window === w.key}
             className={`rounded-full px-3.5 py-1.5 text-sm ${
               !year && window === w.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}
@@ -57,6 +63,9 @@ export function Stats() {
           <button
             key={y}
             onClick={() => setYear(y)}
+            role="radio"
+            aria-checked={year === y}
+            aria-label={`Your ${y}`}
             className={`rounded-full px-3.5 py-1.5 text-sm ${
               year === y ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}

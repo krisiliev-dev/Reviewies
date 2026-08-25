@@ -64,11 +64,13 @@ export function Calendar() {
 
       <section className="mb-6 rounded-2xl bg-surface p-4">
         <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>
-        <div className="flex flex-wrap gap-1.5">
+        <div role="radiogroup" aria-label="Tell me about" className="flex flex-wrap gap-1.5">
           {PREFS.map((p) => (
             <button
               key={p.key}
               onClick={() => choose(p.key)}
+              role="radio"
+              aria-checked={preference === p.key}
               className={`rounded-full px-3 py-1.5 text-xs ${
                 preference === p.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
               }`}
@@ -138,7 +140,11 @@ function Row({ entry }: { entry: UpcomingEntry }) {
 
   return (
     <li className="flex items-center gap-3 rounded-xl bg-surface p-2.5">
-      <Link to={`/title/${encodeURIComponent(entry.seriesId)}`} className="shrink-0">
+      <Link
+        to={`/title/${encodeURIComponent(entry.seriesId)}`}
+        aria-label={`Open ${entry.seriesName}`}
+        className="shrink-0"
+      >
         <Poster url={entry.posterUrl} name={entry.seriesName} className="h-16 w-11 rounded-md" />
       </Link>
       <div className="min-w-0 flex-1">

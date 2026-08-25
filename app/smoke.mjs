@@ -87,6 +87,59 @@ const browser = await chromium.launch({
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => check('no page errors', false, e.message));
 
+/**
+ * Every control on a screen has a name, on every screen — not only the ones this suite
+ * happened to reach for.
+ *
+ * A poster link is the case that made this worth writing: the image is `alt=""` and the
+ * placeholder is aria-hidden, both correct on their own, and the link wrapping them had
+ * no accessible name at all on five screens. Nothing visual was wrong with it, so
+ * nothing but this would have found it.
+ *
+ * The count is asserted too. Half the ways to lose a name also lose the role, and a
+ * screen reporting no controls has not passed — it has failed to be looked at.
+ */
+async function audit(screen, atLeast) {
+  const found = await page.evaluate(() => {
+    const ROLES = ['button', 'link', 'radio', 'checkbox', 'switch', 'tab', 'menuitem'];
+    const selector = ROLES.map((r) => `[role="${r}"]`).join(',') + ',button,a[href]';
+    let named = 0;
+    const nameless = [];
+    for (const el of document.querySelectorAll(selector)) {
+      if (el.closest('[aria-hidden="true"], [inert]')) continue;
+      const labelledBy = (el.getAttribute('aria-labelledby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ');
+      // Text inside an aria-hidden descendant is not part of the accessible name, and
+      // reading it as though it were is how this check first passed a link that had no
+      // name at all: the poster placeholder holds the title, and is aria-hidden.
+      const clone = el.cloneNode(true);
+      for (const hidden of clone.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+      const name = (
+        el.getAttribute('aria-label') ??
+        (labelledBy.trim() || clone.textContent) ??
+        ''
+      ).trim();
+      if (name) named++;
+      else nameless.push(el.outerHTML.slice(0, 90));
+    }
+    return { named, nameless };
+  });
+
+  check(
+    `${screen}: every control is named`,
+    found.nameless.length === 0,
+    found.nameless.length ? found.nameless.join(' | ') : `${found.named} named`,
+  );
+  check(
+    `${screen}: and the screen reports its controls`,
+    found.named >= atLeast,
+    `${found.named} found, expected at least ${atLeast}`,
+  );
+}
+
 try {
   // --- Empty state -----------------------------------------------------------
   await page.goto(BASE, { waitUntil: 'networkidle' });
@@ -114,9 +167,10 @@ try {
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   check('search returns results', true);
+  await audit('Search', 8);
   await page.screenshot({ path: OUT + '02-search.png' });
 
-  await page.getByRole('button', { name: 'Track', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Track The Long Dark' }).click();
   await page.waitForSelector('text=Tracking', { timeout: 5000 });
 
   // --- Up Next ---------------------------------------------------------------
@@ -130,6 +184,7 @@ try {
 
   const remainingText = await page.locator('text=/more episodes/').first().textContent();
   check('shows a remaining count, not a vague badge', /\d+ more episodes/.test(remainingText ?? ''), remainingText?.trim());
+  await audit('Up Next', 10);
   await page.screenshot({ path: OUT + '03-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
@@ -163,7 +218,7 @@ try {
   await page.getByRole('link', { name: /Up Next/ }).click();
 
   // --- Watching Mode ---------------------------------------------------------
-  await page.getByRole('link', { name: 'Watch along' }).first().click();
+  await page.getByRole('link', { name: /^Watch along with / }).first().click();
   await page.waitForSelector('text=Start watching', { timeout: 5000 });
   check('Watching Mode opens', true);
   await page.screenshot({ path: OUT + '04-watching-start.png' });
@@ -171,8 +226,8 @@ try {
   await page.getByRole('button', { name: 'Start watching' }).click();
   await page.waitForTimeout(1200);
 
-  await page.getByRole('button', { name: 'Cliffhanger' }).click();
-  await page.getByRole('button', { name: 'Reveal' }).click();
+  await page.getByRole('button', { name: 'React with cliffhanger' }).click();
+  await page.getByRole('button', { name: 'React with reveal' }).click();
   check('reactions can be recorded', true);
 
   const reactionCount = await page.evaluate(
@@ -190,7 +245,10 @@ try {
 
   await page.getByPlaceholder('Search any emoji…').fill('twist');
   await page.waitForTimeout(300);
-  check('emoji search filters the pad', (await page.getByRole('button', { name: 'Mind blown' }).count()) > 0);
+  check(
+    'emoji search filters the pad',
+    (await page.getByRole('button', { name: 'React with mind blown' }).count()) > 0,
+  );
 
   // "Any emojis can be used by simply searching in the search bar." The index arrives as
   // its own chunk once Watching Mode opens, so this also proves that chunk loads.
@@ -202,14 +260,18 @@ try {
   );
   await page.getByPlaceholder('Search any emoji…').fill('');
   await page.waitForTimeout(400);
+  // Twenty emoji on the pad plus the clock controls and the way out. The emoji glyph
+  // is aria-hidden and the caption is the whole name, so each of these announces once,
+  // as a word a person would say rather than as a Unicode description.
+  await audit('Watching Mode', 23);
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
   // --- Extension auto-sync ---------------------------------------------------
   // Simulate what the extension's content script posts into the page and confirm
   // the clock follows it instead of needing a manual start.
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
   await page.getByRole('link', { name: /Up Next/ }).click();
-  await page.getByRole('link', { name: 'Watch along' }).first().click();
+  await page.getByRole('link', { name: /^Watch along with / }).first().click();
   await page.waitForSelector('text=Start watching', { timeout: 5000 });
 
   await page.evaluate(() => {
@@ -243,13 +305,13 @@ try {
   check('stale readings are ignored', !/0:0\d/.test(afterStale), afterStale.slice(0, 90));
 
   // --- Watchlist with notes --------------------------------------------------
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
   await page.getByRole('link', { name: /Search/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
-  await page.getByRole('button', { name: 'Watchlist', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Add Quiet Harbour to your watchlist' }).click();
   await page.getByPlaceholder(/Why\?/).fill('Ana recommended');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Save Quiet Harbour to your watchlist' }).click();
 
   await page.getByRole('link', { name: /Watchlist/ }).click();
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
@@ -264,6 +326,7 @@ try {
     noteShown,
     noteShown ? '' : (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 200),
   );
+  await audit('Watchlist', 9);
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
   // --- Spoiler-free quick log --------------------------------------------------
@@ -273,14 +336,14 @@ try {
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   const beforeUrl = page.url();
-  await page.getByRole('button', { name: 'Seen it' }).first().click();
+  await page.getByRole('button', { name: 'Log that you have seen Quiet Harbour' }).click();
   await page.waitForSelector('text=Logged', { timeout: 5000 });
   check('a film can be logged without leaving search', page.url() === beforeUrl, page.url());
 
   // --- Spoiler-free catch-up ---------------------------------------------------
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
-  await page.getByRole('button', { name: 'Caught up further?' }).first().click();
+  await page.getByRole('button', { name: 'Catch up on The Long Dark' }).click();
   // Two-season fixture, so the season step comes first.
   await page.waitForSelector('text=/^Season$/', { timeout: 5000 });
   const sheet = await page.locator('div.rounded-t-3xl').innerText();
@@ -290,17 +353,18 @@ try {
     !/Pilot|Thaw|Episode \d/.test(sheet),
     sheet.replace(/\s+/g, ' ').slice(0, 140),
   );
+  await audit('the catch-up sheet', 4);
   await page.screenshot({ path: OUT + '15-catchup.png' });
 
-  await page.getByRole('button', { name: '2', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Season: 2' }).click();
   await page.waitForSelector('text=/Last episode you watched in season 2/', { timeout: 5000 });
   await page.screenshot({ path: OUT + '16-catchup-episodes.png' });
-  await page.getByRole('button', { name: '4', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Last episode you watched in season 2: 4' }).click();
   await page.waitForSelector('text=/Marked \\d+ episode/', { timeout: 5000 });
   const markedText = (await page.locator('text=/Marked/').first().innerText()).replace(/\s+/g, ' ');
   // 18 aired episodes; one was already watched above, so 11 of the first 12 remain.
   check('catching up marks the whole run at once', /Marked 11 episodes/.test(markedText), markedText);
-  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Done catching up' }).click();
 
   const afterCatchUp = await page.locator('text=/more episodes|Last one/').first().textContent();
   check('Up Next moves on after catching up', /more episodes|Last one/.test(afterCatchUp ?? ''), afterCatchUp?.trim());
@@ -311,20 +375,20 @@ try {
   await page.getByRole('link', { name: /Search/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('kitchen');
   await page.waitForSelector('text=Kitchen Nightshift', { timeout: 5000 });
-  await page.getByRole('button', { name: 'Track', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Track Kitchen Nightshift' }).click();
   await page.waitForSelector('text=Tracking', { timeout: 5000 });
 
   await page.getByRole('link', { name: /Up Next/ }).click();
   const kitchen = page.locator('li').filter({ hasText: 'Kitchen Nightshift' }).first();
   await kitchen.waitFor({ timeout: 5000 });
-  await kitchen.getByRole('button', { name: 'Caught up further?' }).click();
+  await kitchen.getByRole('button', { name: 'Catch up on Kitchen Nightshift' }).click();
   await page.waitForSelector('text=/Last episode you watched/', { timeout: 5000 });
-  await page.getByRole('button', { name: '12', exact: true }).first().click();
+  await page.getByRole('button', { name: /Last episode you watched.*: 12$/ }).click();
   // Completing the show removes its Up Next row. The confirmation must outlive that,
   // or the sheet just disappears and nothing tells you it worked.
   await page.waitForSelector('text=/Marked \\d+ episode/', { timeout: 5000 });
   check('the catch-up confirmation survives the row disappearing', true);
-  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('button', { name: 'Done catching up' }).click();
   await page.waitForTimeout(400);
 
   const libStatus = await page.evaluate(
@@ -349,6 +413,7 @@ try {
   const upcomingText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
   check('milestones is the default', /The moments worth knowing about/.test(upcomingText));
+  await audit('Upcoming', 9);
   await page.screenshot({ path: OUT + '10-upcoming.png' });
 
   // --- Discover --------------------------------------------------------------
@@ -368,6 +433,7 @@ try {
     'discover explains why',
     /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),
   );
+  await audit('Discover', 9);
   await page.screenshot({ path: OUT + '09-discover.png' });
 
   // --- Stats -----------------------------------------------------------------
@@ -376,6 +442,7 @@ try {
   const statsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
+  await audit('Stats', 9);
   await page.screenshot({ path: OUT + '08-stats.png' });
 
   // --- Ratings and poster override -------------------------------------------
@@ -403,8 +470,8 @@ try {
 
   // Availability is per country, so answering for one silently would be confidently
   // wrong for most of the world.
-  await page.getByRole('button', { name: 'United States', exact: true }).click();
-  await page.getByRole('button', { name: 'GB', exact: true }).click();
+  await page.getByRole('button', { name: /^Change country/ }).click();
+  await page.getByRole('radio', { name: 'Show availability in United Kingdom' }).click();
   await page.waitForTimeout(400);
   const afterRegion = await page.locator('section', { hasText: 'Where to watch' }).first().innerText();
   check('the country can be changed', /United Kingdom/.test(afterRegion), afterRegion.replace(/\s+/g, ' ').slice(0, 90));
@@ -429,6 +496,8 @@ try {
       : 'content warnings are hidden without an account',
     ((await page.getByRole('button', { name: 'Content warnings' }).count()) > 0) === configured,
   );
+  // Eighteen episodes, each with React, Talk and Mark, plus the stars and the rest.
+  await audit('the title page', 30);
   await page.screenshot({ path: OUT + '13-title.png' });
 
   // --- People ----------------------------------------------------------------
@@ -445,6 +514,7 @@ try {
     configured ? /Sign in/i.test(peopleText) : /works without it/.test(peopleText),
     peopleText.slice(0, 140),
   );
+  await audit('People', 6);
   await page.screenshot({ path: OUT + '14-people.png' });
   await page.goBack();
 

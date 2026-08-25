@@ -55,6 +55,8 @@ function Row({ item }: { item: Suggestion }) {
     <Pressable
       style={styles.row}
       onPress={() => router.push(`/title/${encodeURIComponent(item.id)}`)}
+      accessibilityRole="link"
+      accessibilityLabel={`Open ${item.name}`}
     >
       <Poster url={item.posterUrl} name={item.name} />
       <View style={styles.rowBody}>

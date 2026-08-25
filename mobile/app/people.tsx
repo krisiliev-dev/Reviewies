@@ -103,7 +103,13 @@ export default function PeopleScreen() {
           {handle === undefined ? (
             <>
               <Text style={styles.blurb}>{me ? `@${me.handle}` : 'Loading…'}</Text>
-              <Pressable onPress={() => setHandle(me?.handle ?? '')} disabled={!me} hitSlop={8}>
+              <Pressable
+                onPress={() => setHandle(me?.handle ?? '')}
+                disabled={!me}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !me }}
+              >
                 <Text style={styles.link}>Change your handle</Text>
               </Pressable>
             </>
@@ -119,10 +125,20 @@ export default function PeopleScreen() {
                 style={styles.input}
               />
               <View style={styles.row}>
-                <Pressable onPress={saveHandle} style={styles.primary}>
+                <Pressable
+                  onPress={saveHandle}
+                  style={styles.primary}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save your handle"
+                >
                   <Text style={styles.primaryText}>Save</Text>
                 </Pressable>
-                <Pressable onPress={() => setHandle(undefined)} hitSlop={8}>
+                <Pressable
+                  onPress={() => setHandle(undefined)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel changing your handle"
+                >
                   <Text style={styles.link}>Cancel</Text>
                 </Pressable>
               </View>
@@ -229,6 +245,11 @@ function FindPeople({
               }}
               disabled={isBlocked}
               style={[styles.small, already ? styles.smallMuted : styles.smallOn, isBlocked && styles.disabled]}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isBlocked, selected: already }}
+              // A search result is a row of identical words. Which person "Follow"
+              // belongs to is only visible, never spoken.
+              accessibilityLabel={`${already ? 'Unfollow' : 'Follow'} @${person.handle}`}
             >
               <Text style={already ? styles.smallMutedText : styles.smallOnText}>
                 {already ? 'Following' : 'Follow'}
@@ -240,6 +261,8 @@ function FindPeople({
                 onChanged();
               }}
               style={[styles.small, styles.smallMuted]}
+              accessibilityRole="button"
+              accessibilityLabel={`Block @${person.handle}`}
             >
               <Text style={styles.smallMutedText}>Block</Text>
             </Pressable>
@@ -282,6 +305,8 @@ function PersonList({
                   onChanged();
                 }}
                 style={[styles.small, styles.smallMuted]}
+                accessibilityRole="button"
+                accessibilityLabel={`${act.label} @${person.handle}`}
               >
                 <Text style={styles.smallMutedText}>{act.label}</Text>
               </Pressable>

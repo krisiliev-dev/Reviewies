@@ -168,7 +168,11 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             className="rounded-xl bg-surface-2 px-3 py-2.5 outline-none placeholder:text-muted"
           />
           <div className="flex gap-2">
-            <button onClick={save} className="rounded-xl bg-accent px-4 py-2 font-medium text-ink">
+            <button
+              onClick={save}
+              aria-label="Save how you appear"
+              className="rounded-xl bg-accent px-4 py-2 font-medium text-ink"
+            >
               Save
             </button>
             <button
@@ -253,6 +257,7 @@ function FindPeople({
                   onChanged();
                 }}
                 disabled={isBlocked}
+                aria-label={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
                 className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 ${
                   already ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
                 }`}
@@ -264,6 +269,7 @@ function FindPeople({
                   await blockPerson(p.id);
                   onChanged();
                 }}
+                aria-label={`Block @${p.handle}`}
                 className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
               >
                 Block
@@ -310,6 +316,7 @@ function PersonList({
                     await act.run();
                     onChanged();
                   }}
+                  aria-label={`${act.label} @${p.handle}`}
                   className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
                 >
                   {act.label}

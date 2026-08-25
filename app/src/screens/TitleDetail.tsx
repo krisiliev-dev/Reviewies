@@ -105,11 +105,16 @@ export function TitleDetail() {
                   await setPosterOverride(titleId, posterDraft.trim() || undefined);
                   setPosterDraft(undefined);
                 }}
+                aria-label="Save this poster"
                 className="rounded-lg bg-accent px-3 text-sm font-medium text-ink"
               >
                 Save
               </button>
-              <button onClick={() => setPosterDraft(undefined)} className="px-2 text-sm text-muted">
+              <button
+                onClick={() => setPosterDraft(undefined)}
+                aria-label="Cancel changing the poster"
+                className="px-2 text-sm text-muted"
+              >
                 Cancel
               </button>
             </div>
@@ -188,8 +193,11 @@ function EpisodeRow({
         )}
       </div>
 
+      {/* Every row carries the same three words. Read down a season they are "React,
+          Talk, Mark" forty times over with nothing to tell them apart. */}
       <Link
         to={`/watching/${encodeURIComponent(episode.id)}`}
+        aria-label={`React along with episode ${episode.number}, ${episode.name}`}
         className="shrink-0 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
       >
         React
@@ -197,6 +205,7 @@ function EpisodeRow({
 
       <Link
         to={`/comments/${encodeURIComponent(episode.id)}`}
+        aria-label={`Comments on episode ${episode.number}, ${episode.name}`}
         className="shrink-0 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
       >
         Talk
@@ -209,6 +218,12 @@ function EpisodeRow({
             : markWatched({ targetId: episode.id, seriesId, runtimeMin: episode.runtimeMin })
         }
         disabled={!aired && !watched}
+        aria-pressed={watched}
+        aria-label={
+          watched
+            ? `Unmark episode ${episode.number}, ${episode.name}`
+            : `Mark episode ${episode.number}, ${episode.name} watched`
+        }
         className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-30 ${
           watched ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
         }`}

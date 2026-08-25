@@ -45,6 +45,8 @@ export function ListenSync({
           onPress={() => (listening ? listen.stop() : void listen.startListening())}
           disabled={mapping || uploading}
           style={[styles.button, listening && styles.buttonOn, mapping && styles.buttonOff]}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: mapping || uploading, selected: listening }}
         >
           <Text style={[styles.buttonText, listening && styles.buttonTextOn]}>
             {listening ? 'Stop listening' : 'Keep in sync by listening'}
@@ -71,6 +73,12 @@ export function ListenSync({
             mapping && styles.buttonOn,
             (listening || uploading || (!mapping && !clockRunning)) && styles.buttonOff,
           ]}
+          accessibilityRole="button"
+          accessibilityState={{
+            disabled: listening || uploading || (!mapping && !clockRunning),
+            selected: mapping,
+            busy: uploading,
+          }}
         >
           <Text style={[styles.quietText, mapping && styles.buttonTextOn]}>
             {mapping ? 'Finish and contribute' : uploading ? 'Sending…' : 'Help map this episode'}

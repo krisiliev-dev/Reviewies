@@ -133,15 +133,29 @@ export default function WatchingScreen() {
             <Text style={styles.startBlurb}>
               Press start when the episode starts. You can nudge the clock any time.
             </Text>
-            <Pressable style={styles.start} onPress={() => clock.start()}>
+            <Pressable
+              style={styles.start}
+              onPress={() => clock.start()}
+              accessibilityRole="button"
+            >
               <Text style={styles.startText}>Start watching</Text>
             </Pressable>
           </View>
         ) : (
           <View style={styles.controls}>
             <Control label={clock.running ? 'Pause' : 'Resume'} onPress={clock.toggle} />
-            <Control label="−5s" onPress={() => clock.nudge(-5000)} />
-            <Control label="+5s" onPress={() => clock.nudge(5000)} />
+            {/* "−5s" is a minus sign, a digit and a letter. Named, because what it does
+                is a sentence and what it shows is three characters. */}
+            <Control
+              label="−5s"
+              name="Move the clock back 5 seconds"
+              onPress={() => clock.nudge(-5000)}
+            />
+            <Control
+              label="+5s"
+              name="Move the clock forward 5 seconds"
+              onPress={() => clock.nudge(5000)}
+            />
             <View style={styles.densityBlock}>
               <Text style={styles.densityLabel}>Density</Text>
               <View style={styles.densityRow}>
@@ -182,7 +196,11 @@ export default function WatchingScreen() {
         />
 
         {drift !== undefined && (
-          <Pressable style={styles.drift} onPress={() => clock.nudge(drift)}>
+          <Pressable
+            style={styles.drift}
+            onPress={() => clock.nudge(drift)}
+            accessibilityRole="button"
+          >
             <Text style={styles.driftText}>
               You look {drift > 0 ? 'behind' : 'ahead of'} the crowd by{' '}
               {Math.abs(Math.round(drift / 1000))}s — tap to correct
@@ -198,6 +216,11 @@ export default function WatchingScreen() {
                 onPress={() => react(item.emoji)}
                 // Big targets: this is tapped in the dark without looking down for long.
                 style={({ pressed }) => [styles.padButton, pressed && styles.padPressed]}
+                accessibilityRole="button"
+                // Without this the emoji is read by its Unicode name and then the label
+                // underneath it: "face with tears of joy, Funny". One name, and the one
+                // a person would say.
+                accessibilityLabel={`React with ${item.label.toLowerCase()}`}
               >
                 <Text style={styles.padEmoji}>{item.emoji}</Text>
                 <Text style={styles.padLabel}>{item.label}</Text>
@@ -216,6 +239,7 @@ export default function WatchingScreen() {
           placeholderTextColor={theme.muted}
           style={styles.search}
           autoCorrect={false}
+          accessibilityLabel="Search any emoji"
         />
   
       {/* "Hidden in a drawer to the side" — and here rather than only on its own screen,
@@ -226,9 +250,22 @@ export default function WatchingScreen() {
   );
 }
 
-function Control({ label, onPress }: { label: string; onPress: () => void }) {
+function Control({
+  label,
+  name,
+  onPress,
+}: {
+  label: string;
+  name?: string;
+  onPress: () => void;
+}) {
   return (
-    <Pressable onPress={onPress} style={styles.control}>
+    <Pressable
+      onPress={onPress}
+      style={styles.control}
+      accessibilityRole="button"
+      accessibilityLabel={name ?? label}
+    >
       <Text style={styles.controlText}>{label}</Text>
     </Pressable>
   );

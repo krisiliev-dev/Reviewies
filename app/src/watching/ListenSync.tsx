@@ -90,6 +90,7 @@ export function ListenSync({
         <button
           onClick={listen}
           disabled={!!busy}
+          aria-busy={busy === 'listening'}
           className="rounded-lg bg-surface px-3 py-1.5 text-xs disabled:opacity-50"
         >
           {busy === 'listening' ? 'Listening…' : 'Sync by listening'}
@@ -97,6 +98,14 @@ export function ListenSync({
         <button
           onClick={contribute}
           disabled={!!busy || positionMs < 1000}
+          aria-busy={busy === 'contributing'}
+          // The title attribute is a tooltip on a pointer and nothing at all otherwise;
+          // the reason it is disabled has to be part of the name.
+          aria-label={
+            positionMs < 1000
+              ? 'Help map this episode — start the episode first'
+              : 'Help map this episode'
+          }
           className="rounded-lg bg-surface px-3 py-1.5 text-xs text-muted disabled:opacity-40"
           title={positionMs < 1000 ? 'Start the episode first' : undefined}
         >

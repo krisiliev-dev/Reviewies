@@ -119,11 +119,17 @@ export function AccountPanel() {
         <button
           onClick={() => void sync()}
           disabled={busy}
+          aria-label="Sync now"
+          aria-busy={busy}
           className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:opacity-50"
         >
           {busy ? 'Syncing…' : 'Sync now'}
         </button>
-        <button onClick={() => void signOut()} className="rounded-xl bg-surface-2 px-4 py-2">
+        <button
+          onClick={() => void signOut()}
+          aria-label="Sign out of your account"
+          className="rounded-xl bg-surface-2 px-4 py-2"
+        >
           Sign out
         </button>
       </div>

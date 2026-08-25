@@ -36,11 +36,13 @@ export function StarRating({
             <Pressable
               style={[styles.half, { width: size / 2, height: size }]}
               onPress={() => set(star - 0.5)}
+              accessibilityRole="button"
               accessibilityLabel={`${star - 0.5} stars`}
             />
             <Pressable
               style={[styles.half, styles.right, { width: size / 2, height: size }]}
               onPress={() => set(star)}
+              accessibilityRole="button"
               accessibilityLabel={`${star} stars`}
             />
           </View>

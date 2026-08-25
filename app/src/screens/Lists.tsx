@@ -103,7 +103,12 @@ function ListCard({
 
   return (
     <li className="rounded-2xl bg-surface p-3">
-      <button onClick={onToggle} className="flex w-full items-start justify-between gap-3 text-left">
+      <button
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={`${open ? 'Collapse' : 'Expand'} ${list.name}`}
+        className="flex w-full items-start justify-between gap-3 text-left"
+      >
         <span className="min-w-0">
           <span className="block truncate font-medium">{list.name}</span>
           <span className="text-xs text-muted">
@@ -125,6 +130,7 @@ function ListCard({
                 await setListVisibility(list.id, !list.isPublic);
                 onChanged();
               }}
+              aria-label={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
               className="mb-2 text-xs text-accent"
             >
               {list.isPublic ? 'Make private' : 'Publish'}

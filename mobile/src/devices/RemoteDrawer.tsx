@@ -43,13 +43,19 @@ export function RemoteDrawer() {
           onPress={() => setOpen(true)}
           style={styles.tab}
           hitSlop={10}
+          accessibilityRole="button"
           accessibilityLabel="Open remote"
         >
           <Text style={styles.tabGlyph}>⌇</Text>
         </Pressable>
       )}
 
-      {open && <Pressable style={styles.scrim} onPress={() => setOpen(false)} />}
+      {/* The scrim dismisses on a tap, which is what a scrim does. It is deliberately
+          not a control: naming it would put a second "Close remote" in the reading
+          order, saying the same thing as the button already in the drawer. */}
+      {open && (
+        <Pressable style={styles.scrim} onPress={() => setOpen(false)} aria-hidden />
+      )}
 
       <Animated.View
         style={[
@@ -62,9 +68,14 @@ export function RemoteDrawer() {
         ]}
         // Hidden from screen readers when closed: it is off-screen, not merely invisible,
         // and a control nobody can see should not be reachable by swiping through them.
+        //
+        // `aria-hidden` rather than the two React Native props that were here: those are
+        // platform-specific and react-native-web implements neither, so on the web build
+        // the closed drawer's thirteen keys sat in the reading order the whole time. This
+        // one prop maps to both of them natively and to aria-hidden on the web, which is
+        // the only place the bug existed. The smoke suite now checks it.
         pointerEvents={open ? 'auto' : 'none'}
-        accessibilityElementsHidden={!open}
-        importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
+        aria-hidden={!open}
       >
         <View style={styles.head}>
           <Text style={styles.title}>Remote</Text>

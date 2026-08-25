@@ -103,7 +103,11 @@ function UpNextRow({
 
   return (
     <li className="flex items-center gap-3 rounded-2xl bg-surface p-2.5">
-      <Link to={`/title/${encodeURIComponent(entry.seriesId)}`} className="shrink-0">
+      <Link
+        to={`/title/${encodeURIComponent(entry.seriesId)}`}
+        aria-label={`Open ${entry.seriesName}`}
+        className="shrink-0"
+      >
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
@@ -127,6 +131,7 @@ function UpNextRow({
         {entry.remaining > 0 && (
           <button
             onClick={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
+            aria-label={`Catch up on ${entry.seriesName}`}
             className="mt-1 text-xs text-muted underline"
           >
             Caught up further?
@@ -145,6 +150,7 @@ function UpNextRow({
         </button>
         <Link
           to={`/watching/${encodeURIComponent(episode.id)}`}
+          aria-label={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
           className="rounded-xl bg-surface-2 px-4 py-2 text-center text-xs text-muted"
         >
           Watch along

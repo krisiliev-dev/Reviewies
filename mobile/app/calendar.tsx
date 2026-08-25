@@ -53,26 +53,42 @@ export default function CalendarScreen() {
     <>
       <Stack.Screen options={{ title: 'Upcoming' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.sectionHeading}>Tell me about</Text>
-        {OPTIONS.map((option) => (
-          <Pressable
-            key={option.key}
-            onPress={() => {
-              setPref(option.key);
-              // Mirrored to the server, which filters before sending — a stale setting
-              // there would cost a delivery, or send one nobody asked for.
-              void syncPreference(option.key);
-              if (option.key === 'off') void unregisterFromPush();
-            }}
-            style={[styles.option, preference === option.key && styles.optionOn]}
-          >
-            <View style={styles.optionBody}>
-              <Text style={styles.optionLabel}>{option.label}</Text>
-              <Text style={styles.optionDetail}>{option.detail}</Text>
-            </View>
-            {preference === option.key && <Text style={styles.tick}>✓</Text>}
-          </Pressable>
-        ))}
+        <Text style={styles.sectionHeading} accessibilityRole="header">
+          Tell me about
+        </Text>
+        <View
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Tell me about"
+          style={styles.options}
+        >
+          {OPTIONS.map((option) => (
+            <Pressable
+              key={option.key}
+              onPress={() => {
+                setPref(option.key);
+                // Mirrored to the server, which filters before sending — a stale setting
+                // there would cost a delivery, or send one nobody asked for.
+                void syncPreference(option.key);
+                if (option.key === 'off') void unregisterFromPush();
+              }}
+              style={[styles.option, preference === option.key && styles.optionOn]}
+              // One of three, not three independent buttons: which one is on is the
+              // entire content of this control, and a button role cannot say it.
+              accessibilityRole="radio"
+              accessibilityState={{
+                selected: preference === option.key,
+                checked: preference === option.key,
+              }}
+              accessibilityLabel={`${option.label} — ${option.detail}`}
+            >
+              <View style={styles.optionBody}>
+                <Text style={styles.optionLabel}>{option.label}</Text>
+                <Text style={styles.optionDetail}>{option.detail}</Text>
+              </View>
+              {preference === option.key && <Text style={styles.tick}>✓</Text>}
+            </Pressable>
+          ))}
+        </View>
 
         {/* Choosing a granularity used to be the whole of it: the phone offered the
             same three options as the web and had nothing that could ever act on them,
@@ -92,6 +108,8 @@ export default function CalendarScreen() {
                     );
                   }}
                   style={[styles.enable, registered && styles.enableOn]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: registered }}
                 >
                   <Text style={[styles.enableText, registered && styles.enableTextOn]}>
                     {registered ? 'Notifications on' : 'Notify this device'}
@@ -129,6 +147,8 @@ export default function CalendarScreen() {
                   router.push(`/title/${encodeURIComponent(entry.seriesId)}`)
                 }
                 style={styles.entry}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${entry.seriesName}`}
               >
                 <View style={styles.entryBody}>
                   <Text numberOfLines={1} style={styles.entryName}>
@@ -174,6 +194,7 @@ const styles = StyleSheet.create({
   spaced: { marginTop: 18 },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
 
+  options: { gap: 8 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',

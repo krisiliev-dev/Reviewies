@@ -104,12 +104,22 @@ export default function CommentsScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.chips}>
+            <View
+              style={styles.chips}
+              accessibilityRole="radiogroup"
+              accessibilityLabel="How much effort a comment has to show"
+            >
               {EFFORT_LEVELS.map((level) => (
                 <Pressable
                   key={level.label}
                   onPress={() => setEffort(level.minLength)}
                   style={[styles.chip, effort === level.minLength && styles.chipOn]}
+                  accessibilityRole="radio"
+                  accessibilityState={{
+                    selected: effort === level.minLength,
+                    checked: effort === level.minLength,
+                  }}
+                  accessibilityLabel={`Show ${level.label.toLowerCase()} comments`}
                 >
                   <Text
                     style={[styles.chipText, effort === level.minLength && styles.chipTextOn]}
@@ -133,6 +143,8 @@ export default function CommentsScreen() {
               style={[styles.primary, !draft.trim() && styles.disabled]}
               onPress={submit}
               disabled={!draft.trim()}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !draft.trim() }}
             >
               <Text style={styles.primaryText}>Post</Text>
             </Pressable>

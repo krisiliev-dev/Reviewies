@@ -47,7 +47,12 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
   return (
     <View style={styles.block}>
-      <Pressable onPress={() => setOpen(!open)} hitSlop={8}>
+      <Pressable
+        onPress={() => setOpen(!open)}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
         <Text style={styles.toggle}>{open ? 'Cancel' : 'Add to list'}</Text>
       </Pressable>
 
@@ -63,6 +68,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               key={list.id}
               onPress={() => add(list.id, list.name)}
               style={styles.listRow}
+              accessibilityRole="button"
               accessibilityLabel={`Add to ${list.name}`}
             >
               <Text numberOfLines={1} style={styles.listName}>
@@ -86,6 +92,9 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               onPress={createAndAdd}
               disabled={!newName.trim()}
               style={[styles.add, !newName.trim() && styles.disabled]}
+              accessibilityRole="button"
+              accessibilityLabel="Make this list and add the title to it"
+              accessibilityState={{ disabled: !newName.trim() }}
             >
               <Text style={styles.addText}>Add</Text>
             </Pressable>

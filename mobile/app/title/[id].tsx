@@ -103,7 +103,11 @@ export default function TitleScreen() {
         {libraryItem && (
           <View style={styles.posterEdit}>
             {posterDraft === undefined ? (
-              <Pressable onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')} hitSlop={8}>
+              <Pressable
+                onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')}
+                hitSlop={8}
+                accessibilityRole="button"
+              >
                 <Text style={styles.posterToggle}>
                   {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
                 </Text>
@@ -126,10 +130,17 @@ export default function TitleScreen() {
                     setPosterDraft(undefined);
                   }}
                   style={styles.posterSave}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save this poster"
                 >
                   <Text style={styles.posterSaveText}>Save</Text>
                 </Pressable>
-                <Pressable onPress={() => setPosterDraft(undefined)} hitSlop={8}>
+                <Pressable
+                  onPress={() => setPosterDraft(undefined)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel changing the poster"
+                >
                   <Text style={styles.posterCancel}>Cancel</Text>
                 </Pressable>
               </View>
@@ -228,6 +239,10 @@ function EpisodeRow({
       <Pressable
         onPress={() => router.push(`/watching/${encodeURIComponent(episode.id)}`)}
         style={styles.react}
+        accessibilityRole="link"
+        // Every episode row carries a React and a Talk. Read in a list they are the
+        // same two words repeated down the screen.
+        accessibilityLabel={`React along with episode ${episode.number}, ${episode.name}`}
       >
         <Text style={styles.reactText}>React</Text>
       </Pressable>
@@ -235,6 +250,8 @@ function EpisodeRow({
       <Pressable
         onPress={() => router.push(`/comments/${encodeURIComponent(episode.id)}`)}
         style={styles.react}
+        accessibilityRole="link"
+        accessibilityLabel={`Comments on episode ${episode.number}, ${episode.name}`}
       >
         <Text style={styles.reactText}>Talk</Text>
       </Pressable>
@@ -243,6 +260,13 @@ function EpisodeRow({
         onPress={toggle}
         disabled={!aired && !watched}
         style={[styles.mark, watched && styles.marked, !aired && !watched && styles.disabled]}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !aired && !watched, checked: watched }}
+        accessibilityLabel={
+          watched
+            ? `Unmark episode ${episode.number}, ${episode.name}`
+            : `Mark episode ${episode.number}, ${episode.name} watched`
+        }
       >
         <Text style={[styles.markText, watched && styles.markedText]}>
           {watched ? 'Watched' : 'Mark'}

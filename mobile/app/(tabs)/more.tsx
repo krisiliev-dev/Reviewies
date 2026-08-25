@@ -67,7 +67,14 @@ export default function MoreScreen() {
 
         {LINKS.map((link) => (
           <Link key={link.href} href={link.href} asChild>
-            <Pressable style={styles.link}>
+            <Pressable
+              style={styles.link}
+              accessibilityRole="link"
+              // The detail line is the half that says what the screen is for, and it is
+              // a separate Text node — read on its own, "Upcoming" and "›" is all a
+              // screen reader gets.
+              accessibilityLabel={`${link.label} — ${link.detail}`}
+            >
               <View style={styles.linkBody}>
                 <Text style={styles.linkLabel}>{link.label}</Text>
                 <Text style={styles.linkDetail}>{link.detail}</Text>

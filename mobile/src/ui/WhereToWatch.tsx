@@ -51,10 +51,15 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
     <View style={styles.block}>
       <View style={styles.header}>
         <Text style={styles.heading}>Where to watch</Text>
-        <Pressable onPress={() => setPicking(!picking)} hitSlop={8}>
-          <Text style={styles.region} accessibilityLabel="Change country">
-            {regionName(region)}
-          </Text>
+        <Pressable
+          onPress={() => setPicking(!picking)}
+          hitSlop={8}
+          accessibilityRole="button"
+          // The label belonged to the Text, which is not the thing you press.
+          accessibilityLabel={`Change country — currently ${regionName(region)}`}
+          accessibilityState={{ expanded: picking }}
+        >
+          <Text style={styles.region}>{regionName(region)}</Text>
         </Pressable>
       </View>
 
@@ -65,6 +70,8 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               key={r.code}
               onPress={() => choose(r.code)}
               style={[styles.chip, r.code === region && styles.chipOn]}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: r.code === region, checked: r.code === region }}
               accessibilityLabel={`Show availability in ${r.name}`}
             >
               <Text style={[styles.chipText, r.code === region && styles.chipTextOn]}>
@@ -91,7 +98,11 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           <Row label="Buy" names={providers.buy} />
 
           {providers.link && (
-            <Pressable onPress={() => void Linking.openURL(providers.link!)} hitSlop={8}>
+            <Pressable
+              onPress={() => void Linking.openURL(providers.link!)}
+              hitSlop={8}
+              accessibilityRole="link"
+            >
               <Text style={styles.link}>Open on JustWatch</Text>
             </Pressable>
           )}

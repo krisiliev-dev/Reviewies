@@ -35,7 +35,14 @@ export function RemotePanel({ remote }: { remote: Remote }) {
         <View style={styles.devices}>
           <View style={styles.devicesHead}>
             <Text style={styles.sectionHeading}>Device</Text>
-            <Pressable onPress={remote.scan} disabled={remote.scanning} hitSlop={8}>
+            <Pressable
+              onPress={remote.scan}
+              disabled={remote.scanning}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Scan the Wi-Fi for a device"
+              accessibilityState={{ disabled: remote.scanning, busy: remote.scanning }}
+            >
               <Text style={styles.scan}>{remote.scanning ? 'Scanning…' : 'Scan Wi-Fi'}</Text>
             </Pressable>
           </View>
@@ -57,6 +64,9 @@ export function RemotePanel({ remote }: { remote: Remote }) {
               key={found.id}
               onPress={() => remote.select(found)}
               style={[styles.device, remote.device?.id === found.id && styles.deviceOn]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: remote.device?.id === found.id }}
+              accessibilityLabel={`Use ${found.name} at ${found.address}`}
             >
               <Text style={styles.deviceName}>{found.name}</Text>
               <Text style={styles.deviceAddress}>{found.address}</Text>

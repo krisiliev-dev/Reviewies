@@ -54,13 +54,18 @@ export function CatchUp({
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onDone}>
       {/* Tapping the dimmed area closes it, which is what a sheet on a phone does. */}
-      <Pressable style={styles.backdrop} onPress={onDone} accessibilityLabel="Close" />
+      <Pressable
+        style={styles.backdrop}
+        onPress={onDone}
+        accessibilityRole="button"
+        accessibilityLabel="Close catching up"
+      />
       <View style={styles.sheet}>
         <View style={styles.header}>
           <Text numberOfLines={1} style={styles.title}>
             {seriesName}
           </Text>
-          <Pressable onPress={onDone} hitSlop={8}>
+          <Pressable onPress={onDone} hitSlop={8} accessibilityRole="button">
             <Text style={styles.done}>{marked === undefined ? 'Cancel' : 'Done'}</Text>
           </Pressable>
         </View>
@@ -92,7 +97,11 @@ export function CatchUp({
                   onPick={pick}
                 />
                 {seasons.length > 1 && (
-                  <Pressable onPress={() => setSeason(undefined)} hitSlop={8}>
+                  <Pressable
+                    onPress={() => setSeason(undefined)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                  >
                     <Text style={styles.link}>Pick a different season</Text>
                   </Pressable>
                 )}
@@ -129,6 +138,7 @@ function Grid({
             onPress={() => onPick(value)}
             // Big enough to hit one-handed; this is a grid of small numbers.
             style={styles.cell}
+            accessibilityRole="button"
             accessibilityLabel={`${label}: ${value}`}
           >
             <Text style={styles.cellText}>{value}</Text>

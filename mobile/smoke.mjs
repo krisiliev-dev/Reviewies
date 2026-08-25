@@ -32,6 +32,61 @@ page.on('pageerror', (e) => errors.push(e.message));
 
 const text = async () => (await page.locator('body').innerText()).replace(/\s+/g, ' ');
 
+/**
+ * Every control on a screen has a role and a name, on every screen — not only the one
+ * this suite happened to collide with.
+ *
+ * Two failures are possible and both matter. A control with no *name* announces as
+ * "button" and nothing else. A control with no *role* — a tappable View, which is what
+ * a Pressable renders as unless it is given an accessibilityRole — is not announced at
+ * all, and is invisible to this check too. So the count is asserted as well: a screen
+ * that reports zero controls has not passed, it has failed to be looked at.
+ */
+async function audit(screen, atLeast) {
+  const found = await page.evaluate(() => {
+    const ROLES = ['button', 'link', 'radio', 'checkbox', 'switch', 'tab', 'menuitem'];
+    const selector = ROLES.map((r) => `[role="${r}"]`).join(',');
+    const named = [];
+    const nameless = [];
+    for (const el of document.querySelectorAll(selector)) {
+      if (el.closest('[aria-hidden="true"]')) continue;
+      // Off-screen but mounted: the remote drawer is always in the tree, and its keys
+      // are correctly hidden from screen readers while it is closed.
+      if (el.closest('[inert]')) continue;
+      const labelledBy = (el.getAttribute('aria-labelledby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ');
+      // Text inside an aria-hidden descendant is not part of the accessible name, and
+      // reading it as though it were is how this check first passed a link that had no
+      // name at all: the poster placeholder holds the title, and is aria-hidden.
+      const clone = el.cloneNode(true);
+      for (const hidden of clone.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+      const name = (
+        el.getAttribute('aria-label') ??
+        (labelledBy.trim() || clone.textContent) ??
+        ''
+      ).trim();
+      (name ? named : nameless).push(name || el.outerHTML.slice(0, 80));
+    }
+    return { named: named.length, nameless };
+  });
+
+  check(
+    `${screen}: every control is named`,
+    found.nameless.length === 0,
+    found.nameless.length ? found.nameless.join(' | ') : `${found.named} named`,
+  );
+  // The guard above passes trivially on a screen where nothing declares itself a
+  // control at all, which is the more common bug of the two.
+  check(
+    `${screen}: and the screen reports its controls`,
+    found.named >= atLeast,
+    `${found.named} found, expected at least ${atLeast}`,
+  );
+}
+
 try {
   // --- Boot ------------------------------------------------------------------
   // The layout gates rendering on the platform bindings, so reaching Up Next at all
@@ -47,6 +102,7 @@ try {
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
   await page.waitForSelector('text=The Long Dark', { timeout: 15000 });
   check('search returns results', true);
+  await audit('Search', 6);
   await page.screenshot({ path: OUT + '2-search.png' });
 
   await page.getByText('Track', { exact: true }).first().click();
@@ -61,6 +117,7 @@ try {
 
   const before = Number(first.match(/(\d+) more episodes/)?.[1]);
   check('shows a remaining count, not a vague badge', Number.isFinite(before), String(before));
+  await audit('Up Next', 4);
   await page.screenshot({ path: OUT + '3-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
@@ -117,21 +174,29 @@ try {
     await page.getByText(tab, { exact: true }).first().click();
     await page.waitForTimeout(1200);
     check(`the ${tab} tab opens`, (await text()).includes(tab));
+    // Six is the tab bar alone, so anything at or below that means the screen's own
+    // controls did not declare themselves.
+    await audit(`the ${tab} tab`, 7);
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
   // --- The rest of More --------------------------------------------------------
   // Every link has to lead somewhere. A route that does not exist is a dead end that
   // only shows up when someone taps it, which is how the title page shipped broken.
-  for (const [detail, expect_] of [
-    ['What is airing, and what to be told about', /Tell me about/i],
-    ['Film and television in the same list', /list/i],
-    ['Your handle, following, blocking', /account|sync|following/i],
+  // The minimum is per screen and not a blanket number, because two of these are
+  // gated: without an account Lists and People are a sentence explaining why, and
+  // asserting they hold three controls would assert something untrue. What the audit
+  // still catches there is a control that exists and has no name.
+  for (const [detail, expect_, controls] of [
+    ['What is airing, and what to be told about', /Tell me about/i, 4],
+    ['Film and television in the same list', /list/i, 1],
+    ['Your handle, following, blocking', /account|sync|following/i, 1],
   ]) {
     await page.getByText(detail).click();
     await page.waitForTimeout(1500);
     const body = await text();
     check(`${detail.slice(0, 22)}… opens`, expect_.test(body), body.slice(0, 90));
+    await audit(detail.slice(0, 22), controls);
     await page.goBack();
     await page.waitForTimeout(1000);
   }
@@ -193,6 +258,7 @@ try {
     'it says plainly that nothing is paired yet',
     /No device yet/.test(remote),
   );
+  await audit('the remote', 12);
   await page.screenshot({ path: OUT + '10-remote.png' });
   await page.goBack();
   await page.waitForTimeout(1000);
@@ -202,6 +268,7 @@ try {
   await page.waitForTimeout(2000);
   const stats = await text();
   check('stats are runtime-weighted', /Watched/.test(stats) && /Episodes/.test(stats), stats.slice(0, 110));
+  await audit('Stats', 4);
   await page.screenshot({ path: OUT + '7-stats.png' });
   await page.goBack();
   await page.waitForTimeout(800);
@@ -231,6 +298,9 @@ try {
     'a custom poster can be set',
     (await page.getByText('Use a different poster').count()) > 0,
   );
+  // Eighteen episodes, each with React, Talk and Mark; plus the stars, the poster
+  // override, where-to-watch and the content warnings.
+  await audit('the title page', 30);
 
   await page.screenshot({ path: OUT + '5-title.png' });
 
@@ -248,6 +318,7 @@ try {
     'and shows numbers rather than episode names',
     !/Episode \d/.test(sheet.split('How far have you got?')[1] ?? ''),
   );
+  await audit('the catch-up sheet', 3);
 
   // Two seasons in the fixture, so the season comes first — one season would skip
   // straight to episodes, which is why the sheet chooses rather than always asking.
@@ -308,6 +379,11 @@ try {
 
   await page.getByPlaceholder('Search any emoji…').fill('');
   await page.waitForTimeout(500);
+  // Twenty emoji on the pad, plus the clock controls, the density chips and the two
+  // ways out. An emoji reads as its own Unicode name, so a pad button labelled only by
+  // its caption announces the name twice over with two different words for it — these
+  // carry one name each, and it is the word a person would say.
+  await audit('Watching Mode', 26);
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
 
   // --- The remote, in a drawer ------------------------------------------------
@@ -330,27 +406,27 @@ try {
   for (const name of ['Up', 'Select', 'Play or pause', 'Back 15 seconds', 'Volume up']) {
     check(`the remote's ${name} key is named`, (await page.getByLabel(name).count()) > 0);
   }
+  await audit('the remote drawer', 25);
 
   await page.getByLabel('Close remote').click();
   await page.waitForTimeout(600);
+
+  // The drawer stays mounted when closed — that is the point of it, the connection is
+  // not torn down each time — so it has to be hidden from screen readers rather than
+  // merely moved off-screen, or the whole remote sits in the swipe order invisibly.
+  const drawerHidden = await page.evaluate(() => {
+    const key = [...document.querySelectorAll('[aria-label="Play or pause"]')][0];
+    if (!key) return 'the key is gone from the DOM entirely';
+    return key.closest('[aria-hidden="true"], [inert]') ? true : 'still reachable';
+  });
+  check(
+    'the closed drawer is out of the screen reader\'s reach',
+    drawerHidden === true,
+    typeof drawerHidden === 'string' ? drawerHidden : '',
+  );
+
   await page.getByLabel('Leave Watching Mode').click();
   await page.waitForTimeout(1500);
-
-  // Nothing on the screen the product is judged on should be a button with no name.
-  // Three times this suite could not say which control it meant, and every time it was
-  // a screen reader hearing the same ambiguity first.
-  //
-  // Reaches what declares itself a button: react-native-web only emits `role="button"`
-  // for a Pressable given an `accessibilityRole`, so a tappable View without one is
-  // outside this check as well as outside a screen reader's list of controls. Both
-  // problems have the same fix, which is why this is worth asserting rather than
-  // widening.
-  const nameless = await page.evaluate(() =>
-    [...document.querySelectorAll('[role="button"]')]
-      .filter((el) => !(el.getAttribute('aria-label') ?? el.textContent ?? '').trim())
-      .length,
-  );
-  check('no unnamed buttons in Watching Mode', nameless === 0, `${nameless} found`);
 
   // --- Comments, and the spoiler gate ------------------------------------------
   // The gate is a database policy; this screen only explains it. Unwatched episodes
@@ -363,6 +439,9 @@ try {
     /Hidden until you watch it|needs? an account|not configured/i.test(talk),
     talk.slice(0, 130),
   );
+  // Gated like Lists and People: without an account this is the explanation and a way
+  // back, and nothing else.
+  await audit('comments', 1);
   await page.screenshot({ path: OUT + '11-comments.png' });
   await page.goBack();
   await page.waitForTimeout(1000);

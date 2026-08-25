@@ -105,7 +105,12 @@ export function RemoteDrawer() {
       >
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Remote</h2>
-          <button onClick={() => setOpen(false)} className="text-sm text-muted">
+          {/* Named, because Watching Mode has a "Close" of its own. */}
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close remote"
+            className="text-sm text-muted"
+          >
             Close
           </button>
         </div>

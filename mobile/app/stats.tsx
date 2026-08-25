@@ -54,7 +54,11 @@ export default function StatsScreen() {
     <>
       <Stack.Screen options={{ title: 'Stats' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.chips}>
+        <View
+          style={styles.chips}
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Which stretch of time these figures cover"
+        >
           {WINDOWS.map((option) => (
             <Chip
               key={option.key}
@@ -144,7 +148,12 @@ function Chip({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipOn]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.chip, active && styles.chipOn]}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: active, checked: active }}
+    >
       <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
     </Pressable>
   );

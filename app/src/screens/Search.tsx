@@ -139,7 +139,11 @@ function ResultRow({ result }: { result: SearchResult }) {
 
   return (
     <li className="flex items-start gap-3 rounded-2xl bg-surface p-2.5">
-      <Link to={`/title/${encodeURIComponent(result.id)}`} className="shrink-0">
+      <Link
+        to={`/title/${encodeURIComponent(result.id)}`}
+        aria-label={`Open ${result.name}`}
+        className="shrink-0"
+      >
         <Poster url={result.posterUrl} name={result.name} className="h-24 w-16 rounded-lg" />
       </Link>
 
@@ -159,7 +163,11 @@ function ResultRow({ result }: { result: SearchResult }) {
               className="min-w-0 flex-1 rounded-lg bg-surface-2 px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
               autoFocus
             />
-            <button onClick={saveToWatchlist} className="rounded-lg bg-accent px-3 text-sm font-medium text-ink">
+            <button
+              onClick={saveToWatchlist}
+              aria-label={`Save ${result.name} to your watchlist`}
+              className="rounded-lg bg-accent px-3 text-sm font-medium text-ink"
+            >
               Save
             </button>
           </div>
@@ -168,6 +176,7 @@ function ResultRow({ result }: { result: SearchResult }) {
             <button
               onClick={track}
               disabled={added === 'library'}
+              aria-label={`Track ${result.name}`}
               className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50"
             >
               {added === 'library' ? 'Tracking' : 'Track'}
@@ -175,6 +184,7 @@ function ResultRow({ result }: { result: SearchResult }) {
             <button
               onClick={() => setNoting(true)}
               disabled={added === 'watchlist'}
+              aria-label={`Add ${result.name} to your watchlist`}
               className="rounded-lg bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
             >
               {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
@@ -185,6 +195,7 @@ function ResultRow({ result }: { result: SearchResult }) {
               <button
                 onClick={log}
                 disabled={added === 'logged'}
+                aria-label={`Log that you have seen ${result.name}`}
                 className="rounded-lg bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
               >
                 {added === 'logged' ? 'Logged' : 'Seen it'}

@@ -87,6 +87,9 @@ export default function ListsScreen() {
             onPress={create}
             disabled={!name.trim() || busy}
             style={[styles.primary, (!name.trim() || busy) && styles.disabled]}
+            accessibilityRole="button"
+            accessibilityLabel="Create this list"
+            accessibilityState={{ disabled: !name.trim() || busy }}
           >
             <Text style={styles.primaryText}>Add</Text>
           </Pressable>
@@ -140,7 +143,13 @@ function ListCard({
 
   return (
     <View style={styles.card}>
-      <Pressable onPress={onToggle} style={styles.cardHead}>
+      <Pressable
+        onPress={onToggle}
+        style={styles.cardHead}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={`${expanded ? 'Collapse' : 'Expand'} ${list.name}`}
+      >
         <View style={styles.cardBody}>
           <Text style={styles.cardName}>{list.name}</Text>
           <Text style={styles.cardMeta}>
@@ -173,6 +182,8 @@ function ListCard({
                     setItems(items.filter((i) => i.titleId !== item.titleId));
                   }}
                   hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${item.name ?? item.titleId} from ${list.name}`}
                 >
                   <Text style={styles.remove}>Remove</Text>
                 </Pressable>
@@ -187,6 +198,8 @@ function ListCard({
                 onChanged();
               }}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
             >
               <Text style={styles.remove}>
                 {list.isPublic ? 'Make private' : 'Make public'}

@@ -94,7 +94,11 @@ function SuggestionRow({
 
   return (
     <li className="flex items-start gap-3 rounded-2xl bg-surface p-2.5">
-      <Link to={`/title/${encodeURIComponent(suggestion.id)}`} className="shrink-0">
+      <Link
+        to={`/title/${encodeURIComponent(suggestion.id)}`}
+        aria-label={`Open ${suggestion.name}`}
+        className="shrink-0"
+      >
         <Poster url={suggestion.posterUrl} name={suggestion.name} className="h-24 w-16 rounded-lg" />
       </Link>
 
@@ -112,6 +116,7 @@ function SuggestionRow({
           <button
             onClick={track}
             disabled={busy}
+            aria-label={`Track ${suggestion.name}`}
             className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50"
           >
             Track
@@ -119,6 +124,7 @@ function SuggestionRow({
           <button
             onClick={save}
             disabled={busy}
+            aria-label={`Add ${suggestion.name} to your watchlist`}
             className="rounded-lg bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
           >
             Watchlist

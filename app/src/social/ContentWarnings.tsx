@@ -105,6 +105,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             onClick={() => setVoting(!voting)}
             className="text-xs text-muted underline"
             aria-expanded={voting}
+            aria-label={voting ? 'Done flagging' : 'Flag something'}
           >
             {voting ? 'Done' : 'Flag something'}
           </button>

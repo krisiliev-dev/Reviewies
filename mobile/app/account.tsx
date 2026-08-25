@@ -87,7 +87,11 @@ export default function AccountScreen() {
           <View style={styles.card}>
             <Text style={styles.cardHeading}>Signed in</Text>
             <Text style={styles.blurb}>{session.user.email}</Text>
-            <Pressable style={styles.secondary} onPress={() => void signOut()}>
+            <Pressable
+              style={styles.secondary}
+              onPress={() => void signOut()}
+              accessibilityRole="button"
+            >
               <Text style={styles.secondaryText}>Sign out</Text>
             </Pressable>
           </View>
@@ -118,7 +122,15 @@ export default function AccountScreen() {
               style={styles.input}
             />
 
-            <Pressable style={styles.primary} onPress={submit} disabled={busy}>
+            <Pressable
+              style={styles.primary}
+              onPress={submit}
+              disabled={busy}
+              accessibilityRole="button"
+              // While busy the label is a spinner, which has no text to read.
+              accessibilityLabel={mode === 'in' ? 'Sign in' : 'Create account'}
+              accessibilityState={{ disabled: busy, busy }}
+            >
               {busy ? (
                 <ActivityIndicator color={theme.ink} />
               ) : (
@@ -128,7 +140,11 @@ export default function AccountScreen() {
               )}
             </Pressable>
 
-            <Pressable onPress={() => setMode(mode === 'in' ? 'up' : 'in')} hitSlop={8}>
+            <Pressable
+              onPress={() => setMode(mode === 'in' ? 'up' : 'in')}
+              hitSlop={8}
+              accessibilityRole="button"
+            >
               <Text style={styles.toggle}>
                 {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
               </Text>

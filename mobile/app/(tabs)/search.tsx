@@ -124,7 +124,11 @@ function ResultRow({ result }: { result: SearchResult }) {
 
   return (
     <View style={styles.row}>
-      <Pressable onPress={() => router.push(`/title/${encodeURIComponent(result.id)}`)}>
+      <Pressable
+        onPress={() => router.push(`/title/${encodeURIComponent(result.id)}`)}
+        accessibilityRole="link"
+        accessibilityLabel={`Open ${result.name}`}
+      >
         <Poster url={result.posterUrl} name={result.name} />
       </Pressable>
 

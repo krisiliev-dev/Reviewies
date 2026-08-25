@@ -113,6 +113,7 @@ export default function DataScreen() {
                 'application/json',
               )
             }
+            accessibilityRole="button"
           >
             <Text style={styles.primaryText}>Export everything (JSON)</Text>
           </Pressable>
@@ -121,6 +122,7 @@ export default function DataScreen() {
             onPress={async () =>
               downloadFile(`reviewies-watches-${today}.csv`, await exportWatchesCsv(), 'text/csv')
             }
+            accessibilityRole="button"
           >
             <Text style={styles.secondaryText}>Export watch history (CSV)</Text>
           </Pressable>
@@ -139,7 +141,15 @@ export default function DataScreen() {
             Time wrote its most recent months there, and importing the database alone
             loses them without telling you.
           </Text>
-          <Pressable style={styles.secondary} onPress={pickAndImport} disabled={busy}>
+          <Pressable
+            style={styles.secondary}
+            onPress={pickAndImport}
+            disabled={busy}
+            accessibilityRole="button"
+            // Mid-import the label is a spinner and there is no text to fall back on.
+            accessibilityLabel="Choose files"
+            accessibilityState={{ disabled: busy, busy }}
+          >
             {busy ? (
               <ActivityIndicator color={theme.muted} />
             ) : (

@@ -76,7 +76,7 @@ export function EpisodeComments() {
 
   return (
     <div className="p-4">
-      <button onClick={() => navigate(-1)} className="mb-3 text-sm text-muted">
+      <button onClick={() => navigate(-1)} aria-label="Back to the title" className="mb-3 text-sm text-muted">
         Back
       </button>
 
@@ -102,11 +102,18 @@ export function EpisodeComments() {
         </div>
       ) : (
         <>
-          <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          <div
+            role="radiogroup"
+            aria-label="How much effort a comment has to show"
+            className="mt-4 flex flex-wrap items-center gap-1.5"
+          >
             {EFFORT_LEVELS.map((level) => (
               <button
                 key={level.label}
                 onClick={() => setEffort(level.minLength)}
+                role="radio"
+                aria-checked={effort === level.minLength}
+                aria-label={`Show ${level.label.toLowerCase()} comments`}
                 className={`rounded-full px-3 py-1.5 text-xs ${
                   effort === level.minLength ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
                 }`}
@@ -138,6 +145,7 @@ export function EpisodeComments() {
                 <button
                   type="button"
                   onClick={() => setImage(undefined)}
+                  aria-label="Remove the attached screenshot"
                   className="text-xs text-muted underline"
                 >
                   Remove

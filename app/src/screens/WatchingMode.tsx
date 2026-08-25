@@ -124,7 +124,12 @@ export function WatchingMode() {
   return (
     <div className="flex h-full flex-col bg-ink">
       <header className="safe-top flex items-center gap-3 px-4 pt-3 pb-1">
-        <button onClick={() => navigate(-1)} className="text-sm text-muted" aria-label="Close">
+        {/* Two things on this screen say "Close": this and the remote drawer. */}
+        <button
+          onClick={() => navigate(-1)}
+          className="text-sm text-muted"
+          aria-label="Leave Watching Mode"
+        >
           Close
         </button>
         <div className="min-w-0 flex-1 text-center">
@@ -186,7 +191,9 @@ export function WatchingMode() {
             onClick={() => react(e.emoji)}
             disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
             className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl bg-surface text-3xl active:scale-90 disabled:opacity-30"
-            aria-label={e.label}
+            // The emoji is aria-hidden, so this is the whole name — "Funny" alone does
+            // not say it is something you do.
+            aria-label={`React with ${e.label.toLowerCase()}`}
           >
             <span aria-hidden="true">{e.emoji}</span>
             <span className="text-[9px] leading-none text-muted">{e.label}</span>
@@ -234,15 +241,28 @@ function SyncBar({
 }) {
   return (
     <div className="flex items-center gap-2 px-3 pb-2">
-      <button onClick={clock.toggle} className="rounded-lg bg-surface-2 px-3 py-2 text-sm">
+      <button
+        onClick={clock.toggle}
+        aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}
+        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+      >
         {clock.running ? 'Pause' : 'Resume'}
       </button>
       {/* Manual drift correction, always available. The crowd-derived estimate
           above handles the common case; these cover the rest. */}
-      <button onClick={() => clock.nudge(-5000)} className="rounded-lg bg-surface-2 px-3 py-2 text-sm">
+      {/* "−5s" is a minus sign, a digit and a letter; what it does is a sentence. */}
+      <button
+        onClick={() => clock.nudge(-5000)}
+        aria-label="Move the clock back 5 seconds"
+        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+      >
         −5s
       </button>
-      <button onClick={() => clock.nudge(5000)} className="rounded-lg bg-surface-2 px-3 py-2 text-sm">
+      <button
+        onClick={() => clock.nudge(5000)}
+        aria-label="Move the clock forward 5 seconds"
+        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+      >
         +5s
       </button>
       <label className="ml-auto flex items-center gap-1.5 text-xs text-muted">
@@ -289,10 +309,18 @@ function DriftHint({
       <span className="flex-1 text-muted">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
       </span>
-      <button onClick={onApply} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-ink">
+      <button
+        onClick={onApply}
+        aria-label={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
+        className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-ink"
+      >
         Fix
       </button>
-      <button onClick={onDismiss} className="px-2 py-1.5 text-xs text-muted">
+      <button
+        onClick={onDismiss}
+        aria-label="Ignore the drift correction"
+        className="px-2 py-1.5 text-xs text-muted"
+      >
         Ignore
       </button>
     </div>

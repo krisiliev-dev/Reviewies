@@ -42,7 +42,11 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
   return (
     <div className="mt-2">
-      <button onClick={() => setOpen(!open)} className="text-xs text-muted underline">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="text-xs text-muted underline"
+      >
         {open ? 'Cancel' : 'Add to list'}
       </button>
 
@@ -58,6 +62,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               <li key={list.id}>
                 <button
                   onClick={() => add(list.id, list.name)}
+                  aria-label={`Add to ${list.name}`}
                   className="w-full truncate rounded-lg bg-surface px-2.5 py-1.5 text-left text-sm"
                 >
                   {list.name}
@@ -77,6 +82,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
             <button
               type="submit"
               disabled={!newName.trim()}
+              aria-label="Make this list and add the title to it"
               className="rounded-lg bg-accent px-3 text-sm font-medium text-ink disabled:opacity-40"
             >
               Add

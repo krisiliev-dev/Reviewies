@@ -46,17 +46,26 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
     <section className="mb-5 rounded-2xl bg-surface p-3.5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">Where to watch</h2>
-        <button onClick={() => setPicking(!picking)} className="shrink-0 text-xs text-muted underline">
+        <button
+          onClick={() => setPicking(!picking)}
+          aria-expanded={picking}
+          aria-label={`Change country — currently ${regionName(region)}`}
+          className="shrink-0 text-xs text-muted underline"
+        >
           {regionName(region)}
         </button>
       </div>
 
       {picking && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div role="radiogroup" aria-label="Country" className="mt-2 flex flex-wrap gap-1.5">
           {REGIONS.map((r) => (
             <button
               key={r.code}
               onClick={() => choose(r.code)}
+              role="radio"
+              aria-checked={r.code === region}
+              // Two-letter country codes read aloud as words: "de", "gb".
+              aria-label={`Show availability in ${r.name}`}
               className={`rounded-lg px-2.5 py-1.5 text-xs ${
                 r.code === region ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
               }`}

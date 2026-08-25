@@ -60,7 +60,12 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
   return (
     <View style={styles.wrap}>
-      <Pressable onPress={() => setOpen(!open)} style={styles.toggle}>
+      <Pressable
+        onPress={() => setOpen(!open)}
+        style={styles.toggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
         <Text style={styles.toggleText}>
           {open ? 'Hide content warnings' : 'Content warnings'}
         </Text>
@@ -95,7 +100,13 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             </View>
           ))}
 
-          <Pressable onPress={() => setVoting(!voting)} hitSlop={8}>
+          <Pressable
+            onPress={() => setVoting(!voting)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: voting }}
+            accessibilityLabel={voting ? 'Done flagging' : 'Flag something'}
+          >
             <Text style={styles.link}>{voting ? 'Done' : 'Flag something'}</Text>
           </Pressable>
 

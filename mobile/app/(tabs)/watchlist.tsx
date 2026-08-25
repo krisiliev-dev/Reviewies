@@ -73,7 +73,11 @@ function Row({
 
   return (
     <View style={styles.row}>
-      <Pressable onPress={() => router.push(`/title/${encodeURIComponent(titleId)}`)}>
+      <Pressable
+        onPress={() => router.push(`/title/${encodeURIComponent(titleId)}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${name}`}
+      >
         <Poster url={posterUrl} name={name} />
       </Pressable>
       <View style={styles.rowBody}>
@@ -95,7 +99,12 @@ function Row({
               onSubmitEditing={save}
               accessibilityLabel={`Note for ${name}`}
             />
-            <Pressable onPress={save} hitSlop={8}>
+            <Pressable
+              onPress={save}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Save note for ${name}`}
+            >
               <Text style={styles.save}>Save</Text>
             </Pressable>
           </View>
@@ -104,14 +113,26 @@ function Row({
           // something is the whole value of a watchlist — "I have ZERO memory for why
           // they're there" — and a note you can read but never write is a note nobody
           // has. Until now the phone could only display what the web wrote.
-          <Pressable onPress={() => setEditing(true)} hitSlop={8}>
+          <Pressable
+            onPress={() => setEditing(true)}
+            hitSlop={8}
+            accessibilityRole="button"
+            // Every row on this screen says "Add a note". Which show is only knowable
+            // from what is above it, which a screen reader does not read along with it.
+            accessibilityLabel={note ? `Edit note for ${name}` : `Add a note for ${name}`}
+          >
             <Text style={note ? styles.note : styles.addNote}>
               {note || 'Add a note'}
             </Text>
           </Pressable>
         )}
 
-        <Pressable onPress={() => removeFromWatchlist(titleId)} hitSlop={8}>
+        <Pressable
+          onPress={() => removeFromWatchlist(titleId)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${name} from your watchlist`}
+        >
           <Text style={styles.remove}>Remove</Text>
         </Pressable>
       </View>
