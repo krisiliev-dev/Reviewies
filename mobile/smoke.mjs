@@ -325,10 +325,32 @@ try {
     'the whole reason for not making it a separate screen',
   );
   await page.screenshot({ path: OUT + '11-remote-drawer.png' });
+  // Every control in the drawer says what it is, not just what it looks like. "▲" read
+  // aloud is "up-pointing triangle"; the web remote has named these since it shipped.
+  for (const name of ['Up', 'Select', 'Play or pause', 'Back 15 seconds', 'Volume up']) {
+    check(`the remote's ${name} key is named`, (await page.getByLabel(name).count()) > 0);
+  }
+
   await page.getByLabel('Close remote').click();
   await page.waitForTimeout(600);
   await page.getByLabel('Leave Watching Mode').click();
   await page.waitForTimeout(1500);
+
+  // Nothing on the screen the product is judged on should be a button with no name.
+  // Three times this suite could not say which control it meant, and every time it was
+  // a screen reader hearing the same ambiguity first.
+  //
+  // Reaches what declares itself a button: react-native-web only emits `role="button"`
+  // for a Pressable given an `accessibilityRole`, so a tappable View without one is
+  // outside this check as well as outside a screen reader's list of controls. Both
+  // problems have the same fix, which is why this is worth asserting rather than
+  // widening.
+  const nameless = await page.evaluate(() =>
+    [...document.querySelectorAll('[role="button"]')]
+      .filter((el) => !(el.getAttribute('aria-label') ?? el.textContent ?? '').trim())
+      .length,
+  );
+  check('no unnamed buttons in Watching Mode', nameless === 0, `${nameless} found`);
 
   // --- Comments, and the spoiler gate ------------------------------------------
   // The gate is a database policy; this screen only explains it. Unwatched episodes

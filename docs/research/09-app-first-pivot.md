@@ -980,3 +980,41 @@ the page, and ambiguous to the smoke check, which is how it was noticed. Both ar
 now. That is the third time this week a test could not say which control it meant and the
 fix was to make the app say, which suggests the tests are finding a real accessibility
 problem rather than being fussy.
+
+### 6.18 The tests were finding an accessibility bug three times over
+
+Three times in a week a smoke check could not say which control it meant. `Watchlist`
+matched the tab bar and a search result's button. `Close` matched Watching Mode's header
+and the remote drawer. A catch-up grid offered forty-eight identical numbers. Each time
+the fix was an accessibility label and each time it looked like tidying a test.
+
+It was not. A screen reader working down the page hears exactly what the selector saw:
+two things called "Close", a row of bare numbers, a button called "Watchlist" that might
+be a tab. The tests kept finding a real defect and it kept getting filed as a testing
+inconvenience, which is a good argument for treating "the test cannot express this" as
+evidence rather than friction.
+
+So, rather than wait for the fourth, a pass over both apps for controls whose accessible
+name is a bare glyph, a repeated word, or nothing.
+
+The worst of it was content warnings. Twelve warnings, each with a **Yes** and a **No**
+button and nothing else — twenty-four controls, read aloud as "Yes button, No button,
+Yes button, No button", with the thing being voted on in a separate label the buttons
+never referenced. On both platforms. They now say "Yes, this has animal harm" and "No,
+this does not have animal harm", which is also better copy for anyone who can see them.
+
+The phone's remote keys were glyphs: ▲, ◀, ▶, ▼, ⏯, OK. Read aloud, "up-pointing
+triangle". The web remote has named these since it shipped, so this was the phone being
+behind rather than a new idea. And the reaction-density chips were "8", "24", "60" — three
+numbers beside each other, now "Show up to 24 reactions a minute".
+
+Two checks guard it. The remote's keys are asserted by name, and Watching Mode is
+asserted to contain no button without one. That second check is worth being precise
+about: react-native-web only emits `role="button"` for a Pressable given an
+`accessibilityRole`, so a tappable `View` without one is invisible to the check — and
+also invisible to a screen reader's list of controls. Both problems have the same fix,
+which is why asserting the narrow version is worth more than widening the check.
+
+Thirteen buttons on that screen, thirteen named, verified by counting rather than by
+trusting a passing assertion — a guard that would pass on a page with no buttons at all
+is the monitoring-script failure from §6.15 in a different costume.

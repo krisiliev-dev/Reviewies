@@ -26,7 +26,7 @@ tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the r
 Supabase project and the real TMDB and AniList APIs — including the whole
 listen-to-sync pipeline end to end: two people contribute timelines, the promoter
 cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
-app end to end and 41 drive the phone app through react-native-web.
+app end to end and 47 drive the phone app through react-native-web.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
 
@@ -151,7 +151,7 @@ node smoke.mjs                        # 50 end-to-end checks in a real browser
 
 cd mobile && npx expo export --platform web
 npx serve dist &
-node smoke.mjs                        # 41 checks driving the phone app
+node smoke.mjs                        # 47 checks driving the phone app
 ```
 
 The browser checks work either way. They ask the app once whether it has credentials and

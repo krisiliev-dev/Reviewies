@@ -73,29 +73,29 @@ export function RemotePanel({ remote }: { remote: Remote }) {
         )}
 
         <View style={styles.transport}>
-          <Key label="⏪ 15s" onPress={() => press('back', 3)} wide />
-          <Key label="⏯" onPress={() => press('playpause')} primary />
-          <Key label="15s ⏩" onPress={() => press('forward', 3)} wide />
+          <Key label="⏪ 15s" name="Back 15 seconds" onPress={() => press('back', 3)} wide />
+          <Key label="⏯" name="Play or pause" onPress={() => press('playpause')} primary />
+          <Key label="15s ⏩" name="Forward 15 seconds" onPress={() => press('forward', 3)} wide />
         </View>
 
         <View style={styles.dpad}>
           <View style={styles.dpadRow}>
-            <Key label="▲" onPress={() => press('up')} />
+            <Key label="▲" name="Up" onPress={() => press('up')} />
           </View>
           <View style={styles.dpadRow}>
-            <Key label="◀" onPress={() => press('left')} />
-            <Key label="OK" onPress={() => press('select')} primary />
-            <Key label="▶" onPress={() => press('right')} />
+            <Key label="◀" name="Left" onPress={() => press('left')} />
+            <Key label="OK" name="Select" onPress={() => press('select')} primary />
+            <Key label="▶" name="Right" onPress={() => press('right')} />
           </View>
           <View style={styles.dpadRow}>
-            <Key label="▼" onPress={() => press('down')} />
+            <Key label="▼" name="Down" onPress={() => press('down')} />
           </View>
         </View>
 
         <View style={styles.transport}>
           <Key label="Home" onPress={() => press('home')} wide />
-          <Key label="Vol −" onPress={() => press('volumeDown')} wide />
-          <Key label="Vol +" onPress={() => press('volumeUp')} wide />
+          <Key label="Vol −" name="Volume down" onPress={() => press('volumeDown')} wide />
+          <Key label="Vol +" name="Volume up" onPress={() => press('volumeUp')} wide />
         </View>
 
         <Text style={styles.footnote}>
@@ -111,11 +111,15 @@ export function RemotePanel({ remote }: { remote: Remote }) {
 
 function Key({
   label,
+  name,
   onPress,
   primary,
   wide,
 }: {
+  /** What the key shows, which for most of these is a single glyph. */
   label: string;
+  /** What the key is, for anything that cannot see a glyph. Defaults to the label. */
+  name?: string;
   onPress: () => void;
   primary?: boolean;
   wide?: boolean;
@@ -123,6 +127,10 @@ function Key({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      // "▲" read aloud is "up-pointing triangle", and "OK" is not obviously a button
+      // that selects. The web remote has named these since it shipped.
+      accessibilityLabel={name ?? label}
       style={({ pressed }) => [
         styles.key,
         wide && styles.keyWide,

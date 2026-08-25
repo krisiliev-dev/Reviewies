@@ -150,6 +150,10 @@ export default function WatchingScreen() {
                     key={value}
                     onPress={() => setDensity(value)}
                     style={[styles.densityChip, density === value && styles.densityChipOn]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: density === value }}
+                    // "8", "24", "60" on their own are three numbers next to each other.
+                    accessibilityLabel={`Show up to ${value} reactions a minute`}
                   >
                     <Text
                       style={[styles.densityText, density === value && styles.densityTextOn]}

@@ -108,6 +108,12 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                   <Pressable
                     onPress={() => vote(warning.id, true)}
                     style={[styles.vote, own === true && styles.voteOn]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: own === true }}
+                    // Twelve warnings, twelve pairs of these. Read aloud in order,
+                    // "Yes button, No button, Yes button" says nothing about what is
+                    // being voted on.
+                    accessibilityLabel={`Yes, this has ${warning.label.toLowerCase()}`}
                   >
                     <Text style={[styles.voteText, own === true && styles.voteTextOn]}>Yes</Text>
                   </Pressable>
@@ -116,6 +122,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                   <Pressable
                     onPress={() => vote(warning.id, false)}
                     style={[styles.vote, own === false && styles.voteOn]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: own === false }}
+                    accessibilityLabel={`No, this does not have ${warning.label.toLowerCase()}`}
                   >
                     <Text style={[styles.voteText, own === false && styles.voteTextOn]}>No</Text>
                   </Pressable>

@@ -119,6 +119,10 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                     <button
                       onClick={() => vote(w.id, true)}
                       aria-pressed={own === true}
+                      // Twelve warnings, twelve pairs of these. Read aloud in order,
+                      // "Yes button, No button, Yes button" says nothing about what is
+                      // being voted on.
+                      aria-label={`Yes, this has ${w.label.toLowerCase()}`}
                       className={`shrink-0 rounded-lg px-2.5 py-1 text-xs ${
                         own === true ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
                       }`}
@@ -130,6 +134,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                     <button
                       onClick={() => vote(w.id, false)}
                       aria-pressed={own === false}
+                      aria-label={`No, this does not have ${w.label.toLowerCase()}`}
                       className={`shrink-0 rounded-lg px-2.5 py-1 text-xs ${
                         own === false ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
                       }`}
