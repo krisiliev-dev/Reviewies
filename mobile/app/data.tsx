@@ -30,6 +30,7 @@ export default function DataScreen() {
   // startup, so it is available synchronously and does not need a subscription.
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
   const [cleared, setCleared] = useState<number>();
+  const [exportNote, setExportNote] = useState<string>();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -39,21 +40,32 @@ export default function DataScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Section heading="Export">
           <Text style={styles.blurb}>
-            Everything, in full, with no account and no upsell. It is yours.
+            Everything, in full, with no account and no upsell. It is yours. Signed in, the
+            file carries your lists, the people you follow and your comments too.
           </Text>
           <Pressable
             style={styles.primary}
-            onPress={async () =>
-              downloadFile(
+            onPress={async () => {
+              const bundle = await exportAll();
+              // Written either way; a person with an account would otherwise get a file
+              // that looks complete and is missing their lists.
+              setExportNote(bundle.accountUnavailable);
+              await downloadFile(
                 `reviewies-${today}.json`,
-                JSON.stringify(await exportAll(), null, 2),
+                JSON.stringify(bundle, null, 2),
                 'application/json',
-              )
-            }
+              );
+            }}
             accessibilityRole="button"
           >
             <Text style={styles.primaryText}>Export everything (JSON)</Text>
           </Pressable>
+          {exportNote && (
+            <Text style={styles.blurb} accessibilityLiveRegion="polite">
+              Saved, but your lists, follows and comments could not be read: {exportNote}. The
+              rest of the file is complete.
+            </Text>
+          )}
           <Pressable
             style={styles.secondary}
             onPress={async () =>

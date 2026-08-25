@@ -51,7 +51,9 @@ export function People() {
       <div className="p-4">
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
         <p className="px-1 text-sm text-muted">
-          Following needs sync configured. Everything else in Reviewies works without it.
+          Following needs sync configured, as do comments and shared reactions. Everything else
+          — your history, ratings, lists of what to watch, stats and the whole import — works
+          without it.
         </p>
       </div>
     );

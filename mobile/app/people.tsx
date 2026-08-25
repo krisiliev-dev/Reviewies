@@ -77,7 +77,7 @@ export default function PeopleScreen() {
           <Text style={styles.blurb}>
             {syncConfigured()
               ? 'Sign in on the Account screen to follow people. Your history stays on this device either way.'
-              : 'Following needs sync configured. Everything else works without it.'}
+              : 'Following needs sync configured, as do comments and shared reactions. Your history, ratings, watchlist, stats and the import all work without it.'}
           </Text>
         </View>
       </>

@@ -1,6 +1,6 @@
 import { db } from '../data/db';
 import { syncSeriesStatus } from '../data/repo';
-import { getEpisodesCached, getTitleCached } from '../metadata/index';
+import { expireMetadata, getEpisodesCached, getTitleCached } from '../metadata/index';
 
 /**
  * Keep the calendar's idea of what is coming up from going quietly stale.
@@ -53,6 +53,8 @@ export const DEFAULT_LOOKUP: RefreshLookup = {
 export interface RefreshReport {
   /** Series whose episodes were refetched. */
   refreshed: number;
+  /** Cached rows deleted for being past the TTL. */
+  expired: number;
   /** Series whose library status changed as a result. */
   reopened: number;
   /** Series left for the next pass because the batch was full. */
@@ -91,7 +93,17 @@ export async function refreshTracked(
   withAge.sort((a, b) => a.fetchedAt - b.fetchedAt);
   const due = withAge.slice(0, batch);
 
-  const report: RefreshReport = { refreshed: 0, reopened: 0, deferred: withAge.length - due.length };
+  // The pass that is already running on a timer is the natural place to do this: the
+  // settings screens promise the cache expires automatically, and nothing was deleting
+  // anything — `isStale` only stops a row being served.
+  const expired = await expireMetadata(now);
+
+  const report: RefreshReport = {
+    refreshed: 0,
+    reopened: 0,
+    expired,
+    deferred: withAge.length - due.length,
+  };
 
   for (const { id } of due) {
     // A placeholder from a rescued history has no provider behind it. Asking would be a

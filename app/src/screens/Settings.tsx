@@ -18,6 +18,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
   const [cleared, setCleared] = useState<number>();
+  const [exportNote, setExportNote] = useState<string>();
 
   const stats = useLiveQuery(() => getStats('all'), [], undefined);
   const counts = useLiveQuery(
@@ -75,18 +76,33 @@ export function Settings() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Export</h2>
+        <p className="px-1 text-sm text-muted">
+          Everything, in full, with no account and no upsell. Signed in, the file carries
+          your lists, the people you follow and your comments too.
+        </p>
         <button
-          onClick={async () =>
+          onClick={async () => {
+            const bundle = await exportAll();
+            // The file is written either way — the local half never depends on a server
+            // — but a person with an account would otherwise get something that looks
+            // complete and is missing their lists.
+            setExportNote(bundle.accountUnavailable);
             downloadFile(
               `reviewies-${new Date().toISOString().slice(0, 10)}.json`,
-              JSON.stringify(await exportAll(), null, 2),
+              JSON.stringify(bundle, null, 2),
               'application/json',
-            )
-          }
+            );
+          }}
           className="rounded-xl bg-accent px-4 py-3 font-medium text-ink"
         >
           Export everything (JSON)
         </button>
+        {exportNote && (
+          <p className="px-1 text-sm text-muted" role="status">
+            Saved, but your lists, follows and comments could not be read: {exportNote}. The
+            rest of the file is complete.
+          </p>
+        )}
         <button
           onClick={async () =>
             downloadFile(

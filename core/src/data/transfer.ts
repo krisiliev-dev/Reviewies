@@ -1,6 +1,7 @@
 import { db } from './db';
 import { enqueueAll } from '../sync/engine';
 import { makeId } from '../domain/types';
+import { fetchAccountExport, type AccountExport } from '../social/exportAccount';
 import type { MediaKind, WatchEvent } from '../domain/types';
 
 /**
@@ -13,9 +14,18 @@ import type { MediaKind, WatchEvent } from '../domain/types';
  *
  * Exports contain user data only. Provider metadata is deliberately excluded — it is
  * not ours to redistribute, and TMDB's terms forbid it.
+ *
+ * "Complete" had a hole in it until somebody read the sentence and went looking: lists,
+ * the people you follow and every comment you have written live on the server and were
+ * in no export at all. They are in `account` now, which is present only when there is an
+ * account to read — absent means there was none, empty means there was nothing in it.
  */
 
-export const EXPORT_VERSION = 1;
+/**
+ * 2 added `account`. A version 1 file is still read: everything it holds is still
+ * here under the same names, and the new field is optional by construction.
+ */
+export const EXPORT_VERSION = 2;
 
 export interface ExportBundle {
   format: 'reviewies-export';
@@ -26,9 +36,29 @@ export interface ExportBundle {
   ratings: unknown[];
   watchlist: unknown[];
   reactions: unknown[];
+  /** Absent when signed out. See `fetchAccountExport`. */
+  account?: AccountExport;
+  /**
+   * Set when there was an account and its half could not be read.
+   *
+   * The distinction matters: `account` absent normally means there was no account, and
+   * a person who has one would otherwise get a file that looks complete and quietly is
+   * not. The local half is written either way — "no account needed" is the promise, and
+   * a slow server must never be able to take the export with it.
+   */
+  accountUnavailable?: string;
 }
 
-export async function exportAll(): Promise<ExportBundle> {
+/**
+ * Everything of yours, in one file.
+ *
+ * The account fetch is injectable because it is the only part that touches a network:
+ * the local half must never be able to fail because a server was slow, and a test of
+ * the local half must never depend on one being there.
+ */
+export async function exportAll(
+  options: { account?: () => Promise<AccountExport | undefined> } = {},
+): Promise<ExportBundle> {
   const [library, watches, ratings, watchlist, reactions] = await Promise.all([
     db.library.toArray(),
     db.watches.toArray(),
@@ -36,6 +66,14 @@ export async function exportAll(): Promise<ExportBundle> {
     db.watchlist.toArray(),
     db.reactions.toArray(),
   ]);
+
+  let account: AccountExport | undefined;
+  let accountUnavailable: string | undefined;
+  try {
+    account = await (options.account ?? fetchAccountExport)();
+  } catch (e) {
+    accountUnavailable = e instanceof Error ? e.message : 'Could not read your account data';
+  }
 
   return {
     format: 'reviewies-export',
@@ -46,6 +84,8 @@ export async function exportAll(): Promise<ExportBundle> {
     ratings,
     watchlist,
     reactions,
+    ...(account ? { account } : {}),
+    ...(accountUnavailable ? { accountUnavailable } : {}),
   };
 }
 
@@ -168,6 +208,25 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
 
   report.watches = bundle.watches.length;
   report.watchlist = bundle.watchlist.length;
+
+  // Carried, and deliberately not restored. Lists and follows would need an account and
+  // a round of handle resolution, and re-posting old comments would put them back into
+  // other people's threads with today's timestamps. Saying so is the standard the
+  // importer already holds itself to everywhere else: nothing is silently dropped.
+  const account = bundle.account;
+  if (account) {
+    const carried = [
+      account.lists.length && `${account.lists.length} list(s)`,
+      account.following.length && `${account.following.length} follow(s)`,
+      account.comments.length && `${account.comments.length} comment(s)`,
+    ].filter(Boolean);
+    if (carried.length) {
+      report.warnings.push(
+        `The file also holds ${carried.join(', ')} from an account. They are kept in the file and were not restored here.`,
+      );
+    }
+  }
+
   return report;
 }
 

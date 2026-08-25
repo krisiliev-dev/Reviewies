@@ -189,4 +189,32 @@ export async function clearMetadataCache(): Promise<number> {
   return providerTitles.length + providerEpisodes.length;
 }
 
+/**
+ * Delete cached metadata that is past its life, rather than merely refusing to serve it.
+ *
+ * Both settings screens say artwork and episode listings "expire automatically", and
+ * until somebody read that sentence back against the code, nothing expired: `isStale` is
+ * checked when a row is *read*, so a show looked up once and never opened again sat on
+ * the device for as long as the app was installed. TMDB's terms cap caching at six
+ * months and the tables only ever grew.
+ *
+ * Titles carried over from an import are kept, for the same reason `clearMetadataCache`
+ * keeps them: they are not the provider's to expire, and they are the only record of a
+ * show it has never heard of.
+ */
+export async function expireMetadata(now = Date.now()): Promise<number> {
+  const gone = (fetchedAt: number) => isStale(fetchedAt, now);
+  const mine = (id: string) => id.startsWith('local:');
+
+  const titles = (await db.titles.toArray()).filter((t) => !mine(t.id) && gone(t.fetchedAt));
+  const episodes = (await db.episodes.toArray()).filter((e) => !mine(e.id) && gone(e.fetchedAt));
+  const providers = (await db.providers.toArray()).filter((p) => gone(p.fetchedAt));
+
+  for (const title of titles) await db.titles.delete(title.id);
+  for (const episode of episodes) await db.episodes.delete(episode.id);
+  for (const row of providers) await db.providers.delete(row.id);
+
+  return titles.length + episodes.length + providers.length;
+}
+
 export * from './provider';
