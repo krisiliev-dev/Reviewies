@@ -11,21 +11,41 @@
       "supportsTablet": true,
       "bundleIdentifier": "dev.krisiliev.reviewies",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Reviewies listens for a few seconds to work out where you are in an episode. The audio never leaves your device — only a one-way digest of it is sent, which cannot be turned back into sound.",
+        "NSMicrophoneUsageDescription": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded — it is never recorded, saved, or sent anywhere.",
         "NSLocalNetworkUsageDescription": "Reviewies talks directly to a TV or streaming stick on your Wi-Fi so it can act as a remote.",
-        "NSBonjourServices": ["_roku-rcp._tcp", "_googlecast._tcp", "_airplay._tcp"]
+        "NSBonjourServices": [
+          "_roku-rcp._tcp",
+          "_googlecast._tcp",
+          "_airplay._tcp"
+        ]
       }
     },
     "android": {
       "package": "dev.krisiliev.reviewies",
       "edgeToEdgeEnabled": true,
-      "permissions": ["RECORD_AUDIO", "INTERNET", "ACCESS_NETWORK_STATE"]
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
       "output": "static"
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-sharing"],
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-sharing",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded — it is never recorded, saved, or sent anywhere.",
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": false
+        }
+      ]
+    ],
     "extra": {
       "tmdbToken": "",
       "supabaseUrl": "",

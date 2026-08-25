@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { captureContribution, micSupported, syncByListening, HOP_SIZE } from '../fingerprint/capture';
+import {
+  captureContribution,
+  micSupported,
+  syncByListening,
+  HOP_SIZE,
+  SAMPLE_RATE,
+} from '../fingerprint/capture';
 import { contributeReference, fetchReference } from '@reviewies/core/fingerprint/references';
 
 /**
@@ -61,7 +67,7 @@ export function ListenSync({
         hashes,
         frameCount: frames,
         hopSize: HOP_SIZE,
-        sampleRate: 22_050,
+        sampleRate: SAMPLE_RATE,
       });
       setNote(
         result.ok

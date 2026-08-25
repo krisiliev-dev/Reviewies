@@ -2,6 +2,7 @@ import {
   CAPTURE_MS,
   FFT_SIZE,
   HOP_SIZE,
+  SAMPLE_RATE,
   fingerprint,
   framesToMs,
   matchSample,
@@ -9,7 +10,7 @@ import {
 } from '@reviewies/core/fingerprint/fingerprint';
 
 // Re-exported for the screens that show what the capture will do.
-export { CAPTURE_MS, FFT_SIZE, HOP_SIZE };
+export { CAPTURE_MS, FFT_SIZE, HOP_SIZE, SAMPLE_RATE };
 
 /**
  * Microphone capture for automatic sync.
@@ -57,7 +58,7 @@ export async function captureSpectrogram(
     },
   });
 
-  const context = new AudioContext({ sampleRate: 22_050 });
+  const context = new AudioContext({ sampleRate: SAMPLE_RATE });
 
   try {
     const source = context.createMediaStreamSource(stream);
@@ -102,10 +103,10 @@ export async function syncByListening(
 
   // The offset locates the *start* of the sample, so add its length to land on
   // where playback is now rather than where it was when listening began.
-  const sampleMs = framesToMs(spectrogram.length, HOP_SIZE, 22_050);
+  const sampleMs = framesToMs(spectrogram.length, HOP_SIZE, SAMPLE_RATE);
 
   return {
-    positionMs: framesToMs(match.offsetFrames, HOP_SIZE, 22_050) + sampleMs,
+    positionMs: framesToMs(match.offsetFrames, HOP_SIZE, SAMPLE_RATE) + sampleMs,
     confidence: match.confidence,
   };
 }

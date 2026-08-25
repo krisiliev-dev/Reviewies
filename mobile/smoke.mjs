@@ -160,6 +160,14 @@ try {
   await page.waitForTimeout(2000);
   check('Watching Mode opens', (await text()).includes('Start watching'));
 
+  // Continuous listening is native-only: `useAudioStream` has no web implementation, so
+  // the control must remove itself rather than offer a button that cannot work. Worth a
+  // check because the failure mode is a dead affordance, not an error.
+  check(
+    'listening hides itself where there is no audio stream',
+    !(await text()).includes('Keep in sync by listening'),
+  );
+
   await page.getByText('Start watching').click();
   await page.waitForTimeout(1500);
   await page.getByText('Cliffhanger').click();

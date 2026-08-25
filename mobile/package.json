@@ -6,6 +6,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@reviewies/core": "*",
     "expo": "~57.0.16",
+    "expo-audio": "~57.0.4",
     "expo-constants": "~57.0.14",
     "expo-document-picker": "~57.0.1",
     "expo-file-system": "~57.0.5",

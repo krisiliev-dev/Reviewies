@@ -20,6 +20,7 @@ import {
 } from '@reviewies/core/watching/reactions';
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
 import { ReactionStream } from '../../src/ui/ReactionStream';
+import { ListenSync } from '../../src/watching/ListenSync';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
@@ -146,6 +147,19 @@ export default function WatchingScreen() {
             </View>
           </View>
         )}
+
+        {/* Listening sits below the controls rather than above them: starting the
+            clock by hand is the reliable path, and this is the thing that keeps it
+            right afterwards. */}
+        <ListenSync
+          targetId={targetId}
+          positionMs={clock.positionMs}
+          onCorrection={(ms) =>
+            // Hearing the episode is itself proof it is playing, so a match on a clock
+            // that was never started begins it rather than setting a paused timecode.
+            clock.running ? clock.seek(ms) : clock.start(ms)
+          }
+        />
 
         {drift !== undefined && (
           <Pressable style={styles.drift} onPress={() => clock.nudge(drift)}>

@@ -26,6 +26,16 @@
  */
 export const FFT_SIZE = 2048;
 export const HOP_SIZE = 512;
+/**
+ * Every capture is resampled to this before analysis.
+ *
+ * The rate is part of the fingerprint just as much as the FFT size is: it decides
+ * which frequency each bin stands for, so a reference built at 44.1kHz and a sample
+ * taken at 48kHz share no landmarks at all. Microphones deliver whatever the hardware
+ * feels like — 48000 on most phones, 44100 on most laptops — so every path resamples
+ * to this one number rather than trusting what it was handed.
+ */
+export const SAMPLE_RATE = 22_050;
 /** Enough audio to be distinctive; short enough not to feel like surveillance. */
 export const CAPTURE_MS = 6000;
 
@@ -182,7 +192,18 @@ export interface MatchResult {
   offsetFrames: number;
   /** Votes for the winning offset. */
   score: number;
-  /** Winning votes as a share of all votes cast. Low means a weak match. */
+  /**
+   * The share of matched landmarks that agreed on the winning offset.
+   *
+   * Deliberately measured against the landmarks that matched *something*, not against
+   * every vote cast. A hash that recurs through an episode votes once per place it
+   * occurs, so counting all votes makes confidence fall as the reference gets longer:
+   * the same six seconds of audio would read as confident against a five-minute
+   * reference and as noise against a forty-minute one, purely because of length. That
+   * is length-sensitivity dressed up as uncertainty. Measured this way, a match where
+   * every recognised landmark points at one offset is 1.0 however long the episode is,
+   * and scattered agreement is low however short it is.
+   */
   confidence: number;
 }
 
@@ -203,19 +224,22 @@ export function matchSample(
   const minConfidence = opts.minConfidence ?? 0.15;
 
   const votes = new Map<number, number>();
-  let total = 0;
+  // Landmarks that matched anything at all. One sample hash can only ever vote once
+  // for a given offset, so the winning score can never exceed this — which is what
+  // keeps confidence a genuine fraction.
+  let matched = 0;
 
   for (const { hash, frame } of sample) {
     const frames = reference.get(hash);
     if (!frames) continue;
+    matched++;
     for (const referenceFrame of frames) {
       const offset = referenceFrame - frame;
       votes.set(offset, (votes.get(offset) ?? 0) + 1);
-      total++;
     }
   }
 
-  if (total === 0) return undefined;
+  if (matched === 0) return undefined;
 
   let bestOffset = 0;
   let bestScore = 0;
@@ -226,7 +250,7 @@ export function matchSample(
     }
   }
 
-  const confidence = bestScore / total;
+  const confidence = bestScore / matched;
   // Both bars matter: a handful of votes is noise however dominant, and a large but
   // evenly-spread vote is a coincidence rather than a match.
   if (bestScore < minScore || confidence < minConfidence) return undefined;

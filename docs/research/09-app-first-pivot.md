@@ -214,3 +214,88 @@ MPRIS is a D-Bus interface with no network protocol at all — there is nothing 
 app to connect to, with or without an entitlement. What has changed is that it is no
 longer the only way to reach a television, which was the thing that made it feel like
 an apology for the platform.
+
+### 6.2 §1.3 is done, and end-to-end testing found a real bug in the matcher
+
+The app listens continuously. `useAudioStream` from expo-audio delivers raw PCM
+buffers, `setAudioModeAsync({ shouldPlayInBackground: true })` keeps the session alive
+when the screen goes away, and the expo-audio config plugin adds what neither of those
+can add from JavaScript: `UIBackgroundModes: ["audio"]` on iOS, and on Android a
+microphone foreground service with the permissions it needs. That is verified against
+`expo config --type introspect` rather than asserted — the plugin's options are easy to
+set wrongly and produce a build that simply stops recording when backgrounded.
+
+The plugin also offers `enableBackgroundPlayback`, on by default, which adds a
+media-playback foreground service. Nothing here plays audio, so it is turned off. It
+would have been free to leave on, and it would have meant shipping a permission the app
+has no use for.
+
+Three pieces of the pipeline had no web equivalent and are new in the core:
+
+- **`spectrogram.ts`** — an FFT, a Hann window, and framing. The web got all of this
+  free from `AnalyserNode.getFloatFrequencyData`. It reproduces that function's shifted
+  decibel scale exactly, because a reference built on one scale and a sample taken on
+  another do not fail loudly; they simply never match.
+- **`stream.ts`** — downmix, resample, and overlapped framing, all written to be fed in
+  pieces. Microphones deliver 48kHz when you ask for 22.05kHz, in buffers whose length
+  has nothing to do with the FFT size, so every stage carries state across boundaries.
+  The resampler's fractional read position is the part that matters: resetting it per
+  buffer, which is the obvious way to write it, puts a timing discontinuity at every
+  boundary dozens of times a second and smears the peaks the fingerprint depends on.
+- **`continuous.ts`** — a sliding window that reports a position every few seconds, plus
+  the rule for whether a reported position is worth acting on at all.
+
+#### The bug: confidence fell as the reference got longer
+
+Doc 6's matcher scored an offset by voting and reported confidence as *the winning
+votes as a share of all votes cast*. Feeding it a whole synthetic episode showed why
+that is wrong. A hash that recurs through an episode votes once per place it occurs, so
+the denominator grows with the reference's length while the numerator does not. The same
+six seconds of audio read as a confident match against a five-minute reference and as
+noise against a forty-minute one — which is length-sensitivity wearing uncertainty's
+clothes, and it would have made continuous matching against full episodes fail
+constantly and for no visible reason.
+
+Confidence is now the share of *matched landmarks* that agreed on one offset. A sample
+hash can only ever vote once for a given offset, so it stays a genuine fraction, and it
+no longer moves with the length of the thing being searched.
+
+That bug survived 41 passing tests because every one of them built its sample by
+slicing the reference **spectrogram**. Frame-aligned, identical values, no analysis
+involved. Nothing had ever taken audio, analysed it independently, and matched the
+result — which is the only thing a microphone ever does. The new tests do that: they
+generate an episode, build a reference at 22.05kHz, then generate the *same signal* at
+48kHz, cut a slice, and push it through the resampler and the FFT in irregular chunks.
+The lesson generalises past this feature: a test that slices the intermediate
+representation tests the second half of a pipeline twice and the first half never.
+
+#### Two things the design does not pretend about
+
+**A match describes the past.** It says where playback was when the window closed, and
+an attempt fires part-way through a buffer. Applying the raw position would set the
+clock slightly slow *every single time it fired* — a drift correction that introduces
+drift. `positionNow` ages a match forward by the frames that have arrived since, in
+frames rather than milliseconds, because frames only exist if the audio arrived and so
+they keep counting correctly through a backgrounded app whose timers are throttled.
+
+**A large jump is usually real.** `shouldCorrect` ignores anything under 1.5 seconds,
+because correcting agreement only jitters the timecode. Its upper bound is fifteen
+minutes, which is deliberately loose: skipping a recap and scrubbing back to rewatch a
+scene are both large, legitimate jumps, and refusing to follow one would break the
+feature exactly when it is most wanted.
+
+#### The honest limits
+
+`UIBackgroundModes: ["audio"]` for a microphone that runs while the app is backgrounded
+is the kind of thing App Review reads closely, and rightly. The permission copy was
+rewritten for it — the old string said "listens for a few seconds", which was true of
+the web's one-shot capture and is not true of this — and the screen repeats what the
+microphone is doing while it is doing it. If review pushes back, the fallback is
+foreground-only listening, which costs the corrections that happen while the phone is
+face down, not the feature.
+
+Nothing here has heard real audio. The tests use a synthetic signal built to have the
+one property that matters — a spectrum that keeps changing — and it is a poor stand-in
+for a television in a room with people talking over it. Accuracy against real audio,
+through a real microphone, at across-the-room volume, is unmeasured and stays on the
+list. So does the reference contribution path on the phone, which is still web-only.
