@@ -25,13 +25,15 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
   const [mine, setMine] = useState<Map<string, boolean>>(new Map());
   const [voting, setVoting] = useState(false);
   const [note, setNote] = useState<string>();
+  const [failed, setFailed] = useState<string>();
 
   const load = useCallback(async () => {
     const [aggregate, own] = await Promise.all([
       fetchContentWarnings(titleId),
       fetchMyWarningVotes(titleId),
     ]);
-    setSummaries(aggregate);
+    setSummaries(aggregate.warnings);
+    setFailed(aggregate.failed);
     setMine(own);
   }, [titleId]);
 
@@ -68,7 +70,17 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
         <div className="mt-2 rounded-xl bg-surface p-3">
           {summaries === undefined && <p className="text-xs text-muted">Loading…</p>}
 
-          {summaries?.length === 0 && (
+          {/* Not the same sentence. A request that did not arrive is not an answer, and
+              this is the one screen where being told the wrong one matters — somebody
+              avoiding a trigger would take "nobody has flagged anything" as a fact. */}
+          {failed && (
+            <p className="text-xs text-accent" role="status">
+              Could not read the warnings for this title. Nothing here means nothing is
+              known, not that there is nothing.
+            </p>
+          )}
+
+          {!failed && summaries?.length === 0 && (
             <p className="text-xs text-muted">
               Nobody has flagged anything yet. If you have seen it, you can below.
             </p>

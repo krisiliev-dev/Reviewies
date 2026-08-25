@@ -101,19 +101,36 @@ export function describeVotes(s: WarningSummary): string {
 }
 
 /**
+ * What came back, and whether asking worked.
+ *
+ * The two have to be told apart here more than anywhere else in this codebase. "Nobody
+ * has flagged anything" is what this screen said when the query failed, and somebody
+ * avoiding a trigger would read that as an answer. An empty list because there are no
+ * votes and an empty list because the request did not arrive are the same array and
+ * opposite facts.
+ */
+export interface WarningsResult {
+  warnings: WarningSummary[];
+  /** Set when the aggregate could not be read. Absent means it was read and was empty. */
+  failed?: string;
+}
+
+/**
  * Fetch the aggregate for a title.
  *
  * Signed-out users get nothing rather than an error: like every shared feature, this
- * is additive, and the title page must render fully without it.
+ * is additive, and the title page must render fully without it. That is not a failure
+ * and does not set `failed` — there was nothing to ask.
  */
-export async function fetchContentWarnings(titleId: string): Promise<WarningSummary[]> {
+export async function fetchContentWarnings(titleId: string): Promise<WarningsResult> {
   const client = getClient();
-  if (!client || !(await getSession())) return [];
+  if (!client || !(await getSession())) return { warnings: [] };
 
   const { data, error } = await client.rpc('content_warnings', { p_title: titleId });
-  if (error || !data) return [];
+  if (error) return { warnings: [], failed: error.message };
+  if (!data) return { warnings: [] };
 
-  return summariseWarnings(
+  return summariseResult(
     (data as Array<Record<string, unknown>>).map((row) => ({
       warning: String(row.warning),
       yesVotes: Number(row.yes_votes),
@@ -121,6 +138,10 @@ export async function fetchContentWarnings(titleId: string): Promise<WarningSumm
     })),
   );
 }
+
+const summariseResult = (rows: WarningVotes[]): WarningsResult => ({
+  warnings: summariseWarnings(rows),
+});
 
 /** Which warnings the signed-in user has voted on, so the UI can show their position. */
 export async function fetchMyWarningVotes(titleId: string): Promise<Map<string, boolean>> {

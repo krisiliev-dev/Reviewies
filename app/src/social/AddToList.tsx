@@ -18,7 +18,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
   useEffect(() => {
     if (!open) return;
     // Only your own lists can be added to.
-    void fetchLists().then((all) => setLists(all.filter((l) => l.mine)));
+    void fetchLists().then((all) => setLists(all.lists.filter((l) => l.mine)));
   }, [open]);
 
   if (!syncConfigured()) return null;

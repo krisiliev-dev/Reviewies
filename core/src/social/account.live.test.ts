@@ -111,8 +111,8 @@ live('the account export, live', () => {
     expect(second.lists, 'a second restore created the list again').toBe(0);
     expect(second.skipped.join(' ')).toMatch(/already here/);
 
-    const names = (await fetchLists()).map((l) => l.name);
-    expect(names.filter((n) => n === `Restored ${stamp}`)).toHaveLength(1);
+    const names = (await fetchLists()).lists.map((l: { name: string }) => l.name);
+    expect(names.filter((n: string) => n === `Restored ${stamp}`)).toHaveLength(1);
   }, 30_000);
 
   it('comes back empty rather than failing when there is nothing to read', async () => {

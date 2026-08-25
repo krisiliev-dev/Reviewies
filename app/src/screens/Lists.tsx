@@ -20,8 +20,13 @@ export function Lists() {
   const [lists, setLists] = useState<ListSummary[]>();
   const [name, setName] = useState('');
   const [openId, setOpenId] = useState<string>();
+  const [failed, setFailed] = useState<string>();
 
-  const load = useCallback(async () => setLists(await fetchLists()), []);
+  const load = useCallback(async () => {
+    const result = await fetchLists();
+    setLists(result.lists);
+    setFailed(result.failed);
+  }, []);
   useEffect(() => {
     void load();
   }, [load]);
@@ -70,7 +75,14 @@ export function Lists() {
       </form>
 
       {lists === undefined && <p className="px-1 text-muted">Loading…</p>}
-      {lists?.length === 0 && <p className="px-1 text-muted">No lists yet.</p>}
+      {/* "No lists yet" was shown for both having none and failing to ask, which is a
+          strange thing to tell somebody about work they did. */}
+      {failed && (
+        <p className="px-1 text-accent" role="status">
+          Could not load your lists ({failed}). They are still there — try again.
+        </p>
+      )}
+      {!failed && lists?.length === 0 && <p className="px-1 text-muted">No lists yet.</p>}
 
       <ul className="flex flex-col gap-2">
         {lists?.map((list) => (
@@ -102,7 +114,7 @@ function ListCard({
 
   useEffect(() => {
     if (!open) return;
-    void fetchListItems(list.id).then(setItems);
+    void fetchListItems(list.id).then((r) => setItems(r.items));
   }, [open, list.id]);
 
   return (
@@ -159,7 +171,7 @@ function ListCard({
                   <button
                     onClick={async () => {
                       await removeFromList(list.id, item.titleId);
-                      setItems(await fetchListItems(list.id));
+                      setItems((await fetchListItems(list.id)).items);
                       onChanged();
                     }}
                     className="shrink-0 px-1 text-xs text-muted"

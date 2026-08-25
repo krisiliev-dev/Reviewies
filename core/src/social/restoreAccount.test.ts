@@ -34,7 +34,7 @@ beforeEach(() => {
   followed = [];
 
   vi.spyOn(auth, 'getSession').mockResolvedValue({ user: { id: 'me' } } as never);
-  vi.spyOn(lists, 'fetchLists').mockResolvedValue([]);
+  vi.spyOn(lists, 'fetchLists').mockResolvedValue({ lists: [] });
   vi.spyOn(lists, 'createList').mockImplementation(async (name, isPublic, description) => {
     created.push({ name, isPublic: Boolean(isPublic), description });
     return `list-${created.length}`;
@@ -99,15 +99,29 @@ describe('restoring what the local import could not', () => {
   it('leaves a list that is already here alone', async () => {
     // Running a restore twice must not leave two of everything, and a restored list is
     // a new row with a new ID — the name is the only thing the two copies share.
-    vi.spyOn(lists, 'fetchLists').mockResolvedValue([
-      { id: 'existing', name: 'comfort REWATCHES', isPublic: false, count: 2 },
-    ] as never);
+    vi.spyOn(lists, 'fetchLists').mockResolvedValue({
+      lists: [{ id: 'existing', name: 'comfort REWATCHES', isPublic: false, count: 2 }],
+    } as never);
 
     const report = await restoreAccount(bundle({ lists: [aList()] }));
 
     expect(created).toEqual([]);
     expect(report.lists).toBe(0);
     expect(report.skipped.join(' ')).toMatch(/already here/);
+  });
+
+  it('restores nothing when it cannot see what is already there', async () => {
+    // The functional half of the failure-as-absence pattern rather than the cosmetic
+    // one. `fetchLists` returned a bare array, so a request that never arrived looked
+    // exactly like an empty account — and the restore would have made a second copy of
+    // every list somebody owns. Doing nothing is recoverable; that is not.
+    vi.spyOn(lists, 'fetchLists').mockResolvedValue({ lists: [], failed: 'network' } as never);
+
+    const report = await restoreAccount(bundle({ lists: [aList()] }));
+
+    expect(created).toEqual([]);
+    expect(report.lists).toBe(0);
+    expect(report.skipped.join(' ')).toMatch(/Could not check what is already here/);
   });
 
   it('does not create the same list twice from one file', async () => {

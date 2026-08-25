@@ -1517,6 +1517,42 @@ straight to the address: it takes the route a person takes, through More, in a h
 says so. A suite that jumps to a URL the navigation no longer offers is testing that the
 router still works and nothing else.
 
+### 6.33 A failure that renders as absence
+
+Every screen had been examined happy and empty. None had been examined broken — and this
+codebase had already been caught at the same thing twice. §6.23's match-imports screen
+went back to offering its button when a run failed, which looks identical to a run that
+found nothing to do. §6.27 found that supabase-js answers a bad column with an empty
+result, so a broken query and an empty account render the same screen.
+
+That is a pattern rather than two incidents, and the shape is always
+`if (error || !data) return []`. Two opposite facts — "there are none" and "we could not
+ask" — collapse into one value, and every caller downstream reads the first.
+
+The worst of them was **content warnings**. The screen said *"Nobody has flagged anything
+yet"* when the query failed, and somebody avoiding a trigger reads that as an answer. The
+whole feature exists so people can avoid things, and its failure mode was to say
+confidently that there was nothing to avoid.
+
+The most expensive was **`fetchLists`**, and it is not a presentation bug. `restoreAccount`
+reads it to know what is already there, so a failed read looked like an empty account —
+and a restore would have made a second copy of every list somebody owns. Doing nothing is
+recoverable; that is not. It stops and says why now, and the list index and each list's
+contents both distinguish their two empties.
+
+What is left behind is the exemption list, which is the interesting half. A read whose
+emptiness a person or a decision depends on has to say which kind of empty it is;
+everything else has to have a written reason, and there are five. Two of them say the
+read is wrong and unfinished rather than deliberate — `searchPeople`, where a failed
+search reads as "no such person", and `findByHandle`, where a failed lookup makes the
+restore report a wrong statement about somebody else's account. Naming those is better
+than a list that implies every entry was a good decision.
+
+`fetchComments` is worth naming for the opposite reason. It has always distinguished its
+two empties — `gated` says whether the server withheld the comments or there were none —
+and it is the shape everything else is being brought to. It was written that way from the
+start.
+
 ---
 
 ## 7. What is still not known

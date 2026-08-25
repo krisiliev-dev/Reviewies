@@ -25,10 +25,26 @@ export interface ListItem {
   rank: number;
 }
 
-export async function fetchLists(): Promise<ListSummary[]> {
+/**
+ * What came back, and whether asking worked.
+ *
+ * "No lists yet" and "we could not read your lists" are different sentences and this
+ * returned the first for both. That is alarming on a screen showing work somebody did,
+ * and it is worse than alarming in `restoreAccount`, which reads this to know what is
+ * already here: a failed read looks like an empty account, and the restore makes a
+ * second copy of every list.
+ */
+export interface ListsResult {
+  lists: ListSummary[];
+  /** Set when the lists could not be read. Absent means they were read and there were none. */
+  failed?: string;
+}
+
+export async function fetchLists(): Promise<ListsResult> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return [];
+  // Not a failure: signed out, there is nothing to ask.
+  if (!client || !session) return { lists: [] };
 
   const { data, error } = await client
     .from('lists')
@@ -36,9 +52,10 @@ export async function fetchLists(): Promise<ListSummary[]> {
     .eq('deleted', false)
     .order('updated_at', { ascending: false });
 
-  if (error || !data) return [];
+  if (error) return { lists: [], failed: error.message };
+  if (!data) return { lists: [] };
 
-  return data.map((row) => {
+  const lists = data.map((row) => {
     // PostgREST returns an aggregate as a one-element array.
     const counts = row.list_items as Array<{ count: number }> | null;
     return {
@@ -50,6 +67,8 @@ export async function fetchLists(): Promise<ListSummary[]> {
       mine: row.user_id === session.user.id,
     };
   });
+
+  return { lists };
 }
 
 export async function createList(
@@ -80,9 +99,22 @@ export async function createList(
   return error || !data ? undefined : String(data.id);
 }
 
-export async function fetchListItems(listId: string): Promise<ListItem[]> {
+export interface ListItemsResult {
+  items: ListItem[];
+  /** Set when the contents could not be read. Absent means they were read and were none. */
+  failed?: string;
+}
+
+/**
+ * The contents of one list.
+ *
+ * Same distinction as `fetchLists`, and for the same reason: opening a list you built
+ * and being shown an empty one is a bad way to find out the network is down. Fixing the
+ * index and not its contents would have been half a fix.
+ */
+export async function fetchListItems(listId: string): Promise<ListItemsResult> {
   const client = getClient();
-  if (!client) return [];
+  if (!client) return { items: [] };
 
   const { data, error } = await client
     .from('list_items')
@@ -91,14 +123,17 @@ export async function fetchListItems(listId: string): Promise<ListItem[]> {
     .order('rank')
     .order('added_at');
 
-  if (error || !data) return [];
+  if (error) return { items: [], failed: error.message };
+  if (!data) return { items: [] };
 
-  return data.map((row) => ({
-    titleId: String(row.title_id),
-    kind: row.kind as MediaKind,
-    note: row.note ? String(row.note) : undefined,
-    rank: Number(row.rank),
-  }));
+  return {
+    items: data.map((row) => ({
+      titleId: String(row.title_id),
+      kind: row.kind as MediaKind,
+      note: row.note ? String(row.note) : undefined,
+      rank: Number(row.rank),
+    })),
+  };
 }
 
 export async function addToList(

@@ -35,9 +35,12 @@ export default function ListsScreen() {
   const [name, setName] = useState('');
   const [open, setOpen] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string>();
 
   const load = useCallback(async () => {
-    setLists(await fetchLists());
+    const result = await fetchLists();
+    setLists(result.lists);
+    setFailed(result.failed);
   }, []);
 
   useEffect(() => {
@@ -96,7 +99,14 @@ export default function ListsScreen() {
         </View>
 
         {lists === undefined && <ActivityIndicator color={theme.accent} />}
-        {lists?.length === 0 && (
+        {/* See the web's copy of this: "No lists yet" was shown for both having none
+            and failing to ask. */}
+        {failed && (
+          <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
+            Could not load your lists ({failed}). They are still there — try again.
+          </Text>
+        )}
+        {!failed && lists?.length === 0 && (
           <Text style={styles.blurb}>No lists yet. Make one above, then add titles to it.</Text>
         )}
 
@@ -129,10 +139,10 @@ function ListCard({
 
   useEffect(() => {
     if (!expanded) return;
-    void fetchListItems(list.id).then(async (rows) => {
+    void fetchListItems(list.id).then(async (result) => {
       setItems(
         await Promise.all(
-          rows.map(async (item) => ({
+          result.items.map(async (item) => ({
             ...item,
             name: (await db.titles.get(item.titleId))?.name,
           })),
@@ -213,6 +223,7 @@ function ListCard({
 }
 
 const styles = StyleSheet.create({
+  listsFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
   content: { padding: 16, gap: 10, backgroundColor: theme.ink, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },

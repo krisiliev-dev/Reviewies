@@ -45,7 +45,20 @@ export async function restoreAccount(account: AccountExport): Promise<RestoreRep
   // Names already here, so running a restore twice does not leave two of everything.
   // Matching on name rather than on anything sturdier because a restored list is a new
   // row with a new ID: there is nothing else the two copies share.
-  const existing = new Set((await fetchLists()).map((list) => list.name.trim().toLowerCase()));
+  //
+  // And it stops if that read failed rather than treating the failure as an empty
+  // account. This used to return a bare array, so a request that never arrived was
+  // indistinguishable from having no lists — and the restore would have made a second
+  // copy of every one of them. Doing nothing is recoverable; duplicating somebody's
+  // lists is a mess they have to clean up by hand.
+  const known = await fetchLists();
+  if (known.failed) {
+    report.skipped.push(
+      `Could not check what is already here (${known.failed}), so nothing was restored. Try again.`,
+    );
+    return report;
+  }
+  const existing = new Set(known.lists.map((list) => list.name.trim().toLowerCase()));
 
   for (const list of account.lists) {
     if (existing.has(list.name.trim().toLowerCase())) {

@@ -29,13 +29,15 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
   const [mine, setMine] = useState<Map<string, boolean>>(new Map());
   const [voting, setVoting] = useState(false);
   const [note, setNote] = useState<string>();
+  const [failed, setFailed] = useState<string>();
 
   const load = useCallback(async () => {
     const [aggregate, own] = await Promise.all([
       fetchContentWarnings(titleId),
       fetchMyWarningVotes(titleId),
     ]);
-    setSummaries(aggregate);
+    setSummaries(aggregate.warnings);
+    setFailed(aggregate.failed);
     setMine(own);
   }, [titleId]);
 
@@ -74,7 +76,16 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
       {open && (
         <View style={styles.panel}>
           {summaries === undefined && <Text style={styles.blurb}>Loading…</Text>}
-          {summaries?.length === 0 && (
+          {/* Not the same sentence — see the web's copy of this. A request that did not
+              arrive is not an answer, and somebody avoiding a trigger would take
+              "nobody has flagged anything" as one. */}
+          {failed && (
+            <Text style={styles.warningFailed} accessibilityLiveRegion="polite">
+              Could not read the warnings for this title. Nothing here means nothing is
+              known, not that there is nothing.
+            </Text>
+          )}
+          {!failed && summaries?.length === 0 && (
             <Text style={styles.blurb}>
               Nobody has flagged anything yet. If you have seen it, you can below.
             </Text>
@@ -156,6 +167,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 }
 
 const styles = StyleSheet.create({
+  warningFailed: { color: theme.accent, fontSize: 13, lineHeight: 19 },
   wrap: { gap: 8 },
   toggle: {
     alignSelf: 'flex-start',
