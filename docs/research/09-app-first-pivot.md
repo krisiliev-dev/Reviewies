@@ -1620,6 +1620,14 @@ clears when its children change, because one that latches forever turns a broken
 into a permanently broken tab. A rejection fired at the running app raises the banner
 with its message in it.
 
+The phone half was claimed before it was checked, and checking it found something. Its
+boundary sits at the root layout, so it replaces the navigation along with the screen,
+where the web's sits inside the tab bar and leaves it standing — which makes "Try again"
+the only way out, and a loop with no exit for a screen that throws every time. There is a
+way home beside it now. Worth recording as a method note rather than a fix: the claim
+went into a commit message a step ahead of the evidence, and going back to get the
+evidence is what turned it up.
+
 Two things this does **not** do, said plainly. An unhandled rejection on a device is not
 caught: React Native's promise implementation does not surface those the way a browser
 does, and the ways to hook it are internal to the runtime and change between versions.

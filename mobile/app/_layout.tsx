@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
@@ -20,6 +20,11 @@ import type { ErrorBoundaryProps } from 'expo-router';
  * `retry` is expo-router's: it remounts the subtree, which is the right offer because
  * most of what lands here is one screen's load rather than a broken app.
  *
+ * It is not the only offer, and that took looking at it to notice. This boundary is at
+ * the root layout, so it replaces the navigation along with the screen — where the web's
+ * sits inside the tab bar and leaves it standing. A screen that throws every time makes
+ * "Try again" a loop with no way out of it, so there is a way home as well.
+ *
  * What this does *not* cover, said plainly rather than left to look handled: an
  * unhandled promise rejection on a device. React Native's promise implementation does
  * not surface those the way a browser's `unhandledrejection` does, and the ways to hook
@@ -37,6 +42,13 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       </Text>
       <Pressable style={styles.retry} accessibilityRole="button" onPress={() => void retry()}>
         <Text style={styles.retryText}>Try again</Text>
+      </Pressable>
+      <Pressable
+        style={styles.retryQuiet}
+        accessibilityRole="button"
+        onPress={() => router.replace('/')}
+      >
+        <Text style={styles.retryQuietText}>Go to Up Next</Text>
       </Pressable>
     </View>
   );
@@ -132,6 +144,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   retryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
+  retryQuiet: {
+    marginTop: 10,
+    backgroundColor: theme.surface2,
+    borderRadius: 999,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  retryQuietText: { color: theme.text, fontWeight: '600', fontSize: 15 },
   centre: {
     flex: 1,
     alignItems: 'center',
