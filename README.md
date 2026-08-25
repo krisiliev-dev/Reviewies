@@ -191,6 +191,14 @@ checking. Asserting only the credential-free answer is what they used to do, and
 `vite.config.ts` reads `.env` from the repository root, an ordinary build took the other
 branch and the run failed against a perfectly correct app.
 
+The live Supabase suite makes and unmakes its own user through the admin API, so it
+needs `SB_SECRET` and skips without one. It cannot be replaced by signing up through the
+public endpoint: the project rejects obviously-disposable addresses, and an account
+created that way could not be cleaned up afterwards. What does not need credentials is
+`sync/columnMap.test.ts`, which checks the adapter's column mapping against the
+migration SQL — a column missing from that mapping is not an error anywhere, the field
+just never leaves the device, and a second device is the only place it shows.
+
 Row-level security is tested against real Postgres via PGlite, running the deployable
 migration SQL as an unprivileged role — Postgres bypasses RLS for superusers and table
 owners, so testing as the owner would make every assertion pass vacuously.

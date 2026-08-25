@@ -15,8 +15,14 @@ import { type Change, type PullResult, type SyncBackend, SyncError, type SyncTab
  * real project to confirm.
  */
 
-/** Local camelCase to the database's snake_case, per table. */
-const COLUMN_MAP: Record<SyncTable, Record<string, string>> = {
+/**
+ * Local camelCase to the database's snake_case, per table.
+ *
+ * Exported for one test, which checks it against the migration SQL. A column missing
+ * from here is not an error anywhere — `toRemote` skips what it does not know — so the
+ * field simply never leaves the device, and the only place that shows is a second one.
+ */
+export const COLUMN_MAP: Record<SyncTable, Record<string, string>> = {
   watches: {
     id: 'id',
     targetId: 'target_id',
@@ -41,7 +47,7 @@ const COLUMN_MAP: Record<SyncTable, Record<string, string>> = {
 /** Columns holding epoch milliseconds locally and timestamptz remotely. */
 const TIMESTAMP_COLUMNS = new Set(['watched_at', 'rated_at', 'added_at', 'created_at']);
 
-function toRemote(table: SyncTable, row: Record<string, unknown>): Record<string, unknown> {
+export function toRemote(table: SyncTable, row: Record<string, unknown>): Record<string, unknown> {
   const map = COLUMN_MAP[table];
   const out: Record<string, unknown> = {};
 
@@ -56,7 +62,7 @@ function toRemote(table: SyncTable, row: Record<string, unknown>): Record<string
   return out;
 }
 
-function fromRemote(table: SyncTable, row: Record<string, unknown>): Record<string, unknown> {
+export function fromRemote(table: SyncTable, row: Record<string, unknown>): Record<string, unknown> {
   const map = COLUMN_MAP[table];
   const out: Record<string, unknown> = {};
 

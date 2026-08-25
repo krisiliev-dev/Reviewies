@@ -117,6 +117,101 @@ live('Supabase sync adapter (live)', () => {
     expect(found?.deleted).toBe(true);
   }, 30_000);
 
+  /**
+   * Every table, not just the two that happened to be covered.
+   *
+   * `library` had never been pushed by the app at all — nothing that changed a library
+   * row queued until recently — so its columns, its policy and the adapter's mapping for
+   * it were entirely unproven against the real thing. `ratings` and `reactions` were
+   * only ever exercised locally. A column silently dropped in the mapping looks like
+   * nothing at all on one device.
+   */
+  it.each([
+    [
+      'library',
+      () => ({
+        titleId: `tmdb:tv:${crypto.randomUUID().slice(0, 8)}`,
+        kind: 'show',
+        status: 'watching',
+        // The two fields most likely to be missing from a mapping: one optional, one
+        // constrained by a check the database will enforce and nothing local will.
+        posterOverride: 'https://example.test/p.jpg',
+        ordering: 'absolute',
+        addedAt: Date.now(),
+      }),
+      'titleId',
+    ],
+    [
+      'ratings',
+      () => ({
+        targetId: `tmdb:tv:${crypto.randomUUID().slice(0, 8)}`,
+        value: 4.5,
+        ratedAt: Date.now(),
+      }),
+      'targetId',
+    ],
+    [
+      'reactions',
+      () => ({
+        id: crypto.randomUUID(),
+        targetId: `tmdb:ep:${crypto.randomUUID().slice(0, 8)}`,
+        tMs: 61_000,
+        emoji: '😂',
+        createdAt: Date.now(),
+      }),
+      'id',
+    ],
+    [
+      'watchlist',
+      () => ({
+        titleId: `tmdb:tv:${crypto.randomUUID().slice(0, 8)}`,
+        kind: 'film',
+        // Absent on purpose: an optional column has to survive being omitted as well as
+        // being present.
+        addedAt: Date.now(),
+      }),
+      'titleId',
+    ],
+    [
+      'watches',
+      () => ({
+        id: crypto.randomUUID(),
+        targetId: `tmdb:movie:${crypto.randomUUID().slice(0, 8)}`,
+        // No seriesId: a film has none, and a mapping that assumes one would fail here
+        // and nowhere else.
+        watchedAt: Date.now(),
+        source: 'import',
+      }),
+      'id',
+    ],
+  ] as const)('round-trips a %s row, then retires it', async (table, make, key) => {
+    const row = make() as Record<string, unknown>;
+    const pk = String(row[key]);
+
+    await backend.push([{ pk, table, row, updatedAt: Date.now(), deleted: false }]);
+
+    const { changes } = await backend.pull(0);
+    const found = changes.find((c) => c.table === table && c.row[key] === row[key]);
+    expect(found, `${table} did not come back`).toBeDefined();
+
+    // Every field that went in comes back. Not a subset — a mapping that drops a column
+    // is invisible locally and permanent once somebody has relied on it.
+    for (const [field, value] of Object.entries(row)) {
+      if (typeof value === 'number' && field.endsWith('At')) {
+        expect(Math.abs((found!.row[field] as number) - value), field).toBeLessThan(1000);
+      } else {
+        expect(found!.row[field], `${table}.${field}`).toEqual(value);
+      }
+    }
+
+    // And a delete sticks rather than the row returning on the next pull.
+    await backend.push([{ pk, table, row, updatedAt: Date.now() + 1, deleted: true }]);
+    const after = await backend.pull(0);
+    expect(after.changes.find((c) => c.table === table && c.row[key] === row[key])?.deleted).toBe(
+      true,
+    );
+  }, 45_000);
+
   it('refuses to push when not signed in, without retrying forever', async () => {
     const other = crypto.randomUUID();
     // persistSession:false matters — otherwise this client picks up the session
