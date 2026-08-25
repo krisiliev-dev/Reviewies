@@ -19,6 +19,7 @@ import { useLive } from '../../src/useLive';
  * opened, not by how interesting it is to build.
  */
 const LINKS = [
+  { href: '/remote', label: 'Remote', detail: 'Control a TV on your Wi-Fi, directly' },
   { href: '/stats', label: 'Stats', detail: 'Runtime-weighted, and your year in review' },
   { href: '/data', label: 'Your data', detail: 'Import from TV Time, export everything' },
 ] as const;

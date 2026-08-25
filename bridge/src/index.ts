@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
-import { RokuAdapter } from './roku';
+import { RokuAdapter } from '@reviewies/core/devices/roku';
 import { MprisAdapter } from './mpris';
 import { gdbusMprisTransport, nodeRokuTransport } from './transports';
 import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, type BridgeMessage } from './protocol';
-import type { Device, DeviceAdapter } from './types';
+import type { Device, DeviceAdapter } from '@reviewies/core/devices/types';
 
 /**
  * Reviewies bridge.

@@ -88,6 +88,21 @@ try {
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
+  // --- The remote ------------------------------------------------------------
+  // This is what going native bought: the same feature on the web needed a companion
+  // process dialling out to a relay, because a page cannot reach a LAN address.
+  await page.getByText('Control a TV on your Wi-Fi, directly').click();
+  await page.waitForTimeout(1500);
+  const remote = await text();
+  check('the remote opens with its buttons', /Scan Wi-Fi/.test(remote) && /Home/.test(remote), remote.slice(0, 110));
+  check(
+    'it says plainly that nothing is paired yet',
+    /No device yet/.test(remote),
+  );
+  await page.screenshot({ path: OUT + '10-remote.png' });
+  await page.goBack();
+  await page.waitForTimeout(1000);
+
   // --- Stats -----------------------------------------------------------------
   await page.getByText('Runtime-weighted, and your year in review').click();
   await page.waitForTimeout(2000);

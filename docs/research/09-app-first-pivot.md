@@ -189,3 +189,28 @@ Two things worth recording because they were the parts that actually bit:
   roughly 350 lines of React Native against 3,700 lines of web UI still to port. The
   logic behind them — `getUpNext`, `markWatched`, the metadata cache, the ID scheme —
   was imported, not rewritten.
+
+### 6.1 §1.1 is done, and it cost less than the workaround it replaces
+
+The app talks to a Roku directly. The Roku adapter moved into the core unchanged — it
+was already written against a transport interface — so the bridge and the app now run
+one implementation rather than two.
+
+The part that needed thought was discovery. SSDP is a UDP multicast, which needs a raw
+socket, which needs a native module, which needs a custom development build: the
+feature would not work in Expo Go and would not work on the web at all. But ECP is
+plain HTTP on port 8060, so instead of asking the network who is there, the app asks
+every address on it. A /24 is 254 probes that either answer in milliseconds or fail on
+connect.
+
+That is not strictly better than SSDP and the code says so: it only handles /24
+subnets, it finds devices that answer on a known port rather than devices that
+announce themselves, and it puts 254 connection attempts in a router's log. What it
+buys is that it works today, with no native module, using the adapter that already
+existed.
+
+The relay is not deleted. It still earns its place for controlling a **laptop**, where
+MPRIS is a D-Bus interface with no network protocol at all — there is nothing for an
+app to connect to, with or without an entitlement. What has changed is that it is no
+longer the only way to reach a television, which was the thing that made it feel like
+an apology for the platform.

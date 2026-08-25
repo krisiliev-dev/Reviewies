@@ -1,4 +1,4 @@
-import type { Command, Device, Playback } from './types';
+import type { Command, Device, Playback } from '@reviewies/core/devices/types';
 
 /**
  * Wire protocol between the app and the bridge.

@@ -19,7 +19,7 @@ Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser.
 ```bash
 npx expo export --platform web
 npx serve dist -p 4200 &
-node smoke.mjs         # 19 checks against a real SQLite database
+node smoke.mjs         # 21 checks against a real SQLite database
 ```
 
 This drives the app through react-native-web. It cannot see haptics, the local-network
@@ -58,6 +58,11 @@ for a phone: iOS collapses a tab bar past five, and simplicity was the loudest s
 finding in the research. The four things done daily get a tab; everything else is one
 level down under More.
 
-Still to come, in doc 9 §5's order: direct device control — the thing going native
-actually unlocks — then a background audio session for fingerprinting, then the social
-screens.
+**The remote** talks to a Roku directly over the Wi-Fi, which is the clearest thing
+going native bought: the same feature on the web needed a companion process on your
+machine dialling out to a relay we host. Discovery probes the subnet over HTTP rather
+than using SSDP, so it needs no native module and works in Expo Go — see
+`core/src/devices/scan.ts` for what that trades away.
+
+Still to come, in doc 9 §5's order: a background audio session for fingerprinting,
+then the social screens.

@@ -1,4 +1,4 @@
-import type { Command, Device, DeviceAdapter, Playback } from './types';
+import type { Command, Device, DeviceAdapter, Playback } from '@reviewies/core/devices/types';
 
 /**
  * The local machine, via the OS media transport API.

@@ -21,8 +21,8 @@ lives in IndexedDB.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built.
-**Nothing is deliberately skipped.** 397 core tests (run twice, against both database
-implementations), 142 app tests, 43 bridge tests and 19 relay tests
+**Nothing is deliberately skipped.** 434 core tests (run twice, against both database
+implementations), 142 app tests, 24 bridge tests and 19 relay tests
 pass, including live tests against a real Supabase project and the real TMDB API;
 49 browser checks cover the full flow.
 
@@ -46,7 +46,8 @@ pass, including live tests against a real Supabase project and the real TMDB API
 | Browser extension + automatic Watching Mode sync | ✅ Built (site selectors unverified) |
 | Anime season correction via AniList | ✅ Verified live |
 | Push notification delivery | ✅ Deployed and verified |
-| Local bridge (Roku ECP, desktop MPRIS) | ✅ Built, not verified on hardware |
+| Direct TV control from the app (Roku ECP over the LAN) | ✅ Built, not verified on hardware |
+| Local bridge for a laptop (MPRIS) | ✅ Built, not verified on hardware |
 | Remote drawer + relay server | ✅ Built, relay verified end to end |
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
 | Half-star ratings, poster overrides | ✅ Built |
@@ -158,6 +159,7 @@ core/                   @reviewies/core — no DOM, no React, no platform assump
 mobile/                 The iOS and Android app (Expo)
   app/(tabs)/           Up Next, Search, Discover, Watchlist, More
   app/watching/         Watching Mode
+  app/remote.tsx        Direct device control over the LAN
   src/platform.ts       The only file that knows it is a phone
 app/                    The web app
   src/data/             Dexie adapter and the platform bindings
@@ -166,7 +168,7 @@ app/                    The web app
   src/remote/           Remote drawer and bridge connection
   src/fingerprint/      Microphone capture
 extension/              Browser extension (MV3)
-bridge/                 Local companion for device control (Roku ECP, MPRIS)
+bridge/                 Local companion for controlling a laptop (MPRIS over D-Bus)
 relay/                  WebSocket relay pairing the app to a bridge
 supabase/               Schema, RLS policies, edge functions
 scripts/                Migration and function deployment
