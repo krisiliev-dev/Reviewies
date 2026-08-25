@@ -59,6 +59,42 @@ const text = async () => (await page.locator('body').innerText()).replace(/\s+/g
  *
  * Not a substitute for a device. It is a substitute for nothing, which is what was here.
  */
+/**
+ * Nothing parked outside the screen that the screen can be scrolled to.
+ *
+ * §6.38 found the closed remote drawer this way, by following a number rather than a
+ * failing control: 300 wide, absolute, parked at `translateX(300)` while shut, with
+ * nothing clipping it — so the page measured 690 in a 390 viewport and could be dragged
+ * sideways to reveal a drawer that is supposed to be closed. True at any text size and
+ * true since the drawer shipped.
+ *
+ * A cold load does not reproduce it, which is why this lives in the suite rather than a
+ * standalone probe: the fault needs the overlay *mounted and closed*, and that is a
+ * state you arrive at by using the app — a probe over cold URLs found nothing on either
+ * platform.
+ *
+ * Both axes, and the vertical half was checked rather than assumed: an element parked at
+ * `top: 2000px` inside the app's own scroll container takes `documentElement.scrollHeight`
+ * from 844 to 2300, because an absolutely-positioned thing resolves against the nearest
+ * *positioned* ancestor and the scroll container is not one. Which is the same escape the
+ * drawer made sideways. If a future container does position itself, its overflow rule
+ * clips the ghost and there is nothing left to catch.
+ */
+async function noGhosts(screen) {
+  const m = await page.evaluate(() => ({
+    w: document.documentElement.scrollWidth,
+    h: document.documentElement.scrollHeight,
+    vw: innerWidth,
+    vh: innerHeight,
+  }));
+
+  check(
+    `${screen}: nothing parked off screen to scroll to`,
+    m.w <= m.vw + 1 && m.h <= m.vh + 1,
+    `${m.w}x${m.h} in ${m.vw}x${m.vh}`,
+  );
+}
+
 async function scaled(screen) {
   const applied = await page.evaluate(() => {
     let count = 0;
@@ -207,6 +243,7 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 15000 });
   check('search returns results', true);
   await audit('Search', 6);
+  await noGhosts('Search');
   await scaled('Search');
   await page.screenshot({ path: OUT + '2-search.png' });
 
@@ -223,6 +260,7 @@ try {
   const before = Number(first.match(/(\d+) more episodes/)?.[1]);
   check('shows a remaining count, not a vague badge', Number.isFinite(before), String(before));
   await audit('Up Next', 4);
+  await noGhosts('Up Next');
   await scaled('Up Next');
   await page.screenshot({ path: OUT + '3-upnext.png' });
 
@@ -283,6 +321,7 @@ try {
     // Six is the tab bar alone, so anything at or below that means the screen's own
     // controls did not declare themselves.
     await audit(`the ${tab} tab`, 7);
+    await noGhosts(`the ${tab} tab`);
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
@@ -365,6 +404,7 @@ try {
     /No device yet/.test(remote),
   );
   await audit('the remote', 12);
+  await noGhosts('the remote');
   await scaled('the remote');
   await page.screenshot({ path: OUT + '10-remote.png' });
   await page.goBack();
@@ -376,6 +416,7 @@ try {
   const stats = await text();
   check('stats are runtime-weighted', /Watched/.test(stats) && /Episodes/.test(stats), stats.slice(0, 110));
   await audit('Stats', 4);
+  await noGhosts('Stats');
   await scaled('Stats');
   await page.screenshot({ path: OUT + '7-stats.png' });
   await page.goBack();
@@ -409,6 +450,7 @@ try {
   // Eighteen episodes, each with React, Talk and Mark; plus the stars, the poster
   // override, where-to-watch and the content warnings.
   await audit('the title page', 30);
+  await noGhosts('the title page');
   await scaled('the title page');
 
   await page.screenshot({ path: OUT + '5-title.png' });
@@ -428,6 +470,7 @@ try {
     !/Episode \d/.test(sheet.split('How far have you got?')[1] ?? ''),
   );
   await audit('the catch-up sheet', 3);
+  await noGhosts('the catch-up sheet');
   await scaled('the catch-up sheet');
 
   // Two seasons in the fixture, so the season comes first — one season would skip
@@ -569,6 +612,7 @@ try {
   // its caption announces the name twice over with two different words for it — these
   // carry one name each, and it is the word a person would say.
   await audit('Watching Mode', 26);
+  await noGhosts('Watching Mode');
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
 
@@ -593,6 +637,7 @@ try {
     check(`the remote's ${name} key is named`, (await page.getByLabel(name).count()) > 0);
   }
   await audit('the remote drawer', 25);
+  await noGhosts('the remote drawer');
   await scaled('the remote drawer');
 
   await page.getByLabel('Close remote').click();
@@ -629,6 +674,7 @@ try {
   // Gated like Lists and People: without an account this is the explanation and a way
   // back, and nothing else.
   await audit('comments', 1);
+  await noGhosts('comments');
   await page.screenshot({ path: OUT + '11-comments.png' });
   await page.goBack();
   await page.waitForTimeout(1000);

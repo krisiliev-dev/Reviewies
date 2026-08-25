@@ -113,6 +113,42 @@ async function viaMore(name) {
   await page.getByRole('link', { name }).click();
 }
 
+/**
+ * Nothing parked outside the screen that the screen can be scrolled to.
+ *
+ * §6.38 found the closed remote drawer this way, by following a number rather than a
+ * failing control: 300 wide, absolute, parked at `translateX(300)` while shut, with
+ * nothing clipping it — so the page measured 690 in a 390 viewport and could be dragged
+ * sideways to reveal a drawer that is supposed to be closed. True at any text size and
+ * true since the drawer shipped.
+ *
+ * A cold load does not reproduce it, which is why this lives in the suite rather than a
+ * standalone probe: the fault needs the overlay *mounted and closed*, and that is a
+ * state you arrive at by using the app — a probe over cold URLs found nothing on either
+ * platform.
+ *
+ * Both axes, and the vertical half was checked rather than assumed: an element parked at
+ * `top: 2000px` inside the app's own scroll container takes `documentElement.scrollHeight`
+ * from 844 to 2300, because an absolutely-positioned thing resolves against the nearest
+ * *positioned* ancestor and the scroll container is not one. Which is the same escape the
+ * drawer made sideways. If a future container does position itself, its overflow rule
+ * clips the ghost and there is nothing left to catch.
+ */
+async function noGhosts(screen) {
+  const m = await page.evaluate(() => ({
+    w: document.documentElement.scrollWidth,
+    h: document.documentElement.scrollHeight,
+    vw: innerWidth,
+    vh: innerHeight,
+  }));
+
+  check(
+    `${screen}: nothing parked off screen to scroll to`,
+    m.w <= m.vw + 1 && m.h <= m.vh + 1,
+    `${m.w}x${m.h} in ${m.vw}x${m.vh}`,
+  );
+}
+
 async function audit(screen, atLeast) {
   const found = await page.evaluate(() => {
     const ROLES = ['button', 'link', 'radio', 'checkbox', 'switch', 'tab', 'menuitem'];
@@ -313,6 +349,7 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   check('search returns results', true);
   await audit('Search', 8);
+  await noGhosts('Search');
   await scaled('Search');
   await page.screenshot({ path: OUT + '02-search.png' });
 
@@ -331,6 +368,7 @@ try {
   const remainingText = await page.locator('text=/more episodes/').first().textContent();
   check('shows a remaining count, not a vague badge', /\d+ more episodes/.test(remainingText ?? ''), remainingText?.trim());
   await audit('Up Next', 10);
+  await noGhosts('Up Next');
   await scaled('Up Next');
   await page.screenshot({ path: OUT + '03-upnext.png' });
 
@@ -468,6 +506,7 @@ try {
   // is aria-hidden and the caption is the whole name, so each of these announces once,
   // as a word a person would say rather than as a Unicode description.
   await audit('Watching Mode', 23);
+  await noGhosts('Watching Mode');
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
@@ -532,6 +571,7 @@ try {
     noteShown ? '' : (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 200),
   );
   await audit('Watchlist', 9);
+  await noGhosts('Watchlist');
   await scaled('Watchlist');
   await page.screenshot({ path: OUT + '06-watchlist.png' });
 
@@ -560,6 +600,7 @@ try {
     sheet.replace(/\s+/g, ' ').slice(0, 140),
   );
   await audit('the catch-up sheet', 4);
+  await noGhosts('the catch-up sheet');
   await scaled('the catch-up sheet');
   await page.screenshot({ path: OUT + '15-catchup.png' });
 
@@ -660,6 +701,7 @@ try {
   check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
   check('milestones is the default', /The moments worth knowing about/.test(upcomingText));
   await audit('Upcoming', 9);
+  await noGhosts('Upcoming');
   await scaled('Upcoming');
   await page.screenshot({ path: OUT + '10-upcoming.png' });
 
@@ -681,6 +723,7 @@ try {
     /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),
   );
   await audit('Discover', 9);
+  await noGhosts('Discover');
   await scaled('Discover');
   await page.screenshot({ path: OUT + '09-discover.png' });
 
@@ -691,6 +734,7 @@ try {
   check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
   await audit('Stats', 9);
+  await noGhosts('Stats');
   await scaled('Stats');
   await page.screenshot({ path: OUT + '08-stats.png' });
 
@@ -747,6 +791,7 @@ try {
   );
   // Eighteen episodes, each with React, Talk and Mark, plus the stars and the rest.
   await audit('the title page', 30);
+  await noGhosts('the title page');
   await scaled('the title page');
   await page.screenshot({ path: OUT + '13-title.png' });
 
@@ -765,6 +810,7 @@ try {
     peopleText.slice(0, 140),
   );
   await audit('People', 6);
+  await noGhosts('People');
   await scaled('People');
   await page.screenshot({ path: OUT + '14-people.png' });
   await page.goBack();

@@ -1767,6 +1767,34 @@ Both fixed, both verified by putting the fault back and watching the check go re
 drawer's own contents are now scaled too — clipping the page hides them from the page
 measurement, which would have left the thing behind the clip untested.
 
+### 6.39 Looking for the rest of the ghosts, and finding none
+
+§6.38's parked drawer was worth treating as a pattern rather than a one-off, because the
+phone has several things positioned off-screen on purpose and each is fine while clipped
+and a scrollable ghost while not.
+
+The first attempt found nothing, and the reason is the useful part. A probe over cold URLs
+— every screen on both platforms, both axes — came back clean everywhere. The fault needs
+the overlay *mounted and closed*, and on a cold load the drawer does not render at all.
+A check that cannot reach the state the bug lives in is a check that passes.
+
+So it went into both suites instead, at every point they already audit a screen: twelve
+screens on the phone, ten on the web, in whatever state the suite has walked itself into.
+That is where the drawer showed. Everything passes — the phone because §6.38 fixed the one
+it had, the web because it genuinely has none, which is now measured rather than reasoned
+from `inert` and a couple of overflow containers.
+
+The guard was proved by putting the drawer's fault back: 690x844 in 390x844, red on the
+screen that had it and nowhere else.
+
+One thing checked rather than assumed, because the phrasing would have implied cover it
+might not have: the vertical half. An element parked at `top: 2000px` inside the app's own
+scroll container takes `documentElement.scrollHeight` from 844 to 2300 — an absolutely
+positioned thing resolves against the nearest *positioned* ancestor, and the scroll
+container is not one, so it escapes to the document exactly as the drawer escaped
+sideways. The check sees it. Had it not, "both axes" would have been a sentence doing more
+work than the code behind it.
+
 ---
 
 ## 7. What is still not known
