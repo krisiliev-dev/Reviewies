@@ -33,6 +33,38 @@ beforeEach(async () => {
   await Promise.all([db.watches.clear(), db.watchlist.clear(), db.ratings.clear()]);
 });
 
+describe('a queue larger than one batch', () => {
+  /**
+   * The flagship flow for this app is rescuing a TV Time library, which writes
+   * thousands of watch events in one go. Every test here used a handful of rows, so the
+   * batch limit was never reached and one-batch-per-sync looked like draining the queue.
+   */
+  it('drains the whole outbox rather than one batch per sync', async () => {
+    for (let i = 0; i < 45; i++) await enqueue('watches', watch(`w${i}`, 1000 + i));
+    expect(await pendingCount()).toBe(45);
+
+    const result = await syncOnce(backend, 10);
+
+    expect(await pendingCount()).toBe(0);
+    expect(result.pushed).toBe(45);
+    expect(backend.snapshot()).toHaveLength(45);
+    // Five batches of ten, so the loop ran rather than one oversized request.
+    expect(backend.pushCount).toBe(5);
+  });
+
+  it('leaves the rest queued when a batch fails, and does not spin', async () => {
+    for (let i = 0; i < 30; i++) await enqueue('watches', watch(`w${i}`, 1000 + i));
+    backend.failNextPush = new SyncError('offline', true);
+
+    const result = await syncOnce(backend, 10);
+
+    expect(result.error).toBe('offline');
+    // The failing batch stops the run; nothing after it is attempted this time.
+    expect(backend.pushCount).toBe(1);
+    expect(await pendingCount()).toBe(30);
+  });
+});
+
 describe('local writes never depend on the network', () => {
   it('queues a change without contacting the server', async () => {
     await enqueue('watches', watch('a'));

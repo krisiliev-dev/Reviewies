@@ -55,7 +55,26 @@ export function windowEnd(window: Window, now: number, year?: number): number {
   return Infinity;
 }
 
-const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+/**
+ * Which day, in the viewer's own calendar, a moment belongs to.
+ *
+ * Local rather than UTC, and the distinction is the whole point. Everything around this
+ * already works in local time — `windowStart` builds January the first with
+ * `new Date(year, 0, 1)`, and the year list reads `getFullYear()` — so a UTC day key
+ * disagreed with its own neighbours. West of Greenwich that is not an edge case but the
+ * normal evening: 8pm in New York is already tomorrow in UTC, so every evening's
+ * viewing was filed under the following day. Two episodes watched Monday evening and
+ * Tuesday morning collapsed onto one day and a two-day streak read as one, and an
+ * episode watched on New Year's Eve was dated to a year the Year in Review did not put
+ * it in.
+ *
+ * Invisible to every test here because the runner's clock is UTC, where the two agree.
+ */
+const dayKey = (ms: number) => {
+  const date = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
 
 export function summarise(
   events: WatchEvent[],

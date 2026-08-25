@@ -77,12 +77,34 @@ const PK_COLUMN: Record<SyncTable, string[]> = {
   library: ['user_id', 'title_id'],
 };
 
+/** How many rows one pull asks each table for. Exposed so tests can reach the boundary. */
+export const DEFAULT_PAGE_SIZE = 1000;
+
+/**
+ * A ceiling on requests per table, so a server that never returns a short page cannot
+ * spin forever. Reaching it raises rather than truncating: silently returning part of
+ * someone's history is the failure this whole paging scheme exists to prevent.
+ */
+const MAX_PAGES = 1000;
+
+/**
+ * The column that breaks ties between rows sharing a timestamp.
+ *
+ * `user_id` is dropped because every row in a pull already belongs to one user, so it
+ * is constant and orders nothing.
+ */
+function tieBreaker(table: SyncTable): string {
+  return PK_COLUMN[table].filter((column) => column !== 'user_id')[0];
+}
+
 export class SupabaseBackend implements SyncBackend {
   readonly name = 'supabase';
   private readonly client: SupabaseClient;
+  private readonly pageSize: number;
 
-  constructor(client: SupabaseClient) {
+  constructor(client: SupabaseClient, options: { pageSize?: number } = {}) {
     this.client = client;
+    this.pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   }
 
   static fromEnv(): SupabaseBackend | undefined {
@@ -127,36 +149,85 @@ export class SupabaseBackend implements SyncBackend {
     }
   }
 
+  /**
+   * Fetch everything changed since `cursor`, draining every table completely.
+   *
+   * Draining matters, and one page per table used to be the whole of it. The returned
+   * cursor is the newest timestamp seen *anywhere*, so a table that filled its page
+   * while another table happened to hold a later row had the cursor stepped straight
+   * over its remainder — gone, silently, permanently. Rescuing a TV Time library writes
+   * thousands of watches at once, so "one table with far more than a page of changes"
+   * is the ordinary first sync for exactly the person this app was built for.
+   *
+   * Paging is by keyset — the last row's `(updated_at, id)` — rather than by offset or
+   * by timestamp alone. Postgres stamps every row written in one transaction with the
+   * same `now()`, so a bulk import gives thousands of rows an identical `updated_at`. A
+   * cursor that is only a timestamp cannot say where inside that group it stopped:
+   * `gt` loses the rest of the group and `gte` never advances past it.
+   *
+   * The external cursor stays a single timestamp, which is safe only because every
+   * table is fully drained before it moves. It does mean a first sync after a large
+   * import assembles the whole backlog in memory — the same data the local import
+   * already held, so it is affordable, but it is a real cost and not an oversight.
+   */
   async pull(cursor: number): Promise<PullResult> {
     const since = new Date(cursor).toISOString();
     const changes: Change[] = [];
     let newest = cursor;
 
     for (const table of Object.keys(COLUMN_MAP) as SyncTable[]) {
-      const { data, error } = await this.client
-        .from(table)
-        .select('*')
-        .gt('updated_at', since)
-        .order('updated_at', { ascending: true })
-        .limit(1000);
+      const tie = tieBreaker(table);
+      let lastAt = since;
+      let lastTie: string | undefined;
 
-      if (error) throw classify(error);
+      for (let page = 0; ; page++) {
+        if (page >= MAX_PAGES) {
+          throw new SyncError(`Too many pages of ${table} to pull in one go`, true);
+        }
 
-      for (const row of data ?? []) {
-        const record = row as Record<string, unknown>;
-        const updatedAt = Date.parse(String(record.updated_at));
-        newest = Math.max(newest, updatedAt);
+        const filtered =
+          lastTie === undefined
+            ? this.client.from(table).select('*').gt('updated_at', lastAt)
+            : this.client
+                .from(table)
+                .select('*')
+                // Everything strictly later, plus the remainder of the timestamp we
+                // stopped inside. Quoted because an id is arbitrary text and a bare
+                // comma would be read as another filter.
+                .or(
+                  `updated_at.gt.${lastAt},and(updated_at.eq.${lastAt},${tie}.gt."${lastTie}")`,
+                );
 
-        changes.push({
-          table,
-          pk: PK_COLUMN[table]
-            .filter((c) => c !== 'user_id')
-            .map((c) => String(record[c]))
-            .join('|'),
-          row: fromRemote(table, record),
-          updatedAt,
-          deleted: Boolean(record.deleted),
-        });
+        const { data, error } = await filtered
+          .order('updated_at', { ascending: true })
+          .order(tie, { ascending: true })
+          .limit(this.pageSize);
+
+        if (error) throw classify(error);
+        const rows = (data ?? []) as Record<string, unknown>[];
+
+        for (const record of rows) {
+          const updatedAt = Date.parse(String(record.updated_at));
+          newest = Math.max(newest, updatedAt);
+
+          changes.push({
+            table,
+            pk: PK_COLUMN[table]
+              .filter((c) => c !== 'user_id')
+              .map((c) => String(record[c]))
+              .join('|'),
+            row: fromRemote(table, record),
+            updatedAt,
+            deleted: Boolean(record.deleted),
+          });
+        }
+
+        // A short page means the table is caught up. Anything else and there is more.
+        if (rows.length < this.pageSize) break;
+
+        const last = rows[rows.length - 1];
+        lastAt = String(last.updated_at);
+        lastTie = String(last[tie]);
       }
     }
 

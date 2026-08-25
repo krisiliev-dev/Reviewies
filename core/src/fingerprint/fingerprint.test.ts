@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FFT_SIZE,
   buildReference,
   deserialiseReference,
   estimateBytes,
@@ -20,7 +21,14 @@ import {
  * phone microphone in a room actually does to it.
  */
 function makeSpectrogram(frameCount: number, seed = 1): Float32Array[] {
-  const bins = 128;
+  // The real number of bins a 2048-point FFT produces, not a convenient small one.
+  //
+  // This used to be 128, which was faster and hid a bug for months: `packHash` shifts
+  // the first bin left by 22 places, so the packed value only goes negative once a bin
+  // reaches 512 — and a 128-bin fixture can never get there. Every landmark above about
+  // 5.5kHz was being lost crossing the wire format, and no test could see it, because
+  // no test produced one.
+  const bins = FFT_SIZE / 2;
   let state = seed;
   const rand = () => {
     // Deterministic LCG — no Math.random, so failures reproduce.

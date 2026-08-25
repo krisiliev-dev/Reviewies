@@ -409,3 +409,60 @@ imports with `sloppy-imports` set in `supabase/functions/deno.json`. If it does 
 fallback is explicit `.ts` extensions across the core rather than a second copy of the
 matcher on the server: a server and a client that disagree about what a fingerprint
 means is the failure this whole section is about.
+
+### 6.5 One pattern, four bugs: fixtures smaller than reality
+
+Three bugs in two days had shared a cause — a test fixture whose dimensions could not
+reach the values production produces — so the next sprint went looking for the pattern
+rather than for bugs. It found four more, three of them shipping.
+
+The method was mechanical: find every limit, batch size and dimension in production
+code, then check whether any test ever reaches it. Almost none did.
+
+**Pulling skipped data.** `pull` fetched one page per table and returned the newest
+timestamp seen *anywhere* as the next cursor. A table that filled its page while another
+table happened to hold a later row had the cursor stepped straight over its remainder —
+gone, silently, permanently. The page size is 1000 and no test had ever supplied more
+than a handful of rows, so the boundary that makes this possible was never crossed.
+
+It is not a corner case for this app in particular: rescuing a TV Time library writes
+thousands of watches at once, so "one table with far more than a page of changes" is the
+ordinary first sync for exactly the person the product is for.
+
+**And could not get past a bulk import.** Postgres stamps every row written in one
+transaction with the same `now()`, so an import gives thousands of rows an identical
+`updated_at`. A cursor that is only a timestamp cannot say where inside that group it
+stopped: `gt` loses the rest of the group, `gte` never advances. Paging is now by keyset
+— the last row's `(updated_at, id)` — and every table is drained before the cursor moves.
+
+**Pushing sent one batch per sync.** `syncOnce` took 200 outbox entries and returned.
+The caller runs on a timer, so twenty thousand imported events needed a hundred timer
+ticks to reach the server. Nobody had queued more than a handful in a test, so one batch
+always looked like the whole queue. It now loops until the outbox is empty.
+
+**Stats were dated in the wrong timezone.** Day keys came from
+`toISOString().slice(0, 10)`, which is UTC, while everything around them worked in local
+time — `windowStart` builds January the first with `new Date(year, 0, 1)`, and the year
+list reads `getFullYear()`. West of Greenwich that is not an edge case, it is the normal
+evening: 8pm in New York is already tomorrow in UTC. Every evening's viewing was filed
+under the following day, an episode watched Monday evening and one watched Tuesday
+morning collapsed onto a single day so a two-day streak read as one, and an episode
+watched on New Year's Eve was dated to a year the Year in Review did not count it in.
+
+Invisible to every stats test, because the test runner's clock is UTC and in UTC the two
+agree. The new tests set `TZ` to `America/New_York`, and were checked against the old
+code to confirm they fail there — twice today a test written to catch something passed
+against the unfixed version, so that check is no longer optional.
+
+**Still open: reactions arrive as a prefix.** `fetchRemoteReactions` asks for reactions
+ordered by timestamp with a limit of 2000. On an episode with more than that, it returns
+the earliest 2000 — a flurry in the opening minutes and silence for the rest, on exactly
+the popular episodes where Watching Mode is worth using. The fix is a server-side sample
+spread across the timeline rather than a prefix of it, which is also the shape the UI's
+density control already wants. Recorded rather than rushed into this sprint.
+
+The generalisable lesson is not "test the boundaries" — everybody knows that. It is that
+a fixture gets sized for the assertion being written, and then silently defines the range
+the code is ever exercised over. 128 bins instead of 1024, three rows instead of a
+thousand, UTC instead of anywhere anyone lives: each was a reasonable local choice, and
+each one made a whole class of failure unreachable.

@@ -89,6 +89,9 @@ async function setCursor(value: number): Promise<void> {
   await meta().put({ key: 'cursor', value });
 }
 
+/** A ceiling on push batches per sync, so a pathological queue cannot spin forever. */
+const MAX_PUSH_BATCHES = 500;
+
 export interface SyncResult {
   pushed: number;
   pulled: number;
@@ -107,8 +110,21 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
   const result: SyncResult = { pushed: 0, pulled: 0, conflictsResolvedLocally: 0 };
 
   // --- Push ---------------------------------------------------------------
-  const batch = await outbox().orderBy('updatedAt').limit(batchSize).toArray();
-  if (batch.length > 0) {
+  //
+  // In batches, until the queue is empty. It used to send one batch per call, which
+  // was fine for a queue of a few edits and quietly awful for the flow this app was
+  // built around: rescuing a TV Time library writes thousands of watch events at once,
+  // and the caller runs a sync on a timer, so twenty thousand events at two hundred a
+  // go is a hundred timer ticks before someone's history reaches the server.
+  for (let batches = 0; ; batches++) {
+    // A ceiling, not a limit anyone should reach. An entry that is superseded while in
+    // flight is deliberately left in the queue, so a pathological write loop could keep
+    // finding work; stopping is better than spinning.
+    if (batches >= MAX_PUSH_BATCHES) break;
+
+    const batch = await outbox().orderBy('updatedAt').limit(batchSize).toArray();
+    if (batch.length === 0) break;
+
     const changes: Change[] = batch.map((e) => ({
       pk: e.pk,
       table: e.table,
@@ -117,6 +133,7 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
       deleted: e.deleted,
     }));
 
+    let cleared = 0;
     try {
       await backend.push(changes);
       // Only clear entries that have not been superseded while the request was in
@@ -126,10 +143,11 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
           const current = await outbox().get(entry.key);
           if (current && current.updatedAt === entry.updatedAt) {
             await outbox().delete(entry.key);
+            cleared++;
           }
         }
       });
-      result.pushed = batch.length;
+      result.pushed += batch.length;
     } catch (e) {
       const retryable = !(e instanceof SyncError) || e.retryable;
       await db.transaction('rw', outbox(), async () => {
@@ -145,6 +163,10 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
       result.error = e instanceof Error ? e.message : String(e);
       return result;
     }
+
+    // Nothing left the queue, so the next pass would fetch the same rows and send them
+    // again. Every entry in it was superseded mid-flight; they will go next time.
+    if (cleared === 0) break;
   }
 
   // --- Pull ---------------------------------------------------------------
