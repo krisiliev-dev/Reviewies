@@ -77,6 +77,28 @@ export async function enqueue(
   });
 }
 
+/**
+ * Queue a batch of rows the same way, for the paths that write in bulk.
+ *
+ * The importers and the matcher were writing straight to the tables, which is the one
+ * thing in this codebase that must never happen: every other write goes through
+ * `markWatched` or `rate`, which queue. A rescued history that never reaches the outbox
+ * exists on one device and no other, and matching was worse than that — it retired watch
+ * IDs locally while the server still held the old ones, so a pull could resurrect the
+ * pre-match state and split one history across two sets of IDs.
+ *
+ * Sequential rather than parallel: each call reads the existing row to avoid clobbering
+ * a newer write, and thousands of interleaved read-modify-writes against the same store
+ * is how that check stops being reliable.
+ */
+export async function enqueueAll(
+  table: SyncTable,
+  rows: Array<Record<string, unknown>>,
+  opts: { deleted?: boolean; updatedAt?: number } = {},
+): Promise<void> {
+  for (const row of rows) await enqueue(table, row, opts);
+}
+
 export async function pendingCount(): Promise<number> {
   return outbox().count();
 }

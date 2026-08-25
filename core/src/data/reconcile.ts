@@ -1,4 +1,5 @@
 import { db } from './db';
+import { enqueue } from '../sync/engine';
 import { provider } from '../metadata/index';
 import { getEpisodesCached, getTitleCached } from '../metadata/index';
 import type { SearchResult } from '../metadata/provider';
@@ -264,6 +265,7 @@ export async function acceptMatch(
     db.watchlist,
     db.titles,
     db.episodes,
+    db.outbox,
     async () => {
       for (const watch of watches) {
         const target = episodeMap.get(watch.targetId);
@@ -273,13 +275,18 @@ export async function acceptMatch(
         }
         // Deleted and re-added rather than updated: the ID encodes the target, and
         // leaving a stale one would break re-import's deduplication.
-        await db.watches.delete(watch.id);
-        await db.watches.put({
+        const moved = {
           ...watch,
           id: watch.id.replace(watch.targetId, target),
           targetId: target,
           seriesId: providerId,
-        });
+        };
+        await db.watches.delete(watch.id);
+        await db.watches.put(moved);
+        // Both halves replicate, or the server keeps the row under the ID this just
+        // retired and the next pull resurrects a history split across two sets of them.
+        await enqueue('watches', { id: watch.id }, { deleted: true });
+        await enqueue('watches', moved as unknown as Record<string, unknown>);
         report.watches++;
       }
 
@@ -289,23 +296,36 @@ export async function acceptMatch(
         if (!target) continue;
         // A rating already on the matched ID wins: it was made against the real show.
         if (!(await db.ratings.get(target))) {
-          await db.ratings.put({ ...rating, targetId: target });
+          const at = { ...rating, targetId: target };
+          await db.ratings.put(at);
+          await enqueue('ratings', at as unknown as Record<string, unknown>);
           report.ratings++;
         }
         await db.ratings.delete(rating.targetId);
+        await enqueue('ratings', { targetId: rating.targetId }, { deleted: true });
       }
 
       if (libraryRow) {
         const existing = await db.library.get(providerId);
         await db.library.delete(localId);
+        await enqueue('library', { titleId: localId }, { deleted: true });
         // Anything already tracked under the real ID is the deliberate row and wins.
-        if (!existing) await db.library.put({ ...libraryRow, titleId: providerId });
+        if (!existing) {
+          const at = { ...libraryRow, titleId: providerId };
+          await db.library.put(at);
+          await enqueue('library', at as unknown as Record<string, unknown>);
+        }
       }
 
       if (watchlistRow) {
         const existing = await db.watchlist.get(providerId);
         await db.watchlist.delete(localId);
-        if (!existing) await db.watchlist.put({ ...watchlistRow, titleId: providerId });
+        await enqueue('watchlist', { titleId: localId }, { deleted: true });
+        if (!existing) {
+          const at = { ...watchlistRow, titleId: providerId };
+          await db.watchlist.put(at);
+          await enqueue('watchlist', at as unknown as Record<string, unknown>);
+        }
       }
 
       // The placeholder episodes have served their purpose; the provider's list is

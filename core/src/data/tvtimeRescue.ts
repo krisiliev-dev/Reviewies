@@ -1,4 +1,5 @@
 import { db } from './db';
+import { enqueueAll } from '../sync/engine';
 import { makeId } from '../domain/types';
 import { parseCsv } from './transfer';
 import type {
@@ -342,6 +343,7 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
     db.library,
     db.titles,
     db.episodes,
+    db.outbox,
     async () => {
       if (watches.length) await db.watches.bulkPut(watches);
       if (watchlist.length) await db.watchlist.bulkPut(watchlist);
@@ -377,6 +379,20 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
         missingEpisodes.push(episode);
       }
       if (missingEpisodes.length) await db.episodes.bulkPut(missingEpisodes);
+
+      // Queued for upload, in the same transaction as the writes themselves. Without
+      // this a rescued history lived on one device and reached no other — every other
+      // write in the app goes through markWatched or rate, which queue; these did not.
+      //
+      // Titles and episodes are deliberately absent: they are a TTL'd cache of somebody
+      // else's data under TMDB's terms, and replicating them is not ours to do.
+      await enqueueAll('watches', watches as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('watchlist', watchlist as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('ratings', ratings as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('library', [
+        ...library,
+        ...missingLibrary,
+      ] as unknown as Array<Record<string, unknown>>);
     },
   );
 

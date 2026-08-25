@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../data/db';
 import { enqueue, pendingCount, resetSyncState, syncOnce } from './engine';
 import { MemoryBackend } from './memoryBackend';
+import { importRescueCsv } from '../data/tvtimeRescue';
 import { SyncError } from './types';
 
 /** The outbox lives in the main database now; see sync/engine.ts. */
@@ -30,7 +31,50 @@ let backend: MemoryBackend;
 beforeEach(async () => {
   backend = new MemoryBackend();
   await resetSyncState();
-  await Promise.all([db.watches.clear(), db.watchlist.clear(), db.ratings.clear()]);
+  await Promise.all([
+    db.watches.clear(),
+    db.watchlist.clear(),
+    db.ratings.clear(),
+    db.library.clear(),
+    db.titles.clear(),
+    db.episodes.clear(),
+  ]);
+});
+
+/**
+ * A rescued library, all the way to the server.
+ *
+ * The flow this app is built around writes thousands of rows in one go, and until
+ * recently wrote them straight to the tables — so none of this reached the queue at all,
+ * and a rescued history lived on one device. Six thousand rows at two hundred a batch is
+ * thirty-two round trips, which is what the push loop was rewritten for; this is the
+ * test that says both halves hold together.
+ */
+describe('a rescued library reaching the server', () => {
+  it('drains in one sync rather than one batch', async () => {
+    const header =
+      'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id';
+    const rows: string[] = [];
+    for (let show = 0; show < 60; show++) {
+      for (let episode = 1; episode <= 20; episode++) {
+        rows.push(
+          `Show ${show},1,${episode},Ep,True,2026-01-05,1,2026-01-01,${900 + show},${show * 100 + episode}`,
+        );
+      }
+    }
+    await importRescueCsv([header, ...rows].join('\n'));
+
+    const queued = await pendingCount();
+    expect(queued).toBeGreaterThan(1000);
+
+    const result = await syncOnce(backend, 200);
+
+    expect(await pendingCount()).toBe(0);
+    expect(result.pushed).toBe(queued);
+    // The library rows travel with the watches. A history on the server that nothing is
+    // tracking would not appear in Up Next on a second device.
+    expect(backend.snapshot().filter((c) => c.table === 'library')).toHaveLength(60);
+  }, 60_000);
 });
 
 describe('a queue larger than one batch', () => {

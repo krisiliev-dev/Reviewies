@@ -1,5 +1,6 @@
 import { getSqlJsLoader, type SqlJsLoader } from './sqlWasm';
 import { db } from './db';
+import { enqueueAll } from '../sync/engine';
 import { applyWal } from './sqliteWal';
 import { parseDioCache, type DioLibrary } from './diocacheParse';
 import { tvtimeEpisodeId, tvtimeMovieId, tvtimeSeriesId } from './tvtimeRescue';
@@ -222,6 +223,7 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
     db.library,
     db.titles,
     db.episodes,
+    db.outbox,
     async () => {
       if (watches.length) await db.watches.bulkPut(watches);
       if (watchlist.length) await db.watchlist.bulkPut(watchlist);
@@ -256,6 +258,17 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
         missingEpisodes.push(episode);
       }
       if (missingEpisodes.length) await db.episodes.bulkPut(missingEpisodes);
+
+      // Queued for upload, same as the CSV importer and for the same reason. Titles and
+      // episodes stay out of it: a TTL'd cache of somebody else's data is not ours to
+      // replicate.
+      await enqueueAll('watches', watches as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('watchlist', watchlist as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('ratings', ratings as unknown as Array<Record<string, unknown>>);
+      await enqueueAll('library', [
+        ...libraryItems,
+        ...missingLibrary,
+      ] as unknown as Array<Record<string, unknown>>);
     },
   );
 

@@ -39,6 +39,9 @@ beforeEach(async () => {
     db.watchlist.clear(),
     db.titles.clear(),
     db.episodes.clear(),
+    // Cleared like the rest: without it the queue carries rows in from the test before,
+    // which is how the first version of these assertions counted six watches.
+    db.outbox.clear(),
   ]);
 });
 
@@ -333,6 +336,95 @@ describe('working through a library', () => {
     // A provider will rate-limit a burst of two hundred, and the honest response is to
     // go slower rather than lose the tail of somebody's library.
     expect(waits).toEqual([350]);
+  });
+});
+
+describe('a migration on an account', () => {
+  const HEADER =
+    'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id';
+
+  const finds = async () => [
+    { id: 'tmdb:tv:1', kind: 'show' as const, name: 'The Long Dark', year: 2021 },
+  ];
+  const lookup = {
+    title: async () => undefined,
+    episodes: async () => [
+      {
+        id: 'tmdb:ep:1',
+        seriesId: 'tmdb:tv:1',
+        season: 1,
+        number: 1,
+        name: 'Pilot',
+        fetchedAt: Date.now(),
+      },
+    ],
+  };
+
+  const queued = async () => (await db.outbox.toArray()).map((row) => ({
+    table: row.table,
+    pk: row.pk,
+    deleted: row.deleted,
+  }));
+
+  it('queues an imported history for upload', async () => {
+    await importRescueCsv(
+      `${HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`,
+    );
+
+    const rows = await queued();
+    // Every other write in this app goes through markWatched or rate, which queue. An
+    // import wrote straight to the tables, so a rescued history lived on one device and
+    // reached no other — and nothing said so.
+    expect(rows.filter((r) => r.table === 'watches')).toHaveLength(1);
+    expect(rows.filter((r) => r.table === 'library')).toHaveLength(1);
+
+    // Titles and episodes are a TTL'd cache of somebody else's data under TMDB's terms.
+    // Replicating them is not ours to do.
+    expect(rows.some((r) => r.table === 'titles' || r.table === 'episodes')).toBe(false);
+  });
+
+  it('retires the old IDs on the server as well as here', async () => {
+    await importRescueCsv(
+      `${HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`,
+    );
+    const [title] = await unmatchedTitles();
+    await db.outbox.clear();
+
+    const target = (await proposeMatch(title, finds)).confident!.id;
+    await acceptMatch(title.id, target, lookup);
+
+    const rows = await queued();
+    // Without the tombstone the server keeps the row under the ID this just retired,
+    // and the next pull resurrects a history split across two sets of them.
+    expect(rows.filter((r) => r.table === 'watches' && r.deleted)).toHaveLength(1);
+    expect(rows.filter((r) => r.table === 'watches' && !r.deleted)).toHaveLength(1);
+    expect(rows.filter((r) => r.table === 'library' && r.deleted)).toHaveLength(1);
+    expect(rows.filter((r) => r.table === 'library' && !r.deleted)).toHaveLength(1);
+  });
+
+  it('survives the round trip through the sync engine', async () => {
+    await importRescueCsv(
+      `${HEADER}\nThe Long Dark,1,1,Pilot,True,2026-01-05,1,2026-01-01,900,4001`,
+    );
+    const [title] = await unmatchedTitles();
+    const target = (await proposeMatch(title, finds)).confident!.id;
+    await acceptMatch(title.id, target, lookup);
+
+    // What a server would end up holding: apply the queue in order and see what is
+    // left. Asserting on outbox rows alone would not catch an ordering that deletes the
+    // new row after writing it.
+    const server = new Map<string, unknown>();
+    for (const row of await db.outbox.orderBy('updatedAt').toArray()) {
+      if (row.deleted) server.delete(`${row.table}:${row.pk}`);
+      else server.set(`${row.table}:${row.pk}`, row.row);
+    }
+
+    const watches = [...server.keys()].filter((key) => key.startsWith('watches:'));
+    expect(watches).toHaveLength(1);
+    expect(watches[0]).toContain('tmdb:ep:1');
+    expect([...server.keys()].filter((key) => key.startsWith('library:'))).toEqual([
+      'library:tmdb:tv:1',
+    ]);
   });
 });
 
