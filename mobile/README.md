@@ -12,15 +12,18 @@ npm start --workspace @reviewies/mobile
 ```
 
 Then press `i` for the iOS simulator, `a` for Android, or scan the QR code with Expo
-Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser.
+Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser, and
+`npm run ios` / `npm run android` go straight to a simulator without the menu.
 
 ## Checks
 
 ```bash
-npx expo export --platform web
+npm run export:web     # or: npx expo export --platform web
 npx serve dist -p 4200 &
-node smoke.mjs         # 26 checks against a real SQLite database
+node smoke.mjs         # against a real SQLite database
 ```
+
+`npm run smoke` does all three in one command.
 
 This drives the app through react-native-web. It cannot see haptics, the local-network
 entitlement, or how anything feels — that needs a device. What it does prove on every

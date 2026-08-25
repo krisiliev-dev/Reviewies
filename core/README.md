@@ -30,7 +30,7 @@ rather than by copying an ORM. Two implementations live in `data/adapters/`:
 | `dexie.ts` | the web app | `npm test` |
 | `sqlite.ts` | the phone app, via expo-sqlite | `npm run test:sqlite` |
 
-**Both run the same 386 tests.** The SQLite implementation is driver-agnostic so the
+**Both run the same suite.** The SQLite implementation is driver-agnostic so the
 suite can point at sql.js in CI; on a device the driver is expo-sqlite. That is what
 makes the port provable rather than merely plausible — every assertion was written
 against Dexie's semantics, so anything failing under SQLite is a real difference

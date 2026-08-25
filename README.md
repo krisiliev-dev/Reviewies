@@ -18,15 +18,22 @@ build. Open it in Safari on an iPhone and Share → Add to Home Screen; that is 
 exempts it from Safari's seven-day storage eviction, which matters because your history
 lives in IndexedDB.
 
+> **The deployment is behind the branch.** Everything below is committed and passing;
+> the site is serving an older bundle because deploying needs a `VERCEL_TOKEN` this
+> checkout does not have. `npm run whats-live` compares the two and says so. Saying
+> "deployed" about work that is not is the failure this repository has already had
+> once, so it is written down rather than assumed.
+
 ## Status
 
-Core loop, social layer, backend, remote control and fingerprinting are all built and
-deployed. 516 core tests (run twice, against both database implementations), 165 app
-tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the real
-Supabase project and the real TMDB and AniList APIs — including the whole
-listen-to-sync pipeline end to end: two people contribute timelines, the promoter
-cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
-app end to end and 47 drive the phone app through react-native-web.
+Core loop, social layer, backend, remote control, fingerprinting and the whole
+migration path from TV Time are built. The core suite runs twice, against both database
+implementations, and there are separate suites for the app, the bridge and the relay;
+live suites run against the real Supabase project and the real TMDB and AniList APIs,
+including the listen-to-sync pipeline end to end — two people contribute timelines, the
+promoter cross-validates them, and a client reads back a reference it can sync against.
+Browser checks drive the web app and the phone app end to end. Exact counts are not
+repeated here because they are wrong by the next commit; `npm test` prints them.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
 
@@ -74,8 +81,15 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Half-star ratings, poster overrides | ✅ Built |
 | Lists mixing film and TV | ✅ Built |
 | TV Time rescue CSV import | ✅ Built against the real tool's output |
+| Migration is the first thing a new arrival is offered | ✅ Built on both platforms |
+| An import writes the library, the names and the episodes it knows | ✅ Built, tested |
+| Matching imported shows to TMDB, asking when unsure | ✅ Built, measured against live TMDB |
 | Community-voted content warnings | ✅ Deployed |
 | Profiles, following, blocking | ✅ Deployed |
+| Every control named and reachable by keyboard | ✅ Built, asserted per screen in both smoke suites |
+| Reduced motion, and a way to stop the reaction stream | ✅ Built on both platforms |
+| 24px targets and 200% text without losing a control | ✅ Built, measured per screen |
+| The reaction stream summarised rather than read out one by one | ✅ Built on both platforms |
 
 ## Running it
 
@@ -141,18 +155,34 @@ covers installing it on an iPhone — and why that matters more than it sounds.
 ### Tests
 
 ```bash
-npm test                              # 681 tests across core and app
+npm test                              # every workspace that has tests
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
-npm run test:sqlite --workspace core  # the same 516 core tests, against SQLite
+npm run test:sqlite --workspace core  # the same core tests, against SQLite
 
 cd app && npm run build
 npx vite preview &
-node smoke.mjs                        # 50 end-to-end checks in a real browser
+node smoke.mjs                        # end-to-end checks in a real browser
 
-cd mobile && npx expo export --platform web
+cd mobile && npm run export:web       # or: npx expo export --platform web
 npx serve dist &
-node smoke.mjs                        # 47 checks driving the phone app
+node smoke.mjs                        # the same, driving the phone app
 ```
+
+Two suites are deliberately not part of `npm test`:
+
+```bash
+RECONCILE_LIVE=1 npx vitest run src/data/reconcile.live.test.ts   # in core/
+```
+
+That one asks TMDB about thirty real shows and asserts on the shape of the replies, so a
+new entry sharing a name with an existing show changes the result. That is the event it
+exists to catch when run deliberately, and somebody else's flake when it is blocking a
+routine test run. The other live suites ask a handful of questions with known answers and
+run whenever a token is present.
+
+Two environment variables appear only inside tests: `TZ`, which the stats suite sets to
+prove day boundaries are local rather than UTC, and `DATA`, which carries a base64
+SQLite fixture into a subprocess in the write-ahead-log test.
 
 The browser checks work either way. They ask the app once whether it has credentials and
 then assert the correct behaviour for that build — an account-only control has to hide
@@ -180,6 +210,63 @@ keyed to provider episode IDs, never `"S3E4"` strings, because upstream database
 episodes routinely. Spoiler safety is a **database policy**, not application code: a
 comment is only selectable once you have watched that episode.
 
+## Arriving from TV Time
+
+The premise of the product, so it is the first thing the app offers rather than
+something on a settings screen. Three different things turn up under the name "my TV
+Time data" and all three are read by content rather than by filename: the GDPR zip, a
+CSV from the [rescue tool](docs/research/05-universal-remote-and-timestamp-sync.md), and
+a `DioCache.db` pulled off a phone — with its `-wal`, which holds the most recent months
+and is silently lost if you import the database alone.
+
+What an export carries is names and dates. It has no provider IDs, so everything lands
+under local ones (`local:tv:tvtime-900`) that TMDB has never heard of. The import writes
+three things from that: the library rows the history implies, the names, and the
+episodes it knows were watched. The last of those is what makes the rest possible —
+matching a show is easy, but moving a watch history onto it means mapping each episode
+to the provider's own ID, and the only route across is season and number.
+
+Matching then runs against the provider, and the shape of it is set by one asymmetry.
+An unmatched row is visibly unfinished and costs nothing; a **wrong** match silently
+moves somebody's history onto the wrong show, and there is no way for them to notice. So
+acting without asking needs two conditions rather than one — high confidence *and* a
+clear margin over the runner-up — because the dangerous case is not a weak match, it is
+a remake or a regional twin, two answers that both look right. Everything else becomes a
+question with posters and years, and "none of these" leaves the row alone.
+
+Both numbers were measured rather than guessed, and measuring them found one wrong
+match: at a 0.2 margin, "Ghost in the Shell" matched onto a 2026 entry of that exact
+name ahead of the 2002 series. `core/src/data/reconcile.live.test.ts` records what
+thirty real names do at the thresholds that replaced it.
+
+## Reachable without a pointer, and without sight
+
+Not a compliance exercise: the failures found were ones that made features unusable
+rather than merely awkward, and every one of them was invisible until something
+measured it.
+
+- **There was no focus indicator.** The browser's default outline computed to
+  `rgb(16, 16, 16)` against a `#0b0b0f` background — 1.03:1, which is to say nothing at
+  all. Every control was reachable by keyboard and none of them showed where you were.
+- **The overlays could not be escaped.** The catch-up sheet and the remote drawer were
+  openable, correctly labelled, and left a keyboard standing outside: focus stayed
+  behind, Tab walked into the page underneath, Escape did nothing.
+- **Reduced motion emptied the flagship feature.** The reaction drift is a keyframe
+  animation with `forwards`, so a global `animation-duration: 0.01ms` ran it instantly
+  to its end state — off the left-hand edge. The setting meant an empty strip.
+- **The reaction stream was unusable in both directions.** On the web it announced every
+  emoji as it passed, twenty-four interruptions a minute; on the phone it announced
+  nothing, so the feature was simply absent. It summarises a moment now — "2 funny and 1
+  other" — at most every ten seconds, and Hold stops the talking with the movement.
+- **Ten targets in a row were seven pixels wide.** The star rating's halves were well
+  under the 24 CSS pixels WCAG asks for, and at 200% text the whole control was pushed
+  off the side of the screen — twice, the second time because the minimum had been
+  written in `rem` and doubled along with the text.
+
+Both smoke suites now audit every screen they visit: every control named, the count of
+them asserted so a screen reporting nothing fails rather than passes, every target
+measured, and the page re-rendered at 200% text to check nothing leaves the viewport.
+
 ## Repository layout
 
 An npm workspace. The rule that shapes it: **anything that is not a screen lives in
@@ -197,7 +284,8 @@ core/                   @reviewies/core — no DOM, no React, no platform assump
   src/discover/         Recommendations that exclude what you have seen
   src/calendar/         Upcoming episodes and notification granularity
   src/fingerprint/      Landmark-hash fingerprinting
-  src/watching/         Reactions, drift estimation, the emoji pad
+  src/watching/         Reactions, drift estimation, the emoji pad, what it says aloud
+  src/devices/          Roku over the LAN, device discovery, the direct-control adapters
 mobile/                 The iOS and Android app (Expo)
   app/(tabs)/           Up Next, Search, Discover, Watchlist, More
   app/watching/         Watching Mode

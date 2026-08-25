@@ -65,9 +65,10 @@ implementation is written so far, because it is the one that could be exercised 
 
 ```bash
 npm test
+npm run typecheck      # tsc --noEmit; there is no build step to catch it otherwise
 ```
 
-43 tests covering ECP XML parsing (playing, paused, buffering, no position, malformed
+The suite covers ECP XML parsing (playing, paused, buffering, no position, malformed
 input), SSDP deduplication and malformed headers, adapter error handling when a device
 is unreachable, MPRIS unit conversion and the music filter, protocol validation
 including rejected commands and version mismatch, and token comparison.

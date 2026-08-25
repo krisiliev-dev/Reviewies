@@ -63,9 +63,10 @@ with `REVIEWIES_RELAY` and `REVIEWIES_TOKEN`. Use the same token for both.
 
 ```bash
 npm test
+npm run typecheck      # tsc --noEmit; there is no build step to catch it otherwise
 ```
 
-19 tests over pairing, reconnection and token validation — including that traffic never
+Pairing, reconnection and token validation — including that traffic never
 crosses between tokens, which is the property that matters most.
 
 Verified end to end with real WebSockets: bidirectional forwarding, cross-token

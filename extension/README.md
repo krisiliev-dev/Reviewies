@@ -92,6 +92,6 @@ is tested from the app package:
 cd ../app && npx vitest run src/extension
 ```
 
-40 tests cover the label formats each service uses, show/episode splitting, the
+The suite covers the label formats each service uses, show/episode splitting, the
 confidence gate, lookalike-domain rejection, preferring the longest video so adverts
 and trailers are ignored, and the scrobble threshold.
