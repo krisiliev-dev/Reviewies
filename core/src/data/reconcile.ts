@@ -18,10 +18,23 @@ import type { CachedEpisode, CachedTitle, InternalId, MediaKind } from '../domai
  * deliberately high, and everything else is put in front of a person.
  */
 
-/** How sure we have to be to move somebody's history without asking. */
+/**
+ * How sure we have to be to move somebody's history without asking.
+ *
+ * Both numbers were guesses until they were measured against live TMDB with thirty real
+ * show names — see reconcile.live.test.ts, which records what each one does. The margin
+ * started at 0.2 and was wrong: "Ghost in the Shell" matched confidently onto a 2026
+ * entry of that exact name, over the 2002 series somebody's history would actually be,
+ * on a margin of 0.21. One confidently wrong match is the whole failure this design
+ * exists to prevent, so the threshold has to sit above the one that was observed.
+ *
+ * The cost, measured on the same thirty: 0.2 matched 13 and asked 15; 0.25 matches 11
+ * and asks 17. The two given up are the wrong one and "Twin Peaks", which was right by
+ * luck. That is the trade this is meant to make.
+ */
 const CONFIDENT = 0.94;
 /** And how far clear of the runner-up, so two plausible shows are never guessed between. */
-const MARGIN = 0.2;
+const MARGIN = 0.25;
 
 export interface MatchCandidate extends SearchResult {
   score: number;
