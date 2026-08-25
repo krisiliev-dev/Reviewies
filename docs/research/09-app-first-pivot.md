@@ -1018,3 +1018,382 @@ which is why asserting the narrow version is worth more than widening the check.
 Thirteen buttons on that screen, thirteen named, verified by counting rather than by
 trusting a passing assertion — a guard that would pass on a page with no buttons at all
 is the monitoring-script failure from §6.15 in a different costume.
+
+### 6.19 The rest of the accessibility pass, and what naming things could not fix
+
+§6.18 named the controls the tests had collided with. Finishing it meant three more
+passes, and each found something the previous one could not have.
+
+The first was completeness. The guard only reached Pressables that had been given an
+`accessibilityRole` — the same set react-native-web emits `role="button"` for — so a
+tappable `View` without one was invisible to the guard and to a screen reader alike.
+Fifty-odd of them across the phone app now declare what they are. Three groups turned out
+to be semantic rather than cosmetic: notification granularity, the comment effort filter,
+the stats window and the country picker are each one choice among several rather than a
+row of independent buttons, and say so as radio groups on both platforms.
+
+Two real defects fell out of it. A link wrapping a poster had no accessible name at all,
+on five web screens — the image is `alt=""` and the placeholder is `aria-hidden`, both
+right on their own, and nothing looked wrong, so only a name check would ever find it.
+And the phone's remote drawer, which stays mounted when closed, hid itself with two React
+Native props react-native-web implements neither of: on the web build its thirteen keys
+sat in the reading order the whole time.
+
+Contrast was measured for the first time in the same pass. Everything cleared AA, so no
+colour moved for that reason — but the two palettes had drifted in six of seven values
+despite a comment promising they had not, and the phone's muted grey was a full contrast
+step behind. A test fails if they part again.
+
+The second pass was reachability, which is a different question from naming and was
+answered worse. **There was no focus indicator at all.** The browser's default
+`outline: auto` computed to `rgb(16, 16, 16)` against a `#0b0b0f` background — 1.03:1,
+which is to say nothing. Every control in the app was reachable and none of them showed
+where you were. Both overlays were openable, readable, correctly labelled, and left a
+keyboard standing outside: focus stayed on the button behind, Tab walked into the page
+underneath, Escape did nothing.
+
+A shared hook now owns the three things a dialog owes a keyboard. Writing its test found
+two more: the drawer's handle was unmounted while the drawer was open, so by the time it
+closed there was nothing left to give focus back to; and the drawer was `aria-hidden`
+while closed, which takes it out of the reading order and leaves its buttons in the tab
+order off the right-hand edge. `inert` does both — the same defect fixed on the phone one
+sprint earlier, in the same component, found there by a screen-reader check and here by a
+keyboard one.
+
+### 6.20 Reduced motion emptied the flagship feature
+
+`index.css` had flattened every animation under `prefers-reduced-motion` for a long time.
+That is right for a slide and wrong for the one component whose animation *is* the
+feature. The reaction drift is a keyframe animation with `forwards`, so
+`animation-duration: 0.01ms !important` ran it instantly to its end state —
+`translateX(-20vw)` — and **anyone with the setting on saw an empty strip where the whole
+of Watching Mode's shared layer was meant to be.**
+
+Measured rather than guessed: the smoke check that catches it reports the emoji at
+`left: -78` on a 390px screen.
+
+Reduced motion means a different presentation now rather than a faster one — reactions
+placed across the strip and held still, on both platforms. The phone needed its own path,
+because `Animated` writes inline transforms no CSS rule touches, and it stops its
+animation where it stands rather than flattening the duration, which on a drift would
+have reproduced the same disappearing act.
+
+The stream also had nothing that could stop it. WCAG 2.2.2 asks for a way to pause
+anything that moves by itself for more than five seconds; this moves for the length of an
+episode. There is a Hold now, deliberately separate from the clock's pause — wanting the
+timecode to keep running while the top of the screen holds still is a reasonable thing to
+want.
+
+Three of the checks written for this passed vacuously first. The worst asked whether a
+reaction was in the DOM, which the broken version satisfied happily while rendering it a
+fifth of a screen past the left edge. **Position is the question, not presence.**
+
+### 6.21 Measuring the controls, then measuring them again at twice the text size
+
+Two things had never been measured, and both were measured badly the first time, which is
+the more useful half of the story.
+
+Target size. WCAG 2.5.8 asks for 24 CSS pixels. A sweep found the star rating's halves at
+seven to fourteen pixels wide, and a dozen text-only controls at fourteen to twenty tall.
+The stars are the ones that mattered: ten targets in a row, small enough that the
+tap-again-to-clear escape had been covering for how often the wrong one got hit. On the
+phone that height had been coming from `hitSlop`, which is real on a device and invisible
+to layout — two hitSlop targets beside each other overlap, and nothing can measure them.
+
+Text scaling. WCAG 1.4.4 asks for 200% without loss and nothing had ever been rendered
+that large. Doubling the root font size pushed the rating clean off the right-hand edge of
+the title page, two stars through five unreachable, because it sat in a column beside a
+poster.
+
+Then it failed again, and the second cause was mine: the 48px minimum was written
+`min-w-12`, which is rem, so it doubled along with the text and made the control 480
+wide. **WCAG's pixels do not scale with type.** A test fails if that regresses.
+
+The phone cannot be checked the same way — text there scales through a system setting
+react-native-web does not implement, so the export the smoke drives renders at a fixed
+size whatever is asked of it. What is left to guard is the thing that would silently
+switch it off, so a test fails if any component opts out of `allowFontScaling`. Said
+plainly rather than left looking covered.
+
+### 6.22 Meeting the person the product is for
+
+The premise of this app is that TV Time shut down and its users need somewhere to go. The
+first thing it said to one of them was "Nothing tracked yet" and a search box, with the
+import that would have rescued years of history two taps away behind a tab called **Data**
+— a word nobody holding a zip file would think to open.
+
+Then the worse half, which only turned up by watching what happens *after*: the import
+wrote the watches and nothing else. No library rows, no names. So a successful rescue of
+somebody's entire history left the app saying "Nothing tracked yet" over a set of
+identifiers with no titles attached — indistinguishable from an import that failed
+silently.
+
+Both importers now record what the export implies: a show you have watched belongs in your
+library, and the name in the file is the only name anyone has until a provider is asked.
+Added where absent and never over the top, so re-importing cannot reset a status you have
+changed. Placeholders are written stale, so the first screen to ask a provider replaces
+them.
+
+And then the confirmation vanished, because putting shows in the library is exactly what
+stops the first-run screen being the first-run screen. It is held until dismissed — the
+same failure the catch-up sheet had, in a different place.
+
+### 6.23 Matching two hundred shows without silently rewriting a history
+
+An export carries names and dates and no provider IDs. Setting out to match them, the
+first thing in the way was that it could not be done: moving a watch history onto a
+matched series means mapping each watched episode to the provider's own episode ID, and
+the only route across is season and number. An imported watch had neither — it was an
+event pointing at an opaque `local:ep:tvtime-4001`. So both importers now write the
+episodes as episodes, which unblocked the matching and paid for itself before then: the
+title page for an imported show had been a name over an empty season list.
+
+**The whole design turns on one asymmetry.** An unmatched row is visibly unfinished and
+costs nothing. A wrong match silently moves somebody's history onto the wrong show and
+there is no way for them to notice. So the bar for acting unasked is two conditions rather
+than one: high absolute confidence, *and* a clear margin over the runner-up. The second is
+the one that matters — the dangerous case is not a weak match, it is a remake or a
+regional twin, two results that both look right.
+
+Every test of it ran against a stub returning exactly what the test wanted, which proves
+the plumbing and nothing about the thresholds, and the thresholds are the design. Thirty
+real names against live TMDB, including ones built to break it: two Doctor Whos, two
+Offices, an anime with a live-action remake, an apostrophe an export drops, a Brazilian
+title that is a percentage sign.
+
+**It found one.** At a margin of 0.2, "Ghost in the Shell" matched confidently onto a 2026
+entry carrying that exact name, ahead of the 2002 series a history under that name would
+actually be — on a margin of 0.21. That is precisely the failure the design exists to
+prevent. The margin is 0.25 now, which is above the wrong match that was *observed* rather
+than above a number that felt right.
+
+The cost is recorded rather than asserted: 0.2 matched 13 of thirty and asked about 15;
+0.25 matches 11 and asks 17. The two given up are "Ghost in the Shell", which was wrong,
+and "Twin Peaks", which was right by luck. The next change to these numbers has to argue
+with that table. All fifteen genuinely ambiguous names became questions rather than
+guesses, and punctuation turned out to be a non-issue.
+
+Then the screen a person actually touches, which had no test on either platform — the
+smoke suites deliberately do not press the button and the core tests stop at the proposal.
+Two of the five written for it are the ones that matter, and both fail if the protection
+is theatre: choosing the second candidate must accept the second rather than whichever is
+at the top, and "None of these" must write nothing at all.
+
+Writing them turned up two quiet failures of the same shape — the screen going back to
+offering its button, which looks identical to a run that found nothing to do. A failed run
+threw out of the event handler and nothing said the provider was unreachable; a run with
+nothing left to match never entered its loop, so nothing was reported and pressing the
+button appeared to do nothing.
+
+One thing the core tests could not reach is now pinned. TMDB reports some anime as a
+single hundred-episode season; `getEpisodesCached` re-cuts those with AniList and
+`provider.getEpisodes` does not. An imported anime history counts seasons the way a fan
+does, so remapping against the flattened listing would place nothing and orphan an entire
+history in one go.
+
+### 6.24 What Watching Mode gives somebody who cannot see it
+
+Watching Mode is the reason this product exists, and what it gave somebody who could not
+see it was one of two bad answers. On the web the stream was a live region, so every
+reaction was announced as it drifted past — twenty-four interruptions a minute at the
+default density, on a screen you are holding while watching television. On the phone there
+was no live region at all, so the feature was simply absent.
+
+Deleting the announcements was the easy answer and the wrong one. The stream is the
+company, and that is worth more to somebody who cannot see it, not less. You can hear the
+episode; what you are missing is everyone else in the room.
+
+So it announces *moments* rather than reactions. A burst is collected and summarised once
+— "2 funny and 1 other" — at most once every ten seconds, and between moments it says
+nothing. That is closer to what the drifting emoji actually convey, which is never the
+individual reaction and always the swell. It names emoji by the word a person would say —
+"funny", not "face with tears of joy" — and counts what it cannot name rather than
+inventing a word for it.
+
+### 6.25 Three sprints on one hole: writes that never left the device
+
+The migration work opened a hole in itself. Every write in this app goes through
+`markWatched` or `rate`, which queue to the outbox. **The importers and the matcher wrote
+straight to the tables.** So with sync configured — the reason to have an account at all —
+a rescued history lived on one device and reached no other. Matching was worse: it retired
+watch IDs locally and re-added them under provider ones while the server still held the
+old ones, so a pull could resurrect the pre-match state and split one history across two
+sets of IDs.
+
+Fixing the known ones invited the obvious question, and looking for the rest found four
+more: adding to the library, a poster override, a series status flipping to completed, and
+clearing a rating — which undid itself on the next pull, because a delete that is not
+queued is not a delete.
+
+What came out of it is a guard rather than a list. A source-level check reads every
+function in `repo.ts` and the importers and requires each one that writes a syncable table
+to queue, with exemptions written out as sentences. The first version of that check was
+per-file and too crude to be worth having: `repo.ts` mentions `enqueue` somewhere, so it
+passed while `addToList` was broken.
+
+Then the other half of the same doubt. The live round-trip suite covered watches and
+watchlist and nothing else; library had never been pushed by the app at all, so its
+columns, policy and mapping were unproven. It now round-trips all five with the shapes
+that differ — a library row with both optional columns set, a watchlist row with its note
+deliberately absent, a watch with no `seriesId`, which is what a film is.
+
+That suite could not be run: it makes and unmakes its own user through the admin API and
+this checkout has no service key. Signing up through the public endpoint is not a
+substitute — the project rejects disposable addresses and the account could not be cleaned
+up afterwards, and **creating an account nobody can delete on a live project to satisfy a
+test is not a trade worth making.** So it ships opt-in and unrun, and what could be
+checked without credentials was checked instead: `toRemote` skips any field it has no
+column for, so a missing entry is not an error anywhere — the value simply never leaves
+the device. The mapping is now checked against the migration SQL in both directions.
+
+### 6.26 Nothing on the phone ever synced
+
+The largest finding of the week, and it had been true since the phone app existed.
+
+**Nothing in `mobile/` imported the sync engine.** You could sign in, read "an account
+adds sync across devices" on the account screen, and never have one row pushed or pulled.
+The same broken promise the notification settings made before §6.12.
+
+The web was barely better. The loop lived in `useSync`, a hook, and a hook runs for as
+long as its component is mounted — which was the account panel and the people screen. The
+queue drained only while somebody was looking at one of two screens they have no reason to
+sit on, and every write in the app happens somewhere else. That is also why three sprints
+of sync bugs went unnoticed: the queue they fed was barely being drained.
+
+There is a driver in core now, started once at the root on both platforms, triggered on
+sign-in, on a settled write, on foreground, on reconnect and on a timer, with overlapping
+reasons coalesced into one round trip. The phone's account screen says how many changes
+are waiting rather than implying it is all fine.
+
+One bug shipped in the process and the smoke suite caught it before the commit. The driver
+was notified from inside `enqueue`, and every bulk writer queues inside a Dexie
+transaction — Dexie binds promises to the transaction's zone, so the listener's read joined
+the caller's transaction and hung it, and a GDPR zip import stopped part-way through with
+no error at all. It notifies from outside now. **The unit test written for it was thrown
+away**, because fake-indexeddb does not reproduce the zone binding and it passed with the
+fix removed; a guard that cannot fail is worse than none, and a comment records that the
+smoke's import step is what catches it.
+
+### 6.27 Three questions asked systematically, and what each one found
+
+The three sprints after that did not start from a bug report. Each started from a question
+about the codebase as a whole, and each found real defects. That is worth recording as a
+method and not only as three sets of results.
+
+**"What does core export that nothing calls?"** Sync existed in core and the phone simply
+never called it, and the screen advertised it anyway. That is a shape rather than a
+one-off, and the parity audit of §6.10 had compared screens rather than wiring. So: every
+symbol core exports, against what each app actually imports.
+
+Five things came back. The calendar read a cache only screens ever filled — nothing
+refreshed a show you were merely watching, so a season announced after you added it never
+appeared, on either platform, and the 90-day TTL did not help because a TTL only applies to
+a fetch somebody makes. `db.clearMetadataCache()` emptied the titles table, and the web has
+offered it as "Clearing them never touches your own history" since before imported
+placeholders started living there — pressing it after a TV Time import erased the name of
+every show TMDB has never heard of. The outbox and pull cursor had no owner, so signing out
+on a shared device and in as someone else pushed whatever the previous person had not
+uploaded into the new account. `deleteComment` had been in core since comments existed and
+neither platform offered it. And `shouldNotify` sat in core with a test and no callers
+while the edge function restated the same rule by hand.
+
+**"What does the interface claim out loud?"** Two bugs in two sprints had been found by
+reading a sentence rather than the code. Both were true when written; neither had anything
+holding them true. So: follow every assertion in the user-visible copy to the thing that
+makes it true, or find that nothing does.
+
+Three were false. *"Everything, in full, with no account and no upsell. It is yours."* — the
+export held the five local tables and nothing else, so lists, follows and every comment
+written lived only on the server and were in no export at all. *"Artwork and episode
+listings expire automatically."* — nothing expired anything; `isStale` is checked when a row
+is read, so a show looked up once and never opened again sat on the device indefinitely,
+past the six months TMDB's terms allow. *"Following needs sync configured. Everything else
+works without it."* — comments and shared reactions need it too.
+
+Three were true and are now pinned, since the ones that would hurt are the ones nothing was
+holding: the export is checked against the schema rather than a hand-written list, so a new
+user-data table that is not exported fails; the fingerprint upload's payload keys are
+asserted exhaustively, so a field added later has to be looked at; and the catch-up sheet is
+rendered with episode names, synopses and air dates in the database and checked to leak
+none of them.
+
+**"What columns does the client name?"** The account export and restore added reads and
+writes across five tables the client had barely touched, none of it ever run against the
+real project. supabase-js does not throw on a bad column — it answers `{ data: null,
+error }`, and nearly every read falls back to an empty array, which is right for a network
+blip and indistinguishable from "you have no lists". A misspelled column, a renamed table
+or a missing policy all produce an export that looks complete and is empty, which is
+exactly what the export exists to prevent.
+
+So every `.from(...)` in core is now checked against the migrations: the table exists, every
+column named in a select, filter, order or write exists on that table, and every embed names
+a foreign key Postgres would really have derived. Then the same question for row-level
+security, which fails the same silent way — a secured table with no policy for an operation
+is not an error, it is zero rows.
+
+One thing changed in the code because of it. The follows embed was assembled at runtime,
+`profiles!follows_${other}_fkey`, and a name built that way cannot be checked by anything.
+Both are written out now. The first version of the join scan only looked inside the
+`.from` chain, found nothing there, and passed — the worst outcome for a check whose whole
+job is those two names.
+
+### 6.28 The export was not complete, so it was made complete
+
+Following the promise audit rather than stopping at it. Lists, the people you follow and
+every comment written live on the server, and the file carries them now under `account`,
+present only when there is an account to read. The local half never waits on a server and
+never fails because one is slow; if the account half cannot be read the file is still
+written and both screens say what is missing from it.
+
+Then the other half, because a file with your lists in it and no way to put them back is
+half a feature: `restoreAccount` is a second step the import screens offer once the local
+half has landed. Three things that would have gone wrong quietly are covered by tests. Run
+twice and you would have had two of everything — a restored list is a new row with a new
+ID, so the name is the only thing the two copies share. `addToList` sets no rank, so item
+order falls back to `added_at`, which reproduces the original order *only* if the inserts
+happen in it; doing them concurrently would be faster and would shuffle everybody's lists.
+And follows resolve through an exact-handle lookup rather than `searchPeople`, which is a
+substring match where "ana" matches "ana", "anastasia" and "banana".
+
+Comments stay unrestored, deliberately. Re-posting them would drop old text into other
+people's episode threads with today's timestamps; the file keeps them for the person who
+owns them.
+
+### 6.29 The phone could look at screenshots and not post one
+
+The wiring audit's last open finding. `uploadCommentImage` was imported by the web and by
+nothing in `mobile/`, so the phone rendered other people's screenshots and had no way to
+attach one — the half the research cares about, since screenshots were core to TV Time's
+comment culture and the effort filter deliberately exempts a post carrying one.
+
+The reason it had never been done was real rather than an oversight: the function took a
+`File` and React Native has none. Its `FormData` takes `{ uri, name, type }` and reads the
+bytes off disk itself, so the part and its metadata cannot be derived from each other. Core
+takes them separately now.
+
+That shape is the trap, and it is the one thing no browser run can catch: on the web export
+the picker hands back a real `File`, so the smoke never takes the branch a phone takes, and
+a plain object appended to a browser `FormData` goes out as the string `"[object Object]"`.
+The passthrough is asserted at `append` rather than by reading the entry back, because jsdom
+stringifies on the way in and there would be nothing left to recognise.
+
+---
+
+## 7. What is still not known
+
+Unchanged from §6 and worth restating in one place, because the list has not shortened:
+
+- **Nothing has run on a physical device.** The phone's smoke suite drives the
+  react-native-web export, which is a real build and not a real phone. `getExpoPushTokenAsync`
+  has never executed. The image picker's native branch has never run — the web export takes
+  the other one. The phone's comments screen reaches its sealed state in the smoke, so the
+  composer and its new attach control have never rendered there.
+- **The fingerprinter has never heard real audio through a real microphone.**
+- **The Roku and MPRIS adapters have never spoken to hardware.**
+- **The extension's site selectors have never met a real streaming site.**
+- **The live Supabase suites have never been run.** `supabase.live.test.ts` and
+  `account.live.test.ts` both need a service key to make and unmake their own user, and this
+  checkout has none. What could be established by reading the migrations has been, and is
+  recorded in `backendQueries.test.ts` rather than left to be worked out again.
+- **The deployed site is behind.** `npm run deploy:web` needs a Vercel token that is not in
+  this container, so everything since §6.14 is in the repository and not on the web.

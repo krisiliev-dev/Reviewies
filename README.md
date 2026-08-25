@@ -91,6 +91,12 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Reduced motion, and a way to stop the reaction stream | ✅ Built on both platforms |
 | 24px targets and 200% text without losing a control | ✅ Built, measured per screen |
 | The reaction stream summarised rather than read out one by one | ✅ Built on both platforms |
+| The calendar refreshes itself, so a new season appears | ✅ Built on both platforms — nothing refetched a tracked show before |
+| Cached metadata expires and can be cleared, keeping imported names | ✅ Built on both platforms |
+| Deleting your own comment | ✅ Built on both platforms |
+| Attaching a screenshot from the phone | ✅ Built, native picker unverified on a device |
+| The export carries your lists, follows and comments too | ✅ Built, live round-trip written and unrun |
+| Restoring lists and follows from an export | ✅ Built, live round-trip written and unrun |
 
 ## Running it
 
@@ -287,25 +293,40 @@ core/                   @reviewies/core — no DOM, no React, no platform assump
   src/domain/           Types, ID scheme
   src/data/             Repository, importers, the injectable Database interface
   src/metadata/         Provider abstraction, TMDB, AniList, fixtures
-  src/sync/             Auth, offline outbox, sync engine, Supabase adapter
-  src/social/           Comments, lists, people, content warnings
+  src/sync/             Auth, offline outbox, sync engine and the driver that runs it
+  src/social/           Comments, lists, people, content warnings, the account export
   src/stats/            Runtime-weighted stats
   src/discover/         Recommendations that exclude what you have seen
-  src/calendar/         Upcoming episodes and notification granularity
+  src/calendar/         Upcoming episodes, the refresh that keeps them current, notifications
   src/fingerprint/      Landmark-hash fingerprinting
   src/watching/         Reactions, drift estimation, the emoji pad, what it says aloud
   src/devices/          Roku over the LAN, device discovery, the direct-control adapters
 mobile/                 The iOS and Android app (Expo)
   app/(tabs)/           Up Next, Search, Discover, Watchlist, More
   app/watching/         Watching Mode
+  app/comments/         Episode conversations
   app/remote.tsx        Direct device control over the LAN
+  src/ui/               Shared controls, theme, importers
+  src/watching/         Reaction stream, listen-to-sync
+  src/fingerprint/      Background audio session
+  src/devices/          The remote's connection to a television
+  src/social/           Lists and content warnings, as the phone renders them
+  src/comments/         The image picker, and the one branch no browser run reaches
   src/platform.ts       The only file that knows it is a phone
 app/                    The web app
-  src/data/             Dexie adapter and the platform bindings
   src/screens/          UI
+  src/ui/               Shared controls: posters, importers, catch-up, dialogs, palette
+  src/data/             Dexie adapter and the platform bindings
   src/watching/         Playback clock, reaction stream, extension bridge
   src/remote/           Remote drawer and bridge connection
   src/fingerprint/      Microphone capture
+  src/social/           Lists and content warnings, as the web renders them
+  src/sync/             Reads the driver's status; does not own it
+  src/calendar/         Web Push subscription
+  src/metadata/         Region selection
+  src/extension/        Receives what the browser extension reports
+  src/backend/          Checks the deployed backend and the prose about it
+  src/wiring/           What core exports, against what each app imports
 extension/              Browser extension (MV3)
 bridge/                 Local companion for controlling a laptop (MPRIS over D-Bus)
 relay/                  WebSocket relay pairing the app to a bridge
@@ -319,9 +340,23 @@ a `Database`, a key/value store for preferences, and a file saver. Until they ar
 bound, using them throws with a message saying so — rather than failing later in a way
 that looks like a data bug. See [`core/README.md`](core/README.md).
 
-Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same 516
-core tests run against both**, so the SQLite one is proven by the suite that was
-written against Dexie rather than by a second suite written to agree with it.
+Two `Database` implementations ship: Dexie over IndexedDB, and SQLite. **The same core
+suite runs against both**, so the SQLite one is proven by the suite that was written
+against Dexie rather than by a second suite written to agree with it. Counts are not
+repeated here for the reason given under Status; `npm test` prints them.
+
+Three of the checks are about the codebase rather than its behaviour, and each exists
+because something got through without one:
+
+- `app/src/wiring/` compares every symbol `core` exports against what each app imports,
+  because sync existed in core for the life of the phone app and nothing there ever
+  called it. It is pointed at the commit before that was fixed on every run and has to
+  find the gap there.
+- `core/src/sync/writes.test.ts` requires every function that writes a syncable table to
+  queue it, because the importers and the matcher did not.
+- `core/src/sync/backendQueries.test.ts` checks every column, table, foreign key and
+  policy the client names against the migrations, because supabase-js answers a bad
+  column with an empty result rather than an error.
 
 ## Research
 
