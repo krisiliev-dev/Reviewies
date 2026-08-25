@@ -6,34 +6,47 @@ import {
   useAudioStream,
   type AudioStreamBuffer,
 } from 'expo-audio';
-import { SAMPLE_RATE, type Reference } from '@reviewies/core/fingerprint/fingerprint';
+import { HOP_SIZE, SAMPLE_RATE, type Reference } from '@reviewies/core/fingerprint/fingerprint';
 import { SpectrogramStream } from '@reviewies/core/fingerprint/stream';
 import {
   ContinuousMatcher,
+  framesForMs,
   positionNow,
   shouldCorrect,
   type ContinuousMatch,
 } from '@reviewies/core/fingerprint/continuous';
-import { fetchReference } from '@reviewies/core/fingerprint/references';
+import { ContributionRecorder } from '@reviewies/core/fingerprint/contribute';
+import { contributeReference, fetchReference } from '@reviewies/core/fingerprint/references';
 
 /**
- * Listening for as long as an episode runs.
+ * The microphone, and the two things worth doing with it.
  *
- * This is the reason the pivot to a real app was worth making. On the web the same
- * feature could only ever be a button: a tab that loses focus loses its audio graph,
- * so the honest design was one six-second capture followed by forty minutes of
+ * **Listening** is the reason the pivot to a real app was worth making. On the web the
+ * same feature could only ever be a button: a tab that loses focus loses its audio
+ * graph, so the honest design was one six-second capture followed by forty minutes of
  * dead-reckoning. A phone can hold an audio session open in the background, so the
- * clock can be corrected every few seconds instead — which is what makes it survive a
+ * clock corrects itself every few seconds instead — which is what makes it survive a
  * pause, an ad break, or someone skipping the recap.
  *
- * The privacy shape is unchanged and non-negotiable, and running for longer makes
- * saying so more important rather than less:
+ * **Mapping** is what makes listening possible at all. An episode nobody has mapped
+ * cannot be listened to, so without a way to contribute from the phone the feature is
+ * inert for everything except the handful of episodes someone mapped on a laptop. The
+ * phone is also the better place to do it: it can record a whole episode rather than
+ * thirty seconds, because the hashing happens as the audio arrives and almost nothing
+ * is held.
+ *
+ * They share one hook because they share one microphone, and running both at once is
+ * neither possible nor meaningful.
+ *
+ * The privacy shape is the same for both, and running for longer makes saying so more
+ * important rather than less:
  *
  *  - audio is analysed in memory and thrown away frame by frame; nothing is recorded,
  *    written to disk, or uploaded;
- *  - only the position it derives is used, and only inside this screen;
- *  - it starts on an explicit tap and stops when the screen closes, when playback is
- *    paused, or when the user says so — never on its own.
+ *  - what a contribution uploads is landmark hashes, which are one-way digests — there
+ *    is no audio in them and none can be recovered from them;
+ *  - it starts on an explicit tap and stops when the screen closes or the user says so,
+ *    never on its own.
  */
 
 export type ListenState =
@@ -42,7 +55,14 @@ export type ListenState =
   | 'no-reference'
   | 'denied'
   | 'listening'
+  | 'mapping'
+  | 'uploading'
   | 'failed';
+
+export interface MappingProgress {
+  seconds: number;
+  landmarks: number;
+}
 
 export interface ListenSync {
   state: ListenState;
@@ -50,15 +70,19 @@ export interface ListenSync {
   note?: string;
   /** The most recent accepted match, for showing how sure it is. */
   lastMatch?: ContinuousMatch;
-  /** How many attempts have found nothing since the last success. */
+  /** Attempts that have found nothing since the last success. */
   misses: number;
-  start: () => Promise<void>;
+  /** How the recording is going, while mapping. */
+  mapping?: MappingProgress;
+  startListening: () => Promise<void>;
+  startMapping: () => Promise<void>;
   stop: () => void;
 }
 
 export interface ListenSyncOptions {
   targetId: string;
-  /** The clock's current reading, so a match that already agrees costs nothing. */
+  /** The clock's current reading — the position a match is compared against, and
+   *  where a contribution says it begins. */
   positionMs: number;
   /** Called only when a correction is actually worth applying. */
   onCorrection: (positionMs: number, confidence: number) => void;
@@ -73,21 +97,24 @@ export function useListenSync({
   const [note, setNote] = useState<string>();
   const [lastMatch, setLastMatch] = useState<ContinuousMatch>();
   const [misses, setMisses] = useState(0);
+  const [mapping, setMapping] = useState<MappingProgress>();
 
   // Everything the buffer callback reads lives in a ref. It fires dozens of times a
   // second from native code and must never depend on a re-render having happened.
   const streamRef = useRef<SpectrogramStream | undefined>(undefined);
   const matcherRef = useRef<ContinuousMatcher | undefined>(undefined);
+  const recorderRef = useRef<ContributionRecorder | undefined>(undefined);
   const positionRef = useRef(positionMs);
+  const correctionRef = useRef(onCorrection);
   /** Whether a position has been applied since listening started. */
   const correctedRef = useRef(false);
-  const correctionRef = useRef(onCorrection);
   positionRef.current = positionMs;
   correctionRef.current = onCorrection;
 
   const onBuffer = useCallback((buffer: AudioStreamBuffer) => {
     const matcher = matcherRef.current;
-    if (!matcher) return;
+    const recorder = recorderRef.current;
+    if (!matcher && !recorder) return;
 
     // The hardware decides the rate, not us — asking for 22050 is a request, and
     // phones routinely answer 48000. Rebuild the pipeline if it ever changes rather
@@ -98,14 +125,23 @@ export function useListenSync({
         sourceRate: buffer.sampleRate,
         channels: buffer.channels,
       });
-      // The frames already in the window were analysed at the old rate, which means
-      // their bins stand for different frequencies. Keeping them would mix two
-      // incompatible spectrograms into one match.
-      matcher.reset();
+      // Frames already accumulated were analysed at the old rate, so their bins stand
+      // for different frequencies. Keeping them would mix two incompatible
+      // spectrograms — harmless-looking, and wrong.
+      matcher?.reset();
+      recorder?.reset();
     }
-    const stream = streamRef.current;
 
-    const match = matcher.push(stream.push(new Float32Array(buffer.data)));
+    const frames = streamRef.current.push(new Float32Array(buffer.data));
+    if (frames.length === 0) return;
+
+    if (recorder) {
+      recorder.push(frames);
+      return;
+    }
+    if (!matcher) return;
+
+    const match = matcher.push(frames);
     if (!match) return;
 
     // Age the match to the last frame in this buffer. An attempt fires part-way
@@ -136,33 +172,51 @@ export function useListenSync({
     onBuffer,
   });
 
-  const available = !!stream;
-
-  const stop = useCallback(() => {
-    matcherRef.current = undefined;
-    streamRef.current = undefined;
+  /** Give the audio session back. Leaving `allowsRecording` on keeps iOS routing audio
+   *  as though something were still listening, which is both wrong and rude. */
+  const release = useCallback(() => {
     try {
       stream?.stop();
     } catch {
       // Already stopped, or the screen is unmounting. Nothing useful to do.
     }
-    // Hand the audio session back. Leaving `allowsRecording` on keeps iOS routing
-    // audio as though something were still listening, which is both wrong and rude.
     void setAudioModeAsync({ allowsRecording: false, shouldPlayInBackground: false }).catch(
       () => {},
     );
-    setState((current) => (current === 'listening' ? 'idle' : current));
   }, [stream]);
 
-  const start = useCallback(async () => {
+  /** Permission, then the audio session. Shared by both jobs; returns false if refused. */
+  const claimMicrophone = useCallback(async (): Promise<boolean> => {
+    const existing = await getRecordingPermissionsAsync();
+    const granted = existing.granted ? existing : await requestRecordingPermissionsAsync();
+    if (!granted.granted) {
+      setState('denied');
+      setNote('This needs the microphone. You can turn it on in Settings.');
+      return false;
+    }
+
+    await setAudioModeAsync({
+      allowsRecording: true,
+      // The session survives the app going to the background, so a recording is not
+      // cut short by putting the phone face down for two hours.
+      shouldPlayInBackground: true,
+      playsInSilentMode: true,
+      // Never take audio focus. Whatever is playing the episode — the television, or
+      // this phone — must not be ducked or paused by something that is only listening.
+      interruptionMode: 'mixWithOthers',
+    });
+    return true;
+  }, []);
+
+  const startListening = useCallback(async () => {
     if (!stream) {
       setState('unsupported');
-      setNote('Listening needs the app rather than the browser.');
       return;
     }
 
     setNote(undefined);
     setMisses(0);
+    setMapping(undefined);
     correctedRef.current = false;
 
     let reference: Reference;
@@ -170,7 +224,7 @@ export function useListenSync({
       const stored = await fetchReference(targetId);
       if (!stored) {
         setState('no-reference');
-        setNote('Nobody has mapped this episode yet. Sync by hand and you can contribute one.');
+        setNote('Nobody has mapped this episode yet — you could be the first.');
         return;
       }
       reference = stored.reference;
@@ -180,26 +234,10 @@ export function useListenSync({
       return;
     }
 
-    const existing = await getRecordingPermissionsAsync();
-    const granted = existing.granted ? existing : await requestRecordingPermissionsAsync();
-    if (!granted.granted) {
-      setState('denied');
-      setNote('Listening needs the microphone. You can turn it on in Settings.');
-      return;
-    }
+    if (!(await claimMicrophone())) return;
 
     try {
-      await setAudioModeAsync({
-        allowsRecording: true,
-        // The point of the whole task: the session survives the app going to the
-        // background, so the clock keeps being corrected while the phone is face down.
-        shouldPlayInBackground: true,
-        playsInSilentMode: true,
-        // Never take audio focus. Whatever is playing the episode — the television, or
-        // this phone — must not be ducked or paused by something that is only listening.
-        interruptionMode: 'mixWithOthers',
-      });
-
+      recorderRef.current = undefined;
       matcherRef.current = new ContinuousMatcher({
         reference,
         // Reporting only. Whether to act on a match is decided once the whole buffer
@@ -218,18 +256,113 @@ export function useListenSync({
       setState('failed');
       setNote(err instanceof Error ? err.message : 'Could not start listening.');
     }
-  }, [stream, targetId]);
+  }, [claimMicrophone, stream, targetId]);
+
+  const startMapping = useCallback(async () => {
+    if (!stream) {
+      setState('unsupported');
+      return;
+    }
+
+    setNote(undefined);
+    setLastMatch(undefined);
+    if (!(await claimMicrophone())) return;
+
+    try {
+      matcherRef.current = undefined;
+      recorderRef.current = new ContributionRecorder({
+        // Where the clock has reached is where this recording sits in the episode. A
+        // contribution stamped from zero would not describe a fragment — it would
+        // assert the episode begins here, and misplace everyone who used it.
+        startFrame: framesForMs(positionRef.current, HOP_SIZE, SAMPLE_RATE),
+      });
+      streamRef.current = undefined;
+      setMapping({ seconds: 0, landmarks: 0 });
+      await stream.start();
+      setState('mapping');
+    } catch (err) {
+      recorderRef.current = undefined;
+      setState('failed');
+      setNote(err instanceof Error ? err.message : 'Could not start recording.');
+    }
+  }, [claimMicrophone, stream]);
+
+  /** Finish a recording and send it. Separated so `stop` reads as one decision. */
+  const submit = useCallback(
+    async (recorder: ContributionRecorder) => {
+      const { hashes, frames } = recorder.finish();
+      if (recorder.frameCount < framesForMs(20_000, HOP_SIZE, SAMPLE_RATE)) {
+        setState('idle');
+        setNote('That was too short to be useful. Twenty seconds is about the minimum.');
+        return;
+      }
+
+      setState('uploading');
+      try {
+        const result = await contributeReference({
+          targetId,
+          hashes,
+          frameCount: frames,
+          hopSize: HOP_SIZE,
+          sampleRate: SAMPLE_RATE,
+        });
+        setState('idle');
+        setNote(
+          result.ok
+            ? 'Thank you. It becomes usable once someone else agrees with it.'
+            : result.reason,
+        );
+      } catch (err) {
+        setState('idle');
+        setNote(err instanceof Error ? err.message : 'Could not send that.');
+      }
+    },
+    [targetId],
+  );
+
+  const stop = useCallback(() => {
+    const recorder = recorderRef.current;
+    matcherRef.current = undefined;
+    recorderRef.current = undefined;
+    streamRef.current = undefined;
+    release();
+
+    if (recorder) {
+      void submit(recorder);
+      return;
+    }
+    setState((current) => (current === 'listening' ? 'idle' : current));
+  }, [release, submit]);
+
+  // Progress while mapping. Polled rather than pushed: buffers arrive dozens of times
+  // a second and re-rendering the screen at that rate to move a counter would cost
+  // more than the analysis does.
+  useEffect(() => {
+    if (state !== 'mapping') return;
+    const timer = setInterval(() => {
+      const recorder = recorderRef.current;
+      if (!recorder) return;
+      setMapping({
+        seconds: Math.round((recorder.frameCount * HOP_SIZE) / SAMPLE_RATE),
+        landmarks: recorder.hashCount,
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [state]);
 
   // Never outlive the screen. A microphone left running after navigating away is the
-  // single worst thing this feature could do.
-  useEffect(() => stop, [stop]);
+  // single worst thing this feature could do — so this releases the hardware
+  // unconditionally, without trying to salvage a recording in progress.
+  useEffect(() => release, [release]);
 
   return {
-    state: available ? state : 'unsupported',
+    state: stream ? state : 'unsupported',
     note,
     lastMatch,
     misses,
-    start,
+    mapping,
+    startListening,
+    startMapping,
     stop,
   };
 }

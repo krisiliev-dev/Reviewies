@@ -97,6 +97,19 @@ describe('landmark hashing', () => {
     expect(packHash(100, 200, 12)).not.toBe(packHash(100, 200, 13));
   });
 
+  it('stays unsigned across the whole bin range', () => {
+    // A 2048-point FFT has 1024 bins, so the top bit of the packed hash is set for
+    // everything above about 5.5kHz. Bitwise operators in JavaScript are signed, and a
+    // negative hash does not survive the Uint32Array the wire format uses — it comes
+    // back as its unsigned twin and never matches again. The old fixtures used 128
+    // bins, so nothing here ever reached that half of the range.
+    for (const binA of [0, 511, 512, 700, 1023]) {
+      const hash = packHash(binA, 300, 5);
+      expect(hash).toBeGreaterThanOrEqual(0);
+      expect(hash).toBe(new Uint32Array([hash])[0]);
+    }
+  });
+
   it('excludes absolute time, so the same audio hashes alike wherever it starts', () => {
     const early = hashPeaks([
       { frame: 10, bin: 40 },

@@ -299,3 +299,49 @@ one property that matters — a spectrum that keeps changing — and it is a poo
 for a television in a room with people talking over it. Accuracy against real audio,
 through a real microphone, at across-the-room volume, is unmeasured and stays on the
 list. So does the reference contribution path on the phone, which is still web-only.
+
+### 6.3 Contributing references, and two bugs that had been shipping quietly
+
+Listening consumes references. Nothing made them except a laptop, so every episode
+nobody had mapped in a browser was permanently unlistenable — a feature that works only
+where someone has already done the work by other means is not really shipped. The phone
+can now map an episode, and it is the better place to do it: `ContributionRecorder`
+hashes as the audio arrives and keeps about two dozen frames of peaks in memory, so it
+records a whole episode where the web records thirty seconds and holds the entire
+spectrogram. Its output is required to be byte-identical to hashing the whole
+spectrogram at once, which is what the test asserts — a phone and a laptop that describe
+the same audio differently produce references that silently never interoperate.
+
+Writing that test found two bugs, both of the same species: wrong in a way that still
+looks like it works.
+
+**Half of every landmark was being thrown away on the wire.** `packHash` builds a
+32-bit value with shifts and ORs, and JavaScript's bitwise operators are *signed*. Any
+pair with `binA >= 512` — at a 2048-point FFT, everything above about 5.5kHz, which is
+most of the harmonic content of speech and music — came back negative. References travel
+as a `Uint32Array`, which stores the same bits unsigned, so a stored reference keyed on
+3284828161 while a live sample looked up −1010139135. No error anywhere; matching simply
+ran on half the landmarks it should have. It survived every existing test because the
+fixtures used 128 bins and never reached that half of the range. One `>>> 0` fixes it.
+
+**A contribution asserted the episode began wherever you pressed the button.** A
+reference is consulted by voting on `referenceFrame − sampleFrame`, so its frame numbers
+are read as positions in the episode. The web recorded thirty seconds from wherever the
+user was and stamped them from zero — which does not describe a fragment, it claims the
+episode starts there. Everyone who later synced against such a reference would be placed
+exactly as far out as the contributor happened to be in. The match would be perfect and
+the answer wrong, which is the worst combination available. Contributions now carry a
+`startFrame` and stamp episode-absolute times; `frame_count` correspondingly means where
+the reference *ends*, which is also the more meaningful thing for the backend to compare
+two contributors on.
+
+Both bugs share a cause worth naming, because it is the same one that hid the confidence
+bug in §6.2: **the fixtures were smaller than reality.** 128 bins instead of 1024, a
+spectrogram sliced instead of audio analysed, a five-minute reference instead of forty.
+Every one of those choices made a test faster and quietly moved it out of the range
+where the code was wrong.
+
+Mapping is deliberately the quieter of the two controls, and disabled until the clock is
+running — with the reason said out loud rather than left as a greyed-out button. A
+contribution is only as accurate as the clock it was recorded against, and an
+enthusiastic badly-timed one misplaces everyone else's reactions.

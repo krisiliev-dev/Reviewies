@@ -61,7 +61,10 @@ export function ListenSync({
     setNote(undefined);
     try {
       // Thirty seconds is enough to be useful without asking someone to sit still.
-      const { hashes, frames } = await captureContribution(30_000);
+      // Where the clock is now is where the recording starts in the episode. Without
+      // it the contribution claims the episode begins wherever this person happened to
+      // press the button.
+      const { hashes, frames } = await captureContribution(30_000, { startMs: positionMs });
       const result = await contributeReference({
         targetId,
         hashes,

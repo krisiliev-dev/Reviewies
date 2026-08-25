@@ -154,6 +154,7 @@ export default function WatchingScreen() {
         <ListenSync
           targetId={targetId}
           positionMs={clock.positionMs}
+          clockRunning={clock.running}
           onCorrection={(ms) =>
             // Hearing the episode is itself proof it is playing, so a match on a clock
             // that was never started begins it rather than setting a paused timecode.

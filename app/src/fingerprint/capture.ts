@@ -3,11 +3,13 @@ import {
   FFT_SIZE,
   HOP_SIZE,
   SAMPLE_RATE,
-  fingerprint,
   framesToMs,
   matchSample,
+  fingerprint,
   type Reference,
 } from '@reviewies/core/fingerprint/fingerprint';
+import { ContributionRecorder } from '@reviewies/core/fingerprint/contribute';
+import { framesForMs } from '@reviewies/core/fingerprint/continuous';
 
 // Re-exported for the screens that show what the capture will do.
 export { CAPTURE_MS, FFT_SIZE, HOP_SIZE, SAMPLE_RATE };
@@ -118,19 +120,23 @@ export async function syncByListening(
  * synced accurately by hand — a wrong contribution would misplace everyone else's
  * reactions. Cross-validating multiple contributions before trusting one is the
  * planned safeguard.
+ *
+ * `startMs` is where the clock had reached when recording began, and it is not
+ * optional in any meaningful sense. A reference's frame numbers are read as positions
+ * in the episode, so a recording taken twelve minutes in and stamped from zero does not
+ * describe a fragment — it asserts the episode starts there, and everyone who later
+ * syncs against it is placed twelve minutes early. That failure is invisible from here:
+ * the match is perfect, the answer is wrong.
  */
 export async function captureContribution(
   durationMs: number,
-  opts: { signal?: AbortSignal } = {},
+  opts: { signal?: AbortSignal; startMs?: number } = {},
 ): Promise<{ hashes: Uint32Array; frames: number }> {
   const spectrogram = await captureSpectrogram(durationMs, opts);
-  const hashes = fingerprint(spectrogram);
 
-  const flat = new Uint32Array(hashes.length * 2);
-  hashes.forEach((h, i) => {
-    flat[i * 2] = h.hash;
-    flat[i * 2 + 1] = h.frame;
+  const recorder = new ContributionRecorder({
+    startFrame: framesForMs(opts.startMs ?? 0, HOP_SIZE, SAMPLE_RATE),
   });
-
-  return { hashes: flat, frames: spectrogram.length };
+  recorder.push(spectrogram);
+  return recorder.finish();
 }

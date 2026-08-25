@@ -110,8 +110,17 @@ export function findPeaks(
  * and the offset is recovered later by voting.
  */
 export function packHash(binA: number, binB: number, deltaFrames: number): number {
-  // 10 bits per frequency, 12 for the delta: comfortably within a 32-bit integer.
-  return ((binA & 0x3ff) << 22) | ((binB & 0x3ff) << 12) | (deltaFrames & 0xfff);
+  // 10 bits per frequency, 12 for the delta: exactly 32 bits.
+  //
+  // `>>> 0` is load-bearing, not decoration. JavaScript's bitwise operators produce
+  // *signed* 32-bit results, so any pair with `binA >= 512` — which at a 2048-point FFT
+  // is everything above about 5.5kHz, meaning most of the harmonic content of speech
+  // and music — comes back negative. References travel over the wire as a Uint32Array,
+  // which stores the same bits unsigned, so a reference read back would key on
+  // 3284828161 while a live sample looked up -1010139135. Half of every landmark set
+  // would simply never be found, with no error anywhere: the feature would just work
+  // half as well as it should and nothing would say why.
+  return (((binA & 0x3ff) << 22) | ((binB & 0x3ff) << 12) | (deltaFrames & 0xfff)) >>> 0;
 }
 
 /** Build landmark hashes from peaks. */
