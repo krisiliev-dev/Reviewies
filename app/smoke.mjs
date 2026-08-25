@@ -171,11 +171,21 @@ async function scaled(screen) {
 
   const result = await page.evaluate(() => {
     const clipped = [];
-    for (const el of document.querySelectorAll('button,a[href],[role="button"],[role="radio"]')) {
+    // `select` and `input` were missing, which is why the country picker on the title
+    // page ran off the right-hand edge for as long as it did: it is a native select,
+    // and a check that only looked at buttons and links could not see it.
+    for (const el of document.querySelectorAll(
+      'button,a[href],select,input,[role="button"],[role="radio"]',
+    )) {
       if (el.closest('[aria-hidden="true"],[inert]')) continue;
       const box = el.getBoundingClientRect();
-      // Pushed off the side, or squashed out of existence by a neighbour that grew.
-      if (box.width > 0 && (box.left > innerWidth || box.right < 0)) {
+      if (box.width === 0) continue;
+      // Any part of it past either edge, not only all of it. Written the loose way
+      // first — `left > innerWidth || right < 0` — which asks whether a control is
+      // *entirely* gone, and the ones that were actually broken were half gone: a
+      // skip button with its right half past the edge is as unusable as one that is
+      // not there, and it looked like a pass.
+      if (box.right > innerWidth + 1 || box.left < -1) {
         clipped.push((el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30));
       }
     }

@@ -127,7 +127,11 @@ export function WatchingMode() {
 
   return (
     <div className="flex h-full flex-col bg-ink">
-      <header className="safe-top flex items-center gap-3 px-4 pt-3 pb-1">
+      {/* Wraps, and the title is allowed more than one line. Close, the title and the
+          timecode in one nowrap row fits a phone once; at twice the text size the show
+          came out as "The L…" and the episode as "S1E2 · …", which is not a truncation
+          so much as the screen refusing to say what you are watching. */}
+      <header className="safe-top flex flex-wrap items-center gap-x-3 px-4 pt-3 pb-1">
         {/* Two things on this screen say "Close": this and the remote drawer. */}
         <button
           onClick={() => navigate(-1)}
@@ -137,14 +141,15 @@ export function WatchingMode() {
           Close
         </button>
         <div className="min-w-0 flex-1 text-center">
-          <p className="truncate text-sm font-medium">{series?.name ?? 'Watching'}</p>
+          {/* Two lines before it gives up, rather than one character. */}
+          <p className="line-clamp-2 text-sm font-medium">{series?.name ?? 'Watching'}</p>
           {episode && (
-            <p className="truncate text-xs text-muted">
+            <p className="line-clamp-2 text-xs text-muted">
               S{episode.season}E{episode.number} · {episode.name}
             </p>
           )}
         </div>
-        <span className="w-12 text-right font-mono text-sm tabular-nums text-muted">
+        <span className="min-w-12 text-right font-mono text-sm tabular-nums text-muted">
           {formatTimecode(clock.positionMs)}
         </span>
       </header>
@@ -259,7 +264,9 @@ function SyncBar({
   onStreamPaused: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 pb-2">
+    // Five controls and a density picker in one row, which fits a phone once and not at
+    // twice the text size. Wrapping keeps Hold reachable; it was running off the edge.
+    <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
       <button
         onClick={clock.toggle}
         aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}

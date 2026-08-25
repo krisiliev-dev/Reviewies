@@ -112,7 +112,8 @@ function SuggestionRow({
           Because you watched {suggestion.because.slice(0, 2).join(' and ')}
         </p>
 
-        <div className="mt-2 flex gap-1.5">
+        {/* Wraps, for the same reason the Up Next row does. */}
+        <div className="mt-2 flex flex-wrap gap-1.5">
           <button
             onClick={track}
             disabled={busy}

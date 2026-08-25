@@ -131,7 +131,10 @@ function TabBar() {
       // merely scrolling and leaving focus where it was.
       tabIndex={-1}
       aria-label="Sections"
-      className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink/95 backdrop-blur"
+      // Opaque. At 95% the content behind showed through, which is a subtle grubbiness at
+      // the default text size and unreadable at twice it, where this bar wraps to four
+      // rows and covers nearly half the screen with two layers of text at once.
+      className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink"
     >
       {/* Wraps rather than truncating or scrolling. Eight tabs fit a phone at the
           default text size and cannot at twice it. A label cut short is content lost,
@@ -141,7 +144,7 @@ function TabBar() {
           Wrapping keeps every one of them on screen and visible. */}
       <ul className="mx-auto flex max-w-lg flex-wrap justify-center">
         {TABS.map((tab) => (
-          <li key={tab.to} className="min-w-[4.5rem] flex-1">
+          <li key={tab.to} className="flex-1">
             <NavLink
               to={tab.to}
               end={tab.to === '/'}
@@ -150,7 +153,7 @@ function TabBar() {
                 // which made them the one piece of text in the app that ignored the
                 // reader's setting entirely — while the icons beside them, sized in em,
                 // doubled. Exactly inverted.
-                `flex flex-col items-center gap-0.5 px-2 py-2.5 text-[0.625rem] whitespace-nowrap ${
+                `flex flex-col items-center gap-0.5 px-1 py-2.5 text-center text-[0.625rem] leading-tight break-words ${
                   isActive ? 'text-accent' : 'text-muted'
                 }`
               }

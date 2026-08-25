@@ -192,7 +192,11 @@ function UpNextRow({
   }
 
   return (
-    <li className="flex items-center gap-3 rounded-2xl bg-surface p-2.5">
+    // Wraps. At twice the text size the poster and the action column together are
+    // wider than a phone, and with `flex-nowrap` the actions went past the right edge —
+    // half a Watched button is as unusable as none. The smoke suite's 200% check only
+    // noticed controls that were *entirely* gone, which these never were.
+    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface p-2.5">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}

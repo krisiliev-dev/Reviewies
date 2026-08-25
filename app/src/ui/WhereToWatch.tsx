@@ -44,13 +44,17 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
 
   return (
     <section className="mb-5 rounded-2xl bg-surface p-3.5">
-      <div className="flex items-baseline justify-between gap-3">
+      {/* Wraps, and the country is allowed to shrink. `shrink-0` beside a heading that
+          takes three lines at twice the text size pushed "United Kingdom" out through
+          the side of its own card — visible in a screenshot and invisible to the
+          viewport check, because it escaped the card and not the screen. */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">Where to watch</h2>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
           aria-label={`Change country — currently ${regionName(region)}`}
-          className="tap shrink-0 text-xs text-muted underline"
+          className="tap text-xs text-muted underline"
         >
           {regionName(region)}
         </button>

@@ -1438,6 +1438,56 @@ pixels; no tab icon that is a character; no filled button disabled by fading. Wh
 guarded is everything else in this section, and that is worth being plain about: three of
 these four were found by looking, and nothing here means the next one will not be.
 
+ ### 6.31 The same again, with something on the screen
+
+§6.30 looked at the app and found four things. It looked almost entirely at *empty*
+screens, which is the easy half: nothing wraps, nothing overflows, no grid has to decide
+how many columns it has. `app/smoke.mjs` already drives a populated profile and already
+writes screenshots; looking at those was most of this.
+
+**The 200% check was measuring the wrong thing.** It asked whether a control was
+*entirely* off screen — `left > innerWidth || right < 0` — and everything actually broken
+was half off. A Watched button with its right edge past the viewport is as untappable as
+one that is not there, and it looked like a pass. It also only examined buttons and links,
+so the country picker on the title page, which is a native `select`, was never looked at.
+
+Tightened to "any part past either edge", and widened to selects and inputs, it named four
+screens at once: the Up Next row's Watched and Watch along, the catch-up sheet behind it,
+Discover's Track and Add, and Watching Mode's Hold. One cause behind all of them — a row
+of controls with `flex-nowrap` and nowhere to go when the text doubles. They wrap now.
+
+Two things it still could not see, both found by looking:
+
+The **country picker escaped its card** rather than the viewport. "United Kingdom" sat
+beside a heading that takes three lines at 200%, with `shrink-0` on it, and came out
+through the side of the panel — wrong in a way no viewport measurement can express,
+because nothing crossed the edge of the screen.
+
+**Watching Mode's header gave up on saying what you were watching.** "The L…" and
+"S1E2 · …", from a `truncate` on a nowrap row of Close, title and timecode. Truncation is
+content loss, and this is the flagship screen. It wraps, and the title gets two lines
+before it gives up.
+
+And the tab bar took three attempts, which is the part worth recording. §6.30 replaced
+pixel-sized labels with rem ones; that made eight tabs stop fitting a phone, and the first
+answer — scrolling — hid half the navigation. Wrapping fixed 200% and broke the default
+size, because a fixed minimum width wraps when there is no need to. What works is neither:
+`flex-1` so the eight share the row evenly, no `whitespace-nowrap` so a label may use two
+lines inside its own tab, and `break-words` so a single long word can still give. One row
+at 58px normally, two rows at 183px at 200%, nothing overflowing at either — measured
+rather than eyeballed.
+
+The honest note on that: eight tabs on a 390px phone is too many, and the phone app already
+knows it — five, with a More. Fixing the web's navigation properly is a decision about the
+product, not a layout bug to fix while passing, so it is written down here rather than done
+in a commit about wrapping.
+
+Two things looked wrong and were not, which is worth as much as the four that were. The
+emoji pad appeared to be clipped by the search field beneath it; it is a scroll container
+meeting its own edge. And the tab bar's translucency looked like a rendering fault at 200%
+— it was `bg-ink/95`, and five per cent of a screen's worth of text behind a bar that
+covers half the display is legible. That one *was* a defect, and it is opaque now.
+
 ---
 
 ## 7. What is still not known
