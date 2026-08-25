@@ -88,6 +88,22 @@ try {
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
+  // --- The rest of More --------------------------------------------------------
+  // Every link has to lead somewhere. A route that does not exist is a dead end that
+  // only shows up when someone taps it, which is how the title page shipped broken.
+  for (const [detail, expect_] of [
+    ['What is airing, and what to be told about', /Tell me about/i],
+    ['Film and television in the same list', /list/i],
+    ['Your handle, following, blocking', /account|sync|following/i],
+  ]) {
+    await page.getByText(detail).click();
+    await page.waitForTimeout(1500);
+    const body = await text();
+    check(`${detail.slice(0, 22)}… opens`, expect_.test(body), body.slice(0, 90));
+    await page.goBack();
+    await page.waitForTimeout(1000);
+  }
+
   // --- Account ---------------------------------------------------------------
   await page.getByText('Optional — adds sync and the shared layer').click();
   await page.waitForTimeout(1500);

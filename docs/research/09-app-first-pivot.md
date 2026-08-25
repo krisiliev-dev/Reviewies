@@ -166,7 +166,7 @@ core testable independently of any UI, and they are reversible.
 
 ## 6. Where it got to
 
-Steps 1–4 are done, and the thesis holds.
+**Steps 1–6 are done. The port is complete**, and the thesis holds.
 
 `@reviewies/core` is 6,200 lines with no DOM, no React, and no `import.meta.env`. Its
 386 tests run against **both** database implementations — Dexie and SQLite — and pass

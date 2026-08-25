@@ -21,6 +21,9 @@ import { useLive } from '../../src/useLive';
 const LINKS = [
   { href: '/account', label: 'Account', detail: 'Optional — adds sync and the shared layer' },
   { href: '/remote', label: 'Remote', detail: 'Control a TV on your Wi-Fi, directly' },
+  { href: '/calendar', label: 'Upcoming', detail: 'What is airing, and what to be told about' },
+  { href: '/lists', label: 'Lists', detail: 'Film and television in the same list' },
+  { href: '/people', label: 'People', detail: 'Your handle, following, blocking' },
   { href: '/stats', label: 'Stats', detail: 'Runtime-weighted, and your year in review' },
   { href: '/data', label: 'Your data', detail: 'Import from TV Time, export everything' },
 ] as const;

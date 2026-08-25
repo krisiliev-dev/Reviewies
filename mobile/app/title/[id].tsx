@@ -20,6 +20,7 @@ import {
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { Poster } from '../../src/ui/Poster';
+import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { StarRating } from '../../src/ui/StarRating';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
@@ -87,6 +88,10 @@ export default function TitleScreen() {
         </View>
 
         {title?.overview ? <Text style={styles.overview}>{title.overview}</Text> : null}
+
+        {/* Asked for repeatedly: a doesthedogdie-style heads-up inside the tracker.
+            Collapsed, so it spoils nothing unasked. */}
+        <ContentWarnings titleId={titleId} />
 
         {loading && seasons.length === 0 && (
           <ActivityIndicator color={theme.accent} style={styles.loading} />
