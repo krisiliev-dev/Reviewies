@@ -21,7 +21,7 @@ lives in IndexedDB.
 ## Status
 
 Core loop, social layer, backend, remote control and fingerprinting are all built and
-deployed. 497 core tests (run twice, against both database implementations), 157 app
+deployed. 497 core tests (run twice, against both database implementations), 159 app
 tests, 24 bridge tests and 19 relay tests pass, plus 31 live tests against the real
 Supabase project and the real TMDB and AniList APIs. 49 browser checks cover the web
 app end to end and 27 drive the phone app through react-native-web.
@@ -123,7 +123,7 @@ and why that matters more than it sounds.
 ### Tests
 
 ```bash
-npm test                              # 654 tests across core and app
+npm test                              # 656 tests across core and app
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
 npm run test:sqlite --workspace core  # the same 497 core tests, against SQLite
 
