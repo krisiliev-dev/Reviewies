@@ -928,3 +928,55 @@ deduplicating on the bare form both would have appeared in the pad, and the crow
 for a single moment would have split between two entries nobody could tell apart. Caught
 by a test asserting the ranking, which failed with `expected '👍️' to be '👍'` — a
 character difference invisible in the diff and obvious in the assertion.
+
+### 6.17 The remote clause, and a reason that expired
+
+> *"Connect to all kinds of devices through Bluetooth or WiFi… pause, play, skip 15s,
+> rewind 15s… hidden in a drawer to the side."*
+
+**The controls hold.** Play/pause, back fifteen, forward fifteen, on both platforms, with
+a d-pad and volume beyond them. Skipping is repeated key presses because Roku's ECP has
+no seek, which the code has always said.
+
+**The drawer held on the web and not on the phone.** The web has a genuine drawer — an
+edge tab, a panel sliding in from the right, Escape to close. The phone had the same
+controls on their own screen, reached through the More tab. That reads like a styling
+difference and is not: using the remote during an episode meant *leaving Watching Mode*,
+losing the clock and the reaction stream, and then having to find the episode again. A
+remote you have to abandon what you are doing to reach is not the thing that was
+described.
+
+The controls are now a component either can render, so the phone has both: a drawer
+inside Watching Mode, and the standalone screen for finding a television in the first
+place. The drawer stays mounted and slides rather than being conditionally rendered,
+because scanning a subnet takes seconds and doing it again on every open would be its own
+answer to why nobody uses the feature.
+
+**"All kinds of devices" is two.** Roku directly over Wi-Fi, and a laptop through the
+bridge. Cast and AirPlay need their vendors' SDKs and a custom development build (doc 6
+§2). The panel now says so rather than saying "Roku only, for now", which was true and
+incomplete in a way that undersold the laptop path.
+
+#### The Bluetooth answer was right for a reason that has since expired
+
+Doc 3 recorded the Bluetooth half of the brief as **"dead on iOS"**, because Safari has
+never supported Web Bluetooth. That was correct — and it stopped being the reason the
+moment this became a native app, which is exactly the kind of finding a pivot is supposed
+to produce and exactly the kind that goes unnoticed because the conclusion did not change.
+
+The conclusion does not change, but it now rests on something that is still true.
+Controlling a television over Bluetooth means being a Bluetooth *remote*: the television
+is the host and the remote is a HID peripheral it pairs with. iOS has no public API for
+acting as a HID peripheral, so an iPhone cannot present itself as one however native the
+app is. Televisions are A2DP *sinks* — they receive audio — and do not offer themselves
+as controllable AVRCP targets to arbitrary phones. So Bluetooth is not a route to
+controlling a television for anyone, rather than a route this app cannot take.
+
+Wi-Fi is, which is why the remote works the way it does.
+
+One thing fell out of building the drawer: Watching Mode now had two controls saying
+"Close" — the screen's own, and the drawer's. Ambiguous to a screen reader working down
+the page, and ambiguous to the smoke check, which is how it was noticed. Both are named
+now. That is the third time this week a test could not say which control it meant and the
+fix was to make the app say, which suggests the tests are finding a real accessibility
+problem rather than being fussy.

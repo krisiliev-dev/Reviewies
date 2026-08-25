@@ -309,7 +309,25 @@ try {
   await page.getByPlaceholder('Search any emoji…').fill('');
   await page.waitForTimeout(500);
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
-  await page.getByText('Close').click();
+
+  // --- The remote, in a drawer ------------------------------------------------
+  // "Hidden in a drawer to the side." The phone had the controls on their own screen
+  // reached through the More tab, so using the remote during an episode meant leaving
+  // Watching Mode — losing the clock and the reaction stream, and having to find the
+  // episode again afterwards.
+  await page.getByLabel('Open remote').click();
+  await page.waitForTimeout(800);
+  const drawer = await text();
+  check('the remote opens as a drawer without leaving Watching Mode', /Scan Wi-Fi/.test(drawer));
+  check(
+    'and the clock is still running behind it',
+    /Pause|Resume/.test(drawer),
+    'the whole reason for not making it a separate screen',
+  );
+  await page.screenshot({ path: OUT + '11-remote-drawer.png' });
+  await page.getByLabel('Close remote').click();
+  await page.waitForTimeout(600);
+  await page.getByLabel('Leave Watching Mode').click();
   await page.waitForTimeout(1500);
 
   // --- Comments, and the spoiler gate ------------------------------------------

@@ -26,7 +26,7 @@ tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the r
 Supabase project and the real TMDB and AniList APIs — including the whole
 listen-to-sync pipeline end to end: two people contribute timelines, the promoter
 cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
-app end to end and 39 drive the phone app through react-native-web.
+app end to end and 41 drive the phone app through react-native-web.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
 
@@ -66,7 +66,7 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Push notification delivery (phone) | ⚠️ Built and deployed; needs a device to obtain a token |
 | Direct TV control from the app (Roku ECP over the LAN) | ✅ Built, not verified on hardware |
 | Local bridge for a laptop (MPRIS) | ✅ Built, not verified on hardware |
-| Remote drawer + relay server | ✅ Built, relay verified end to end |
+| Remote drawer + relay server | ✅ Built on both platforms, relay verified end to end |
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
 | Continuous listening in the background (phone) | ✅ Built, unverified on a device |
 | Mapping a whole episode from the phone | ✅ Built |
@@ -151,7 +151,7 @@ node smoke.mjs                        # 50 end-to-end checks in a real browser
 
 cd mobile && npx expo export --platform web
 npx serve dist &
-node smoke.mjs                        # 39 checks driving the phone app
+node smoke.mjs                        # 41 checks driving the phone app
 ```
 
 The browser checks work either way. They ask the app once whether it has credentials and

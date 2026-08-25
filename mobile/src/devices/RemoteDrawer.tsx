@@ -1,0 +1,133 @@
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ScrollView } from 'react-native';
+import { useRemote } from './useRemote';
+import { RemotePanel } from './RemotePanel';
+import { radius, theme } from '../ui/theme';
+
+/**
+ * The remote, hidden in a drawer to the side — which is what the brief asked for.
+ *
+ * The phone had the controls and put them on a separate screen reached through the More
+ * tab, so using the remote during an episode meant leaving Watching Mode: the clock
+ * stopped being visible, the reaction stream went away, and coming back meant finding
+ * the episode again. A remote you have to abandon what you are doing to reach is not the
+ * thing that was described.
+ *
+ * It stays mounted and slides, rather than being conditionally rendered, so the device
+ * you scanned for is still selected the second time you open it. Scanning a subnet takes
+ * a few seconds and doing it again because a component unmounted would be its own answer
+ * to why nobody uses the feature.
+ */
+const WIDTH = Math.min(300, Dimensions.get('window').width * 0.85);
+
+export function RemoteDrawer() {
+  const [open, setOpen] = useState(false);
+  const slide = useRef(new Animated.Value(0)).current;
+  const remote = useRemote();
+
+  useEffect(() => {
+    Animated.timing(slide, {
+      toValue: open ? 1 : 0,
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [open, slide]);
+
+  return (
+    <>
+      {/* The handle: a tab on the edge, always there, never in the way of the pad. */}
+      {!open && (
+        <Pressable
+          onPress={() => setOpen(true)}
+          style={styles.tab}
+          hitSlop={10}
+          accessibilityLabel="Open remote"
+        >
+          <Text style={styles.tabGlyph}>⌇</Text>
+        </Pressable>
+      )}
+
+      {open && <Pressable style={styles.scrim} onPress={() => setOpen(false)} />}
+
+      <Animated.View
+        style={[
+          styles.drawer,
+          {
+            transform: [
+              { translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [WIDTH, 0] }) },
+            ],
+          },
+        ]}
+        // Hidden from screen readers when closed: it is off-screen, not merely invisible,
+        // and a control nobody can see should not be reachable by swiping through them.
+        pointerEvents={open ? 'auto' : 'none'}
+        accessibilityElementsHidden={!open}
+        importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
+      >
+        <View style={styles.head}>
+          <Text style={styles.title}>Remote</Text>
+          <Pressable
+            onPress={() => setOpen(false)}
+            hitSlop={8}
+            accessibilityRole="button"
+            // Named, because "Close" on its own is what half the sheets in this app say.
+            accessibilityLabel="Close remote"
+          >
+            <Text style={styles.close}>Close</Text>
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={styles.body}>
+          <RemotePanel remote={remote} />
+        </ScrollView>
+      </Animated.View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  tab: {
+    position: 'absolute',
+    right: 0,
+    top: '45%',
+    paddingVertical: 16,
+    paddingHorizontal: 6,
+    backgroundColor: theme.surface2,
+    borderTopLeftRadius: radius.md,
+    borderBottomLeftRadius: radius.md,
+    zIndex: 40,
+  },
+  tabGlyph: { color: theme.muted, fontSize: 18 },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 45,
+  },
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: WIDTH,
+    backgroundColor: theme.ink,
+    borderLeftWidth: 1,
+    borderLeftColor: theme.edge,
+    zIndex: 50,
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 52,
+    paddingBottom: 10,
+  },
+  title: { color: theme.text, fontSize: 17, fontWeight: '600' },
+  close: { color: theme.muted, fontSize: 15 },
+  body: { padding: 14, paddingBottom: 40, gap: 16 },
+});

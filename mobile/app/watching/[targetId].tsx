@@ -21,6 +21,7 @@ import {
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
 import { ReactionStream } from '../../src/ui/ReactionStream';
 import { ListenSync } from '../../src/watching/ListenSync';
+import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 
@@ -95,7 +96,15 @@ export default function WatchingScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.screen}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} hitSlop={12}>
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            accessibilityRole="button"
+            // Named, because this screen now holds two things that say "Close": this,
+            // and the remote drawer. Ambiguous to a screen reader and ambiguous to a
+            // test, which is how the ambiguity got noticed.
+            accessibilityLabel="Leave Watching Mode"
+          >
             <Text style={styles.close}>Close</Text>
           </Pressable>
           <View style={styles.headerMiddle}>
@@ -204,7 +213,11 @@ export default function WatchingScreen() {
           style={styles.search}
           autoCorrect={false}
         />
-      </SafeAreaView>
+  
+      {/* "Hidden in a drawer to the side" — and here rather than only on its own screen,
+          because reaching for the remote should not cost you the clock and the stream. */}
+      <RemoteDrawer />
+    </SafeAreaView>
     </>
   );
 }
