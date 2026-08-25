@@ -45,20 +45,44 @@ export async function fetchRemoteReactions(targetId: string, limit = 2000): Prom
   const client = getClient();
   if (!client || !(await getSession())) return 0;
 
-  const { data, error } = await client
-    .from('reactions')
-    .select('id, user_id, target_id, t_ms, emoji, created_at')
-    .eq('target_id', targetId)
-    .eq('deleted', false)
-    .order('t_ms', { ascending: true })
-    .limit(limit);
+  // A sample spread across the episode, not the first `limit` of them.
+  //
+  // Asking for reactions ordered by time with a limit sounds harmless and is not: an
+  // episode with more reactions than the cap returns only its opening minutes, so the
+  // busiest episodes — the ones worth watching along with — were exactly the ones that
+  // fell silent after the titles. The server buckets by time and returns the liveliest
+  // few from each, which is also the shape the density control here already wants.
+  const sampled = await client.rpc('reactions_sample', {
+    p_target: targetId,
+    p_bucket_ms: 10_000,
+    p_per_bucket: 10,
+    p_limit: limit,
+  });
+
+  // A client can be newer than the database it is talking to — an app that has not been
+  // updated, or a project mid-migration. Falling back to the old query keeps reactions
+  // working there rather than emptying the screen; it is the previous behaviour, prefix
+  // and all, and is meant to be reachable only until the migration lands.
+  const { data, error } = sampled.error
+    ? await client
+        .from('reactions')
+        .select('id, user_id, target_id, t_ms, emoji, created_at')
+        .eq('target_id', targetId)
+        .eq('deleted', false)
+        .order('t_ms', { ascending: true })
+        .limit(limit)
+    : sampled;
 
   if (error || !data) return 0;
 
   const session = await getSession();
   const myId = session?.user.id;
 
-  const incoming: Reaction[] = data.map((row) => ({
+  // The RPC and the fallback select return the same columns, but through different
+  // typings, so they are read as one shape here rather than at each call site.
+  const rows = data as Array<Record<string, unknown>>;
+
+  const incoming: Reaction[] = rows.map((row) => ({
     id: String(row.id),
     targetId: String(row.target_id),
     tMs: Number(row.t_ms),

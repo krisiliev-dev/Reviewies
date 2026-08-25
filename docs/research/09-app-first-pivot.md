@@ -466,3 +466,41 @@ a fixture gets sized for the assertion being written, and then silently defines 
 the code is ever exercised over. 128 bins instead of 1024, three rows instead of a
 thousand, UTC instead of anywhere anyone lives: each was a reasonable local choice, and
 each one made a whole class of failure unreachable.
+
+### 6.6 Reactions now cover the episode
+
+The last finding from §6.5, fixed. The client asked for reactions ordered by time with a
+limit of two thousand, which on a busy episode returns the earliest two thousand: a
+storm over the opening titles and silence for the following forty minutes. Backwards, in
+the way that matters — the episodes that exceed the cap are the popular ones, and those
+are the only episodes where watching along with a crowd is worth doing.
+
+`reactions_sample` buckets by time, keeps the liveliest few in each bucket, and returns
+them in timeline order. The defaults are ten per ten seconds, which is sixty a minute,
+exactly the top setting of the density control already in Watching Mode — so the client
+can thin what arrives and never needs to ask for more.
+
+Two details that were wrong on the first attempt:
+
+- **Ordering the cap by time reinstated the bug one level up.** Ranking within buckets
+  and then taking `order by rank, t_ms limit N` keeps rank-one from the first N buckets
+  and none after — with a small cap the sample reached twenty minutes into a
+  forty-five-minute episode and stopped. The survivors are now scattered by a
+  multiplicative hash of the bucket index, so a cap that bites thins density everywhere
+  instead of truncating coverage. Being a pure function of the index, it returns the same
+  sample every call.
+- **SECURITY INVOKER is load-bearing, not incidental.** `reactions_select` hides deleted
+  rows and anyone the viewer has blocked or been blocked by. A definer-rights function
+  would bypass that policy and hand back blocked users' reactions through this one code
+  path only. There is a test for it.
+
+The client falls back to the old query when the RPC is missing, because an app can be
+newer than the project it talks to — a phone that has not updated, or a database
+mid-migration. It returns the prefix, which is worse, and showing the opening minutes
+beats showing nothing.
+
+Both the SQL and the client change were checked against the previous implementation to
+confirm the new tests fail there. That is now standard practice here rather than a nicety:
+two tests written this week to catch a specific bug passed against the unfixed code — one
+because a mock never applied, one because an option the test passed was silently ignored
+by a constructor that did not yet accept it.

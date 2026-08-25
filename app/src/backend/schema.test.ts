@@ -432,6 +432,117 @@ describe('notification scheduler', () => {
   });
 });
 
+describe('sampling an episode\'s reactions', () => {
+  const EPISODE = 'tmdb:ep:busy';
+  /** Forty-five minutes, which is what the cap has to stretch across. */
+  const RUNTIME_MS = 45 * 60 * 1000;
+
+  /**
+   * A popular episode: a storm of reactions over the opening titles, then a normal
+   * scattering through the rest of it.
+   *
+   * The shape matters. The old query took the earliest 2000 by `t_ms`, so a burst at
+   * the start was enough to consume the entire budget and leave the remaining forty
+   * minutes invisible — and a burst at the start is what an episode everyone is
+   * watching together actually looks like.
+   */
+  async function fillEpisode(burst = 2500, rest = 500) {
+    const values: string[] = [];
+    const params: unknown[] = [ALICE, EPISODE];
+    let n = 0;
+
+    const push = (tMs: number) => {
+      n++;
+      values.push(`(gen_random_uuid(), $1, $2, ${tMs}, '👏', now() - interval '${n} seconds')`);
+    };
+
+    for (let i = 0; i < burst; i++) push(Math.floor((i / burst) * 60_000));
+    for (let i = 0; i < rest; i++) push(60_000 + Math.floor((i / rest) * (RUNTIME_MS - 60_000)));
+
+    await asAdmin(
+      `insert into reactions (id, user_id, target_id, t_ms, emoji, created_at) values ${values.join(',')}`,
+      params,
+    );
+  }
+
+  const sample = async (user: string, limit = 2000) =>
+    (
+      await asUser<{ t_ms: number; user_id: string }>(
+        user,
+        'select * from reactions_sample($1, 10000, 10, $2)',
+        [EPISODE, limit],
+      )
+    ).rows;
+
+  it('covers the whole episode instead of only its opening', async () => {
+    await fillEpisode();
+
+    // What the client used to ask for, kept here as the thing being improved on.
+    const prefix = (
+      await asUser<{ t_ms: number }>(
+        ALICE,
+        'select t_ms from reactions where target_id = $1 and not deleted order by t_ms limit 2000',
+        [EPISODE],
+      )
+    ).rows;
+    expect(Math.max(...prefix.map((r) => r.t_ms))).toBeLessThan(60_000);
+
+    const sampled = await sample(ALICE);
+    expect(sampled.length).toBeGreaterThan(100);
+    // Reaches the closing minutes rather than stopping after the titles.
+    expect(Math.max(...sampled.map((r) => r.t_ms))).toBeGreaterThan(RUNTIME_MS - 60_000);
+  });
+
+  it('thins the crowded moments rather than dropping the quiet ones', async () => {
+    await fillEpisode();
+    const sampled = await sample(ALICE);
+
+    // The first minute held 2500 of the 3000 reactions and must not still hold most of
+    // the sample: six buckets of ten is the most it can contribute.
+    const inFirstMinute = sampled.filter((r) => r.t_ms < 60_000).length;
+    expect(inFirstMinute).toBeLessThanOrEqual(60);
+    expect(sampled.length - inFirstMinute).toBeGreaterThan(inFirstMinute);
+  });
+
+  it('still spans the episode when the overall cap bites', async () => {
+    await fillEpisode();
+    const small = await sample(ALICE, 120);
+
+    expect(small.length).toBe(120);
+    // Coverage survives even when density does not: a hundred and twenty reactions
+    // spread over the episode rather than the first twenty minutes of it.
+    const thirds = [0, 0, 0];
+    for (const r of small) thirds[Math.min(2, Math.floor((r.t_ms / RUNTIME_MS) * 3))]++;
+    expect(thirds.every((count) => count > 10)).toBe(true);
+    expect(Math.max(...small.map((r) => r.t_ms))).toBeGreaterThan(RUNTIME_MS * 0.9);
+  });
+
+  it('comes back in timeline order', async () => {
+    await fillEpisode(200, 200);
+    const sampled = await sample(ALICE);
+    for (let i = 1; i < sampled.length; i++) {
+      expect(sampled[i].t_ms).toBeGreaterThanOrEqual(sampled[i - 1].t_ms);
+    }
+  });
+
+  it('hides reactions from someone you blocked', async () => {
+    // The reason this function is SECURITY INVOKER. Running as the owner would bypass
+    // `reactions_select` and hand back reactions from people the viewer blocked —
+    // silently, and only for this one code path.
+    await fillEpisode(60, 60);
+    await asUser(BOB, 'insert into blocks (user_id, blocked_id) values ($1,$2)', [BOB, ALICE]);
+
+    expect(await sample(BOB)).toHaveLength(0);
+    expect((await sample(ALICE)).length).toBeGreaterThan(0);
+  });
+
+  it('hides deleted reactions', async () => {
+    await fillEpisode(60, 60);
+    await asAdmin('update reactions set deleted = true where target_id = $1', [EPISODE]);
+    expect(await sample(ALICE)).toHaveLength(0);
+  });
+});
+
 describe('fingerprint references', () => {
   const TARGET = 'tmdb:ep:fp';
 
