@@ -129,6 +129,10 @@ try {
     'searching is still offered, as the alternative',
     /Find something to watch/.test(firstRun),
   );
+  // The other half of the migration — matching those shows to the provider — cannot be
+  // reached from here: importing on the phone goes through the system document picker,
+  // which the web export has no way to drive. It is asserted in app/src/ui/migration
+  // parity instead, and its behaviour by the core's own tests.
   await page.screenshot({ path: OUT + '1-empty.png' });
 
   // --- Search and track ------------------------------------------------------

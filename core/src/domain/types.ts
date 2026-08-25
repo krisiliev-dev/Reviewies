@@ -126,6 +126,15 @@ export interface Reaction {
 
 export interface CachedTitle {
   id: InternalId;
+  /**
+   * Where an imported placeholder was matched to.
+   *
+   * Set on the *local* row when reconciliation accepts a match, and it is the only
+   * thing that stops a re-import asking the same question twice: the rows come back
+   * under the same local ID, and this says where they belong. Never set on a row that
+   * came from a provider.
+   */
+  matchedTo?: InternalId;
   kind: MediaKind;
   name: string;
   year?: number;

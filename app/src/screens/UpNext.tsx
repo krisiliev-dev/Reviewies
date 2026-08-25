@@ -11,6 +11,7 @@ import { db } from '../data/db';
 import { Poster } from '../ui/Poster';
 import { CatchUp } from '../ui/CatchUp';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
+import { MatchImports } from '../ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
@@ -60,22 +61,21 @@ export function UpNext() {
           Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
           {imported.watchlist > 0 && `, ${imported.watchlist} watchlist items`}.
         </p>
-        {/* Said rather than hidden. An export carries names and dates and nothing else,
-            so these shows have no episode lists, no artwork and no air dates until they
-            are matched against a metadata provider — which is not built yet. Telling
-            someone their library is "all caught up" instead would be a lie that makes
-            the app look broken rather than unfinished. */}
+        {/* An export carries names and dates and no provider IDs, so what has landed is
+            a set of shows with no artwork, no air dates and no episode lists beyond what
+            was watched. Matching them is the next thing to do, and it is offered here
+            rather than mentioned, because here is where somebody is standing. */}
         <p className="text-muted">
           They are in your library under the names your export carried. Matching them to
-          artwork and episode lists is not built yet, so Up Next will stay quiet about
-          them until it is — your history is safe in the meantime, and Stats already
-          counts it.
+          the real shows fills in the artwork, the air dates and everything you have not
+          watched yet.
         </p>
+        <MatchImports />
         <button
           onClick={() => setImported(undefined)}
-          className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+          className="tap self-start text-sm text-muted underline"
         >
-          Continue
+          Later
         </button>
       </div>
     );
@@ -89,9 +89,11 @@ export function UpNext() {
         <h1 className="mb-2 text-2xl font-semibold">Up Next</h1>
         <p className="text-muted">
           {unmatched
-            ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched to a provider.`
+            ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched.`
             : 'All caught up — nothing has aired that you have not seen.'}
         </p>
+        {/* Offered where the gap is felt, not filed under a settings screen. */}
+        {unmatched ? <MatchImports /> : null}
         <Link
           to="/search"
           className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-ink"

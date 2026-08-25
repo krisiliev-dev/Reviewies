@@ -874,18 +874,30 @@ try {
     await fresh.waitForSelector('text=Your history is in', { timeout: 15000 });
     const landed = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
     check('the import confirms itself where it was started', /Imported 2 watches/.test(landed), landed.slice(0, 120));
-    // An export carries names and dates and nothing else, so these shows have no
-    // episode lists until something matches them to a provider — which is not built.
-    // Saying "all caught up" instead would be a lie that reads as a broken app.
-    check('and says plainly what is not built yet', /not built yet/.test(landed));
+    // An export carries no provider IDs, so what landed is a set of shows with no
+    // artwork, no air dates and no episode lists beyond what was watched. Matching them
+    // is offered here rather than mentioned, because here is where somebody is standing.
+    //
+    // Not pressed: it would make a live search against whatever the provider says about
+    // a fixture name today. What it does is covered by the core's own tests.
+    check(
+      'and offers to finish the job rather than describing it',
+      (await fresh.getByRole('button', { name: 'Match imported shows' }).count()) === 1,
+      landed.slice(0, 120),
+    );
 
-    await fresh.getByRole('button', { name: 'Continue' }).click();
+    await fresh.getByRole('button', { name: 'Later' }).click();
     await fresh.waitForTimeout(600);
+    const quiet = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
     check(
       'Up Next explains its own silence rather than claiming you are caught up',
-      /no episode lists until they are matched/.test(
-        (await fresh.locator('body').innerText()).replace(/\s+/g, ' '),
-      ),
+      /no episode lists until they are matched/.test(quiet),
+      quiet.slice(0, 130),
+    );
+    // Offered where the gap is felt, not filed under a settings screen.
+    check(
+      'and offers the fix there too',
+      (await fresh.getByRole('button', { name: 'Match imported shows' }).count()) === 1,
     );
 
     await fresh.goto(new URL('stats', BASE + '/').href, { waitUntil: 'networkidle' });

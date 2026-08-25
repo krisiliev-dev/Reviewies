@@ -22,6 +22,7 @@ import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { CatchUp } from '../../src/ui/CatchUp';
 import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
+import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
@@ -71,22 +72,23 @@ export default function UpNextScreen() {
               Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
               {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
             </Text>
-            {/* Said rather than hidden. An export carries names and dates and nothing
-                else, so these shows have no episode lists, no artwork and no air dates
-                until they are matched against a metadata provider — which is not built
-                yet. "All caught up" instead would be a lie that reads as a broken app. */}
+            {/* An export carries no provider IDs, so what has landed is a set of shows
+                with no artwork, no air dates and no episode lists beyond what was
+                watched. Matching them is offered here rather than mentioned, because
+                here is where somebody is standing. */}
             <Text style={styles.emptyText}>
               They are in your library under the names your export carried. Matching them
-              to artwork and episode lists is not built yet, so Up Next will stay quiet
-              about them until it is — your history is safe in the meantime, and Stats
-              already counts it.
+              to the real shows fills in the artwork, the air dates and everything you
+              have not watched yet.
             </Text>
+            <MatchImports />
             <Pressable
-              style={styles.cta}
               onPress={() => setImported(undefined)}
+              style={tap}
+              hitSlop={8}
               accessibilityRole="button"
             >
-              <Text style={styles.ctaText}>Continue</Text>
+              <Text style={styles.later}>Later</Text>
             </Pressable>
           </View>
         ) : entries.length === 0 && libraryCount === 0 ? (
@@ -120,9 +122,11 @@ export default function UpNextScreen() {
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
               {unmatched
-                ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched to a provider.`
+                ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched.`
                 : 'All caught up — nothing has aired that you have not seen.'}
             </Text>
+            {/* Offered where the gap is felt, not filed under a settings screen. */}
+            {unmatched ? <MatchImports /> : null}
             <Link href="/search" asChild>
               <Pressable style={styles.cta} accessibilityRole="link">
                 <Text style={styles.ctaText}>Find something to watch</Text>
@@ -248,6 +252,7 @@ const styles = StyleSheet.create({
 
   empty: { gap: 14, paddingTop: 8 },
   firstHeading: { color: theme.text, fontSize: 20, fontWeight: '700' },
+  later: { color: theme.muted, fontSize: 14, textDecorationLine: 'underline' },
   emptyText: { color: theme.muted, fontSize: 16 },
   cta: {
     alignSelf: 'flex-start',
