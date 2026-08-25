@@ -176,6 +176,13 @@ function EpisodeRow({
       </Pressable>
 
       <Pressable
+        onPress={() => router.push(`/comments/${encodeURIComponent(episode.id)}`)}
+        style={styles.react}
+      >
+        <Text style={styles.reactText}>Talk</Text>
+      </Pressable>
+
+      <Pressable
         onPress={toggle}
         disabled={!aired && !watched}
         style={[styles.mark, watched && styles.marked, !aired && !watched && styles.disabled]}

@@ -88,6 +88,19 @@ try {
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
+  // --- Account ---------------------------------------------------------------
+  await page.getByText('Optional — adds sync and the shared layer').click();
+  await page.waitForTimeout(1500);
+  const account = await text();
+  // A credential-free build must say why rather than showing a form that cannot work.
+  check(
+    'the account screen explains what it needs',
+    /not configured on this build/i.test(account),
+    account.slice(0, 120),
+  );
+  await page.goBack();
+  await page.waitForTimeout(1000);
+
   // --- The remote ------------------------------------------------------------
   // This is what going native bought: the same feature on the web needed a companion
   // process dialling out to a relay, because a page cannot reach a LAN address.
@@ -150,6 +163,21 @@ try {
   check('emoji search filters the pad', (await text()).includes('Mind blown'));
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
   await page.getByText('Close').click();
+  await page.waitForTimeout(1500);
+
+  // --- Comments, and the spoiler gate ------------------------------------------
+  // The gate is a database policy; this screen only explains it. Unwatched episodes
+  // must say so rather than showing an empty thread that looks like nobody commented.
+  await page.getByText('Talk', { exact: true }).last().click();
+  await page.waitForTimeout(1500);
+  const talk = await text();
+  check(
+    'an unwatched episode says its comments are sealed',
+    /Hidden until you watch it|needs? an account|not configured/i.test(talk),
+    talk.slice(0, 130),
+  );
+  await page.screenshot({ path: OUT + '11-comments.png' });
+  await page.goBack();
   await page.waitForTimeout(1000);
 
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));

@@ -15,6 +15,31 @@ import { getConfig } from '../config';
 
 let client: SupabaseClient | undefined;
 
+/**
+ * Where the auth library keeps the session.
+ *
+ * supabase-js reaches for `localStorage` by default, which does not exist on a phone —
+ * without this the session is lost the moment the app closes, and the user is signed
+ * out every launch. React Native supplies AsyncStorage; the web supplies nothing and
+ * gets the default.
+ *
+ * Async on purpose: it is supabase-js's own interface, and AsyncStorage is async.
+ */
+export interface AuthStorage {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+}
+
+let authStorage: AuthStorage | undefined;
+
+export function setAuthStorage(storage: AuthStorage): void {
+  if (client) {
+    throw new Error('setAuthStorage() must be called before the Supabase client is created.');
+  }
+  authStorage = storage;
+}
+
 export function getClient(): SupabaseClient | undefined {
   if (client) return client;
 
@@ -34,8 +59,10 @@ export function getClient(): SupabaseClient | undefined {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // Only meaningful in a browser, where an OAuth redirect comes back in the URL.
+      detectSessionInUrl: !authStorage,
       storageKey: authStorageKey(),
+      ...(authStorage ? { storage: authStorage } : {}),
     },
   });
   return client;

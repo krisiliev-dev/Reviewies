@@ -2,6 +2,7 @@ import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { setConfig } from '@reviewies/core/config';
+import { setAuthStorage } from '@reviewies/core/sync/auth';
 import { setDatabase } from '@reviewies/core/data/db';
 import { SqliteDatabase, type SqlDriver } from '@reviewies/core/data/adapters/sqlite';
 import { setStorage, type KeyValueStore } from '@reviewies/core/data/storage';
@@ -88,6 +89,11 @@ let ready: Promise<void> | undefined;
 export function bindNativePlatform(): Promise<void> {
   ready ??= (async () => {
     setConfig(readConfig());
+
+    // Before anything can create the Supabase client. supabase-js reaches for
+    // localStorage by default, which does not exist here — without this the session
+    // is lost on every launch and the user is signed out each time they open the app.
+    setAuthStorage(AsyncStorage);
 
     const store = new HydratedStore();
     await store.hydrate();
