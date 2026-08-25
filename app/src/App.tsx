@@ -5,6 +5,7 @@ import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { TabIcon } from './ui/TabIcon';
 import { More } from './screens/More';
 import { ErrorBoundary } from './ui/ErrorBoundary';
+import { breakInEffect, breakOnRender } from './ui/breakScreen';
 import { FailureBanner } from './ui/FailureBanner';
 import { UpNext } from './screens/UpNext';
 import { Search } from './screens/Search';
@@ -79,19 +80,21 @@ function Shell() {
       <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-[calc(var(--tabbar,5rem)+1rem)]'}>
         <ErrorBoundary>
           <Routes>
-          <Route path="/" element={<UpNext />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/watchlist" element={<Watchlist />} />
-          <Route path="/title/:id" element={<TitleDetail />} />
-          <Route path="/watching/:targetId" element={<WatchingMode />} />
-          <Route path="/comments/:targetId" element={<EpisodeComments />} />
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/lists" element={<Lists />} />
-          <Route path="/people" element={<People />} />
-          <Route path="/stats" element={<Stats />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/more" element={<More />} />
+            {ROUTES.map(({ path, screen: Screen }) => (
+              <Route
+                key={path}
+                path={path}
+                // Every route, not the handful somebody remembered to wrap. The
+                // boundaries of §6.35 were each checked on one screen, and doing that to
+                // a phone screen is what found it stranding people — so the harness
+                // reaches all of them rather than whichever two get tried.
+                element={
+                  <Breakable name={path}>
+                    <Screen />
+                  </Breakable>
+                }
+              />
+            ))}
           </Routes>
         </ErrorBoundary>
       </main>
@@ -116,6 +119,36 @@ const TABS = [
   { to: '/watchlist', label: 'Watchlist', icon: 'watchlist' },
   { to: '/more', label: 'More', icon: 'more' },
 ];
+
+/**
+ * The routes, as data.
+ *
+ * A list rather than thirteen JSX lines so that anything which needs to apply to every
+ * screen — the break harness below, and whatever comes after it — applies to every
+ * screen rather than to the ones somebody edited.
+ */
+const ROUTES: Array<{ path: string; screen: () => React.JSX.Element }> = [
+  { path: '/', screen: UpNext },
+  { path: '/search', screen: Search },
+  { path: '/watchlist', screen: Watchlist },
+  { path: '/title/:id', screen: TitleDetail },
+  { path: '/watching/:targetId', screen: WatchingMode },
+  { path: '/comments/:targetId', screen: EpisodeComments },
+  { path: '/discover', screen: Discover },
+  { path: '/calendar', screen: Calendar },
+  { path: '/lists', screen: Lists },
+  { path: '/people', screen: People },
+  { path: '/stats', screen: Stats },
+  { path: '/settings', screen: Settings },
+  { path: '/more', screen: More },
+];
+
+/** Breaks this screen when asked to, and does nothing at all otherwise. */
+function Breakable({ name, children }: { name: string; children: React.ReactNode }) {
+  breakOnRender(name);
+  useEffect(() => breakInEffect(name), [name]);
+  return children;
+}
 
 function TabBar() {
   /**

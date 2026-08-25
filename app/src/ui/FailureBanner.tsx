@@ -12,22 +12,28 @@ import { onFailure, reportFailure, type Failure } from '@reviewies/core/data/fai
  * one screen's load failed and the rest of the app is fine — so it says what happened
  * and gets out of the way rather than taking over.
  */
+/**
+ * Listen from the moment the bundle runs, not from when a component mounts.
+ *
+ * This was registered in an effect, and breaking a screen on purpose is what showed the
+ * hole: the phone's root layout renders a spinner until the platform is bound, so the
+ * banner is not in the tree yet — and a rejection during startup reached nothing at all.
+ * The bus retains the last failure for a late subscriber, but only if something called
+ * `reportFailure`, and the thing that calls it was the listener that did not exist yet.
+ *
+ * At module scope it is attached before any of the app has run, and the banner picks up
+ * whatever happened from the retained value when it does mount.
+ */
+if (typeof window !== 'undefined') {
+  // The two ways a failure escapes everything, both of which were silent.
+  window.addEventListener('unhandledrejection', (e) => reportFailure(e.reason));
+  window.addEventListener('error', (e) => reportFailure(e.error ?? e.message));
+}
+
 export function FailureBanner() {
   const [failure, setFailure] = useState<Failure>();
 
   useEffect(() => onFailure(setFailure), []);
-
-  // The two ways a failure escapes everything, both of which were silent.
-  useEffect(() => {
-    const onRejection = (e: PromiseRejectionEvent) => reportFailure(e.reason);
-    const onError = (e: ErrorEvent) => reportFailure(e.error ?? e.message);
-    window.addEventListener('unhandledrejection', onRejection);
-    window.addEventListener('error', onError);
-    return () => {
-      window.removeEventListener('unhandledrejection', onRejection);
-      window.removeEventListener('error', onError);
-    };
-  }, []);
 
   if (!failure) return null;
 

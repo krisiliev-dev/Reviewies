@@ -1,5 +1,4 @@
 import { Component, type ReactNode } from 'react';
-import { reportFailure } from '@reviewies/core/data/failure';
 
 /**
  * Keep one broken screen from taking the app with it.
@@ -10,7 +9,11 @@ import { reportFailure } from '@reviewies/core/data/failure';
  * device. The data was always fine and the screen said nothing at all.
  *
  * Around the routes rather than the shell, so the navigation survives and somebody can
- * leave the screen that broke.
+ * leave the screen that broke — except on the one route that hides it. Watching Mode is
+ * immersive and has no tab bar, so breaking it left "Try another section below" pointing
+ * at nothing at all. Sweeping every route is what found that; checking two of them had
+ * not. The way home is always offered now, which costs a line on the twelve screens that
+ * do not need it.
  */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -19,10 +22,15 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     return { failed: true };
   }
 
-  componentDidCatch(error: Error) {
-    // Through the same bus as an unhandled rejection, so both are said the same way.
-    reportFailure(error);
-  }
+  /**
+   * Deliberately does not report into the failure bus.
+   *
+   * It did, until sweeping every route showed the result: a full-screen explanation
+   * with a banner on top of it repeating the same sentence. The bus is what drives that
+   * banner — it is a way of telling somebody, not a log — and a failure this component
+   * has already explained does not need telling twice.
+   */
+  componentDidCatch() {}
 
   /**
    * Recover when the route changes.
@@ -44,8 +52,14 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
           <h1 className="text-2xl font-semibold">This screen stopped</h1>
           <p className="text-muted">
             Something on it went wrong. Everything you have tracked is still here — it
-            lives on this device and nothing was lost. Try another section below.
+            lives on this device and nothing was lost.
           </p>
+          <a
+            href="/"
+            className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+          >
+            Go to Up Next
+          </a>
         </div>
       );
     }

@@ -26,6 +26,17 @@ export interface Failure {
 const listeners = new Set<(failure: Failure) => void>();
 
 /**
+ * The most recent failure, kept for whoever subscribes next.
+ *
+ * Found by breaking a screen on first load: `componentDidCatch` fires during the commit
+ * that renders the boundary's fallback, and the banner's `useEffect` has not run yet, so
+ * the report went to an empty listener set and vanished. The boundary showed its own
+ * message and nothing was lost that time — but the same ordering would drop any failure
+ * during startup, when there is no boundary to cover for it.
+ */
+let last: Failure | undefined;
+
+/**
  * Say that something failed and nothing handled it.
  *
  * Deliberately not a logger. The point is that a person finds out, which is the whole
@@ -40,15 +51,19 @@ export function reportFailure(error: unknown): void {
         : 'Something went wrong';
 
   const failure: Failure = { message, at: Date.now() };
+  last = failure;
   for (const listener of listeners) listener(failure);
 }
 
 export function onFailure(fn: (failure: Failure) => void): () => void {
   listeners.add(fn);
+  // Anything that failed before there was anybody to tell.
+  if (last) fn(last);
   return () => listeners.delete(fn);
 }
 
 /** Mainly for tests, which must not leak a listener into the next case. */
 export function resetFailures(): void {
   listeners.clear();
+  last = undefined;
 }

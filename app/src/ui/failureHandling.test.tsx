@@ -38,7 +38,10 @@ describe('a screen that throws', () => {
     expect(screen.getByText(/nothing was lost/)).toBeTruthy();
   });
 
-  it('says so through the same channel as everything else', () => {
+  it('does not also raise the banner, which would say the same thing twice', () => {
+    // It used to, and sweeping every route is what showed the result: a full-screen
+    // explanation with a banner on top of it repeating the sentence. The bus is a way
+    // of telling somebody rather than a log, and this component has already told them.
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const heard: string[] = [];
     const stop = onFailure((f) => heard.push(f.message));
@@ -50,7 +53,7 @@ describe('a screen that throws', () => {
     );
     stop();
 
-    expect(heard).toEqual(['the screen broke']);
+    expect(heard).toEqual([]);
   });
 });
 

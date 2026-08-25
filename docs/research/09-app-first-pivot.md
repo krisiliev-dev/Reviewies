@@ -1632,6 +1632,7 @@ Two things this does **not** do, said plainly. An unhandled rejection on a devic
 caught: React Native's promise implementation does not surface those the way a browser
 does, and the ways to hook it are internal to the runtime and change between versions.
 The web export gets them through the same listener the web app uses; a device does not.
+**[Corrected in §6.36: that was wrong, and the phone hears them now.]**
 And the guard from §6.34 was not extended to `app/src` — the shape there is an unhandled
 promise rather than a returned empty, and there is no useful mechanical check for it that
 would fail on anything real. Saying so is the same call §6.26 made when it threw away a
@@ -1641,6 +1642,50 @@ The wiring check from §6.27 caught the new module before the tests did — `res
 reached by nothing, and `onFailure` imported by one app and not the other. Both are
 explained now rather than quietly exempted: the phone reports *into* the bus and never
 reads back out of it, because expo-router hands its boundary the error directly.
+
+### 6.36 Breaking every screen, and a caveat that turned out to be wrong
+
+§6.35's boundaries were each checked on one screen. Doing that to a phone screen is what
+found it stranding people, so this did it to all of them — behind a query parameter
+(`?break=render`, `?break=effect`) wired at the routing layer of both apps rather than
+edited into a screen at a time. It ships, because a harness that only exists while
+somebody is testing has to be re-added every time, and the last three things found here
+were found by pointing it somewhere nobody had pointed it.
+
+Thirteen web routes, two ways to break, and three findings.
+
+**Watching Mode stranded people on the web too.** It is the one immersive route, so it
+hides the tab bar — and the boundary's message said "Try another section below" with
+nothing below it. Exactly what the phone did, on the one route that checking two screens
+would never have shown. The way home is offered always now, which costs a line on the
+twelve that do not need it.
+
+**The failure bus dropped anything reported before somebody subscribed.** A render error
+on first load reaches `componentDidCatch` during the commit that renders the fallback,
+which is before the banner's effect has registered its listener — so the report went to
+an empty set and vanished. The bus keeps the last failure for a late subscriber now, and
+the listeners are attached at module load rather than in an effect. That second half
+matters more than the first: the phone's root layout renders a spinner until the platform
+is bound, so *nothing* of the app is listening during startup, which is precisely when a
+binding failure would happen.
+
+**A render error raised two messages saying the same thing** — a full-screen explanation
+with a banner on top of it repeating the sentence. The boundary no longer reports into
+the bus. That bus drives a way of telling somebody rather than a log, and a failure this
+component has already explained does not need telling twice.
+
+And the caveat from §6.35 was wrong. It said an unhandled rejection on a device could not
+be caught, because React Native does not surface them like a browser and the hooks are
+runtime internals. Breaking a screen in an effect and watching the phone show nothing at
+all was worth a second look rather than a note — and React Native bundles `promise`,
+whose rejection tracking is that package's own documented interface. React Native's own
+`promiseRejectionTrackingOptions` imports the same `enable`. It is what the development
+red box already uses. The phone hears them now, and the two platforms behave identically
+under both kinds of break: a boundary and a way out for a render error, a banner for one
+that escapes an effect.
+
+Written down as a correction rather than quietly fixed, because the caveat had already
+gone into the record as a limit of the platform when it was a limit of how hard I looked.
 
 ---
 

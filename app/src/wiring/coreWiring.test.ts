@@ -54,8 +54,6 @@ const UNREACHED: Record<string, string> = {
  * read aloud.
  */
 const LOPSIDED: Record<string, string> = {
-  'app only: data/failure#onFailure':
-    'The web shows a banner for a failure nobody caught; the phone shows expo-router\'s error boundary instead, which is handed the error directly and does not subscribe. Both report *into* the bus — only the web reads back out of it.',
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',
   'app only: calendar/upcoming#notificationsSupported':

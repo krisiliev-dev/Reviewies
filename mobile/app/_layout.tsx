@@ -6,6 +6,8 @@ import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
+import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
+import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
 import type { ErrorBoundaryProps } from 'expo-router';
 
@@ -83,6 +85,11 @@ export default function RootLayout() {
    * After the platform is bound, because the driver reads the outbox and the database
    * is not there yet.
    */
+  // The break harness, at the root so it reaches every route rather than the two
+  // somebody remembered to try. Does nothing without the query parameter.
+  breakOnRender('the phone');
+  useEffect(() => breakInEffect('the phone'), []);
+
   useEffect(() => {
     if (!ready) return;
     const stop = startSyncDriver();
@@ -120,6 +127,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
+      <FailureBanner />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: theme.ink },
