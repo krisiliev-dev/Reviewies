@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
+import { TabIcon } from './ui/TabIcon';
 import { UpNext } from './screens/UpNext';
 import { Search } from './screens/Search';
 import { TitleDetail } from './screens/TitleDetail';
@@ -71,7 +72,7 @@ function Shell() {
           Skip to navigation
         </a>
       )}
-      <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-20'}>
+      <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-[calc(var(--tabbar,5rem)+1rem)]'}>
         <Routes>
           <Route path="/" element={<UpNext />} />
           <Route path="/search" element={<Search />} />
@@ -94,19 +95,37 @@ function Shell() {
 }
 
 const TABS = [
-  { to: '/', label: 'Up Next', icon: '▶' },
-  { to: '/search', label: 'Search', icon: '⌕' },
-  { to: '/discover', label: 'Discover', icon: '✦' },
-  { to: '/calendar', label: 'Upcoming', icon: '▦' },
-  { to: '/watchlist', label: 'Watchlist', icon: '☰' },
-  { to: '/lists', label: 'Lists', icon: '❏' },
-  { to: '/stats', label: 'Stats', icon: '◔' },
-  { to: '/settings', label: 'Data', icon: '⚙' },
+  { to: '/', label: 'Up Next', icon: 'upnext' },
+  { to: '/search', label: 'Search', icon: 'search' },
+  { to: '/discover', label: 'Discover', icon: 'discover' },
+  { to: '/calendar', label: 'Upcoming', icon: 'upcoming' },
+  { to: '/watchlist', label: 'Watchlist', icon: 'watchlist' },
+  { to: '/lists', label: 'Lists', icon: 'lists' },
+  { to: '/stats', label: 'Stats', icon: 'stats' },
+  { to: '/settings', label: 'Data', icon: 'data' },
 ];
 
 function TabBar() {
+  /**
+   * Tell the layout how tall this is.
+   *
+   * The bar wraps to two or three rows at large text sizes, and a fixed bottom padding
+   * on the content cannot know that — so the last thing on every screen would sit under
+   * it. Measured rather than guessed, because the height depends on the reader's setting
+   * and on how the labels happen to wrap.
+   */
+  const measure = useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+    const apply = () =>
+      document.documentElement.style.setProperty('--tabbar', `${node.offsetHeight}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(node);
+  }, []);
+
   return (
     <nav
+      ref={measure}
       id="tabs"
       // Focusable only as a jump target, so the skip link lands here rather than
       // merely scrolling and leaving focus where it was.
@@ -114,21 +133,29 @@ function TabBar() {
       aria-label="Sections"
       className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink/95 backdrop-blur"
     >
-      <ul className="mx-auto flex max-w-lg">
+      {/* Wraps rather than truncating or scrolling. Eight tabs fit a phone at the
+          default text size and cannot at twice it. A label cut short is content lost,
+          and scrolling — which this was, briefly — is worse: it satisfies the letter of
+          1.4.4 and puts half the navigation somewhere nobody knows to look. The smoke
+          suite's own 200% check said so, by finding four tabs off the right-hand edge.
+          Wrapping keeps every one of them on screen and visible. */}
+      <ul className="mx-auto flex max-w-lg flex-wrap justify-center">
         {TABS.map((tab) => (
-          <li key={tab.to} className="flex-1">
+          <li key={tab.to} className="min-w-[4.5rem] flex-1">
             <NavLink
               to={tab.to}
               end={tab.to === '/'}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${
+                // Sized in rem. These labels were given a pixel size for a long time,
+                // which made them the one piece of text in the app that ignored the
+                // reader's setting entirely — while the icons beside them, sized in em,
+                // doubled. Exactly inverted.
+                `flex flex-col items-center gap-0.5 px-2 py-2.5 text-[0.625rem] whitespace-nowrap ${
                   isActive ? 'text-accent' : 'text-muted'
                 }`
               }
             >
-              <span aria-hidden="true" className="text-lg leading-none">
-                {tab.icon}
-              </span>
+              <TabIcon name={tab.icon} />
               {tab.label}
             </NavLink>
           </li>

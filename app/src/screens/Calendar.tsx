@@ -160,7 +160,7 @@ function Row({ entry }: { entry: UpcomingEntry }) {
         </p>
       </div>
       {label && (
-        <span className="shrink-0 rounded-full bg-accent/20 px-2 py-1 text-[10px] font-semibold text-accent">
+        <span className="shrink-0 rounded-full bg-accent/20 px-2 py-1 text-[0.625rem] font-semibold text-accent">
           {label}
         </span>
       )}

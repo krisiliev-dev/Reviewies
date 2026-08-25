@@ -211,7 +211,7 @@ export function WatchingMode() {
             aria-label={`React with ${e.label.toLowerCase()}`}
           >
             <span aria-hidden="true">{e.emoji}</span>
-            <span className="text-[9px] leading-none text-muted">{e.label}</span>
+            <span className="text-[0.5625rem] leading-none text-muted">{e.label}</span>
           </button>
         ))}
       </div>

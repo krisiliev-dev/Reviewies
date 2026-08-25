@@ -124,13 +124,17 @@ export function UpNext() {
           reads it and picks up where you left off.
         </p>
         <ImportFormats />
-        <ImportFiles label="Import from TV Time" onImported={setImported} />
+        <ImportFiles label="Import from TV Time" onImported={setImported} primary />
         <p className="mt-2 px-1 text-sm text-muted">
           Nothing to import? Search for a show and start from there.
         </p>
+        {/* The secondary of the two. It was the bright one and the import was the muted
+            one, which is the opposite of what this screen is for — the migration is the
+            offer and searching is the fallback. Nothing but looking at it would have
+            said so: both were named, both were reachable, both were big enough. */}
         <Link
           to="/search"
-          className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+          className="self-start rounded-full bg-surface-2 px-5 py-2.5 font-medium text-text"
         >
           Find something to watch
         </Link>

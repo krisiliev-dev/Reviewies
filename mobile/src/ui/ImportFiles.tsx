@@ -20,9 +20,17 @@ import { radius, theme } from './theme';
  */
 export function ImportFiles({
   label = 'Choose files',
+  primary = false,
   onImported,
 }: {
   label?: string;
+  /**
+   * Styled as the main thing to do on the screen.
+   *
+   * True on first run, where the import *is* the offer, and false on the data screen,
+   * where it sits among equals.
+   */
+  primary?: boolean;
   /** Fires after a run, so a caller can react to a library appearing. */
   onImported?: (report: ImportReport) => void;
 }) {
@@ -97,7 +105,7 @@ export function ImportFiles({
   return (
     <>
       <Pressable
-        style={styles.button}
+        style={[styles.button, primary ? styles.buttonPrimary : null]}
         onPress={pickAndImport}
         disabled={busy}
         accessibilityRole="button"
@@ -108,7 +116,7 @@ export function ImportFiles({
         {busy ? (
           <ActivityIndicator color={theme.muted} />
         ) : (
-          <Text style={styles.buttonText}>{label}</Text>
+          <Text style={[styles.buttonText, primary ? styles.buttonPrimaryText : null]}>{label}</Text>
         )}
       </Pressable>
 
@@ -197,6 +205,8 @@ export function ImportFormats() {
 }
 
 const styles = StyleSheet.create({
+  buttonPrimary: { backgroundColor: theme.accent },
+  buttonPrimaryText: { color: theme.ink, fontWeight: '700' },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   button: {
     backgroundColor: theme.surface2,

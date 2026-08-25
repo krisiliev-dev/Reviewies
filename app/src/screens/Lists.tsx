@@ -59,7 +59,11 @@ export function Lists() {
         <button
           type="submit"
           disabled={!name.trim()}
-          className="rounded-xl bg-accent px-4 font-medium text-ink disabled:opacity-40"
+          // `disabled:opacity-40` on an accent fill gave a maroon block with unreadable
+          // dark red lettering — it read as broken rather than as waiting. Disabled
+          // controls are exempt from the contrast rules, which is a reason they are
+          // allowed to be quiet and not a reason to make them illegible.
+          className="rounded-xl bg-accent px-4 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
         >
           Create
         </button>
@@ -148,7 +152,7 @@ function ListCard({
                 >
                   {item.titleId}
                 </Link>
-                <span className="shrink-0 text-[10px] text-muted uppercase">
+                <span className="shrink-0 text-[0.625rem] text-muted uppercase">
                   {item.kind === 'show' ? 'Series' : 'Film'}
                 </span>
                 {list.mine && (

@@ -83,7 +83,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               type="submit"
               disabled={!newName.trim()}
               aria-label="Make this list and add the title to it"
-              className="rounded-lg bg-accent px-3 text-sm font-medium text-ink disabled:opacity-40"
+              className="rounded-lg bg-accent px-3 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
             >
               Add
             </button>

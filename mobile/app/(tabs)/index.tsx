@@ -108,13 +108,17 @@ export default function UpNextScreen() {
               this reads it and picks up where you left off.
             </Text>
             <ImportFormats />
-            <ImportFiles label="Import from TV Time" onImported={setImported} />
+            <ImportFiles label="Import from TV Time" onImported={setImported} primary />
             <Text style={styles.emptyText}>
               Nothing to import? Search for a show and start from there.
             </Text>
+            {/* The secondary of the two. It was the bright one and the import was the
+                muted one — the opposite of what this screen is for. The web had the
+                same inversion, and neither was visible to any check: both controls were
+                named, reachable and big enough. */}
             <Link href="/search" asChild>
-              <Pressable style={styles.cta} accessibilityRole="link">
-                <Text style={styles.ctaText}>Find something to watch</Text>
+              <Pressable style={styles.ctaQuiet} accessibilityRole="link">
+                <Text style={styles.ctaQuietText}>Find something to watch</Text>
               </Pressable>
             </Link>
           </View>
@@ -262,6 +266,18 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   ctaText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
+  // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
+  // `<Link asChild>`, which clones its child and merges props — and an array style
+  // through that path reached the DOM as an index-keyed object, which React refuses to
+  // set. The export booted to a blank page; the smoke suite caught it.
+  ctaQuiet: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.surface2,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  ctaQuietText: { color: theme.text, fontWeight: '600', fontSize: 16 },
 
   row: {
     flexDirection: 'row',

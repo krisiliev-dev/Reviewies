@@ -113,14 +113,14 @@ export function ListenSync({
         </button>
       </div>
 
-      <p className="mt-1.5 text-[11px] leading-snug text-muted">
+      <p className="mt-1.5 text-[0.6875rem] leading-snug text-muted">
         {/* Specific about scope: what is recorded, for how long, and what leaves the
             device. Vague reassurance would be worse than none. */}
         Uses the microphone for a few seconds. Audio never leaves this device — only a
         one-way digest of it is sent, which cannot be turned back into sound.
       </p>
 
-      {note && <p className="mt-1 text-[11px] text-accent">{note}</p>}
+      {note && <p className="mt-1 text-[0.6875rem] text-accent">{note}</p>}
     </div>
   );
 }

@@ -117,7 +117,7 @@ function SuggestionRow({
             onClick={track}
             disabled={busy}
             aria-label={`Track ${suggestion.name}`}
-            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50"
+            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
           >
             Track
           </button>

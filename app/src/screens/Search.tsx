@@ -177,7 +177,7 @@ function ResultRow({ result }: { result: SearchResult }) {
               onClick={track}
               disabled={added === 'library'}
               aria-label={`Track ${result.name}`}
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:opacity-50"
+              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
             >
               {added === 'library' ? 'Tracking' : 'Track'}
             </button>

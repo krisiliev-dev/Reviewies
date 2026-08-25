@@ -160,7 +160,7 @@ export function EpisodeComments() {
               <button
                 type="submit"
                 disabled={(!draft.trim() && !image) || uploading}
-                className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:opacity-40"
+                className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
               >
                 Post
               </button>

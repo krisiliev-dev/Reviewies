@@ -15,10 +15,18 @@ import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data
 export function ImportFiles({
   label = 'Choose files',
   onImported,
+  primary = false,
 }: {
   label?: string;
   /** Fires after a successful run, so a caller can react to a library appearing. */
   onImported?: (report: ImportReport) => void;
+  /**
+   * Styled as the main thing to do on the screen.
+   *
+   * True on first run, where the import *is* the offer, and false on the data screen,
+   * where it sits among several equals.
+   */
+  primary?: boolean;
 }) {
   const [report, setReport] = useState<ImportReport>();
   const [restored, setRestored] = useState<RestoreReport>();
@@ -94,7 +102,11 @@ export function ImportFiles({
 
   return (
     <>
-      <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-3 text-center">
+      <label
+        className={`cursor-pointer rounded-xl px-4 py-3 text-center ${
+          primary ? 'bg-accent font-medium text-ink' : 'bg-surface-2'
+        }`}
+      >
         {busy ? 'Reading…' : label}
         <input
           type="file"

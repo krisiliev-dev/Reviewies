@@ -1377,6 +1377,67 @@ a plain object appended to a browser `FormData` goes out as the string `"[object
 The passthrough is asserted at `append` rather than by reading the entry back, because jsdom
 stringifies on the way in and there would be nothing left to recognise.
 
+### 6.30 Nobody had ever looked at it
+
+Everything known about this app was known from assertions. Every screen had been queried
+for roles, names, target sizes and contrast ratios; not one had been looked at. Those are
+different questions, and the difference is the whole of this section: a control can be 24
+pixels, correctly named and 4.5:1 against its background while being illegible,
+meaningless, or the wrong shape entirely.
+
+Screenshots of every screen, at a phone width and again at twice the text size, examined
+rather than asserted on. Four things, none of which any existing check could express.
+
+**The tab bar was a row of Unicode characters**, and what they actually looked like was
+nothing like what they were meant to be. `▶` and `⚙` have emoji presentation variants, so
+Chromium drew them in full colour — an orange play button and a blue gear — beside five
+flat grey glyphs. `❏` for Lists came out as an empty square, which is indistinguishable
+from a missing glyph. `▦` for Upcoming was a dense grey block. `◔` for Stats rendered as a
+sliver two pixels tall and was, in practice, invisible. They are drawn paths now: the same
+everywhere, inheriting `currentColor` so the active tab still tints.
+
+**The tab labels ignored the reader's text setting entirely.** `text-[10px]` is a pixel
+size, and the icons beside them were in `em` — so at 200% the icons doubled and the labels
+did not. Exactly inverted, and the one piece of text in the app that could not respond to
+1.4.4 at all. The check written for it found five more sites nobody had spotted: the poster
+placeholder, the calendar's kind badge, a list label, the emoji pad's captions and the
+listen-sync notes.
+
+**The first-run hierarchy was backwards.** §6.22 moved the migration to the front of the
+app and said searching was the alternative. Visually it was the reverse: "Import from TV
+Time" was a muted grey box and "Find something to watch" was the bright accent button. On
+both platforms. Both were named, both reachable, both large enough — every property a test
+had been aimed at was correct, and the screen said the opposite of what it meant.
+
+**A disabled primary button looked broken rather than disabled.** `bg-accent` with
+`disabled:opacity-40` gives a maroon block with dark red lettering. Disabled controls are
+exempt from the contrast rules, which is a reason they are allowed to be quiet and not a
+reason to make them illegible. Six of them across the app.
+
+Two things are worth recording about the method rather than the results.
+
+The first is that the fix for the labels was wrong once. Letting them scale meant eight
+tabs no longer fit a phone at 200%, and the first answer — a horizontally scrolling bar —
+satisfies 1.4.4 to the letter while putting half the navigation somewhere nobody knows to
+look. **The smoke suite's own 200% check said so**, by finding four tabs off the right-hand
+edge. It wraps now, and all eight stay on screen; the content's bottom padding follows the
+bar's measured height, because a bar that wraps to three rows cannot be allowed for by a
+constant.
+
+The second is that fixing the phone's half of the hierarchy broke its web export outright.
+`<Link asChild>` clones its child and merges props, and an array style through that path
+reaches the DOM as an index-keyed object, which React refuses to set — the export booted to
+a blank page. The phone's smoke suite caught it immediately. Worth saying plainly because
+the first suspicion was worse and wrong: that the suite had been passing against a stale
+`dist` for several sprints. It had not — exporting the tree without this sprint's changes
+gave 101/101, which is how the real cause was found.
+
+What is guarded is the cause, not the appearance — the same trade §6.21 made when it pinned
+`min-w-[48px]` rather than trying to assert that a control looked right. No text sized in
+pixels; no tab icon that is a character; no filled button disabled by fading. What is not
+guarded is everything else in this section, and that is worth being plain about: three of
+these four were found by looking, and nothing here means the next one will not be.
+
 ---
 
 ## 7. What is still not known
