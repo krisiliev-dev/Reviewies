@@ -1728,6 +1728,45 @@ worth recording as such rather than turning into a finding. What the exercise is
 the ratio: seven checks, seven held, one honestly unverifiable — and the two that failed
 last time were both found the same way, by running the thing rather than re-reading it.
 
+### 6.38 The phone at twice the text size, for the first time
+
+§6.37 verified §6.21's claim that the phone export ignores the browser's text setting, and
+verifying it is what made the gap obvious: a true statement had been standing in for a
+test since §6.21. WCAG 1.4.4 applies to the phone as much as the web, the web's version of
+this check found the rating pushed off the right-hand edge and a 48px minimum written in
+rem — and the phone had never been rendered large at all.
+
+Three routes, and the first two are dead for reasons worth writing down. React Native
+scales text through `PixelRatio.getFontScale()`; react-native-web reads that from
+`Dimensions`, which **hardcodes `fontScale: 1`**, and nothing in `Text` or `StyleSheet`
+consumes it anyway. So it cannot be driven from the page. Shrinking the viewport instead
+approximates the stress but over-states it: on the phone the poster and the padding are
+pixels too, so halving the viewport doubles their relative size along with the type, which
+raising the text setting does not do.
+
+The third works and is closer to the real thing than either: read every element's computed
+font size and double it inline, leaving every other pixel value alone. That is exactly
+what a device does when somebody raises the text size — the type grows, the poster does
+not — and it is the property 1.4.4 actually asks about. A companion check counts how many
+elements were scaled, because a pass on a screen where nothing grew proves nothing.
+
+Seven screens, and it found two things on the first run.
+
+**Watching Mode's transport row was 690 pixels wide in a 390 viewport**, with all three
+density chips off the edge. The web's copy of that row was fixed the same way in §6.31 and
+the phone kept it, because nothing had ever rendered the phone large.
+
+**The closed remote drawer could be scrolled to.** It is 300 wide, absolute, parked at
+`translateX(300)` while shut — and nothing clipped it, so the page measured 690 and could
+be dragged sideways to reveal a drawer that is supposed to be closed. True at any text
+size; the 200% check is simply what looked. Finding it took following the number rather
+than the failing control: no element was past the edge, so the overflow had to be
+something positioned outside on purpose.
+
+Both fixed, both verified by putting the fault back and watching the check go red. And the
+drawer's own contents are now scaled too — clipping the page hides them from the page
+measurement, which would have left the thing behind the clip untested.
+
 ---
 
 ## 7. What is still not known
@@ -1737,7 +1776,9 @@ Every item below was checked rather than carried forward — see §6.37 for what
 and which single claim in this document could not be checked at all:
 
 - **Nothing has run on a physical device.** The phone's smoke suite drives the
-  react-native-web export, which is a real build and not a real phone. `getExpoPushTokenAsync`
+  react-native-web export, which is a real build and not a real phone. Its 200% text
+  check (§6.38) doubles every computed font size rather than using the system setting,
+  which is the same property and not the same mechanism. `getExpoPushTokenAsync`
   has never executed. The image picker's native branch has never run — the web export takes
   the other one. The phone's comments screen reaches its sealed state in the smoke, so the
   composer and its new attach control have never rendered there.

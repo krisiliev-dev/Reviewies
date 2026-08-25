@@ -42,6 +42,72 @@ const text = async () => (await page.locator('body').innerText()).replace(/\s+/g
  * all, and is invisible to this check too. So the count is asserted as well: a screen
  * that reports zero controls has not passed, it has failed to be looked at.
  */
+/**
+ * The same screen at twice the text size.
+ *
+ * §6.21 measured this on the web and left the phone out, with a reason: React Native's
+ * styles compile to CSS classes carrying pixel values, `Dimensions` hardcodes
+ * `fontScale: 1`, and nothing in `Text` or `StyleSheet` consumes it — so asking the
+ * browser for larger text changes nothing at all. §6.37 measured that and found it true:
+ * a heading is 30px whether the root font is 16px or 32px.
+ *
+ * True, and it had been standing in for a test since. So this does the thing the setting
+ * would do rather than asking the browser to: every element's computed font size,
+ * doubled inline, with every other pixel value left where it is. That is exactly what
+ * raising the text size on a device does — the type grows and the poster does not — and
+ * it is the property 1.4.4 actually asks about.
+ *
+ * Not a substitute for a device. It is a substitute for nothing, which is what was here.
+ */
+async function scaled(screen) {
+  const applied = await page.evaluate(() => {
+    let count = 0;
+    for (const el of document.querySelectorAll('*')) {
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (!Number.isFinite(size) || size === 0) continue;
+      el.setAttribute('data-was', el.style.fontSize);
+      el.style.fontSize = `${size * 2}px`;
+      count++;
+    }
+    return count;
+  });
+
+  await page.waitForTimeout(400);
+
+  const result = await page.evaluate(() => {
+    const clipped = [];
+    for (const el of document.querySelectorAll(
+      '[role="button"],[role="link"],[role="radio"],[role="switch"],button,a[href],input',
+    )) {
+      if (el.closest('[aria-hidden="true"]')) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width === 0) continue;
+      // Any part past either edge, not merely all of it — the mistake §6.31 found in
+      // the web's version of this check.
+      if (box.right > innerWidth + 1 || box.left < -1) {
+        clipped.push((el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30));
+      }
+    }
+    return { scrollWidth: document.documentElement.scrollWidth, viewport: innerWidth, clipped };
+  });
+
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll('[data-was]')) {
+      el.style.fontSize = el.getAttribute('data-was') || '';
+      el.removeAttribute('data-was');
+    }
+  });
+  await page.waitForTimeout(200);
+
+  // Non-vacuous: a pass on a screen where nothing was scaled proves nothing.
+  check(`${screen}: text could actually be doubled`, applied > 10, `${applied} elements`);
+  check(
+    `${screen}: holds together at 200% text`,
+    result.scrollWidth <= result.viewport + 1 && result.clipped.length === 0,
+    `${result.scrollWidth} wide in ${result.viewport}${result.clipped.length ? `, off screen: ${result.clipped.join(', ')}` : ''}`,
+  );
+}
+
 async function audit(screen, atLeast) {
   const found = await page.evaluate(() => {
     const ROLES = ['button', 'link', 'radio', 'checkbox', 'switch', 'tab', 'menuitem'];
@@ -141,6 +207,7 @@ try {
   await page.waitForSelector('text=The Long Dark', { timeout: 15000 });
   check('search returns results', true);
   await audit('Search', 6);
+  await scaled('Search');
   await page.screenshot({ path: OUT + '2-search.png' });
 
   await page.getByText('Track', { exact: true }).first().click();
@@ -156,6 +223,7 @@ try {
   const before = Number(first.match(/(\d+) more episodes/)?.[1]);
   check('shows a remaining count, not a vague badge', Number.isFinite(before), String(before));
   await audit('Up Next', 4);
+  await scaled('Up Next');
   await page.screenshot({ path: OUT + '3-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
@@ -297,6 +365,7 @@ try {
     /No device yet/.test(remote),
   );
   await audit('the remote', 12);
+  await scaled('the remote');
   await page.screenshot({ path: OUT + '10-remote.png' });
   await page.goBack();
   await page.waitForTimeout(1000);
@@ -307,6 +376,7 @@ try {
   const stats = await text();
   check('stats are runtime-weighted', /Watched/.test(stats) && /Episodes/.test(stats), stats.slice(0, 110));
   await audit('Stats', 4);
+  await scaled('Stats');
   await page.screenshot({ path: OUT + '7-stats.png' });
   await page.goBack();
   await page.waitForTimeout(800);
@@ -339,6 +409,7 @@ try {
   // Eighteen episodes, each with React, Talk and Mark; plus the stars, the poster
   // override, where-to-watch and the content warnings.
   await audit('the title page', 30);
+  await scaled('the title page');
 
   await page.screenshot({ path: OUT + '5-title.png' });
 
@@ -357,6 +428,7 @@ try {
     !/Episode \d/.test(sheet.split('How far have you got?')[1] ?? ''),
   );
   await audit('the catch-up sheet', 3);
+  await scaled('the catch-up sheet');
 
   // Two seasons in the fixture, so the season comes first — one season would skip
   // straight to episodes, which is why the sheet chooses rather than always asking.
@@ -497,6 +569,7 @@ try {
   // its caption announces the name twice over with two different words for it — these
   // carry one name each, and it is the word a person would say.
   await audit('Watching Mode', 26);
+  await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '9-emoji-search.png' });
 
   // --- The remote, in a drawer ------------------------------------------------
@@ -520,6 +593,7 @@ try {
     check(`the remote's ${name} key is named`, (await page.getByLabel(name).count()) > 0);
   }
   await audit('the remote drawer', 25);
+  await scaled('the remote drawer');
 
   await page.getByLabel('Close remote').click();
   await page.waitForTimeout(600);

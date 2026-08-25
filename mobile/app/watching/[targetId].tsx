@@ -291,7 +291,11 @@ function Control({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink },
+  // Clips. The remote drawer is 300 wide, absolute against this, and parked at
+  // `translateX(300)` while closed — so with nothing clipping it the page measured 690
+  // in a 390 viewport and could be scrolled sideways to reveal a drawer that is supposed
+  // to be shut. True at any text size; the 200% check is simply what looked.
+  screen: { flex: 1, backgroundColor: theme.ink, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
   headerMiddle: { flex: 1, alignItems: 'center' },
   close: { color: theme.muted, fontSize: 15 },
@@ -309,7 +313,17 @@ const styles = StyleSheet.create({
   },
   startText: { color: theme.ink, fontWeight: '700', fontSize: 17 },
 
-  controls: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16 },
+  // Wraps. Five controls and a density picker fit a phone once and not at twice the
+  // text size, where the row measured 690px in a 390px viewport and pushed all three
+  // density chips off the edge. The web's copy of this row was fixed the same way in
+  // §6.31; the phone kept it because nothing had ever rendered the phone large.
+  controls: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    padding: 16,
+  },
   control: {
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
@@ -319,7 +333,9 @@ const styles = StyleSheet.create({
   controlOn: { backgroundColor: theme.accent },
   controlText: { color: theme.text, fontSize: 14 },
   controlTextOn: { color: theme.ink, fontWeight: '600' },
-  densityBlock: { marginLeft: 'auto', alignItems: 'flex-end', gap: 3 },
+  // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
+  // line and is what carried it past the edge once the row wrapped.
+  densityBlock: { alignItems: 'flex-end', gap: 3 },
   densityLabel: { color: theme.muted, fontSize: 10 },
   densityRow: { flexDirection: 'row', gap: 4 },
   densityChip: {
