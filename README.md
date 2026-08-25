@@ -119,8 +119,14 @@ Then schedule the sender — see [`supabase/README.md`](supabase/README.md).
 ### Hosting the app
 
 `vercel.json` and `netlify.toml` are set up so importing the repository deploys it with
-no build settings to configure. Add the `VITE_` variables above and it is live. See
-[docs/deploying.md](docs/deploying.md), which also covers installing it on an iPhone —
+no build settings to configure. Add the `VITE_` variables above and it is live.
+
+The existing Vercel project has **no Git connection**, so nothing deploys on push and
+every release is a manual step — which is exactly how the deployed site came to sit
+several weeks behind the repository without anything reporting a problem. See
+[docs/deploying.md](docs/deploying.md) for the command that actually works, why deploying
+from inside the checkout fails with an error that names the wrong cause, and how to ask
+the live site which bundle it is serving. It also covers installing it on an iPhone —
 and why that matters more than it sounds.
 
 ### Tests

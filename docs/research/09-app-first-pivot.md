@@ -810,3 +810,42 @@ The general lesson is about where a decision like this is written down. All four
 now live in the READMEs of the things they are about, because "does this still have a
 job" is asked by someone looking at the component, not by someone reading a numbered
 research document from a month earlier.
+
+### 6.14 The deployed site was three weeks behind, and nothing said so
+
+The backend was kept current all day — migrations applied, functions redeployed,
+verified after each. The web app was not deployed once. So by the end of it the live
+client was older than the schema it talked to, which is the wrong way round: the client
+carries the fallbacks, but it is also where every bug fixed today actually lived.
+
+The live bundle still contained `getFloatFrequencyData` — the timer-driven capture whose
+frames drift with timer jitter (§6.7) — and none of the sync pagination that stops a
+large first sync losing data silently (§6.5), the timezone fix that filed every evening
+west of Greenwich under the wrong day (§6.5), or the unsigned `packHash` that had been
+throwing away half of every landmark set (§6.3).
+
+It was not stale because a branch went unmerged. The Vercel project has **no Git
+connection at all** — `link` is `null` — so nothing was ever going to redeploy it. There
+had been exactly one deployment, made by hand the previous day. A manual step nobody
+scheduled is a step that happens once.
+
+Deploying it turned up two things worth recording:
+
+**The error names the wrong cause.** Deploying from inside the checkout produces
+`Error: fetch failed`, which reads like a network problem, in an environment where
+everything does go through a proxy. It is not. The deployment is created and then
+`BLOCKED`, with `readyStateReason: "Git author noreply@anthropic.com must have access to
+the team reviewies"` — Vercel attributes a CLI deployment to the git author it finds, and
+these commits are authored by an address with no seat on the team. The `fetch failed` came
+from a later, unrelated attempt to stream build logs. Deploying the built directory from
+outside the repository works, because there is no git metadata to attribute.
+
+**READY is not the same as live.** A deployment reporting READY says a build succeeded,
+not that the production alias serves it. The check is to ask the site what it is running:
+the bundle filename is content-hashed, so comparing it to `app/dist/assets/` is a real
+answer rather than an inference. That is how the staleness was established in the first
+place, and how the fix was confirmed — `getFloatFrequencyData` gone, `reviewies-recorder`
+and `reactions_sample` present, the SPA rewrite and both cache-control rules intact after
+a prebuilt deploy that could easily have dropped them.
+
+Both are now in `docs/deploying.md`, next to the command, rather than here.

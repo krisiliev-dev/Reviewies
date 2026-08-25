@@ -28,16 +28,61 @@ preference — this account is a "northstar" account whose personal scope report
 at all. The first deployment happened to succeed; every one after it was blocked. If
 deployments start failing silently, check which scope they are going to first.
 
-Redeploying from a checkout:
+### Redeploying
 
-```bash
-npx vercel deploy --prod --token=$VERCEL_TOKEN --scope=reviewies
+Deploying from inside the checkout **fails**, and it fails in a way worth writing down
+because the error is nowhere near the cause. Vercel attributes a CLI deployment to the
+git commit author it finds, and this repository's commits are authored by
+`noreply@anthropic.com`, who is not a member of the team. The deployment is created, and
+then:
+
+```
+"readyState": "BLOCKED",
+"readyStateReason": "Git author noreply@anthropic.com must have access to the
+                     team reviewies on Vercel to create deployments."
 ```
 
-**Pushes do not deploy automatically yet.** Linking the Git repository needs a GitHub
-login connection on the Vercel account, which can only be added from the dashboard:
-Project → Settings → Git → Connect Git Repository. Once that is done, every push to the
-branch deploys and the command above stops being necessary.
+The CLI reports `Error: fetch failed` — from a *later*, unrelated attempt to stream build
+logs — so the message you see has nothing to do with the reason.
+
+Deploying the built directory, from outside the repository, works, because there is no
+git metadata to attribute:
+
+```bash
+npm run build --workspace app
+rm -rf /tmp/reviewies-deploy && cp -r app/dist /tmp/reviewies-deploy
+# The build settings do not travel — nothing is left to build — but the serving rules do.
+node -e "const s=require('./vercel.json');require('fs').writeFileSync('/tmp/reviewies-deploy/vercel.json',JSON.stringify({rewrites:s.rewrites,headers:s.headers},null,2))"
+cd /tmp/reviewies-deploy
+VERCEL_ORG_ID=team_… VERCEL_PROJECT_ID=prj_… \
+  npx vercel deploy --prod --yes --archive=tgz --token=$VERCEL_TOKEN
+```
+
+Copying `vercel.json`'s `rewrites` and `headers` across is not optional. Without the
+rewrite every deep link 404s, because a static host has no `/stats` file to serve.
+
+Two things about this environment: the Vercel CLI uses Node's built-in `fetch`, which
+ignores `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1` is set, and the CA bundle needs
+`NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt`.
+
+### Verifying, rather than assuming
+
+A deployment reporting READY says a build succeeded, not that the alias serves it. Ask
+the site what it is running:
+
+```bash
+curl -s https://reviewies-beryl.vercel.app/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js'
+```
+
+Compare that filename to `app/dist/assets/`. They are content-hashed, so equal names mean
+equal bundles. This matters: the deployed site sat several weeks behind the repository
+without anything reporting a problem, because nothing was ever going to redeploy it.
+
+**Pushes do not deploy automatically.** The project has no Git connection at all —
+`link` is `null` in the project API — so every deployment is manual. Linking it needs a
+GitHub login on the Vercel account, which can only be added from the dashboard: Project →
+Settings → Git → Connect Git Repository. Until then, the command above is the only thing
+that updates the site.
 
 ## Netlify
 
