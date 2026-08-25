@@ -606,3 +606,40 @@ with the new one and returned 200.
 The lesson is the ordinary one about redaction being a guess unless you know the format.
 The better habit is the one used for the service-role key ten minutes later: fetch it to
 a file, pass it by reference, and never let it near a command line or an output stream.
+
+### 6.9 The parts passed their own tests; the feature had never run
+
+Cross-validation was built, deployed, and invoked — and every one of those was verified
+separately. The agreement rules were tested against synthetic episodes in the core, the
+grants in PGlite, the function's boot on the edge by calling it and getting a well-formed
+empty answer. None of that is the same as the feature working, and the gap between them
+is where software goes wrong quietly.
+
+So it was run once, properly, against the deployed project:
+
+1. One person maps an episode. Nothing is promoted, and a client asking for the reference
+   is told there isn't one — so Watching Mode falls back to syncing by hand, which works.
+2. A second person maps the same episode *through a worse microphone*. The promoter
+   accepts them, and a client reads back a reference with agreement 2 and several
+   thousand landmarks, ready to sync against. Requiring identical recordings would have
+   meant a check that never fires outside a test.
+3. Two people map *different* episodes. Refused, and no reference is written. This is the
+   case the old length comparison called agreement, because two episodes of a show are
+   usually the same length.
+
+The reaction path got the same treatment. `reactions_sample` had been tested as SQL in
+PGlite and as a client call against a mock, which between them never asked the deployed
+project anything. Live, on an episode seeded with fifteen hundred reactions — twelve
+hundred of them piled into the opening minute, which is what an episode everyone is
+watching together actually looks like — it returns a few hundred spread across the
+whole running time, and returns nothing at all to someone who has blocked the author.
+That last one is the SECURITY INVOKER property: definer rights would run the function as
+the owner, skip `reactions_select`, and hand back a blocked person's reactions through
+this one path while every other path behaved correctly.
+
+One test-design note worth keeping. The first version asserted only that the sample
+reached the end of the episode, which the *old* prefix query also satisfies, because
+fifteen hundred rows fit inside its two-thousand-row limit. An assertion that the count
+came back well under the number seeded was needed to tell the two apart. Same lesson as
+§6.5 from the other direction: a fixture has to be sized so the wrong answer is visibly
+wrong, not merely so the right answer passes.

@@ -22,8 +22,10 @@ lives in IndexedDB.
 
 Core loop, social layer, backend, remote control and fingerprinting are all built and
 deployed. 497 core tests (run twice, against both database implementations), 159 app
-tests, 24 bridge tests and 19 relay tests pass, plus 31 live tests against the real
-Supabase project and the real TMDB and AniList APIs. 49 browser checks cover the web
+tests, 24 bridge tests and 19 relay tests pass, plus 37 live tests against the real
+Supabase project and the real TMDB and AniList APIs — including the whole
+listen-to-sync pipeline end to end: two people contribute timelines, the promoter
+cross-validates them, and a client reads back a reference it can sync against. 49 browser checks cover the web
 app end to end and 27 drive the phone app through react-native-web.
 
 **What is deliberately not built**, so the table below is not read as a to-do list:
@@ -67,7 +69,7 @@ a real microphone; and the Roku and MPRIS adapters have never spoken to hardware
 | Audio fingerprinting + crowd-sourced references | ✅ Built, accuracy unverified on real audio |
 | Continuous listening in the background (phone) | ✅ Built, unverified on a device |
 | Mapping a whole episode from the phone | ✅ Built |
-| Contributions cross-validated by content before promotion | ✅ Deployed and invoked live |
+| Contributions cross-validated by content before promotion | ✅ Deployed, proven end to end live |
 | Half-star ratings, poster overrides | ✅ Built |
 | Lists mixing film and TV | ✅ Built |
 | TV Time rescue CSV import | ✅ Built against the real tool's output |
