@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from '../ui/useReducedMotion';
 import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
-import { REACTION_VISIBLE_MS } from '@reviewies/core/watching/reactions';
+import {
+  DEFAULT_REACTION_DENSITY,
+  REACTION_VISIBLE_MS,
+} from '@reviewies/core/watching/reactions';
 
 const LANES = 4;
 /**
@@ -34,7 +37,7 @@ interface Flying {
 export function ReactionStream({
   reactions,
   positionMs,
-  density = 1,
+  density = DEFAULT_REACTION_DENSITY,
   paused = false,
 }: {
   reactions: Reaction[];
@@ -61,12 +64,17 @@ export function ReactionStream({
    * What this says out loud, which is moments rather than reactions.
    *
    * The container used to be the live region, so every emoji that drifted past was
-   * announced — twenty-four a minute at the default density, on a screen somebody is
-   * holding while watching television. Now a burst is collected and summarised once,
-   * and between moments it says nothing.
+   * announced — up to twenty-four on screen at once at the default density, on a screen
+   * somebody is holding while watching television. Now a burst is collected and
+   * summarised once, and between moments it says nothing.
    */
   const [announcement, setAnnouncement] = useState('');
   const pending = useRef<string[]>([]);
+  /**
+   * How many are on screen, readable from the effect below without making it depend on
+   * `flying` — which would re-run it on every arrival and replay the same window.
+   */
+  const flyingCount = useRef(0);
   const spokeAt = useRef(0);
 
   useEffect(() => {
@@ -86,7 +94,12 @@ export function ReactionStream({
     );
     if (due.length === 0) return;
 
-    const shown = density >= 1 ? due : due.filter(() => Math.random() < density);
+    // A cap on what is on screen, not a proportion of what is due. `density` was a
+    // fraction here and a count on the phone — the same control meaning two different
+    // things — and a fraction cannot be promised to anybody, because a quarter of a
+    // quiet episode is nothing and all of a busy one is a wall. §6.55.
+    const room = Math.max(0, density - flyingCount.current);
+    const shown = due.slice(0, room);
     if (shown.length === 0) return;
 
     pending.current.push(...shown.map((r) => r.emoji));
@@ -168,6 +181,8 @@ export function ReactionStream({
     const id = setTimeout(() => setFlying((c) => c.slice(1)), TRAVEL_MS / 2);
     return () => clearTimeout(id);
   }, [flying, paused]);
+
+  flyingCount.current = flying.length;
 
   return (
     <div

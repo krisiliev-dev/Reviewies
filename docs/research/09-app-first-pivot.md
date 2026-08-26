@@ -2716,6 +2716,59 @@ episode unaired, so Up Next correctly showed almost nothing and the check looked
 missing list. A fixture that is wrong in the direction of "the app is broken" is the
 expensive kind, and neither of those was visible without reading what the numbers meant.
 
+### 6.55 What each screen opens on
+
+Three sweeps have now compared the platforms: what a screen offers (§6.50), what it says
+(§6.51), what numbers it passes into the core (§6.52). Stats still opened on *this year*
+in one app and *the last thirty days* in the other, and none of the three could see it —
+a default window is a string sitting in a `useState` call. §6.54 found it sideways, while
+looking at something else.
+
+A default is a decision. Which period is selected, which filter is on, what starts
+expanded, how much of the crowd you see before you touch anything: each is an answer to a
+question about the product, and two platforms answering differently means nobody answered.
+So the fourth sweep reads the initial state out of each pair of screens and compares it by
+name.
+
+**"Density" meant two different things.** Watching Mode has a density control on both
+platforms, and they did not agree on what it was:
+
+- the web, a slider from a quarter to all, applied as `Math.random() < density` — a
+  *proportion* of the reactions due;
+- the phone, three chips of 8, 24 and 60, applied as `.slice(0, density)` — a *cap* on
+  how many are on screen.
+
+The same word, the same screen, the flagship feature, two mental models. And a proportion
+is not something anybody can act on: a quarter of a quiet episode is nothing, all of a busy
+one is a wall, and the reader cannot tell which they are about to get. A cap is the same
+experience on every episode. `REACTION_DENSITY_CHOICES` and `DEFAULT_REACTION_DENSITY` are
+in the core now; the web's slider is three chips, and its stream fills up to the cap
+instead of sampling.
+
+**And the phone's label was a promise the code did not keep.** *"Show up to 24 reactions a
+minute"* — while the code capped how many were on screen inside a four-second window,
+which is up to three hundred and sixty a minute. Doc 9 §6.13 is the standing rule about
+checking what the interface says out loud; this was the same mistake sitting in the
+product's centrepiece. Both platforms now say *"Show at most 24 reactions on screen at
+once"*, from the core, which is what both now do.
+
+One smaller thing: the calendar read its stored notification preference on every render on
+the web (`useState(getPreference())`) and lazily on the phone (`useState(getPreference)`).
+The same decision, two idioms; the lazy one is right, and matching them is one character.
+
+Fixing the density default then broke a test, in the way that is worth having: the stream's
+own suite renders it without a density prop, and the component's fallback was `1` — which
+under the old meaning was "all of them" and under the new one is "one at a time". The
+summary that should have read *"2 funny and 1 other"* read *"1 funny"*. The fallback is
+`DEFAULT_REACTION_DENSITY` now. A default that changes meaning while keeping its value is
+exactly what an old test is for.
+
+`app/src/wiring/openState.test.ts` keeps it, beside the other three, reading the same
+pairing list. Its bound is worth stating: it compares state by *name*, so a value only one
+platform holds is ignored — a screen legitimately has state its twin does not. What it
+catches is the same named thing opening differently, which is what all four of these
+sweeps have found each time. Proved by planting the `ytd`/`30d` split back, which fails it.
+
 ---
 
 ## 7. What is still not known

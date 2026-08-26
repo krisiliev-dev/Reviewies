@@ -84,6 +84,19 @@ export const COPY = {
     findSomething: 'Find something to watch',
   },
 
+  watching: {
+    /**
+     * The density control, named for what it actually does.
+     *
+     * The phone's said "Show up to N reactions a minute" while the code capped how many
+     * were on screen at once — twenty-four within a four-second window is three hundred
+     * and sixty a minute, so the sentence promised something the code did not do. Doc 9
+     * §6.13 is the standing rule about that; this is the same mistake in the flagship.
+     */
+    densityChoice: (many: number) => `Show at most ${many} reactions on screen at once`,
+    densityLabel: 'Density',
+  },
+
   comments: {
     /** The web's: an empty conversation is an invitation, not a status. */
     empty: 'Nothing here yet. Be the first.',

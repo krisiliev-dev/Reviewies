@@ -28,6 +28,22 @@ import type { Reaction } from '../domain/types.ts';
  */
 export const REACTION_VISIBLE_MS = 4000;
 
+/**
+ * How many other people's reactions may be on screen at once, and what you can pick.
+ *
+ * The two platforms had the same control, called it the same thing, and meant different
+ * things by it: the web was a slider from a quarter to all, thinning the crowd by a
+ * proportion, and the phone was three chips capping the count. Neither was written down
+ * anywhere, so neither was a decision (§6.55).
+ *
+ * A cap, not a proportion, because a proportion is not a promise anybody can act on: a
+ * quarter of a quiet episode is nothing and all of a busy one is a wall, and the reader
+ * has no way of knowing which they are about to get. "At most this many on screen" is
+ * the same experience whichever episode you open.
+ */
+export const REACTION_DENSITY_CHOICES = [8, 24, 60] as const;
+export const DEFAULT_REACTION_DENSITY = 24;
+
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 

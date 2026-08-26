@@ -25,7 +25,9 @@ export function Calendar() {
   // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
   // the live query picks up whatever it writes without this screen waiting on it.
   useEffect(() => void requestRefresh(), []);
-  const [preference, setPref] = useState<NotifyPreference>(getPreference());
+  // Lazy, like the phone's: the initial value is only wanted on the first render, and
+  // calling it on every one reads the stored preference for nothing.
+  const [preference, setPref] = useState<NotifyPreference>(getPreference);
   const [permission, setPermissionState] = useState<NotificationPermission | undefined>(
     typeof Notification !== 'undefined' ? Notification.permission : undefined,
   );

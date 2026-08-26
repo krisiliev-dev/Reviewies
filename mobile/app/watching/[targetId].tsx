@@ -25,6 +25,11 @@ import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
+import { COPY } from '@reviewies/core/copy';
+import {
+  DEFAULT_REACTION_DENSITY,
+  REACTION_DENSITY_CHOICES,
+} from '@reviewies/core/watching/reactions';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -46,7 +51,7 @@ export default function WatchingScreen() {
 
   const clock = usePlaybackClock();
   const [query, setQuery] = useState('');
-  const [density, setDensity] = useState(24);
+  const [density, setDensity] = useState<number>(DEFAULT_REACTION_DENSITY);
   // Separate from the clock: the timecode can keep running while the top of the screen
   // holds still, which is what WCAG 2.2.2 asks for and what someone who finds the
   // drift distracting actually wants.
@@ -199,9 +204,9 @@ export default function WatchingScreen() {
               onPress={() => clock.nudge(5000)}
             />
             <View style={styles.densityBlock}>
-              <Text style={styles.densityLabel}>Density</Text>
+              <Text style={styles.densityLabel}>{COPY.watching.densityLabel}</Text>
               <View style={styles.densityRow}>
-                {[8, 24, 60].map((value) => (
+                {REACTION_DENSITY_CHOICES.map((value) => (
                   <Pressable
                     key={value}
                     onPress={() => setDensity(value)}
@@ -209,7 +214,10 @@ export default function WatchingScreen() {
                     accessibilityRole="button"
                     accessibilityState={{ selected: density === value }}
                     // "8", "24", "60" on their own are three numbers next to each other.
-                    accessibilityLabel={`Show up to ${value} reactions a minute`}
+                    // The sentence used to say "a minute", which the code never did:
+                    // twenty-four inside a four-second window is three hundred and sixty
+                    // a minute. §6.55.
+                    accessibilityLabel={COPY.watching.densityChoice(value)}
                   >
                     <Text
                       style={[styles.densityText, density === value && styles.densityTextOn]}

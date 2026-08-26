@@ -14,6 +14,11 @@ import {
   type PlaybackUpdate,
 } from '../watching/extensionBridge';
 import { ListenSync } from '../watching/ListenSync';
+import { COPY } from '@reviewies/core/copy';
+import {
+  DEFAULT_REACTION_DENSITY,
+  REACTION_DENSITY_CHOICES,
+} from '@reviewies/core/watching/reactions';
 
 /**
  * Watching Mode — timestamped reactions to moments, on a second screen.
@@ -47,7 +52,7 @@ export function WatchingMode() {
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [clock]);
-  const [density, setDensity] = useState(1);
+  const [density, setDensity] = useState<number>(DEFAULT_REACTION_DENSITY);
   // Separate from the clock on purpose: wanting the timecode to keep running while the
   // top of the screen holds still is a reasonable thing to want, and WCAG 2.2.2 asks
   // for a way to stop anything that moves by itself for longer than five seconds.
@@ -333,18 +338,30 @@ function SyncBar({
       >
         {streamPaused ? 'Held' : 'Hold'}
       </button>
-      <label className="ml-auto flex items-center gap-1.5 text-xs text-muted">
-        Density
-        <input
-          type="range"
-          min={0.25}
-          max={1}
-          step={0.25}
-          value={density}
-          onChange={(e) => onDensity(Number(e.target.value))}
-          className="w-16"
-        />
-      </label>
+      {/* Three choices, the phone's, rather than a slider from a quarter to all. A
+          proportion is not a promise anybody can act on — a quarter of a quiet episode
+          is nothing — and the two platforms meant different things by the same word
+          until §6.55. */}
+      <div className="ml-auto flex items-center gap-1.5 text-xs text-muted">
+        {COPY.watching.densityLabel}
+        <div role="radiogroup" aria-label={COPY.watching.densityLabel} className="flex gap-1">
+          {REACTION_DENSITY_CHOICES.map((value) => (
+            <button
+              key={value}
+              onClick={() => onDensity(value)}
+              role="radio"
+              aria-checked={density === value}
+              // "8", "24", "60" on their own are three numbers next to each other.
+              aria-label={COPY.watching.densityChoice(value)}
+              className={`min-h-6 rounded-full px-2.5 py-1 ${
+                density === value ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
+              }`}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
