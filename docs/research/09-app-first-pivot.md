@@ -4662,6 +4662,116 @@ largest single block left — was not reached at all and is named in §7.
 
 ---
 
+### 6.77 Point the harness at the screens, and at the one decision anime rests on
+
+§6.76 left three names in §7: the anime season decision, `core/src/fingerprint`, and the
+two application workspaces. This sprint took them in that order, because the first is a
+gap and the other two are measurements. 316 more mutations, and one of them changed how
+much of this document I trust.
+
+#### The decision anime rests on
+
+`correctAnimeSeasons` decides whether a flat 38-episode TMDB listing is really several
+AniList seasons. `splitIntoSeasons` beneath it has had tests since it was written; the
+decision above it had none, because reaching it means answering AniList. Six mutants
+survived: the 26-episode floor, the two-season minimum, and the renumbering.
+
+It is worth the effort of getting to. Anime is a core audience for this product, and both
+ways of being wrong are quiet. Re-cut on a bad signal, somebody's watch history shows
+under season numbers that do not match anything they recognise. Not re-cut when it should
+be, they are scrolling a hundred-episode season looking for where they left off.
+
+Reached by seeding the ID mapping through **its own cache** rather than stubbing it — so
+`resolveFromTmdb` runs for real and only AniList's GraphQL is answered by hand — and
+driven through the public `getEpisodesCached`, which is how the product calls it. Eight
+tests, and all six mutants now die: a run of twenty-five is left alone, one of twenty-six
+is re-cut, a show AniList knows as a single season is left alone, one already in several
+seasons is left alone, an unreachable AniList leaves everything untouched, the specials
+come through unchanged, and **every episode id survives the correction**, which is what
+keeps existing watch history attached.
+
+#### A written excuse that was true of half a file
+
+`mobile/src/notifications.ts`: nineteen mutants, **none killed**. Its own header said why:
+
+> This file cannot be tested anywhere but a device: a simulator has no push token, and
+> `getExpoPushTokenAsync` needs a project id and a real build to return one.
+
+Every word of that is true about getting a token, and it had been applied to the whole
+file. `pushSupported()` and `whyNotSupported()` are pure functions of three imports — the
+platform, whether this is a real device, whether the build has a project id — and all
+three can be replaced. §6.50 exists because offering a notification setting that can never
+work is worse than offering none; the sentence explaining why it cannot work is exactly
+the part of that promise this side of the boundary can keep, and every branch of it could
+be inverted unnoticed.
+
+Eight of the nineteen die now. The other eleven are past the permission prompt and need a
+device, which is what the excuse should have said. It says that now.
+
+This is §6.106's rule again — *an excuse outlives the thing it excuses* — and the first
+time mutation testing rather than a re-read is what caught one.
+
+#### A function that could only ever be seen returning false
+
+The web has the same capability check, and its test read:
+
+```js
+it('reports unsupported in jsdom, which lacks PushManager', () => {
+  expect(typeof pushSupported()).toBe('boolean');
+});
+```
+
+jsdom has no `PushManager`, so the answer is always `false`, so any one of the four
+conditions could be inverted and it stayed `false` and stayed green. A function observed
+returning one value is not being observed. Both platforms now have the same four tests —
+all conditions present, then each removed in turn — which is also the only way §6.51's
+question (do the two platforms decide this the same way?) can be asked at all.
+
+#### The application workspaces did not need the smoke suite after all
+
+The brief expected `app/` and `mobile/` to need `MUTATE_CMD`, as `bridge/` did. They did
+not, and the reason is worth recording: their logic lives in a handful of small files with
+ordinary unit tests, and everything else is a screen. `extensionBridge.ts` came back 16 of
+23; `push.ts` 7 of 20 and now 13; `notifications.ts` 0 of 19 and now 8. Mutating a screen
+is a different exercise — the smoke suites drive them, but one mutation per two-minute
+browser run is a different order of cost, and this sprint did not attempt it. §7 says so.
+
+#### The fingerprinter, measured at last
+
+245 mutations across eight files, 134 killed by the core suite and two more by the app's.
+The survivors sort into three kinds and almost none of them are missing tests:
+
+- **Unreachable arithmetic.** A recording's length is a whole number of hops — 512 samples
+  at 22,050Hz, 23.22ms each — so twenty seconds is 861.3 hops, which no recording can be.
+  `duration < MIN_REFERENCE_MS` and `<=` therefore cannot disagree, ever. Three of
+  `references.ts`'s survivors are that, and the test file now says so rather than leaving
+  the next person to chase them.
+- **Out-of-bounds no-ops.** Most of `spectrogram.ts` and `stream.ts`'s survivors are
+  `i < n` → `i <= n` inside typed-array loops, where the extra write is silently dropped
+  and the extra read is `undefined`. And `20 * Math.log10(…) + 100` shifts every bin by the
+  same amount, which cannot change which of them is a peak.
+- **Live-only.** `references.ts` and `contribute.ts` guard on a signed-in client, which is
+  the §6.40 list again.
+
+Two were real, and both are the same shape as everything else this sprint: `shouldCorrect`
+decides whether to move somebody's playback position mid-episode, and its tests sat at
+400ms against a 1.5-second floor and an hour against a fifteen-minute ceiling. Both bounds
+could move. Both are pinned to the millisecond now.
+
+A note on scope, and on nearly getting it wrong. The first draft of this section said
+that for six of the eight files the narrow scope *was* the wide scope, because nothing
+outside `core/src/fingerprint` imports them — checked, within `core`, and true there.
+Then `app/src/fingerprint/capture.ts` and `capture.test.ts` turned out to import five of
+them from the other workspace, which the grep had not been pointed at. §6.76's whole
+lesson, one sprint later, in the direction of my own convenience.
+
+So all 83 survivors of those five files were re-run against the app's suite. It changed
+**two** verdicts out of 83 — one in `continuous.ts` and one in `fingerprint.ts` — which is
+a small number and not the point. The point is that it was not zero, and the only way to
+know which two was to run it.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4773,19 +4883,19 @@ and which single claim in this document could not be checked at all:
   real assertion from an unfailable one means knowing what the code could have done
   instead, which is what mutation testing is for and what nothing here does. The honest
   version of this claim is: no test is silent, and some may still be toothless.
-- **Twenty-four files have been mutated; `fingerprint/`, `app/`, `mobile/` and
-  `extension/` have not.** §6.75 and §6.76 ran 663 mutations and classified every
-  survivor. What that leaves is `core/src/fingerprint` — 240 mutants, the largest single
-  block in the core, and the subsystem §7 already says has never heard real audio — and
-  the two application workspaces, whose logic is mostly screens and therefore covered by
-  smoke rather than by unit tests, which the harness can now run via `MUTATE_CMD` but has
-  not been pointed at. The files measured were chosen for stakes rather than sampled, so
-  the rates say nothing about the ones not looked at.
-- **`correctAnimeSeasons` decides something important and nothing tests it.** Whether a
-  flat 38-episode TMDB listing is really several AniList seasons: the 26-episode floor,
-  the two-season minimum and the renumbering all survive mutation. `splitIntoSeasons`
-  beneath it is well tested and the decision above it is not, because reaching it needs
-  the AniList lookup mocked. Anime is a core audience for this product (§6.76).
+- **No screen has been mutated.** §6.75 to §6.77 ran 979 mutations over 36 files and
+  classified every survivor, which is all of `relay/`, all of `bridge/`, the measured
+  parts of `core/`, and the handful of `app/` and `mobile/` files that carry logic rather
+  than markup. What is untouched is every `.tsx` — the screens themselves — and
+  `extension/`. Mutating a screen means one browser run per mutation, which is a
+  different order of cost from a unit suite, and nothing here has attempted it. So the
+  claim "the screens are covered" still rests on the smoke suites asserting the right
+  things, which is what §6.74 found was not always true.
+- **A survivor list is a statement about the runner.** §6.76 learned this from `bridge/`
+  and §6.77 nearly repeated it: a grep for importers of the fingerprint modules was run
+  inside `core/` only, and the app imports five of them. Re-running against the app's
+  suite changed two verdicts out of 83. Nothing automates this — deciding which suites
+  can see a file is a judgement made per file, by hand, and it has been wrong once.
 - **Nothing runs the mutation harness on a schedule.** It is committed now, so the numbers
   are reproducible rather than a one-off, but it takes tens of minutes and its output
   needs a person to classify — so it is deliberately not in `npm run verify`. Nothing

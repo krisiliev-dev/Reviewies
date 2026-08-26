@@ -146,6 +146,13 @@ describe('agreesWith', () => {
     expect(verdict.reason).toBe('too-short');
   });
 
+  /**
+   * Five pairs of two full recordings compared both ways round, which is real work: it
+   * runs for several seconds alone and longer when three core configurations share four
+   * cores. Vitest's default is five, so under load the runner killed it and reported a
+   * timeout where the assertion was never in doubt — the same thing §6.75 fixed in
+   * `scale.test.ts` and `driver.test.ts`. The runner is told the number the test needs.
+   */
   it('gives the same verdict whichever way round it is asked', () => {
     // chooseReference compares every pair, so an asymmetric verdict would make the
     // winner depend on iteration order. It is also just wrong: whether two recordings
@@ -161,7 +168,7 @@ describe('agreesWith', () => {
     for (const [first, second] of pairs) {
       expect(agreesWith(first, second).agrees).toBe(agreesWith(second, first).agrees);
     }
-  });
+  }, 30_000);
 
   it('refuses two contributions that cover different halves of the episode', () => {
     // They may both be perfectly good, but neither has checked the other's work — and

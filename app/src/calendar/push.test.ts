@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setConfig } from '@reviewies/core/config';
 import { decodeVapidKey, pushSupported, subscriptionKeys, vapidPublicKey } from './push';
 
@@ -52,6 +52,68 @@ describe('capability detection', () => {
   it('reports unsupported in jsdom, which lacks PushManager', () => {
     // The important property is that it answers rather than throwing.
     expect(typeof pushSupported()).toBe('boolean');
+  });
+
+  /**
+   * All four conditions, and each one on its own.
+   *
+   * The check above only ever sees `false`, because jsdom has no `PushManager` — so
+   * §6.77 could invert any single condition and it stayed false and stayed green. A
+   * function that can only be observed returning one value is not being observed.
+   *
+   * The phone has the same shape in `mobile/src/notifications.ts` and the same tests
+   * now. Two platforms deciding the same thing differently is §6.51's subject, and the
+   * only way to notice is to drive both.
+   */
+  describe('with a browser that has everything', () => {
+    const absent = Symbol('absent');
+    const globals = globalThis as unknown as Record<string, unknown>;
+    const saved = new Map<string, unknown>();
+
+    const give = (name: string, value: unknown) => {
+      if (!saved.has(name)) saved.set(name, name in globals ? globals[name] : absent);
+      globals[name] = value;
+    };
+    const take = (name: string) => {
+      if (!saved.has(name)) saved.set(name, name in globals ? globals[name] : absent);
+      delete globals[name];
+    };
+
+    beforeEach(() => {
+      give('PushManager', function PushManager() {});
+      give('Notification', function Notification() {});
+      Object.defineProperty(navigator, 'serviceWorker', {
+        value: {},
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      for (const [name, value] of saved) {
+        if (value === absent) delete globals[name];
+        else globals[name] = value;
+      }
+      saved.clear();
+    });
+
+    it('says yes', () => {
+      expect(pushSupported()).toBe(true);
+    });
+
+    it('says no without a Push API', () => {
+      take('PushManager');
+      expect(pushSupported()).toBe(false);
+    });
+
+    it('says no without notifications', () => {
+      take('Notification');
+      expect(pushSupported()).toBe(false);
+    });
+
+    it('says no without a service worker', () => {
+      Reflect.deleteProperty(navigator, 'serviceWorker');
+      expect(pushSupported()).toBe(false);
+    });
   });
 
   it('returns undefined when no key is configured', () => {

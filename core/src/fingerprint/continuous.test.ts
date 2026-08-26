@@ -217,4 +217,23 @@ describe('shouldCorrect', () => {
   it('works backwards as well, for scrubbing back to rewatch a scene', () => {
     expect(shouldCorrect(600_000, 540_000)).toBe(true);
   });
+
+  /**
+   * Both bounds, to the millisecond.
+   *
+   * Every case above sits well inside or well outside — 400ms against a 1.5s floor, an
+   * hour against a fifteen-minute ceiling — so §6.77 could move either bound and nothing
+   * failed. They are the two decisions this function exists to make: below the floor a
+   * correction is jitter on somebody's timecode while they are watching, and above the
+   * ceiling it is a bad match dragging them somewhere they never were.
+   */
+  it('acts from exactly the floor upwards, and not just below it', () => {
+    expect(shouldCorrect(60_000, 61_500)).toBe(true);
+    expect(shouldCorrect(60_000, 61_499)).toBe(false);
+  });
+
+  it('follows a jump of exactly the ceiling, and nothing past it', () => {
+    expect(shouldCorrect(60_000, 60_000 + 15 * 60_000)).toBe(true);
+    expect(shouldCorrect(60_000, 60_001 + 15 * 60_000)).toBe(false);
+  });
 });

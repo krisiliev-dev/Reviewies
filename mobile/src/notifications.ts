@@ -17,11 +17,20 @@ import { setPreference, type NotifyPreference } from '@reviewies/core/calendar/u
  * ## What is verified and what is not
  *
  * The decisions live in `@reviewies/core/calendar/expoPush` and are tested there. The
- * schema and its policy are tested against real Postgres. This file cannot be tested
- * anywhere but a device: a simulator has no push token, and `getExpoPushTokenAsync`
- * needs a project id and a real build to return one. It is written to fail into an
- * explanation rather than an exception, because the state it will most often be in
- * during development is "not possible here".
+ * schema and its policy are tested against real Postgres. Getting a token cannot be
+ * tested anywhere but a device: a simulator has no push token, and
+ * `getExpoPushTokenAsync` needs a project id and a real build to return one. It is
+ * written to fail into an explanation rather than an exception, because the state it
+ * will most often be in during development is "not possible here".
+ *
+ * That last sentence used to read "this file cannot be tested anywhere but a device",
+ * which was true of half of it and got applied to all of it. §6.77 mutated the file and
+ * all nineteen changes survived — including every branch of the sentence somebody reads
+ * when the answer is no, which is the part §6.50 existed to get right. `pushSupported`
+ * and `whyNotSupported` are pure functions of the platform, whether this is a real
+ * device, and whether the build has a project id; all three are imports, and
+ * `notifications.test.ts` replaces them. What is still device-only is everything past
+ * the permission prompt.
  */
 
 /** How a notification behaves when it lands while the app is open. */
