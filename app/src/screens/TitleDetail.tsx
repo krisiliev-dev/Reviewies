@@ -121,7 +121,9 @@ export function TitleDetail() {
           above describes, reproduced by adding four words, and caught by the check that
           was written after it happened the first time. */}
       <div className="mb-5">
-        <span className="mb-1 block text-xs tracking-wide text-muted uppercase">Your rating</span>
+        <span className="mb-1 block text-xs tracking-wide text-muted uppercase">
+          {COPY.title.yourRating}
+        </span>
         <StarRating
           value={rating?.value}
           onChange={(value) =>

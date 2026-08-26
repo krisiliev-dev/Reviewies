@@ -3123,6 +3123,45 @@ artwork-led, and the star widget repeats once per episode row, which reads as te
 rather than as controls. Both are judgement calls that want a person's eye, and neither is
 a defect I can argue for in a sentence.
 
+### 6.62 The same pass, on the platform this became
+
+§6.61 opened the web's screenshots, found the suite had been leaving the text doubled in
+half of them, and then — with honest pictures — found three things. It looked at one of
+the phone's seventeen. The phone is what this product pivoted to *be*, and its own 200%
+check restores what it changes, so those pictures have been true all along. Anything found
+there is a design finding rather than an artefact.
+
+**Most watched was a bar with no number.** The web's version is a card per title: name and
+hours on one line, a bar beneath, and *"12 episodes"* under it. The phone had the name and
+the hours, a hairline running the full width of the screen, and no count — no card either,
+so it floated against the page background and read as a progress bar rather than as a
+chart. The count is the part that makes the bar mean anything: without it the picture says
+one show beat another, and not by how much of what. It is a card with a count now, and its
+bar has the same four-percent floor the web's has, so a show with one episode is a mark
+rather than nothing.
+
+**The phone's star row was still unlabelled** — a sprint after §6.61 captioned the web's,
+which is the drift these guards exist to catch and could not: a caption is not a route, a
+word, a number or a default. `COPY.title.yourRating` now feeds both.
+
+**And it asked you to rate the thing above the sentence saying what it is.** The phone's
+order was poster → stars → description; the web's is poster → description → stars. Nothing
+enforces the order of a page, and nobody had put the two side by side. The phone follows
+the web now, for the obvious reason: rate it after you know what it is.
+
+Held against each other, most of what differs between the two is *merely* different and
+right to leave: the phone has a navigation bar and the web has a tab bar, the phone's rows
+are a few pixels tighter, the phone's headings sit under a back arrow. That is the largest
+category and the easiest to mistake for a defect — the temptation is to make the pictures
+match rather than to make the product good.
+
+One thing noticed and deliberately not changed: **the phone prints the title twice** in
+the top hundred and twenty pixels, once in the navigation bar and once as the page
+heading. iOS solves this with a large title that collapses into the bar on scroll, which
+is not available here; removing the in-page heading costs the name beside the poster, and
+removing the bar's copy costs the context that stays put while somebody scrolls forty
+episodes. I could not argue either in a sentence, so it stays, written down.
+
 ---
 
 ## 7. What is still not known

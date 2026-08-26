@@ -139,6 +139,15 @@ export const COPY = {
      * §6.58.
      */
     loadFailed: 'Could not load this title. It may just be the network.',
+    /**
+     * The caption over the star row.
+     *
+     * Five grey stars in an empty band read as a divider, not a control — §6.61 on the
+     * web, and §6.62 found the phone still unlabelled a sprint later. "Your" is doing
+     * work: this is your rating, not an average, which is the difference from every site
+     * that shows you a crowd score.
+     */
+    yourRating: 'Your rating',
     tryAgain: 'Try again',
   },
 

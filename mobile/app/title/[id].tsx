@@ -117,18 +117,23 @@ export default function TitleScreen() {
           </View>
         </View>
 
+        {title?.overview ? <Text style={styles.overview}>{title.overview}</Text> : null}
+
         {/* Its own line rather than the column beside the poster. Ten targets at 24
             points each is 240 wide and does not bend; in a column narrowed by a poster
             and by whatever the system font scale is doing, the last stars fall off the
-            end. A rating you cannot reach is a rating you cannot give. */}
-        <StarRating
-          value={rating?.value}
-          onChange={(value) =>
-            value === undefined ? clearRating(titleId) : rate(titleId, value)
-          }
-        />
-
-        {title?.overview ? <Text style={styles.overview}>{title.overview}</Text> : null}
+            end. A rating you cannot reach is a rating you cannot give.
+            Captioned, and after the description rather than before it: the phone asked
+            you to rate the thing above the sentence that says what it is. §6.62. */}
+        <View style={styles.ratingBlock}>
+          <Text style={styles.ratingLabel}>{COPY.title.yourRating.toUpperCase()}</Text>
+          <StarRating
+            value={rating?.value}
+            onChange={(value) =>
+              value === undefined ? clearRating(titleId) : rate(titleId, value)
+            }
+          />
+        </View>
 
         {title && <AddToList titleId={titleId} kind={title.kind} />}
 
@@ -351,6 +356,8 @@ const styles = StyleSheet.create({
   title: { color: theme.text, fontSize: 20, fontWeight: '700' },
   year: { color: theme.muted, fontSize: 14 },
   overview: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  ratingBlock: { gap: 6 },
+  ratingLabel: { color: theme.muted, fontSize: 11, letterSpacing: 0.6 },
   loading: { marginTop: 24 },
 
   season: { gap: 6 },

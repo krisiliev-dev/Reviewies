@@ -111,7 +111,7 @@ export default function StatsScreen() {
               <View style={styles.section}>
                 <Text style={styles.sectionHeading}>Most watched</Text>
                 {summary.topTitles.map((title) => (
-                  <View key={title.titleId} style={styles.tally}>
+                  <View key={title.titleId} style={styles.tallyCard}>
                     <View style={styles.tallyHead}>
                       <Text numberOfLines={1} style={styles.tallyName}>
                         {title.name}
@@ -122,9 +122,19 @@ export default function StatsScreen() {
                         ranking, or the picture would contradict the order. */}
                     <View style={styles.barTrack}>
                       <View
-                        style={[styles.barFill, { width: `${(title.minutes / longest) * 100}%` }]}
+                        style={[
+                          styles.barFill,
+                          { width: `${Math.max(4, (title.minutes / longest) * 100)}%` },
+                        ]}
                       />
                     </View>
+                    {/* The count under the bar, which the web has had since Stats
+                        shipped and this did not. A bar with no number beside it is a
+                        shape: it says one show beat another and not by how much of what.
+                        §6.62 put the two screenshots side by side. */}
+                    <Text style={styles.tallyCount}>
+                      {title.episodes} {title.episodes === 1 ? 'episode' : 'episodes'}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -229,7 +239,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  tally: { gap: 5 },
+  // A card, like the web's. It was bare text on the page background with a hairline
+  // running the full width of the screen under it, which reads as a progress bar rather
+  // than as a chart. §6.62.
+  tallyCard: {
+    gap: 5,
+    backgroundColor: theme.surface,
+    borderRadius: radius.lg,
+    padding: 12,
+  },
+  tallyCount: { color: theme.muted, fontSize: 11 },
   tallyHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   tallyName: { color: theme.text, fontSize: 14, flex: 1 },
   tallyTime: { color: theme.muted, fontSize: 12 },
