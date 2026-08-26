@@ -8,3 +8,6 @@ dist-ssr/
 .expo/
 .vercel/
 coverage/
+
+# A mutation run that was killed outright leaves one of these behind.
+*.mutant-backup

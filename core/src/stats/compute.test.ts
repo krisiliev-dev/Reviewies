@@ -6,6 +6,7 @@ import {
   getSummary,
   longestStreak,
   summarise,
+  windowEnd,
   windowStart,
 } from './compute.ts';
 import type { WatchEvent } from '../domain/types.ts';
@@ -88,6 +89,31 @@ describe('summary shape', () => {
     const events = ['a', 'b', 'c', 'd'].map((k) => ev({ seriesId: `tmdb:tv:${k}` }));
     expect(summarise(events, names, 2).topTitles).toHaveLength(2);
   });
+
+  /**
+   * Five, and the busiest day rather than the first one seen.
+   *
+   * §6.76 mutated `summarise` and both of these survived. The list length is only ever
+   * asked for explicitly above, so the default nothing passes — which is what every
+   * screen actually gets — was free to be any number. And the busiest-day comparator
+   * reads `b[1] - a[1]`; change either index and the comparison returns NaN, which
+   * leaves the array in the order it was built. The fixture above happens to build the
+   * busy day first, so it still came out on top.
+   */
+  it('returns five titles when nobody says how many', () => {
+    const events = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((k) => ev({ seriesId: `tmdb:tv:${k}` }));
+    expect(summarise(events, names).topTitles).toHaveLength(5);
+  });
+
+  it('finds the busiest day even when it is not the first one', () => {
+    const first = new Date(2026, 5, 15, 20).getTime();
+    const later = new Date(2026, 5, 18, 20).getTime();
+    const s = summarise(
+      [ev({ watchedAt: first }), ev({ watchedAt: later }), ev({ watchedAt: later + 1000 })],
+      names,
+    );
+    expect(s.busiestDay).toEqual({ date: '2026-06-18', episodes: 2 });
+  });
 });
 
 describe('streaks', () => {
@@ -124,12 +150,32 @@ describe('windows', () => {
   });
 
   it('ytd starts at January 1st', () => {
-    expect(new Date(windowStart('ytd', now)).getFullYear()).toBe(2026);
-    expect(new Date(windowStart('ytd', now)).getMonth()).toBe(0);
+    // The whole instant, not the year and the month: checking two of the three fields
+    // left the day free to be the 2nd, which §6.76 proved by making it so.
+    expect(windowStart('ytd', now)).toBe(new Date(2026, 0, 1).getTime());
   });
 
   it('all-time starts at zero', () => {
     expect(windowStart('all', now)).toBe(0);
+  });
+
+  /**
+   * The Year in Review's two edges, which nothing had ever named.
+   *
+   * The `ytd` test above checks the year and the month and not the day, and the `year`
+   * window — the one the picker uses — had no test of its own at all. §6.76 moved its
+   * start to February, moved its start to the 2nd, moved its end into the year after
+   * next, and the suite stayed green through all of it.
+   *
+   * Written in local time on purpose. Both ends of this are built with `new Date(y, 0, 1)`,
+   * which is local midnight, and the suite runs again at UTC+14 (§6.66).
+   */
+  it('a year begins at local midnight on the first of January', () => {
+    expect(windowStart('year', now, 2025)).toBe(new Date(2025, 0, 1).getTime());
+  });
+
+  it('and ends at local midnight on the first of January after it', () => {
+    expect(windowEnd('year', now, 2025)).toBe(new Date(2026, 0, 1).getTime());
   });
 });
 
@@ -167,6 +213,32 @@ describe('against the database', () => {
     expect((await getSummary('all', { now })).episodes).toBe(1);
   });
 
+  /**
+   * Both ends of the filter, to the millisecond.
+   *
+   * `watchedAt >= from && watchedAt < to` — half-open, which is the right shape and was
+   * asserted nowhere. §6.76 flipped each comparison in turn and nothing failed, because
+   * every fixture here is days from a boundary. On the Year in Review it decides which
+   * side of midnight on New Year's Eve a watch is counted.
+   */
+  it('counts the first millisecond of a year and not the last of the one before', async () => {
+    const start = new Date(2025, 0, 1).getTime();
+    await db.watches.bulkAdd([ev({ watchedAt: start }), ev({ watchedAt: start - 1 })]);
+
+    const s = await getSummary('year', { year: 2025, now: new Date(2026, 7, 1).getTime() });
+    expect(s.episodes).toBe(1);
+    expect(s.firstWatch).toBe(start);
+  });
+
+  it('and stops before the first millisecond of the next one', async () => {
+    const end = new Date(2026, 0, 1).getTime();
+    await db.watches.bulkAdd([ev({ watchedAt: end - 1 }), ev({ watchedAt: end })]);
+
+    const s = await getSummary('year', { year: 2025, now: new Date(2026, 7, 1).getTime() });
+    expect(s.episodes).toBe(1);
+    expect(s.lastWatch).toBe(end - 1);
+  });
+
   it('resolves series names', async () => {
     await db.watches.add(ev({ watchedAt: Date.now() }));
     expect((await getSummary('all')).topTitles[0].name).toBe('The Long Dark');
@@ -196,6 +268,13 @@ describe('formatDuration', () => {
     [90, '1.5h'],
     [600, '10h'],
     [2880, '2.0 days'],
+    // The two places the unit changes. Every case above is comfortably inside one of
+    // them, so §6.76 could move either boundary by a whole unit unnoticed — an hour of
+    // television reading as "60m", a day as "24h".
+    [59, '59m'],
+    [60, '1.0h'],
+    [1439, '24h'],
+    [1440, '1.0 days'],
   ])('formats %i minutes as %s', (mins, expected) => {
     expect(formatDuration(mins)).toBe(expected);
   });

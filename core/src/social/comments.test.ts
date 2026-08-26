@@ -63,6 +63,33 @@ describe('effort filter', () => {
     expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
     expect(lengths[0]).toBe(0);
   });
+
+  /**
+   * The threshold itself, which every fixture above is comfortably clear of.
+   *
+   * §6.76 changed `length >= minLength` to `>`, and moved 80 to 81 and 280 to 281, and
+   * none of the seven tests here noticed: a one-liner is far below the bar and a review
+   * far above it, so the bar could be anywhere between them.
+   *
+   * The numbers are pinned to their labels for the same reason `UPCOMING_DAYS` is pinned
+   * to "the next two months" — "Skip one-liners" is a claim about roughly one line of
+   * text, and a number that drifts away from its own label is how a filter stops meaning
+   * what it says.
+   */
+  it('keeps a comment of exactly the minimum length, and not one character less', () => {
+    const exactly = { ...ONE_LINER, body: 'x'.repeat(80) };
+    const justUnder = { ...ONE_LINER, body: 'x'.repeat(79) };
+    expect(filterByEffort([exactly], 80)).toHaveLength(1);
+    expect(filterByEffort([justUnder], 80)).toHaveLength(0);
+  });
+
+  it('sets the bar at one line and at a paragraph', () => {
+    expect(EFFORT_LEVELS.map((l) => [l.label, l.minLength])).toEqual([
+      ['Everything', 0],
+      ['Skip one-liners', 80],
+      ['Proper reviews', 280],
+    ]);
+  });
 });
 
 describe('what gets stored as a comment body', () => {

@@ -47,6 +47,33 @@ describe('verdicts', () => {
     expect(summariseWarnings([votes('gore', 9, 1)])[0].verdict).toBe('yes');
   });
 
+  /**
+   * Exactly a quarter, and exactly even.
+   *
+   * §6.76 moved the contested threshold from "at least a quarter" to "more than a
+   * quarter" and let a tied vote read as confirmed, and neither change failed anything.
+   * The fixtures above are 3-2 (40%) and 9-1 (10%), comfortably either side.
+   *
+   * The tie is the one that matters to somebody reading it. Four people say a show has
+   * this in it and four say it does not; calling that a confirmed warning is picking a
+   * side, and the word for it is already in the vocabulary.
+   *
+   * The `yesVotes > noVotes` below it survives mutation to `>=` and always will: an even
+   * split is half the votes in the minority, so the contested branch has already claimed
+   * it. Equality is unreachable there, which is why the test asserts the verdict rather
+   * than the comparison.
+   */
+  it('is contested at exactly a quarter, and settled just under', () => {
+    expect(summariseWarnings([votes('gore', 3, 1)])[0].verdict).toBe('contested');
+    // 1 in 5 is under the bar; 1 in 4 is on it.
+    expect(summariseWarnings([votes('gore', 4, 1)])[0].verdict).toBe('yes');
+  });
+
+  it('never calls an evenly split vote confirmed', () => {
+    expect(summariseWarnings([votes('gore', 4, 4)])[0].verdict).toBe('contested');
+    expect(summariseWarnings([votes('gore', 1, 1)])[0].verdict).toBe('contested');
+  });
+
   it('marks a lone vote as such', () => {
     const [only] = summariseWarnings([votes('vomit', 1, 0)]);
     expect(only.verdict).toBe('yes');

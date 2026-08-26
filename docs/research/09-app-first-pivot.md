@@ -4557,6 +4557,111 @@ two-second threshold, a divisor, a boundary and a whole branch of a median.
 
 ---
 
+### 6.76 Mutate the other four fifths, and leave the harness behind
+
+§6.75 measured six modules with a script in a scratch directory. Two things followed from
+that: most of the codebase had never been asked the question, and none of it could be
+asked again. This sprint fixed the second first — `scripts/mutate.mjs` is committed, with
+its operator list written down and the rules it cost a sprint to learn in its header —
+and then ran it over 455 mutations across eighteen more files.
+
+#### The tool, and three things it now guarantees
+
+Committing it meant making true two claims that §6.75's version only asserted.
+
+**Restore on a signal.** §6.75's harness registered `SIGTERM` handlers and they did
+nothing, which is worse than not having them: a synchronous `execFileSync` blocks the
+event loop, so the signal sits in the queue until the run it was meant to interrupt has
+finished anyway. Proved by killing it and finding the mutant still on disk. The test run
+is spawned asynchronously now, and a `SIGTERM` mid-run restores the file within a second.
+
+**And restore after a kill that cannot be handled.** `SIGKILL` never reaches a handler at
+all, so the original is also written beside the file as `.mutant-backup` and restored by
+the next invocation. Proved by leaving one there deliberately: the next run says
+`Restoring core/src/time.ts from a previous run that did not finish` and carries on.
+
+**Run something other than vitest.** `MUTATE_CMD` replaces the whole invocation. That
+turned out to be the sprint's largest finding rather than a convenience — see below.
+
+#### A hundred and twenty mutants that only looked untested
+
+The first results read like a disaster:
+
+| file | mutants | killed by vitest |
+|---|---|---|
+| `relay/src/server.ts` | 13 | **0** |
+| `bridge/src/index.ts` | 26 | **0** |
+| `bridge/src/transports.ts` | 11 | **0** |
+| `bridge/src/protocol.ts` | 33 | 23 |
+| `bridge/src/mpris.ts` | 15 | 11 |
+| `relay/src/relay.ts` | 22 | 20 |
+
+Three files with nothing at all watching them, including the relay server that every
+remote control in the product goes through. Except that none of it is true. The bridge is
+tested by `e2e.mjs` — §6.44's fake television, which starts the real relay, the real
+bridge and a fake Roku on port 8060 — and `e2e.mjs` is not a vitest suite, so the harness
+had never run it.
+
+Re-run with `MUTATE_CMD='npm run smoke --workspace bridge'`, **every single one of those
+120 mutants dies.** Not most: all of them, in all six files.
+
+This is §6.75's "triage narrow, confirm wide" one turn further round, and the sharper
+version of it: *wide* can mean a different kind of suite, not a wider directory. A
+survivor list is a statement about the runner that produced it, and the runner is a
+choice. Reported without the second pass, this sprint would have claimed the relay server
+and the bridge entry point were untested — a claim that is both alarming and false.
+
+#### Where the real gaps were
+
+**`stats/compute.ts` — 17 survivors of 56, almost all boundaries.** The Year in Review's
+window could start in February, or on the 2nd, or end in the year after next, and nothing
+failed; `formatDuration` could call an hour "60m" and a day "24h"; the half-open
+`watchedAt >= from && watchedAt < to` could be flipped at either end, which is what
+decides which side of midnight on New Year's Eve a watch is counted on. Two more subtle
+ones: the default top-list length of five is what every screen gets and only explicit
+values were ever asked for, and the busiest-day comparator reads `b[1] - a[1]` — break
+either index and the comparison returns `NaN`, which leaves the array in the order it was
+built, and the fixture happened to build the busy day first. Fifteen of the seventeen are
+killed now; the other two are equivalent.
+
+**The content-warning verdict.** A quarter of voters disagreeing is the bar for
+"contested", and the fixtures sat at 40% and 10%, so the bar could move. Worth a test
+because the alternative is picking a side on somebody's behalf. Its sibling — `yesVotes >
+noVotes` mutating to `>=` — survives and always will: an even split is half the votes in
+the minority, so the contested branch has already claimed it. Equality is unreachable
+there, and the test says so.
+
+**The effort filter**, the one feature the research called the single most corroborated
+unmet need. Seven tests, and the threshold could be anywhere: a one-liner is far below it
+and a review far above. A comment of exactly eighty characters now decides it, and the
+levels are pinned to their labels for the same reason `UPCOMING_DAYS` is pinned to "the
+next two months".
+
+#### What survives, and why most of it is not a gap
+
+180 survivors remain across `social/` and `metadata/`, and **half of them sit on a
+`if (!client || !session) return …` guard**. Those are the paths that need a real Supabase
+to reach, which is the same §7 entry as everything else about live code — the live suites
+skip themselves without credentials, and §6.40's list says so by name. Counting them as
+untested would be double-reporting a limit already recorded.
+
+The rest are mostly one shape: a length cap or a page size inside a query that cannot be
+run here — `.limit(200)`, `slice(0, 120)`, `MAX_IMAGE_BYTES`. Real numbers, no local seam.
+
+One genuine gap is recorded rather than closed: **`correctAnimeSeasons`**, which decides
+whether a flat 38-episode TMDB listing is really several AniList seasons. `splitIntoSeasons`
+beneath it is well tested; the function that decides *whether* to correct — the 26-episode
+floor, the two-season minimum, the renumbering — has six surviving mutants and needs the
+AniList lookup mocked. Anime is a core audience for this product, and §7 carries it.
+
+#### Where this leaves the count
+
+Across §6.75 and §6.76: **663 mutations over 24 files.** `relay/` and `bridge/` are
+completely covered once the right suite is run. `core/src/fingerprint` — 240 mutants, the
+largest single block left — was not reached at all and is named in §7.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4668,18 +4773,23 @@ and which single claim in this document could not be checked at all:
   real assertion from an unfailable one means knowing what the code could have done
   instead, which is what mutation testing is for and what nothing here does. The honest
   version of this claim is: no test is silent, and some may still be toothless.
-- **Six modules have been mutated; the rest have not.** §6.75 ran 208 mutations over
-  `sync/engine.ts`, `data/repo.ts`, `calendar/upcoming.ts`, `watching/reactions.ts`,
-  `time.ts` and `sync/clock.ts`, and every surviving mutant is either killed now or
-  classified in that section. That is roughly a fifth of the core and none of `app/`,
-  `mobile/`, `relay/`, `bridge/` or `extension/`. The modules were chosen for stakes
-  rather than sampled, so the survival rates measured — 12% in `engine.ts`, 59% in
-  `reactions.ts` — say nothing about the ones not looked at.
-- **The mutation harness is not committed and not repeatable by anybody else.** It lives
-  in a scratch directory: forty lines that write a file, shell out to vitest and put the
-  file back. Re-running any of this means writing it again. That was the right trade for
-  one sprint and it means the numbers above are a snapshot, not a check — nothing stops
-  the next change from reintroducing exactly what was found.
+- **Twenty-four files have been mutated; `fingerprint/`, `app/`, `mobile/` and
+  `extension/` have not.** §6.75 and §6.76 ran 663 mutations and classified every
+  survivor. What that leaves is `core/src/fingerprint` — 240 mutants, the largest single
+  block in the core, and the subsystem §7 already says has never heard real audio — and
+  the two application workspaces, whose logic is mostly screens and therefore covered by
+  smoke rather than by unit tests, which the harness can now run via `MUTATE_CMD` but has
+  not been pointed at. The files measured were chosen for stakes rather than sampled, so
+  the rates say nothing about the ones not looked at.
+- **`correctAnimeSeasons` decides something important and nothing tests it.** Whether a
+  flat 38-episode TMDB listing is really several AniList seasons: the 26-episode floor,
+  the two-season minimum and the renumbering all survive mutation. `splitIntoSeasons`
+  beneath it is well tested and the decision above it is not, because reaching it needs
+  the AniList lookup mocked. Anime is a core audience for this product (§6.76).
+- **Nothing runs the mutation harness on a schedule.** It is committed now, so the numbers
+  are reproducible rather than a one-off, but it takes tens of minutes and its output
+  needs a person to classify — so it is deliberately not in `npm run verify`. Nothing
+  stops the next change from reintroducing exactly what §6.75 and §6.76 found.
 - **Twenty mutants are alive on purpose.** Five user-facing tuning constants and five
   Supabase-only paths in `reactions.ts`, two unreachable loop caps and one concurrency
   case in `engine.ts`, and a handful of genuinely equivalent changes. Each is named in
