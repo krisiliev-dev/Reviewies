@@ -1,5 +1,12 @@
 import type { Database, Query, Table, WhereClause } from '../store.ts';
-import { TABLES, createTableSql, quote, type TableSpec } from './schema.ts';
+import {
+  TABLES,
+  addColumnSql,
+  createIndexSql,
+  createTableSql,
+  quote,
+  type TableSpec,
+} from './schema.ts';
 
 /**
  * SQLite implementation of the core's `Database`.
@@ -254,9 +261,33 @@ export class SqliteDatabase implements Database {
     }
   }
 
+  /**
+   * Open, creating or upgrading whatever is there.
+   *
+   * Three steps per table rather than one, and the order is the whole point: the table
+   * first, then any column a later version added, then the indexes — an index cannot be
+   * built on a column that does not exist yet.
+   *
+   * This used to be `CREATE TABLE IF NOT EXISTS` and nothing else, which quietly meant
+   * the phone had no upgrade path at all. A new table appeared; a new column never did.
+   * Nothing noticed because every suite here starts from an empty database, which is
+   * the one thing no real install ever does (§6.53).
+   */
   static async open(driver: SqlDriver): Promise<SqliteDatabase> {
     for (const spec of TABLES) {
       for (const statement of createTableSql(spec)) await driver.execute(statement);
+
+      const existing = new Set(
+        (
+          await driver.select<{ name: string }>(`PRAGMA table_info(${quote(spec.name)})`)
+        ).map((column) => column.name),
+      );
+      for (const field of spec.indexed) {
+        if (existing.has(field)) continue;
+        for (const statement of addColumnSql(spec, field)) await driver.execute(statement);
+      }
+
+      for (const statement of createIndexSql(spec)) await driver.execute(statement);
     }
     return new SqliteDatabase(driver);
   }

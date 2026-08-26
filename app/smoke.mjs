@@ -1257,6 +1257,104 @@ try {
   } finally {
     await arrival.close();
   }
+
+  // --- 19. The second launch, on a database an older build wrote ----------------
+  //
+  // Every other check in this file starts from nothing, which is the one thing no real
+  // install ever does. This one hand-builds the version 1 IndexedDB — the stores and
+  // indexes as the first release declared them — puts somebody's tracked show in it, and
+  // then loads the app, which opens it, upgrades it to the current version and has to
+  // render what was there. §6.53.
+  const returning = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const second = await returning.newPage();
+  try {
+    // Seeded before any script runs, so the app's own open() is the upgrade.
+    await second.addInitScript(() => {
+      indexedDB.deleteDatabase('reviewies');
+      const request = indexedDB.open('reviewies', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        const library = db.createObjectStore('library', { keyPath: 'titleId' });
+        for (const index of ['kind', 'status', 'addedAt']) library.createIndex(index, index);
+        const watches = db.createObjectStore('watches', { keyPath: 'id' });
+        for (const index of ['targetId', 'seriesId', 'watchedAt']) watches.createIndex(index, index);
+        const titles = db.createObjectStore('titles', { keyPath: 'id' });
+        for (const index of ['kind', 'fetchedAt']) titles.createIndex(index, index);
+        const episodes = db.createObjectStore('episodes', { keyPath: 'id' });
+        episodes.createIndex('seriesId', 'seriesId');
+        episodes.createIndex('fetchedAt', 'fetchedAt');
+        episodes.createIndex('[seriesId+season]', ['seriesId', 'season']);
+      };
+      request.onsuccess = () => {
+        const tx = request.result.transaction(['library', 'titles', 'episodes'], 'readwrite');
+        tx.objectStore('titles').put({
+          id: 'tmdb:1399',
+          kind: 'show',
+          name: 'Older Build Show',
+          year: 2011,
+          fetchedAt: Date.now(),
+        });
+        tx.objectStore('library').put({
+          titleId: 'tmdb:1399',
+          kind: 'show',
+          status: 'watching',
+          addedAt: Date.now(),
+        });
+        tx.objectStore('episodes').put({
+          id: 'tmdb:ep:9001',
+          seriesId: 'tmdb:1399',
+          season: 1,
+          number: 1,
+          name: 'From Before',
+          airDate: '2011-04-17',
+          fetchedAt: Date.now(),
+        });
+        tx.oncomplete = () => request.result.close();
+      };
+    });
+
+    await second.goto(BASE, { waitUntil: 'networkidle' });
+    await second.waitForTimeout(2500);
+    const upgraded = await second.locator('body').innerText();
+    // Not the first-run screen: a returning person's library is not empty, and an
+    // upgrade that lost it would land them back on "Bring your history with you".
+    check(
+      'a database from an older build still has its shows in it',
+      /Older Build Show/.test(upgraded),
+      upgraded.replace(/\s+/g, ' ').slice(0, 140),
+    );
+    check(
+      'and is not mistaken for a first run',
+      !/Bring your history with you/.test(upgraded),
+      upgraded.replace(/\s+/g, ' ').slice(0, 140),
+    );
+    // The library query Up Next makes goes through the `status` index, which version 1
+    // had; the check that matters is that the upgrade did not drop it.
+    const version = await second.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const request = indexedDB.open('reviewies');
+          request.onsuccess = () => {
+            const db = request.result;
+            const names = [...db.objectStoreNames];
+            const result = { version: db.version, names };
+            db.close();
+            resolve(result);
+          };
+        }),
+    );
+    check(
+      'upgraded to the current version, keeping every store',
+      // Thirty, not three: Dexie multiplies its version by ten so it can slot schema
+      // changes in between, and what IndexedDB reports is the native number.
+      version.version === 30 &&
+        ['outbox', 'syncState', 'animeIds'].every((n) => version.names.includes(n)),
+      JSON.stringify(version),
+    );
+    await second.screenshot({ path: OUT + '19-upgraded.png' });
+  } finally {
+    await returning.close();
+  }
 } catch (err) {
   check(
     'smoke run completed',

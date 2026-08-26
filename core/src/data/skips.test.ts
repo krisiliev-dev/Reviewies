@@ -61,6 +61,12 @@ const SKIPS: Record<string, Waiting> = {
     needs: 'SB_SECRET',
     covers: 'that sampling spreads across the episode and that a blocked person stays hidden',
   },
+  'data/adapters/dexieUpgrade.test.ts': {
+    needs: 'an IndexedDB, which the SQLite run of this suite has no business providing',
+    covers:
+      'opening a version 1 browser database with the current code and finding every row ' +
+      'still there — the other store’s upgrade is covered beside it, without skipping',
+  },
   'fingerprint/promotion.live.test.ts': {
     needs: 'SB_SECRET',
     covers: 'that two people hearing the same thing is what promotes a reference, server-side',

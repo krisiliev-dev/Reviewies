@@ -45,12 +45,41 @@ export function createTableSql(spec: TableSpec): string[] {
     ...spec.indexed.map((field) => `${quote(field)} ANY`),
     'doc TEXT NOT NULL',
   ];
+  return [`CREATE TABLE IF NOT EXISTS ${quote(spec.name)} (${columns.join(', ')})`];
+}
+
+/**
+ * The indexes, separately from the table.
+ *
+ * Because they cannot be created until the columns exist, and on a database an older
+ * build wrote they may not — see `addColumnSql`. Creating a table and indexing it were
+ * one step until §6.53, which is why an upgrade could not have worked.
+ */
+export function createIndexSql(spec: TableSpec): string[] {
+  return spec.indexed.map(
+    (field) =>
+      `CREATE INDEX IF NOT EXISTS ${quote(`${spec.name}_${field}`)} ` +
+      `ON ${quote(spec.name)} (${quote(field)})`,
+  );
+}
+
+/**
+ * Add a queried field to a table that predates it, and fill it in.
+ *
+ * `CREATE TABLE IF NOT EXISTS` does nothing to a table that already exists, so a field
+ * promoted to a real column would have been missing on every install that had been
+ * opened before — and every query filtering or sorting by it would fail with
+ * `no such column`. The value is in the document either way, so the backfill reads it
+ * from there.
+ *
+ * `WHERE ... IS NULL` rather than unconditionally: this runs on every launch, and a
+ * value written since the upgrade must not be overwritten by whatever the document said
+ * when it was stored.
+ */
+export function addColumnSql(spec: TableSpec, field: string): string[] {
   return [
-    `CREATE TABLE IF NOT EXISTS ${quote(spec.name)} (${columns.join(', ')})`,
-    ...spec.indexed.map(
-      (field) =>
-        `CREATE INDEX IF NOT EXISTS ${quote(`${spec.name}_${field}`)} ` +
-        `ON ${quote(spec.name)} (${quote(field)})`,
-    ),
+    `ALTER TABLE ${quote(spec.name)} ADD COLUMN ${quote(field)} ANY`,
+    `UPDATE ${quote(spec.name)} SET ${quote(field)} = json_extract(doc, '$.${field}') ` +
+      `WHERE ${quote(field)} IS NULL`,
   ];
 }

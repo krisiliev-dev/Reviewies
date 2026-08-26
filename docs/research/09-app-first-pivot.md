@@ -2606,6 +2606,60 @@ identifiers holding one product decision. Only reading finds those. The exemptio
 where that reading gets written down, so the next person reads six explained lines instead
 of the whole tree.
 
+### 6.53 Opening a database an older build wrote
+
+Every suite in this repository starts from an empty store. That is the one thing no real
+install ever does: a person's second launch opens the database their previous version
+wrote, and their history is in it. That path had never been executed here on either
+store — and on one of them there was nothing to execute.
+
+**The phone had no upgrade path at all.** `SqliteDatabase.open` issued
+`CREATE TABLE IF NOT EXISTS` and stopped. A new *table* therefore appeared on an existing
+install, which is how `animeIds`, `outbox` and `syncState` arrived without anybody
+noticing the gap. A new **column** never did — and the columns in this schema are exactly
+the fields something filters or sorts by, lifted out of the JSON document beside them. So
+the first time a field was promoted to a column, every upgraded phone would have met
+`no such column: status` on the query Up Next makes, which is the first thing the app
+does. Not a crash in a corner: the home screen, for everyone who already had the app.
+
+Nothing could have caught it. The SQLite suite is the core's own suite pointed at a fresh
+sql.js database, so it creates every table from the current spec, every time.
+
+`open()` now does three steps per table, and the order is the point: create the table,
+add any column a later version introduced — backfilling it from the document, where the
+value has been all along — and only then build the indexes, because an index cannot be
+built on a column that does not exist. The backfill is `WHERE <column> IS NULL` rather
+than unconditional, because this runs on every launch and a value written since the
+upgrade must not be overwritten by whatever the document said when it was stored.
+
+`sqliteUpgrade.test.ts` builds the old file by hand — the tables as an early build
+declared them, with rows in them — and checks three things: the rows survive, every field
+the current code queries is a real column afterwards, and running `open()` three times in
+a row changes nothing. The second of those walks the whole schema rather than the one
+column that prompted it, so the next field lifted out of a document is covered without
+anybody remembering to add a case.
+
+**The browser store was fine, and is now checked.** Dexie migrates declaratively and did
+the right thing, but "lower risk" had never been distinguished from "no risk". Three cases
+in `dexieUpgrade.test.ts`: a version 1 database keeps every row, the later versions' tables
+and indexes exist afterwards, and the two queries the screens actually make — Up Next's
+`where('status')` and Watching Mode's compound `[targetId+tMs]` — still answer.
+
+And once in the browser itself. The web smoke now hand-builds the version 1 IndexedDB
+before any script runs — the stores and indexes as the first release declared them, with a
+tracked show in them — then loads the app, which opens it, upgrades it, and has to render
+what was there. It does: *Older Build Show*, with its next episode, rather than the
+first-run screen. That last check is the one worth having, because "the rows are still
+there" and "the person sees their shows" are different claims, and an upgrade that lost
+the library would land somebody who has been using the app for months back on *Bring your
+history with you*.
+
+Two smaller things fell out of it. Dexie reports version 30, not 3 — it multiplies by ten
+so schema changes can be slotted between versions — which the smoke's first attempt at the
+check got wrong and the run said so. And the new Dexie suite skips itself under
+`npm run test:sqlite`, where there is no IndexedDB; the skip guard from §6.41 immediately
+demanded a written reason for it, which is exactly what that guard is for.
+
 ---
 
 ## 7. What is still not known
@@ -2624,6 +2678,13 @@ and which single claim in this document could not be checked at all:
   screen is reached in the suite by its own address rather than by asking for a wrong one,
   because the static server answers an unknown path before the app boots; that expo-router
   routes to it on a device is the framework's business and is not under test here.
+- **No real upgrade has happened on a device.** §6.53 opens a version 1 database with the
+  current code on both stores — the browser's in the app's own smoke run, in Chromium, and
+  SQLite's against sql.js, which is real SQLite rather than a stand-in. What neither can be
+  is a file that has actually been carried across an app update on a phone, with expo-sqlite's
+  own WAL and OPFS handling in the way. The fixtures are also the versions this repository
+  *declares*; a database written by a build that no longer exists here — one shipped before a
+  schema was renamed, say — cannot be reconstructed and is not covered.
 - **The fingerprinter has never heard real audio through a real microphone.**
 - **The Roku and MPRIS adapters have never spoken to hardware.** §6.44 runs the whole chain
   — app, relay, bridge, adapter — against a fake Roku on port 8060 found by real SSDP
