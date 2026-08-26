@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
+import { stripComments } from '../test/source.ts';
 import { resolve } from 'node:path';
 
 /**
@@ -175,7 +176,12 @@ function sourceFiles(): string[] {
  * end of the statement, which is how these are written throughout.
  */
 function queriesIn(path: string): Query[] {
-  const source = readFileSync(path, 'utf8');
+  // Comments stripped: a `.from('...')` quoted in an explanation is not a query the
+  // client makes, and checking its columns against the schema is this guard reading
+  // prose. §6.72 found it by writing one into a comment. It also means a query that
+  // has been commented *out* stops being checked, which is the same distinction from
+  // the other side.
+  const source = stripComments(readFileSync(path, 'utf8'));
   const file = path.slice(ROOT.length + 1);
   const found: Query[] = [];
 
@@ -240,7 +246,12 @@ function queriesIn(path: string): Query[] {
  * job is these two names.
  */
 function joinsIn(path: string): Join[] {
-  const source = readFileSync(path, 'utf8');
+  // Comments stripped: a `.from('...')` quoted in an explanation is not a query the
+  // client makes, and checking its columns against the schema is this guard reading
+  // prose. §6.72 found it by writing one into a comment. It also means a query that
+  // has been commented *out* stops being checked, which is the same distinction from
+  // the other side.
+  const source = stripComments(readFileSync(path, 'utf8'));
   const file = path.slice(ROOT.length + 1);
   const found: Join[] = [];
 

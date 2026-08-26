@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * Every socket this product opens to the relay is addressed the way the relay reads.
@@ -37,8 +38,19 @@ function sources(dir: string, out: string[] = []): string[] {
 }
 
 describe('dialling the relay', () => {
-  const files = sources(ROOT).filter((f) => !f.endsWith('relayUrl.ts'));
-  const dialling = files.filter((f) => /new WebSocket\(/.test(readFileSync(f, 'utf8')));
+  // No exclusion any more: `relayUrl.ts` was excluded by name because its own comment
+  // quotes `new WebSocket(...)` while explaining why nobody should write that, and the
+  // scan could not tell the two apart. It can now. §6.72.
+  const files = sources(ROOT);
+  /**
+   * Files that actually open a socket, rather than files that mention opening one.
+   *
+   * `relayUrl.ts` used to be excluded from this scan by name, because its own comment
+   * quotes `new WebSocket(VITE_BRIDGE_RELAY)` while explaining why nobody should write
+   * that. The exclusion was the scar: strip the comments and the file needs no special
+   * case, and neither does the next one. §6.72.
+   */
+  const dialling = files.filter((f) => /new WebSocket\(/.test(stripComments(readFileSync(f, 'utf8'))));
 
   it('finds the sockets rather than passing on an empty list', () => {
     // Two: the app's bridge hook and the bridge itself. If this ever reads zero, the
@@ -48,7 +60,7 @@ describe('dialling the relay', () => {
 
   it('addresses every one of them with a role and a token', () => {
     const bare = dialling
-      .filter((f) => !readFileSync(f, 'utf8').includes('relayConnectionUrl('))
+      .filter((f) => !stripComments(readFileSync(f, 'utf8')).includes('relayConnectionUrl('))
       .map((f) => relative(ROOT, f))
       .filter((f) => !(f in EXEMPT));
     expect(bare).toEqual([]);

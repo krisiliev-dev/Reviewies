@@ -12,6 +12,7 @@ import {
 import { enqueue } from './engine.ts';
 import { MemoryBackend } from './memoryBackend.ts';
 import { SyncError } from './types.ts';
+import { stripComments } from '../test/source.ts';
 
 /**
  * A queue that cannot drain, and nobody being told.
@@ -207,9 +208,9 @@ describe('which failures are worth trying again', () => {
    * reads prose as code is the shape this repository keeps catching itself in (§6.41,
    * §6.63), and it catches nothing.
    */
-  const source = readFileSync(resolve(import.meta.dirname, './supabaseBackend.ts'), 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '');
+  const source = stripComments(
+    readFileSync(resolve(import.meta.dirname, './supabaseBackend.ts'), 'utf8'),
+  );
   const permanent = /const permanent = new Set\(\[([\s\S]*?)\]\)/.exec(source)?.[1] ?? '';
   const listed = [...permanent.matchAll(/'([0-9A-Z]{5})'/g)].map((m) => m[1]);
 

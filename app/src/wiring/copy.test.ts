@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { NOTIFY_OPTIONS, UPCOMING_DAYS } from '@reviewies/core/calendar/upcoming';
 import { PAIRS, ROOT } from './pairs';
+import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
@@ -33,8 +34,8 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
  */
 const EXEMPT: Record<string, string> = {};
 
-const strip = (s: string) =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 /**
  * Sentences a person reads: JSX text, and the props that become text — placeholders and

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { SCREEN_STATES, phoneRoutes, webRoutes } from './screenStates';
+import { stripComments } from '@reviewies/core/test/source';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -66,7 +67,18 @@ describe('the screen-state inventory', () => {
   });
 
   it('does not claim a suite renders a screen its suite never mentions', () => {
-    const smoke = { web: read('app/smoke.mjs'), phone: read('mobile/smoke.mjs') };
+    /**
+     * Comments stripped, and that is the whole check.
+     *
+     * §6.72 removed every real reference to the People screen from the web suite, left
+     * the word in a comment, and this still said the suite rendered it. A guard that
+     * asks whether a name *appears* is satisfied by prose — and these suites are full
+     * of prose, because every one of their sections is explained at length.
+     */
+    const smoke = {
+      web: stripComments(read('app/smoke.mjs')),
+      phone: stripComments(read('mobile/smoke.mjs')),
+    };
     // The route as the suite would refer to it: the last meaningful segment, which is
     // what appears in a URL, a link name or a screenshot filename. A weak link on
     // purpose — it cannot tell which *state* was reached — but it does catch a whole
@@ -74,9 +86,27 @@ describe('the screen-state inventory', () => {
     const missing: string[] = [];
     for (const screen of SCREEN_STATES) {
       if (!screen.states.some((s) => s.verdict === 'suite')) continue;
+      /**
+       * Strip a *parameter* segment, not any trailing one.
+       *
+       * `/\[?[\w:.]+\]?$/` was meant to turn `/title/:id` into `title`. It also turns
+       * `/people` into nothing, because a slash followed by word characters at the end
+       * of the string is exactly what a single-segment route is — and the `!segment`
+       * skip below then passed silently over it.
+       *
+       * So **eleven of the fourteen web screens claiming a suite renders them had never
+       * been checked**: `/search`, `/watchlist`, `/discover`, `/calendar`, `/lists`,
+       * `/people`, `/stats`, `/settings`, `/more` and the two that genuinely reduce to
+       * nothing. Only the three with a parameter — `/title/:id`, `/watching/:targetId`,
+       * `/comments/:targetId` — survived their own segment extraction. The phone was
+       * unaffected, because expo-router spells its routes without a leading slash.
+       *
+       * The comment below was right that `/` and `*` reduce to nothing on purpose, and
+       * wrong that they were the only ones. §6.72.
+       */
       const segment = screen.route
         .replace(/^\(tabs\)\//, '')
-        .replace(/\/\[?[\w:.]+\]?$/, '')
+        .replace(/\/(?::[\w.]+|\[[\w.]+\])$/, '')
         .replace(/[^\w-]/g, '');
       // '/' and '*' reduce to nothing, and the phone spells Up Next 'index'. Both are
       // unmistakably driven — they are where each run starts — and neither leaves a

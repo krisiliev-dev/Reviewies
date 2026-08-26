@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { ROOT } from './pairs';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * The numbers, on both platforms.
@@ -42,8 +43,8 @@ const PLATFORM_NUMBERS: Record<string, string> = {
     'the smallest half-star target in device-independent pixels, which is a WCAG 2.5.8 measurement of a native control and has no web counterpart',
 };
 
-const strip = (s: string) =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 function sources(...dirs: string[]): string[] {
   const walk = (dir: string, out: string[] = []): string[] => {

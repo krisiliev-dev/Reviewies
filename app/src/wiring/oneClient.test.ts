@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * One Supabase client, made in one place.
@@ -44,7 +45,8 @@ function sources(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 describe('the Supabase client', () => {
   const files = TREES.flatMap((tree) => sources(resolve(ROOT, tree)));

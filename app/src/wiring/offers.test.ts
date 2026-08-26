@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PAIRS, ROOT, UNPAIRED_PHONE, UNPAIRED_WEB, phoneScreenFiles, webScreenFiles } from './pairs';
+import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
@@ -48,8 +49,8 @@ const EXEMPT: Record<string, string> = {
     'the phone reaches the same core setter through syncPreference in mobile/src/notifications, which writes the preference and then tells the backend which device to notify — one hop further out than this reads, not a missing control',
 };
 
-const strip = (s: string) =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 /** The first segment, so `/title/${id}`, `/title/:id` and `/title/tmdb:1` are one place. */
 const firstSegment = (route: string) => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PAIRS, ROOT } from './pairs';
+import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
@@ -28,8 +29,8 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 /** Defaults that are genuinely one platform's own, one line each saying why. */
 const EXEMPT: Record<string, string> = {};
 
-const strip = (s: string) =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 /** `const [thing, setThing] = useState<T>(initial)` → `thing` → the initial value. */
 export function initialState(source: string): Map<string, string> {

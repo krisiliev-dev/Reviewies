@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PAIRS, ROOT } from './pairs';
+import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
@@ -48,8 +49,8 @@ const EXEMPT: Record<string, string> = {
     'the phone extracts a ListItem component where the web writes the row inline, and orders its two failure lines the other way round; both render both',
 };
 
-const strip = (s: string) =>
-  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+/** One copy, in the core, since §6.72. */
+const strip = stripComments;
 
 /**
  * Layout primitives, which are the grammar rather than the content. A screen made of

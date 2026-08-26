@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { globSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * The deploy documentation has to keep up with the directory.
@@ -95,7 +96,10 @@ describe('what the documentation claims', () => {
     const switches = new Set<string>();
 
     for (const file of globSync('{core,app}/src/**/*.ts', { cwd: ROOT })) {
-      const source = readFileSync(resolve(ROOT, file), 'utf8');
+      // Comments stripped: a switch *named* in an explanation is not a switch the code
+      // reads, and demanding the README document it is this guard firing on prose.
+      // §6.72 found it by writing one into a comment and watching the build go red.
+      const source = stripComments(readFileSync(resolve(ROOT, file), 'utf8'));
       for (const [, name] of source.matchAll(/process\.env\.([A-Z][A-Z0-9_]+)/g)) {
         switches.add(name);
       }

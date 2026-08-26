@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * A calendar date and an instant are different things, and only one file may convert
@@ -79,9 +80,7 @@ function sources(dir: string, out: string[] = []): string[] {
 }
 
 /** Prose is not code: a comment naming the banned spelling is how it gets explained. */
-function withoutComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-}
+const withoutComments = stripComments;
 
 describe('converting between a calendar date and an instant', () => {
   const files = TREES.flatMap((tree) => sources(resolve(ROOT, tree)));

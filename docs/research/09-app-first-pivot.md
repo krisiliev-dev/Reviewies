@@ -4038,6 +4038,89 @@ and a button).
 Postgres and the engine's behaviour is a fake that models statement-level failure, which is
 the part that matters — but no row has ever been set aside by the deployed backend.
 
+### 6.72 Plant a comment, not a change
+
+Three times this project had caught a guard reading prose as code — §6.41's skip list,
+§6.63's JSX detection, §6.71's permanent-code set. The third was luck: it happened to be
+the plant I chose. §107 planted a violation against every guard and that was the right
+idea, but **every plant was code**. Nobody had ever planted a comment.
+
+Twenty guards read source. Each has two ways to be wrong and neither had been asked:
+
+- **False positive** — it fires on the *word*. Not hypothetical: every one of these guards
+  carries a long explanation that quotes what it forbids.
+- **False negative** — a violation it cannot see because it is commented out, or worse, a
+  guard that checks for a *mention* and is satisfied by one.
+
+Both were probed against every guard: a comment quoting the violation (must stay green),
+and a real violation commented out (must stay green, then fire when restored).
+
+#### Eleven were already right. Five were not.
+
+| guard | wrong how |
+|---|---|
+| `screenStates` | **false negative** — a screen named only in a comment counted as driven |
+| `dials` | false positive — worked around by excluding one file by name |
+| `runnable` | false positive — a commented-out import reported as broken |
+| `docs` | false positive — an env switch named in prose demanded documenting |
+| `backendQueries` | false positive — a `.from('…')` in a comment checked against the schema |
+
+`dials` is the one worth dwelling on. `relayUrl.ts` had been excluded from its scan **by
+name**, because that file's own comment quotes `new WebSocket(VITE_BRIDGE_RELAY)` while
+explaining why nobody should write it. The exclusion was scar tissue from exactly this
+bug, applied without anybody naming the cause. Stripping comments makes it unnecessary,
+and it is gone.
+
+Eight guards had each written their own copy of the same three-line stripper and five had
+none at all. There is one copy now, in `core/src/test/source.ts`, with its own tests —
+including the one every hand-rolled version gets wrong eventually: `https://` is not a
+comment.
+
+#### And then the finding underneath the finding
+
+`screenStates` asks whether the suite that claims to render a screen ever mentions it. Its
+route-to-word step was:
+
+```js
+.replace(/\/\[?[\w:.]+\]?$/, '')   // meant to turn /title/:id into title
+```
+
+A slash followed by word characters at the end of the string is also exactly what
+`/people` is. So every single-segment web route reduced to the empty string — and the
+`if (!segment) continue` two lines below passed silently over it.
+
+**Eleven of the fourteen web screens claiming a suite renders them had never been
+checked**: `/search`, `/watchlist`, `/discover`, `/calendar`, `/lists`, `/people`,
+`/stats`, `/settings`, `/more`, and the two that genuinely reduce to nothing. Only the
+three carrying a parameter survived their own segment extraction. The phone was
+unaffected, because expo-router spells its routes without a leading slash — which is why
+the guard looked like it worked.
+
+The comment beside that line said `/` and `*` reduce to nothing on purpose. It was right
+about those two and wrong that they were the only ones, and the skip made the difference
+invisible. Both halves now fail correctly: a screen mentioned only in a comment, and a
+screen removed from the suite outright.
+
+#### Two of my own plants were wrong before the guards were
+
+Worth recording, because the method is the point and it misfired twice.
+
+The first `runnable` plant put a broken import in `core/src` — which `runnable` does not
+scan. It scans `scripts/` and `supabase/functions/`. A green result there proved nothing,
+and re-running it inside the real scope turned it red immediately.
+
+The second was better: a plant that removed every mention of *stats* from the web suite
+used `PLACEHOLDERSTATS` as the replacement — which lowercases to something containing
+`stats`. The guard searched case-insensitively, found its own word inside my placeholder,
+and passed. A plant that defeats itself is indistinguishable from a guard that works.
+
+Both are the same lesson as the sprint itself: a green result is a claim, and the claim
+has to be checked before it is believed.
+
+§7 records what is still not asked of these guards: nothing plants a violation inside a
+*string literal*, which is the third way a text scan can be fooled and the one this
+sprint did not get to.
+
 ---
 
 ## 7. What is still not known
@@ -4130,6 +4213,19 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **No guard has been fooled with a string literal.** §6.72 asked every source-reading
+  guard the two questions it had never been asked — does prose trip it, and does a
+  commented-out violation trip it — and fixed the five that answered wrongly. The third
+  way a text scan can be fooled is a violation inside a string: `const banned = "new
+  WebSocket("` reads as code to a regex and as data to a compiler. The shared stripper
+  removes comments and deliberately not strings, because these suites *use* strings as
+  selectors and stripping them would blind the checks that read them. Whether that trade
+  costs anything has not been measured.
+- **Eleven web screens were checked for the first time today.** `screenStates` had never
+  examined a single-segment web route, so its claim that the suite renders them rested on
+  nothing until §6.72. They pass now — but "passes a mention check" was always a weak
+  claim, as that check's own comment says: it cannot tell which *state* of a screen was
+  reached, only that the suite has heard of it.
 - **No row has ever been set aside by the real backend.** §6.71's classifications are
   real Postgres — every code in the permanent list was observed by making the deployed
   schema reject that shape — and the engine's behaviour around them is proved against a

@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import ts from 'typescript';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * The code no suite runs and no compiler reads.
@@ -68,7 +69,7 @@ describe('the code nothing else runs', () => {
     // §6.60 planted one and this suite said nothing.
     const broken: string[] = [];
     for (const script of scripts) {
-      const source = readFileSync(script, 'utf8');
+      const source = stripComments(readFileSync(script, 'utf8'));
       for (const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g)) {
         const spec = match[1];
         const target = resolve(dirname(script), spec);
@@ -88,7 +89,9 @@ describe('the code nothing else runs', () => {
     // is the failure that has actually happened to a function in this repository.
     const bad: string[] = [];
     for (const fn of functions) {
-      const source = readFileSync(fn, 'utf8');
+      // Comments stripped: an import that has been commented out is not an import,
+      // and reporting it as a broken one is a guard reading prose. §6.72.
+      const source = stripComments(readFileSync(fn, 'utf8'));
       const parsed = ts.createSourceFile(fn, source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
       // `parseDiagnostics` is not on the public type, which is why it is reached for by
       // name here: it is the only thing that reports a syntax error without asking the
@@ -102,7 +105,9 @@ describe('the code nothing else runs', () => {
   it('every relative import an edge function makes still exists', () => {
     const broken: string[] = [];
     for (const fn of functions) {
-      const source = readFileSync(fn, 'utf8');
+      // Comments stripped: an import that has been commented out is not an import,
+      // and reporting it as a broken one is a guard reading prose. §6.72.
+      const source = stripComments(readFileSync(fn, 'utf8'));
       for (const [, spec] of source.matchAll(/from\s+'(\.[^']+)'/g)) {
         const target = resolve(dirname(fn), spec);
         // Written with the extension for Deno's sake; tolerate either spelling so this
