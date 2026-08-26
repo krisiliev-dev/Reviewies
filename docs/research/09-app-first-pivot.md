@@ -3918,6 +3918,126 @@ check turning red.
 §7 records what is still untried twice: signing out and back in, which needs the service
 key this checkout has never had.
 
+### 6.71 A queue that cannot drain, and nobody told
+
+§6.70 found a tombstone the server could never accept. That was one row. The machinery
+around it was worse in three separate ways, and none of them had ever been looked at.
+
+#### One bad row deleted two hundred good ones
+
+```js
+if (retryable) await outbox().update(entry.key, { attempts: current.attempts + 1 });
+else await outbox().delete(entry.key);
+```
+
+`entry` there is every entry in the batch. Postgres fails the *statement*, not the row, so
+a permanent failure meant the client had no idea which of up to two hundred writes was the
+problem — and deleted all of them. One malformed tombstone could take a hundred and
+ninety-nine watch events with it, silently, from a product built to rescue exactly that
+data from somebody else deleting it.
+
+The queue now **bisects** a failed batch: push each half, recurse into whichever halves
+fail, and a batch of one that fails is the answer. At most `log2(batch)` extra requests, on
+a failure that is already rare, and everything that succeeds on the way is genuinely
+delivered — the isolation *is* the push, done in smaller pieces.
+
+#### And the alternative to deleting was blocking for ever
+
+The other branch was no better. `syncOnce` returns on the first failed push, so an entry
+the server refuses and calls retryable sits at the front of the queue holding up every
+later write — indefinitely. That is what §6.70's tombstone did.
+
+So the binary was wrong. There are three outcomes, not two:
+
+- **Try again** — transient: a network that went, a 500, a session being refreshed.
+- **Set aside** — the server will never take this row as it stands. Out of the queue so
+  the rest can drain, and **kept**, because deleting somebody's write to unblock an upload
+  is the one outcome that is never acceptable.
+- Never *silently drop*, which is what the code did.
+
+A new local table holds what was set aside, with the server's own words for why. Retryable
+failures also stop after twenty attempts — roughly a day at the driver's interval —
+because a row the server calls transient and refuses every time is the same jam wearing
+different clothes. Retryable should buy patience, not immunity.
+
+#### The classifier was four codes and a guess
+
+`classify` decided permanence from `{42501, 23514, 23503, 22P02}`. Everything else retried,
+including the 23502 that jammed the queue.
+
+The reason it was so short is now visible: while "permanent" meant *delete the person's
+write*, timidity was the right instinct. Once permanent means *set aside*, the list can be
+honest. Each code below was observed by making real Postgres reject the shape, in
+`app/src/backend/schema.test.ts`, rather than read off a reference page:
+
+| shape | code | decision |
+|---|---|---|
+| tombstone with no not-null columns | 23502 | permanent — §6.70's jam |
+| library status outside the four | 23514 | permanent |
+| rating outside the scale | 23514 | permanent |
+| rating with too many digits | 22003 | permanent |
+| a column the schema does not have | 42703 | permanent, uncomfortably |
+| a uuid that is not one | 22P02 | permanent |
+| a duplicate the conflict target missed | 23505 | permanent |
+| **a user with no profile row** | **23503** | **retryable — changed** |
+
+Two of those deserve their reasoning said out loud.
+
+**42703** is not literally permanent: a client running ahead of its backend would work once
+the migration lands. It is here anyway, because a client can be ahead for weeks and jamming
+every unrelated write behind it for weeks is the worse failure. Set aside and visible beats
+invisible — and the retry button exists precisely for the deployment that fixes it.
+
+**23503** moved the other way, off the list. The only foreign key these tables have is
+`user_id → profiles`, and a missing profile is a *timing* problem that `ensureProfile()`
+fixes on the next run — not a wrong row. Setting somebody's history aside for a reason that
+resolves itself would be the wrong kind of caution.
+
+#### Nobody was told
+
+`attempts` has been counted since the engine was written and read by **nothing**. A queue
+stuck for a week and a queue that is empty looked identical: no banner, no count, no error
+after the first one scrolled past.
+
+`SyncStatus` now carries `rejected` separately from `pending`, because they mean opposite
+things to a person — pending is *on its way*, rejected is *not going without help*. Both
+platforms say so, from one sentence in the core:
+
+> *N changes could not be saved to your account. They are safe on this device and nothing
+> is lost.*
+
+The second half is the part somebody needs, and it is true: the write is in the local
+database where it was made, and what failed is only the copy going up. Beside it, a button
+that puts them back in the queue.
+
+#### The plant that did not fail
+
+Three plants, and the third one passed — which is the finding.
+
+Commenting `'23502'` out of the permanent set left every check green. The guard read the
+`new Set([...])` block **with its comments in**, so a code commented *out* was still
+"listed". A guard that reads prose as code catches nothing, and this repository has now
+found that shape three times (§6.41's skip list, §6.63's JSX detection, and here). Comments
+are stripped first now, and the replanted version — commented out *and* deleted outright —
+fails both ways.
+
+The other two behaved: dropping the isolation step fails five checks, and removing the
+attempts ceiling fails two.
+
+#### Three guards caught the new table without being asked
+
+Worth recording, because it is what they are for. Adding a local store broke the export
+promise check (every user-data table must be in the export — `rejected` is bookkeeping and
+holds *copies* of rows already exported, so exporting it would put the same watch in the
+file twice), the v1-database upgrade check (a new store needs a new Dexie version, and the
+check queries it through its index rather than by key), and the wiring check (`rejectedEntries`
+was an export nothing reached — deleted rather than exempted, since the screens want a count
+and a button).
+
+§7 records the limit: none of this has run against Supabase. The classifications are real
+Postgres and the engine's behaviour is a fake that models statement-level failure, which is
+the part that matters — but no row has ever been set aside by the deployed backend.
+
 ---
 
 ## 7. What is still not known
@@ -4010,6 +4130,14 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **No row has ever been set aside by the real backend.** §6.71's classifications are
+  real Postgres — every code in the permanent list was observed by making the deployed
+  schema reject that shape — and the engine's behaviour around them is proved against a
+  fake that models statement-level failure, which is the part that matters, since a real
+  server fails the statement and not the row. What has never happened is a client with a
+  session pushing a row Supabase refuses and watching it land in `rejected`, or somebody
+  pressing *Try those again* after a deployment and seeing it go. The retry path in
+  particular has only ever been driven by a test.
 - **Nobody has signed out and back in.** §6.70 did every other sequence twice — mark and
   unmark and mark, rate and clear and rate, import the same file three times, visit every
   screen three times — and the one it could not do is the account. `resetSyncState` and the

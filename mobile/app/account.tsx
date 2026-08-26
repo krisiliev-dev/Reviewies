@@ -19,7 +19,8 @@ import {
   signUp,
   syncConfigured,
 } from '@reviewies/core/sync/auth';
-import { onSyncStatus, syncStatus } from '@reviewies/core/sync/driver';
+import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
+import { COPY } from '@reviewies/core/copy';
 import { radius, theme } from '../src/ui/theme';
 
 /**
@@ -32,6 +33,7 @@ import { radius, theme } from '../src/ui/theme';
  */
 export default function AccountScreen() {
   const [status, setStatus] = useState(syncStatus);
+  const [retryNote, setRetryNote] = useState<string>();
   useEffect(() => onSyncStatus(setStatus), []);
 
   const [session, setSession] = useState<Session | null>();
@@ -102,6 +104,25 @@ export default function AccountScreen() {
                   : 'Everything is uploaded.'}
               {status.lastError ? ` Last attempt failed: ${status.lastError}` : ''}
             </Text>
+
+            {/* Writes the server refused, which this device is still holding. Separate
+                from the waiting count because they mean opposite things: pending is "on
+                its way", this is "not going without help". §6.71. */}
+            {status.rejected > 0 && (
+              <View style={styles.rejected}>
+                <Text style={styles.rejectedText} accessibilityLiveRegion="polite">
+                  {COPY.sync.rejected(status.rejected)}
+                </Text>
+                <Pressable
+                  style={styles.secondary}
+                  onPress={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.secondaryText}>{COPY.sync.retryRejected}</Text>
+                </Pressable>
+                {retryNote ? <Text style={styles.blurb}>{retryNote}</Text> : null}
+              </View>
+            )}
             <Pressable
               style={styles.secondary}
               onPress={() => void signOut()}
@@ -180,6 +201,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
   cardHeading: { color: theme.text, fontSize: 17, fontWeight: '700' },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  rejected: { marginTop: 10, gap: 8 },
+  rejectedText: { color: theme.accent, fontSize: 14, lineHeight: 20 },
   input: {
     backgroundColor: theme.surface2,
     borderRadius: radius.md,

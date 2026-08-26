@@ -71,15 +71,18 @@ describe.skipIf(typeof indexedDB === 'undefined')('opening a version 1 database 
     const db = new ReviewiesDB(name);
     await db.open();
     try {
-      expect(db.verno).toBe(3);
+      expect(db.verno).toBe(4);
       await db.animeIds.put({ id: 'anilist:1', ids: { tmdb: 1 }, fetchedAt: 1 });
       await db.outbox.put({ key: 'watches:w1', table: 'watches', updatedAt: 2 });
       await db.syncState.put({ key: 'cursor', value: 3 });
+      // v4, added in §6.71: where a write goes when the server will never accept it.
+      await db.rejected.put({ key: 'watches:w2', table: 'watches', at: 4, reason: '23502' });
 
       // Queried through the index rather than by primary key: an upgrade that created
       // the table without its indexes would pass a `get` and fail the app.
       expect(await db.outbox.where('table').equals('watches').count()).toBe(1);
       expect((await db.syncState.get('cursor'))?.value).toBe(3);
+      expect(await db.rejected.where('table').equals('watches').count()).toBe(1);
     } finally {
       db.close();
       await Dexie.delete(name);

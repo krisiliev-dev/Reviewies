@@ -19,12 +19,29 @@ export class MemoryBackend implements SyncBackend {
   failNextPull?: Error;
   pushCount = 0;
 
+  /**
+   * Rows this server will never accept, by primary key.
+   *
+   * A real server fails the whole *statement*, not the row — which is why §6.71 has to
+   * bisect a failed batch to find out which entry is the problem. Modelling that here
+   * rather than failing whichever push happens to be first is the difference between a
+   * test that proves the isolation works and one that proves a batch of size one works.
+   */
+  readonly refuses = new Map<string, SyncError>();
+
   async push(changes: Change[]): Promise<void> {
     this.pushCount++;
     if (this.failNextPush) {
       const err = this.failNextPush;
       this.failNextPush = undefined;
       throw err;
+    }
+
+    // Any offending row poisons the whole call, and nothing in it is written — exactly
+    // what Postgres does with a failed multi-row upsert.
+    for (const change of changes) {
+      const refusal = this.refuses.get(`${change.table}:${change.pk}`);
+      if (refusal) throw refusal;
     }
 
     for (const change of changes) {

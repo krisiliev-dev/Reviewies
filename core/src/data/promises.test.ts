@@ -42,7 +42,19 @@ describe('"Everything, in full, with no account and no upsell. It is yours."', (
     // export — and a hand-written list would be updated in the same commit that
     // forgot it. The metadata cache is excluded on purpose: it is not ours to
     // redistribute and TMDB's terms forbid it. The outbox and cursor are bookkeeping.
-    const NOT_YOURS = ['titles', 'episodes', 'providers', 'animeIds', 'outbox', 'syncState'];
+    // `rejected` is bookkeeping too, and worth saying why rather than leaving it in a
+    // list: it holds *copies* of rows that are already in the tables above — a write the
+    // server refused is still in `watches` or `ratings` where it was made. Exporting it
+    // would put the same watch in the file twice. §6.71.
+    const NOT_YOURS = [
+      'titles',
+      'episodes',
+      'providers',
+      'animeIds',
+      'outbox',
+      'syncState',
+      'rejected',
+    ];
     const yours = TABLES.map((t) => t.name).filter((name) => !NOT_YOURS.includes(name));
 
     // If this drops to nothing the assertion below passes vacuously.

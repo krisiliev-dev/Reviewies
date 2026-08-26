@@ -1527,10 +1527,13 @@ try {
     );
     check(
       'upgraded to the current version, keeping every store',
-      // Thirty, not three: Dexie multiplies its version by ten so it can slot schema
-      // changes in between, and what IndexedDB reports is the native number.
-      version.version === 30 &&
-        ['outbox', 'syncState', 'animeIds'].every((n) => version.names.includes(n)),
+      // Forty, not four: Dexie multiplies its version by ten so it can slot schema
+      // changes in between, and what IndexedDB reports is the native number. It was
+      // thirty until §6.71 added `rejected` — the check noticing that is the check
+      // working, and the number is written out rather than derived so that a schema
+      // change has to be a deliberate edit here too.
+      version.version === 40 &&
+        ['outbox', 'syncState', 'animeIds', 'rejected'].every((n) => version.names.includes(n)),
       JSON.stringify(version),
     );
     await second.screenshot({ path: OUT + '19-upgraded.png' });

@@ -24,6 +24,29 @@
  */
 
 export const COPY = {
+  sync: {
+    /**
+     * Writes the server refused, which this device is still holding.
+     *
+     * A queue that is stuck used to look exactly like a queue that is empty: `attempts`
+     * was counted and read by nothing, and one entry the server would never accept held
+     * up every write behind it for ever. §6.71.
+     *
+     * The second half of the sentence is the part somebody needs, and it is true: the
+     * write is in the local database where it always was, and what failed is only the
+     * copy going up.
+     */
+    rejected: (many: number) =>
+      many === 1
+        ? 'One change could not be saved to your account. It is safe on this device and nothing is lost.'
+        : `${many} changes could not be saved to your account. They are safe on this device and nothing is lost.`,
+    /** What to press. Worth offering, because a deployment can make them work. */
+    retryRejected: 'Try those again',
+    /** Said after pressing it, so the button is not a shrug. */
+    retrying: (many: number) =>
+      many === 1 ? 'Queued one change again.' : `Queued ${many} changes again.`,
+  },
+
   app: {
     /**
      * A tab that has been open across a deployment.

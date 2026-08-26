@@ -79,6 +79,19 @@ export interface SyncStateRow {
 }
 
 /**
+ * One upload the server refused for a reason retrying cannot fix.
+ *
+ * Out of the queue so the rest can drain, and kept so nobody's write is deleted to
+ * achieve that. See `sync/engine.ts`. §6.71.
+ */
+export interface RejectedRow extends OutboxRow {
+  /** When it was set aside. */
+  at: number;
+  /** What the server said, verbatim. */
+  reason: string;
+}
+
+/**
  * Tables are named and typed rather than generic, so a typo is a compile error and a
  * row's shape is known at every call site. The names match the Dexie schema and the
  * SQLite one, because having them differ would be a bug factory for no benefit.
@@ -95,6 +108,7 @@ export interface Database {
   animeIds: Table<AnimeIdRow>;
   outbox: Table<OutboxRow>;
   syncState: Table<SyncStateRow>;
+  rejected: Table<RejectedRow>;
 
   /**
    * Run several writes atomically.

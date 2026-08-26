@@ -402,6 +402,111 @@ describe('deleting something the server never received', () => {
   });
 });
 
+/**
+ * The codes the classifier decides on, observed rather than looked up.
+ *
+ * `classify` in `core/src/sync/supabaseBackend.ts` sorts a failure into "try again" or
+ * "this will never work". The two mistakes are not symmetrical: calling something
+ * retryable when it is not jammed the whole queue for ever (§6.70), and calling
+ * something permanent used to *delete the person's write* — which is why the list was
+ * short and timid. Since §6.71 a permanent failure sets the entry aside instead, so the
+ * list can be honest.
+ *
+ * These run the shapes past real Postgres so the codes in that file are the ones this
+ * schema actually raises, not the ones a reference page lists. §6.71.
+ */
+describe('the SQLSTATE a bad write actually gets', () => {
+  const raises = async (sql: string, params: unknown[] = []) => {
+    try {
+      await asAdmin(sql, params);
+      return 'NO ERROR';
+    } catch (e) {
+      return (e as { code?: string }).code ?? 'UNKNOWN';
+    }
+  };
+
+  it('a tombstone with no not-null columns → 23502', async () => {
+    // §6.70's jam, and the reason this list needed revisiting.
+    expect(
+      await raises(
+        'insert into watches (id, user_id, deleted) values (gen_random_uuid(), $1, true)',
+        [ALICE],
+      ),
+    ).toBe('23502');
+  });
+
+  it('a library status outside the four → 23514', async () => {
+    expect(
+      await raises(
+        `insert into library (user_id, title_id, kind, status, added_at)
+         values ($1, 'x', 'show', 'nonsense', now())`,
+        [ALICE],
+      ),
+    ).toBe('23514');
+  });
+
+  it('a rating outside the scale → 23514', async () => {
+    expect(
+      await raises(
+        `insert into ratings (user_id, target_id, value, rated_at) values ($1, 'x', 9.0, now())`,
+        [ALICE],
+      ),
+    ).toBe('23514');
+  });
+
+  it('a rating with more digits than the column holds → 22003', async () => {
+    expect(
+      await raises(
+        `insert into ratings (user_id, target_id, value, rated_at) values ($1, 'x', 100.5, now())`,
+        [ALICE],
+      ),
+    ).toBe('22003');
+  });
+
+  it('a column this schema does not have → 42703', async () => {
+    // A client running ahead of its backend. Permanent is not literally true — a
+    // migration would fix it — and it is still the better answer than jamming every
+    // unrelated write behind it for however long the deployment takes.
+    expect(
+      await raises(
+        `insert into watches (id, user_id, target_id, watched_at, nonsense)
+         values (gen_random_uuid(), $1, 'x', now(), 1)`,
+        [ALICE],
+      ),
+    ).toBe('42703');
+  });
+
+  it('a uuid that is not one → 22P02', async () => {
+    expect(
+      await raises(
+        `insert into watches (id, user_id, target_id, watched_at)
+         values ('not-a-uuid', $1, 'x', now())`,
+        [ALICE],
+      ),
+    ).toBe('22P02');
+  });
+
+  it('a duplicate the conflict target did not cover → 23505', async () => {
+    const insert = `insert into ratings (user_id, target_id, value, rated_at)
+                    values ($1, 'dup', 4, now())`;
+    await asAdmin(insert, [ALICE]);
+    expect(await raises(insert, [ALICE])).toBe('23505');
+  });
+
+  it('a user with no profile row → 23503, which stays retryable', async () => {
+    // The one exception, and the reason it is worth naming: the only foreign key these
+    // tables have is `user_id → profiles`, and a missing profile is a *timing* problem
+    // that `ensureProfile()` fixes on the next run — not a wrong row. It was classified
+    // permanent until §6.71 asked what the constraint actually referred to.
+    expect(
+      await raises(
+        `insert into watches (id, user_id, target_id, watched_at)
+         values (gen_random_uuid(), '99999999-9999-9999-9999-999999999999', 'x', now())`,
+      ),
+    ).toBe('23503');
+  });
+});
+
 describe('what the server does with a device’s idea of the time', () => {
   const SHOW = 'tmdb:tv:clock';
 

@@ -282,13 +282,55 @@ export class SupabaseBackend implements SyncBackend {
  * Getting this wrong in either direction is costly: retrying a permanent rejection
  * blocks the queue forever, and giving up on a transient one loses the change.
  */
+/**
+ * Whether sending this again could ever work.
+ *
+ * The two mistakes are not symmetrical, and it is worth being explicit about which way
+ * this errs. Calling something **retryable** when it is not used to jam the whole queue
+ * for ever, silently — §6.70's tombstone did exactly that, and 23502 was not on this
+ * list. Calling something **permanent** when it is not used to *delete the person's
+ * write*, which is worse. Since §6.71 the second no longer happens: a permanent failure
+ * sets the entry aside rather than dropping it, so this list can be honest about what
+ * cannot succeed without that honesty costing anybody their data.
+ *
+ * Every code below was observed by making real Postgres reject the shape, in
+ * `app/src/backend/schema.test.ts`, rather than read off a reference page.
+ */
 function classify(error: { message: string; code?: string }): SyncError {
   const permanent = new Set([
-    '42501', // insufficient privilege — an RLS policy refused the write
-    '23514', // check constraint violation
-    '23503', // foreign key violation
-    '22P02', // malformed input
+    // An RLS policy refused it. The row is not this user's to write, and asking again
+    // with the same session will be refused the same way.
+    '42501',
+    // A check constraint: a library status outside the four, a rating outside 0.5–5.
+    // The client would have to send something different, and it will not.
+    '23514',
+    // A not-null column the client did not send. §6.70's tombstone, and the reason this
+    // list needed revisiting: the identical row fails identically, for ever.
+    '23502',
+    // Numeric overflow — a rating with more digits than the column holds. Same shape.
+    '22003',
+    // Malformed input: a uuid that is not one. Retrying cannot make it one.
+    '22P02',
+    // A column this client knows and the deployed schema does not. Deliberately here
+    // rather than retryable, and it is the least comfortable of the eight: a migration
+    // *would* make it work, so "permanent" is not literally true. But a client running
+    // ahead of its backend can be that way for weeks, and jamming every unrelated write
+    // behind it for weeks is the worse failure. Set aside and visible beats invisible.
+    '42703',
+    // A duplicate that the upsert's conflict target did not cover — some other unique
+    // index. The row cannot be inserted as it stands.
+    '23505',
   ]);
+
+  /**
+   * Foreign keys are the exception, and stay retryable.
+   *
+   * The only one these tables have is `user_id → profiles`, and a missing profile row is
+   * a *timing* problem rather than a wrong row: `ensureProfile()` runs before each sync
+   * and can fail. Treating it as permanent would set aside somebody's history for a
+   * reason that fixes itself on the next run. It was on this list until §6.71 asked what
+   * the constraint actually referred to.
+   */
   const retryable = !error.code || !permanent.has(error.code);
   return new SyncError(`${error.code ?? 'error'}: ${error.message}`, retryable);
 }

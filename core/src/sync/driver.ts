@@ -1,6 +1,14 @@
 import { readPreference, writePreference } from '../data/storage.ts';
 import { ensureProfile, getSession, onAuthChange, syncConfigured } from './auth.ts';
-import { onEnqueue, pendingCount, resetSyncState, syncOnce, type SyncResult } from './engine.ts';
+import {
+  onEnqueue,
+  pendingCount,
+  rejectedCount,
+  resetSyncState,
+  retryRejected,
+  syncOnce,
+  type SyncResult,
+} from './engine.ts';
 import { SupabaseBackend } from './supabaseBackend.ts';
 import type { SyncBackend } from './types.ts';
 
@@ -25,13 +33,27 @@ export interface SyncStatus {
   configured: boolean;
   signedIn: boolean;
   pending: number;
+  /**
+   * Writes the server refused and this device is still holding.
+   *
+   * Separate from `pending` because they mean opposite things to a person: pending is
+   * "on its way", rejected is "not going without help". Lumping them together is how a
+   * stuck queue looked like a busy one. §6.71.
+   */
+  rejected: number;
   busy: boolean;
   lastResult?: SyncResult;
   lastRunAt?: number;
   lastError?: string;
 }
 
-let status: SyncStatus = { configured: false, signedIn: false, pending: 0, busy: false };
+let status: SyncStatus = {
+  configured: false,
+  signedIn: false,
+  pending: 0,
+  rejected: 0,
+  busy: false,
+};
 const listeners = new Set<(status: SyncStatus) => void>();
 
 function update(patch: Partial<SyncStatus>): void {
@@ -41,6 +63,20 @@ function update(patch: Partial<SyncStatus>): void {
 
 export function syncStatus(): SyncStatus {
   return status;
+}
+
+/**
+ * Offer the refused writes back to the queue, and say how many.
+ *
+ * Here rather than in either screen so both platforms get the same behaviour and the
+ * same recount afterwards — §6.50's rule, and the reason the notification preference
+ * ended up in the core in §6.66.
+ */
+export async function retryRejectedWrites(): Promise<number> {
+  const many = await retryRejected();
+  update({ pending: await pendingCount(), rejected: await rejectedCount() });
+  void requestSync();
+  return many;
 }
 
 export function onSyncStatus(fn: (status: SyncStatus) => void): () => void {
@@ -110,7 +146,7 @@ export async function requestSync(): Promise<void> {
       // timer nobody is awaiting.
       update({ lastError: e instanceof Error ? e.message : 'Sync failed' });
     } finally {
-      update({ busy: false, pending: await pendingCount() });
+      update({ busy: false, pending: await pendingCount(), rejected: await rejectedCount() });
       running = undefined;
     }
   })();
@@ -157,6 +193,7 @@ export function startSyncDriver(options: {
   // after an import: six thousand rows should not wait for a timer.
   const unsubscribeQueue = onEnqueue(() => {
     void pendingCount().then((pending) => update({ pending }));
+    void rejectedCount().then((rejected) => update({ rejected }));
     void requestSync();
   });
 
@@ -181,5 +218,5 @@ export function resetSyncDriver(): void {
   listeners.clear();
   makeBackend = () => SupabaseBackend.fromEnv();
   currentUserId = undefined;
-  status = { configured: false, signedIn: false, pending: 0, busy: false };
+  status = { configured: false, signedIn: false, pending: 0, rejected: 0, busy: false };
 }

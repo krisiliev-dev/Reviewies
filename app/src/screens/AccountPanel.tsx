@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { signIn, signOut, signUp } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
+import { COPY } from '@reviewies/core/copy';
+import { retryRejectedWrites } from '@reviewies/core/sync/driver';
 
 /**
  * Account and sync controls.
@@ -10,12 +12,13 @@ import { useSync } from '../sync/useSync';
  * layer; it is not a gate.
  */
 export function AccountPanel() {
-  const { configured, session, pending, busy, lastResult, lastRunAt, sync } = useSync();
+  const { configured, session, pending, rejected, busy, lastResult, lastRunAt, sync } = useSync();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
+  const [retryNote, setRetryNote] = useState<string>();
 
   if (!configured) {
     return (
@@ -113,6 +116,24 @@ export function AccountPanel() {
         // Surfaced rather than hidden: a silent sync failure is how people lose
         // confidence in a tracker.
         <p className="mt-2 text-sm text-accent">Last sync failed: {lastResult.error}</p>
+      )}
+
+      {/* Writes the server refused, which this device is still holding.
+          Separate from the waiting count because they mean opposite things: pending is
+          "on its way", this is "not going without help". Counted since the engine was
+          written and read by nothing until §6.71, so a queue stuck for a week looked
+          exactly like one that was empty. */}
+      {rejected > 0 && (
+        <div className="mt-3 rounded-xl bg-ink/40 p-3" role="status">
+          <p className="text-sm text-accent">{COPY.sync.rejected(rejected)}</p>
+          <button
+            onClick={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
+            className="mt-2 rounded-lg bg-surface2 px-3 py-1.5 text-sm font-medium"
+          >
+            {COPY.sync.retryRejected}
+          </button>
+          {retryNote && <p className="mt-2 text-xs text-muted">{retryNote}</p>}
+        </div>
       )}
 
       <div className="mt-3 flex gap-2">

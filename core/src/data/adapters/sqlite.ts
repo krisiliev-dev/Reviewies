@@ -309,6 +309,7 @@ export class SqliteDatabase implements Database {
   get animeIds() { return this.table('animeIds') as never; }
   get outbox() { return this.table('outbox') as never; }
   get syncState() { return this.table('syncState') as never; }
+  get rejected() { return this.table('rejected') as never; }
 
   /**
    * The table arguments are accepted and ignored: they exist so Dexie can lock the

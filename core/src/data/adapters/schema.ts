@@ -33,6 +33,9 @@ export const TABLES: TableSpec[] = [
   // Sync bookkeeping.
   { name: 'outbox', primaryKey: 'key', indexed: ['table', 'updatedAt'] },
   { name: 'syncState', primaryKey: 'key', indexed: [] },
+  // Where a write goes when the server will never accept it: kept rather than dropped,
+  // and out of the queue rather than blocking it. §6.71.
+  { name: 'rejected', primaryKey: 'key', indexed: ['table', 'at'] },
 ];
 
 

@@ -45,6 +45,8 @@ export class ReviewiesDB extends Dexie {
   // Sync bookkeeping
   outbox!: EntityTable<{ key: string; table: string; updatedAt: number }, 'key'>;
   syncState!: EntityTable<{ key: string; value: number }, 'key'>;
+  /** Writes the server refused, kept out of the queue and kept. §6.71. */
+  rejected!: EntityTable<{ key: string; table: string; at: number; reason: string }, 'key'>;
 
   constructor(name = 'reviewies') {
     super(name);
@@ -74,6 +76,18 @@ export class ReviewiesDB extends Dexie {
     this.version(3).stores({
       outbox: 'key, table, updatedAt',
       syncState: 'key',
+    });
+
+    /**
+     * v4 adds the place a write goes when the server will never accept it.
+     *
+     * Not the outbox, because an entry that cannot succeed blocks everything behind it
+     * (§6.71), and not nothing, because deleting somebody's write to unblock a queue is
+     * the worst of the three options. Set aside, kept, and counted where a person can
+     * see it.
+     */
+    this.version(4).stores({
+      rejected: 'key, table, at',
     });
   }
 }

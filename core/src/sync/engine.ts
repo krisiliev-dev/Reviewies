@@ -27,6 +27,32 @@ export interface SyncMeta {
 }
 
 /**
+ * A write the server will never accept, kept out of the queue and kept.
+ *
+ * The outbox had two outcomes and needed three. A failure that cannot succeed was
+ * *deleted* — the whole batch of up to two hundred rows, not just the offending one —
+ * and a failure that could was left in front of everything else, so §6.70's tombstone
+ * jammed every later write for ever with nothing on screen to say so.
+ *
+ * Set aside is the third: the row leaves the queue so the rest can drain, and it is
+ * still here, counted, and said out loud. Deleting somebody's watch history to unblock
+ * an upload is the one outcome that is never acceptable. §6.71.
+ */
+export interface RejectedEntry {
+  key: string;
+  table: SyncTable;
+  pk: string;
+  row: Record<string, unknown>;
+  updatedAt: number;
+  deleted: boolean;
+  /** When it was set aside. */
+  at: number;
+  /** What the server said, verbatim, so it can be reported rather than guessed at. */
+  reason: string;
+  attempts: number;
+}
+
+/**
  * The outbox and the sync cursor live in the same database as everything else.
  *
  * They used to be a second Dexie instance. Separating them bought nothing — the two
@@ -35,6 +61,8 @@ export interface SyncMeta {
  */
 const outbox = () => db.outbox as unknown as import('../data/store.ts').Table<OutboxEntry>;
 const meta = () => db.syncState as unknown as import('../data/store.ts').Table<SyncMeta>;
+const rejected = () =>
+  db.rejected as unknown as import('../data/store.ts').Table<RejectedEntry>;
 
 const PK_FIELDS: Record<SyncTable, string[]> = {
   watches: ['id'],
@@ -158,6 +186,35 @@ export async function pendingCount(): Promise<number> {
   return outbox().count();
 }
 
+/** How many writes the server refused and this device is still holding. */
+export async function rejectedCount(): Promise<number> {
+  return rejected().count();
+}
+
+/**
+ * Put a rejected write back in the queue.
+ *
+ * The one honest thing to offer after a deployment: a row set aside because the schema
+ * did not know a column (42703) succeeds once it does, and nobody should have to be told
+ * to reinstall the app.
+ */
+export async function retryRejected(): Promise<number> {
+  const held = await rejected().toArray();
+  for (const entry of held) {
+    await outbox().put({
+      key: entry.key,
+      table: entry.table,
+      pk: entry.pk,
+      row: entry.row,
+      updatedAt: entry.updatedAt,
+      deleted: entry.deleted,
+      attempts: 0,
+    });
+    await rejected().delete(entry.key);
+  }
+  return held.length;
+}
+
 async function getCursor(): Promise<number> {
   return (await meta().get('cursor'))?.value ?? 0;
 }
@@ -174,7 +231,85 @@ export interface SyncResult {
   pulled: number;
   /** Remote rows discarded because the local copy was newer. */
   conflictsResolvedLocally: number;
+  /** Writes set aside this run because the server will never accept them. */
+  rejected: number;
   error?: string;
+}
+
+/**
+ * How many times a retryable failure may repeat before the entry is set aside too.
+ *
+ * A failure the server calls transient can still be permanent in practice — a bug in
+ * this client, a backend that 500s on one particular row for ever. Without a ceiling
+ * that is indistinguishable from §6.70's jam, so retryable buys patience rather than
+ * immunity. Twenty is roughly a day at the driver's interval: long enough that a
+ * fortnight offline costs nothing, short enough that a genuinely stuck row stops
+ * holding the rest hostage.
+ */
+export const MAX_ATTEMPTS = 20;
+
+/** Move an entry out of the queue and into what the person can be shown. */
+async function setAside(entry: OutboxEntry, reason: string, attempts: number): Promise<void> {
+  await rejected().put({
+    key: entry.key,
+    table: entry.table,
+    pk: entry.pk,
+    row: entry.row,
+    updatedAt: entry.updatedAt,
+    deleted: entry.deleted,
+    at: syncedNow(),
+    reason,
+    attempts,
+  });
+  await outbox().delete(entry.key);
+}
+
+/**
+ * Which entries in a failed batch the server will not take.
+ *
+ * Binary search on the batch: push each half, and recurse into whichever halves fail.
+ * A batch of one that fails is the answer. Everything that succeeds on the way is
+ * genuinely delivered, so the isolation is not wasted work — it is the push, done in
+ * smaller pieces.
+ *
+ * A retryable error part-way through means the network went while we were bisecting;
+ * that half is left alone and tried again next time rather than blamed.
+ */
+async function isolate(backend: SyncBackend, batch: OutboxEntry[]): Promise<OutboxEntry[]> {
+  const asChange = (e: OutboxEntry): Change => ({
+    pk: e.pk,
+    table: e.table,
+    row: e.row,
+    updatedAt: e.updatedAt,
+    deleted: e.deleted,
+  });
+
+  const failing: OutboxEntry[] = [];
+  const queue: OutboxEntry[][] = [batch];
+
+  while (queue.length) {
+    const part = queue.shift()!;
+    if (part.length === 0) continue;
+    try {
+      await backend.push(part.map(asChange));
+      // Delivered. Clear what is still recognisable, exactly as the happy path does.
+      await db.transaction('rw', outbox(), async () => {
+        for (const entry of part) {
+          const current = await outbox().get(entry.key);
+          if (current && current.updatedAt === entry.updatedAt) await outbox().delete(entry.key);
+        }
+      });
+    } catch (e) {
+      if (e instanceof SyncError && e.retryable) continue;
+      if (part.length === 1) {
+        failing.push(part[0]);
+        continue;
+      }
+      const half = Math.floor(part.length / 2);
+      queue.push(part.slice(0, half), part.slice(half));
+    }
+  }
+  return failing;
 }
 
 /**
@@ -184,7 +319,7 @@ export interface SyncResult {
  * which keeps last-write-wins from resurrecting data we just deleted.
  */
 export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<SyncResult> {
-  const result: SyncResult = { pushed: 0, pulled: 0, conflictsResolvedLocally: 0 };
+  const result: SyncResult = { pushed: 0, pulled: 0, conflictsResolvedLocally: 0, rejected: 0 };
 
   // --- Push ---------------------------------------------------------------
   //
@@ -227,18 +362,59 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
       result.pushed += batch.length;
     } catch (e) {
       const retryable = !(e instanceof SyncError) || e.retryable;
-      await db.transaction('rw', outbox(), async () => {
-        for (const entry of batch) {
+      result.error = e instanceof Error ? e.message : String(e);
+
+      if (retryable) {
+        /**
+         * Count the attempt, and give up on anything that has had enough of them.
+         *
+         * A batch that fails for a transient reason stays put and is tried again. What
+         * must not happen is *for ever*: a row the server calls retryable and refuses
+         * every time is §6.70's jam wearing different clothes, so the ceiling applies
+         * here too. Returning is still right — the network is the likely cause and
+         * hammering it with the next batch helps nobody.
+         */
+        await db.transaction('rw', outbox(), rejected(), async () => {
+          for (const entry of batch) {
+            const current = await outbox().get(entry.key);
+            if (!current) continue;
+            const attempts = current.attempts + 1;
+            if (attempts >= MAX_ATTEMPTS) {
+              await setAside(current, result.error!, attempts);
+              result.rejected++;
+            } else {
+              await outbox().update(entry.key, { attempts });
+            }
+          }
+        });
+        return result;
+      }
+
+      /**
+       * One of these rows cannot be accepted. Find out which, rather than punishing all
+       * of them.
+       *
+       * The whole batch — up to two hundred writes — used to be **deleted** on a
+       * permanent failure, because Postgres fails the statement rather than the row and
+       * nothing here asked which one. One malformed tombstone could take a hundred and
+       * ninety-nine good watches with it, silently.
+       *
+       * Bisecting costs at most `log2(batch)` extra requests, only on a failure that is
+       * already rare, and it is the only way to tell the offender from its neighbours
+       * with a server that answers per statement.
+       */
+      const offenders = await isolate(backend, batch);
+      await db.transaction('rw', outbox(), rejected(), async () => {
+        for (const entry of offenders) {
           const current = await outbox().get(entry.key);
           if (!current) continue;
-          // Non-retryable failures are dropped rather than blocking the queue
-          // forever; retryable ones stay put and are counted.
-          if (retryable) await outbox().update(entry.key, { attempts: current.attempts + 1 });
-          else await outbox().delete(entry.key);
+          await setAside(current, result.error!, current.attempts + 1);
+          result.rejected++;
         }
       });
-      result.error = e instanceof Error ? e.message : String(e);
-      return result;
+      // Round the loop again: the rest of the batch is untouched and still queued, so
+      // the next pass sends it without the row that was stopping it.
+      continue;
     }
 
     // Nothing left the queue, so the next pass would fetch the same rows and send them
