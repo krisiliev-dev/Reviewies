@@ -34,6 +34,24 @@ export interface PlaybackClock {
   reset: () => void;
 }
 
+/**
+ * Elapsed time that no correction can move.
+ *
+ * `Date.now()` is the wall clock, and the wall clock is allowed to jump — NTP catching
+ * up, a manual correction, a phone crossing a timezone. This hook only ever measures a
+ * *difference* from an anchor, so an offset cancels; a jump does not. Half an hour into
+ * an episode, a two-minute correction would move the timecode two minutes and file
+ * every reaction after it at the wrong moment.
+ *
+ * `performance.now()` is monotonic by definition and immune to all of it. Falling back
+ * to `Date.now()` where it does not exist, which is no worse than what was here before.
+ * §6.67.
+ */
+const elapsed = (): number =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+
 export function usePlaybackClock(tickMs = 250): PlaybackClock {
   const [running, setRunning] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
@@ -47,7 +65,7 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => {
-      setPositionMs(anchorMedia.current + (Date.now() - anchorWall.current));
+      setPositionMs(anchorMedia.current + (elapsed() - anchorWall.current));
     }, tickMs);
     return () => clearInterval(id);
   }, [running, tickMs]);
@@ -55,7 +73,7 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
 
   const start = useCallback((atMs?: number) => {
     anchorMedia.current = atMs ?? 0;
-    anchorWall.current = Date.now();
+    anchorWall.current = elapsed();
     setPositionMs(anchorMedia.current);
     setRunning(true);
   }, []);
@@ -63,7 +81,7 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
   const pause = useCallback(() => {
     setRunning((was) => {
       if (was) {
-        const now = anchorMedia.current + (Date.now() - anchorWall.current);
+        const now = anchorMedia.current + (elapsed() - anchorWall.current);
         anchorMedia.current = now;
         setPositionMs(now);
       }
@@ -74,7 +92,7 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
   const seek = useCallback((ms: number) => {
     const clamped = Math.max(0, ms);
     anchorMedia.current = clamped;
-    anchorWall.current = Date.now();
+    anchorWall.current = elapsed();
     setPositionMs(clamped);
   }, []);
 
@@ -82,7 +100,7 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
     setPositionMs((current) => {
       const next = Math.max(0, current + deltaMs);
       anchorMedia.current = next;
-      anchorWall.current = Date.now();
+      anchorWall.current = elapsed();
       return next;
     });
   }, []);
@@ -90,20 +108,20 @@ export function usePlaybackClock(tickMs = 250): PlaybackClock {
   const toggle = useCallback(() => {
     if (running) pause();
     else {
-      anchorWall.current = Date.now();
+      anchorWall.current = elapsed();
       setRunning(true);
     }
   }, [running, pause]);
 
   const reset = useCallback(() => {
     anchorMedia.current = 0;
-    anchorWall.current = Date.now();
+    anchorWall.current = elapsed();
     setPositionMs(0);
     setRunning(false);
   }, []);
 
   const resync = useCallback(() => {
-    if (running) setPositionMs(anchorMedia.current + (Date.now() - anchorWall.current));
+    if (running) setPositionMs(anchorMedia.current + (elapsed() - anchorWall.current));
   }, [running]);
 
   return { positionMs, running, start, pause, toggle, nudge, seek, reset, resync };

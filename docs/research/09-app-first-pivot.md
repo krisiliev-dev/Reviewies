@@ -3452,6 +3452,152 @@ the `void`.
 §7 records what a container still cannot reach: a device whose timezone is its own, a phone
 carried across one, and a `time_zone` column that has never been written by a real client.
 
+### 6.67 A device whose clock is wrong
+
+§6.66 fixed *which* calendar a date is read in. This is the other half, and it turned out
+to be the more serious one: sync is last-write-wins on `updatedAt`, and `updatedAt` is a
+number **the device writes**. Nothing anywhere compared it to anything.
+
+A phone whose clock is a week fast is not exotic — a dead coin cell, a bad NTP server, a
+factory-reset tablet with no network yet, somebody who set the date by hand to unlock an
+expired trial. Three things followed, all silent, all looking exactly like sync working.
+
+**One device a week fast stopped every other device syncing.** The pull cursor was the
+newest `updated_at` the adapter had seen. A row stamped a week ahead therefore moved a
+*correct* device's cursor a week into the future, and its next pull asked for everything
+later than that. Nothing is. Sync stopped — for everyone, for a week — and the only
+symptom was that nothing arrived.
+
+**Rows it touched became unwritable.** Not by the other device, not by the person
+correcting their own mistake. Last-write-wins read "next Wednesday beats today", for as
+long as next Wednesday was in the future.
+
+**And the same device, once corrected, locked its own outbox.** NTP catches up, the clock
+jumps back a week, and every edit made afterwards was older than the entry already queued
+— which `enqueue` dropped on the floor. The button worked. The change vanished.
+
+The opposite skew loses just as much, more quietly. A phone a week **slow** pushes rows
+carrying a week-old timestamp, and every other device's cursor is already past them: the
+row is on the server and nobody ever sees it.
+
+#### Two columns, two jobs
+
+The mistake underneath all of it is that one number was doing two jobs.
+
+- **`updated_at`** — when the device says the change happened. Still the client's, because
+  it is the only thing that can say which of two offline edits the person made second.
+  Now clamped server-side so it can never be in the future.
+- **`synced_at`** — when this server learned of the row. Entirely the server's, never
+  accepted from a client, and what the pull cursor reads (migration `0014`).
+
+Making the cursor server-assigned is the half that matters most. It makes paging correct
+whatever any device believes the time is, and it fixes the slow-clock case at the same
+time: the row's `synced_at` is now, so everyone sees it, even though it honestly claims to
+have been edited a week ago.
+
+The trigger also does something that was assumed everywhere and implemented nowhere:
+**refuses a stale write.** `MemoryBackend` compares timestamps on push and its comment says
+it "implements the same last-write-wins semantics the real server must" — the real server
+did a plain upsert, so whoever pushed last won regardless of when they actually made the
+change. Two devices offline for a week resolved by who happened to reconnect second.
+Returning `null` from a `BEFORE UPDATE` trigger skips the row entirely, so `synced_at` does
+not move either and nobody is woken to fetch a row that did not change.
+
+#### Correcting at the source
+
+The server can only clamp what reaches it. The client also needs to stop writing wrong
+numbers in the first place, and there is a free reference for that: **every HTTP response
+already carries a `Date` header.** `core/src/sync/clock.ts` learns the offset from requests
+that were happening anyway — an auth refresh, a profile read, a push — halves the round
+trip to allow for one-way delay, persists it, and `syncedNow()` is what every `updatedAt`
+in the product now comes from. No extra round trip and nothing new on the wire.
+
+Two other rules need no clock at all, and both were being decided by one:
+
+- **An unstamped `enqueue` always supersedes what is queued.** It is happening now, in this
+  process, after whatever is already there — later by construction. Only an explicit
+  `updatedAt`, which the importers pass because they know their own order, is compared.
+- **A pending local edit always wins over a remote change.** That sentence was already in
+  `applyRemote`, and the line under it compared timestamps and did something else. On a
+  slow device the person's own change lost to the thing they had just replaced.
+
+What this deliberately does **not** become is a Lamport clock. A per-device counter is the
+correct answer to "which write came after which" and does not involve wall time at all — it
+also changes the wire format, the schema, and the meaning of every row already written.
+Named in §7 as the thing this is not.
+
+#### The other bug in the same file
+
+While reading the sync path, something worse than the clock: **`SupabaseBackend.fromEnv()`
+— the only backend the running app ever builds — called `createClient` itself.**
+`sync/auth.ts` keeps the session under its own `storageKey`, and on a phone in AsyncStorage,
+so that second client had never seen a session on either platform. Every sync therefore
+raised *Not signed in*; that was classified **non-retryable**; and the engine deletes a
+batch that fails permanently. Everything written offline, dropped from the outbox, silently,
+on the first attempt.
+
+Nothing caught it because **nothing had ever called `fromEnv`**. Both sync test files
+construct `new SupabaseBackend(client)` with a client they signed in themselves, so the
+tested path and the shipped path were not the same path — this repository's oldest recurring
+shape, in the subsystem where being wrong loses somebody's history.
+
+Two fixes. `fromEnv` reaches for the shared client. And *Not signed in* is retryable now,
+because the engine's delete-on-permanent-failure is right for a row the server will never
+accept and catastrophic for a failure about the **request** — a session expiring mid-sync
+would take the queue with it.
+
+#### Proving it
+
+Every fix was planted against, and each plant is the bug it claims to be:
+
+| planted | what failed |
+|---|---|
+| `Date.now()` instead of `syncedNow()` | the corrected stamp, and the slow device's edit |
+| the enqueue comparison made unconditional again | the outbox lock, and the mid-push edit |
+| the cursor clamp removed | the other device stops pulling |
+| `applyRemote` compares timestamps again | the pending edit is overwritten |
+| the trigger's future clamp removed | a future `updated_at` is stored |
+| the trigger's stale-write check removed | an older write overwrites a newer one |
+| `fromEnv` builds its own client | both halves of the one-client guard |
+
+The Postgres half runs against real Postgres with the real migrations, so the guarantee is
+the trigger's rather than a mock's. `app/src/wiring/oneClient.test.ts` holds the rule that
+caused the second bug: exactly one `createClient` in the product's own source, and
+`fromEnv` must reach for it.
+
+#### What the fixture was hiding
+
+`MemoryBackend` hands out a **monotonic sequence number** as its cursor. The real backend
+derives one from a timestamp. So every engine test ever written has run against a server
+that *could not have* the worst bug in this sprint — a fixture smaller than reality (§6.43)
+in the one subsystem where being wrong loses data. The reproduction needed a second fake
+whose cursor is a timestamp, and that fake is now in the suite beside the tests it exists
+for.
+
+#### The clocks that are fine
+
+Not everything that reads `Date.now()` wanted correcting, and saying which is part of the
+work. `isStale(fetchedAt)`, `expireMetadata`, the calendar's refresh throttle, the anime-id
+TTL and `resumeFor` all compare two of *this device's own* timestamps — an offset cancels
+exactly, and correcting one end and not the other would introduce the error rather than
+remove it. A clock that *jumps* still perturbs them, and the cost is bounded and
+self-healing: a cache that refreshes early, or waits longer than it should, once.
+
+One place was not survivable. `usePlaybackClock` measures elapsed time across a whole
+episode from a wall-clock anchor, so a two-minute correction half an hour in would move the
+timecode two minutes and file every reaction after it at the wrong moment — in the flagship
+feature. It uses `performance.now()` now, which is monotonic by definition.
+
+#### Saying so
+
+Sync corrects itself and needs no help. Everything else this app says about time cannot be
+corrected from here — what aired today, what is coming this week, which day a watch is filed
+under — so a device more than an hour out is told, once, on Settings and the phone's Data
+screen: *"This device's clock is about 3 days out. Your history is safe and syncs correctly,
+but dates and what is airing will look wrong until it is fixed."* The bar is deliberately
+high; a few minutes is invisible and a warning about it would be noise. An unknown offset
+says nothing at all, which is most people, because most people have never signed in.
+
 ---
 
 ## 7. What is still not known
@@ -3544,6 +3690,25 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **No two real devices have ever synced with each other.** §6.67's clock fixes are
+  proved by planting each one and watching the right test fail, and the server half runs
+  against real Postgres with the real migrations — so what the trigger *does* is verified.
+  What is not: any of it against a live Supabase project, which needs the service key this
+  checkout has never had, and `synced_at` has never been written by a real client. Nor has
+  a genuinely wrong clock been involved anywhere — `vi.setSystemTime` moves `Date.now()`
+  and nothing else, so what is exercised is the arithmetic, not a phone whose whole
+  operating system disagrees with the world. The `Date` header the offset is learned from
+  has never been read from a real response.
+- **Conflict resolution is still wall-clock last-write-wins, and that has a floor.** Two
+  devices editing the same row while both offline are resolved by whose corrected clock
+  says later, and a device that has never once reached the server has no correction to
+  apply. A per-device counter — a Lamport clock — is the answer that does not involve wall
+  time at all; it changes the wire format, the schema and the meaning of every row already
+  written, and it is deliberately not what §6.67 did.
+- **The outbox has never been drained against a real signed-in session.** §6.67 found that
+  `SupabaseBackend.fromEnv()` — the only backend the shipped app builds — had never been
+  called by any test, and built a client that could not see the session. The fix is one
+  line and is now guarded, but the corrected path has still only run against fakes.
 - **No clock here belongs to a person.** §6.66 fixed how dates are read and proved it by
   planting the old reading and watching it fail in Los Angeles and Kiritimati but not at
   UTC — which is real, and is a claim about a container running with `TZ` set. What has

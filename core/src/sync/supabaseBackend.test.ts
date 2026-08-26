@@ -114,6 +114,7 @@ describe('column mapping on pull', () => {
           target_id: 'tmdb:ep:1',
           series_id: 'tmdb:tv:1',
           watched_at: '2026-01-05T20:00:00.000Z',
+          synced_at: '2026-01-05T20:00:00.000Z',
           updated_at: '2026-01-05T20:00:00.000Z',
           deleted: false,
         },
@@ -128,7 +129,14 @@ describe('column mapping on pull', () => {
 
   it('advances the cursor to the newest row seen', async () => {
     const { client } = fakeClient({
-      rows: [{ id: 'w1', updated_at: '2026-03-01T00:00:00.000Z', deleted: false }],
+      rows: [
+        {
+          id: 'w1',
+          synced_at: '2026-03-01T00:00:00.000Z',
+          updated_at: '2026-03-01T00:00:00.000Z',
+          deleted: false,
+        },
+      ],
     });
     const { cursor } = await new SupabaseBackend(client).pull(0);
     expect(cursor).toBe(Date.parse('2026-03-01T00:00:00.000Z'));
@@ -136,7 +144,14 @@ describe('column mapping on pull', () => {
 
   it('excludes user_id from the primary key, since it is implied by the session', async () => {
     const { client } = fakeClient({
-      rows: [{ user_id: USER, title_id: 'tmdb:tv:9', updated_at: '2026-01-01T00:00:00.000Z' }],
+      rows: [
+        {
+          user_id: USER,
+          title_id: 'tmdb:tv:9',
+          synced_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-01T00:00:00.000Z',
+        },
+      ],
     });
     const { changes } = await new SupabaseBackend(client).pull(0);
     const wl = changes.find((c) => c.table === 'watchlist');
@@ -166,13 +181,18 @@ describe('error classification', () => {
     });
   });
 
-  it('treats being signed out as permanent rather than retrying forever', async () => {
+  it('holds the queue when it cannot tell who is signed in, rather than emptying it', async () => {
+    // This was `retryable: false`, and the engine deletes a batch that fails
+    // permanently — right for a row the server will never accept, catastrophic for a
+    // failure about the request. A session that expired mid-sync took the person's
+    // queued history with it. The driver refuses to sync while signed out, so this
+    // cannot spin. §6.67.
     const client = {
       auth: { getUser: async () => ({ data: { user: null }, error: null }) },
     } as unknown as SupabaseClient;
 
     await expect(new SupabaseBackend(client).push([change()])).rejects.toMatchObject({
-      retryable: false,
+      retryable: true,
       message: 'Not signed in',
     });
   });

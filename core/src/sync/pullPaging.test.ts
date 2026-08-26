@@ -20,6 +20,9 @@ import type { SyncTable } from './types.ts';
 const USER = '11111111-1111-1111-1111-111111111111';
 
 interface Stored {
+  /** What the server knows: when it learned of the row. The cursor reads this. */
+  synced_at: string;
+  /** What the device claimed. Conflict resolution reads this; paging never does. */
   updated_at: string;
   [column: string]: unknown;
 }
@@ -52,13 +55,13 @@ function fakeServer(tables: Partial<Record<SyncTable, Stored[]>>) {
         /** Only the one shape this backend builds: later, or the rest of one instant. */
         or: (filter: string) => {
           const match =
-            /^updated_at\.gt\.(.+),and\(updated_at\.eq\.(.+),([a-z_]+)\.gt\."(.*)"\)$/.exec(
+            /^synced_at\.gt\.(.+),and\(synced_at\.eq\.(.+),([a-z_]+)\.gt\."(.*)"\)$/.exec(
               filter,
             );
           if (!match) throw new Error(`fake cannot read this filter: ${filter}`);
           const [, after, at, tie, tieAfter] = match;
           keep = (row) =>
-            row.updated_at > after || (row.updated_at === at && String(row[tie]) > tieAfter);
+            row.synced_at > after || (row.synced_at === at && String(row[tie]) > tieAfter);
           return builder;
         },
         order: (column: string) => {
@@ -96,6 +99,7 @@ function watches(count: number, startMs: number, ms = 1): Stored[] {
     watched_at: startMs,
     source: 'manual',
     deleted: false,
+    synced_at: new Date(startMs + i * ms).toISOString(),
     updated_at: new Date(startMs + i * ms).toISOString(),
   }));
 }
@@ -128,6 +132,7 @@ describe('pulling more than one page', () => {
           value: 5,
           rated_at: 1_800_000_000_000,
           deleted: false,
+          synced_at: new Date(1_800_000_000_000).toISOString(),
           updated_at: new Date(1_800_000_000_000).toISOString(),
         },
       ],

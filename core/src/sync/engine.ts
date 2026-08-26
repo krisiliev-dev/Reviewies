@@ -1,5 +1,6 @@
 import { db } from '../data/db.ts';
 import { type Change, type SyncBackend, SyncError, type SyncTable } from './types.ts';
+import { syncedNow } from './clock.ts';
 
 /**
  * Offline-first sync engine.
@@ -59,12 +60,29 @@ export async function enqueue(
   opts: { deleted?: boolean; updatedAt?: number } = {},
 ): Promise<void> {
   const pk = primaryKeyOf(table, row);
-  const updatedAt = opts.updatedAt ?? Date.now();
+  // Corrected towards the server where that is known. Every `updatedAt` in the product
+  // is decided here, so this one line is what stops a wrong clock from writing rows no
+  // other device can ever overwrite. §6.67.
+  const updatedAt = opts.updatedAt ?? syncedNow();
   const key = `${table}:${pk}`;
 
   const existing = await outbox().get(key);
-  // A stale write must not overwrite a newer one already waiting to go out.
-  if (existing && existing.updatedAt > updatedAt) return;
+  /**
+   * A stale write must not overwrite a newer one already waiting to go out — but only
+   * when the caller said which write it is.
+   *
+   * The check used to apply to every call, comparing two of *this device's own*
+   * timestamps. So a clock corrected backwards — NTP catching up, exactly what happens
+   * to the fast device once it finds a network — left an entry stamped in the future
+   * sitting in the queue, and every edit the person made afterwards was silently
+   * dropped until the clock caught up with it again. Nothing told them; the button
+   * worked and the change vanished.
+   *
+   * An unstamped call is happening *now*, in this process, after whatever is already
+   * queued. It is later by construction and needs no clock to say so. Only an explicit
+   * `updatedAt` — the importers, replaying history whose order they know — is compared.
+   */
+  if (opts.updatedAt !== undefined && existing && existing.updatedAt > updatedAt) return;
 
   await outbox().put({
     key,
@@ -236,7 +254,21 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
       if (applied) result.pulled++;
       else result.conflictsResolvedLocally++;
     }
-    await setCursor(cursor);
+    /**
+     * Never let the cursor run ahead of now.
+     *
+     * The real backend derives its cursor from the newest `updated_at` it saw, and that
+     * column holds whatever clock wrote the row. One device a week fast therefore moved
+     * *every other device's* cursor a week into the future, and each of them then asked
+     * for everything later than that and received nothing — for a week. A single wrong
+     * clock silenced sync for everybody, and the only symptom was that nothing arrived.
+     *
+     * Clamping here rather than in the adapter because it is the engine that owns the
+     * cursor, and because it protects any backend. Rows stamped in the future are still
+     * applied — they are somebody's data — they just cannot carry the cursor with them.
+     * §6.67.
+     */
+    await setCursor(Math.min(cursor, syncedNow()));
   } catch (e) {
     result.error = e instanceof Error ? e.message : String(e);
   }
@@ -249,11 +281,21 @@ export async function syncOnce(backend: SyncBackend, batchSize = 200): Promise<S
  * Returns whether it was applied.
  */
 async function applyRemote(change: Change): Promise<boolean> {
-  // A pending local edit always wins: it is newer by definition of not having
-  // been pushed yet, and discarding it would lose a write the user has already
-  // seen succeed.
+  /**
+   * A pending local edit always wins: it is newer by definition of not having been
+   * pushed yet, and discarding it would lose a write the user has already seen succeed.
+   *
+   * That sentence was already here, and the line under it then compared timestamps and
+   * did something else. On a device whose clock runs slow, a change made *after* the
+   * remote one carried a smaller number and lost — the person's edit overwritten by the
+   * thing they had just replaced. The rule as written needs no comparison: unconditional
+   * is both simpler and what the comment always claimed. §6.67.
+   *
+   * It costs nothing in ordering. The pending entry is pushed moments later and
+   * last-write-wins settles it on the server either way.
+   */
   const pending = await outbox().get(`${change.table}:${change.pk}`);
-  if (pending && pending.updatedAt >= change.updatedAt) return false;
+  if (pending) return false;
 
   const table = db.table(change.table);
 

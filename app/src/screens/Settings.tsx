@@ -16,6 +16,7 @@ import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
+import { clockWarning } from '@reviewies/core/sync/clock';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -75,6 +76,15 @@ export function Settings() {
           </p>
         )}
       </section>
+
+      {/* Only ever rendered by a device that is genuinely an hour or more out. Sync
+          corrects for it and needs no help; the calendar and "aired today" cannot be
+          corrected from here, so the honest thing is to say where the trouble is. §6.67. */}
+      {clockWarning() && (
+        <p role="status" className="rounded-2xl bg-surface px-4 py-3 text-sm text-accent">
+          {clockWarning()}
+        </p>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Export</h2>

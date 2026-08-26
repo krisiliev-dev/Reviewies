@@ -15,6 +15,7 @@ import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
+import { clockWarning } from '@reviewies/core/sync/clock';
 
 /**
  * Getting your history in, and getting it back out.
@@ -43,6 +44,13 @@ export default function DataScreen() {
     <>
       <Stack.Screen options={{ title: 'Your data' }} />
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Only ever rendered by a device genuinely an hour or more out. §6.67. */}
+        {clockWarning() && (
+          <Text style={styles.clockWarning} accessibilityLiveRegion="polite">
+            {clockWarning()}
+          </Text>
+        )}
+
         <Section heading="Export">
           <Text style={styles.blurb}>{COPY.settings.exportBlurb}</Text>
           <Pressable
@@ -183,6 +191,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   blurb: { color: theme.muted, fontSize: 13, lineHeight: 19 },
+  clockWarning: { color: theme.accent, fontSize: 13, lineHeight: 19, marginBottom: 4 },
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.lg,

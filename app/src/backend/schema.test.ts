@@ -350,6 +350,85 @@ describe('push notifications', () => {
   });
 });
 
+/**
+ * A clock nobody checked.
+ *
+ * Every syncable row carries `updated_at`, and until §6.67 that was whatever number the
+ * device wrote — sent by the engine, stored by the upsert, compared by nothing. These
+ * run against real Postgres with the real migrations, because the guarantee is the
+ * trigger's and a mock cannot have one.
+ */
+describe('what the server does with a device’s idea of the time', () => {
+  const SHOW = 'tmdb:tv:clock';
+
+  /**
+   * What a device pushes, spelled as the SQL expression for the time it claims.
+   *
+   * Interpolated rather than bound, because the point of each test is a *relative*
+   * instant — `now() + interval '7 days'` — and a bound parameter arrives as a string
+   * Postgres then refuses to read as a timestamp.
+   */
+  const put = (updatedAt: string, status = 'watching') =>
+    asAdmin(
+      `insert into library (user_id, title_id, kind, status, added_at, updated_at)
+       values ($1, $2, 'show', $3, now(), ${updatedAt})
+       on conflict (user_id, title_id) do update
+         set status = excluded.status, updated_at = excluded.updated_at`,
+      [ALICE, SHOW, status],
+    );
+
+  const stored = async () =>
+    (
+      await asAdmin('select status, updated_at, synced_at from library where title_id = $1', [SHOW])
+    ).rows[0] as { status: string; updated_at: Date; synced_at: Date };
+
+  it('refuses to store a timestamp from the future', async () => {
+    // A phone a week fast used to make its rows unwritable by anybody — including the
+    // person themselves — until the real clock caught up.
+    await put("now() + interval '7 days'");
+    const row = await stored();
+    expect(row.updated_at.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+  });
+
+  it('leaves a genuinely old timestamp alone', async () => {
+    // Clamping the past too would be lying in the other direction: a device that was
+    // offline for a week is telling the truth about when the edit happened, and that
+    // ordering is the only thing updated_at is for.
+    await put("now() - interval '7 days'");
+    const row = await stored();
+    expect(Date.now() - row.updated_at.getTime()).toBeGreaterThan(6 * 86_400_000);
+  });
+
+  it('stamps synced_at with its own clock even then, so the row is not invisible', async () => {
+    // The opposite failure: a phone a week slow pushed rows every other device's cursor
+    // had already passed. The row arrived and nobody ever saw it.
+    await put("now() - interval '7 days'");
+    const row = await stored();
+    expect(Math.abs(Date.now() - row.synced_at.getTime())).toBeLessThan(60_000);
+  });
+
+  it('does not let an older write overwrite a newer one', async () => {
+    // Assumed everywhere, implemented nowhere: the real server did a plain upsert, so
+    // two devices offline for a week resolved by who reconnected second.
+    await put('now()', 'completed');
+    await put("now() - interval '1 day'", 'dropped');
+    expect((await stored()).status).toBe('completed');
+  });
+
+  it('does not move synced_at when it rejects one, so nobody is woken for nothing', async () => {
+    await put('now()', 'completed');
+    const before = (await stored()).synced_at.getTime();
+    await put("now() - interval '1 day'", 'dropped');
+    expect((await stored()).synced_at.getTime()).toBe(before);
+  });
+
+  it('still accepts a newer write, so this is a clamp and not a wall', async () => {
+    await put("now() - interval '1 hour'", 'paused');
+    await put('now()', 'completed');
+    expect((await stored()).status).toBe('completed');
+  });
+});
+
 describe('notification scheduler', () => {
   const SERIES = 'tmdb:tv:1';
   const EP = 'tmdb:ep:today';

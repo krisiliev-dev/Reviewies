@@ -37,6 +37,18 @@ export const COPY = {
      */
     updated: 'The app has been updated since you opened this tab. Reload to carry on.',
     reload: 'Reload',
+    /**
+     * A clock that is wrong by enough to matter.
+     *
+     * Sync corrects for it silently and needs no help (§6.67). Everything else this app
+     * says about time cannot be corrected from here — what aired today, what is coming
+     * this week, which day a watch is filed under — so the honest thing is to say where
+     * the trouble is rather than let somebody conclude the app is broken.
+     *
+     * `by` is already a phrase: "2 hours", "3 days".
+     */
+    clockWrong: (by: string) =>
+      `This device's clock is about ${by} out. Your history is safe and syncs correctly, but dates and what is airing will look wrong until it is fixed.`,
   },
 
   upNext: {

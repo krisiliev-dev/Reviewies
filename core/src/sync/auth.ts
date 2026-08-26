@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type Session } from '@supabase/supabase-js';
 import { getConfig } from '../config.ts';
+import { observeServerTime } from './clock.ts';
 
 /**
  * Supabase auth, kept deliberately optional.
@@ -14,6 +15,25 @@ import { getConfig } from '../config.ts';
  */
 
 let client: SupabaseClient | undefined;
+
+/**
+ * `fetch`, with a look at what time the other end thinks it is.
+ *
+ * Wrapped here rather than in the sync adapter because this is where the one client is
+ * made, and because the cheapest measurement is the one taken from requests that were
+ * happening anyway — an auth refresh, a profile read, a push. No extra round trip, and
+ * a skew is known before the first sync rather than after it.
+ *
+ * A failed request still carries a `Date` header if it reached the server at all, so
+ * the observation is made before anything is thrown.
+ */
+const observingFetch: typeof fetch = async (input, init) => {
+  const started = Date.now();
+  const response = await fetch(input, init);
+  const header = response.headers.get('date');
+  if (header) observeServerTime(Date.parse(header), Date.now() - started);
+  return response;
+};
 
 /**
  * Where the auth library keeps the session.
@@ -56,6 +76,10 @@ export function getClient(): SupabaseClient | undefined {
   }
 
   client = createClient(url, key, {
+    // Every response already carries a `Date` header, so the server's clock is free.
+    // See sync/clock.ts: this is what stops a device with a wrong one from writing
+    // rows nobody else can overwrite. §6.67.
+    global: { fetch: observingFetch },
     auth: {
       persistSession: true,
       autoRefreshToken: true,

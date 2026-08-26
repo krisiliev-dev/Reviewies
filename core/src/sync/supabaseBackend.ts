@@ -1,5 +1,5 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { getConfig } from '../config.ts';
+import { type SupabaseClient } from '@supabase/supabase-js';
+import { getClient } from './auth.ts';
 import { type Change, type PullResult, type SyncBackend, SyncError, type SyncTable } from './types.ts';
 
 /**
@@ -113,16 +113,40 @@ export class SupabaseBackend implements SyncBackend {
     this.pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
   }
 
+  /**
+   * The backend the running app actually uses.
+   *
+   * It used to call `createClient` itself, and that was the whole bug. `sync/auth.ts`
+   * keeps the session under its own `storageKey` — and on a phone in AsyncStorage,
+   * which a default client cannot reach at all — so this second client had **never seen
+   * a session on either platform**. Every sync therefore raised *Not signed in*, and
+   * because that was classified non-retryable the engine deleted the whole batch from
+   * the outbox: everything written offline, dropped, silently, on the first attempt.
+   *
+   * Nothing caught it because nothing has ever called this. `supabaseBackend.test.ts`
+   * and `supabase.live.test.ts` both construct `new SupabaseBackend(client)` with a
+   * client they signed in themselves, so the tested path and the shipped path were not
+   * the same path. §6.67; the guard is in `app/src/wiring/`.
+   */
   static fromEnv(): SupabaseBackend | undefined {
-    const { supabaseUrl: url, supabaseAnonKey: key } = getConfig();
-    if (!url || !key) return undefined;
-    return new SupabaseBackend(createClient(url, key));
+    const client = getClient();
+    if (!client) return undefined;
+    return new SupabaseBackend(client);
   }
 
   private async userId(): Promise<string> {
     const { data, error } = await this.client.auth.getUser();
-    // Not being signed in is not retryable — retrying would spin forever.
-    if (error || !data.user) throw new SyncError('Not signed in', false);
+    /**
+     * Retryable, and the distinction matters more than it looks.
+     *
+     * The engine deletes a batch from the outbox when a push fails permanently, which
+     * is right for a row the server will never accept — a constraint violation is not
+     * going to start passing. It is wrong for a failure about the *request*: a session
+     * that expired mid-sync, or a driver and a backend that disagree about who is
+     * signed in, would take somebody's queued history with it. The driver refuses to
+     * sync while signed out, so this cannot spin. §6.67.
+     */
+    if (error || !data.user) throw new SyncError('Not signed in', true);
     return data.user.id;
   }
 
@@ -165,11 +189,20 @@ export class SupabaseBackend implements SyncBackend {
    * thousands of watches at once, so "one table with far more than a page of changes"
    * is the ordinary first sync for exactly the person this app was built for.
    *
-   * Paging is by keyset — the last row's `(updated_at, id)` — rather than by offset or
+   * Paging is by keyset — the last row's `(synced_at, id)` — rather than by offset or
    * by timestamp alone. Postgres stamps every row written in one transaction with the
-   * same `now()`, so a bulk import gives thousands of rows an identical `updated_at`. A
+   * same `now()`, so a bulk import gives thousands of rows an identical `synced_at`. A
    * cursor that is only a timestamp cannot say where inside that group it stopped:
    * `gt` loses the rest of the group and `gte` never advances past it.
+   *
+   * `synced_at`, not `updated_at`, since §6.67 and migration 0014. `updated_at` is
+   * whatever clock the writing device had; `synced_at` is when this server learned of
+   * the row. Ordering a cursor by the first meant one device a week fast pushed every
+   * other device's cursor a week into the future — after which they received nothing at
+   * all — and one a week slow pushed rows that every cursor had already passed, so the
+   * row arrived and nobody ever saw it. Conflict resolution still reads `updated_at`,
+   * which is the one thing it is good for: which of two offline edits the person made
+   * second.
    *
    * The external cursor stays a single timestamp, which is safe only because every
    * table is fully drained before it moves. It does mean a first sync after a large
@@ -193,7 +226,7 @@ export class SupabaseBackend implements SyncBackend {
 
         const filtered =
           lastTie === undefined
-            ? this.client.from(table).select('*').gt('updated_at', lastAt)
+            ? this.client.from(table).select('*').gt('synced_at', lastAt)
             : this.client
                 .from(table)
                 .select('*')
@@ -201,11 +234,11 @@ export class SupabaseBackend implements SyncBackend {
                 // stopped inside. Quoted because an id is arbitrary text and a bare
                 // comma would be read as another filter.
                 .or(
-                  `updated_at.gt.${lastAt},and(updated_at.eq.${lastAt},${tie}.gt."${lastTie}")`,
+                  `synced_at.gt.${lastAt},and(synced_at.eq.${lastAt},${tie}.gt."${lastTie}")`,
                 );
 
         const { data, error } = await filtered
-          .order('updated_at', { ascending: true })
+          .order('synced_at', { ascending: true })
           .order(tie, { ascending: true })
           .limit(this.pageSize);
 
@@ -213,8 +246,10 @@ export class SupabaseBackend implements SyncBackend {
         const rows = (data ?? []) as Record<string, unknown>[];
 
         for (const record of rows) {
+          // Two clocks, two jobs. The cursor advances on the server's; the change
+          // carries the device's, because that is what settles a conflict.
+          newest = Math.max(newest, Date.parse(String(record.synced_at)));
           const updatedAt = Date.parse(String(record.updated_at));
-          newest = Math.max(newest, updatedAt);
 
           changes.push({
             table,
@@ -232,7 +267,7 @@ export class SupabaseBackend implements SyncBackend {
         if (rows.length < this.pageSize) break;
 
         const last = rows[rows.length - 1];
-        lastAt = String(last.updated_at);
+        lastAt = String(last.synced_at);
         lastTie = String(last[tie]);
       }
     }

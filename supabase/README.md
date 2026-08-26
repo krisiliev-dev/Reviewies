@@ -41,6 +41,7 @@ directory.
 | `0011_reaction_sampling.sql` | `reactions_sample`, so a busy episode returns a spread rather than its first minutes |
 | `0012_expo_push_tokens.sql` | `push_tokens`, so a phone can be notified at all — Web Push cannot reach one |
 | `0013_notification_timezone.sql` | `notification_preferences.time_zone`, so "airs today" means the person's today rather than UTC's |
+| `0014_server_clock.sql` | `synced_at` on every syncable table, and a trigger that clamps a future `updated_at` and refuses a stale write — so one device's wrong clock cannot silence everybody else's sync |
 
 ## Push notifications
 

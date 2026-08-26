@@ -46,6 +46,8 @@ const UNREACHED: Record<string, string> = {
   'metadata/animeMapping#isAnime':
     'Answers the question the season correction asks implicitly. Nothing asks it directly.',
   'metadata/animeMapping#clearMappingCache': 'Test seam for the mapping cache.',
+  'sync/clock#resetClock':
+    'Test seam: the learned server offset is module state and a case must not inherit the previous one\u2019s. Nothing in the product forgets it — the offset describes the device, not the account, so signing out is not a reason to unlearn it.',
 };
 
 /**
