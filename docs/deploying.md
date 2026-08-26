@@ -123,7 +123,7 @@ that updates the site.
 | `VITE_SUPABASE_URL` | Supabase → Project Settings → API | For accounts and the shared layer |
 | `VITE_SUPABASE_ANON_KEY` | The same page — the **publishable/anon** key | As above |
 | `VITE_VAPID_PUBLIC_KEY` | Generated with the deploy; the private half is a function secret | For push |
-| `VITE_BRIDGE_RELAY`, `VITE_BRIDGE_TOKEN` | Your relay, if you run one | For the remote drawer |
+| `VITE_BRIDGE_RELAY`, `VITE_BRIDGE_TOKEN` | Your relay's bare `wss://` URL, if you run one, and its shared token | For the remote drawer. No query string: the app appends `role` and `token` itself |
 
 With none of them the app still builds and runs on sample data, which is why a broken
 variable shows up as "no search results" rather than a blank page.

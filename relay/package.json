@@ -15,6 +15,7 @@
     "@types/node": "^24.13.3",
     "@types/ws": "^8.5.13",
     "typescript": "~6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@reviewies/core": "*"
   }
 }

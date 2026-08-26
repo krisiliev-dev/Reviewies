@@ -2006,6 +2006,73 @@ What this still does not prove is the selectors. The fixture was written from th
 assumptions as the adapter, so a passing run says the two agree with each other, which is
 not evidence that either is right about Netflix. That stays in §7 where it was.
 
+### 6.43 The remote had never connected
+
+§6.42's extension POSTed watches to a path nothing serves and got a 200 back, because the
+SPA rewrite answers everything. That is a distinct failure from the ones before it — not a
+swallowed exception, not an unreached state, but a delivery into nothing that reports
+success. So: every outbound call in the product, and for each, what proves the far end
+received it rather than that the call returned.
+
+Most of them came back clean, and some of them are careful in ways worth noticing. The
+AniList client reads the GraphQL `errors` array, which is the classic 200-with-a-body-full-
+of-failure. `lookupAnimeIds` documents that ARM answers a miss with 200 and a literal
+`null`. Roku discovery checks the XML actually contains `<device-info>` rather than
+trusting a 200 from whatever answered on port 8060. The comment upload asserts a URL comes
+back rather than that the invoke resolved. The push sender reads Expo's tickets. Nothing
+else in the product points at a path under the app's own origin now that the extension's
+POST is gone, which was the specific question the rewrite raised.
+
+**But the remote control had never connected at all.** Not "sent into nothing" — refused,
+every time, before a byte moved.
+
+The relay identifies a connection entirely from its query string: `role` says which half
+of the pair you are, `token` says which pair. Anything without both is closed with 1008.
+The app opened `new WebSocket(VITE_BRIDGE_RELAY)` — a bare address — and then sent a
+`hello` message carrying the token. The bridge opened `new WebSocket(REVIEWIES_RELAY)` and
+sent a `welcome`. Neither message was ever read by anything, because the socket was already
+shut.
+
+Three documents each described a different URL. The relay's README had the query form. The
+bridge's README and its own header comment said `wss://your-relay/bridge` — a path, which
+the parser does not look at. The deployment table said "Your relay, if you run one". And
+the one thing none of them could describe is that the two halves need *different* URLs,
+because the role differs, so a single environment variable on each side cannot be the whole
+address.
+
+Measured rather than reasoned: the relay was started and dialled three ways.
+
+```
+app, as the app dials today (bare URL):   closed 1008 role must be app or bridge
+bridge, as its README says (/bridge):     closed 1008 role must be app or bridge
+with the query the relay documents:       open, still open after 500ms
+```
+
+Why nothing knew: `relay/src/relay.test.ts` covers the pairing class, and covers the URL
+parser, and both are correct. Nineteen tests, none of which dials a server. It is §6.27's
+shape exactly — each side individually right, and the join between them never made.
+
+Fixed at the only place that knows both the address and its own role: `relayConnectionUrl`
+in the core, used by the app and the bridge. `relay/src/pairing.test.ts` now stands up the
+real server and pairs two real clients — a bare URL is refused, a built one is accepted, a
+command crosses from app to bridge, a sender with nobody on the other side is told so, and
+two different tokens do not pair. Beside it, a cheap source guard: every `new WebSocket` in
+the product goes through the helper or explains itself, and the exemption list is empty on
+purpose.
+
+**And the reason was there the whole time.** A refused connection closes with 1008 *and a
+reason*, and both clients threw it away — the app set "disconnected" and retried every few
+seconds forever, the bridge printed the same sentence to a console nobody was reading. Both
+say why now, for any close that is not an ordinary one. Two consequences of the same habit:
+the information needed to fix this was travelling on every failed attempt for as long as the
+feature has existed.
+
+One smaller thing in the same family, found on the way past: `mobile/src/platform.ts` read
+`vapidPublicKey`, `bridgeRelay` and `bridgeToken` out of the Expo manifest. `extra` in
+`app.json` has never contained any of the three, and nothing on the phone consumes them —
+web push is a browser mechanism and this app uses Expo's, and the phone reaches a television
+directly, which is what §1.1 was about. Three keys read from a place they can never arrive.
+
 ---
 
 ## 7. What is still not known
@@ -2025,7 +2092,10 @@ and which single claim in this document could not be checked at all:
   because the static server answers an unknown path before the app boots; that expo-router
   routes to it on a device is the framework's business and is not under test here.
 - **The fingerprinter has never heard real audio through a real microphone.**
-- **The Roku and MPRIS adapters have never spoken to hardware.**
+- **The Roku and MPRIS adapters have never spoken to hardware.** The relay between the app
+  and the bridge is exercised now — §6.43's `relay/src/pairing.test.ts` stands up the real
+  server and pairs two real clients — but what crosses it in that test is a message, not a
+  television. No `pause` this product has sent has ever reached a device.
 - **The extension's site selectors have never met a real streaming site.** §6.42 runs the
   whole extension in a real browser against a fixture player page, which is the first time
   any of `content.ts`, `background.ts` or `inject.ts` has executed — but that fixture was

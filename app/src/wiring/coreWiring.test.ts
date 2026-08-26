@@ -56,6 +56,8 @@ const UNREACHED: Record<string, string> = {
 const LOPSIDED: Record<string, string> = {
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',
+  'app only: devices/relayUrl#relayConnectionUrl':
+    'The browser cannot reach a television directly, so the web goes through the relay; the phone has the local network entitlement and talks to it. The bridge uses this too — it is the relay\'s other half — but this check compares the app against the phone.',
   'app only: watching/scrobble#startScrobbleListener':
     'Listens for the browser extension. There is no browser extension on a phone, and nothing else posts a window message at it — the equivalent there is listening to the room, which is a different mechanism for a different situation.',
   'app only: calendar/upcoming#notificationsSupported':

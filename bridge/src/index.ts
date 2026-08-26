@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { RokuAdapter } from '@reviewies/core/devices/roku';
+import { relayConnectionUrl } from '@reviewies/core/devices/relayUrl';
 import { MprisAdapter } from './mpris';
 import { gdbusMprisTransport, nodeRokuTransport } from './transports';
 import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, type BridgeMessage } from './protocol';
@@ -11,7 +12,7 @@ import type { Device, DeviceAdapter } from '@reviewies/core/devices/types';
  * Dials outbound to a relay and waits to be told what to do. Nothing listens on a
  * port, so there is no inbound attack surface and no router configuration.
  *
- *   REVIEWIES_RELAY=wss://relay.example/bridge REVIEWIES_TOKEN=... node src/index.js
+ *   REVIEWIES_RELAY=wss://relay.example REVIEWIES_TOKEN=... node src/index.js
  */
 
 const RELAY = process.env.REVIEWIES_RELAY;
@@ -46,7 +47,10 @@ async function connect(): Promise<void> {
     process.exit(2);
   }
 
-  const socket = new WebSocket(RELAY);
+  // The relay wants the role and token in the query string; without them it closes the
+  // socket with 1008 before reading anything. This dialled RELAY bare and then sent a
+  // `welcome`, which nothing ever received. §6.43.
+  const socket = new WebSocket(relayConnectionUrl(RELAY, 'bridge', TOKEN));
   const send = (message: BridgeMessage) => {
     if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
   };
@@ -112,8 +116,16 @@ async function connect(): Promise<void> {
     }
   });
 
-  socket.addEventListener('close', () => {
-    console.log('Relay disconnected; retrying in 5s.');
+  socket.addEventListener('close', (event) => {
+    // Print why, when the relay says why. This process has nothing but its console, and
+    // "Relay disconnected; retrying in 5s." every five seconds forever is what a refused
+    // connection looked like — while the socket was carrying the reason the whole time.
+    // 1000 and 1001 are ordinary closes with nothing to report. §6.43.
+    const why =
+      event.code && event.code !== 1000 && event.code !== 1001
+        ? ` (${event.code}${event.reason ? `: ${event.reason}` : ''})`
+        : '';
+    console.log(`Relay disconnected${why}; retrying in 5s.`);
     // The bridge is meant to run unattended, so it reconnects rather than exiting.
     setTimeout(() => void connect(), 5000);
   });

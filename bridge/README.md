@@ -23,7 +23,7 @@ Nothing listens on a port, so there is no inbound attack surface.
 ```bash
 cd bridge
 npm install
-REVIEWIES_RELAY=wss://your-relay/bridge REVIEWIES_TOKEN=your-token node src/index.ts
+REVIEWIES_RELAY=wss://your-relay REVIEWIES_TOKEN=your-token node src/index.ts
 ```
 
 Without `REVIEWIES_TOKEN` it prints a generated one to pair with.

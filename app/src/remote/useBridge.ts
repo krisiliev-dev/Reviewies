@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getConfig } from '@reviewies/core/config';
+import { relayConnectionUrl } from '@reviewies/core/devices/relayUrl';
 
 /**
  * Client half of the bridge connection.
@@ -96,7 +97,24 @@ export function useBridge(): BridgeConnection {
       if (closed) return;
       setStatus('connecting');
 
-      const socket = new WebSocket(settings.url);
+      // The relay reads the role and token off the query string and closes anything
+      // without them. This used to dial `settings.url` bare and then send a `hello`
+      // carrying the token, which the relay never read because the socket was already
+      // shut. §6.43.
+      //
+      // A misspelt `VITE_BRIDGE_RELAY` throws here rather than at connect time — `new
+      // URL` is strict — and a bad environment variable must say so on the screen, not
+      // take the app down through the error boundary.
+      let address: string;
+      try {
+        address = relayConnectionUrl(settings.url, 'app', settings.token);
+      } catch {
+        setStatus('disconnected');
+        setError(`Cannot dial "${settings.url}" — it is not a valid relay address.`);
+        return;
+      }
+
+      const socket = new WebSocket(address);
       socketRef.current = socket;
 
       socket.onopen = () => {
@@ -132,10 +150,18 @@ export function useBridge(): BridgeConnection {
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         socketRef.current = null;
         if (closed) return;
         setStatus('disconnected');
+        // Say why, when the relay says why. A refused connection closes with 1008 and a
+        // reason — "role must be app or bridge" is the one this app spent its whole life
+        // getting — and throwing that away left the drawer showing "disconnected" and
+        // retrying every few seconds forever with nothing to act on. 1000 and 1001 are
+        // ordinary closes and have nothing to report. §6.43.
+        if (event.code !== 1000 && event.code !== 1001) {
+          setError(event.reason || `Relay closed the connection (${event.code})`);
+        }
         // The bridge is meant to run unattended, so reconnect rather than giving up.
         retryRef.current = setTimeout(connect, RECONNECT_MS);
       };

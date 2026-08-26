@@ -73,14 +73,17 @@ class HydratedStore implements KeyValueStore {
  * Metro equivalent of Vite replacing `import.meta.env`.
  */
 function readConfig() {
+  // Three keys, and only three. This also read `vapidPublicKey`, `bridgeRelay` and
+  // `bridgeToken` — none of which app.json's `extra` has ever contained, and none of
+  // which anything on the phone consumes: web push is a browser mechanism and this app
+  // uses Expo's, and the phone reaches a television directly rather than through the
+  // relay, which is what going native bought (§1.1). Reading a key from a place it can
+  // never arrive is the same shape as §6.43 one layer down. §6.43.
   const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
   return {
     tmdbToken: extra.tmdbToken,
     supabaseUrl: extra.supabaseUrl,
     supabaseAnonKey: extra.supabaseAnonKey,
-    vapidPublicKey: extra.vapidPublicKey,
-    bridgeRelay: extra.bridgeRelay,
-    bridgeToken: extra.bridgeToken,
   };
 }
 

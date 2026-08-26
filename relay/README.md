@@ -43,10 +43,20 @@ PORT=8787 npm start
 `GET /health` reports `{ ok, rooms }`.
 
 Connections are `wss://host/?role=app|bridge&token=<token>`. Tokens must be at least
-20 url-safe characters; anything shorter is refused at the handshake.
+20 url-safe characters; anything shorter is refused at the handshake — as is anything
+without both parameters, with close code 1008 and a reason, before a byte is exchanged.
 
-Point the app at it with `VITE_BRIDGE_RELAY` and `VITE_BRIDGE_TOKEN`, and the bridge
-with `REVIEWIES_RELAY` and `REVIEWIES_TOKEN`. Use the same token for both.
+Point the app at it with `VITE_BRIDGE_RELAY` and `VITE_BRIDGE_TOKEN`, and the bridge with
+`REVIEWIES_RELAY` and `REVIEWIES_TOKEN`. Use the same token for both, and give both the
+**bare** URL — `wss://your-relay`, with no query string and no path. Each client appends
+its own `role` and `token` through `relayConnectionUrl` in the core, because the two
+halves need different URLs and one environment variable cannot hold both.
+
+That is newer than it reads. Until §6.43 neither client appended anything: both dialled
+the bare URL and then sent a handshake *message* carrying the token, which nothing ever
+received because the relay had already closed the socket. This package's tests covered the
+pairing class and the URL parser, separately and correctly, and nothing dialled a running
+server — `src/pairing.test.ts` does now.
 
 ## Behaviour worth knowing
 
