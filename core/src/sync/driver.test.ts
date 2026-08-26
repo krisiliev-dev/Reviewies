@@ -68,7 +68,10 @@ describe('the sync driver', () => {
     // The whole point: a write on the title page reaches the server without anybody
     // opening the account panel.
     await vi.waitFor(() => expect(backend.snapshot()).toHaveLength(1), { timeout: 3000 });
-  });
+    // Two three-second waits inside a five-second default is a race the runner wins on a
+    // loaded machine, and it reports a timeout rather than the thing being waited for.
+    // §6.75.
+  }, 15_000);
 
   it('does nothing at all while signed out', async () => {
     vi.spyOn(auth, 'getSession').mockResolvedValue(null);

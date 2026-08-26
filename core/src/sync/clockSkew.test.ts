@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../data/db.ts';
 import { enqueue, resetSyncState, syncOnce } from './engine.ts';
-import { clockWarning, observeServerTime, resetClock, syncedNow } from './clock.ts';
+import {
+  clockOffsetMs,
+  clockWarning,
+  observeServerTime,
+  resetClock,
+  syncedNow,
+} from './clock.ts';
 import type { Change, PullResult } from './types.ts';
 
 /**
@@ -117,6 +123,53 @@ describe('telling somebody their clock is wrong', () => {
     vi.setSystemTime(NOW - 2 * 3_600_000);
     observeServerTime(NOW);
     expect(clockWarning()).toContain('2 hours');
+  });
+
+  /**
+   * The two edges of the sentence, which nothing pinned.
+   *
+   * §6.75 mutated `clock.ts` in fourteen places and ten of the changes survived — the
+   * highest proportion of any module measured. The tests above sit at five minutes,
+   * two hours and three days, so every threshold between them was free to move: the
+   * hour at which the warning appears at all, and the point where hours become days.
+   * The three-day test does not even pin the divisor, because 72 ÷ 25 still rounds to
+   * three.
+   */
+  it('speaks at exactly an hour, and not a minute before', () => {
+    // An hour is the stated bar — the point where the calendar starts being wrong — and
+    // "at least an hour" and "more than an hour" are different sentences. It is the
+    // first: the warning appears the moment the skew reaches the threshold.
+    //
+    // Written as sixty minutes rather than as `NOTABLE_SKEW_MS`, deliberately. A test
+    // that measures a constant with the same constant moves when it moves and says
+    // nothing — the trap §6.75 found in the retry-limit test two files away.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW + 59 * 60_000);
+    observeServerTime(NOW);
+    expect(clockWarning()).toBeUndefined();
+
+    vi.setSystemTime(NOW + 60 * 60_000);
+    observeServerTime(NOW);
+    expect(clockWarning()).toContain('1 hour');
+  });
+
+  it('counts in hours up to two days, and in days after that', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW + 47 * 3_600_000);
+    observeServerTime(NOW);
+    expect(clockWarning()).toContain('47 hours');
+
+    // 48 is where a number of hours stops being something anybody can picture.
+    vi.setSystemTime(NOW + 48 * 3_600_000);
+    observeServerTime(NOW);
+    expect(clockWarning()).toContain('2 days');
+
+    // Twenty-five rather than ten, because ten days is 240 hours and 240 divided by
+    // twenty-five still rounds to ten — the divisor could be wrong and the sentence
+    // would come out the same.
+    vi.setSystemTime(NOW + 25 * DAY);
+    observeServerTime(NOW);
+    expect(clockWarning()).toContain('25 days');
   });
 
   it('promises the history is safe, because it is', () => {
@@ -287,3 +340,46 @@ class TimestampCursorBackend {
     return [...this.rows.values()];
   }
 }
+
+/**
+ * What survives the app being closed.
+ *
+ * The offset is written to a preference so a device that has been corrected once stays
+ * corrected — otherwise every cold start writes wrongly-stamped rows until the first
+ * successful request comes back. §6.75 mutated the function that reads it back and
+ * nothing failed: every test in this file starts from a cleared clock, so the reading
+ * half had never run.
+ */
+describe('a clock that has already been corrected', () => {
+  it('uses this device\'s own time until the server has answered', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+    // Not "close to": with nothing known, correcting by anything at all is inventing an
+    // answer, and the offset has to be exactly zero rather than nearly zero.
+    expect(syncedNow()).toBe(NOW);
+    expect(clockOffsetMs()).toBeUndefined();
+  });
+
+  it('remembers the correction across a restart', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW + 3 * DAY);
+    observeServerTime(NOW);
+    expect(syncedNow()).toBeCloseTo(NOW, -4);
+
+    // A fresh process: nothing in memory, the preference still on disk.
+    resetClock({ keepStored: true });
+    expect(clockOffsetMs()).toBeCloseTo(-3 * DAY, -4);
+    expect(syncedNow()).toBeCloseTo(NOW, -4);
+  });
+
+  it('and forgets it when the clock is reset outright', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW + 3 * DAY);
+    observeServerTime(NOW);
+
+    resetClock();
+    // Nothing stored is not the same as an offset of zero: one is an unknown and the
+    // other is a measurement.
+    expect(clockOffsetMs()).toBeUndefined();
+  });
+});

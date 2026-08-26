@@ -43,7 +43,7 @@
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "test": "vitest run",
-    "smoke": "expo export --platform web && (npx serve dist -p 4200 --no-clipboard & sleep 6) && node smoke.mjs",
+    "smoke": "node ../scripts/portFree.mjs 4200 && expo export --platform web && (npx serve dist -p 4200 --no-clipboard & sleep 6) && node smoke.mjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true

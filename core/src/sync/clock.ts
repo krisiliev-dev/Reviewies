@@ -60,7 +60,10 @@ function load(): void {
   if (loaded) return;
   loaded = true;
   const stored = readPreference(OFFSET_KEY);
-  if (stored === null) return;
+  // The empty string is what `resetClock` writes, and `Number('')` is 0 — which would
+  // read as "the server says this clock is exactly right" rather than "the server has
+  // never answered". Two different things, and only one of them is true. §6.75.
+  if (stored === null || stored === '') return;
   const parsed = Number(stored);
   if (Number.isFinite(parsed)) offsetMs = parsed;
 }
@@ -102,10 +105,14 @@ export function clockOffsetMs(): number | undefined {
 }
 
 /** Forget the correction. For tests, and for signing out of an account. */
-export function resetClock(): void {
+export function resetClock({ keepStored = false }: { keepStored?: boolean } = {}): void {
   offsetMs = undefined;
   loaded = false;
-  writePreference(OFFSET_KEY, '');
+  // `keepStored` exists for one reason: it is the only way to reach `load()` a second
+  // time, and `load()` is what makes a correction survive an app being closed. §6.75
+  // mutated that function and the whole package stayed green, because every test here
+  // starts from a cleared clock and nothing had ever opened one that remembered.
+  if (!keepStored) writePreference(OFFSET_KEY, '');
 }
 
 /**

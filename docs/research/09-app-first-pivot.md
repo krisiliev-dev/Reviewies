@@ -4392,6 +4392,171 @@ readings for the same claim.
 
 ---
 
+### 6.75 Change a line and see whether anything notices
+
+Every guard in this repository is proved by planting the one violation its author had in
+mind. §6.74's closing line admitted what that leaves open: nobody had ever asked the
+other question — **which lines can be changed with every suite still green.**
+
+A throwaway harness answered it. One mutation at a time: write it, run the suites that
+could see it, record whether anything went red, put the file back. Six modules, chosen
+highest-stakes first.
+
+| module | mutants | killed | survived |
+|---|---|---|---|
+| `sync/engine.ts` | 47 | 34 | 13 |
+| `data/repo.ts` | 64 | 48 | 16 |
+| `calendar/upcoming.ts` | 33 | 28 | 5 |
+| `watching/reactions.ts` | 34 | 14 | 20 |
+| `time.ts` | 16 | 12 | 4 |
+| `sync/clock.ts` | 14 | 4 | 10 |
+
+That is 208 mutations and 68 survivors, and the number is the least interesting thing
+here. Where the survivors clustered is the finding.
+
+#### Half the survivors were an artefact of how the run was scoped
+
+Running the whole package for every mutation costs 51 seconds; running only the directory
+a module lives in costs 12. The fast version was used to triage, on the understanding
+that every survivor would be re-run against a wider scope before being believed. That
+step was not a formality:
+
+- **`repo.ts`: 16 survivors became 9.** Seven were killed by `src/sync` and `src/calendar`
+  — `syncSeriesStatus` is tested from `engine.test.ts` and `refresh.test.ts`, two
+  directories away from the file it lives in.
+- **`engine.ts`: 13 became 3**, once the four tests written earlier in this sprint were in
+  place and the scope reached `src/data`.
+- **`clock.ts`: 10 became 4.**
+- **`reactions.ts`: 20 stayed 20.**
+
+A survivor list from a narrow scope is not a finding; it is a shortlist. Reported without
+the second pass it would have claimed eleven missing tests that were not missing.
+
+#### A test that measures a constant with the same constant
+
+The sharpest single result. `stuck.test.ts` proves the outbox gives up on a row that keeps
+failing:
+
+```js
+for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) { … }
+expect((await db.rejected.toArray())[0].attempts).toBe(MAX_ATTEMPTS);
+```
+
+Change `MAX_ATTEMPTS` from 20 to 21 and it passes, because both halves move together. The
+same shape appeared again in `clock.ts`, where a threshold test written *during this
+sprint* referred to `NOTABLE_SKEW_MS` and therefore could not pin it. Both now assert
+against the other side of the boundary — the attempt before the limit, and fifty-nine
+minutes rather than sixty — and the clock one spells the hour out in minutes so the
+constant is measured by something that is not itself.
+
+#### Where nothing was watching at all
+
+**`estimateDriftMs` — every one of eighteen mutations survived.** This is the function
+that offers to correct somebody's timing mid-episode from the crowd's reactions. It had
+seven tests, all of them comfortably inside every threshold: eight seconds of drift
+against a two-second bar, three matches against a minimum of three, a ten-minute gap
+against a thirty-second window. So the two-second bar, the thirty-second window, the
+nearest-match tie-break and the entire even-length half of the median were free to move.
+The even branch had never run at all.
+
+The tie-break is the one worth naming. `Math.abs(d) < Math.abs(best)` keeps the first of
+two equally distant candidates; `<=` keeps the last. With the crowd split evenly either
+side of a tap, those are opposite answers — nudge forwards, or nudge backwards, five
+seconds each way. Six new tests kill eight of the eighteen; two of the rest are equivalent
+and eight are the Supabase read path, which needs a real server.
+
+**`clock.ts` — 10 of 14.** The `load()` that reads a saved offset back had never run,
+because every test in the file starts from a cleared clock and the only reset available
+also wiped what was stored. That function is what makes a correction survive the app being
+closed; without it every cold start writes wrongly-stamped rows until the first request
+returns. It now has a `resetClock({ keepStored: true })` seam — the one thing that reaches
+it — and three tests. Reading it back also turned up a smaller wrongness: `resetClock`
+writes an empty string, and `Number('')` is 0, so a reset clock reported "the server says
+this device is exactly right" rather than "the server has never answered".
+
+**`getStats`'s windows.** The 30-day test put its two watches sixty days and two days back.
+A whole extra day of margin is wide enough that thirty-one days, sixty-one minutes in an
+hour and a 1,001-millisecond second all still excluded it. The fixture now sits twenty
+minutes past the edge. `ytd` had never been asked anything at all — it could have started
+on the first of February.
+
+**`hasAired` with no air date.** Flipped to `return true` and nothing noticed. TMDB lists
+announced episodes with no date routinely, and reading them as aired is wrong twice over:
+Up Next offers an episode that does not exist, and a finished show never completes because
+of an undated placeholder at the end of it.
+
+**`syncSeriesStatus`'s return value.** Seven tests check the library row afterwards and
+none of them the boolean, so it could claim a change in both cases where there is none.
+`refresh.ts` counts those returns into the "3 shows reopened" line after a metadata
+refresh.
+
+#### What survives on purpose
+
+Not every survivor is a missing test, and saying so is part of the job:
+
+- **Equivalent.** `setTimeout(…, 0)` → `1`; `airDate.slice(0, 10)` → `(0, 11)` on a string
+  that is ten characters; `diff > 1` → `>= 1` under a line that already returned on
+  `diff === 1`; two `estimateDriftMs` guards that a later check catches anyway.
+- **Unobservable.** `catchUpTo` sorts the episodes it is about to mark; breaking the sort
+  changes the order of the writes and nothing anywhere depends on it. The set marked is
+  identical.
+- **Out of reach.** `MAX_PUSH_BATCHES` is a runaway-loop backstop at 500 batches of 200
+  rows; reaching it means a hundred thousand queued writes. The `current &&` in
+  `isolate()` differs only when an entry vanishes between being read and being cleared,
+  which needs a concurrency hook the suite does not have — and its sibling mutation, the
+  one that silently keeps delivered rows queued for ever, is killed by the accounting test
+  §6.74 added.
+- **Killed somewhere else entirely.** `UPCOMING_DAYS` is pinned in `app/src/wiring/copy.test.ts`,
+  because the sentence "the next two months" has to keep matching the number. Confirmed by
+  running it with the mutant in place, not by reading it.
+
+#### Three things the run broke that were not mutations
+
+Mutation testing turns out to be a stress test of everything around it, and all three of
+these were found by the harness misbehaving rather than by a surviving mutant.
+
+**A guard that counted a word in a comment as a use.** Writing the sentence *"`resetClock`
+writes an empty string"* into `clock.ts` made `coreWiring` stop reporting `resetClock` as
+unreached — its "a symbol used inside its own module is not dead" rule counts mentions in
+the raw source, and the second mention was prose. §6.72 fixed this class in fifteen
+guards and this one was not among them, because the plant it was given was a different
+shape. Comments are stripped now, and the moment they were, a real difference surfaced
+that the same bug had been hiding: **`discoverRokus` is called by the phone and not by the
+web** — a browser cannot send an SSDP broadcast — and it now has a written reason like
+every other asymmetry.
+
+**A flaky test that killed mutants for the wrong reason.** `scale.test.ts` asserts an
+import of 3,000 rows finishes in under twenty seconds, and vitest's default timeout is
+five. Running three core configurations at once on four cores, the runner killed it
+first — a red saying "timed out" where the number under test was nowhere near breached.
+It appeared as the cause of death for several mutants, including `setTimeout(…, 0)` → `1`,
+which cannot change behaviour at all. *A green mutation run is a claim; so is a red one.*
+Both that test and one in `driver.test.ts` are now told the same number they assert.
+
+**A smoke suite testing a previous run's build.** Four phone checks failed with the
+first-run screen showing "All caught up" instead of the migration. Nothing in the diff
+explained it: a `serve` from an earlier run still held port 4200, so this run's export was
+published on 45303 while `smoke.mjs` talked to the stale one — with the stale one's
+browser storage. `serve --no-port-switching` does not work with `-p`, so there is now a
+pre-flight, `scripts/portFree.mjs`, that refuses to start when the port is taken and says
+which process to look for. §6.74's shape once more: a suite that silently tests the wrong
+thing.
+
+#### Where it ended
+
+Twenty mutants still survive across the six modules: twelve in `reactions.ts` (five
+user-facing tuning constants, five on the Supabase read path, two equivalent), three in
+`engine.ts`, two in `repo.ts`, one in `upcoming.ts`, one in `time.ts` — every one of them
+classified above. `clock.ts` went from 4 survivors to none: its final
+run is 17 mutants and 17 kills.
+
+The harness is not committed. It is forty lines that write a file and shell out to vitest,
+and the interesting part was never the tool: it is that a suite of 1,192 tests, which
+§6.74 had just finished proving all *assert* something, could still be blind to a
+two-second threshold, a divisor, a boundary and a whole branch of a median.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4503,12 +4668,25 @@ and which single claim in this document could not be checked at all:
   real assertion from an unfailable one means knowing what the code could have done
   instead, which is what mutation testing is for and what nothing here does. The honest
   version of this claim is: no test is silent, and some may still be toothless.
-- **Nobody has run the suites against a mutated codebase.** Every guard in this repository
-  is proved by planting the one violation it claims to catch — deliberately, one at a
-  time, by hand, and recorded when it misfires (§6.72, §6.74). That is much better than
-  nothing and it is not coverage: it proves each guard catches the case its author thought
-  of. A mutation run would answer the other question — which lines can be changed with
-  every suite still green — and it has never been done here.
+- **Six modules have been mutated; the rest have not.** §6.75 ran 208 mutations over
+  `sync/engine.ts`, `data/repo.ts`, `calendar/upcoming.ts`, `watching/reactions.ts`,
+  `time.ts` and `sync/clock.ts`, and every surviving mutant is either killed now or
+  classified in that section. That is roughly a fifth of the core and none of `app/`,
+  `mobile/`, `relay/`, `bridge/` or `extension/`. The modules were chosen for stakes
+  rather than sampled, so the survival rates measured — 12% in `engine.ts`, 59% in
+  `reactions.ts` — say nothing about the ones not looked at.
+- **The mutation harness is not committed and not repeatable by anybody else.** It lives
+  in a scratch directory: forty lines that write a file, shell out to vitest and put the
+  file back. Re-running any of this means writing it again. That was the right trade for
+  one sprint and it means the numbers above are a snapshot, not a check — nothing stops
+  the next change from reintroducing exactly what was found.
+- **Twenty mutants are alive on purpose.** Five user-facing tuning constants and five
+  Supabase-only paths in `reactions.ts`, two unreachable loop caps and one concurrency
+  case in `engine.ts`, and a handful of genuinely equivalent changes. Each is named in
+  §6.75 with which kind it is. The two categories worth restating: a constant nothing
+  behavioural depends on is not a gap, and a path that needs a real server cannot be
+  reached from here at all — which is the same list as every other §7 entry about live
+  code.
 - **Eleven web screens were checked for the first time today.** `screenStates` had never
   examined a single-segment web route, so its claim that the suite renders them rested on
   nothing until §6.72. They pass now — but "passes a mention check" was always a weak

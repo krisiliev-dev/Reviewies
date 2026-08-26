@@ -173,6 +173,29 @@ describe('naming a day to a person', () => {
     expect(formatDay('2026-09-20', now)).toMatch(/\d/);
   });
 
+  /**
+   * Both edges of "within the week", which nothing pinned.
+   *
+   * §6.75 mutated `diff > 1 && diff < 7` in every direction and four of the five changes
+   * survived the suite. The two tests above sit at three days and twenty-five, so the
+   * boundaries at each end were free to move: the day after tomorrow could be pushed out
+   * to a date, and a week away could be pulled in to a weekday.
+   *
+   * The second one is the reason the range exists. "Tuesday" seven days from a Tuesday
+   * names today's weekday for something a whole week off — the exact ambiguity the
+   * comment on `formatDay` says the date is there to avoid.
+   */
+  it('names the weekday from the day after tomorrow to six days out', () => {
+    // now is Wednesday 2026-08-26: +2 is the first day past "Tomorrow", +6 the last
+    // before a weekday name would start repeating.
+    expect(formatDay('2026-08-28', now)).not.toMatch(/\d/);
+    expect(formatDay('2026-09-01', now)).not.toMatch(/\d/);
+  });
+
+  it('and switches to a date exactly a week out, before a weekday name repeats', () => {
+    expect(formatDay('2026-09-02', now)).toMatch(/\d/);
+  });
+
   it('hands back anything it cannot read, rather than showing "Invalid Date"', () => {
     expect(formatDay('TBA', now)).toBe('TBA');
   });

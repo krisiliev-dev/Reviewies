@@ -8,6 +8,7 @@ import {
   getUpNext,
   hasAired,
   markWatched,
+  syncSeriesStatus,
   unwatchLatest,
   watchCount,
   watchedEpisodeIds,
@@ -186,6 +187,24 @@ describe('Up Next', () => {
       const [entry] = await getUpNext(new Date(2026, 7, 27, 0, 1).getTime());
       expect(entry?.episode.name).toBe('Pilot');
     });
+
+    /**
+     * An episode with no date at all has not aired.
+     *
+     * §6.75 flipped that line to `return true` and nothing in the package noticed. TMDB
+     * lists announced episodes with no air date routinely, and reading them as aired is
+     * the wrong way round twice over: Up Next would offer an episode that does not
+     * exist yet, and `syncSeriesStatus` would refuse to complete a finished show
+     * because of an undated placeholder sitting at the end of it.
+     */
+    it('is not aired at all when nobody knows when it airs', async () => {
+      await seedOne('2026-08-27');
+      const undated = { ...(await db.episodes.get(ep(1)))!, airDate: undefined };
+      expect(hasAired(undated, new Date(2027, 0, 1).getTime())).toBe(false);
+
+      await db.episodes.update(ep(1), { airDate: undefined });
+      expect(await getUpNext(new Date(2027, 0, 1).getTime())).toHaveLength(0);
+    });
   });
 
   it('ignores shows that are not currently being watched', async () => {
@@ -238,6 +257,44 @@ describe('stats are runtime-weighted', () => {
 
     expect((await getStats('30d')).episodes).toBe(1);
     expect((await getStats('all')).episodes).toBe(2);
+  });
+
+  /**
+   * Thirty days, and the first of January.
+   *
+   * The test above puts its two watches sixty days and two days back, which leaves the
+   * whole middle of the range untested: §6.75 could change the window to thirty-one
+   * days, or to sixty-one hours a day, and nothing noticed. `ytd` was worse — nothing
+   * had ever asked it anything, so it could have started on the first of February.
+   *
+   * These are the three buttons at the top of the Stats screen. Somebody comparing this
+   * month to last is reading the answer.
+   */
+  it('counts thirty days back, to the minute', async () => {
+    // Twenty minutes past the edge rather than a day past it: a whole extra day is
+    // wide enough that every wrong version of this arithmetic still excludes it, which
+    // is how the window survived being changed to thirty-one days, to sixty-one minutes
+    // an hour, and to a second of 1,001 milliseconds.
+    const now = Date.parse('2026-08-26T12:00:00Z');
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: now - 29 * DAY });
+    await markWatched({
+      targetId: ep(2),
+      seriesId: SERIES,
+      watchedAt: now - 30 * DAY - 20 * 60_000,
+    });
+
+    expect((await getStats('30d', now)).episodes).toBe(1);
+    expect((await getStats('all', now)).episodes).toBe(2);
+  });
+
+  it('starts the year on the first of January, in the local calendar', async () => {
+    const now = Date.parse('2026-08-26T12:00:00Z');
+    const newYear = new Date(2026, 0, 1).getTime();
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: newYear + 60_000 });
+    await markWatched({ targetId: ep(2), seriesId: SERIES, watchedAt: newYear - 60_000 });
+
+    expect((await getStats('ytd', now)).episodes).toBe(1);
+    expect((await getStats('all', now)).episodes).toBe(2);
   });
 });
 
@@ -420,5 +477,41 @@ describe('a finished show leaves "watching" on its own', () => {
     await db.library.update(SERIES, { status: 'dropped' });
     await catchUpTo(SERIES, 1, 3);
     expect(await status()).toBe('dropped');
+  });
+
+  /**
+   * And says whether it changed anything, which is a number somebody reads.
+   *
+   * Every test above checks the library row and none of them the return value, so
+   * §6.75 could make `syncSeriesStatus` claim a change in both of the cases where
+   * there is none — a show the user dropped, and a show already in the right state —
+   * and the whole suite stayed green. `refresh.ts` counts those returns into
+   * `report.reopened`, which is the "3 shows reopened" line after a metadata refresh.
+   * Claiming a change that did not happen is the one thing the boolean must not do.
+   */
+  it('reports no change when it leaves a show alone', async () => {
+    await seedEnded(3);
+    await db.library.update(SERIES, { status: 'dropped' });
+    expect(await syncSeriesStatus(SERIES)).toBe(false);
+
+    // Not in the library at all is the other way in through that first line.
+    expect(await syncSeriesStatus('tmdb:tv:absent')).toBe(false);
+
+    // And the ordinary case: watching, not finished, nothing to do.
+    await db.library.update(SERIES, { status: 'watching' });
+    expect(await syncSeriesStatus(SERIES)).toBe(false);
+  });
+
+  it('reports the change when it makes one', async () => {
+    await seedEnded(3);
+    // `catchUpTo` runs the check itself, so the show is already completed here and a
+    // further call has nothing to do.
+    await catchUpTo(SERIES, 1, 3);
+    expect(await syncSeriesStatus(SERIES)).toBe(false);
+
+    // Put it back by hand, and the next call is the one that changes something.
+    await db.library.update(SERIES, { status: 'watching' });
+    expect(await syncSeriesStatus(SERIES)).toBe(true);
+    expect(await status()).toBe('completed');
   });
 });

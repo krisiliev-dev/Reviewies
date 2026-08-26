@@ -113,6 +113,36 @@ describe('one write the server will never accept', () => {
     expect((await syncOnce(backend)).rejected).toBe(1);
   });
 
+  /**
+   * Nothing is lost in the search, and everything delivered leaves the queue.
+   *
+   * §6.75 mutated `isolate()` and three separate changes survived the whole suite:
+   * dropping the first entry of every left-hand half during the bisection, and both
+   * halves of the `current && current.updatedAt === entry.updatedAt` that clears what
+   * was delivered. The tests above check the *server* — seven rows arrived, one was set
+   * aside — and never that the queue on this device is emptied of them, or that the
+   * search visits every row it was given.
+   *
+   * The arithmetic is the point: whatever was queued is now exactly delivered plus set
+   * aside plus still waiting, with nothing unaccounted for. A row that vanishes in the
+   * bisection is a write the person made, gone, with no error anywhere.
+   */
+  it('accounts for every row it was given', async () => {
+    // Nine, with the refused one in the middle, so the search bisects more than once and
+    // the poison is not on an edge where an off-by-one would step over it harmlessly.
+    const ids = ['a', 'b', 'c', 'd', 'poison', 'e', 'f', 'g', 'h'];
+    await queue(ids);
+    await syncOnce(backend);
+
+    const delivered = backend.snapshot().map((c) => c.pk);
+    const setAside = (await db.rejected.toArray()).map((r) => r.pk);
+    const stillQueued = (await db.outbox.toArray()).map((e) => e.pk);
+
+    expect([...delivered, ...setAside, ...stillQueued].sort()).toEqual([...ids].sort());
+    expect(setAside).toEqual(['poison']);
+    expect(stillQueued).toEqual([]);
+  });
+
   it('finds more than one of them in the same batch', async () => {
     backend.refuses.set('watches:poison2', new SyncError('22P02: invalid input', false));
     await queue(['poison', 'a', 'poison2', 'b']);
@@ -146,6 +176,32 @@ describe('a failure the server calls temporary', () => {
     expect(await db.outbox.count()).toBe(0);
     expect(await rejectedCount()).toBe(1);
     expect((await db.rejected.toArray())[0].attempts).toBe(MAX_ATTEMPTS);
+  });
+
+  /**
+   * The last attempt before the limit, which the test above cannot see.
+   *
+   * It loops `MAX_ATTEMPTS` times and then asserts the count is `MAX_ATTEMPTS` — the
+   * constant measuring itself. §6.75 changed 20 to 21 and it stayed green, because both
+   * halves moved together. Whether the row is held for one more try or given up on one
+   * early is the part somebody would actually notice, and it needs the *other* side of
+   * the boundary to say anything at all.
+   */
+  it('holds on for the last attempt before the limit', async () => {
+    await queue(['a']);
+    for (let attempt = 0; attempt < MAX_ATTEMPTS - 1; attempt++) {
+      backend.failNextPush = new SyncError('503: unavailable', true);
+      await syncOnce(backend);
+    }
+
+    expect(await rejectedCount()).toBe(0);
+    expect(await db.outbox.count()).toBe(1);
+    expect((await db.outbox.toArray())[0].attempts).toBe(MAX_ATTEMPTS - 1);
+
+    // And the next one is the one that gives up.
+    backend.failNextPush = new SyncError('503: unavailable', true);
+    await syncOnce(backend);
+    expect(await rejectedCount()).toBe(1);
   });
 
   it('and an ordinary network failure is still just a wait', async () => {

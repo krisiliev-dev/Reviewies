@@ -316,12 +316,18 @@ describe('pull', () => {
     expect((await syncOnce(backend)).pulled).toBe(0);
   });
 
-  it('replicates deletes as tombstones', async () => {
+  it('replicates deletes as tombstones, and counts them as pulled', async () => {
     await db.watches.put(watch('gone') as never);
     backend.seed({ pk: 'gone', table: 'watches', row: {}, updatedAt: 9000, deleted: true });
 
-    await syncOnce(backend);
+    const result = await syncOnce(backend);
     expect(await db.watches.get('gone')).toBeUndefined();
+    // A tombstone applied is a change received, not a conflict resolved locally. §6.75
+    // found the delete branch could report either and nothing would notice — and the
+    // two numbers are what the Data screen shows somebody who is asking whether their
+    // devices agree.
+    expect(result.pulled).toBe(1);
+    expect(result.conflictsResolvedLocally).toBe(0);
   });
 
   /**

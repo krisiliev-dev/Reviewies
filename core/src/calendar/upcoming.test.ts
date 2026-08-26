@@ -1,7 +1,14 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../data/db.ts';
 import { dayKey } from '../time.ts';
-import { classify, getUpcoming, groupByDay, shouldNotify } from './upcoming.ts';
+import {
+  classify,
+  getUpcoming,
+  groupByDay,
+  notificationsSupported,
+  requestPermission,
+  shouldNotify,
+} from './upcoming.ts';
 import type { CachedEpisode } from '../domain/types.ts';
 
 const DAY = 86_400_000;
@@ -113,6 +120,24 @@ describe('upcoming feed', () => {
   });
 
   /**
+   * The far edge of the window, which nothing pinned.
+   *
+   * §6.75 changed `airs > until` to `airs >= until` and the whole suite stayed green:
+   * every fixture here sits three or five days out, so the day the window ends on was
+   * free to be included or excluded. It matters at the size the product actually uses —
+   * a premiere announced exactly two months out is the thing somebody opens this screen
+   * to find, and it is the last day the window covers.
+   */
+  it('includes the last day of the window and nothing past it', async () => {
+    await db.episodes.bulkPut([
+      ep(1, 1, { airDate: dateAt(30) }),
+      ep(1, 2, { id: 'tmdb:ep:s1e2', airDate: dateAt(31) }),
+    ]);
+    const found = await getUpcoming(30, now);
+    expect(found.map((e) => e.episode.number)).toEqual([1]);
+  });
+
+  /**
    * The boundary, which is where the whole bug lived and which nothing tested.
    *
    * Every fixture above is *days* from now, so reading an air date as UTC midnight and
@@ -193,5 +218,75 @@ describe('grouping', () => {
 
   it('handles an empty list', () => {
     expect(groupByDay([])).toEqual([]);
+  });
+});
+
+/**
+ * The permission prompt, which had never run.
+ *
+ * §6.75 inverted both conditions in `requestPermission` and the suite stayed green —
+ * nothing in this package had ever called it, on any branch. It is not decoration: it is
+ * the gate in front of every notification the calendar offers, and its whole job is to
+ * behave where the API is missing, which is the case on iOS in a Safari tab and here.
+ */
+describe('asking for notification permission', () => {
+  interface FakeNotification {
+    permission: NotificationPermission;
+    requestPermission: () => Promise<NotificationPermission>;
+  }
+  const slot = globalThis as unknown as { Notification?: FakeNotification };
+  const before = slot.Notification;
+
+  afterEach(() => {
+    if (before === undefined) delete slot.Notification;
+    else slot.Notification = before;
+  });
+
+  it('refuses rather than throwing where the API does not exist', async () => {
+    delete slot.Notification;
+    expect(notificationsSupported()).toBe(false);
+    await expect(requestPermission()).resolves.toBe('denied');
+  });
+
+  it('does not ask again once the answer is known', async () => {
+    // Asking a second time is either a no-op or, on some browsers, an error — and
+    // either way it is the wrong thing to do to somebody who has already answered.
+    let asked = 0;
+    slot.Notification = {
+      permission: 'granted',
+      requestPermission: async () => {
+        asked++;
+        return 'granted';
+      },
+    };
+    await expect(requestPermission()).resolves.toBe('granted');
+    expect(asked).toBe(0);
+
+    slot.Notification.permission = 'denied';
+    await expect(requestPermission()).resolves.toBe('denied');
+    expect(asked).toBe(0);
+  });
+
+  it('asks exactly once when nobody has answered yet', async () => {
+    let asked = 0;
+    slot.Notification = {
+      permission: 'default',
+      requestPermission: async () => {
+        asked++;
+        return 'granted';
+      },
+    };
+    await expect(requestPermission()).resolves.toBe('granted');
+    expect(asked).toBe(1);
+  });
+
+  it('treats a browser that throws as a refusal', async () => {
+    slot.Notification = {
+      permission: 'default',
+      requestPermission: async () => {
+        throw new Error('permission API unavailable in this context');
+      },
+    };
+    await expect(requestPermission()).resolves.toBe('denied');
   });
 });

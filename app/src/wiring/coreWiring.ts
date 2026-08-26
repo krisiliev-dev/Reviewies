@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * What the core offers, and who actually calls it.
@@ -186,8 +187,15 @@ export function scan(tree: Tree): Reach[] {
 
   // A symbol used inside the module that declares it is not dead either; it is simply
   // not the entry point. Without this the report is mostly helper functions.
+  //
+  // Comments stripped first, which §6.72 would have caught if its plant had been this
+  // shape. §6.75 wrote a sentence about `resetClock` into the file that declares it and
+  // the export stopped being reported as unreached — the second "mention" was prose. A
+  // guard that counts the word rather than the call cannot tell an explanation from a
+  // use, and the failure is silent in the direction that matters: it marks dead code
+  // alive.
   for (const [module, names] of exports) {
-    const source = tree.read(`core/src/${module}.ts`);
+    const source = stripComments(tree.read(`core/src/${module}.ts`));
     for (const name of names) {
       const mentions = source.match(new RegExp(`\\b${name}\\b`, 'g'))?.length ?? 0;
       if (mentions > 1) record(module, name, 'core');

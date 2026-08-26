@@ -72,6 +72,8 @@ const LOPSIDED: Record<string, string> = {
     'How long to record a contribution, which only the web decides: it takes one bounded capture of that length, while the phone records for as long as you hold the button and is bounded by MIN_REFERENCE_MS at the other end. Both numbers live together in the core so the pair can be read at once (§6.52).',
   'mobile only: devices/direct#createDirectRokuAdapter':
     'The phone is on the same network as the television and can speak to it. A browser cannot, so the web goes through the local bridge.',
+  'mobile only: devices/direct#discoverRokus':
+    'The other half of the same difference, and hidden until \u00a76.75. Finding a Roku means an SSDP broadcast over UDP, which a browser cannot send at all — the web asks the bridge for the list instead. This was not reported as lopsided before, because the file that declares it mentions the name once more in a comment and the scan counted that as a second use; stripping comments made the truth visible.',
   'mobile only: fingerprint/continuous#ContinuousMatcher':
     'The phone holds a background audio session and corrects for drift as it goes. The web takes one bounded capture with the microphone on only for those few seconds, which is a privacy decision rather than a missing feature.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',

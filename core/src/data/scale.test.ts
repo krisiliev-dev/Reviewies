@@ -216,7 +216,12 @@ describe('a library somebody has actually used', () => {
     const ms = await took('enqueueAll (3000 rows)', () => enqueueAll('watches', rows));
     expect(await pendingCount()).toBeGreaterThan(2999);
     expect(ms).toBeLessThan(20_000);
-  });
+    // The budget above is twenty seconds and vitest's default is five, so on a machine
+    // running the three core configurations at once this was killed by the runner rather
+    // than failed by its own measurement — a red that says "timed out" where the number
+    // it is actually asserting was nowhere near breached. §6.75 hit it twice while
+    // measuring something else entirely. The runner is told the same number the test is.
+  }, 30_000);
 
   it('looks up one show’s watched episodes without reading everybody else’s', async () => {
     // The per-show query Up Next makes, on its own: if this is linear in the *whole*

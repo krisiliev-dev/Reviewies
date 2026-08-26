@@ -9,7 +9,7 @@
     "test": "vitest run",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "VITE_TMDB_TOKEN= npm run build && (npx vite preview --port 4173 & sleep 6) && node smoke.mjs",
+    "smoke": "node ../scripts/portFree.mjs 4173 && VITE_TMDB_TOKEN= npm run build && (npx vite preview --port 4173 --strictPort & sleep 6) && node smoke.mjs",
     "smoke:failures": "npm run build && (npx vite preview --port 4173 & sleep 6) && node failures.mjs"
   },
   "dependencies": {

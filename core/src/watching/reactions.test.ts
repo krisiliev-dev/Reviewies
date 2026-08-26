@@ -84,4 +84,70 @@ describe('crowd drift estimation', () => {
     // A 10-minute gap is a different scene, not drift.
     expect(estimateDriftMs(at(600_000, 620_000, 640_000), at(1000, 2000, 3000))).toBeUndefined();
   });
+
+  /**
+   * The edges of it, none of which anything reached.
+   *
+   * §6.75 mutated this function in eighteen places and every change survived the suite —
+   * the highest proportion in the package. The tests above are all comfortably inside
+   * the thresholds: eight seconds of drift against a two-second bar, three matches
+   * against a minimum of three, a ten-minute gap against a thirty-second window. So
+   * every boundary, and the whole even-length half of the median, was free to move.
+   *
+   * It is not a decorative function. It is what offers to correct somebody's timing
+   * mid-episode, and being wrong about the direction or the amount is worse than saying
+   * nothing.
+   */
+  it('takes the reading at exactly two seconds, and not just under', () => {
+    expect(estimateDriftMs(at(12_000, 32_000, 52_000), at(10_000, 30_000, 50_000))).toBe(-2000);
+    expect(
+      estimateDriftMs(at(11_999, 31_999, 51_999), at(10_000, 30_000, 50_000)),
+    ).toBeUndefined();
+  });
+
+  it('averages the middle two when the number of matches is even', () => {
+    // Four matches, a hundred seconds apart so each has one candidate, with deltas of
+    // −2000 −4000 −6000 −8000. The answer is −5000: the mean of the middle pair, which
+    // is not any single delta and not the mean of the outer pair either. Every test
+    // above has an odd count, so this branch had never run.
+    const drift = estimateDriftMs(
+      at(12_000, 114_000, 216_000, 318_000),
+      at(10_000, 110_000, 210_000, 310_000),
+    );
+    expect(drift).toBe(-5000);
+  });
+
+  it('does not flip the sign when the crowd is equally split either side', () => {
+    // Two candidates the same distance apart in opposite directions. Which one is kept
+    // decides whether somebody is told to nudge forwards or backwards, and the two
+    // answers are five seconds apart in opposite directions.
+    const drift = estimateDriftMs(
+      at(20_000, 120_000, 220_000),
+      at(15_000, 25_000, 115_000, 125_000, 215_000, 225_000),
+    );
+    expect(drift).toBe(-5000);
+  });
+
+  it('counts a match exactly at the edge of the window, and nothing past it', () => {
+    // Thirty seconds is the window. At exactly that distance the crowd reaction is
+    // still the same moment; a millisecond further out it is not.
+    // Spaced a hundred seconds apart so each of mine has exactly one candidate and the
+    // nearest-match rule cannot quietly pick a closer one.
+    expect(estimateDriftMs(at(40_000, 140_000, 240_000), at(10_000, 110_000, 210_000))).toBe(
+      -30_000,
+    );
+    expect(
+      estimateDriftMs(at(40_001, 140_001, 240_001), at(10_000, 110_000, 210_000)),
+    ).toBeUndefined();
+  });
+
+  it('needs three of my own reactions, not two', () => {
+    expect(estimateDriftMs(at(18_000, 38_000), at(10_000, 30_000))).toBeUndefined();
+    expect(estimateDriftMs(at(18_000, 38_000, 58_000), at(10_000, 30_000, 50_000))).toBe(-8000);
+  });
+
+  it('needs three that actually matched, not three that were offered', () => {
+    // Three of mine, but only two land within the window of any crowd reaction.
+    expect(estimateDriftMs(at(18_000, 38_000, 900_000), at(10_000, 30_000))).toBeUndefined();
+  });
 });
