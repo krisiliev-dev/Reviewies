@@ -5,7 +5,7 @@ const outdir = new URL('./dist/', import.meta.url).pathname;
 mkdirSync(outdir, { recursive: true });
 
 await build({
-  entryPoints: ['src/content.ts', 'src/background.ts', 'src/options.ts', 'src/inject.ts'],
+  entryPoints: ['src/content.ts', 'src/background.ts', 'src/inject.ts'],
   bundle: true,
   format: 'esm',
   target: 'chrome110',
@@ -13,7 +13,7 @@ await build({
   logLevel: 'info',
 });
 
-for (const file of ['manifest.json', 'options.html']) {
+for (const file of ['manifest.json']) {
   cpSync(new URL(`./${file}`, import.meta.url).pathname, outdir + file);
 }
 

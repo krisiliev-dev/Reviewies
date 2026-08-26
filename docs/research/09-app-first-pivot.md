@@ -1932,6 +1932,80 @@ The shape across §6.40 and §6.41 is the same one, twice: work that is only per
 somebody remembers to perform it is work that eventually is not performed, and the record
 of it says green either way. The answer both times was a command that exits non-zero.
 
+### 6.42 The extension, run for the first time
+
+§6.41 made the extension a workspace and typechecked it. Typechecking a directory is not
+reading it, and none of `content.ts`, `background.ts` or `inject.ts` had ever been
+executed by anything — only the pure functions in `parse.ts` and `adapters.ts` were
+covered, from the app package.
+
+It runs now. `extension/smoke.mjs` loads the built extension into the pinned Chromium and
+drives it: a fixture player page served on `https://www.netflix.com`, so the manifest's
+own match patterns decide whether the content script runs rather than the test injecting
+it by hand, and a real `<video>` — a generated WAV of silence, three and a half minutes
+of it, because `findVideo` requires a finite duration over 120 seconds and a property
+defined on the page's wrapper is invisible to a content script's isolated world anyway.
+Twenty checks, following one reading from the DOM through the service worker to the app
+page.
+
+**Automatic scrobbling had never worked, and could not have.** The extension has computed
+`isWatched` since it shipped and POSTed the result to a URL configured on an options page:
+`https://your-reviewies-instance/api/playback`. No Reviewies instance serves that path.
+The app is a static site, and on the deployed origin the SPA rewrite in `vercel.json`
+answers `/(.*)` with `index.html` — so the POST returned 200, the `fetch` resolved, and
+nothing was recorded. Not a 404, not an error, not a swallowed exception: a success. The
+README called it "the only thing in the product that marks an episode watched without
+anybody tapping anything", and `WatchEvent['source']` has had `'extension'` in its union
+since the data model was written with nothing anywhere writing it.
+
+It works now, over the channel that already worked. The watch travels on the same
+`postMessage` as the position, and `core/src/watching/scrobble.ts` decides what to do
+with it — deliberately unwilling, because a scrobble is a show *name* scraped off a
+streaming page and marking the wrong episode watched silently corrupts the history this
+product exists to protect:
+
+- only titles already in the library are considered. Nothing is added and nothing is
+  looked up: a page title must not be able to start tracking something on your behalf.
+- the name has to match closely *and* beat the runner-up clearly. Two similar names is
+  exactly when a confident wrong answer costs most, so it is declined instead.
+- an episode already watched is left alone, so a heartbeat arriving twice is not a
+  rewatch.
+
+The web suite proved the app is actually listening, which is the §6.26 question and not
+the same as the rules being right: a scrobble took Up Next from 16 remaining to 15, and a
+show nobody tracks changed nothing. The catch-up section then had to move from "Marked 11
+episodes" to "Marked 10" — which is not an adjustment to make a test pass but the
+evidence that catching up skipped the scrobbled episode instead of re-marking it.
+
+**The staleness guard was defeated by the extension itself.** The app ignores readings
+older than fifteen seconds so a crashed extension cannot freeze the clock at its last
+known position. `inject.ts` polled the worker every second and stamped `at: Date.now()`
+on whatever it got back — so a stored reading never aged, and a stream that had stopped
+looked exactly like a paused one still being observed. Closing the streaming tab left
+Watching Mode following a dead position indefinitely. It forwards the worker's own
+`updatedAt` now. Proved by putting the bug back: the timestamps start advancing again and
+two checks go red.
+
+**Two things that were describing a product nobody had.** `alarms` was in the manifest and
+no code has ever called `chrome.alarms` — measured off the running extension rather than
+read off the file, so what is asserted is what Chrome granted. And `background.ts` had an
+`onMessageExternal` listener for the app to call directly; a page can only message an
+extension that names its origin under `externally_connectable`, which this manifest has
+never had, so that listener could not fire. The app's own bridge documented it as one of
+two supported paths and implemented the other one. Both are gone, along with the options
+page whose only field configured the endpoint that did not exist.
+
+Two things about the harness worth writing down, because each looks exactly like a bug in
+the extension. `route.fulfill` answers with a plain 200 and no `Accept-Ranges`, so
+Chromium reports the media as unseekable and `currentTime = 190` is silently refused —
+the route handler answers range requests itself now. Serving the media from a local HTTP
+server instead does not work either: the page is https and the server is not, so it is
+blocked as mixed content.
+
+What this still does not prove is the selectors. The fixture was written from the same
+assumptions as the adapter, so a passing run says the two agree with each other, which is
+not evidence that either is right about Netflix. That stays in §7 where it was.
+
 ---
 
 ## 7. What is still not known
@@ -1952,11 +2026,14 @@ and which single claim in this document could not be checked at all:
   routes to it on a device is the framework's business and is not under test here.
 - **The fingerprinter has never heard real audio through a real microphone.**
 - **The Roku and MPRIS adapters have never spoken to hardware.**
-- **The extension's site selectors have never met a real streaming site**, and the
-  extension has never been loaded into a browser at all. Since §6.41 it is a workspace,
-  typechecked and built by `npm run verify`, and its parser and adapters are covered by
-  `app/src/extension/parse.test.ts` — but `background.ts`, `content.ts` and `inject.ts`
-  have no tests, and nothing has ever run them.
+- **The extension's site selectors have never met a real streaming site.** §6.42 runs the
+  whole extension in a real browser against a fixture player page, which is the first time
+  any of `content.ts`, `background.ts` or `inject.ts` has executed — but that fixture was
+  written from the same assumptions as `adapters.ts`, so it shows the two agree with each
+  other and nothing about whether either is right. Netflix, Prime Video, Disney+, Max,
+  Crunchyroll and YouTube have never been opened. The fallback to the page title, which is
+  what makes a stale selector cost precision rather than function, is likewise only
+  exercised against a fixture.
 - **The edge functions have never been typechecked.** They are Deno, and there is no Deno
   in this container. `app/src/wiring/runnable.test.ts` checks the two things that actually
   break them — that they parse, and that their relative imports into `core/` still exist —

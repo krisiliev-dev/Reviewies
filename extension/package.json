@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke": "npm run build && node smoke.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.28",

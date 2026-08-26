@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
+import { startScrobbleListener } from '@reviewies/core/watching/scrobble';
 import { TabIcon } from './ui/TabIcon';
 import { More } from './screens/More';
 import { NotFound } from './screens/NotFound';
@@ -36,6 +37,11 @@ export default function App() {
     // simply watching never learned about its next season. This keeps it current for
     // the app rather than for whoever happens to open a title.
     const stopRefresh = startCalendarRefresh();
+    // The browser extension marks an episode watched when it sees you finish it, and
+    // delivers that to whichever Reviewies tab is open. Started here for the same reason
+    // as the sync driver: finishing an episode in a streaming tab has nothing to do with
+    // which screen of this app happens to be showing. §6.42.
+    const stopScrobbles = startScrobbleListener();
     // Coming back online, and coming back to the tab, are the two moments a queued
     // change is most likely to succeed.
     const wake = () => void requestSync();
@@ -47,6 +53,7 @@ export default function App() {
     return () => {
       stop();
       stopRefresh();
+      stopScrobbles();
       window.removeEventListener('online', wake);
       document.removeEventListener('visibilitychange', onVisible);
     };

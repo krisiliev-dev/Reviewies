@@ -20,7 +20,8 @@ all, which is the listening path's real weakness. An episode nobody has mapped c
 listened to; every episode can be read off a `<video>`.
 
 It is also the only thing in the product that marks an episode watched without anybody
-tapping anything.
+tapping anything — see *Marking things watched* below, which is a newer claim than it
+looks, because until §6.42 that half posted into the void.
 
 So it stays. What is *not* claimed for it: that its selectors work today (see below),
 that it will ever cover more than a handful of services, or that it is the primary way
@@ -35,9 +36,15 @@ npm run build
 ```
 
 Then load `extension/dist` as an unpacked extension (`chrome://extensions` →
-Developer mode → Load unpacked). Set a relay URL in the extension's options if you
-want playback forwarded to a running Reviewies instance; leave it blank to send
-nothing.
+Developer mode → Load unpacked). There is nothing to configure: everything the
+extension sees is handed to an open Reviewies tab, and if there is not one open it
+waits.
+
+There used to be an options page for a "relay URL", pointing at
+`https://your-reviewies-instance/api/playback`. No Reviewies instance has ever served
+that path — the app is a static site, and on the deployed origin the SPA rewrite answers
+it with `index.html` and a 200, so the POST succeeded and nothing happened. It is gone,
+along with the `alarms` permission, which nothing ever used.
 
 ## Driving Watching Mode
 
@@ -55,6 +62,22 @@ that content script entry if you host the app somewhere else — until an origin
 there, the extension cannot reach the app page at all, which is a silent nothing rather
 than an error. That was true of the deployed app for some weeks: the manifest listed only
 localhost while the app it was meant to drive lived on Vercel.
+
+## Marking things watched
+
+Past ninety per cent of an episode, the extension records it and hands it to an open
+Reviewies tab on the same `postMessage` channel the position uses. The app decides what
+to do with it, and is deliberately unwilling:
+
+- only shows **already in your library** are considered. Nothing is added and nothing is
+  looked up — a page title must not be able to start tracking something for you.
+- the name has to match one library entry closely and beat the runner-up clearly.
+  Ambiguity is declined rather than guessed at.
+- an episode already watched is left alone, so a heartbeat arriving twice is not a
+  rewatch.
+
+If no Reviewies tab is open the watch waits in the extension until one is, up to fifty of
+them. The rules live in `core/src/watching/scrobble.ts` and are tested there.
 
 ## What it reads
 
@@ -85,6 +108,8 @@ So a stale selector costs precision, not function.
 
 ## Tests
 
+Two levels.
+
 The parsing and detection logic — the part that decides *which* episode gets marked —
 is tested from the app package:
 
@@ -92,6 +117,22 @@ is tested from the app package:
 cd ../app && npx vitest run src/extension
 ```
 
-The suite covers the label formats each service uses, show/episode splitting, the
+That suite covers the label formats each service uses, show/episode splitting, the
 confidence gate, lookalike-domain rejection, preferring the longest video so adverts
 and trailers are ignored, and the scrobble threshold.
+
+And the extension itself runs, in a real browser:
+
+```bash
+npm run smoke
+```
+
+It loads the built extension into Chromium, serves a fixture player page on the streaming
+origin so the manifest's own match patterns decide whether the content script runs, and
+follows a real `<video>` through to a playback update and a watch arriving on the app
+page. Until §6.42 none of `content.ts`, `background.ts` or `inject.ts` had ever been
+executed by anything.
+
+What it does not prove is the selectors. A fixture written from the same assumptions as
+the adapter shows the two agree with each other, which is not the same as either being
+right about Netflix.

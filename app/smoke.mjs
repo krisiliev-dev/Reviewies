@@ -649,8 +649,64 @@ try {
   const afterStale = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('stale readings are ignored', !/0:0\d/.test(afterStale), afterStale.slice(0, 90));
 
-  // --- Watchlist with notes --------------------------------------------------
+  // --- Extension scrobbling ----------------------------------------------------
+  //
+  // The other half of what the extension sends, and the half that never arrived
+  // anywhere: it POSTed watches to a URL no Reviewies instance serves. §6.42 sent them
+  // down this channel instead, and this is the check that the app is actually listening
+  // — the rules are unit-tested in core, and a rule nothing calls is §6.26 again.
   await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
+  const beforeScrobble = await page.locator('text=/more episodes/').first().textContent();
+  const nextUp = (await page.locator('body').innerText()).match(/S1E(\d+)/)?.[1];
+
+  await page.evaluate((episode) => {
+    window.postMessage(
+      {
+        type: 'reviewies:watched',
+        payload: { show: 'The Long Dark', season: 1, episode: Number(episode), at: Date.now() },
+      },
+      window.location.origin,
+    );
+  }, nextUp);
+  await page.waitForTimeout(1200);
+
+  const afterScrobble = await page.locator('text=/more episodes/').first().textContent();
+  const was = Number(beforeScrobble?.match(/(\d+)/)?.[1]);
+  const nowRemaining = Number(afterScrobble?.match(/(\d+)/)?.[1]);
+  check(
+    'a scrobble from the extension marks the episode watched',
+    nowRemaining === was - 1,
+    `${was} → ${nowRemaining}`,
+  );
+
+  // And only for something you already track. A page title must not be able to start
+  // tracking a show on your behalf, or to invent a watch for one you have never added.
+  const libraryBefore = await page.evaluate(async () => {
+    const dbs = await indexedDB.databases();
+    return dbs.length;
+  });
+  await page.evaluate(() => {
+    window.postMessage(
+      {
+        type: 'reviewies:watched',
+        payload: { show: 'A Show Nobody Tracks', season: 1, episode: 1, at: Date.now() },
+      },
+      window.location.origin,
+    );
+  });
+  await page.waitForTimeout(1000);
+  const afterUnknown = await page.locator('text=/more episodes/').first().textContent();
+  check(
+    'and a show that is not in the library changes nothing',
+    Number(afterUnknown?.match(/(\d+)/)?.[1]) === nowRemaining &&
+      (await page.evaluate(async () => (await indexedDB.databases()).length)) === libraryBefore,
+    afterUnknown?.trim(),
+  );
+
+  // --- Watchlist with notes --------------------------------------------------
+  // Already out of Watching Mode: the scrobble section above left it to read Up Next.
   await page.getByRole('link', { name: /Search/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
@@ -749,8 +805,10 @@ try {
   await page.getByRole('button', { name: 'Last episode you watched in season 2: 4' }).click();
   await page.waitForSelector('text=/Marked \\d+ episode/', { timeout: 5000 });
   const markedText = (await page.locator('text=/Marked/').first().innerText()).replace(/\s+/g, ' ');
-  // 18 aired episodes; one was already watched above, so 11 of the first 12 remain.
-  check('catching up marks the whole run at once', /Marked 11 episodes/.test(markedText), markedText);
+  // 18 aired episodes; S1E1 was marked by hand and S1E2 by the extension scrobble above,
+  // so 10 of the first 12 remain. Catching up must skip the two rather than re-marking
+  // them, which would fabricate a rewatch — the count is the assertion that it did.
+  check('catching up marks the whole run at once', /Marked 10 episodes/.test(markedText), markedText);
   await page.getByRole('button', { name: 'Done catching up' }).click();
 
   const afterCatchUp = await page.locator('text=/more episodes|Last one/').first().textContent();

@@ -5,14 +5,16 @@
  * reads `video.currentTime` directly, so there is no drift, no calibration and no
  * microphone. Manual sync remains the fallback everywhere else.
  *
- * The extension can reach the page two ways, and both are supported because the
- * choice depends on how the user runs things:
+ * One way in, `postMessage` from a content script the extension injects into this page.
+ * This used to say two, the second being `chrome.runtime.sendMessage` to an extension
+ * whose ID the page knows — and the extension had a listener for it. That listener could
+ * never have fired: a page can only message an extension that names the page's origin
+ * under `externally_connectable`, and the manifest has never had that key. The app did
+ * not implement its half either, so both sides described a path neither had. §6.42
+ * deleted the listener and this paragraph now says what is there.
  *
- *  - `postMessage` from a content script injected into this page (no configuration)
- *  - `chrome.runtime.sendMessage` to an extension the page knows the ID of
- *
- * Either way the app is a passive receiver. It never reaches into the extension, and
- * a missing extension simply means manual sync.
+ * The app is a passive receiver. It never reaches into the extension, and a missing
+ * extension simply means manual sync.
  */
 
 export interface PlaybackUpdate {

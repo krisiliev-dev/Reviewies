@@ -56,6 +56,8 @@ const UNREACHED: Record<string, string> = {
 const LOPSIDED: Record<string, string> = {
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',
+  'app only: watching/scrobble#startScrobbleListener':
+    'Listens for the browser extension. There is no browser extension on a phone, and nothing else posts a window message at it — the equivalent there is listening to the room, which is a different mechanism for a different situation.',
   'app only: calendar/upcoming#notificationsSupported':
     'Asks about the Web Notification API. The phone has its own stack in mobile/src/notifications.ts and its own capability check.',
   'mobile only: devices/direct#createDirectRokuAdapter':
