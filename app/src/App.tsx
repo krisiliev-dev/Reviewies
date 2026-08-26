@@ -4,6 +4,7 @@ import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { TabIcon } from './ui/TabIcon';
 import { More } from './screens/More';
+import { NotFound } from './screens/NotFound';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { breakInEffect, breakOnRender } from './ui/breakScreen';
 import { FailureBanner } from './ui/FailureBanner';
@@ -141,6 +142,9 @@ const ROUTES: Array<{ path: string; screen: () => React.JSX.Element }> = [
   { path: '/stats', screen: Stats },
   { path: '/settings', screen: Settings },
   { path: '/more', screen: More },
+  // Last, and a catch-all: every address that is not one of the above. Without it
+  // `<Routes>` matched nothing and rendered an empty `<main>` — see NotFound.tsx.
+  { path: '*', screen: NotFound },
 ];
 
 /** Breaks this screen when asked to, and does nothing at all otherwise. */

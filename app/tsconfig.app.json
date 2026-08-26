@@ -25,5 +25,11 @@
   "include": ["src"],
   // Tests are not part of the shipped bundle and need Node types; they are
   // typechecked separately via tsconfig.test.json.
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test"]
+  //
+  // `src/wiring` is in that list because it is not shipped either: it reads the repo
+  // off disk and out of git for the source-level guards, so it imports node: modules
+  // the same way a test does. It only looked like ordinary source because the file
+  // does not end in .test.ts. That cost the app's build for sixteen commits — see
+  // doc 9 §6.40 — so the rule here is the directory, not the filename.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test", "src/wiring"]
 }

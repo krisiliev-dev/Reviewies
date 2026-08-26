@@ -79,7 +79,14 @@ export function EpisodeComments() {
 
   return (
     <div className="p-4">
-      <button onClick={() => navigate(-1)} aria-label="Back to the title" className="mb-3 text-sm text-muted">
+      {/* `tap`, like every other back control in the app. It was 31x20 — under the 24px
+          floor WCAG 2.5.8 sets — for as long as this screen has existed, and no check
+          had ever measured it because no suite had ever stopped here. §6.40. */}
+      <button
+        onClick={() => navigate(-1)}
+        aria-label="Back to the title"
+        className="tap mb-3 text-sm text-muted"
+      >
         Back
       </button>
 

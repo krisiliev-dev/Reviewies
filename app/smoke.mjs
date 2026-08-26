@@ -328,6 +328,60 @@ try {
     `${ring.style} ${ring.width}px at ${ring.contrast.toFixed(2)}:1`,
   );
 
+  // --- The empty ones ----------------------------------------------------------
+  //
+  // Every screen has an empty state and, until §6.40 went looking, three of them had
+  // never been rendered by anything: this suite tracks a show early and then never
+  // returns to a screen while it still holds nothing. An empty state is not
+  // a cosmetic detail here — it is the entire screen for somebody who has just arrived,
+  // which is who this product is for.
+  //
+  // This is the only moment in the run when the database is genuinely empty, so it has
+  // to happen here or not at all.
+  for (const [name, expected] of [
+    [/Stats/, /Nothing watched in this period yet/i],
+    [/Upcoming/, /Nothing airing in the next two months/i],
+  ]) {
+    await viaMore(name);
+    await page.waitForTimeout(400);
+    const body = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      `${String(name).slice(1, -1)} says what empty means`,
+      expected.test(body),
+      body.slice(0, 120),
+    );
+  }
+  await page.getByRole('link', { name: /Watchlist/ }).click();
+  await page.waitForTimeout(400);
+  check(
+    'the empty watchlist says so',
+    /Nothing saved yet/i.test(await page.locator('body').innerText()),
+    (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 100),
+  );
+  await page.screenshot({ path: OUT + '01b-empty-watchlist.png' });
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+
+  // --- An address that is not a screen -----------------------------------------
+  //
+  // There was no catch-all route, so an unknown URL rendered the tab bar, the skip link
+  // and an empty `<main>`: no heading, no message, no way to tell a typo from a broken
+  // app. Nothing had ever loaded one, which is how it stayed that way — and this suite
+  // was itself reading that blank page to decide whether the build had credentials.
+  await page.goto(new URL('not-a-screen', BASE + '/').href, { waitUntil: 'networkidle' });
+  const missing = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('an unknown address says so', /Nothing at this address/i.test(missing), missing.slice(0, 110));
+  check('and names the address that was asked for', /\/not-a-screen/.test(missing));
+  await audit('the not-found screen', 8);
+  await noGhosts('the not-found screen');
+  // And it leads somewhere, rather than being a dead end with a message on it.
+  await page.getByRole('link', { name: 'Go to Up Next' }).click();
+  await page.waitForTimeout(400);
+  check(
+    'and offers a way back that works',
+    (await page.getByRole('heading', { name: 'Bring your history with you' }).count()) > 0,
+  );
+
+
   // --- Is this build signed in to anything? -----------------------------------
   //
   // Several checks below are about what an account-gated control does, and the answer
@@ -338,8 +392,25 @@ try {
   // branch. The run then failed on a correct app.
   //
   // So ask the app, once, and hold the answer.
-  await page.goto(new URL('account', BASE + '/').href, { waitUntil: 'networkidle' });
-  const configured = !/not configured on this build/i.test(await page.locator('body').innerText());
+  //
+  // `/settings`, not `/account`. This asked `/account` for as long as it has existed — an address
+  // the phone has and the web does not — and with no catch-all route the app rendered an
+  // empty `<main>`, which does not contain "not configured on this build". So the answer
+  // was "configured" unconditionally and three checks below branched on it. It passed
+  // only because this checkout has a root `.env`; on a credential-free build it would
+  // have asserted the wrong half of each and failed a correct app, which is precisely
+  // what the paragraph above says this probe exists to prevent. §6.40.
+  //
+  // Asserted rather than assumed now: whichever address this is, the panel has to
+  // actually be on it, or the probe is reading a blank page again.
+  await page.goto(new URL('settings', BASE + '/').href, { waitUntil: 'networkidle' });
+  const accountText = await page.locator('body').innerText();
+  check(
+    'the sync probe is reading the account panel',
+    /Sync across devices/i.test(accountText),
+    accountText.replace(/\s+/g, ' ').slice(0, 90),
+  );
+  const configured = !/not configured on this build/i.test(accountText);
   console.log(`(build is ${configured ? 'configured for sync' : 'credential-free'})`);
   await page.goto(BASE, { waitUntil: 'networkidle' });
 
@@ -384,6 +455,36 @@ try {
   if (configured) {
     await page.waitForURL(/\/comments\//, { timeout: 5000 });
     check('marking watched opens the conversation when there is one', true, page.url());
+
+    // And then it looked at the URL and left. This is the one screen in the app the
+    // suite arrived at and never read — §6.40 — and it is the screen that carries the
+    // composer, the effort filter and the spoiler gate. Reachable here precisely
+    // because the episode was just marked watched: the gate is a local watch count,
+    // not an account, so a signed-out build with credentials gets the open state.
+    await page
+      .getByRole('radiogroup', { name: 'How much effort a comment has to show' })
+      .waitFor({ timeout: 8000 });
+    const conversation = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      'the conversation is open, not sealed',
+      !/Hidden until you watch it/.test(conversation),
+      conversation.slice(0, 110),
+    );
+    check(
+      'and offers somewhere to write',
+      (await page.getByPlaceholder(/What did you think/i).count()) > 0,
+    );
+    check(
+      'and says which episode it is about',
+      /S1E1/.test(conversation),
+      conversation.slice(0, 110),
+    );
+    // Three effort levels, a composer with its attach control, Back, and the tab bar.
+    await audit('the conversation', 11);
+    await noGhosts('the conversation');
+    await scaled('the conversation');
+    await page.screenshot({ path: OUT + '03b-comments.png' });
+
     await page.getByRole('link', { name: /Up Next/ }).click();
     await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   } else {
@@ -737,6 +838,58 @@ try {
   await noGhosts('Stats');
   await scaled('Stats');
   await page.screenshot({ path: OUT + '08-stats.png' });
+
+  // Year in Review is a whole second layout on this screen — a headline panel that only
+  // appears when a year is picked rather than a rolling window — and nothing had ever
+  // picked one. It shipped in task #16 and had been rendered by unit tests and by
+  // nobody's browser.
+  const year = new Date().getFullYear();
+  await page.getByRole('radio', { name: `Your ${year}` }).click();
+  await page.waitForTimeout(500);
+  const review = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('a year can be picked', /Your \d{4}/.test(review), review.slice(0, 120));
+  check(
+    'and it puts the year in review at the top',
+    review.indexOf(`Your ${year}`) < review.indexOf('Watched'),
+    review.slice(0, 140),
+  );
+  await audit('Year in Review', 9);
+  await noGhosts('Year in Review');
+  await scaled('Year in Review');
+  await page.screenshot({ path: OUT + '08b-year.png' });
+
+  // --- The screens behind More -------------------------------------------------
+  //
+  // More, Your data and Lists were each walked through by this suite — for a link, a
+  // toggle, an import — and none of the three had ever been audited or measured. A
+  // screen a suite passes through is not a screen a suite has looked at.
+  await page.getByRole('link', { name: /^More$/ }).click();
+  await page.waitForSelector('h1:text("More")', { timeout: 5000 });
+  await audit('More', 11);
+  await noGhosts('More');
+  await scaled('More');
+
+  await viaMore(/Lists/);
+  await page.waitForSelector('h1:text("Lists")', { timeout: 5000 });
+  const listsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  // Two reasons for an empty list screen, and they are not the same reason: nothing
+  // made yet, or the question could never be asked. §6.33 separated them; this is the
+  // first time either has been read here.
+  check(
+    'the lists screen says which kind of empty it is',
+    configured ? /No lists yet|Could not/i.test(listsText) : /needs an account/i.test(listsText),
+    listsText.slice(0, 130),
+  );
+  await audit('Lists', 7);
+  await noGhosts('Lists');
+  await scaled('Lists');
+  await page.screenshot({ path: OUT + '08c-lists.png' });
+
+  await viaMore(/Your data/);
+  await page.waitForSelector('text=Choose files', { timeout: 5000 });
+  await audit('Your data', 12);
+  await noGhosts('Your data');
+  await scaled('Your data');
 
   // --- Ratings and poster override -------------------------------------------
   await page.getByRole('link', { name: /Up Next/ }).click();

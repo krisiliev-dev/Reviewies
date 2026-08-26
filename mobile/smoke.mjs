@@ -237,6 +237,57 @@ try {
   // parity instead, and its behaviour by the core's own tests.
   await page.screenshot({ path: OUT + '1-empty.png' });
 
+  // --- The empty ones ----------------------------------------------------------
+  //
+  // The only moment in the run when the database holds nothing, and until §6.40 no
+  // screen but Up Next had ever been rendered in it. An empty state is not a cosmetic
+  // detail — it is the whole screen for somebody who has just installed the app.
+  for (const [path, expected] of [
+    ['stats', /Nothing watched in this window yet/i],
+    ['calendar', /Nothing scheduled/i],
+    ['watchlist', /Nothing saved yet/i],
+  ]) {
+    await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+    const body = await text();
+    check(`${path} says what empty means`, expected.test(body), body.slice(0, 120));
+  }
+
+  // --- An address that is not a screen -----------------------------------------
+  //
+  // expo-router's built-in unmatched route is "404 — The requested path could not be
+  // found" and, measured, zero controls: no link home, no tab bar, nothing but the
+  // system back gesture, which somebody arriving from a shared link does not have.
+  // §6.40 replaced it with `app/+not-found.tsx`.
+  //
+  // Reached by its own address rather than by asking for a wrong one, because this
+  // harness serves a static export: `serve` answers an unknown path with its own 404
+  // page and the app never boots, so nothing about the app would be under test. On a
+  // device expo-router routes to this screen instead. That the *routing* happens is
+  // the framework's business; that the screen exists and leads somewhere is ours.
+  await page.goto(`${BASE}/+not-found`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1500);
+  const missing = await text();
+  check('an unknown address says so', /Nothing at this address/i.test(missing), missing.slice(0, 110));
+  check('and offers a way out', /Go to Up Next/.test(missing) && /See everything else/.test(missing));
+  await audit('the not-found screen', 2);
+  await noGhosts('the not-found screen');
+  await scaled('the not-found screen');
+
+  // The route listing expo-router adds for development shipped in the production
+  // export: every screen by source filename, plus a build-information panel, at a
+  // public URL. Turned off in app.json; asserted here so it cannot come back.
+  await page.goto(`${BASE}/_sitemap`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
+  check(
+    'the developer route listing is not in the build',
+    !/watching\/\[targetId\]/.test(await text()),
+    (await text()).slice(0, 110),
+  );
+
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.waitForSelector('text=Up Next', { timeout: 20000 });
+
   // --- Search and track ------------------------------------------------------
   await page.getByText('Find something to watch').click();
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
@@ -376,6 +427,10 @@ try {
     'the phone offers the open-the-conversation preference',
     (await page.getByText('Open the conversation after marking watched').count()) > 0,
   );
+  // Walked through for a toggle since it shipped, and never once read. §6.40.
+  await audit('Your data', 5);
+  await noGhosts('Your data');
+  await scaled('Your data');
   await page.goBack();
   await page.waitForTimeout(1000);
 
@@ -389,6 +444,11 @@ try {
     /not configured on this build/i.test(account),
     account.slice(0, 120),
   );
+  // One control on a credential-free build — the header's back — and that one still has
+  // to have a name and be big enough to hit.
+  await audit('Account', 1);
+  await noGhosts('Account');
+  await scaled('Account');
   await page.goBack();
   await page.waitForTimeout(1000);
 

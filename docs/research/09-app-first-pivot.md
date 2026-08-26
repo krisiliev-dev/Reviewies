@@ -1795,6 +1795,85 @@ container is not one, so it escapes to the document exactly as the drawer escape
 sideways. The check sees it. Had it not, "both axes" would have been a sentence doing more
 work than the code behind it.
 
+### 6.40 The states nothing had ever rendered
+
+§6.39's lesson — a check that cannot reach the state a bug lives in is a check that
+passes — is only useful if somebody asks which states are reachable. So: every screen on
+both platforms, every visibly different branch it has, and which of them anything had
+ever produced. Not to reach them all. To have the list.
+
+The list is checked in, at `app/src/wiring/screenStates.ts`, with three verdicts per
+state — driven by a suite, covered only by a unit test, or never rendered by anything,
+with the reason beside it. Its guard does the part that rots: every route the two routers
+actually have must appear, and no entry may name a route that has been deleted, so adding
+a screen and forgetting to say what has looked at it is a failing test rather than a
+silence. What it deliberately does not do is check that "the catch-up sheet, open" really
+is driven every run; nothing mechanical can, which is why the reasons are required
+instead of optional.
+
+Five things fell out of writing it.
+
+**The app's build had been failing for eleven commits, and the record said otherwise.**
+`app/src/wiring/coreWiring.ts` reads the repository off disk and out of git, so it imports
+`node:fs` and `node:child_process`; it does not end in `.test.ts`, so `tsconfig.app.json`
+compiled it as shipped source with no Node types. `npm run build` has exited 2 since §6.27
+introduced it, sixteen commits ago, and every sprint since has signed off with the build
+among the things reported green. The tempting explanation — that an incremental `tsc -b`
+skipped the file — is wrong: running it twice with nothing touched reports the error both
+times. The account that survives checking is that the build was reported clean without
+being run, and nothing in this repository would have said otherwise, because nothing runs
+it but a person deciding to. The exclusion is now keyed on the directory rather than the
+filename, because the filename is what misled.
+
+The second half of that fix is `npm run verify`, which runs both core configurations, all
+five workspaces' tests, the app's build, the phone's typecheck and the linter in one
+command that exits non-zero. §6.15 made deploying one command for the same reason: a
+procedure somebody has to remember is a procedure that eventually is not followed, and the
+evidence that it was not is a build nobody ran for sixteen commits.
+
+**An unknown URL rendered a blank page — and the web's own suite was reading it.** There
+was no catch-all route, so `<Routes>` matched nothing: tab bar, skip link, empty `<main>`,
+no message. Nothing had ever loaded an address the app does not have. The suite had,
+though, without noticing: to decide whether the build carried Supabase credentials it
+asked for `/account` — a route the phone has and the web does not — and an empty body does
+not contain "not configured on this build", so the answer was "configured", every run,
+unconditionally. Three checks branch on that answer. This checkout has a root `.env`, so
+the right branch happened to be taken; on a credential-free build all three would have
+asserted the wrong half and failed a correct app, which is exactly what the comment above
+that probe says it exists to prevent. Both halves are fixed — a real not-found screen with
+two ways out, and a probe that now asserts it is reading the account panel before
+believing what it reads. Proved by pointing it back at `/account`: it fails.
+
+**Two controls had never been measured, because nothing had ever stopped on their
+screens.** The conversation's Back was 31x20, under the 24px floor of WCAG 2.5.8, since
+the screen shipped — the suite arrived at `/comments/…`, read the URL to confirm marking
+watched had opened it, and left. The phone's only `Switch` measured 40x20; whether the
+native control clears 24 on a device cannot be checked from here, so rather than argue
+about it the whole settings row became the control, which is what the platform does anyway
+and leaves one thing in the reading order instead of a label and an unlabelled switch.
+
+**A developer route was in the production export.** `/_sitemap`, which expo-router adds,
+listing every screen by source filename plus a build-information panel, at a public URL.
+Off in `app.json`, and asserted.
+
+**Empty states, for the first time.** Three screens on each platform had never been
+rendered while the database held nothing — the suites track a show early and never look
+back. That is the entire screen for somebody who has just arrived, which is who this
+product is for. Both suites now do it in the one moment they can.
+
+What the list says is not covered is the more useful half, and most of it has one cause:
+nothing here can be signed in. Comments by other people, a list with items in it, a
+profile being edited, following and blocking, the phone's composer and its attach control
+— all of them need a session, and this checkout has no service key to make and unmake a
+test user with. That was already in §7 as one line about the live suites; it is now
+enumerated state by state, so the next person can tell the difference between a feature
+that works and a feature nothing has ever looked at.
+
+The suites went from 124 to 166 checks on the web and 129 to 153 on the phone. Every new
+one was proved non-vacuous by breaking what it watches: reverting the catch-all route
+turns the not-found checks red and reports 6 controls, which is the tab bar and the skip
+link — the blank page, measured.
+
 ---
 
 ## 7. What is still not known
@@ -1809,13 +1888,20 @@ and which single claim in this document could not be checked at all:
   which is the same property and not the same mechanism. `getExpoPushTokenAsync`
   has never executed. The image picker's native branch has never run — the web export takes
   the other one. The phone's comments screen reaches its sealed state in the smoke, so the
-  composer and its new attach control have never rendered there.
+  composer and its new attach control have never rendered there. Its unmatched-route
+  screen is reached in the suite by its own address rather than by asking for a wrong one,
+  because the static server answers an unknown path before the app boots; that expo-router
+  routes to it on a device is the framework's business and is not under test here.
 - **The fingerprinter has never heard real audio through a real microphone.**
 - **The Roku and MPRIS adapters have never spoken to hardware.**
 - **The extension's site selectors have never met a real streaming site.**
-- **The live Supabase suites have never been run.** `supabase.live.test.ts` and
-  `account.live.test.ts` both need a service key to make and unmake their own user, and this
-  checkout has none. What could be established by reading the migrations has been, and is
-  recorded in `backendQueries.test.ts` rather than left to be worked out again.
+- **Nothing has ever been signed in, on either platform.** The live Supabase suites —
+  `supabase.live.test.ts` and `account.live.test.ts` — both need a service key to make and
+  unmake their own user, and this checkout has none. What that costs is no longer one line:
+  §6.40's inventory at `app/src/wiring/screenStates.ts` names every screen state that needs
+  a session and has therefore never rendered — other people's comments, a list with items
+  in it, a profile being edited, following and blocking, the phone's comment composer. What
+  could be established by reading the migrations has been, and is recorded in
+  `backendQueries.test.ts` rather than left to be worked out again.
 - **The deployed site is behind.** `npm run deploy:web` needs a Vercel token that is not in
   this container, so everything since §6.14 is in the repository and not on the web.

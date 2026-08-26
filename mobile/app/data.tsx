@@ -83,22 +83,42 @@ export default function DataScreen() {
         </Section>
 
         <Section heading="Watching">
-          <View style={styles.toggleRow}>
+          {/* The whole row, not the switch.
+              *
+              * The switch alone measured 40x20 under react-native-web, below the 24px
+              * WCAG 2.5.8 floor, and this is the only Switch in the app — nothing had
+              * ever measured it, because §6.40 was the first time anything audited this
+              * screen. Whether the native control clears 24 on a device could not be
+              * checked from here, so the target was made large rather than argued about.
+              *
+              * A settings row that toggles when you tap anywhere on it is also what the
+              * platform does, and it leaves one control in the reading order instead of
+              * a label and a separate unlabelled switch. */}
+          <Pressable
+            style={styles.toggleRow}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: openComments }}
+            accessibilityLabel="Open the conversation after marking watched"
+            accessibilityHint="How TV Time worked. Needs an account."
+            onPress={() => {
+              const on = !openComments;
+              setOpenComments(on);
+              setOpenCommentsAfterWatch(on);
+            }}
+          >
             <View style={styles.toggleText}>
               <Text style={styles.toggleLabel}>Open the conversation after marking watched</Text>
               {/* Off is offered because anyone working through several episodes wants to
                   stay put. Catching up in bulk has its own control, which never moves. */}
               <Text style={styles.toggleHint}>How TV Time worked. Needs an account.</Text>
             </View>
-            <Switch
-              value={openComments}
-              onValueChange={(on) => {
-                setOpenComments(on);
-                setOpenCommentsAfterWatch(on);
-              }}
-              accessibilityLabel="Open the conversation after marking watched"
-            />
-          </View>
+            {/* Presentational: the row above is the control. Hidden from the reading
+                order so it is not announced twice, and from the pointer so a tap on it
+                is a tap on the row. */}
+            <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
+              <Switch value={openComments} />
+            </View>
+          </Pressable>
         </Section>
 
         {/* The web has offered this since the settings screen existed and the phone
