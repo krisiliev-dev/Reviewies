@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Link, Stack, useRouter } from 'expo-router';
 import {
   getPreference,
   getUpcoming,
   groupByDay,
   KIND_LABEL,
-  setPreference,
   type NotifyPreference,
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
@@ -139,9 +138,19 @@ export default function CalendarScreen() {
         <Text style={[styles.sectionHeading, styles.spaced]}>Next 30 days</Text>
         {entries === undefined && <ActivityIndicator color={theme.accent} />}
         {entries?.length === 0 && (
-          <Text style={styles.blurb}>
-            Nothing scheduled. Track a show that is still airing and it will show up here.
-          </Text>
+          <View style={styles.emptyBlock}>
+            <Text style={styles.blurb}>
+              Nothing scheduled. Track a show that is still airing and it will show up here.
+            </Text>
+            {/* Doc 10 §8 said this of the web's copy: a screen whose job is "what is on"
+                should not answer "nothing" and stop, with Discover one tap away. The web
+                got the button; the phone, whose sentence the web borrowed, did not. */}
+            <Link href="/discover" asChild>
+              <Pressable style={styles.cta} accessibilityRole="link">
+                <Text style={styles.ctaText}>Find something to watch</Text>
+              </Pressable>
+            </Link>
+          </View>
         )}
 
         {days.map(([day, list]) => (
@@ -199,6 +208,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   spaced: { marginTop: 18 },
+  emptyBlock: { gap: 14, alignItems: 'flex-start' },
+  cta: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.surface2,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  ctaText: { color: theme.text, fontWeight: '600', fontSize: 15 },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
 
   options: { gap: 8 },

@@ -242,15 +242,23 @@ try {
   // The only moment in the run when the database holds nothing, and until §6.40 no
   // screen but Up Next had ever been rendered in it. An empty state is not a cosmetic
   // detail — it is the whole screen for somebody who has just installed the app.
-  for (const [path, expected] of [
+  //
+  // Each also has to offer the way out it names. §6.50 found the phone's empty
+  // watchlist saying "Add something from Search" and its empty calendar saying "track a
+  // show that is still airing", with neither offering to take you anywhere — the dead
+  // end doc 10 §8 had already found on the web's calendar and fixed there.
+  for (const [path, expected, wayOut] of [
     ['stats', /Nothing watched in this window yet/i],
-    ['calendar', /Nothing scheduled/i],
-    ['watchlist', /Nothing saved yet/i],
+    ['calendar', /Nothing scheduled/i, 'Find something to watch'],
+    ['watchlist', /Nothing saved yet/i, 'Find something'],
   ]) {
     await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(1500);
     const body = await text();
     check(`${path} says what empty means`, expected.test(body), body.slice(0, 120));
+    if (!wayOut) continue;
+    const link = page.getByText(wayOut, { exact: true }).first();
+    check(`${path} offers a way out of empty`, await link.isVisible().catch(() => false), wayOut);
   }
 
   // --- An address that is not a screen -----------------------------------------

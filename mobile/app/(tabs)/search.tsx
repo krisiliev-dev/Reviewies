@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
-import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
+import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
 import {
   getEpisodesCached,
   getTitleCached,
@@ -84,7 +84,7 @@ export default function SearchScreen() {
 
 function ResultRow({ result }: { result: SearchResult }) {
   const router = useRouter();
-  const [added, setAdded] = useState<'library' | 'watchlist'>();
+  const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
 
   /**
    * Cache the full title, not just the search result.
@@ -120,6 +120,26 @@ function ResultRow({ result }: { result: SearchResult }) {
     await cacheTitle();
     await addToWatchlist(result.id, result.kind);
     setAdded('watchlist');
+  }
+
+  /**
+   * Log a film as watched without opening its page.
+   *
+   * Research doc 4 §2.2: *"I try to avoid seeing reviews and ratings of movies before
+   * I see them for myself. It's a little hard to do that when I have to go to the page
+   * to add it."* Recording a watch does not require reading anybody's opinion of it
+   * first, so this deliberately does not navigate. The web has had it since Search
+   * shipped; the phone made you open the film.
+   */
+  async function log() {
+    // Search results carry no runtime and stats are runtime-weighted, so a film logged
+    // without one would count as the 30-minute default. cacheTitle fetches the detail;
+    // if that fails the watch is still recorded, just unweighted.
+    await cacheTitle();
+    const detail = await db.titles.get(result.id);
+    await markWatched({ targetId: result.id, runtimeMin: detail?.runtimeMin });
+    await addToLibrary(result.id, result.kind, 'completed');
+    setAdded('logged');
   }
 
   return (
@@ -167,6 +187,21 @@ function ResultRow({ result }: { result: SearchResult }) {
               {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
             </Text>
           </Pressable>
+          {/* Films only: "watched" is not a thing you can say about a whole series in
+              one tap without lying about which episodes. */}
+          {result.kind === 'film' && (
+            <Pressable
+              onPress={log}
+              disabled={added === 'logged'}
+              accessibilityRole="button"
+              accessibilityLabel={`Log that you have seen ${result.name}`}
+              style={[styles.secondary, added === 'logged' && styles.disabled]}
+            >
+              <Text style={styles.secondaryText}>
+                {added === 'logged' ? 'Logged' : 'Seen it'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
@@ -199,7 +234,7 @@ const styles = StyleSheet.create({
   title: { color: theme.text, fontSize: 16, fontWeight: '600' },
   subtitle: { color: theme.muted, fontSize: 12 },
 
-  actions: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  actions: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primary: {
     backgroundColor: theme.accent,
     paddingHorizontal: 14,

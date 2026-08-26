@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   createList,
@@ -135,6 +135,7 @@ function ListCard({
   onToggle: () => void;
   onChanged: () => void;
 }) {
+  const router = useRouter();
   const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
 
   useEffect(() => {
@@ -181,9 +182,21 @@ function ListCard({
 
           {items?.map((item) => (
             <View key={item.titleId} style={styles.item}>
-              <Text numberOfLines={1} style={styles.itemName}>
-                {item.name ?? item.titleId}
-              </Text>
+              {/* Openable. Every other list of titles in the app takes you to the
+                  title; here the name was plain text, so the one screen whose entire
+                  content is titles somebody chose was the one screen you could not
+                  get out of — you had to remember the name and search for it. */}
+              <Pressable
+                onPress={() => router.push(`/title/${encodeURIComponent(item.titleId)}`)}
+                style={styles.itemOpen}
+                hitSlop={6}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${item.name ?? item.titleId}`}
+              >
+                <Text numberOfLines={1} style={styles.itemName}>
+                  {item.name ?? item.titleId}
+                </Text>
+              </Pressable>
               {list.mine && (
                 <Pressable
                   onPress={async () => {
@@ -256,6 +269,9 @@ const styles = StyleSheet.create({
   cardItems: { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
   mix: { color: theme.muted, fontSize: 11 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  itemName: { color: theme.text, fontSize: 14, flex: 1 },
+  // minHeight, not padding: the row is inside a scroll view where a taller target is
+  // free, and WCAG 2.5.8 wants 24px whether or not the name is one line.
+  itemOpen: { flex: 1, minHeight: 24, justifyContent: 'center' },
+  itemName: { color: theme.text, fontSize: 14 },
   remove: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
 });

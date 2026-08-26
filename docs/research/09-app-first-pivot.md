@@ -2401,6 +2401,76 @@ Upcoming was a dead end with Discover one tap away, which is doc 10 §8 and is c
 it. The other two are recorded rather than churned — a repository where one state has two
 sentences will keep growing them, and the fix is a decision about who owns the words.
 
+### 6.50 What each platform *offers*, rather than what each one has
+
+§6.49 ended on a sentence worth acting on: the thing no audit had caught was neither a
+screen nor a symbol but an **offer**, and nothing in this repository looks at those. Two
+parity audits (§6.10, §6.27) had both come back clean while the phone's Discover was a
+list of links — present, named, and unable to do the one thing the screen exists for.
+
+So the question this time was per screen: *where can you go from here, and what can you
+change from here.* Both are readable from the source. A screen's destinations are its
+`<Link to>`/`navigate()` on the web and `<Link href>`/`router.push()` on the phone,
+reduced to a first segment so `/title/${id}` and `/title/:id` are one place. Its writes
+are the functions it imports from `@reviewies/core` whose names begin like verbs that
+change something. Thirteen pairs of screens, two sets each, compared.
+
+Six differences, every one of them web-only:
+
+```
+/search      markWatched()
+/watchlist   →/search
+/discover    addToLibrary()  addToWatchlist()
+/calendar    →/discover
+/lists       →/title
+/settings    →/people
+```
+
+Four are real, and each is a screen that cannot do its own job on the phone:
+
+- **A list could not be opened.** The phone's Lists screen rendered each item's name as
+  plain text with a Remove button beside it. Every other list of titles in the app takes
+  you to the title; the one screen whose entire content is titles somebody deliberately
+  chose was the one screen you could not get out of.
+- **Search would not log a film you had already seen.** Doc 4 §2.2 is a person saying
+  they avoid title pages to avoid the ratings on them; the web has had *Seen it* in the
+  results row since Search shipped, and on the phone the only way to log a film was to
+  open its page.
+- **Discover offered a link and nothing else** — fixed as part of this, and described in
+  §6.49.
+- **`/calendar →/discover`** was the web half of doc 10 §8, already closed.
+
+`/settings →/people` is the one difference that is right: the phone reaches People from
+its More tab, where its whole second tier lives, and the web has no More tab.
+
+**Closing the first four exposed two more.** With Search, Discover and Lists fixed, the
+same comparison found the phone's empty Watchlist and empty Calendar naming the way out
+without offering it — *"Add something from Search"*, *"track a show that is still
+airing"* — which is exactly the dead end doc 10 §8 found on the web's Calendar and fixed
+*there*. The web's empty watchlist has had a **Find something** button since it shipped.
+Both now have one, and the phone's suite checks for them rather than only for the
+sentence, which is what let two dead ends sit under a passing empty-state check.
+
+The comparison is kept, as `app/src/wiring/offers.test.ts`, beside the other source-level
+guards. Same shape as the rest: the pairing is data, every screen file on both sides is
+either half of a pair or has a written reason not to be, and a difference has to be
+explained in a sentence in `EXEMPT` or the suite fails. Two exemptions today — People
+above, and the phone's calendar reaching `setPreference` through `syncPreference`, one
+hop further out than a single-file read can see. Stale exemptions fail too: an exemption
+describing a difference that has since been closed is worse than none, because it is a
+written claim that the gap is deliberate.
+
+Reading the guard's own limits honestly: it is single-file by choice. Following imports
+into shared components would make the two sides incomparable — the web's `AddToList` has
+no phone twin as a file — and every difference that has actually mattered was in the
+screen itself. It also names writers by prefix, which is a heuristic; a reader whose name
+starts with `set` would be a false positive, and would cost one line in `EXEMPT` rather
+than a wrong pass. Both are cheap failure modes on purpose.
+
+The method is the finding. "Do both platforms have this screen" is a question that
+answers itself in the affirmative for a screen that has been quietly gutted. "Can both
+platforms *do* this from here" is the question that found four.
+
 ---
 
 ## 7. What is still not known

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
@@ -29,9 +29,20 @@ export default function WatchlistScreen() {
         <Text style={styles.heading}>Watchlist</Text>
 
         {items?.length === 0 && (
-          <Text style={styles.empty}>
-            Nothing saved yet. Add something from Search, then say why you saved it.
-          </Text>
+          <View style={styles.emptyBlock}>
+            <Text style={styles.empty}>
+              Nothing saved yet. Add something from Search, then say why you saved it.
+            </Text>
+            {/* Naming Search and then not going there is the dead end doc 10 §8 found on
+                the web's Calendar: the screen knows exactly what you should do next and
+                makes you find it yourself. The web's empty watchlist has had this
+                button since it shipped. */}
+            <Link href="/search" asChild>
+              <Pressable style={styles.cta} accessibilityRole="link">
+                <Text style={styles.ctaText}>Find something</Text>
+              </Pressable>
+            </Link>
+          </View>
         )}
 
         {items?.map(({ item, title }) => (
@@ -148,6 +159,16 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 10 },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
   empty: { color: theme.muted, fontSize: 15, lineHeight: 22 },
+  emptyBlock: { gap: 14, alignItems: 'flex-start' },
+  // The same shape as Up Next's, which is the other empty state somebody meets first.
+  cta: {
+    alignSelf: 'flex-start',
+    backgroundColor: theme.accent,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  ctaText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
   row: {
     flexDirection: 'row',
     gap: 12,
