@@ -6,6 +6,7 @@ import {
   getUpcoming,
   groupByDay,
   KIND_LABEL,
+  NOTIFY_OPTIONS,
   notificationsSupported,
   requestPermission,
   setPreference,
@@ -15,19 +16,10 @@ import {
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
-
-const PREFS: Array<{ key: NotifyPreference; label: string; hint: string }> = [
-  { key: 'off', label: 'Nothing', hint: 'No alerts at all.' },
-  {
-    key: 'milestones',
-    label: 'Premieres & finales',
-    hint: 'The moments worth knowing about, without a ping per episode.',
-  },
-  { key: 'all', label: 'Every episode', hint: 'One alert for everything you track.' },
-];
+import { COPY } from '@reviewies/core/copy';
 
 export function Calendar() {
-  const entries = useLiveQuery(() => getUpcoming(60), [], undefined);
+  const entries = useLiveQuery(() => getUpcoming(), [], undefined);
 
   // Opening the calendar is the one moment somebody definitely wants it current. The
   // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
@@ -71,7 +63,7 @@ export function Calendar() {
       <section className="mb-6 rounded-2xl bg-surface p-4">
         <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>
         <div role="radiogroup" aria-label="Tell me about" className="flex flex-wrap gap-1.5">
-          {PREFS.map((p) => (
+          {NOTIFY_OPTIONS.map((p) => (
             <button
               key={p.key}
               onClick={() => choose(p.key)}
@@ -86,7 +78,7 @@ export function Calendar() {
           ))}
         </div>
         <p className="mt-2 text-xs text-muted">
-          {PREFS.find((p) => p.key === preference)?.hint}
+          {NOTIFY_OPTIONS.find((p) => p.key === preference)?.hint}
         </p>
 
         {preference !== 'off' && !notificationsSupported() && (
@@ -123,15 +115,12 @@ export function Calendar() {
               A screen whose job is "what shall I watch" should not be a dead end — and
               the phone's version of this sentence already said what to do about it, so
               this is the phone's copy rather than a third one. */}
-          <p className="text-muted">
-            Nothing airing in the next two months from the shows you are watching. Track
-            something that is still running and it will show up here.
-          </p>
+          <p className="text-muted">{COPY.calendar.empty}</p>
           <Link
             to="/discover"
             className="rounded-full bg-surface-2 px-4 py-2 text-sm"
           >
-            Find something to watch
+            {COPY.calendar.findSomething}
           </Link>
         </div>
       )}

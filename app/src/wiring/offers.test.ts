@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { PAIRS, ROOT, UNPAIRED_PHONE, UNPAIRED_WEB, phoneScreenFiles, webScreenFiles } from './pairs';
 
-const ROOT = resolve(import.meta.dirname, '../../..');
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
 /**
@@ -36,37 +36,6 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
  * `AddToList` has no phone twin as a file), and the differences that have mattered were
  * all in the screen itself.
  */
-
-/** Web screen file ↔ the phone file or files that stand in for it. */
-const PAIRS: Record<string, { web: string; phone: string[] }> = {
-  '/': { web: 'UpNext.tsx', phone: ['(tabs)/index.tsx'] },
-  '/search': { web: 'Search.tsx', phone: ['(tabs)/search.tsx'] },
-  '/watchlist': { web: 'Watchlist.tsx', phone: ['(tabs)/watchlist.tsx'] },
-  '/title': { web: 'TitleDetail.tsx', phone: ['title/[id].tsx'] },
-  '/watching': { web: 'WatchingMode.tsx', phone: ['watching/[targetId].tsx'] },
-  '/comments': { web: 'EpisodeComments.tsx', phone: ['comments/[targetId].tsx'] },
-  '/discover': { web: 'Discover.tsx', phone: ['(tabs)/discover.tsx'] },
-  '/calendar': { web: 'Calendar.tsx', phone: ['calendar.tsx'] },
-  '/lists': { web: 'Lists.tsx', phone: ['lists.tsx'] },
-  '/people': { web: 'People.tsx', phone: ['people.tsx'] },
-  '/stats': { web: 'Stats.tsx', phone: ['stats.tsx'] },
-  // The web keeps the account panel, the data tools and the preferences on one screen;
-  // the phone splits them into two pushed screens. Compared as a unit, because what
-  // matters is whether the same things can be done, not on how many screens.
-  '/settings': { web: 'Settings.tsx', phone: ['data.tsx', 'account.tsx'] },
-  '/more': { web: 'More.tsx', phone: ['(tabs)/more.tsx'] },
-};
-
-/** Files that are not one half of a pair, and why. */
-const UNPAIRED_WEB: Record<string, string> = {
-  'NotFound.tsx': 'the phone’s +not-found is expo-router’s own; nothing to compare',
-  'AccountPanel.tsx': 'a component of Settings, not a screen — compared as part of it',
-};
-
-const UNPAIRED_PHONE: Record<string, string> = {
-  '+not-found.tsx': 'expo-router’s own; see NotFound.tsx',
-  'remote.tsx': 'the drawer is a screen on the phone and an overlay on the web, so there is no web file to read',
-};
 
 /**
  * Differences that are real and intended. One line each, and the line has to say why
@@ -154,18 +123,6 @@ function differences(route: string): string[] {
   ].sort();
 }
 
-const phoneScreenFiles = (): string[] => {
-  const base = resolve(ROOT, 'mobile/app');
-  const walk = (dir: string, prefix: string, out: string[] = []): string[] => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) walk(join(dir, entry.name), `${prefix}${entry.name}/`, out);
-      else if (entry.name.endsWith('.tsx') && entry.name !== '_layout.tsx') out.push(prefix + entry.name);
-    }
-    return out;
-  };
-  return walk(base, '');
-};
-
 describe('what each platform offers', () => {
   it('offers the same places and the same writes on both sides', () => {
     const unexplained = Object.keys(PAIRS)
@@ -191,7 +148,7 @@ describe('what each platform offers', () => {
   });
 
   it('pairs every screen file on both sides, or says why not', () => {
-    const web = readdirSync(resolve(ROOT, 'app/src/screens')).filter((f) => f.endsWith('.tsx'));
+    const web = webScreenFiles();
     const pairedWeb = new Set(Object.values(PAIRS).map((p) => p.web));
     expect(web.filter((f) => !pairedWeb.has(f) && !UNPAIRED_WEB[f])).toEqual([]);
     expect(Object.keys(UNPAIRED_WEB).filter((f) => !web.includes(f))).toEqual([]);

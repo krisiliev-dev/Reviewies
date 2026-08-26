@@ -7,6 +7,7 @@ import {
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Stats and Year in Review.
@@ -78,7 +79,7 @@ export function Stats() {
       {summary === undefined ? (
         <p className="text-muted">Loading…</p>
       ) : summary.episodes === 0 ? (
-        <p className="text-muted">Nothing watched in this period yet.</p>
+        <p className="text-muted">{COPY.stats.empty}</p>
       ) : (
         <Summary summary={summary} isYearReview={year !== undefined} year={year} />
       )}

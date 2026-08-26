@@ -13,6 +13,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Getting your history in, and getting it back out.
@@ -39,10 +40,7 @@ export default function DataScreen() {
       <Stack.Screen options={{ title: 'Your data' }} />
       <ScrollView contentContainerStyle={styles.content}>
         <Section heading="Export">
-          <Text style={styles.blurb}>
-            Everything, in full, with no account and no upsell. It is yours. Signed in, the
-            file carries your lists, the people you follow and your comments too.
-          </Text>
+          <Text style={styles.blurb}>{COPY.settings.exportBlurb}</Text>
           <Pressable
             style={styles.primary}
             onPress={async () => {

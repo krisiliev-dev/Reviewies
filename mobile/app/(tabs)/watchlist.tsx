@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import { COPY } from '@reviewies/core/copy';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
@@ -30,9 +31,7 @@ export default function WatchlistScreen() {
 
         {items?.length === 0 && (
           <View style={styles.emptyBlock}>
-            <Text style={styles.empty}>
-              Nothing saved yet. Add something from Search, then say why you saved it.
-            </Text>
+            <Text style={styles.empty}>{COPY.watchlist.empty}</Text>
             {/* Naming Search and then not going there is the dead end doc 10 §8 found on
                 the web's Calendar: the screen knows exactly what you should do next and
                 makes you find it yourself. The web's empty watchlist has had this
@@ -102,7 +101,7 @@ function Row({
             <TextInput
               value={draft}
               onChangeText={setDraft}
-              placeholder="Why did you save this?"
+              placeholder={COPY.watchlist.notePlaceholder}
               placeholderTextColor={theme.muted}
               style={styles.input}
               multiline

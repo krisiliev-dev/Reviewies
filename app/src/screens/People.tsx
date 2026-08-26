@@ -14,6 +14,7 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -50,11 +51,7 @@ export function People() {
     return (
       <div className="p-4">
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
-        <p className="px-1 text-sm text-muted">
-          Following needs sync configured, as do comments and shared reactions. Everything else
-          — your history, ratings, lists of what to watch, stats and the whole import — works
-          without it.
-        </p>
+        <p className="px-1 text-sm text-muted">{COPY.people.withoutAccount}</p>
       </div>
     );
   }
@@ -63,10 +60,9 @@ export function People() {
     return (
       <div className="p-4">
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
-        <p className="px-1 text-sm text-muted">
-          Sign in on the Data tab to follow people. Your history stays on this device
-          either way.
-        </p>
+        {/* The destination is the one word that differs by platform: accounts live on
+            the Data tab here and on an Account screen on the phone. */}
+        <p className="px-1 text-sm text-muted">{COPY.people.signInToFollow('Data tab')}</p>
       </div>
     );
   }

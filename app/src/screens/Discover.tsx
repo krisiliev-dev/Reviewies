@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
@@ -34,16 +35,12 @@ export function Discover() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-2xl font-semibold">Discover</h1>
-      <p className="mb-4 px-1 text-sm text-muted">
-        Nothing you have already watched or added.
-      </p>
+      <p className="mb-4 px-1 text-sm text-muted">{COPY.discover.blurb}</p>
 
       {error && <p className="px-1 text-sm text-accent">{error}</p>}
       {suggestions === undefined && <p className="px-1 text-muted">Finding something…</p>}
       {suggestions?.length === 0 && !error && (
-        <p className="px-1 text-muted">
-          Nothing new to suggest yet. Track a few things and come back.
-        </p>
+        <p className="px-1 text-muted">{COPY.discover.empty}</p>
       )}
 
       <ul className="flex flex-col gap-2">

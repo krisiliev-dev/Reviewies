@@ -25,6 +25,7 @@ import {
   type Person,
 } from '@reviewies/core/social/people';
 import { radius, theme } from '../src/ui/theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -76,8 +77,8 @@ export default function PeopleScreen() {
         <View style={styles.centre}>
           <Text style={styles.blurb}>
             {syncConfigured()
-              ? 'Sign in on the Account screen to follow people. Your history stays on this device either way.'
-              : 'Following needs sync configured, as do comments and shared reactions. Your history, ratings, watchlist, stats and the import all work without it.'}
+              ? COPY.people.signInToFollow('Account screen')
+              : COPY.people.withoutAccount}
           </Text>
         </View>
       </>

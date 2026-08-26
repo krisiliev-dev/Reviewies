@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
+import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
@@ -26,7 +27,7 @@ export function Watchlist() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Watchlist</h1>
-        <p className="text-muted">Nothing saved yet.</p>
+        <p className="text-muted">{COPY.watchlist.empty}</p>
         <Link
           to="/search"
           className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
@@ -96,7 +97,7 @@ function Row({
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Why is this here?"
+              placeholder={COPY.watchlist.notePlaceholder}
               className="min-w-0 flex-1 rounded-lg bg-surface-2 px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
               autoFocus
             />

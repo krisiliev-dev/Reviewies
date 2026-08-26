@@ -22,6 +22,7 @@ import {
 } from '@reviewies/core/social/lists';
 import { db } from '@reviewies/core/data/db';
 import { radius, theme } from '../src/ui/theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Lists, mixing film and television freely.
@@ -65,9 +66,7 @@ export default function ListsScreen() {
       <>
         <Stack.Screen options={{ title: 'Lists' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>
-            Lists need an account — they are meaningful mainly when they can be shared.
-          </Text>
+          <Text style={styles.blurb}>{COPY.lists.needsAccount}</Text>
         </View>
       </>
     );
@@ -107,7 +106,7 @@ export default function ListsScreen() {
           </Text>
         )}
         {!failed && lists?.length === 0 && (
-          <Text style={styles.blurb}>No lists yet. Make one above, then add titles to it.</Text>
+          <Text style={styles.blurb}>{COPY.lists.empty}</Text>
         )}
 
         {lists?.map((list) => (
@@ -175,7 +174,7 @@ function ListCard({
       {expanded && (
         <View style={styles.cardItems}>
           {items === undefined && <ActivityIndicator color={theme.accent} />}
-          {items?.length === 0 && <Text style={styles.blurb}>Empty so far.</Text>}
+          {items?.length === 0 && <Text style={styles.blurb}>{COPY.lists.listEmpty}</Text>}
           {/* Saying the mix out loud is the point — a list that is half films should
               say so rather than looking like a broken TV list. */}
           {items && items.length > 0 && <Text style={styles.mix}>{describeMix(items)}</Text>}

@@ -6,6 +6,7 @@ import {
   getUpcoming,
   groupByDay,
   KIND_LABEL,
+  NOTIFY_OPTIONS,
   type NotifyPreference,
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
@@ -18,24 +19,17 @@ import {
   unregisterFromPush,
   whyNotSupported,
 } from '../src/notifications';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * What is coming, and how much you want to hear about it.
  *
  * Notification granularity was the top request on Trakt's roadmap, and milestones is
  * the default because "every episode of everything" is what makes people turn
- * notifications off entirely — after which the feature may as well not exist.
+ * notifications off entirely — after which the feature may as well not exist. The
+ * three options and their wording live in the core now (§6.51) — both screens had
+ * their own copy of the list and all three hints had drifted apart.
  */
-const OPTIONS: Array<{ key: NotifyPreference; label: string; detail: string }> = [
-  { key: 'off', label: 'Nothing', detail: 'No notifications at all' },
-  {
-    key: 'milestones',
-    label: 'Premieres & finales',
-    detail: 'The moments worth knowing about',
-  },
-  { key: 'all', label: 'Every episode', detail: 'Everything, as it airs' },
-];
-
 export default function CalendarScreen() {
   const [entries, setEntries] = useState<UpcomingEntry[]>();
   const [preference, setPref] = useState<NotifyPreference>(getPreference);
@@ -67,7 +61,7 @@ export default function CalendarScreen() {
           accessibilityLabel="Tell me about"
           style={styles.options}
         >
-          {OPTIONS.map((option) => (
+          {NOTIFY_OPTIONS.map((option) => (
             <Pressable
               key={option.key}
               onPress={() => {
@@ -85,11 +79,11 @@ export default function CalendarScreen() {
                 selected: preference === option.key,
                 checked: preference === option.key,
               }}
-              accessibilityLabel={`${option.label} — ${option.detail}`}
+              accessibilityLabel={`${option.label} — ${option.hint}`}
             >
               <View style={styles.optionBody}>
                 <Text style={styles.optionLabel}>{option.label}</Text>
-                <Text style={styles.optionDetail}>{option.detail}</Text>
+                <Text style={styles.optionDetail}>{option.hint}</Text>
               </View>
               {preference === option.key && <Text style={styles.tick}>✓</Text>}
             </Pressable>
@@ -135,19 +129,19 @@ export default function CalendarScreen() {
           </View>
         )}
 
-        <Text style={[styles.sectionHeading, styles.spaced]}>Next 30 days</Text>
+        {/* Sixty days on both platforms now — it was thirty here and sixty on the
+            web, the same screen showing a different amount of the future. */}
+        <Text style={[styles.sectionHeading, styles.spaced]}>Next two months</Text>
         {entries === undefined && <ActivityIndicator color={theme.accent} />}
         {entries?.length === 0 && (
           <View style={styles.emptyBlock}>
-            <Text style={styles.blurb}>
-              Nothing scheduled. Track a show that is still airing and it will show up here.
-            </Text>
+            <Text style={styles.blurb}>{COPY.calendar.empty}</Text>
             {/* Doc 10 §8 said this of the web's copy: a screen whose job is "what is on"
                 should not answer "nothing" and stop, with Discover one tap away. The web
                 got the button; the phone, whose sentence the web borrowed, did not. */}
             <Link href="/discover" asChild>
               <Pressable style={styles.cta} accessibilityRole="link">
-                <Text style={styles.ctaText}>Find something to watch</Text>
+                <Text style={styles.ctaText}>{COPY.calendar.findSomething}</Text>
               </Pressable>
             </Link>
           </View>

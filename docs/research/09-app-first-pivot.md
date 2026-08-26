@@ -2471,6 +2471,83 @@ The method is the finding. "Do both platforms have this screen" is a question th
 answers itself in the affirmative for a screen that has been quietly gutted. "Can both
 platforms *do* this from here" is the question that found four.
 
+### 6.51 One owner for the words
+
+§6.49 measured four states whose wording had drifted between the platforms, fixed two,
+and parked the rest with a sentence rather than a change: *the fix is a decision about
+who owns the words.* §6.50 then demonstrated the cost of nobody owning a comparison —
+the empty Calendar was found to be a dead end on the web, fixed there, and left a dead
+end on the phone for two sprints.
+
+So the same extraction, aimed at prose this time: pull the sentences a person reads out
+of each pair of screens — JSX text, placeholders, the labels a screen reader says — and
+report the pairs that are *nearly* the same. Nearly, not different: two screens saying
+unrelated things is normal, and drift is specifically the recognisable case of one
+sentence written twice. Eleven pairs, across eight screens:
+
+```
+/watchlist  Nothing saved yet.                     · Nothing saved yet. Add something from Search…
+/watchlist  Why is this here?                      · Why did you save this?
+/discover   …already watched or added.             · …already watched.
+/discover   Nothing new to suggest yet…            · Track something first and suggestions will follow.
+/lists      Lists need an account. Sync is not…    · Lists need an account — they are meaningful…
+/lists      No lists yet.                          · No lists yet. Make one above…
+/lists      Nothing on this list yet.              · Empty so far.
+/stats      …in this period yet.                   · …in this window yet.
+/calendar   No alerts at all.                      · No notifications at all
+/calendar   The moments worth knowing about, wi…   · The moments worth knowing about
+/comments   Add a screenshot                       · Attach a screenshot
+```
+
+Each was decided on merit rather than by platform, which is the part that cannot be
+automated. The phone's empty states won most of them, because they say what to do about
+the emptiness and the web's only described it. The web won `/discover`, because *"nothing
+you have already watched"* is a promise the screen over-keeps — a title on your watchlist
+is excluded too, and somebody wondering why their watchlist is not being suggested
+deserves the true sentence. `/stats` went to *period* over *window* for a reason neither
+platform had thought about: the control offers **All time**, and all time is not a
+window.
+
+**Two of the eleven turned out not to be copy at all.**
+
+The calendar's empty state read differently because the two screens were *looking at
+different amounts of the future*: `getUpcoming(60)` on the web against the core's default
+of 30 on the phone. The same screen, the same purpose, two months of it on one platform
+and one month on the other — and nothing could see it, because each side passed its own
+number at the call site. `UPCOMING_DAYS = 60` now lives beside `getUpcoming`, and the
+sentence that says "the next two months" is checked against it.
+
+The second is worse. The phone's comments screen showed *"Nothing here yet."* in the
+**sealed** state — the one where you have marked the episode watched, the server has not
+received that yet, and the spoiler gate is therefore still closed. It was telling people
+a conversation was empty when it was in fact hidden, which is the identical mistake the
+Lists screen made when it showed "No lists yet" for a failed fetch. The web had the right
+sentence and the phone had never been given it.
+
+`core/src/copy.ts` is the owner now: a sentence is there when a person meets it on both
+platforms, with the reasoning for the wording beside it. `COPY.people.signInToFollow` is
+a function rather than a string, because that sentence's destination genuinely has two
+names — the Data tab on the web, the Account screen on the phone — and only the noun
+should differ. The notification options moved into `core/calendar/upcoming.ts` beside the
+type they describe, because both screens had their own copy of the list and all three
+hints had drifted.
+
+`app/src/wiring/copy.test.ts` keeps it. It nearly shipped with a hole worth recording:
+once a sentence moves into `COPY`, the screen has no literal left, so the *other*
+platform could keep — or grow — its own version and the comparison would see nothing on
+one side and pass. I caught it by planting the case rather than by reading the code:
+reverting one phone screen to its old wording did not fail the guard. The extractor
+resolves `COPY.x.y` to its value as well as reading literals, and the planted revert
+fails it now.
+
+The threshold was measured rather than picked. Every real divergence above scored 0.60 or
+higher on word overlap; the highest-scoring false positive — two unrelated Watching Mode
+controls that both mention the clock — scored 0.44. 0.45, with a comfortable gap either
+side, because reworded copy keeps most of its nouns.
+
+Both platform guards now read one pairing list, `app/src/wiring/pairs.ts`. Two lists of
+which screen is which would be precisely the failure these guards exist to catch.
+
 ---
 
 ## 7. What is still not known

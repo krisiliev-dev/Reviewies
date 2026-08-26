@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
+import { COPY } from '@reviewies/core/copy';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -76,10 +77,7 @@ export function Settings() {
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Export</h2>
-        <p className="px-1 text-sm text-muted">
-          Everything, in full, with no account and no upsell. Signed in, the file carries
-          your lists, the people you follow and your comments too.
-        </p>
+        <p className="px-1 text-sm text-muted">{COPY.settings.exportBlurb}</p>
         <button
           onClick={async () => {
             const bundle = await exportAll();

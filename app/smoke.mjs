@@ -983,7 +983,7 @@ try {
   // first time either has been read here.
   check(
     'the lists screen says which kind of empty it is',
-    configured ? /No lists yet|Could not/i.test(listsText) : /needs an account/i.test(listsText),
+    configured ? /No lists yet|Could not/i.test(listsText) : /needs? an account/i.test(listsText),
     listsText.slice(0, 130),
   );
   await audit('Lists', 7);

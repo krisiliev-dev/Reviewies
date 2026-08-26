@@ -24,6 +24,7 @@ import {
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
 import { radius, theme } from '../../src/ui/theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -181,11 +182,11 @@ export default function CommentsScreen() {
               onPress={attach}
               disabled={uploading}
               accessibilityRole="button"
-              accessibilityLabel={image ? 'Replace the attached screenshot' : 'Attach a screenshot'}
+              accessibilityLabel={image ? 'Replace the attached screenshot' : COPY.comments.attach}
               accessibilityState={{ disabled: uploading }}
             >
               <Text style={styles.secondaryText}>
-                {uploading ? 'Uploading…' : image ? 'Replace screenshot' : 'Attach a screenshot'}
+                {uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
               </Text>
             </Pressable>
 
@@ -209,8 +210,8 @@ export default function CommentsScreen() {
                 {comments.length > 0
                   ? 'Everything is filtered out at this level.'
                   : gated
-                    ? 'Nothing here yet.'
-                    : 'Be the first to say something.'}
+                    ? COPY.comments.sealed
+                    : COPY.comments.empty}
               </Text>
             )}
 

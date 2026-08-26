@@ -248,8 +248,8 @@ try {
   // show that is still airing", with neither offering to take you anywhere — the dead
   // end doc 10 §8 had already found on the web's calendar and fixed there.
   for (const [path, expected, wayOut] of [
-    ['stats', /Nothing watched in this window yet/i],
-    ['calendar', /Nothing scheduled/i, 'Find something to watch'],
+    ['stats', /Nothing watched in this period yet/i],
+    ['calendar', /Nothing airing in the next two months/i, 'Find something to watch'],
     ['watchlist', /Nothing saved yet/i, 'Find something'],
   ]) {
     await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });

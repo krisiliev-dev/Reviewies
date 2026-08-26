@@ -56,12 +56,25 @@ export function shouldNotify(kind: EpisodeKind, preference: NotifyPreference): b
 }
 
 /**
+ * How far ahead the calendar looks, on both platforms.
+ *
+ * It was 60 on the web and 30 on the phone — the same screen showing a different amount
+ * of the future depending on which one you opened, which nothing could see because each
+ * side passed its own number at the call site. Sixty, because a season premiere
+ * announced two months out is exactly the thing somebody opens this screen to find.
+ *
+ * The sentence in `COPY.calendar.empty` says "the next two months" and is checked
+ * against this number, so the two cannot drift apart.
+ */
+export const UPCOMING_DAYS = 60;
+
+/**
  * Episodes airing within the next `days`, from shows you are actively watching.
  *
  * Paused and dropped shows are excluded — being reminded about something you
  * deliberately stopped is exactly the noise people complain about.
  */
-export async function getUpcoming(days = 30, now = Date.now()): Promise<UpcomingEntry[]> {
+export async function getUpcoming(days = UPCOMING_DAYS, now = Date.now()): Promise<UpcomingEntry[]> {
   const until = now + days * 86_400_000;
   const tracked = await db.library.where('status').equals('watching').toArray();
   const titles = new Map((await db.titles.toArray()).map((t) => [t.id, t]));
@@ -149,3 +162,24 @@ export async function requestPermission(): Promise<NotificationPermission> {
 export function notificationsSupported(): boolean {
   return typeof Notification !== 'undefined';
 }
+
+/**
+ * The notification choices, with the words people read.
+ *
+ * Here rather than in either screen because both screens had their own copy of the list
+ * and all three hints had drifted — "No alerts at all." against "No notifications at
+ * all", and an every-episode hint that promised different things on each platform.
+ */
+export const NOTIFY_OPTIONS: ReadonlyArray<{
+  key: NotifyPreference;
+  label: string;
+  hint: string;
+}> = [
+  { key: 'off', label: 'Nothing', hint: 'No notifications at all.' },
+  {
+    key: 'milestones',
+    label: 'Premieres & finales',
+    hint: 'The moments worth knowing about, without a ping per episode.',
+  },
+  { key: 'all', label: 'Every episode', hint: 'One notification for everything you track.' },
+];

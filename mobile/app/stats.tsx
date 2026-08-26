@@ -9,6 +9,7 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { radius, theme } from '../src/ui/theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -129,7 +130,7 @@ export default function StatsScreen() {
             )}
 
             {summary.episodes === 0 && (
-              <Text style={styles.note}>Nothing watched in this window yet.</Text>
+              <Text style={styles.note}>{COPY.stats.empty}</Text>
             )}
           </>
         )}

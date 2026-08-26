@@ -14,6 +14,7 @@ import {
   deleteComment,
   type Comment,
 } from '@reviewies/core/social/comments';
+import { COPY } from '@reviewies/core/copy';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -175,7 +176,7 @@ export function EpisodeComments() {
               {/* Screenshots were core to TV Time's comment culture and are named
                   most often as the thing successors dropped. */}
               <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-2 text-sm text-muted">
-                {uploading ? 'Uploading…' : image ? 'Replace image' : 'Add a screenshot'}
+                {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
                 <input
                   type="file"
                   accept={IMAGE_TYPES.join(',')}
@@ -198,11 +199,8 @@ export function EpisodeComments() {
               {comments.length > 0
                 ? 'Everything is filtered out at this level.'
                 : gated
-                  ? // Marked watched locally, but the server has not received that yet,
-                    // so its spoiler gate is still closed. Say so rather than claiming
-                    // the episode has no comments.
-                    'Your watch has not synced yet, so comments are still sealed. Try again in a moment.'
-                  : 'Nothing here yet. Be the first.'}
+                  ? COPY.comments.sealed
+                  : COPY.comments.empty}
             </p>
           )}
 

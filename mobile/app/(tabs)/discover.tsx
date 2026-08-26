@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { db } from '@reviewies/core/data/db';
+import { COPY } from '@reviewies/core/copy';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
@@ -43,12 +44,12 @@ export default function DiscoverScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Discover</Text>
-        <Text style={styles.blurb}>Nothing you have already watched.</Text>
+        <Text style={styles.blurb}>{COPY.discover.blurb}</Text>
 
         {items === undefined && !error && <ActivityIndicator color={theme.accent} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {items?.length === 0 && (
-          <Text style={styles.blurb}>Track something first and suggestions will follow.</Text>
+          <Text style={styles.blurb}>{COPY.discover.empty}</Text>
         )}
 
         {items?.map((item) => <Row key={item.id} item={item} onActed={() => setRound((n) => n + 1)} />)}

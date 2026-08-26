@@ -11,6 +11,7 @@ import {
   type ListItem,
   type ListSummary,
 } from '@reviewies/core/social/lists';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Lists, mixing film and television freely — the thing r/Simkl called a "severe
@@ -35,7 +36,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Lists</h1>
-        <p className="text-muted">Lists need an account. Sync is not configured on this build.</p>
+        <p className="text-muted">{COPY.lists.needsAccount}</p>
       </div>
     );
   }
@@ -82,7 +83,7 @@ export function Lists() {
           Could not load your lists ({failed}). They are still there — try again.
         </p>
       )}
-      {!failed && lists?.length === 0 && <p className="px-1 text-muted">No lists yet.</p>}
+      {!failed && lists?.length === 0 && <p className="px-1 text-muted">{COPY.lists.empty}</p>}
 
       <ul className="flex flex-col gap-2">
         {lists?.map((list) => (
@@ -153,7 +154,7 @@ function ListCard({
             </button>
           )}
 
-          {items?.length === 0 && <p className="text-sm text-muted">Nothing on this list yet.</p>}
+          {items?.length === 0 && <p className="text-sm text-muted">{COPY.lists.listEmpty}</p>}
 
           <ul className="flex flex-col gap-1">
             {items?.map((item) => (
