@@ -3,6 +3,8 @@ import { setStorage } from '@reviewies/core/data/storage';
 import { setFileSaver } from '@reviewies/core/data/transfer';
 import { setSqlJsLoader } from '@reviewies/core/data/sqlWasm';
 import { sqlWasmUrl } from './sqlWasm';
+import { COPY } from '@reviewies/core/copy';
+import { loadChunk } from './chunk';
 
 /**
  * Everything the core needs a browser for.
@@ -37,7 +39,12 @@ export function bindWebPlatform(): void {
   // Dynamic, so neither the loader nor its 650 KB of WebAssembly reaches the bundle
   // everyone downloads. Only someone importing a recovered TV Time cache pays for it.
   setSqlJsLoader(async () => {
-    const initSqlJs = (await import('sql.js')).default;
+    // Through `loadChunk`, because this is the biggest lazily-loaded thing in the app and
+    // the one somebody reaches for at the worst moment — importing the history they came
+    // here to rescue. §6.65.
+    const module = await loadChunk(() => import('sql.js'));
+    if (!module) throw new Error(COPY.app.updated);
+    const initSqlJs = module.default;
     return (await initSqlJs({ locateFile: () => sqlWasmUrl })) as never;
   });
 }

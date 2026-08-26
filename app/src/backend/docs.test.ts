@@ -105,6 +105,24 @@ describe('what the documentation claims', () => {
     expect([...switches].filter((name) => !docs.includes(name))).toEqual([]);
   });
 
+  it('does not rewrite a missing asset to the app shell', () => {
+    // §6.65, in a real browser: a tab open across a deployment asks for the hashed files
+    // its build was made of, and a catch-all rewrite answers `200 text/html` — the app
+    // shell, served as though it were a JavaScript module. A 404 is the honest answer and
+    // the one a browser can report usefully. §6.31 found the same rule lying about
+    // *routes*; nobody had connected it to assets.
+    const vercel = JSON.parse(readFileSync(resolve(ROOT, 'vercel.json'), 'utf8')) as {
+      rewrites: Array<{ source: string; destination: string }>;
+    };
+    const catchAll = vercel.rewrites.find((r) => r.destination === '/index.html');
+    expect(catchAll, 'the SPA rewrite is gone entirely').toBeTruthy();
+    expect(catchAll!.source).toContain('assets');
+    // And it really does exclude them, rather than merely mentioning the word.
+    const pattern = new RegExp(`^${catchAll!.source.replace(/^\//, '')}$`);
+    expect(pattern.test('assets/index-abc123.js')).toBe(false);
+    expect(pattern.test('stats')).toBe(true);
+  });
+
   it.each(['core', 'app', 'mobile'])('accounts for every part of %s', (workspace) => {
     // The layout in the README is how somebody finds the code. A directory missing from
     // it is a subsystem that, as far as the documentation is concerned, does not exist.

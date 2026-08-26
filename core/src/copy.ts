@@ -24,6 +24,21 @@
  */
 
 export const COPY = {
+  app: {
+    /**
+     * A tab that has been open across a deployment.
+     *
+     * The page keeps running the build it loaded with; the files that build was made of
+     * are gone from the server. Anything loaded lazily — the emoji index, the SQLite
+     * reader the TV Time importer needs — is fetched by a name that no longer exists, and
+     * on a static host that answers unknown paths with the app shell it comes back as
+     * *HTML with a 200*, which is the "expected a JavaScript module" failure everybody
+     * has met and nobody can act on. §6.65.
+     */
+    updated: 'The app has been updated since you opened this tab. Reload to carry on.',
+    reload: 'Reload',
+  },
+
   upNext: {
     /**
      * What was just marked, and the way back.

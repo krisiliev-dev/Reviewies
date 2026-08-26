@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onFailure, reportFailure, type Failure } from '@reviewies/core/data/failure';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * What a failure nobody caught looks like.
@@ -37,15 +38,39 @@ export function FailureBanner() {
 
   if (!failure) return null;
 
+  /**
+   * One failure has an answer, and it is not "dismiss".
+   *
+   * A tab left open across a deployment cannot load the files its build was made of, and
+   * the only thing that fixes it is a reload. Saying "something went wrong" and offering
+   * nothing would be the §6.50 mistake — a screen that knows what you should do next and
+   * makes you work it out. §6.65.
+   */
+  const stale = failure.message === COPY.app.updated;
+
   return (
     <div
       role="alert"
       className="safe-top fixed inset-x-0 top-0 z-50 flex items-start gap-3 border-b border-edge bg-surface px-4 py-3"
     >
       <p className="min-w-0 flex-1 text-sm">
-        Something went wrong: {failure.message}. Nothing you have done is lost — it is all
-        on this device.
+        {stale ? (
+          COPY.app.updated
+        ) : (
+          <>
+            Something went wrong: {failure.message}. Nothing you have done is lost — it is
+            all on this device.
+          </>
+        )}
       </p>
+      {stale && (
+        <button
+          onClick={() => window.location.reload()}
+          className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink"
+        >
+          {COPY.app.reload}
+        </button>
+      )}
       <button
         onClick={() => setFailure(undefined)}
         aria-label="Dismiss this message"

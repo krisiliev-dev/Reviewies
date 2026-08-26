@@ -3242,6 +3242,76 @@ second is the sync engine's problem, and still needs the service key this checko
 never had. Nor has anything tested a tab left open across a deployment, which is the other
 half of "leaving it open" and needs two builds and a service worker update to arrange.
 
+### 6.65 Leave it open across a deployment
+
+§6.64 ended by naming what it had not reached: a tab open across a deployment. That is not
+an exotic case. It is what every person who keeps the app in a pinned tab experiences on
+the day something ships, and this repository ships from a static host with a catch-all
+rewrite — the arrangement most likely to get it wrong.
+
+Arranged with two builds and a real browser. Build A, served, a tab opened on it. Then the
+source changed visibly, build B replaced the directory — new hashed filenames — and the
+first tab, still running A, was asked to do things.
+
+**Most of it survives.** Client-side navigation keeps working: the code for every screen is
+already in the tab, and React does not go back to the server to render Stats. A reload
+picks up B and everything is fine. The database, the outbox and the local library are
+untouched, because they are the person's and not the build's.
+
+**What breaks is anything loaded lazily**, and the way it breaks is worse than failing.
+The tab asks for `assets/emojiIndex-<hash>.js` — the name A was built with, gone from the
+server — and gets back **`{"status":200,"type":"text/html"}`**. Not a 404. The SPA rewrite
+that makes deep links work answers *every* unknown path with `index.html`, including a
+request for a JavaScript module, so the browser downloads the app's own HTML, tries to
+parse it as a module, and throws `TypeError: Failed to fetch dynamically imported module`.
+This is §6.31 again — the rewrite lying about a route that does not exist — on a surface
+nobody had connected to it. §6.31 fixed the story for routes and left assets alone.
+
+Both halves are fixed, because they are different failures.
+
+**The server half.** `vercel.json` no longer rewrites `/assets/`:
+
+```
+"source": "/((?!assets/).*)"
+```
+
+A missing chunk now 404s, which is the honest answer and the one a browser can report as
+itself. The exclusion is narrow on purpose — `/assets/` is Vite's output directory and
+nothing a person ever types. Deep links, share URLs and the offline fallback all still
+land on the shell. `scripts/deploy-web.mjs` copies `rewrites` out of this file, so the
+change travels to the deployment rather than living only in the repository.
+
+**The person's half.** A 404 is honest but still arrives as "failed to fetch", which tells
+somebody nothing they can act on. `app/src/data/chunk.ts` recognises the three shapes this
+failure takes across browsers — *dynamically imported module*, *Importing a module script
+failed*, *MIME type* — and turns them into one sentence, from the core's copy:
+
+> The app has been updated since you opened this tab. Reload to carry on.
+
+`FailureBanner` renders that message with a **Reload** button instead of "Dismiss",
+because dismissing it fixes nothing. Everything else the banner shows is unchanged.
+
+Not every lazy import wants this. Two exist. The emoji index already degrades correctly —
+a failed load costs the long tail and search keeps working against the curated set, which
+§6.9 designed deliberately — so it stays as it is. sql.js goes through `loadChunk`, because
+it is 650 KB reached at the worst possible moment: somebody importing the TV Time history
+they came here to rescue. A silent failure there is the §6.56 bug class exactly — a
+person's own data, and an app that cannot tell "nothing" from "I could not look".
+
+`chunk.test.ts` proves the discrimination rather than the happy path: an import failure
+becomes the update sentence, the MIME wording is recognised too, a chunk's *own* error is
+re-thrown rather than swallowed behind a misleading reload prompt, and a module that loads
+is returned untouched.
+
+The honest limit is on the server half. `vite preview` has its own SPA fallback, so the
+local rig cannot tell a fixed `vercel.json` from a broken one — the probe that found this
+returns `200 text/html` either way. What lands instead is a check in `docs.test.ts` that
+parses `vercel.json`, finds the catch-all, and runs its pattern against
+`assets/index-abc123.js` (must not match) and `stats` (must match). That is a claim about
+the configuration, not about Vercel's behaviour, and it is recorded as such in §7. The
+browser half is real: the message and the Reload button were produced by a genuinely stale
+tab in Chromium.
+
 ---
 
 ## 7. What is still not known
@@ -3334,6 +3404,16 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **The asset rewrite has never been tested against Vercel.** §6.65 found, in a real
+  browser, that a tab open across a deployment asks for chunks that are gone and gets the
+  app shell back as `200 text/html`. The half of the fix a person sees — the update
+  sentence and the Reload button — was produced by an actually stale tab and is real. The
+  other half is one line of `vercel.json`, and it cannot be verified here: `vite preview`
+  runs its own SPA fallback, so the local server answers a missing asset with HTML whether
+  the deployed rule is right or wrong. What stands in for it is a check that parses the
+  config and tests the pattern, which proves the rule says what it should and not that
+  Vercel obeys it. Nor has a tab been left open across a *service worker* update on a real
+  host, where the cache is a third party to the argument.
 - **The deployed site is behind.** `npm run deploy:web` needs a Vercel token that is not in
   this container, so everything since §6.14 is in the repository and not on the web.
   `npm run whats-live` confirms it from the outside: the live bundle hash does not match the
