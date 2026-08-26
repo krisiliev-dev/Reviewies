@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   getUpNext,
   markWatched,
+  unwatchLatest,
   unmatchedImportCount,
   type UpNextEntry,
 } from '@reviewies/core/data/repo';
@@ -15,6 +16,7 @@ import { MatchImports } from '../ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -36,6 +38,7 @@ export function UpNext() {
    * vanish mid-confirmation, leaving no sign that anything happened.
    */
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
+  const [marked, setMarked] = useState<{ targetId: string; label: string }>();
   const [imported, setImported] = useState<ImportReport>();
   // Not an episode count: an import now writes the episodes it knows were watched, so
   // "no episodes" stopped meaning "nothing matched" the moment that landed.
@@ -151,9 +154,29 @@ export function UpNext() {
   return (
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Up Next</h1>
+
+      {/* §6.64: two tabs racing at the same button showed the row changing under the
+          click — the other tab's write landed between the render and the press. A live
+          list is live, and cannot be made otherwise; what was missing was the way back
+          from a mark nobody meant. Also the answer to the ordinary mis-tap. */}
+      {marked && (
+        <div className="mb-3 flex items-center gap-3 px-1" role="status">
+          <span className="text-sm text-muted">{COPY.upNext.justMarked(marked.label)}</span>
+          <button
+            onClick={async () => {
+              await unwatchLatest(marked.targetId);
+              setMarked(undefined);
+            }}
+            className="rounded-full bg-surface-2 px-3 py-1.5 text-sm"
+          >
+            {COPY.upNext.undo}
+          </button>
+        </div>
+      )}
+
       <ul className="flex flex-col gap-2">
         {entries.map((entry) => (
-          <UpNextRow key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
+          <UpNextRow key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} onMarked={setMarked} />
         ))}
       </ul>
 
@@ -171,9 +194,11 @@ export function UpNext() {
 function UpNextRow({
   entry,
   onCatchUp,
+  onMarked,
 }: {
   entry: UpNextEntry;
   onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
+  onMarked: (marked: { targetId: string; label: string }) => void;
 }) {
   const { episode } = entry;
   const navigate = useNavigate();
@@ -187,6 +212,7 @@ function UpNextRow({
       runtimeMin: episode.runtimeMin,
     });
     navigator.vibrate?.(10);
+    onMarked({ targetId: episode.id, label: `S${episode.season}E${episode.number}` });
 
     // How TV Time worked, and named as a failing in two of its successors. Only when
     // there is an account behind it — otherwise there is no conversation to open and

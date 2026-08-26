@@ -3207,6 +3207,41 @@ thing under different local names read as a difference until somebody says other
 Proved by planting §6.62's own findings back: remove the phone's caption, swap the two
 blocks, delete `AddToList` from the search row. All three fail it.
 
+### 6.64 Open it twice
+
+Every check in this repository drives one page. The web app is a thing people leave open —
+a tab from this morning, another opened tonight — and those two share one IndexedDB, one
+service worker and one outbox. Nothing had ever asked what the second does to the first.
+
+Four checks, two pages, one context. **The local layer holds up.** A second tab opens on
+the same library. A watch marked in one moves the other on — S1E1 to S1E2, no reload, no
+stale row inviting somebody to mark the same episode twice. One mark is one watch event
+and one queued row, not two. And two tabs pressing Mark at the same instant record two
+different episodes rather than the same one twice.
+
+That last result is the interesting one, and it is not quite as clean as it sounds. In the
+probe the two tabs marked E2 and **E3** — the second tab's write arrived between the first
+tab's render and its click, so the button that was pressed was no longer the button that
+had been seen. Playwright resolves a locator and then clicks it; a person's finger is
+slower than that. A live list is live, and no amount of care in the row prevents the row
+from changing under a press.
+
+What was missing was not prevention but **the way back**. Marking is the action this whole
+product exists for, the one done in the dark one-handed, and the one most likely to be made
+by accident — and Up Next offered no undo on either platform. It does now: *"Marked S1E2"*
+with an **Undo** beside it, on the web and the phone, from the core's copy. It answers the
+ordinary mis-tap as much as the two-tab race, which is the better argument for it.
+
+The suite is four more checks inside the web run rather than a sixth script. It needs the
+browser and the built app that are already there, and a suite nobody runs is the failure
+this repository keeps finding — a sixth entry in the chain would have been another minute
+on every run for something the existing one could hold.
+
+§7 records what this does not reach: two tabs share a database and two devices do not. The
+second is the sync engine's problem, and still needs the service key this checkout has
+never had. Nor has anything tested a tab left open across a deployment, which is the other
+half of "leaving it open" and needs two builds and a service worker update to arrange.
+
 ---
 
 ## 7. What is still not known
@@ -3232,6 +3267,12 @@ and which single claim in this document could not be checked at all:
   half way through an upload. The search deadline of §6.52 exists for the first of those
   and has never met one. Nor has anything tested a device whose radio comes back while a
   write is in flight.
+- **Two tabs are not two devices.** §6.64 runs the app twice in one browser, which shares
+  one IndexedDB, one service worker and one outbox — so what it proves is that the *local*
+  layer holds up under two readers and two writers. Two devices share none of those; they
+  share a Postgres table and a sync engine, and that is still the thing this checkout has
+  never been able to exercise. A tab that has been open for a week, an update installed
+  under it, and a service worker deciding what to do about that are all untested too.
 - **The signed-in failure paths are still out of reach.** §6.58 drives the provider's
   failures in a browser, which needs no account. Lists, People and comments all gate on a
   session, so what a failed *server* write looks like on those screens — the fixes of

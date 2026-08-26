@@ -1683,6 +1683,134 @@ try {
   } finally {
     await air.close();
   }
+
+  // --- 23. Open twice ------------------------------------------------------------
+  //
+  // Every other check in this file drives one page. The web app is a thing people leave
+  // open — a tab from this morning and another opened tonight — and those two share one
+  // IndexedDB, one service worker and one outbox. Nothing had ever asked what the second
+  // does to the first. §6.64.
+  const shared = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const first = await shared.newPage();
+  const other = await shared.newPage();
+  try {
+    await first.goto(BASE, { waitUntil: 'networkidle' });
+    await first.evaluate(async () => {
+      const open = indexedDB.open('reviewies');
+      await new Promise((resolve) => {
+        open.onsuccess = resolve;
+      });
+      const db = open.result;
+      const tx = db.transaction(['titles', 'library', 'episodes'], 'readwrite');
+      const now = Date.now();
+      tx.objectStore('titles').put({
+        id: 'tmdb:55',
+        kind: 'show',
+        name: 'Two Tabs Show',
+        year: 2020,
+        runtimeMin: 42,
+        fetchedAt: now,
+      });
+      tx.objectStore('library').put({
+        titleId: 'tmdb:55',
+        kind: 'show',
+        status: 'watching',
+        addedAt: now,
+      });
+      for (const number of [1, 2, 3]) {
+        tx.objectStore('episodes').put({
+          id: `tmdb:ep:55:${number}`,
+          seriesId: 'tmdb:55',
+          season: 1,
+          number,
+          name: `Episode ${number}`,
+          airDate: `2020-01-0${number}`,
+          runtimeMin: 42,
+          fetchedAt: now,
+        });
+      }
+      await new Promise((resolve) => {
+        tx.oncomplete = resolve;
+      });
+      db.close();
+    });
+    await first.reload({ waitUntil: 'networkidle' });
+    await first.waitForTimeout(1200);
+
+    await other.goto(BASE, { waitUntil: 'networkidle' });
+    await other.waitForTimeout(1200);
+    const both = (await other.locator('body').innerText()).replace(/\s+/g, ' ');
+    check('a second tab opens on the same library', /Two Tabs Show/.test(both), both.slice(0, 110));
+
+    // The one that matters: a mark in one tab has to reach the other without a reload.
+    // Somebody with the app open on two screens marking an episode on one and seeing the
+    // other still offering it is being invited to mark it twice.
+    await first.getByRole('button', { name: /^Mark Two Tabs Show S1E1/ }).first().click();
+    await other.waitForSelector('text=S1E2', { timeout: 15000 }).catch(() => {});
+    const moved = (await other.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      'a watch in one tab moves the other on, with no reload',
+      /S1E2/.test(moved) && !/S1E1/.test(moved),
+      moved.slice(0, 130),
+    );
+
+    const rows = async (page) =>
+      page.evaluate(async () => {
+        const open = indexedDB.open('reviewies');
+        await new Promise((resolve) => {
+          open.onsuccess = resolve;
+        });
+        const db = open.result;
+        const count = (name) =>
+          new Promise((resolve) => {
+            const request = db.transaction(name).objectStore(name).count();
+            request.onsuccess = () => resolve(request.result);
+          });
+        const result = { watches: await count('watches'), outbox: await count('outbox') };
+        db.close();
+        return result;
+      });
+    const afterOne = await rows(first);
+    check(
+      'one mark in one tab is one watch and one queued row',
+      afterOne.watches === 1 && afterOne.outbox === 1,
+      JSON.stringify(afterOne),
+    );
+
+    // And the race: both tabs pressing Mark at the same moment. What must not happen is
+    // the same episode being recorded twice — a rewatch somebody did not do.
+    await first.goto(BASE, { waitUntil: 'networkidle' });
+    await first.waitForTimeout(1200);
+    await other.goto(BASE, { waitUntil: 'networkidle' });
+    await other.waitForTimeout(1200);
+    await Promise.all([
+      first.getByRole('button', { name: /^Mark Two Tabs Show/ }).first().click(),
+      other.getByRole('button', { name: /^Mark Two Tabs Show/ }).first().click(),
+    ]);
+    await first.waitForTimeout(2000);
+
+    const watched = await first.evaluate(async () => {
+      const open = indexedDB.open('reviewies');
+      await new Promise((resolve) => {
+        open.onsuccess = resolve;
+      });
+      const db = open.result;
+      const request = db.transaction('watches').objectStore('watches').getAll();
+      const all = await new Promise((resolve) => {
+        request.onsuccess = () => resolve(request.result);
+      });
+      db.close();
+      return all.map((w) => w.targetId);
+    });
+    check(
+      'two tabs racing do not record the same episode twice',
+      new Set(watched).size === watched.length,
+      watched.join(', '),
+    );
+    await other.screenshot({ path: OUT + '23-second-tab.png' });
+  } finally {
+    await shared.close();
+  }
 } catch (err) {
   check(
     'smoke run completed',

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getUpNext,
   markWatched,
+  unwatchLatest,
   unmatchedImportCount,
   type UpNextEntry,
 } from '@reviewies/core/data/repo';
@@ -26,6 +27,7 @@ import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -44,6 +46,7 @@ export default function UpNextScreen() {
   // removing its own row from Up Next, so a sheet living inside that row unmounts at
   // the exact moment it has something to tell you.
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
+  const [marked, setMarked] = useState<{ targetId: string; label: string }>();
   // Held until dismissed rather than swapped out the moment the library stops being
   // empty. Importing puts shows in the library, which is exactly what stops this being
   // the first-run screen — and took the confirmation with it.
@@ -64,6 +67,26 @@ export default function UpNextScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Up Next</Text>
+
+        {/* The web's copy of this, for the reason §6.64 found by racing two tabs: the
+            row can change under the press, and a one-tap write with no way back is what
+            makes that expensive. It answers the ordinary mis-tap too. */}
+        {marked && (
+          <View style={styles.undoRow}>
+            <Text style={styles.undoText}>{COPY.upNext.justMarked(marked.label)}</Text>
+            <Pressable
+              onPress={async () => {
+                await unwatchLatest(marked.targetId);
+                setMarked(undefined);
+              }}
+              style={styles.undo}
+              accessibilityRole="button"
+              accessibilityLabel={`${COPY.upNext.undo} ${COPY.upNext.justMarked(marked.label)}`}
+            >
+              <Text style={styles.undoLabel}>{COPY.upNext.undo}</Text>
+            </Pressable>
+          </View>
+        )}
 
         {imported ? (
           <View style={styles.empty}>
@@ -139,7 +162,12 @@ export default function UpNextScreen() {
           </View>
         ) : (
           entries.map((entry) => (
-            <Row key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
+            <Row
+              key={entry.seriesId}
+              entry={entry}
+              onCatchUp={setCatchingUp}
+              onMarked={setMarked}
+            />
           ))
         )}
       </ScrollView>
@@ -158,9 +186,11 @@ export default function UpNextScreen() {
 function Row({
   entry,
   onCatchUp,
+  onMarked,
 }: {
   entry: UpNextEntry;
   onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
+  onMarked: (marked: { targetId: string; label: string }) => void;
 }) {
   const { episode } = entry;
   const router = useRouter();
@@ -177,6 +207,7 @@ function Row({
         runtimeMin: episode.runtimeMin,
       });
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onMarked({ targetId: episode.id, label: `S${episode.season}E${episode.number}` });
 
       // How TV Time worked, and named as a failing in two of its successors. Only when
       // there is an account behind it — otherwise there is no conversation to open and
@@ -268,6 +299,17 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ink },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
+  undoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  undoText: { color: theme.muted, fontSize: 14, flexShrink: 1 },
+  undo: {
+    backgroundColor: theme.surface2,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minHeight: 24,
+    justifyContent: 'center',
+  },
+  undoLabel: { color: theme.text, fontSize: 14, fontWeight: '600' },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
   empty: { gap: 14, paddingTop: 8 },

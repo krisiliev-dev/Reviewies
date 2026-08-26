@@ -24,6 +24,20 @@
  */
 
 export const COPY = {
+  upNext: {
+    /**
+     * What was just marked, and the way back.
+     *
+     * §6.64 raced two tabs at the same Mark button and watched the row change under the
+     * click: the other tab's write arrived between the render and the press, so the tap
+     * landed on the next episode. Nothing can prevent that — a live list is live — but a
+     * one-tap write with no way back is the part that made it expensive. Marking is the
+     * action this product exists for and the one most likely to be made by accident.
+     */
+    justMarked: (what: string) => `Marked ${what}`,
+    undo: 'Undo',
+  },
+
   watchlist: {
     /** The phone's, which names the way out. The web's was "Nothing saved yet." */
     empty: 'Nothing saved yet. Add something from Search, then say why you saved it.',
