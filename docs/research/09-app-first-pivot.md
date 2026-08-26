@@ -3711,6 +3711,116 @@ as something to run and think about, not something to satisfy.
 §7 records what it still cannot see: the five browser suites drive a *built bundle*, so
 every screen in both apps shows as untouched and none of that is evidence of anything.
 
+### 6.69 Leave it running for an episode
+
+Every axis so far has been about *what* the code does. This one is about **duration**, and
+about doing a thing more than once. §6.54 filled the database with ten years of history —
+that is size, not time. The longest anything in this repository had ever run was a check
+measured in seconds, and every one of them did each thing exactly once.
+
+Watching Mode is a screen somebody leaves open for forty-five minutes and steps away from
+repeatedly. Two things were wrong with it, and neither could be seen by doing anything
+once.
+
+#### Two fifths of the reactions never appeared
+
+Retirement was one element every `TRAVEL_MS / 2`, whatever had finished:
+
+```js
+setTimeout(() => setFlying((c) => c.slice(1)), TRAVEL_MS / 2);
+```
+
+The density cap held — twenty-four mounted, twenty-four on screen — so nothing looked
+wrong. The cost was paid where nobody was measuring. A reaction crosses in 4.8 seconds and
+its slot then stayed taken for up to another fifty, while `room = density - flyingCount`
+refused every arrival meanwhile.
+
+Measured over five minutes of a busy episode, one reaction a second:
+
+| | reactions shown | rate |
+|---|---|---|
+| before | **116 of 300** | 20 a minute |
+| after | **300 of 300** | everything |
+
+Twenty a minute, against the twenty-four slots × four seconds visible that the design
+allows — which is three hundred. And the ones shown were an arbitrary prefix, because
+`due.slice(0, room)` takes the earliest. *"You still see everything everyone else left at
+that moment"* is what this screen is for, and it was showing two fifths of it.
+
+Retirement is by age now: each arrival carries the moment its crossing ends, and a
+250 ms sweep drops everything expired. The cap still binds where it should — at ten
+reactions a second the peak on screen is twenty-four, which is §6.13's readability limit
+doing its job rather than an accident of the drain rate. Held still means held: WCAG
+2.2.2's pause freezes the animation, so the time spent paused is added back to every
+deadline on release rather than sweeping a screen somebody asked to hold still.
+
+#### Step away twice and the clock dies
+
+The larger one, and it needed three round trips to show.
+
+```js
+const saved = resumeFor(targetId);
+clock.seek(saved.positionMs);
+if (!saved.running) clock.pause();
+```
+
+`seek` moves the anchors and the position and says nothing about *running* — and a
+freshly-mounted clock is stopped. So an episode that was playing came back showing the
+right timecode with the clock dead.
+
+What made it invisible is that the **first** return still looked correct: `resumeFor` had
+already advanced the position by the time spent away, so the number really was further on.
+The effect that persists the clock then wrote `running: false`, and from that moment the
+timecode never moved again — a plausible number, frozen, for the rest of the episode, with
+every reaction landing on it.
+
+The existing check — *"and further on, because the episode did not stop"* — has passed
+since doc 10 §2, because it does exactly one round trip. Three of them read `0:06 → 0:06`.
+
+Isolating it mattered. The first run of the new block failed that check *and* the timer
+census, and the obvious reading was that the instrumentation had broken something. Running
+the three round trips with no instrumentation at all reproduced the freeze on its own; the
+timer census was the thing that was wrong, and separately.
+
+Both platforms had the same line and both are fixed.
+
+#### Two checks were asserting the bug
+
+`'and offers to resume rather than to start'` looked for a *Resume* button and found one —
+because the restored clock was wrongly stopped, and the transport is labelled "Resume the
+clock" when it is not running. The check passed on the strength of the defect. It says what
+it was always trying to say now: the screen does not offer to *start* something already
+under way, and it comes back running.
+
+That is the third time in this project a check has turned out to encode the behaviour
+rather than the intent, and it is the reason a fix has to be watched for what else it
+breaks rather than only for whether its own test goes green.
+
+#### What was fine
+
+Worth recording, because the sprint went looking for a leak and did not find one.
+
+- **No unbounded growth.** `ownFlown` grows with your own taps and the episode's history,
+  both bounded by a person. `pending` in the announcer clears every ten seconds. `seq` is
+  a number.
+- **The extension's scrobble state machine**, flagged in #115 as never unit-tested and a
+  candidate for exactly this: `scrobbled` is `slice(-200)` and `pending` is `slice(-50)`.
+  Somebody had already thought about it.
+- **Timers stop when the screen does.** Three visits leave the same number of live
+  intervals as none, counted from Up Next both times.
+
+#### What it costs to check
+
+Six unit tests over a simulated episode — twenty minutes of playback at a reaction a
+second, in about two seconds of wall clock — plus three checks in the browser suite. The
+browser half is three round trips, not forty-five minutes: what breaks over an episode
+breaks per visit, and a check that needs an hour is one nobody runs.
+
+§7 records the honest limit: the clock is simulated in both halves. What is exercised is
+the component's arithmetic and the screen's state handling, not forty-five minutes of a
+real browser's garbage collector, and a headless Chromium in a container is not a phone
+holding twenty-four compositor layers.
+
 ---
 
 ## 7. What is still not known
@@ -3803,6 +3913,15 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **Nothing has actually run for forty-five minutes.** §6.69 measures duration, and the
+  clock is simulated in both halves: the unit tests advance `positionMs` and vitest's
+  fake timers a second at a time, and the browser checks do three round trips rather than
+  an episode. What that exercises is the component's arithmetic and the screen's state
+  handling — which is where both bugs were — and not forty-five minutes of a real
+  browser's garbage collector, a tab throttled in the background for half an hour, or a
+  phone holding twenty-four compositor layers while the screen is off. Nor has anybody
+  measured a heap: `performance.memory` is Chromium-only and a headless container's
+  numbers would not describe a device.
 - **Coverage cannot see the five browser suites.** §6.68 measures every workspace's unit
   tests in one process, and that is the whole of what it measures. The web, phone,
   extension, bridge and failure suites all drive a *built bundle* in a real browser, so

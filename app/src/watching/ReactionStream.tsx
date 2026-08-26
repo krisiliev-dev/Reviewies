@@ -24,6 +24,16 @@ interface Flying {
   emoji: string;
   lane: number;
   mine: boolean;
+  /**
+   * When this one has finished crossing and its slot is free again.
+   *
+   * `Date.now()` rather than the monotonic clock §6.67 moved the *playback* position to.
+   * A clock correction mid-episode would sweep a batch a little early or late, which is
+   * cosmetic — an emoji leaving a moment sooner than it should — where the same
+   * correction applied to the playback position files every reaction after it at the
+   * wrong timestamp. Different stakes, different answer.
+   */
+  retireAt: number;
 }
 
 /**
@@ -114,6 +124,7 @@ export function ReactionStream({
           emoji: r.emoji,
           lane: lane.current,
           mine: r.mine,
+          retireAt: Date.now() + TRAVEL_MS,
         };
       }),
     ]);
@@ -152,7 +163,13 @@ export function ReactionStream({
       ...current,
       ...fresh.map((r) => {
         lane.current = (lane.current + 1) % LANES;
-        return { key: `${r.id}-own-${seq.current++}`, emoji: r.emoji, lane: lane.current, mine: true };
+        return {
+          key: `${r.id}-own-${seq.current++}`,
+          emoji: r.emoji,
+          lane: lane.current,
+          mine: true,
+          retireAt: Date.now() + TRAVEL_MS,
+        };
       }),
     ]);
   }, [reactions]);
@@ -176,12 +193,53 @@ export function ReactionStream({
     return () => clearInterval(id);
   }, [paused]);
 
-  // Retire finished reactions in one sweep rather than a timer per element.
+  /**
+   * Retire everything that has finished crossing, not one thing every so often.
+   *
+   * It used to drop a single element every `TRAVEL_MS / 2`, whatever had finished. The
+   * cap held — twenty-four were mounted and twenty-four were on screen — so nothing
+   * looked wrong, and the cost was paid somewhere nobody was measuring: a slot taken by
+   * an emoji whose animation ended four seconds ago stays taken for up to another fifty,
+   * and `room = density - flyingCount` then refuses every arrival meanwhile.
+   *
+   * Measured over five minutes of a busy episode — one reaction a second — **116 of 300
+   * ever reached the screen**. Twenty a minute, against the twenty-four slots × four
+   * seconds visible that the design allows, which is three hundred. And the ones shown
+   * were an arbitrary prefix, because `due.slice(0, room)` takes the earliest.
+   *
+   * "You still see everything everyone else left at that moment" is what this screen is
+   * for. It was showing two fifths of it. §6.69.
+   */
   useEffect(() => {
-    if (flying.length === 0 || paused) return;
-    const id = setTimeout(() => setFlying((c) => c.slice(1)), TRAVEL_MS / 2);
-    return () => clearTimeout(id);
-  }, [flying, paused]);
+    if (paused) return;
+    const id = setInterval(() => {
+      const now = Date.now();
+      // Only touch state when something actually expired: a `setFlying` per tick would
+      // re-render the band four times a second for the length of an episode.
+      setFlying((c) => (c.some((f) => f.retireAt <= now) ? c.filter((f) => f.retireAt > now) : c));
+    }, 250);
+    return () => clearInterval(id);
+  }, [paused]);
+
+  /**
+   * Held means held, including the countdown.
+   *
+   * WCAG 2.2.2's pause stops the animation where it stands (`animationPlayState`), so
+   * retiring on schedule underneath it would clear a screen somebody asked to hold
+   * still. The time spent paused is added back to every deadline on release.
+   */
+  const heldSince = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (paused) {
+      heldSince.current = Date.now();
+      return;
+    }
+    const since = heldSince.current;
+    heldSince.current = undefined;
+    if (since === undefined) return;
+    const held = Date.now() - since;
+    setFlying((c) => c.map((f) => ({ ...f, retireAt: f.retireAt + held })));
+  }, [paused]);
 
   flyingCount.current = flying.length;
 

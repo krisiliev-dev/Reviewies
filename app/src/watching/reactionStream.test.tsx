@@ -128,3 +128,139 @@ describe('the reaction stream', () => {
     expect(style).toContain('animation-play-state: paused');
   });
 });
+
+/**
+ * An episode's length, rather than five seconds of one.
+ *
+ * Every check above renders two frames. Watching Mode is a screen somebody leaves open
+ * for forty-five minutes with a timer firing four times a second, and nothing here had
+ * ever run it for longer than a couple of ticks. §6.69.
+ *
+ * The clock is simulated — `positionMs` advances a second at a time and vitest's fake
+ * timers carry the retirement sweep with it — so what these measure is the component's
+ * own arithmetic, not forty-five minutes of a real browser's garbage collector. The
+ * browser half is one bounded check in `app/smoke.mjs`.
+ */
+describe('over the length of an episode', () => {
+  const view = { current: undefined as ReturnType<typeof render> | undefined };
+
+  /** Distinct elements, not a count per frame: the same emoji sampled twice is one. */
+  function playAndCount(reactions: Reaction[], seconds: number, density = 24) {
+    const rendered = render(
+      <ReactionStream reactions={reactions} positionMs={0} density={density} />,
+    );
+    view.current = rendered;
+    const everMounted = new Set<Element>();
+    let peakMounted = 0;
+
+    for (let s = 1; s <= seconds; s++) {
+      act(() => {
+        rendered.rerender(
+          <ReactionStream reactions={reactions} positionMs={s * 1000} density={density} />,
+        );
+      });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      const spans = document.querySelectorAll('span[aria-hidden="true"]');
+      peakMounted = Math.max(peakMounted, spans.length);
+      for (const el of spans) everMounted.add(el);
+    }
+    return { shown: everMounted.size, peakMounted };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  it('shows every reaction on an ordinary episode, rather than two fifths of them', () => {
+    /**
+     * The measurement that started this. Retirement used to drop one element every
+     * `TRAVEL_MS / 2` whatever had finished, so a slot stayed taken for up to fifty
+     * seconds after its emoji had left the screen — and `room = density - flyingCount`
+     * refused every arrival meanwhile. Five minutes of one reaction a second showed
+     * **116 of 300**, twenty a minute, and the ones shown were an arbitrary prefix.
+     *
+     * "You still see everything everyone else left at that moment" is what this screen
+     * is for.
+     */
+    const reactions = Array.from({ length: 300 }, (_, i) => at((i + 1) * 1000, `r${i}`));
+    const { shown } = playAndCount(reactions, 300);
+    expect(shown).toBe(300);
+    vi.useRealTimers();
+  });
+
+  it('still caps how many are on screen when the episode is genuinely busy', () => {
+    // Ten a second, which no real audience produces. The cap is about readability
+    // (§6.13, Bilibili's lesson) and has to bind — the fix above must not have turned a
+    // ceiling into an open door.
+    const reactions = Array.from({ length: 3000 }, (_, i) => at(1000 + i * 100, `r${i}`));
+    const { peakMounted } = playAndCount(reactions, 300);
+    expect(peakMounted).toBeLessThanOrEqual(24);
+    vi.useRealTimers();
+  });
+
+  it('mounts nothing that has finished crossing', () => {
+    // A reaction is visible for four seconds. At one a second, about five are in flight
+    // at any moment; anything much above that is an invisible node holding a compositor
+    // layer, and on a phone that is real memory for the length of an episode.
+    const reactions = Array.from({ length: 300 }, (_, i) => at((i + 1) * 1000, `r${i}`));
+    const { peakMounted } = playAndCount(reactions, 300);
+    expect(peakMounted).toBeLessThan(12);
+    vi.useRealTimers();
+  });
+
+  it('does not grow over an episode', () => {
+    // The same rate, four times as long: whatever is mounted at five minutes should be
+    // what is mounted at twenty. A slope here is the leak this sprint went looking for.
+    const reactions = Array.from({ length: 1200 }, (_, i) => at((i + 1) * 1000, `r${i}`));
+    const long = playAndCount(reactions, 1200);
+    expect(long.peakMounted).toBeLessThan(12);
+    expect(long.shown).toBe(1200);
+    vi.useRealTimers();
+  });
+
+  it('keeps what is on screen while it is held, rather than sweeping it away', () => {
+    // WCAG 2.2.2's pause stops the animation where it stands. Retiring on schedule
+    // underneath it would clear a screen somebody asked to hold still.
+    const reactions = Array.from({ length: 20 }, (_, i) => at((i + 1) * 1000, `r${i}`));
+    const rendered = render(<ReactionStream reactions={reactions} positionMs={0} />);
+    for (let s = 1; s <= 3; s++) {
+      act(() => {
+        rendered.rerender(<ReactionStream reactions={reactions} positionMs={s * 1000} />);
+      });
+      act(() => vi.advanceTimersByTime(1000));
+    }
+    const held = document.querySelectorAll('span[aria-hidden="true"]').length;
+    expect(held).toBeGreaterThan(0);
+
+    act(() => {
+      rendered.rerender(<ReactionStream reactions={reactions} positionMs={3000} paused />);
+    });
+    // Twice as long as a reaction lives, held throughout.
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(document.querySelectorAll('span[aria-hidden="true"]').length).toBe(held);
+    vi.useRealTimers();
+  });
+
+  it('clears them once it is let go again', () => {
+    // And the held time is added back rather than forgiven, so releasing does not empty
+    // the band instantly either.
+    const reactions = Array.from({ length: 20 }, (_, i) => at((i + 1) * 1000, `r${i}`));
+    const rendered = render(<ReactionStream reactions={reactions} positionMs={0} />);
+    act(() => rendered.rerender(<ReactionStream reactions={reactions} positionMs={1000} />));
+    act(() => vi.advanceTimersByTime(500));
+
+    act(() => {
+      rendered.rerender(<ReactionStream reactions={reactions} positionMs={1000} paused />);
+    });
+    act(() => vi.advanceTimersByTime(30_000));
+    act(() => rendered.rerender(<ReactionStream reactions={reactions} positionMs={1000} />));
+    // Still there the instant it is released...
+    expect(document.querySelectorAll('span[aria-hidden="true"]').length).toBeGreaterThan(0);
+    // ...and gone once the rest of its crossing has actually elapsed.
+    act(() => vi.advanceTimersByTime(6000));
+    expect(document.querySelectorAll('span[aria-hidden="true"]').length).toBe(0);
+    vi.useRealTimers();
+  });
+});

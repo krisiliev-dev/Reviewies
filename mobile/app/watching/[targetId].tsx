@@ -67,8 +67,22 @@ export default function WatchingScreen() {
   useEffect(() => {
     const saved = resumeFor(targetId);
     if (!saved) return;
-    clock.seek(saved.positionMs);
-    if (!saved.running) clock.pause();
+    /**
+     * Restore *whether it was running*, not only where it had got to.
+     *
+     * `seek` moves the anchors and the position and says nothing about running, and a
+     * freshly-mounted clock is stopped — so a running episode came back showing the
+     * right timecode with the clock dead. The number looked plausible, which is what
+     * made it invisible: the *first* return still read further on, because `resumeFor`
+     * had already advanced it once. The effect below then wrote `running: false`, and
+     * from that moment the position never moved again for the rest of the episode, with
+     * every reaction landing on the same frozen timestamp.
+     *
+     * Step away twice and the flagship feature is quietly broken. One round trip is all
+     * anything here had ever done. §6.69.
+     */
+    if (saved.running) clock.start(saved.positionMs);
+    else clock.seek(saved.positionMs);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
   }, [targetId]);
 

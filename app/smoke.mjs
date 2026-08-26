@@ -628,6 +628,94 @@ try {
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
+  // --- §24 What a long session leaves behind ---------------------------------------
+  //
+  // Nothing in this repository had ever run for longer than a few seconds, or done
+  // anything more than once. Watching Mode is a screen somebody leaves open for
+  // forty-five minutes and steps away from repeatedly — a phone call, the kettle, who
+  // that actor is. §6.69.
+  //
+  // Bounded on purpose: three round trips, not forty-five minutes. What breaks over an
+  // episode breaks per visit, and a check that needs an hour is one nobody runs.
+  //
+  // The timer census is taken from Up Next both times, so the count is "what is left
+  // behind" rather than "what the screen I am standing on is using". Wrapping while
+  // inside Watching Mode measured a baseline of zero against two live intervals that
+  // were simply the current screen's, which is a check that reports its own setup.
+  await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
+  await page.waitForSelector('h1:text("Up Next")', { timeout: 5000 });
+  await page.evaluate(() => {
+    const w = window;
+    w.__timers = new Set();
+    const realSet = w.setInterval;
+    const realClear = w.clearInterval;
+    w.setInterval = (...args) => {
+      const id = realSet.apply(w, args);
+      w.__timers.add(id);
+      return id;
+    };
+    w.clearInterval = (id) => {
+      w.__timers.delete(id);
+      return realClear.call(w, id);
+    };
+  });
+  const liveTimers = () => page.evaluate(() => window.__timers.size);
+  const timersOnUpNext = await liveTimers();
+
+  const timecode = () => page.locator('text=/^\\d+:\\d\\d$/').first().innerText();
+  /** `seconds` is taken further down, by the single-round-trip check this one precedes. */
+  const asSeconds = (t) => Number(t.split(':')[0]) * 60 + Number(t.split(':')[1]);
+
+  for (let visit = 0; visit < 3; visit++) {
+    await page.getByRole('link', { name: /^Watch along with / }).first().click();
+    await page.waitForTimeout(700);
+    await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
+    await page.waitForSelector('h1:text("Up Next")', { timeout: 5000 });
+  }
+  check(
+    'leaving Watching Mode stops its timers',
+    (await liveTimers()) <= timersOnUpNext,
+    `${timersOnUpNext} live on Up Next, ${await liveTimers()} after three visits`,
+  );
+
+  // The finding this block was written for, and it took the third visit to show.
+  //
+  // Restoring a running clock called `seek`, which moves the position and says nothing
+  // about running — and a freshly-mounted clock is stopped. The *first* return still
+  // read further on, because `resumeFor` had already advanced it once, so the single
+  // round trip below has always passed. The effect that persists the clock then wrote
+  // `running: false`, and from that moment the timecode never moved again: a plausible
+  // number, frozen, with every reaction landing on it.
+  await page.getByRole('link', { name: /^Watch along with / }).first().click();
+  await page.waitForTimeout(700);
+  const afterVisits = await timecode();
+  await page.waitForTimeout(2500);
+  const stillRunning = await timecode();
+  check(
+    'the clock still runs after stepping away more than once',
+    asSeconds(stillRunning) > asSeconds(afterVisits),
+    `${afterVisits} → ${stillRunning} across three round trips`,
+  );
+
+  // And the band: an emoji is visible for four seconds, so what is mounted has to be
+  // what is on screen. Retirement used to drop one element every 2.4s whatever had
+  // finished, so a slot stayed taken for up to fifty seconds after its emoji had gone —
+  // a compositor layer per emoji on a phone, and an arrival refused for every one of
+  // those seconds.
+  const band = await page.evaluate(() => {
+    const stream = document.querySelector('[aria-label="Reactions from other viewers"]');
+    const spans = stream ? [...stream.querySelectorAll('span[aria-hidden="true"]')] : [];
+    return {
+      mounted: spans.length,
+      offScreen: spans.filter((s) => s.getBoundingClientRect().right <= 0).length,
+    };
+  });
+  check(
+    'nothing is left mounted after it has crossed the screen',
+    band.offScreen === 0,
+    `${band.mounted} mounted, ${band.offScreen} already gone past`,
+  );
+
   // --- Stepping away and coming back ---------------------------------------------
   //
   // The sharpest thing doc 10 found by using the app: the clock lived in React state and
@@ -656,9 +744,17 @@ try {
     seconds(onReturn) > seconds(beforeLeaving),
     `${beforeLeaving} → ${onReturn}`,
   );
+  // This asked for a *Resume* button and got one, because the restored clock was
+  // wrongly stopped — the check was passing on the strength of the bug §6.69 found. A
+  // clock that was running comes back running, so the transport offers Pause; what the
+  // check was always trying to say is that this is not a fresh start.
   check(
-    'and offers to resume rather than to start',
-    (await page.getByRole('button', { name: /Resume/ }).count()) > 0,
+    'and does not offer to start something already under way',
+    (await page.getByRole('button', { name: 'Start watching' }).count()) === 0,
+  );
+  check(
+    'and comes back running rather than stopped',
+    (await page.getByRole('button', { name: 'Pause the clock' }).count()) > 0,
   );
 
   // --- Extension auto-sync ---------------------------------------------------
@@ -667,11 +763,11 @@ try {
   await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.getByRole('link', { name: /^Watch along with / }).first().click();
-  // "Resume", not "Start watching": the clock persists since doc 10 §2, and re-entering
-  // an episode that was running is now a resume. The extension's reading has to
-  // supersede a restored position as much as an absent one.
+  // Already running, not "Start watching": the clock persists since doc 10 §2 and comes
+  // back running since §6.69. The extension's reading has to supersede a restored
+  // position as much as an absent one — that is the point of what follows.
   await page
-    .getByRole('button', { name: /Resume|Start watching/ })
+    .getByRole('button', { name: /Pause the clock|Resume the clock|Start watching/ })
     .first()
     .waitFor({ timeout: 5000 });
 
