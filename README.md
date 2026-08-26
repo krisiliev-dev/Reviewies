@@ -182,7 +182,16 @@ node smoke.mjs                        # the same, driving the phone app
 
 cd ../extension && npm run smoke       # loads the extension into a real browser
 cd ../bridge && npm run smoke          # app → relay → bridge → a fake Roku
+
+cd ../app && npm run smoke:failures    # the same web app, with the provider failing
 ```
+
+That last one is the odd member of the family: it builds *with* the TMDB token — the
+others blank it on purpose — and then makes every request to the provider fail three
+ways: refused, answered with a 500, and left hanging with no answer at all. The third is
+the one worth the trouble. A hang never rejects, so no `catch` in the app can see it, and
+only the deadline in `SEARCH_TIMEOUT_MS` ends it. No network is needed: interception
+happens before the request leaves the browser.
 
 Two suites are deliberately not part of `npm test`:
 

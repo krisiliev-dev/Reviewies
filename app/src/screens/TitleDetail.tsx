@@ -18,11 +18,13 @@ import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
 import { WhereToWatch } from '../ui/WhereToWatch';
 import type { CachedEpisode } from '@reviewies/core/domain/types';
+import { COPY } from '@reviewies/core/copy';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
   const titleId = decodeURIComponent(id);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   const title = useLiveQuery(() => db.titles.get(titleId), [titleId]);
   const episodes = useLiveQuery(
@@ -41,17 +43,29 @@ export function TitleDetail() {
     return map;
   }, [titleId], new Map<string, number>());
 
+  /**
+   * Awaited without a catch, so a provider that could not be reached left this effect
+   * rejected part-way: `loading` stayed true and the heading below stayed on its
+   * placeholder — "Loading…", for ever, on the page for a show somebody had opened.
+   * §6.58 drove it in a browser rather than reasoning about it.
+   */
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await getTitleCached(titleId);
-      await getEpisodesCached(titleId);
-      if (!cancelled) setLoading(false);
+      try {
+        await getTitleCached(titleId);
+        await getEpisodesCached(titleId);
+      } catch {
+        if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [titleId]);
+  }, [titleId, attempt]);
 
   const bySeason = new Map<number, CachedEpisode[]>();
   for (const e of [...episodes].sort((a, b) => a.season - b.season || a.number - b.number)) {
@@ -68,7 +82,21 @@ export function TitleDetail() {
           className="h-36 w-24 rounded-xl"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold">{title?.name ?? 'Loading…'}</h1>
+          <h1 className="text-xl font-semibold">
+            {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
+          </h1>
+          {!title && (failed || !loading) && (
+            <button
+              onClick={() => {
+                setFailed(false);
+                setLoading(true);
+                setAttempt((n) => n + 1);
+              }}
+              className="mt-2 rounded-full bg-surface-2 px-4 py-2 text-sm"
+            >
+              {COPY.title.tryAgain}
+            </button>
+          )}
           {title?.year && <p className="text-sm text-muted">{title.year}</p>}
           {title?.overview && (
             <p className="mt-2 line-clamp-3 text-sm text-muted">{title.overview}</p>

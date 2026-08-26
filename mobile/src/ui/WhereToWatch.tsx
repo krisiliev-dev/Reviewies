@@ -4,6 +4,7 @@ import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metad
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
 import { radius, tap, theme } from './theme';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Where a title can be watched right now.
@@ -24,13 +25,18 @@ import { radius, tap, theme } from './theme';
 export function WhereToWatch({ titleId }: { titleId: string }) {
   const [region, setRegionState] = useState(getRegion);
   const [providers, setProviders] = useState<CachedProviders | null>();
+  /** Told apart from "nowhere to watch it", which is what this used to say. §6.58. */
+  const [failed, setFailed] = useState(false);
   const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setProviders(undefined);
-    void getProvidersCached(titleId, region).then((found) => {
-      if (!cancelled) setProviders(found ?? null);
+    setFailed(false);
+    void getProvidersCached(titleId, region).then((result) => {
+      if (cancelled) return;
+      setProviders(result.providers ?? null);
+      setFailed(!!result.failed && !result.providers);
     });
     return () => {
       cancelled = true;
@@ -85,7 +91,13 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
 
       {providers === undefined && <Text style={styles.muted}>Checking…</Text>}
 
-      {nothing && (
+      {failed && (
+        <Text style={styles.failed} accessibilityLiveRegion="polite">
+          {COPY.whereToWatch.failed}
+        </Text>
+      )}
+
+      {!failed && nothing && (
         <Text style={styles.muted}>
           Not on any service in {regionName(region)} that we can see. Try another country
           above.
@@ -157,6 +169,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: theme.accent },
   chipText: { color: theme.muted, fontSize: 12 },
   chipTextOn: { color: theme.ink, fontWeight: '600' },
+  failed: { color: theme.accent, fontSize: 13, lineHeight: 19, marginTop: 6 },
   muted: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
   rowLabel: { color: theme.muted, fontSize: 12 },

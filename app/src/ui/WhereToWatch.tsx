@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Where a title can be watched right now.
@@ -19,13 +20,18 @@ import type { CachedProviders } from '@reviewies/core/domain/types';
 export function WhereToWatch({ titleId }: { titleId: string }) {
   const [region, setRegionState] = useState(getRegion);
   const [providers, setProviders] = useState<CachedProviders | null>();
+  /** Told apart from "nowhere to watch it", which is what this used to say. §6.58. */
+  const [failed, setFailed] = useState(false);
   const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setProviders(undefined);
-    void getProvidersCached(titleId, region).then((found) => {
-      if (!cancelled) setProviders(found ?? null);
+    setFailed(false);
+    void getProvidersCached(titleId, region).then((result) => {
+      if (cancelled) return;
+      setProviders(result.providers ?? null);
+      setFailed(!!result.failed && !result.providers);
     });
     return () => {
       cancelled = true;
@@ -82,7 +88,13 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
 
       {providers === undefined && <p className="mt-2 text-sm text-muted">Checking…</p>}
 
-      {nothing && (
+      {failed && (
+        <p className="mt-2 text-sm text-accent" role="status">
+          {COPY.whereToWatch.failed}
+        </p>
+      )}
+
+      {!failed && nothing && (
         <p className="mt-2 text-sm text-muted">
           Not on any service in {regionName(region)} that we can see. Try another country
           above.

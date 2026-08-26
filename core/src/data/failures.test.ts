@@ -50,9 +50,12 @@ const SILENT: Record<string, string> = {
   // --- metadata: falling back to the cache is the design, not a lapse -------------
   'metadata/index.ts:getTitleCached':
     'Serves stale metadata when the network fails. Deliberate and documented at the top of the file: offline should degrade to slightly-old data, never to an error.',
-  'metadata/index.ts:getProvidersCached':
-    'Same, with one extra rule — a row cached for a different country is a miss rather than a wrong answer.',
   'metadata/index.ts:getEpisodesCached': 'Same fallback as the title cache.',
+  // `getProvidersCached` was on this list, with the same reason as its neighbours, and
+  // the reason was wrong: falling back to stale *metadata* degrades gracefully, but
+  // falling back to "no providers" is not old data — it is a claim that the title is on
+  // no service anywhere, made from a network error. It reports its failure now, and this
+  // guard's own stale-entry check is what insisted the excuse be removed with it. §6.58.
   'metadata/anilist.ts:getSeasonChain':
     'Anime season correction is a bonus on top of what TMDB gives. Failing to reach AniList leaves the flattened listing, which is what everyone had before.',
   'metadata/animeMapping.ts:lookupAnimeIds': 'Falls back to the mapping cache, as above.',

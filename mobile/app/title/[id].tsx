@@ -29,6 +29,7 @@ import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
+import { COPY } from '@reviewies/core/copy';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,17 +55,28 @@ export default function TitleScreen() {
     return map;
   }, [titleId]);
 
+  /**
+   * The web's copy of this awaited without a catch, so a provider that could not be
+   * reached left the heading on "Loading…" for ever. Same shape here. §6.58.
+   */
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      await getTitleCached(titleId);
-      await getEpisodesCached(titleId);
-      if (!cancelled) setLoading(false);
+      try {
+        await getTitleCached(titleId);
+        await getEpisodesCached(titleId);
+      } catch {
+        if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [titleId]);
+  }, [titleId, attempt]);
 
   const seasons = useMemo(() => {
     const bySeason = new Map<number, CachedEpisode[]>();
@@ -84,7 +96,23 @@ export default function TitleScreen() {
         <View style={styles.header}>
           <Poster url={title?.posterUrl} name={title?.name ?? ''} width={96} height={144} />
           <View style={styles.headerBody}>
-            <Text style={styles.title}>{title?.name ?? 'Loading…'}</Text>
+            <Text style={styles.title}>
+              {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
+            </Text>
+            {!title && (failed || !loading) && (
+              <Pressable
+                onPress={() => {
+                  setFailed(false);
+                  setLoading(true);
+                  setAttempt((n) => n + 1);
+                }}
+                style={styles.retry}
+                accessibilityRole="button"
+                accessibilityLabel={COPY.title.tryAgain}
+              >
+                <Text style={styles.retryText}>{COPY.title.tryAgain}</Text>
+              </Pressable>
+            )}
             {title?.year ? <Text style={styles.year}>{title.year}</Text> : null}
           </View>
         </View>
@@ -311,6 +339,15 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
+  retry: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    backgroundColor: theme.surface2,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryText: { color: theme.text, fontSize: 14, fontWeight: '600' },
   title: { color: theme.text, fontSize: 20, fontWeight: '700' },
   year: { color: theme.muted, fontSize: 14 },
   overview: { color: theme.muted, fontSize: 14, lineHeight: 20 },

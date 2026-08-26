@@ -121,6 +121,27 @@ export const COPY = {
     densityLabel: 'Density',
   },
 
+  title: {
+    /**
+     * The title page, when the provider could not be reached and nothing is cached.
+     *
+     * It said "Loading…" for ever: the fetch was awaited without a catch, so a rejection
+     * left the heading on its placeholder and the effect never finished. A placeholder
+     * that never resolves is the same lie as an empty state that is really a failure.
+     * §6.58.
+     */
+    loadFailed: 'Could not load this title. It may just be the network.',
+    tryAgain: 'Try again',
+  },
+
+  whereToWatch: {
+    /**
+     * Not the same sentence as "nowhere to watch it", which is what this used to say
+     * when the request failed — a statement about the world made from a network error.
+     */
+    failed: 'Could not check where this is streaming just now.',
+  },
+
   comments: {
     /** The web's: an empty conversation is an invitation, not a status. */
     empty: 'Nothing here yet. Be the first.',

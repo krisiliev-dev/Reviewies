@@ -2876,6 +2876,66 @@ kind of thing that reads as a triviality in a diff and as a betrayal on a screen
 empty state is a claim about somebody's own data.** Making it because a request failed is
 not a cosmetic error.
 
+### 6.58 Making the provider fail, in a browser
+
+§6.57's guard says in its own doc comment what it cannot see: that a bound failure is
+ever *rendered*. `const result = await …` followed by silence passes it and fails a
+reader. The provider is the one dependency reachable without an account, so that is where
+the other half starts.
+
+`app/failures.mjs` builds the web app **with** the TMDB token — the ordinary smoke run
+blanks it on purpose — and then makes every request to `api.themoviedb.org` fail three
+ways: refused, answered with a 500, and left hanging with no answer at all. No network is
+needed, because interception happens before the request leaves the browser; what is under
+test is the app, not TMDB.
+
+The three are three different bugs. **A hang does not reject**, so nothing in the app's
+error handling can see it; only a deadline can. That case is now driven end to end:
+*Searching…* for ten seconds, then *"That took too long. Check your connection and try
+again"* with a button. §7 has recorded that deadline as untested since it was written in
+doc 10 §6.
+
+Search, Discover and the calendar all came through honestly. The title page did not.
+
+**It said "Loading…" for ever.** `getTitleCached` and `getEpisodesCached` were awaited
+without a catch, so a provider that could not be reached left the effect rejected
+part-way: `loading` stayed true and the heading stayed on its placeholder. Both platforms,
+same shape. It says what happened now, and offers **Try again** — which re-runs the fetch
+rather than reloading the page.
+
+**And underneath it, a worse one.** The page also said:
+
+> Not on any service in United States that we can see.
+
+That is a statement about the world, and it was made from a network error.
+`getProvidersCached` caught the failure and returned `undefined` — the same value it
+returns for a title genuinely streaming nowhere. It returns `{ providers, failed }` now,
+and the screens say *"Could not check where this is streaming just now"* instead.
+
+The part worth recording is what happened next. Removing the swallow broke
+`core/src/data/failures.test.ts` — the guard from §6.29 that lists every read which
+answers a failure with emptiness, each with a written reason — because
+`getProvidersCached` was **on that list, with a reason**:
+
+> Same, with one extra rule — a row cached for a different country is a miss rather than a
+> wrong answer.
+
+The reason was true of its neighbours and wrong about it. Falling back to stale *metadata*
+degrades gracefully: you get last week's episode titles instead of an error. Falling back
+to "no providers" is not old data at all — it is a claim of absence. Two sprints ago that
+distinction had a name (§6.56); when the entry was written, it did not, and the excuse
+read as reasonable beside four that were.
+
+So the guard's stale-entry check is what finally deleted the excuse — the mechanism
+working exactly as intended, one sprint late, against the person who wrote the entry. That
+is the argument for stale-exemption checks in general: an exemption list without one is a
+place where wrong reasons go to be safe.
+
+My own first version of the title-page check was the same failure in miniature: it asked
+whether the page was *non-blank*, and a page sitting on "Loading…" with a five-star rating
+widget under it is not blank. It passed. Reading the detail it printed is what found the
+bug — which is the third sprint running where the finding came from distrusting a pass.
+
 ---
 
 ## 7. What is still not known
@@ -2901,10 +2961,11 @@ and which single claim in this document could not be checked at all:
   half way through an upload. The search deadline of §6.52 exists for the first of those
   and has never met one. Nor has anything tested a device whose radio comes back while a
   write is in flight.
-- **The offline search path is untested end to end.** The web smoke builds with no TMDB
-  token on purpose, so search runs on fixtures, which answer from memory and cannot fail.
-  The provider's own failure — a request that hangs, then the deadline — is covered by
-  unit tests and by reading, not by a browser with the network off.
+- **The signed-in failure paths are still out of reach.** §6.58 drives the provider's
+  failures in a browser, which needs no account. Lists, People and comments all gate on a
+  session, so what a failed *server* write looks like on those screens — the fixes of
+  §6.57 — has been read and typechecked but never seen. That needs `SB_SECRET`, which
+  this checkout does not have.
 - **The scale measurements are a container's, not a phone's.** §6.54 runs the app's own
   queries against a hundred and twenty shows and six thousand episodes on both stores, and
   the screens against a hundred and fifty in Chromium. Nothing there says what a five-year-old

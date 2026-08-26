@@ -73,24 +73,43 @@ export async function getTitleCached(id: string): Promise<CachedTitle | undefine
  * treated as a miss rather than served — changing region has to change the answer, or
  * the feature is actively misleading.
  */
+export interface ProvidersResult {
+  providers?: CachedProviders;
+  /** Set when the asking failed, as opposed to the answer being "nowhere". */
+  failed?: string;
+}
+
+/**
+ * Where a title is streaming, from the cache when it is fresh enough.
+ *
+ * The result is two-valued on purpose. This used to return `CachedProviders | undefined`
+ * and swallow the error, so a request that failed and a title genuinely on no service
+ * came back identical — and the screen said *"Not on any service in United States that
+ * we can see"*, which is a statement about the world made from a network error. §6.58.
+ */
 export async function getProvidersCached(
   id: string,
   country: string,
-): Promise<CachedProviders | undefined> {
+): Promise<ProvidersResult> {
   const cached = await db.providers.get(id);
-  if (cached && cached.country === country && !isStale(cached.fetchedAt)) return cached;
+  if (cached && cached.country === country && !isStale(cached.fetchedAt)) {
+    return { providers: cached };
+  }
 
   try {
     const fresh = await getProvider().getWatchProviders(id, country);
     if (fresh) {
       await db.providers.put(fresh);
-      return fresh;
+      return { providers: fresh };
     }
     // A title genuinely unavailable in this country: cache nothing, and do not fall
     // back to another country's answer.
-    return cached?.country === country ? cached : undefined;
-  } catch {
-    return cached?.country === country ? cached : undefined;
+    return { providers: cached?.country === country ? cached : undefined };
+  } catch (error) {
+    return {
+      providers: cached?.country === country ? cached : undefined,
+      failed: error instanceof Error ? error.message : 'Could not ask.',
+    };
   }
 }
 
