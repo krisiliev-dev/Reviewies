@@ -358,6 +358,50 @@ describe('push notifications', () => {
  * run against real Postgres with the real migrations, because the guarantee is the
  * trigger's and a mock cannot have one.
  */
+/**
+ * A tombstone for a row the server has never seen.
+ *
+ * Mark an episode watched and undo it before the next sync — which §6.64 built an Undo
+ * button for, so it is a designed flow rather than a mishap. The outbox coalesces on
+ * `table:pk`, so the delete *replaces* the unpushed insert, and what finally reaches the
+ * server is `{ id, user_id, updated_at, deleted: true }` for a row it has no record of.
+ *
+ * Every syncable table has not-null columns the client fills. These run against real
+ * Postgres to find out what actually happens rather than reasoning about it. §6.70.
+ */
+describe('deleting something the server never received', () => {
+  const tombstone = (table: string, columns: Record<string, unknown>) =>
+    asAdmin(
+      `insert into ${table} (${Object.keys(columns).join(', ')}, deleted)
+       values (${Object.keys(columns).map((_, i) => `$${i + 1}`).join(', ')}, true)`,
+      Object.values(columns),
+    );
+
+  it('a watch', async () => {
+    await expect(
+      tombstone('watches', { id: '33333333-3333-3333-3333-333333333333', user_id: ALICE }),
+    ).rejects.toThrow(/not-null|null value/i);
+  });
+
+  it('a rating', async () => {
+    await expect(
+      tombstone('ratings', { user_id: ALICE, target_id: 'tmdb:tv:1' }),
+    ).rejects.toThrow(/not-null|null value/i);
+  });
+
+  it('a watchlist entry', async () => {
+    await expect(
+      tombstone('watchlist', { user_id: ALICE, title_id: 'tmdb:tv:1' }),
+    ).rejects.toThrow(/not-null|null value/i);
+  });
+
+  it('a library row', async () => {
+    await expect(
+      tombstone('library', { user_id: ALICE, title_id: 'tmdb:tv:1' }),
+    ).rejects.toThrow(/not-null|null value/i);
+  });
+});
+
 describe('what the server does with a device’s idea of the time', () => {
   const SHOW = 'tmdb:tv:clock';
 

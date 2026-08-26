@@ -628,6 +628,79 @@ try {
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
+  // --- §25 Every screen, three times -----------------------------------------------
+  //
+  // §6.69 found two bugs in Watching Mode that a single visit could not see, and §6.70
+  // asked whether that was a coincidence. Every check in this suite visits each screen
+  // once. This visits them all three times and looks for the same shape: a screen that
+  // renders the first time and not the third, or timers that pile up per visit.
+  //
+  // Bounded — six screens, three visits, a few hundred milliseconds each. `pageerror`
+  // is already wired to fail the run, so an exception thrown on a later visit is caught
+  // without asking for it here.
+  await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
+  await page.waitForSelector('h1:text("Up Next")', { timeout: 5000 });
+  await page.evaluate(() => {
+    const w = window;
+    w.__revisits = new Set();
+    const realSet = w.setInterval;
+    const realClear = w.clearInterval;
+    w.setInterval = (...args) => {
+      const id = realSet.apply(w, args);
+      w.__revisits.add(id);
+      return id;
+    };
+    w.clearInterval = (id) => {
+      w.__revisits.delete(id);
+      return realClear.call(w, id);
+    };
+  });
+  const timersHere = () => page.evaluate(() => window.__revisits.size);
+  const beforeRevisits = await timersHere();
+
+  /**
+   * Where to go, and the heading that proves it arrived.
+   *
+   * Loose link patterns on purpose: the More screen names each link
+   * "Stats — Runtime-weighted, and your year in review", so an anchored `/^Stats$/`
+   * matches nothing. The *heading* is what says the screen rendered.
+   */
+  const SCREENS = [
+    ['Search', /Search/, true],
+    ['Discover', /Discover/, true],
+    ['Watchlist', /Watchlist/, true],
+    ['Stats', /Stats/, false],
+    ['Upcoming', /Upcoming/, false],
+    ['Lists', /Lists/, false],
+    ['People', /People/, false],
+  ];
+
+  for (const [label, link, isTab] of SCREENS) {
+    let arrived = 0;
+    for (let visit = 1; visit <= 3; visit++) {
+      if (isTab) await page.getByRole('link', { name: link }).first().click();
+      else await viaMore(link);
+      try {
+        await page.getByRole('heading', { name: label, level: 1 }).waitFor({ timeout: 4000 });
+        arrived++;
+      } catch {
+        /* counted below rather than throwing: the point is which visit failed. */
+      }
+      await page.getByRole('link', { name: /Up Next/ }).click();
+      await page.waitForSelector('h1:text("Up Next")', { timeout: 5000 });
+    }
+    check(`${label} renders on all three visits`, arrived === 3, `${arrived}/3`);
+  }
+
+  check(
+    'and twenty-one visits leave no timers behind',
+    (await timersHere()) <= beforeRevisits,
+    `${beforeRevisits} before, ${await timersHere()} after`,
+  );
+
+  await page.getByRole('link', { name: /^Watch along with / }).first().click();
+  await page.waitForTimeout(700);
+
   // --- §24 What a long session leaves behind ---------------------------------------
   //
   // Nothing in this repository had ever run for longer than a few seconds, or done

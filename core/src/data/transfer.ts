@@ -283,7 +283,7 @@ export async function importWatchHistoryCsv(text: string): Promise<ImportReport>
 
   const events: WatchEvent[] = [];
 
-  for (const row of rows.slice(1)) {
+  for (const [index, row] of rows.slice(1).entries()) {
     const seriesName = iSeries >= 0 ? row[iSeries]?.trim() : '';
     const tmdbId = iTmdb >= 0 ? row[iTmdb]?.trim() : '';
     if (!seriesName && !tmdbId) {
@@ -291,7 +291,16 @@ export async function importWatchHistoryCsv(text: string): Promise<ImportReport>
       continue;
     }
 
-    const watchedAt = parseDate(iDate >= 0 ? row[iDate] : undefined);
+    const raw = iDate >= 0 ? row[iDate] : undefined;
+    const watchedAt = parseDate(raw);
+    /**
+     * Whether the *file* said when this was watched.
+     *
+     * `parseDate` falls back to `Date.now()`, which is the right thing to store — a
+     * watch has to have happened at some point — and the wrong thing to build an id
+     * from. See the id below. §6.70.
+     */
+    const dated = Boolean(raw?.trim()) && Number.isFinite(Date.parse(raw!.trim()));
     const season = iSeason >= 0 ? Number(row[iSeason]) : undefined;
     const episode = iEpisode >= 0 ? Number(row[iEpisode]) : undefined;
 
@@ -309,7 +318,20 @@ export async function importWatchHistoryCsv(text: string): Promise<ImportReport>
         : seriesId;
 
     events.push({
-      id: `${targetId}@${watchedAt}`,
+      /**
+       * Deterministic, so importing the same file twice is the same history.
+       *
+       * It was `${targetId}@${watchedAt}` throughout, and `watchedAt` is `Date.now()`
+       * when the file carries no date — so a dated CSV re-imported cleanly and an
+       * undated one **doubled**, and doubled again on the third attempt. Re-importing
+       * after a failure is an ordinary thing to do, and this is a product whose whole
+       * pitch is rescuing somebody's history. §6.70.
+       *
+       * The row's position stands in for the timestamp when there isn't one: stable
+       * across re-imports of the same file, and still distinct for the same episode
+       * appearing twice, which is a rewatch we cannot date but can count.
+       */
+      id: dated ? `${targetId}@${watchedAt}` : `${targetId}@row${index}`,
       targetId,
       seriesId: targetId === seriesId ? undefined : seriesId,
       watchedAt,

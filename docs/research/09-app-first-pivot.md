@@ -3821,6 +3821,103 @@ the component's arithmetic and the screen's state handling, not forty-five minut
 real browser's garbage collector, and a headless Chromium in a container is not a phone
 holding twenty-four compositor layers.
 
+### 6.70 Do everything twice
+
+Both bugs in §6.69 came from repetition rather than duration. The reaction stream was fine
+for one arrival and starved from the second onward; the clock was fine for one round trip
+and dead from the second — and the check that should have caught it has passed since doc
+10 §2 because it leaves and returns exactly once. That looked like a class rather than a
+coincidence, because **every check in this repository does each thing once.**
+
+It is a class. Two more, both in the part of the product that is hardest to notice going
+wrong: somebody's history.
+
+#### Undo a watch and sync stops working
+
+The outbox coalesces on `table:pk`, so a delete queued before its insert has gone out does
+not follow it — it **replaces** it. A tombstone is an upsert with `deleted: true`, and the
+client had been sending nothing but the key:
+
+```js
+await enqueue('watches', { id: latest.id }, { deleted: true });
+```
+
+So what reaches the server is a row it has never seen, carrying an id and nothing else.
+Every not-null column is missing. Proved against real Postgres with the real migrations,
+for all four syncable tables — `watches` wants `target_id` and `watched_at`, `ratings`
+wants `value` and `rated_at`, `watchlist` wants `kind` and `added_at`, `library` wants
+`kind`, `status` and `added_at`.
+
+Postgres raises **23502**. `classify` does not list it among the permanent codes, so it is
+*retryable*: the entry never leaves the queue. And `syncOnce` returns on a push failure —
+so **every later write is stuck behind it, for ever**, with nothing on screen to say so.
+
+Mark an episode and undo it before your next sync, and sync stops working. §6.64 added
+that Undo button precisely because marking is the action done in the dark one-handed and
+most likely to be a mis-tap, which makes this a designed flow rather than a mishap.
+
+Every tombstone carries its whole row now — seven sites across `repo.ts` and
+`reconcile.ts`. `core/src/sync/tombstones.test.ts` reads the not-null columns **out of the
+migrations** and checks what the client actually queues against them, so a column added
+tomorrow is covered without anybody remembering the file exists. Planted back, it names
+exactly what is missing: *"watches tombstone is missing target_id, watched_at"*.
+
+#### Import the same file twice and an undated history doubles
+
+`importWatchHistoryCsv` keyed each watch as `` `${targetId}@${watchedAt}` `` — deterministic,
+so re-importing overwrites rather than duplicates. Except `watchedAt` falls back to
+`Date.now()` when the file carries no date, and then every import invents new ids.
+
+| | first import | second | third |
+|---|---|---|---|
+| dated CSV | 2 watches | 2 | 2 |
+| **undated CSV** | 2 watches | **4** | **6** |
+
+Re-importing after a first attempt that seemed to do nothing is an ordinary thing to do,
+and this is a product whose entire pitch is rescuing histories somebody else deleted.
+Silently doubling one is close to the worst thing it could do.
+
+The row's position stands in for the timestamp when there isn't one: stable across
+re-imports, and still distinct for the same episode appearing twice — which the old
+spelling got wrong in the other direction, collapsing two undated watches of one episode
+into a single row *within a single import*, because they shared a target and a `Date.now()`.
+
+The other importers were already right: the TV Time rescue tool and the DioCache reader key
+by `` `${targetId}#${i}` ``, and a Reviewies export carries its own ids and `bulkPut`s over
+itself. Recorded because "already right" is worth knowing as precisely as a bug is.
+
+#### What held up
+
+Said plainly rather than dressed up, because most of the sweep found nothing:
+
+- **Mark, unmark, mark again.** Watches are events with their own ids, so the third act is
+  a new row and the tombstone survives it. One watch in the database, one tombstone and one
+  insert in the queue.
+- **Rate, clear, rate again** and **watchlist add, remove, add.** Both are keyed by target,
+  so all three acts land in one outbox slot and the last one wins — which is what should
+  happen. The value the person ended on is the value that goes out.
+- **Track, drop, track again.** One library row, the final status.
+- **Every screen, three times.** Search, Discover, Watchlist, Stats, Upcoming, Lists,
+  People — twenty-one visits, every one rendering, and no timers left behind. Now three
+  checks in the browser suite, because the Watching Mode bug was exactly this shape and
+  nothing had asked the question of anywhere else.
+- **Pushing the same change twice** after an ambiguous response was already covered by
+  `engine.test.ts`, and still is.
+
+#### The method
+
+Same as last time, and it is becoming the point. Reproduce first — the tombstone finding is
+four `rejects.toThrow` against real Postgres written *before* any fix, and the import one is
+a printed count of 2 → 4 → 6. Then fix. Then plant the old behaviour back and watch the new
+checks fail for the stated reason rather than for some other one.
+
+Nothing else broke this time, which is worth noting after §6.69 found two checks that had
+been asserting a bug. `npm run verify` went from 768 to 783 in the core with no existing
+check turning red.
+
+§7 records what is still untried twice: signing out and back in, which needs the service
+key this checkout has never had.
+
 ---
 
 ## 7. What is still not known
@@ -3913,6 +4010,20 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **Nobody has signed out and back in.** §6.70 did every other sequence twice — mark and
+  unmark and mark, rate and clear and rate, import the same file three times, visit every
+  screen three times — and the one it could not do is the account. `resetSyncState` and the
+  owner check in `sync/driver.ts` exist for exactly the sequence *sign out, sign in as
+  somebody else, sync*, and that path needs a session this checkout has never had. What
+  can be checked without one has been: the driver's claim logic is unit-tested, and the
+  policies it depends on are tested against real Postgres. What happens when a real second
+  person signs into a device holding the first person's queue is still an argument from the
+  code rather than an observation.
+- **The tombstone fix is proved against Postgres and not against Supabase.** The four
+  not-null rejections and the migration-derived column check both run for real; what has
+  never happened is a client with a session pushing a tombstone at the deployed project and
+  watching it land. That is the same missing service key, and it is the reason the failure
+  went unnoticed for the life of the product: nothing has ever pushed anything anywhere.
 - **Nothing has actually run for forty-five minutes.** §6.69 measures duration, and the
   clock is simulated in both halves: the unit tests advance `positionMs` and vitest's
   fake timers a second at a time, and the browser checks do three round trips rather than

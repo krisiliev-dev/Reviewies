@@ -285,7 +285,9 @@ export async function acceptMatch(
         await db.watches.put(moved);
         // Both halves replicate, or the server keeps the row under the ID this just
         // retired and the next pull resurrects a history split across two sets of them.
-        await enqueue('watches', { id: watch.id }, { deleted: true });
+        // The whole row: a tombstone is an upsert, and one carrying only the key
+        // cannot be inserted for a row the server never received. §6.70.
+        await enqueue('watches', watch as unknown as Record<string, unknown>, { deleted: true });
         await enqueue('watches', moved as unknown as Record<string, unknown>);
         report.watches++;
       }
@@ -302,13 +304,15 @@ export async function acceptMatch(
           report.ratings++;
         }
         await db.ratings.delete(rating.targetId);
-        await enqueue('ratings', { targetId: rating.targetId }, { deleted: true });
+        await enqueue('ratings', rating as unknown as Record<string, unknown>, { deleted: true });
       }
 
       if (libraryRow) {
         const existing = await db.library.get(providerId);
         await db.library.delete(localId);
-        await enqueue('library', { titleId: localId }, { deleted: true });
+        await enqueue('library', libraryRow as unknown as Record<string, unknown>, {
+          deleted: true,
+        });
         // Anything already tracked under the real ID is the deliberate row and wins.
         if (!existing) {
           const at = { ...libraryRow, titleId: providerId };
@@ -320,7 +324,9 @@ export async function acceptMatch(
       if (watchlistRow) {
         const existing = await db.watchlist.get(providerId);
         await db.watchlist.delete(localId);
-        await enqueue('watchlist', { titleId: localId }, { deleted: true });
+        await enqueue('watchlist', watchlistRow as unknown as Record<string, unknown>, {
+          deleted: true,
+        });
         if (!existing) {
           const at = { ...watchlistRow, titleId: providerId };
           await db.watchlist.put(at);

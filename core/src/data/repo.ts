@@ -174,8 +174,22 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   const latest = events.at(-1);
   if (!latest) return false;
   await db.watches.delete(latest.id);
-  // Deletes replicate as tombstones — otherwise the row returns on the next pull.
-  await enqueue('watches', { id: latest.id }, { deleted: true });
+  /**
+   * The whole row, not just its key.
+   *
+   * Deletes replicate as tombstones — otherwise the row returns on the next pull. A
+   * tombstone is an *upsert* with `deleted: true`, though, and the outbox coalesces on
+   * `table:pk`: mark an episode watched and undo it before the next sync — which §6.64
+   * built an Undo button for — and the delete replaces the unpushed insert, so what
+   * reaches the server is a row it has never seen carrying nothing but an id.
+   *
+   * Every not-null column is then missing. Postgres raises 23502, which `classify` reads
+   * as retryable, so the entry never leaves the queue — and `syncOnce` returns on a push
+   * failure, so **every later write is stuck behind it, for ever**. Undo a watch before
+   * your next sync and sync stops working. Proved against real Postgres in
+   * `app/src/backend/schema.test.ts`. §6.70.
+   */
+  await enqueue('watches', latest as unknown as Record<string, unknown>, { deleted: true });
   if (latest.seriesId) await syncSeriesStatus(latest.seriesId);
   return true;
 }
@@ -332,8 +346,13 @@ export async function setPosterOverride(titleId: InternalId, url?: string): Prom
  * quietly undid itself.
  */
 export async function clearRating(targetId: InternalId): Promise<void> {
+  // Read before deleting: a tombstone is an upsert, and one carrying only the key cannot
+  // be inserted for a row the server never received. See `unwatchLatest`. §6.70.
+  const existing = await db.ratings.get(targetId);
   await db.ratings.delete(targetId);
-  await enqueue('ratings', { targetId }, { deleted: true });
+  await enqueue('ratings', (existing ?? { targetId }) as unknown as Record<string, unknown>, {
+    deleted: true,
+  });
 }
 
 export async function addToWatchlist(
@@ -353,8 +372,11 @@ export async function setWatchlistNote(titleId: InternalId, note: string): Promi
 }
 
 export async function removeFromWatchlist(titleId: InternalId): Promise<void> {
+  const existing = await db.watchlist.get(titleId);
   await db.watchlist.delete(titleId);
-  await enqueue('watchlist', { titleId }, { deleted: true });
+  await enqueue('watchlist', (existing ?? { titleId }) as unknown as Record<string, unknown>, {
+    deleted: true,
+  });
 }
 
 export async function rate(targetId: InternalId, value: number): Promise<void> {
