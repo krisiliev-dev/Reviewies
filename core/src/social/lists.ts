@@ -158,19 +158,46 @@ export async function addToList(
   return { ok: true };
 }
 
-export async function removeFromList(listId: string, titleId: string): Promise<void> {
+/**
+ * These two used to return `void` and drop the error on the floor.
+ *
+ * Which meant the screens could not have reported a failure even if they had wanted to:
+ * a remove that the server refused looked exactly like one it accepted, the row vanished
+ * from the list, and it came back the next time anybody looked. Same for publishing a
+ * list. Their sibling `addToList` has reported since it shipped; §6.57 brought these two
+ * into line rather than leaving two of the four able to lie.
+ */
+export async function removeFromList(
+  listId: string,
+  titleId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
-  if (!client) return;
-  await client.from('list_items').delete().eq('list_id', listId).eq('title_id', titleId);
+  if (!client) return { ok: false, reason: 'Sign in to use lists.' };
+
+  const { error } = await client
+    .from('list_items')
+    .delete()
+    .eq('list_id', listId)
+    .eq('title_id', titleId);
+
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }
 
-export async function setListVisibility(listId: string, isPublic: boolean): Promise<void> {
+export async function setListVisibility(
+  listId: string,
+  isPublic: boolean,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
-  if (!client) return;
-  await client
+  if (!client) return { ok: false, reason: 'Sign in to use lists.' };
+
+  const { error } = await client
     .from('lists')
     .update({ is_public: isPublic, updated_at: new Date().toISOString() })
     .eq('id', listId);
+
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }
 
 /**

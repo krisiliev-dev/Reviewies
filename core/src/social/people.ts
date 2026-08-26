@@ -242,15 +242,29 @@ export async function follow(
   return { ok: true };
 }
 
-export async function unfollow(personId: string): Promise<void> {
+/**
+ * Unfollow, block and unblock returned `void` and dropped the error.
+ *
+ * `follow` has reported since it shipped, so one of the four could tell you it had
+ * failed and three could not — and the screens, having nothing to read, drew the new
+ * state either way. Pressing Unfollow with no network removed somebody from the list
+ * until the next load put them back. §6.57.
+ */
+export async function unfollow(
+  personId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return;
-  await client
+  if (!client || !session) return { ok: false, reason: 'Sign in to follow people.' };
+
+  const { error } = await client
     .from('follows')
     .delete()
     .eq('follower_id', session.user.id)
     .eq('followee_id', personId);
+
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }
 
 /**
@@ -259,30 +273,47 @@ export async function unfollow(personId: string): Promise<void> {
  * Blocking also stops following them, in both directions. Leaving a follow edge in
  * place would keep their activity plumbed into a feed the block was meant to end.
  */
-export async function blockPerson(personId: string): Promise<void> {
+export async function blockPerson(
+  personId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return;
+  if (!client || !session) return { ok: false, reason: 'Sign in to block people.' };
 
-  await client.from('blocks').insert({ user_id: session.user.id, blocked_id: personId });
-  await client
+  const blocked = await client
+    .from('blocks')
+    .insert({ user_id: session.user.id, blocked_id: personId });
+  if (blocked.error) return { ok: false, reason: blocked.error.message };
+
+  // Reported separately: a block that landed while the follow edges survived is a block
+  // that half worked, and saying nothing would leave their activity plumbed into a feed
+  // the block was meant to end.
+  const unfollowed = await client
     .from('follows')
     .delete()
     .or(
       `and(follower_id.eq.${session.user.id},followee_id.eq.${personId}),` +
         `and(follower_id.eq.${personId},followee_id.eq.${session.user.id})`,
     );
+  if (unfollowed.error) return { ok: false, reason: unfollowed.error.message };
+  return { ok: true };
 }
 
-export async function unblockPerson(personId: string): Promise<void> {
+export async function unblockPerson(
+  personId: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return;
-  await client
+  if (!client || !session) return { ok: false, reason: 'Sign in to unblock people.' };
+
+  const { error } = await client
     .from('blocks')
     .delete()
     .eq('user_id', session.user.id)
     .eq('blocked_id', personId);
+
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }
 
 /**

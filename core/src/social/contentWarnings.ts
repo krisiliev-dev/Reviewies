@@ -189,15 +189,18 @@ export async function voteContentWarning(
 export async function clearContentWarningVote(
   titleId: string,
   warning: ContentWarningId,
-): Promise<void> {
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return;
+  if (!client || !session) return { ok: false, reason: 'Sign in to change your vote.' };
 
-  await client
+  const { error } = await client
     .from('content_warning_votes')
     .delete()
     .eq('user_id', session.user.id)
     .eq('title_id', titleId)
     .eq('warning', warning);
+
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }

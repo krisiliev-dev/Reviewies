@@ -120,7 +120,10 @@ export async function signIn(email: string, password: string): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
-  await getClient()?.auth.signOut();
+  // Throws like its siblings rather than returning quietly: a sign-out that failed used
+  // to leave somebody signed in while the screen said otherwise. §6.57.
+  const { error } = (await getClient()?.auth.signOut()) ?? { error: undefined };
+  if (error) throw error;
 }
 
 /**
@@ -141,5 +144,8 @@ export async function ensureProfile(): Promise<void> {
   // The handle is unique; a short suffix avoids collisions without a round trip.
   const handle = `${base.slice(0, 24) || 'user'}_${session.user.id.slice(0, 4)}`;
 
-  await c.from('profiles').insert({ id: session.user.id, handle });
+  const { error } = await c.from('profiles').insert({ id: session.user.id, handle });
+  // Throwing rather than returning: this runs on the way into an account, and an
+  // account with no profile row is one nobody else can find or follow.
+  if (error) throw error;
 }

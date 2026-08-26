@@ -218,7 +218,14 @@ export function EpisodeComments() {
                       called it. */}
                   {c.mine && (
                     <button
-                      onClick={() => void deleteComment(c.id).then(load)}
+                      onClick={async () => {
+                        const result = await deleteComment(c.id);
+                        if (!result.ok) {
+                          setError(result.reason);
+                          return;
+                        }
+                        await load();
+                      }}
                       className="min-h-[24px] shrink-0 rounded-lg px-2 text-muted underline"
                       aria-label="Delete your comment"
                     >

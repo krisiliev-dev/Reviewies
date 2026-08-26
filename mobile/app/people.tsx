@@ -165,7 +165,7 @@ export default function PeopleScreen() {
           action={(p) =>
             following.some((f) => f.id === p.id)
               ? undefined
-              : { label: 'Follow back', run: () => void follow(p.id) }
+              : { label: 'Follow back', run: () => follow(p.id) }
           }
           onChanged={load}
         />
@@ -196,6 +196,8 @@ function FindPeople({
   const [results, setResults] = useState<Person[]>([]);
   const [searched, setSearched] = useState(false);
   const [searchFailed, setSearchFailed] = useState<string>();
+  /** A follow, unfollow or block the server refused, rather than a button that shrugs. */
+  const [actionFailed, setActionFailed] = useState(false);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -234,6 +236,11 @@ function FindPeople({
       />
       {/* See the web's copy: "Nobody by that name" was said for both no match and no
           answer, and somebody would conclude a friend is not here and stop looking. */}
+      {actionFailed && (
+        <Text style={styles.searchFailed} accessibilityLiveRegion="polite">
+          {COPY.people.followFailed}
+        </Text>
+      )}
       {searchFailed && (
         <Text style={styles.searchFailed} accessibilityLiveRegion="polite">
           Could not search right now ({searchFailed}). This says nothing about whether they
@@ -252,8 +259,12 @@ function FindPeople({
             <PersonName person={person} />
             <Pressable
               onPress={async () => {
-                if (already) await unfollow(person.id);
-                else await follow(person.id);
+                setActionFailed(false);
+                const result = already ? await unfollow(person.id) : await follow(person.id);
+                if (!result.ok) {
+                  setActionFailed(true);
+                  return;
+                }
                 onChanged();
               }}
               disabled={isBlocked}
@@ -270,7 +281,12 @@ function FindPeople({
             </Pressable>
             <Pressable
               onPress={async () => {
-                await blockPerson(person.id);
+                setActionFailed(false);
+                const blockResult = await blockPerson(person.id);
+                if (!blockResult.ok) {
+                  setActionFailed(true);
+                  return;
+                }
                 onChanged();
               }}
               style={[styles.small, styles.smallMuted]}
@@ -296,9 +312,14 @@ function PersonList({
   heading: string;
   people: Person[];
   empty: string;
-  action: (p: Person) => { label: string; run: () => void | Promise<void> } | undefined;
+  // A result, not `void`: three of the four follow-and-block writes used to return
+  // nothing at all, so this list drew the new state whether or not the server had
+  // agreed. §6.57.
+  action: (p: Person) => { label: string; run: () => Promise<{ ok: boolean }> } | undefined;
   onChanged: () => void;
 }) {
+  const [failed, setFailed] = useState(false);
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionHeading}>
@@ -306,6 +327,11 @@ function PersonList({
         {people.length > 0 ? ` ${people.length}` : ''}
       </Text>
       {people.length === 0 && empty ? <Text style={styles.blurb}>{empty}</Text> : null}
+      {failed && (
+        <Text style={styles.failed} accessibilityLiveRegion="polite">
+          {COPY.people.followFailed}
+        </Text>
+      )}
       {people.map((person) => {
         const act = action(person);
         return (
@@ -314,7 +340,12 @@ function PersonList({
             {act && (
               <Pressable
                 onPress={async () => {
-                  await act.run();
+                  setFailed(false);
+                  const result = await act.run();
+                  if (!result.ok) {
+                    setFailed(true);
+                    return;
+                  }
                   onChanged();
                 }}
                 style={[styles.small, styles.smallMuted]}
@@ -347,6 +378,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 18, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  failed: { color: theme.accent, fontSize: 13, lineHeight: 19 },
   link: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
   error: { color: theme.accent, fontSize: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },

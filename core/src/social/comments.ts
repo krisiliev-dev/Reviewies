@@ -190,14 +190,23 @@ export async function postComment(
   }
 }
 
-export async function deleteComment(id: string): Promise<void> {
+export async function deleteComment(
+  id: string,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const client = getClient();
-  if (!client) return;
+  if (!client) return { ok: false, reason: 'Sign in to delete a comment.' };
+
   // Soft delete: the row stays so counts do not break, and RLS hides it.
-  await client
+  const { error } = await client
     .from('comments')
     .update({ deleted: true, updated_at: new Date().toISOString() })
     .eq('id', id);
+
+  // Reported rather than swallowed: a delete that failed used to look exactly like one
+  // that worked — the comment vanished from the screen and came back on the next load,
+  // which for something somebody wanted taken down is the worst way to be wrong. §6.57.
+  if (error) return { ok: false, reason: error.message };
+  return { ok: true };
 }
 
 /**

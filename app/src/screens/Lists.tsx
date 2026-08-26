@@ -145,10 +145,18 @@ function ListCard({
   onChanged: () => void;
 }) {
   const [items, setItems] = useState<ListItem[]>();
+  const [itemsFailed, setItemsFailed] = useState<string>();
+  const [changeFailed, setChangeFailed] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    void fetchListItems(list.id).then((r) => setItems(r.items));
+    // `failed` was dropped here, so a list whose items could not be fetched rendered as
+    // "Nothing on this list yet" — the screen telling somebody their own work is gone
+    // because a request came back empty-handed. §6.57.
+    void fetchListItems(list.id).then((r) => {
+      setItems(r.items);
+      setItemsFailed(r.failed);
+    });
   }, [open, list.id]);
 
   return (
@@ -177,7 +185,12 @@ function ListCard({
           {list.mine && (
             <button
               onClick={async () => {
-                await setListVisibility(list.id, !list.isPublic);
+                setChangeFailed(false);
+                const result = await setListVisibility(list.id, !list.isPublic);
+                if (!result.ok) {
+                  setChangeFailed(true);
+                  return;
+                }
                 onChanged();
               }}
               aria-label={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
@@ -187,7 +200,19 @@ function ListCard({
             </button>
           )}
 
-          {items?.length === 0 && <p className="text-sm text-muted">{COPY.lists.listEmpty}</p>}
+          {changeFailed && (
+            <p className="mb-2 text-sm text-accent" role="status">
+              {COPY.lists.changeFailed}
+            </p>
+          )}
+          {itemsFailed && (
+            <p className="text-sm text-accent" role="status">
+              {COPY.lists.itemsFailed}
+            </p>
+          )}
+          {!itemsFailed && items?.length === 0 && (
+            <p className="text-sm text-muted">{COPY.lists.listEmpty}</p>
+          )}
 
           <ul className="flex flex-col gap-1">
             {items?.map((item) => (
@@ -204,8 +229,17 @@ function ListCard({
                 {list.mine && (
                   <button
                     onClick={async () => {
-                      await removeFromList(list.id, item.titleId);
-                      setItems((await fetchListItems(list.id)).items);
+                      setChangeFailed(false);
+                      // The row used to disappear whether or not the server agreed, and
+                      // come back on the next load.
+                      const result = await removeFromList(list.id, item.titleId);
+                      if (!result.ok) {
+                        setChangeFailed(true);
+                        return;
+                      }
+                      const reloaded = await fetchListItems(list.id);
+                      setItems(reloaded.items);
+                      setItemsFailed(reloaded.failed);
                       onChanged();
                     }}
                     className="shrink-0 px-1 text-xs text-muted"

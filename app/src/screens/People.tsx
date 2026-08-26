@@ -91,7 +91,7 @@ export function People() {
         action={(p) =>
           following.some((f) => f.id === p.id)
             ? undefined
-            : { label: 'Follow back', run: () => void follow(p.id) }
+            : { label: 'Follow back', run: () => follow(p.id) }
         }
         onChanged={load}
       />
@@ -205,6 +205,8 @@ function FindPeople({
   const [results, setResults] = useState<Person[]>([]);
   const [searched, setSearched] = useState(false);
   const [searchFailed, setSearchFailed] = useState<string>();
+  /** A follow, unfollow or block the server refused, rather than a button that shrugs. */
+  const [actionFailed, setActionFailed] = useState(false);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -241,6 +243,11 @@ function FindPeople({
 
       {/* "Nobody by that name" was said for both no match and no answer, and somebody
           would conclude a friend is not here and stop looking. */}
+      {actionFailed && (
+        <p className="px-1 text-sm text-accent" role="status">
+          {COPY.people.followFailed}
+        </p>
+      )}
       {searchFailed && (
         <p className="px-1 text-sm text-accent" role="status">
           Could not search right now ({searchFailed}). This says nothing about whether
@@ -260,8 +267,12 @@ function FindPeople({
               <PersonName person={p} />
               <button
                 onClick={async () => {
-                  if (already) await unfollow(p.id);
-                  else await follow(p.id);
+                  setActionFailed(false);
+                  const result = already ? await unfollow(p.id) : await follow(p.id);
+                  if (!result.ok) {
+                    setActionFailed(true);
+                    return;
+                  }
                   onChanged();
                 }}
                 disabled={isBlocked}
@@ -274,7 +285,12 @@ function FindPeople({
               </button>
               <button
                 onClick={async () => {
-                  await blockPerson(p.id);
+                  setActionFailed(false);
+                  const result = await blockPerson(p.id);
+                  if (!result.ok) {
+                    setActionFailed(true);
+                    return;
+                  }
                   onChanged();
                 }}
                 aria-label={`Block @${p.handle}`}
@@ -300,9 +316,14 @@ function PersonList({
   heading: string;
   people: Person[];
   empty: string;
-  action: (p: Person) => { label: string; run: () => void | Promise<void> } | undefined;
+  // A result, not `void`: three of the four follow-and-block writes used to return
+  // nothing at all, so this list drew the new state whether or not the server had
+  // agreed. §6.57.
+  action: (p: Person) => { label: string; run: () => Promise<{ ok: boolean }> } | undefined;
   onChanged: () => void;
 }) {
+  const [failed, setFailed] = useState(false);
+
   return (
     <section className="flex flex-col gap-2">
       <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
@@ -311,6 +332,11 @@ function PersonList({
       </h2>
 
       {people.length === 0 && empty && <p className="px-1 text-sm text-muted">{empty}</p>}
+      {failed && (
+        <p className="px-1 text-sm text-accent" role="status">
+          {COPY.people.followFailed}
+        </p>
+      )}
 
       <ul className="flex flex-col gap-1.5">
         {people.map((p) => {
@@ -321,7 +347,12 @@ function PersonList({
               {act && (
                 <button
                   onClick={async () => {
-                    await act.run();
+                    setFailed(false);
+                    const result = await act.run();
+                    if (!result.ok) {
+                      setFailed(true);
+                      return;
+                    }
                     onChanged();
                   }}
                   aria-label={`${act.label} @${p.handle}`}

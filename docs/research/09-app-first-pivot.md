@@ -2820,6 +2820,62 @@ something only the destination says now. That is the same mistake §6.54 caught 
 ago, made again, which is a fair argument for reading every new check as though it were
 somebody else's.
 
+### 6.57 Telling "nothing" apart from "I could not look"
+
+§6.56 named the class after meeting it a third time. This sprint went looking for the
+rest of it, and the answer was: seven functions in the core could not have reported a
+failure even if every screen had wanted them to.
+
+`removeFromList`, `setListVisibility`, `unfollow`, `blockPerson`, `unblockPerson`,
+`deleteComment` and `clearContentWarningVote` all returned `Promise<void>` and threw the
+Supabase error away. Each sits beside a sibling that reports properly — `addToList`,
+`follow`, `voteContentWarning` — which is what made it invisible: the module looks
+consistent until you read the return types.
+
+What that cost, in the screens:
+
+- **A removed list item vanished whether or not the server agreed**, and came back the
+  next time anybody opened the list.
+- **Unfollow removed somebody from the list until the next load put them back.** Block was
+  the same, and worse: `blockPerson` writes twice, and a block that landed while the
+  follow edges survived is a block that half worked — their activity still plumbed into a
+  feed the block was meant to end.
+- **A delete that failed looked exactly like one that worked.** For a comment somebody
+  wanted taken down, that is the worst available way to be wrong.
+
+All seven report now. `signOut` and `ensureProfile` throw instead, like their neighbours
+in `auth.ts`, because an account with no profile row is one nobody can find or follow.
+
+One read had the same shape: `fetchListItems` returns `{ items, failed }` and all three
+call sites destructured `items` and dropped `failed`, so a list whose contents could not
+be fetched rendered as *"Nothing on this list yet."* — the screen telling somebody their
+own work is gone because a request came back empty-handed.
+
+`app/src/wiring/failureShown.test.ts` guards both halves of the path, and both halves
+matter:
+
+- a core function that calls `getClient()` may not return `Promise<void>` unless it
+  throws — throwing is reporting, which is what `signIn` and `postComment` do;
+- a screen that calls a function which reports must bind the result, because a result
+  nobody looks at is the same as no result.
+
+The second half is decided by reading backwards from the call over whitespace: an
+assignment, an argument, a return or a ternary catches the result, and a bare statement
+does not. My first attempt at that used a regex with a lookbehind and passed twelve calls
+that were all perfectly bound — a guard reporting false positives is on its way to being
+deleted, so it is worth getting the cheap part right. Both halves were then proved by
+planting the original bugs: a `Promise<void>` write and a call whose result is discarded.
+
+The guard says what it cannot see, which is the important part: **whether a bound result is
+ever rendered.** `const result = await …` followed by silence passes this and fails a
+reader. That is where a source-level check stops and §6.56's offline browser runs take
+over.
+
+Four sprints, four sightings of one bug. It is worth stating plainly, because it is the
+kind of thing that reads as a triviality in a diff and as a betrayal on a screen: **an
+empty state is a claim about somebody's own data.** Making it because a request failed is
+not a cosmetic error.
+
 ---
 
 ## 7. What is still not known

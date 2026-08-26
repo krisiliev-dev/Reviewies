@@ -226,7 +226,14 @@ export default function CommentsScreen() {
                       comments existed and nothing offered it. */}
                   {comment.mine && (
                     <Pressable
-                      onPress={() => void deleteComment(comment.id).then(load)}
+                      onPress={async () => {
+                        const result = await deleteComment(comment.id);
+                        if (!result.ok) {
+                          setError(result.reason);
+                          return;
+                        }
+                        await load();
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel="Delete your comment"
                       hitSlop={8}

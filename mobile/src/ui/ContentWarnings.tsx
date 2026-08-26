@@ -51,8 +51,8 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
     // Tapping the position you already hold withdraws it, rather than leaving you
     // with no way to take back a vote you no longer stand behind.
     if (mine.get(warning) === present) {
-      await clearContentWarningVote(titleId, warning);
-      setNote(undefined);
+      const cleared = await clearContentWarningVote(titleId, warning);
+      setNote(cleared.ok ? undefined : cleared.reason);
     } else {
       const result = await voteContentWarning(titleId, warning, present);
       setNote(result.ok ? undefined : result.reason);

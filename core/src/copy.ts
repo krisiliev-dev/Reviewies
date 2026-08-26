@@ -67,6 +67,15 @@ export const COPY = {
       `Sign in on the ${where} to make lists. Everything else on this device works either way.`,
     /** A create that did not happen, said out loud rather than as a form that resets. */
     createFailed: 'Could not make that list. It has not been saved — try again.',
+    /**
+     * The items behind a list, when the asking failed.
+     *
+     * Without this the screen said "Nothing on this list yet" — a claim about somebody's
+     * own work, made because a request came back empty-handed. §6.57.
+     */
+    itemsFailed: 'Could not load what is on this list. It is still there — try again.',
+    /** A remove or a publish that the server refused, rather than a row that vanishes. */
+    changeFailed: 'That change did not go through. Nothing has been altered — try again.',
   },
 
   stats: {
@@ -139,6 +148,8 @@ export const COPY = {
      * accounts on the Data tab of Settings and the phone has an Account screen. The
      * sentence is shared; the noun is not.
      */
+    /** A follow or unfollow that did not happen, rather than a button that does nothing. */
+    followFailed: 'That did not go through. Try again in a moment.',
     signInToFollow: (where: string) =>
       `Sign in on the ${where} to follow people. Your history stays on this device either way.`,
   },

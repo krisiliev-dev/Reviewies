@@ -170,10 +170,16 @@ function ListCard({
 }) {
   const router = useRouter();
   const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
+  const [itemsFailed, setItemsFailed] = useState<string>();
+  const [changeFailed, setChangeFailed] = useState(false);
 
   useEffect(() => {
     if (!expanded) return;
+    // `failed` was dropped here, so a list whose items could not be fetched rendered as
+    // "Nothing on this list yet" — the screen telling somebody their own work is gone
+    // because a request came back empty-handed. §6.57.
     void fetchListItems(list.id).then(async (result) => {
+      setItemsFailed(result.failed);
       setItems(
         await Promise.all(
           result.items.map(async (item) => ({
@@ -207,8 +213,20 @@ function ListCard({
 
       {expanded && (
         <View style={styles.cardItems}>
-          {items === undefined && <ActivityIndicator color={theme.accent} />}
-          {items?.length === 0 && <Text style={styles.blurb}>{COPY.lists.listEmpty}</Text>}
+          {items === undefined && !itemsFailed && <ActivityIndicator color={theme.accent} />}
+          {itemsFailed && (
+            <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
+              {COPY.lists.itemsFailed}
+            </Text>
+          )}
+          {changeFailed && (
+            <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
+              {COPY.lists.changeFailed}
+            </Text>
+          )}
+          {!itemsFailed && items?.length === 0 && (
+            <Text style={styles.blurb}>{COPY.lists.listEmpty}</Text>
+          )}
           {/* Saying the mix out loud is the point — a list that is half films should
               say so rather than looking like a broken TV list. */}
           {items && items.length > 0 && <Text style={styles.mix}>{describeMix(items)}</Text>}
@@ -233,7 +251,14 @@ function ListCard({
               {list.mine && (
                 <Pressable
                   onPress={async () => {
-                    await removeFromList(list.id, item.titleId);
+                    setChangeFailed(false);
+                    // The row used to disappear whether or not the server agreed, and
+                    // come back the next time anybody opened the list.
+                    const result = await removeFromList(list.id, item.titleId);
+                    if (!result.ok) {
+                      setChangeFailed(true);
+                      return;
+                    }
                     onChanged();
                     setItems(items.filter((i) => i.titleId !== item.titleId));
                   }}
@@ -250,7 +275,12 @@ function ListCard({
           {list.mine && (
             <Pressable
               onPress={async () => {
-                await setListVisibility(list.id, !list.isPublic);
+                setChangeFailed(false);
+                const result = await setListVisibility(list.id, !list.isPublic);
+                if (!result.ok) {
+                  setChangeFailed(true);
+                  return;
+                }
                 onChanged();
               }}
               hitSlop={8}
