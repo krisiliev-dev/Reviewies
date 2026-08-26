@@ -24,6 +24,18 @@ const ROOT = resolve(import.meta.dirname, '../../..');
 /** Everything a plain `node` invocation might have to walk. */
 const MUST_RESOLVE = ['core/src', 'bridge/src', 'relay/src'];
 
+/**
+ * Source with its comments removed.
+ *
+ * A doc comment may quote an import — §6.47's explanation of the bug it fixes shows the
+ * three lines of `main.tsx` that caused it — and a scanner that cannot tell code from
+ * prose reports the quotation. Crude on purpose: block and line comments, nothing
+ * cleverer, because the alternative is a parser for a check this small.
+ */
+function code(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
 function sources(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name === 'dist') continue;
@@ -44,7 +56,7 @@ describe('what a plain Node process can load', () => {
   it('spells out every relative import', () => {
     const bare: string[] = [];
     for (const file of files) {
-      const source = readFileSync(file, 'utf8');
+      const source = code(readFileSync(file, 'utf8'));
       for (const [, spec] of source.matchAll(/(?:from\s+|import\s*\(\s*)'(\.\.?\/[^']*)'/g)) {
         if (!/\.(ts|tsx|js|mjs|json|css)$/.test(spec)) bare.push(`${relative(ROOT, file)} → ${spec}`);
       }
@@ -56,7 +68,7 @@ describe('what a plain Node process can load', () => {
     // Non-vacuity: the pattern above must actually be matching imports, or the assertion
     // is a list of nothing compared with an empty list.
     const found = files.flatMap((file) => [
-      ...readFileSync(file, 'utf8').matchAll(/(?:from\s+|import\s*\(\s*)'(\.\.?\/[^']*)'/g),
+      ...code(readFileSync(file, 'utf8')).matchAll(/(?:from\s+|import\s*\(\s*)'(\.\.?\/[^']*)'/g),
     ]);
     expect(found.length).toBeGreaterThan(200);
   });

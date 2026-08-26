@@ -1,5 +1,5 @@
 import { db } from '../data/db.ts';
-import { provider } from '../metadata/index.ts';
+import { getProvider } from '../metadata/index.ts';
 import type { SearchResult } from '../metadata/provider.ts';
 
 /**
@@ -108,7 +108,7 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
 
   for (const seed of seeds) {
     try {
-      lists.push({ seedName: seed.name, results: await provider.getRecommendations(seed.titleId) });
+      lists.push({ seedName: seed.name, results: await getProvider().getRecommendations(seed.titleId) });
     } catch {
       // One failed seed should not empty the whole feed.
     }
@@ -118,7 +118,7 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
   if (merged.length > 0) return merged;
 
   try {
-    const trending = await provider.getTrending();
+    const trending = await getProvider().getTrending();
     return mergeSuggestions([{ seedName: 'Trending now', results: trending }], excluded, limit);
   } catch (e) {
     // Rethrown rather than swallowed. Both screens already have an error slot and were

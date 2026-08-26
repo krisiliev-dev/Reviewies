@@ -9,16 +9,44 @@ import { getSeasonChain, splitIntoSeasons } from './anilist.ts';
 import { resolveFromTmdb } from './animeMapping.ts';
 
 /**
- * Picks the provider once, at startup. Without a token the app runs on fixtures
- * rather than failing, so it is always launchable and testable.
+ * Picks the provider on first use, and then keeps it.
+ *
+ * This used to be `export const provider = createProvider()` — module scope — and that
+ * is a trap this app fell into for its entire life. ES modules evaluate every import
+ * before the first statement of the importing module runs, so `main.tsx`'s
+ *
+ *     import App from './App.tsx';        // reaches this file, which runs createProvider()
+ *     import { bindWebPlatform } from './data/platform';
+ *     bindWebPlatform();                  // sets the config — too late
+ *
+ * resolved the provider against an empty config every time. The comment above the call
+ * said "Before anything renders", which was true of rendering and irrelevant to module
+ * evaluation. The web app therefore ran on the four-show fixture catalogue no matter
+ * what `VITE_TMDB_TOKEN` held, and nothing noticed because every test that searches
+ * searches for a fixture. §6.47.
+ *
+ * Lazy is the fix rather than "bind earlier", because "earlier" is an ordering nobody
+ * can see and any import sorter may quietly change.
+ *
+ * Without a token the app runs on fixtures rather than failing, so it is always
+ * launchable and testable — that part was always the intent.
  */
-function createProvider(): MetadataProvider {
+let resolved: MetadataProvider | undefined;
+
+export function getProvider(): MetadataProvider {
   const token = getConfig().tmdbToken;
-  return token ? new TmdbProvider(token) : new FixtureProvider();
+  resolved ??= token ? new TmdbProvider(token) : new FixtureProvider();
+  return resolved;
 }
 
-export const provider: MetadataProvider = createProvider();
-export const usingFixtures = provider.name === 'fixtures';
+export function usingFixtures(): boolean {
+  return getProvider().name === 'fixtures';
+}
+
+/** Forget the choice. For tests that bind a different config between cases. */
+export function resetProvider(): void {
+  resolved = undefined;
+}
 
 /**
  * Read-through cache. Serves from IndexedDB, refetches when past the TTL, and falls
@@ -30,7 +58,7 @@ export async function getTitleCached(id: string): Promise<CachedTitle | undefine
   if (cached && !isStale(cached.fetchedAt)) return cached;
 
   try {
-    const fresh = await provider.getTitle(id);
+    const fresh = await getProvider().getTitle(id);
     if (fresh) await db.titles.put(fresh);
     return fresh ?? cached;
   } catch {
@@ -53,7 +81,7 @@ export async function getProvidersCached(
   if (cached && cached.country === country && !isStale(cached.fetchedAt)) return cached;
 
   try {
-    const fresh = await provider.getWatchProviders(id, country);
+    const fresh = await getProvider().getWatchProviders(id, country);
     if (fresh) {
       await db.providers.put(fresh);
       return fresh;
@@ -86,7 +114,7 @@ export async function getEpisodesCached(
   if (fresh) return cached;
 
   try {
-    const fetched = await provider.getEpisodes(seriesId);
+    const fetched = await getProvider().getEpisodes(seriesId);
     if (!fetched.length) return cached;
 
     const corrected = await correctAnimeSeasons(seriesId, fetched);

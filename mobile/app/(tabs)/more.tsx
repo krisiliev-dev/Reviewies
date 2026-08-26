@@ -85,7 +85,7 @@ export default function MoreScreen() {
         ))}
 
         <View style={styles.footer}>
-          {usingFixtures ? (
+          {usingFixtures() ? (
             <Text style={styles.footerText}>
               Running on sample data. Set a TMDB token to use real metadata.
             </Text>

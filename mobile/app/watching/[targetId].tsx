@@ -19,6 +19,7 @@ import {
   fetchRemoteReactions,
 } from '@reviewies/core/watching/reactions';
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
+import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../../src/ui/ReactionStream';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
@@ -50,6 +51,31 @@ export default function WatchingScreen() {
   // holds still, which is what WCAG 2.2.2 asks for and what someone who finds the
   // drift distracting actually wants.
   const [streamHeld, setStreamHeld] = useState(false);
+
+  /**
+   * Pick up where you left off — the same as the web, and it matters more here.
+   *
+   * A phone puts this screen away every time you answer a message, and the position was
+   * held in React state and nowhere else. Doc 10 §2. A clock that was running comes back
+   * advanced by the time that passed, because the episode kept playing.
+   */
+  useEffect(() => {
+    const saved = resumeFor(targetId);
+    if (!saved) return;
+    clock.seek(saved.positionMs);
+    if (!saved.running) clock.pause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, [targetId]);
+
+  useEffect(() => {
+    // Stopped at the beginning is worth forgetting rather than storing: it is what the
+    // screen looks like before you have started.
+    if (!clock.running && clock.positionMs === 0) {
+      forget();
+      return;
+    }
+    remember({ targetId, positionMs: clock.positionMs, running: clock.running, at: Date.now() });
+  }, [targetId, clock.positionMs, clock.running]);
 
   const episode = useLive(() => db.episodes.get(targetId), [targetId]);
   const series = useLive(

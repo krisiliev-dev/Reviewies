@@ -170,7 +170,7 @@ export function Settings() {
       </section>
 
       <footer className="px-1 pb-4 text-xs leading-relaxed text-muted">
-        {usingFixtures ? (
+        {usingFixtures() ? (
           <p className="mb-2">
             Running on sample data. Set <code>VITE_TMDB_TOKEN</code> to use real metadata.
           </p>

@@ -44,6 +44,9 @@ const ROOT = resolve(__dirname, '../../..');
  * code it claims to.
  */
 const SILENT: Record<string, string> = {
+  'watching/resume.ts:resumeFor':
+    'A stored position that will not parse means there is nothing to resume, which is the same answer as never having watched it. Raising here would put an error in front of somebody for the crime of opening an episode.',
+
   // --- metadata: falling back to the cache is the design, not a lapse -------------
   'metadata/index.ts:getTitleCached':
     'Serves stale metadata when the network fails. Deliberate and documented at the top of the file: offline should degrade to slightly-old data, never to an error.',

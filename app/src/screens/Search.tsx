@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
-import { getEpisodesCached, getTitleCached, provider, type SearchResult } from '@reviewies/core/metadata/index';
+import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 
@@ -26,7 +26,7 @@ export function Search() {
       setBusy(true);
       setError(undefined);
       try {
-        setResults(await provider.search(q, controller.signal));
+        setResults(await getProvider().search(q, controller.signal));
       } catch (e) {
         if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'Search failed');
       } finally {

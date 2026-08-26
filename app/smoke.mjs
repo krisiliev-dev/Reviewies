@@ -5,7 +5,17 @@
  * Up Next with a remaining count, mark an episode watched, and confirm the count
  * moves. Then exercises Watching Mode and export.
  *
- * Run against `npm run preview`. Screenshots land in ./screenshots.
+ * Run against `npm run preview` — of a build made *without* a TMDB token, which is what
+ * `npm run smoke` does. This suite asserts on the fixture catalogue: eighteen episodes of
+ * The Long Dark, two seasons, a film called Quiet Harbour. Against a credentialed build it
+ * would be asking a real API about shows that do not exist.
+ *
+ * That was accidental until doc 10 §1. `metadata/index.ts` chose its provider at module
+ * scope, before the app had bound its config, so every build behaved as a fixture build
+ * whatever the token said — and this suite passed because of a bug rather than because of
+ * an arrangement. It is arranged now.
+ *
+ * Screenshots land in ./screenshots.
  */
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
@@ -610,13 +620,52 @@ try {
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
+  // --- Stepping away and coming back ---------------------------------------------
+  //
+  // The sharpest thing doc 10 found by using the app: the clock lived in React state and
+  // nowhere else, so leaving this screen for a moment — a phone call, checking who that
+  // actor is — came back to 0:00 and "Start watching". For a second-screen app that is
+  // not an edge case, it is the case.
+  //
+  // What must be true is not "the number is preserved" but "the episode kept playing":
+  // a clock that was running comes back *further on*, by roughly the time you were away.
+  const beforeLeaving = await page.locator('text=/^\\d+:\\d\\d$/').first().innerText();
+  await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
+  await page.waitForSelector('h1:text("Up Next")', { timeout: 5000 });
+  await page.waitForTimeout(3000);
+  await page.getByRole('link', { name: /^Watch along with / }).first().click();
+  await page.waitForTimeout(1200);
+
+  const onReturn = await page.locator('text=/^\\d+:\\d\\d$/').first().innerText();
+  const seconds = (t) => Number(t.split(':')[0]) * 60 + Number(t.split(':')[1]);
+  check(
+    'coming back picks up where you left off',
+    seconds(onReturn) >= seconds(beforeLeaving),
+    `${beforeLeaving} → ${onReturn}`,
+  );
+  check(
+    'and further on, because the episode did not stop',
+    seconds(onReturn) > seconds(beforeLeaving),
+    `${beforeLeaving} → ${onReturn}`,
+  );
+  check(
+    'and offers to resume rather than to start',
+    (await page.getByRole('button', { name: /Resume/ }).count()) > 0,
+  );
+
   // --- Extension auto-sync ---------------------------------------------------
   // Simulate what the extension's content script posts into the page and confirm
   // the clock follows it instead of needing a manual start.
   await page.getByRole('button', { name: 'Leave Watching Mode' }).click();
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.getByRole('link', { name: /^Watch along with / }).first().click();
-  await page.waitForSelector('text=Start watching', { timeout: 5000 });
+  // "Resume", not "Start watching": the clock persists since doc 10 §2, and re-entering
+  // an episode that was running is now a resume. The extension's reading has to
+  // supersede a restored position as much as an absent one.
+  await page
+    .getByRole('button', { name: /Resume|Start watching/ })
+    .first()
+    .waitFor({ timeout: 5000 });
 
   await page.evaluate(() => {
     window.postMessage(

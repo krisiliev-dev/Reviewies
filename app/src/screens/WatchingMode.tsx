@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
+import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from '@reviewies/core/watching/emoji';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
@@ -54,6 +55,35 @@ export function WatchingMode() {
   const [query, setQuery] = useState('');
   const [dismissedDrift, setDismissedDrift] = useState(false);
   const [autoSynced, setAutoSynced] = useState(false);
+
+  /**
+   * Pick up where you left off.
+   *
+   * This screen used to keep its position in React state and nowhere else, so leaving it
+   * — a phone call, checking who that actor is — came back to 0:00 and "Start watching".
+   * Doc 10 §2. A clock that was running is restored advanced by the time that passed,
+   * because the episode did not stop when you looked away.
+   */
+  useEffect(() => {
+    const saved = resumeFor(targetId);
+    if (!saved) return;
+    clock.seek(saved.positionMs);
+    if (!saved.running) clock.pause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, [targetId]);
+
+  // Written on every tick rather than on the way out, because "the way out" includes
+  // closing the tab, which runs nothing reliably.
+  useEffect(() => {
+    // Stopped at the beginning is the one state worth forgetting rather than storing:
+    // it is what the screen looks like before you have started, and offering to resume
+    // it would put "Resume 0:00" in front of somebody who has watched nothing.
+    if (!clock.running && clock.positionMs === 0) {
+      forget();
+      return;
+    }
+    remember({ targetId, positionMs: clock.positionMs, running: clock.running, at: Date.now() });
+  }, [targetId, clock.positionMs, clock.running]);
 
   const episode = useLiveQuery(() => db.episodes.get(targetId), [targetId]);
   const series = useLiveQuery(

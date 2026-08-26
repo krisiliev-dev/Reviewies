@@ -1,4 +1,5 @@
 import { setConfig } from '../config.ts';
+import { resetProvider } from '../metadata/index.ts';
 import { setDatabase } from '../data/db.ts';
 import { SqliteDatabase } from '../data/adapters/sqlite.ts';
 import { setSqlJsLoader } from '../data/sqlWasm.ts';
@@ -21,3 +22,13 @@ setConfig({
   supabaseUrl: env.VITE_SUPABASE_URL,
   supabaseAnonKey: env.VITE_SUPABASE_ANON_KEY,
 });
+
+/**
+ * And forget any provider chosen before this ran.
+ *
+ * `getProvider()` keeps its answer, which is right in an app and wrong across a suite
+ * where the config is bound after some other file has already asked. §6.47 was that
+ * ordering going unnoticed for the life of the product; this is the same hazard, in a
+ * place where it would look like a test being flaky.
+ */
+resetProvider();

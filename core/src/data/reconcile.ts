@@ -1,6 +1,6 @@
 import { db } from './db.ts';
 import { enqueue } from '../sync/engine.ts';
-import { provider } from '../metadata/index.ts';
+import { getProvider } from '../metadata/index.ts';
 import { getEpisodesCached, getTitleCached } from '../metadata/index.ts';
 import type { SearchResult } from '../metadata/provider.ts';
 import type { CachedEpisode, CachedTitle, InternalId, MediaKind } from '../domain/types.ts';
@@ -156,7 +156,7 @@ export async function proposeMatch(
    * without a network — `provider` is resolved once at module load from the config, so
    * a suite with a token in its environment would otherwise make live searches.
    */
-  search: (query: string) => Promise<SearchResult[]> = (query) => provider.search(query),
+  search: (query: string) => Promise<SearchResult[]> = (query) => getProvider().search(query),
 ): Promise<Proposal> {
   const base = {
     localId: title.id,

@@ -9,7 +9,7 @@
     "test": "vitest run",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "npm run build && (npx vite preview --port 4173 & sleep 6) && node smoke.mjs"
+    "smoke": "VITE_TMDB_TOKEN= npm run build && (npx vite preview --port 4173 & sleep 6) && node smoke.mjs"
   },
   "dependencies": {
     "@reviewies/core": "*",

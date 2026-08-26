@@ -26,6 +26,8 @@ const UNREACHED: Record<string, string> = {
   'data/db#clearDatabase':
     'Unbinds the database. Only the suites that swap Dexie for SQLite between files need it.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',
+  'metadata/index#resetProvider':
+    'Test seam: the provider is chosen once and kept, and a suite binds its config after some file has already asked. Called from core/src/test/setup.ts, which this scan reads as test code.',
   'data/failure#resetFailures':
     'Test seam: the failure bus is a singleton and a listener must not leak into the next case.',
   'sync/memoryBackend#MemoryBackend': 'A backend for tests. Shipping it would be the bug.',

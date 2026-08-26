@@ -15,7 +15,7 @@ import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import {
   getEpisodesCached,
   getTitleCached,
-  provider,
+  getProvider,
 } from '@reviewies/core/metadata/index';
 import type { SearchResult } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
@@ -41,7 +41,7 @@ export default function SearchScreen() {
       setBusy(true);
       setError(undefined);
       try {
-        setResults(await provider.search(q, controller.signal));
+        setResults(await getProvider().search(q, controller.signal));
       } catch (e) {
         if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Search failed');

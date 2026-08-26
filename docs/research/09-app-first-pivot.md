@@ -2249,6 +2249,62 @@ counts quoted in these notes are a credentialed checkout's. Somebody cloning thi
 expect fourteen fewer, and §6.41's `skips.test.ts` names every suite that can make that
 difference.
 
+### 6.47 Using it, and finding it had never used TMDB
+
+Ten sprints of structural questions, and the last three found documentation and
+configuration. So this one stopped auditing and used the app: arrive with a TV Time
+export, import it, resolve what did not match, watch with Watching Mode running, react,
+step away, come back, catch up, rate something, look at Stats.
+
+The findings are a prioritised list in [doc 10](10-an-evening-with-it.md), written as a
+judgement about the product rather than a record of what was easy to fix. Two are fixed
+here. What follows is the one that matters most, because it is a lesson about the tests as
+much as the code.
+
+**The web app has never used TMDB.** `core/src/metadata/index.ts` had
+
+```ts
+export const provider = createProvider();   // module scope
+```
+
+and `createProvider` reads `getConfig().tmdbToken`. ES modules evaluate every import
+before the first statement of the importing module runs, so `main.tsx`'s
+`import App from './App.tsx'` reached this file — and resolved the provider — before
+`bindWebPlatform()` on the line below had bound anything. The comment above that call said
+"Before anything renders", which is true of rendering and irrelevant to module evaluation.
+The app ran on the four-show fixture catalogue for its entire life, whatever
+`VITE_TMDB_TOKEN` held.
+
+What makes it worth a section rather than a line is why nothing caught it. Every test that
+searches searches for a fixture: the browser suite looks for *The Long Dark* and *Quiet
+Harbour*, which are fixture names, and the live TMDB suites run in Node where the setup
+binds the config before anything asks. A hundred and sixty-eight browser checks passed
+against a catalogue of four shows, and would have passed identically if TMDB had never
+existed. §6.40's inventory asked which *states* nothing rendered; it did not think to ask
+which *data* nothing had ever seen.
+
+`getProvider()` is lazy now, and `app/src/wiring/injection.test.ts` fails any core module
+that reads injected config while it is being evaluated — including one call away, which is
+the shape this had. Proved by putting the shape back: it names the line and the function.
+
+The suite's fixture assumption is now arranged rather than accidental: `npm run smoke`
+builds the app with no token, because that suite asserts on eighteen episodes of a show
+TMDB does not have.
+
+**And the clock forgot where you were.** Leaving Watching Mode for a moment came back to
+0:00 and *Start watching* — the position lived in React state and nowhere else. For a
+second-screen app, stepping away is the case rather than an edge case. `core/src/watching/
+resume.ts` keeps it per episode, and restores a clock that was running *advanced by the
+time that passed*, because the episode did not stop when you looked away. The suite checks
+the advance rather than the number: 0:06 out, 0:09 back, and a Resume button where a Start
+was.
+
+One consequence worth recording. With the provider fixed, a credentialed build genuinely
+calls TMDB — and Chromium in this container has no route to it, with or without the agent
+proxy, while Node does. So the browser suites can only be run against a credential-free
+build from here, and real-world search, matching and where-to-watch quality could not be
+judged in the app at all. That is in §7 rather than glossed.
+
 ---
 
 ## 7. What is still not known
@@ -2303,6 +2359,11 @@ and which single claim in this document could not be checked at all:
   in it, a profile being edited, following and blocking, the phone's comment composer. What
   could be established by reading the migrations has been, and is recorded in
   `backendQueries.test.ts` rather than left to be worked out again.
+- **Chromium in this container cannot reach the internet.** Node can — the live TMDB and
+  AniList suites run — but the browser cannot, proxied or not. Since §6.47 fixed the
+  provider, that means no browser suite here can exercise a credentialed build, and the
+  quality of real search results, real import matching and real where-to-watch has never
+  been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
 - **The deployed site is behind.** `npm run deploy:web` needs a Vercel token that is not in
   this container, so everything since §6.14 is in the repository and not on the web.
   `npm run whats-live` confirms it from the outside: the live bundle hash does not match the
