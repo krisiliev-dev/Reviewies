@@ -72,6 +72,7 @@ server — `src/pairing.test.ts` does now.
 ## Tests
 
 ```bash
+cd relay
 npm test
 npm run typecheck      # tsc --noEmit; there is no build step to catch it otherwise
 ```

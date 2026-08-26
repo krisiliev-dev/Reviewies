@@ -64,6 +64,7 @@ implementation is written so far, because it is the one that could be exercised 
 ## Tests
 
 ```bash
+cd bridge
 npm test
 npm run typecheck      # tsc --noEmit; there is no build step to catch it otherwise
 ```

@@ -171,7 +171,7 @@ cd app && npm run build
 npx vite preview &
 node smoke.mjs                        # end-to-end checks in a real browser
 
-cd mobile && npm run export:web       # or: npx expo export --platform web
+cd ../mobile && npm run export:web     # or: npx expo export --platform web
 npx serve dist &
 node smoke.mjs                        # the same, driving the phone app
 ```

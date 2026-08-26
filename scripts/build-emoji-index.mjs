@@ -7,7 +7,7 @@
  * built around.
  *
  * Generated and committed rather than resolved at runtime, so neither app carries a
- * dependency on the dataset and neither has to parse 1,949 objects at startup. The
+ * dependency on the dataset and neither has to parse 1,940 objects at startup. The
  * format is one line per emoji, `emoji|label|tag tag tag`, which is roughly a third the
  * size of the equivalent JSON and compresses better still. It is parsed once, lazily, on
  * the first search — nobody who never opens the search bar pays for it.

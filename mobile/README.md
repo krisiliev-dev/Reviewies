@@ -18,6 +18,7 @@ Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser, 
 ## Checks
 
 ```bash
+cd mobile
 npm run export:web     # or: npx expo export --platform web
 npx serve dist -p 4200 &
 node smoke.mjs         # against a real SQLite database

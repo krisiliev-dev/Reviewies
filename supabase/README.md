@@ -5,6 +5,7 @@ Postgres schema, row-level security, and the push notification sender.
 ## Applying migrations
 
 ```bash
+cd supabase
 SUPABASE_ACCESS_TOKEN=sbp_... SUPABASE_PROJECT_REF=... node ../scripts/apply-migrations.mjs
 ```
 
@@ -107,6 +108,7 @@ caller cannot file an image under someone else's name, because the name is never
 from the caller.
 
 ```bash
+cd supabase
 SUPABASE_ACCESS_TOKEN=sbp_... SUPABASE_PROJECT_REF=... node ../scripts/deploy-functions.mjs
 ```
 
@@ -121,6 +123,7 @@ audio sits in the episode — which needs the matcher, which is TypeScript, so i
 an edge function rather than in SQL.
 
 ```bash
+cd supabase
 SUPABASE_ACCESS_TOKEN=sbp_... SUPABASE_PROJECT_REF=... node ../scripts/deploy-functions.mjs
 ```
 

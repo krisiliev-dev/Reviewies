@@ -2141,6 +2141,58 @@ back as no players rather than as a throw. Registering an actual MPRIS player ne
 binding, and there is none installable here, so no media player has ever been driven. That
 stays in §7 rather than letting the Roku result stand in for it.
 
+### 6.45 Starting everything
+
+Three sprints in a row found a whole component nobody had ever executed — the extension
+(§6.42), the relay connection (§6.43), the bridge (§6.44) — and every time the unit tests
+were correct. So the question stopped being "is it tested" and became "has it ever been
+started". Every entry point in the repository, enumerated from disk and run.
+
+Most of it was boring, which is the outcome to hope for. `npm run dev` serves and
+transforms. `expo start --web` bundles 1,140 modules and answers 200. `npm start` works in
+the relay and, since §6.44, in the bridge. The extension builds. `build-emoji-index.mjs`
+regenerates `core/src/watching/emojiIndex.ts` byte for byte identical to what is committed,
+which is the useful thing to know about a generated file nobody has regenerated in weeks.
+All four suites pass.
+
+**What was wrong was the documentation, in exactly the §6.44 shape.** Not one command in
+five READMEs works where the reader is standing:
+
+- the root README's testing block says `cd app && npm run build`, and then eight lines
+  later `cd mobile` — which, run as written, fails, because the shell is inside `app`.
+- `mobile/README.md` runs `npm run export:web` and `node smoke.mjs` with no `cd mobile` at
+  all, so from the root the first is an unknown script and the second an unknown file.
+- `supabase/README.md` invokes `node ../scripts/apply-migrations.mjs` three times, which
+  only resolves from inside `supabase/`, and never says to go there.
+- `relay/README.md` and `bridge/README.md` both document `npm run typecheck` in a block
+  with no `cd`. At the root there is no such script.
+
+None of these is interesting on its own. What is interesting is that a repository whose
+tests check the accessible name of every control on every screen had nothing at all
+checking whether its own instructions name a file that exists — and §6.44 was precisely a
+documented command that could not run. So `app/src/wiring/commands.test.ts` reads every
+fenced block in every README and doc, tracks the directory the block has walked itself
+into, and asserts that every `node <path>` names a file that is there, every `npm run
+<script>` names a script that workspace actually has, and every `--workspace <name>` names
+a workspace that exists. It does not run anything — running them was this sprint — but it
+holds the cheap half that rots on its own.
+
+**A correction, before it went into the record.** The first measurement of the four scripts
+under `scripts/` said all of them exit 0 when refusing for want of credentials, which would
+have made `npm run deploy:web && …` report success having deployed nothing. That was wrong:
+`PIPESTATUS` was read inside a subshell and reported the wrong process. Measured properly
+they exit 2, 1, 2, 2, and `whats-live`'s documented promise — "exits non-zero when anything
+is behind, so it can gate a release" — holds, which is how it reported the deployed site as
+stale. All four also refuse with a sentence naming the variable they want rather than a
+stack trace. Worth writing down because the false version was exactly the sort of finding
+this week has been full of, and acting on it would have meant "fixing" four scripts that
+were already right.
+
+**And one thing that is now smaller than it was.** The bridge had no `start` script,
+although its README documented `node src/index.ts` — which is the command §6.44 found could
+not run at all. It has one now, and refusing without `REVIEWIES_RELAY` prints one line and
+exits 2.
+
 ---
 
 ## 7. What is still not known
@@ -2197,3 +2249,11 @@ and which single claim in this document could not be checked at all:
   `backendQueries.test.ts` rather than left to be worked out again.
 - **The deployed site is behind.** `npm run deploy:web` needs a Vercel token that is not in
   this container, so everything since §6.14 is in the repository and not on the web.
+  `npm run whats-live` confirms it from the outside: the live bundle hash does not match the
+  local one.
+- **Some entry points have never been started, and cannot be from here** (§6.45 ran the
+  rest). `expo start --android` and `--ios` need an emulator or a device. The edge
+  functions' local serve needs Deno and the Supabase CLI, neither of which is installed
+  here. And the success paths of `deploy-web.mjs`, `apply-migrations.mjs` and
+  `deploy-functions.mjs` have never run in this container — only their refusals, which are
+  clear and exit non-zero.
