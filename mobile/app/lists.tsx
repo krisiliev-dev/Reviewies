@@ -94,7 +94,7 @@ export default function ListsScreen() {
       <>
         <Stack.Screen options={{ title: 'Lists' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>{COPY.lists.signInToMake('Account screen')}</Text>
+          <Text style={styles.blurb}>{COPY.lists.signInToMake('Account')}</Text>
         </View>
       </>
     );

@@ -11,6 +11,7 @@ import {
 } from '@reviewies/core/stats/compute';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
+import { formatDay } from '@reviewies/core/time';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -102,8 +103,10 @@ export default function StatsScreen() {
 
             {summary.busiestDay && (
               <Text style={styles.note}>
-                Busiest day was {summary.busiestDay.date} with {summary.busiestDay.episodes}{' '}
-                episode{summary.busiestDay.episodes === 1 ? '' : 's'}.
+                {COPY.stats.busiestDay(
+                  formatDay(summary.busiestDay.date),
+                  summary.busiestDay.episodes,
+                )}
               </Text>
             )}
 

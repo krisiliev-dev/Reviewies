@@ -125,10 +125,17 @@ export const COPY = {
      * without a session. Two failures reading as ordinary emptiness. §6.56.
      *
      * Parameterised for the same reason `people.signInToFollow` is: the destination has
-     * two names, the Data tab here and the Account screen on the phone.
+     * two names, "Your data" on the web and "Account" on the phone.
+     *
+     * The noun is whatever the navigation calls it, and §6.78 found that it had stopped
+     * being. This said "the Data tab", which was true until §6.79 cut the web's eight
+     * tabs down to five and moved everything else behind More — after which somebody
+     * signed out was told to go to a tab that no longer existed, under a name nothing
+     * on screen used. `navigationLabels` in the wiring suite now checks the argument
+     * against the labels each platform actually renders.
      */
     signInToMake: (where: string) =>
-      `Sign in on the ${where} to make lists. Everything else on this device works either way.`,
+      `Sign in under ${where} to make lists. Everything else on this device works either way.`,
     /** A create that did not happen, said out loud rather than as a form that resets. */
     createFailed: 'Could not make that list. It has not been saved — try again.',
     /**
@@ -158,6 +165,24 @@ export const COPY = {
      * is not a window. The word has to be true of every choice the screen offers.
      */
     empty: 'Nothing watched in this period yet.',
+    /**
+     * The one line on this screen that names a day, and it was wrong three ways.
+     *
+     * The web wrote `new Date(day).toLocaleDateString()` and the phone wrote the key
+     * itself, so the same sentence read "4/30/2026" on one platform and "2026-04-30" on
+     * the other — §6.51's shape, in a sentence nobody had thought of as shared.
+     *
+     * The third way is the one that matters. `new Date('2026-04-30')` is UTC midnight,
+     * and `toLocaleDateString` renders it locally: anywhere west of Greenwich the web
+     * printed the *previous* day. Measured in America/New_York, a busiest day of the
+     * 30th read "4/29/2026". That is §6.66's bug — an air date parsed as an instant —
+     * still alive in one line after the rest of the product was cured of it.
+     *
+     * The day is formatted by `formatDay` now, like every other date this app shows.
+     * §6.78.
+     */
+    busiestDay: (day: string, episodes: number) =>
+      `Busiest day was ${day} with ${episodes} ${episodes === 1 ? 'episode' : 'episodes'}.`,
   },
 
   calendar: {
@@ -263,9 +288,10 @@ export const COPY = {
     withoutAccount:
       'Following needs sync configured, as do comments and shared reactions. Your history, ratings, lists of what to watch, stats and the whole import work without it.',
     /**
-     * Parameterised, because the destination genuinely has two names: the web keeps
-     * accounts on the Data tab of Settings and the phone has an Account screen. The
-     * sentence is shared; the noun is not.
+     * Parameterised, because the destination genuinely has two names: the web calls it
+     * "Your data" and the phone calls it "Account". The sentence is shared; the noun is
+     * not — and the noun has to be what the navigation says, which §6.78 found it had
+     * quietly stopped being.
      */
     /** A follow or unfollow that did not happen, rather than a button that does nothing. */
     followFailed: 'That did not go through. Try again in a moment.',
@@ -279,7 +305,7 @@ export const COPY = {
      */
     listFailed: 'Could not load these just now. Nothing has changed — try again.',
     signInToFollow: (where: string) =>
-      `Sign in on the ${where} to follow people. Your history stays on this device either way.`,
+      `Sign in under ${where} to follow people. Your history stays on this device either way.`,
   },
 
   settings: {

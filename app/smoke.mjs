@@ -732,6 +732,26 @@ try {
   await page.getByRole('link', { name: /^Watch along with / }).first().click();
   await page.waitForTimeout(700);
 
+  /**
+   * Reopening an episode you have already reacted to, before pressing anything.
+   *
+   * Two reactions were recorded on this episode further up, so this is the second visit
+   * with a history behind it — which is the case §6.78 found broken by opening the
+   * screen and looking at it. The component primes a set of "already flown" ids so that
+   * your own past reactions are history rather than taps; the priming ran against the
+   * empty array the live query was given as a default, before it had answered, so the
+   * real history arrived a render later and read as a burst. Eight emoji drifting across
+   * a screen whose clock had not been started.
+   *
+   * The stream is the band at the top; before the clock is running it holds nothing.
+   */
+  const driftingBeforeStart = await page.locator('.will-change-transform').count();
+  check(
+    'reopening an episode does not replay your own reactions',
+    driftingBeforeStart === 0,
+    `${driftingBeforeStart} drifting before the clock was started`,
+  );
+
   // --- §24 What a long session leaves behind ---------------------------------------
   //
   // Nothing in this repository had ever run for longer than a few seconds, or done
@@ -1146,8 +1166,34 @@ try {
   await viaMore(/Stats/);
   await page.waitForSelector('text=Most watched', { timeout: 5000 });
   const statsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
-  check('stats show runtime-weighted totals', /Watched/.test(statsText) && /Episodes/.test(statsText), statsText.slice(0, 120));
+  /**
+   * The numbers, not the words above them.
+   *
+   * This checked for "Watched" and "Episodes", which are the labels printed on the tiles
+   * whatever the tiles contain — so a screen showing every total as zero, or as NaN,
+   * passed. §6.78 found the same screen naming a day three different ways with nothing
+   * to say so; the labels were all correct throughout.
+   */
+  check(
+    'stats show runtime-weighted totals',
+    /Watched\s*\d/.test(statsText) && /Episodes\s*\d/.test(statsText),
+    statsText.slice(0, 120),
+  );
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
+  /**
+   * And the one sentence on this screen that names a day.
+   *
+   * It said `4/30/2026` on the web and `2026-04-30` on the phone — and, west of
+   * Greenwich, the wrong day entirely, because `new Date('2026-04-30')` is UTC midnight
+   * rendered locally. Both go through `formatDay` now, so the shape to insist on is the
+   * app's own: "Today", or a weekday, or "Thu, Apr 30". Never a slash, never an ISO key.
+   */
+  const busiest = statsText.match(/Busiest day was (.+?) with \d+ episodes?\./)?.[1];
+  check(
+    'the busiest day is written the way this app writes days',
+    Boolean(busiest) && !/\//.test(busiest) && !/^\d{4}-\d{2}-\d{2}$/.test(busiest),
+    busiest ?? statsText.slice(0, 160),
+  );
   await audit('Stats', 9);
   await noGhosts('Stats');
   await scaled('Stats');
@@ -1193,13 +1239,14 @@ try {
   check(
     'the lists screen says which kind of empty it is',
     configured
-      ? /No lists yet|Could not|Sign in on the Data tab to make lists/i.test(listsText)
+      ? /No lists yet|Could not|Sign in .* to make lists/i.test(listsText)
       : /needs? an account/i.test(listsText),
     listsText.slice(0, 130),
   );
   // Four when there is a session and a create box; the signed-out screen is a sentence
   // and the navigation, which is what it should be rather than a form that cannot work.
-  await audit('Lists', /Sign in on the Data tab/.test(listsText) ? 6 : 7);
+  // Signed out, the create box is not there, so there is one fewer control to name.
+  await audit('Lists', /Sign in .* to make lists/.test(listsText) ? 6 : 7);
   await noGhosts('Lists');
   await scaled('Lists');
   await page.screenshot({ path: OUT + '08c-lists.png' });
@@ -1843,8 +1890,11 @@ try {
       ['more', /Everything lives on this device/],
       // The two that ask a server. Signed out they say so; the failure mode being
       // guarded against is either of them rendering as "you have nothing".
-      ['lists', /Sign in on the Data tab to make lists|Lists need an account/],
-      ['people', /Sign in on the Data tab to follow people|needs sync configured/],
+      // The sentence, not the noun in it: which destination it names is checked exactly
+      // by `navigationLabels` in the wiring suite, and pinning the whole phrase here is
+      // what turned a copy fix into four smoke failures. §6.78.
+      ['lists', /Sign in .* to make lists|Lists need an account/],
+      ['people', /Sign in .* to follow people|needs sync configured/],
     ]) {
       await plane.goto(`${BASE}/${path}`, { waitUntil: 'domcontentloaded' });
       await plane.waitForTimeout(1200);

@@ -264,3 +264,39 @@ describe('over the length of an episode', () => {
     vi.useRealTimers();
   });
 });
+
+/**
+ * Your own past reactions are history, not something you just did.
+ *
+ * The component primes a set of "already flown" ids on its first run so that reopening
+ * an episode does not replay everything you ever left on it. §6.78 found that the
+ * priming ran against the empty array the live query was given as a default, before it
+ * had answered — so the real history, arriving a render later, read as a burst of taps.
+ *
+ * On an episode with eight of your own reactions, opening Watching Mode threw all eight
+ * across the screen before the clock had been started. `undefined` now means "not read
+ * yet"; an empty array means "read, and empty".
+ */
+describe('reopening an episode you have already reacted to', () => {
+  const mine = (tMs: number, id: string): Reaction =>
+    ({ id, targetId: 't', tMs, emoji: '🔥', mine: true }) as Reaction;
+
+  it('does not replay your own history when it arrives after the first render', () => {
+    const history = [mine(1000, 'a'), mine(2000, 'b'), mine(3000, 'c')];
+    // What a live query actually does: undefined, then the rows.
+    const view = render(<ReactionStream reactions={undefined} positionMs={0} />);
+    view.rerender(<ReactionStream reactions={history} positionMs={0} />);
+
+    expect(screen.queryByText('🔥')).toBeNull();
+  });
+
+  it('and still flies the very first reaction on an episode nobody has touched', () => {
+    // The other half: an episode whose history is genuinely empty, where the first tap
+    // has to appear. Priming on "the array is empty" alone would swallow it.
+    const view = render(<ReactionStream reactions={undefined} positionMs={0} />);
+    view.rerender(<ReactionStream reactions={[]} positionMs={0} />);
+    view.rerender(<ReactionStream reactions={[mine(500, 'first')]} positionMs={0} />);
+
+    expect(screen.getAllByText('🔥').length).toBeGreaterThan(0);
+  });
+});

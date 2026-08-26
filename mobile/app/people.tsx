@@ -82,7 +82,7 @@ export default function PeopleScreen() {
         <View style={styles.centre}>
           <Text style={styles.blurb}>
             {syncConfigured()
-              ? COPY.people.signInToFollow('Account screen')
+              ? COPY.people.signInToFollow('Account')
               : COPY.people.withoutAccount}
           </Text>
         </View>

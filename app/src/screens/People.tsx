@@ -65,9 +65,9 @@ export function People() {
     return (
       <div className="p-4">
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
-        {/* The destination is the one word that differs by platform: accounts live on
-            the Data tab here and on an Account screen on the phone. */}
-        <p className="px-1 text-sm text-muted">{COPY.people.signInToFollow('Data tab')}</p>
+        {/* The destination is the one word that differs by platform, and it has to be
+            what the navigation calls it: "Your data" here, "Account" on the phone. */}
+        <p className="px-1 text-sm text-muted">{COPY.people.signInToFollow('Your data')}</p>
       </div>
     );
   }

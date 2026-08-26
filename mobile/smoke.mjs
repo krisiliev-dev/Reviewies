@@ -482,7 +482,21 @@ try {
   await page.getByText('Runtime-weighted, and your year in review').click();
   await page.waitForTimeout(2000);
   const stats = await text();
-  check('stats are runtime-weighted', /Watched/.test(stats) && /Episodes/.test(stats), stats.slice(0, 110));
+  // The numbers, not the labels above them — and the day, written the way this app
+  // writes days rather than as the storage key it came from. §6.78.
+  check(
+    'stats are runtime-weighted',
+    /Watched\s*\d/.test(stats) && /Episodes\s*\d/.test(stats),
+    stats.slice(0, 110),
+  );
+  const busiest = stats.match(/Busiest day was (.+?) with \d+ episodes?\./)?.[1];
+  check(
+    'the busiest day is written the way this app writes days',
+    // Absent is fine here: this phone's library may hold a single day of watches and no
+    // busiest day to name. Present and spelled as a date key is not.
+    !busiest || (!/\//.test(busiest) && !/^\d{4}-\d{2}-\d{2}$/.test(busiest)),
+    busiest ?? '(no busiest day on this library)',
+  );
   await audit('Stats', 4);
   await noGhosts('Stats');
   await scaled('Stats');
@@ -775,8 +789,8 @@ try {
     await page.getByText('More', { exact: true }).first().click();
     await page.waitForTimeout(1200);
     for (const [name, expected] of [
-      ['Lists', /Sign in on the Account screen to make lists|Lists need an account|No lists yet/],
-      ['People', /Sign in on the Account screen|needs sync configured|Following/],
+      ['Lists', /Sign in .* to make lists|Lists need an account|No lists yet/],
+      ['People', /Sign in .* to follow people|needs sync configured|Following/],
     ]) {
       await page.getByText(name, { exact: true }).first().click();
       await page.waitForTimeout(2000);

@@ -9,6 +9,7 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { COPY } from '@reviewies/core/copy';
+import { formatDay } from '@reviewies/core/time';
 
 /**
  * Stats and Year in Review.
@@ -140,9 +141,7 @@ function Summary({
 
       {summary.busiestDay && (
         <p className="px-1 text-sm text-muted">
-          Busiest day was {new Date(summary.busiestDay.date).toLocaleDateString()} with{' '}
-          {summary.busiestDay.episodes}{' '}
-          {summary.busiestDay.episodes === 1 ? 'episode' : 'episodes'}.
+          {COPY.stats.busiestDay(formatDay(summary.busiestDay.date), summary.busiestDay.episodes)}
         </p>
       )}
 

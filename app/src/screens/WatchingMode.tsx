@@ -111,11 +111,18 @@ export function WatchingMode() {
   );
 
   // Every reaction ever left on this episode, replayed as the clock reaches it.
-  const reactions = useLiveQuery(
+  /**
+   * Deliberately without an initial value, so `undefined` means "not read yet".
+   *
+   * It used to default to `[]`, which made "the query has not come back" and "this
+   * episode has no reactions" the same value — and `ReactionStream` needs to tell them
+   * apart to know which reactions are history. §6.78.
+   */
+  const loadedReactions = useLiveQuery(
     () => db.reactions.where('targetId').equals(targetId).toArray(),
     [targetId],
-    [],
   );
+  const reactions = loadedReactions ?? [];
 
   // Keep the screen awake — an episode is far longer than any sleep timer.
   useEffect(() => {
@@ -205,7 +212,7 @@ export function WatchingMode() {
 
       {/* Other viewers' reactions, drifting right to left as you reach their moments. */}
       <ReactionStream
-        reactions={reactions}
+        reactions={loadedReactions}
         positionMs={clock.positionMs}
         density={density}
         paused={streamPaused}

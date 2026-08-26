@@ -56,7 +56,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Lists</h1>
-        <p className="text-muted">{COPY.lists.signInToMake('Data tab')}</p>
+        <p className="text-muted">{COPY.lists.signInToMake('Your data')}</p>
       </div>
     );
   }

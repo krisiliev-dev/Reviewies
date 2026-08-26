@@ -4772,6 +4772,119 @@ know which two was to run it.
 
 ---
 
+### 6.78 Use it for an evening again, and check the smoke is watching the right things
+
+Five sprints — §6.73 to §6.77 — went into whether the tests were worth anything. Nobody
+had opened the app since §6.96. Everything built since then was proved by suites and
+looked at by nobody, and §7's newest line said exactly what that meant: no screen has been
+mutated, so "the screens are covered" rests entirely on the smoke suites asserting the
+right things.
+
+So: a library somebody would actually have — twelve real shows, mixed statuses, ratings,
+a watchlist, a hundred and twenty reactions on one episode — seeded straight into
+IndexedDB, and then every screen opened and looked at.
+
+Three things were wrong. All three had been green for weeks.
+
+#### "Sign in on the Data tab", which has not existed since §6.79
+
+Lists and People, signed out, both said:
+
+> Sign in on the **Data tab** to make lists. Everything else on this device works either
+> way.
+
+There is no Data tab. §6.79 cut the web's eight tabs down to five and moved everything
+else behind More, where the row is called **Your data**. The phone has an **Account**
+screen and was told to say "Account screen".
+
+This survived §6.98, which gave the words one owner, because the sentence *is* owned:
+`COPY.lists.signInToMake` is parameterised precisely because the destination has two
+names, and the noun is an argument at the call site. The guard checks the sentence. The
+argument is not the sentence.
+
+Both platforms now name what their own navigation renders — "Your data", "Account" — and
+`navigationLabels` in the wiring suite reads the labels out of `More.tsx` and
+`(tabs)/more.tsx` and requires every such argument to be one of them. Planted the original
+string back and it fires.
+
+#### One line naming a day, wrong three ways
+
+Stats ends with a sentence: *Busiest day was … with 10 episodes.*
+
+- The web wrote `new Date(day).toLocaleDateString()` → **4/30/2026**.
+- The phone wrote the key → **2026-04-30**.
+- And `new Date('2026-04-30')` is UTC midnight rendered in local time, so **west of
+  Greenwich the web printed the previous day**. Measured in `America/New_York`: a busiest
+  day of the 30th read `4/29/2026`.
+
+That third one is §6.66's bug — a calendar date parsed as an instant — still alive in one
+line after the rest of the product was cured of it, in the one place §6.66 never looked
+because it is not a calendar screen. Both platforms go through `formatDay` now and the
+sentence lives in `COPY.stats.busiestDay`: *Busiest day was Thu, Apr 30 with 10 episodes.*
+
+What smoke asserted about this screen was `/Watched/` and `/Episodes/` — **the labels
+printed on the tiles**, which are there whatever the tiles contain. A Stats screen showing
+every total as zero would have passed. It now insists on a digit after each label, and on
+the day being written the way this app writes days: never a slash, never an ISO key.
+
+#### Eight of your own reactions, thrown across a screen you had not started
+
+Opening Watching Mode on an episode with a few of my own reactions on it: eight emoji,
+stacked two to a lane, drifting across the top — with the clock at 0:00 and *Start
+watching* still on screen.
+
+The component has a guard for exactly this, with a comment saying so:
+
+```js
+// Everything already there when this screen opened is history, not something you
+// just did. Without this, re-entering an episode you have reacted to before would
+// empty every one of your past reactions across the screen at once.
+if (!primed.current) { primed.current = true; … }
+```
+
+The intent is right and it does not work, because of load order. The effect first runs
+while the live query has not answered — and `useLiveQuery` had been given `[]` as its
+initial value, so "not read yet" and "this episode has nothing" were the same array. It
+primed with nothing. The real history arrived one render later and read as eight taps that
+had just happened.
+
+`undefined` now means not read yet; `[]` means read and empty. That distinction is the
+whole fix, and it has to be exactly that distinction: priming on "the array is empty"
+would swallow the *first* reaction on an episode nobody has touched, which is the bug
+doc 10 §3 was about. Both cases are tests now, and putting the original line back turns
+the first one red.
+
+Smoke re-enters Watching Mode after recording two reactions, which is precisely the case
+that was broken, and asserted nothing about it. It now counts what is drifting before the
+clock is started, where the answer is none.
+
+#### And fixing the words broke four checks, which is the same lesson again
+
+Changing "Sign in on the Data tab" to "Sign in under Your data" turned four smoke checks
+red. Not because anything was wrong — because they matched the whole phrase, old noun
+included, in a suite whose job on those screens is to tell one kind of empty from another.
+One of them then miscounted the controls, because it decided whether the create box was on
+screen by testing for the same string.
+
+They now match `Sign in .* to make lists` — the meaning — and the destination is checked
+exactly, once, by the wiring guard that exists for it. A check pinned to the detail beside
+the thing it cares about is the third instance of this sprint's pattern, and this one was
+mine, made while fixing the first.
+
+#### What the evening says about the suites
+
+Every one of these was a green screen. The pattern across all three is the same and it is
+not "the tests are bad" — it is narrower than that:
+
+- The copy guard checked the **sentence** and not the **argument**.
+- The stats check asserted the **label** and not the **number**.
+- The Watching Mode check asserted that the screen **opened** and not what was on it.
+
+Each time the check named the thing next to the thing that mattered. That is what an
+evening finds and a suite does not, and it is the argument for having both.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4883,6 +4996,13 @@ and which single claim in this document could not be checked at all:
   real assertion from an unfailable one means knowing what the code could have done
   instead, which is what mutation testing is for and what nothing here does. The honest
   version of this claim is: no test is silent, and some may still be toothless.
+- **Three green screens were wrong, and an evening found all three.** §6.78 opened the app
+  on a realistic library for the first time since §6.96 and found a sentence pointing at a
+  tab deleted in §6.79, a date written three ways including the wrong day west of
+  Greenwich, and every one of your own past reactions replayed on reopening an episode.
+  Each had a check next to it that passed. The suites are worth what they cost and they
+  are not a substitute for opening the thing; nothing schedules the second, and the gap
+  this time was twenty-nine sprints.
 - **No screen has been mutated.** §6.75 to §6.77 ran 979 mutations over 36 files and
   classified every survivor, which is all of `relay/`, all of `bridge/`, the measured
   parts of `core/`, and the handful of `app/` and `mobile/` files that carry logic rather

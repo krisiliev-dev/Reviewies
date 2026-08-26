@@ -51,7 +51,14 @@ export function ReactionStream({
   density = DEFAULT_REACTION_DENSITY,
   paused = false,
 }: {
-  reactions: Reaction[];
+  /**
+   * `undefined` until the episode's history has been read.
+   *
+   * The difference matters exactly once, in the priming below, and getting it wrong
+   * meant every reaction you had ever left on an episode flew across the screen the
+   * moment you reopened it. §6.78.
+   */
+  reactions: Reaction[] | undefined;
   positionMs: number;
   /** 0.25–1. Bilibili's lesson is that unfiltered bullet comments become unreadable. */
   density?: number;
@@ -100,6 +107,7 @@ export function ReactionStream({
 
     // Not anything of yours that has already flown on its own account, or the same
     // reaction crosses the screen twice.
+    if (!reactions) return;
     const due = reactions.filter(
       (r) => r.tMs > from && r.tMs <= to && !ownFlown.current.has(r.id),
     );
@@ -149,6 +157,19 @@ export function ReactionStream({
     // Everything already there when this screen opened is history, not something you
     // just did. Without this, re-entering an episode you have reacted to before would
     // empty every one of your past reactions across the screen at once.
+    //
+    // Which is exactly what it did. The priming ran on the first render, when the live
+    // query had not answered yet and `reactions` was the empty array it was given as a
+    // default — so it primed with nothing, and the real history arriving a moment later
+    // looked like eight taps that had just happened. §6.78 found it by opening the
+    // screen on an episode with a few of its own reactions on it: eight emoji, stacked
+    // two to a lane, drifting across a screen whose clock had not been started.
+    //
+    // `undefined` now means "not read yet" and an empty array means "read, and empty",
+    // so the priming happens when the history actually arrives — including when the
+    // history is nothing, which is what keeps the *first* reaction on an episode flying
+    // the moment it is tapped.
+    if (!reactions) return;
     if (!primed.current) {
       primed.current = true;
       for (const r of reactions) if (r.mine) ownFlown.current.add(r.id);
