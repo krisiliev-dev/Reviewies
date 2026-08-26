@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { syncConfigured } from '@reviewies/core/sync/auth';
+import { getSession, syncConfigured } from '@reviewies/core/sync/auth';
 import {
   createList,
   describeMix,
@@ -37,6 +37,9 @@ export default function ListsScreen() {
   const [open, setOpen] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
+  const [createFailed, setCreateFailed] = useState(false);
+  /** undefined while it is being asked, null when there is nobody signed in. */
+  const [session, setSession] = useState<unknown>();
 
   const load = useCallback(async () => {
     const result = await fetchLists();
@@ -45,15 +48,27 @@ export default function ListsScreen() {
   }, []);
 
   useEffect(() => {
-    if (syncConfigured()) void load();
-    else setLists([]);
+    if (!syncConfigured()) {
+      setLists([]);
+      setSession(null);
+      return;
+    }
+    void getSession().then((result) => setSession(result ?? null));
+    void load();
   }, [load]);
 
   async function create() {
     if (!name.trim()) return;
     setBusy(true);
+    setCreateFailed(false);
     try {
-      await createList(name);
+      // A create that did not happen used to clear the box and reload an unchanged
+      // list, which reads as an app that forgot rather than a write that failed.
+      const id = await createList(name);
+      if (!id) {
+        setCreateFailed(true);
+        return;
+      }
       setName('');
       await load();
     } finally {
@@ -67,6 +82,19 @@ export default function ListsScreen() {
         <Stack.Screen options={{ title: 'Lists' }} />
         <View style={styles.centre}>
           <Text style={styles.blurb}>{COPY.lists.needsAccount}</Text>
+        </View>
+      </>
+    );
+  }
+
+  // Signed out on a build that has sync: the create box below cannot work, because
+  // `createList` returns undefined without a session. §6.56.
+  if (session === null) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Lists' }} />
+        <View style={styles.centre}>
+          <Text style={styles.blurb}>{COPY.lists.signInToMake('Account screen')}</Text>
         </View>
       </>
     );
@@ -96,6 +124,12 @@ export default function ListsScreen() {
             <Text style={styles.primaryText}>Add</Text>
           </Pressable>
         </View>
+
+        {createFailed && (
+          <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
+            {COPY.lists.createFailed}
+          </Text>
+        )}
 
         {lists === undefined && <ActivityIndicator color={theme.accent} />}
         {/* See the web's copy of this: "No lists yet" was shown for both having none

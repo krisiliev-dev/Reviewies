@@ -747,6 +747,50 @@ try {
   await page.goBack();
   await page.waitForTimeout(1000);
 
+  // --- With the network off ------------------------------------------------------
+  //
+  // Navigated by tapping, not by `goto`: this is the static web export and a fresh
+  // document fetch with the network off is the browser's own error page, which tests the
+  // export rather than the app. There is no service worker here — on a phone the bundle
+  // is on the device — so the honest question is the aeroplane one: the app is already
+  // running, the network goes away, does it keep working. Nothing had asked it. §6.56.
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1500);
+  await page.context().setOffline(true);
+  try {
+    // Matched on what the screen itself says, not on its own name: "Watchlist" is
+    // written on the tab bar, so a tap that navigated nowhere would pass that.
+    for (const [tab, expected] of [
+      // The note written earlier in this run, which only the watchlist shows.
+      ['Watchlist', /Recommended by Sam|Nothing saved yet/],
+      ['Discover', /Nothing you have already watched or added|Because you watched/],
+    ]) {
+      await page.getByText(tab, { exact: true }).first().click();
+      await page.waitForTimeout(1500);
+      const body = await text();
+      check(`the ${tab} tab still works with no network`, expected.test(body), body.slice(0, 110));
+    }
+
+    // The two that ask a server, reached the way somebody would reach them.
+    await page.getByText('More', { exact: true }).first().click();
+    await page.waitForTimeout(1200);
+    for (const [name, expected] of [
+      ['Lists', /Sign in on the Account screen to make lists|Lists need an account|No lists yet/],
+      ['People', /Sign in on the Account screen|needs sync configured|Following/],
+    ]) {
+      await page.getByText(name, { exact: true }).first().click();
+      await page.waitForTimeout(2000);
+      const body = await text();
+      // The failure being guarded against is either of them rendering a server error, or
+      // worse, rendering as "you have nothing".
+      check(`${name} says something true with no network`, expected.test(body), body.slice(0, 130));
+      await page.goBack();
+      await page.waitForTimeout(1000);
+    }
+  } finally {
+    await page.context().setOffline(false);
+  }
+
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } catch (err) {
   check('smoke run completed', false, err.message);

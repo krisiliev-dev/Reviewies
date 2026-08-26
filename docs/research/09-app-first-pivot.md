@@ -2769,6 +2769,57 @@ platform holds is ignored — a screen legitimately has state its twin does not.
 catches is the same named thing opening differently, which is what all four of these
 sweeps have found each time. Proved by planting the `ytd`/`30d` split back, which fails it.
 
+### 6.56 With the network off
+
+The sentence on the More screen is *"Everything lives on this device. Nothing here needs
+an account, and nothing is withheld."* Nothing had ever tested it. Every check in this
+repository has had a working localhost and a fixture provider that always answers.
+
+So: Playwright's offline switch, both apps, cold and warm.
+
+**The app is genuinely local-first, and that part is now proved rather than asserted.** A
+cold launch with no network at all comes up from the service worker's precache with
+somebody's shows on it; every screen renders; marking an episode watched writes the watch
+and queues the outbox row; coming back online does not duplicate it. Those are eleven new
+checks in the web run and four in the phone's.
+
+**The finding was on the Lists screen, and it was not really about the network.** Offline,
+signed out, on a build that has sync configured, it said:
+
+> No lists yet. Make one above, then add titles to it.
+
+— over a Create box whose button did nothing at all. `createList` returns `undefined`
+without a session, and the screen ignored the return, cleared the input and reloaded an
+unchanged list. Two failures wearing the clothes of ordinary emptiness: *you have no
+lists* for *nobody is signed in*, and a form that silently discards what you typed.
+
+The screen gated on `syncConfigured()` — a fact about the **build** — where People has
+gated on the **session** since it shipped. Lists now has both gates and says *"Sign in on
+the Data tab to make lists. Everything else on this device works either way"*, and a
+create that fails says so instead of resetting. Both platforms, from the core's copy.
+
+That is the third time in seven sprints that the bug has been a failure rendering as
+emptiness: §6.33 separated "no lists" from "could not ask", doc 10 §6 found a search that
+said *Searching…* for ever, §6.50 found empty screens that named a way out without
+offering one. It is worth naming as a class. **An empty state is a claim about the user's
+own data, and code that cannot tell "nothing" from "I could not look" makes that claim
+falsely.**
+
+Two limits, both recorded in §7 rather than papered over. The phone's offline checks
+navigate by tapping rather than by loading a URL, because the static web export has no
+service worker and a fresh document fetch offline is the browser's error page — on a
+device the bundle is local, so what is testable here is the aeroplane case: already
+running, network gone. And offline-as-a-switch is not the connection people actually have.
+A captive portal, or a request that hangs rather than fails, is a different failure, and
+the deadline §6.52 put in the core for exactly that has still never met one.
+
+One check in this sprint was written badly enough to be worth recording: the phone's first
+offline assertions matched on the words *Watchlist* and *Discover*, both of which are
+printed on the tab bar — so a tap that navigated nowhere would have passed. They match on
+something only the destination says now. That is the same mistake §6.54 caught a sprint
+ago, made again, which is a fair argument for reading every new check as though it were
+somebody else's.
+
 ---
 
 ## 7. What is still not known
@@ -2787,6 +2838,17 @@ and which single claim in this document could not be checked at all:
   screen is reached in the suite by its own address rather than by asking for a wrong one,
   because the static server answers an unknown path before the app boots; that expo-router
   routes to it on a device is the framework's business and is not under test here.
+- **Offline here is a switch, not a bad connection.** §6.56 runs both apps with
+  Playwright's offline mode, which is a clean break: every request fails at once and
+  keeps failing. What that does not reproduce is the case people actually meet — a
+  connection that answers slowly, or answers with a captive portal's login page, or drops
+  half way through an upload. The search deadline of §6.52 exists for the first of those
+  and has never met one. Nor has anything tested a device whose radio comes back while a
+  write is in flight.
+- **The offline search path is untested end to end.** The web smoke builds with no TMDB
+  token on purpose, so search runs on fixtures, which answer from memory and cannot fail.
+  The provider's own failure — a request that hangs, then the deadline — is covered by
+  unit tests and by reading, not by a browser with the network off.
 - **The scale measurements are a container's, not a phone's.** §6.54 runs the app's own
   queries against a hundred and twenty shows and six thousand episodes on both stores, and
   the screens against a hundred and fifty in Chromium. Nothing there says what a five-year-old

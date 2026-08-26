@@ -52,6 +52,21 @@ export const COPY = {
     empty: 'No lists yet. Make one above, then add titles to it.',
     /** The web's: "Empty so far" does not say what the list is empty of. */
     listEmpty: 'Nothing on this list yet.',
+    /**
+     * Signed out on a build that *does* have sync configured.
+     *
+     * The screen gated on the build rather than on the person, so somebody signed out
+     * was shown an empty list of lists — "No lists yet. Make one above" — over a Create
+     * box whose button silently did nothing, because `createList` returns undefined
+     * without a session. Two failures reading as ordinary emptiness. §6.56.
+     *
+     * Parameterised for the same reason `people.signInToFollow` is: the destination has
+     * two names, the Data tab here and the Account screen on the phone.
+     */
+    signInToMake: (where: string) =>
+      `Sign in on the ${where} to make lists. Everything else on this device works either way.`,
+    /** A create that did not happen, said out loud rather than as a form that resets. */
+    createFailed: 'Could not make that list. It has not been saved — try again.',
   },
 
   stats: {

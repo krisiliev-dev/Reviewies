@@ -978,15 +978,20 @@ try {
   await viaMore(/Lists/);
   await page.waitForSelector('h1:text("Lists")', { timeout: 5000 });
   const listsText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
-  // Two reasons for an empty list screen, and they are not the same reason: nothing
-  // made yet, or the question could never be asked. §6.33 separated them; this is the
-  // first time either has been read here.
+  // Three reasons for an empty list screen, and they are not the same reason: nothing
+  // made yet, the question could never be asked, or nobody is signed in to ask it.
+  // §6.33 separated the first two; §6.56 found the third being told as the first —
+  // "No lists yet" over a Create box whose button silently did nothing.
   check(
     'the lists screen says which kind of empty it is',
-    configured ? /No lists yet|Could not/i.test(listsText) : /needs? an account/i.test(listsText),
+    configured
+      ? /No lists yet|Could not|Sign in on the Data tab to make lists/i.test(listsText)
+      : /needs? an account/i.test(listsText),
     listsText.slice(0, 130),
   );
-  await audit('Lists', 7);
+  // Four when there is a session and a create box; the signed-out screen is a sentence
+  // and the navigation, which is what it should be rather than a form that cannot work.
+  await audit('Lists', /Sign in on the Data tab/.test(listsText) ? 6 : 7);
   await noGhosts('Lists');
   await scaled('Lists');
   await page.screenshot({ path: OUT + '08c-lists.png' });
@@ -1531,6 +1536,144 @@ try {
     await loaded.screenshot({ path: OUT + '21-heavy-stats.png' });
   } finally {
     await heavy.close();
+  }
+
+  // --- 22. With the network off ------------------------------------------------
+  //
+  // The claim the whole product rests on is that everything lives on this device and
+  // nothing is withheld without an account. Nothing had ever tested it: every check in
+  // this file has had a working localhost, and the fixture provider always answers.
+  //
+  // What this looks for is not that the app survives — it is what the screens *say*. A
+  // read that fails and renders as ordinary emptiness ("no lists yet", "nothing here")
+  // is worse than an error, because it tells somebody their own data is gone. §6.56.
+  const air = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const plane = await air.newPage();
+  try {
+    // Warm, so the service worker installs and precaches the shell.
+    await plane.goto(BASE, { waitUntil: 'networkidle' });
+    const registered = await plane.evaluate(async () => {
+      const reg = await navigator.serviceWorker?.ready.catch(() => undefined);
+      return !!reg?.active;
+    });
+    check('the service worker installs at all', registered);
+
+    await plane.evaluate(async () => {
+      const open = indexedDB.open('reviewies');
+      await new Promise((resolve) => {
+        open.onsuccess = resolve;
+      });
+      const db = open.result;
+      const tx = db.transaction(['titles', 'library', 'episodes'], 'readwrite');
+      const now = Date.now();
+      tx.objectStore('titles').put({
+        id: 'tmdb:77',
+        kind: 'show',
+        name: 'Offline Show',
+        year: 2020,
+        runtimeMin: 42,
+        fetchedAt: now,
+      });
+      tx.objectStore('library').put({
+        titleId: 'tmdb:77',
+        kind: 'show',
+        status: 'watching',
+        addedAt: now,
+      });
+      for (const number of [1, 2]) {
+        tx.objectStore('episodes').put({
+          id: `tmdb:ep:77:${number}`,
+          seriesId: 'tmdb:77',
+          season: 1,
+          number,
+          name: `Episode ${number}`,
+          airDate: '2020-01-0' + number,
+          runtimeMin: 42,
+          fetchedAt: now,
+        });
+      }
+      await new Promise((resolve) => {
+        tx.oncomplete = resolve;
+      });
+      db.close();
+    });
+
+    await air.setOffline(true);
+
+    // A cold launch with no network at all: the shell has to come from the cache, or
+    // an installed app is a browser error page the moment somebody is on a train.
+    await plane.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await plane.waitForTimeout(2000);
+    const offlineHome = (await plane.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      'a cold launch with no network still comes up',
+      /Up Next/.test(offlineHome) && /Offline Show/.test(offlineHome),
+      offlineHome.slice(0, 140),
+    );
+
+    for (const [path, expected] of [
+      ['watchlist', /Nothing saved yet/],
+      ['stats', /Stats/],
+      ['calendar', /Upcoming/],
+      ['more', /Everything lives on this device/],
+      // The two that ask a server. Signed out they say so; the failure mode being
+      // guarded against is either of them rendering as "you have nothing".
+      ['lists', /Sign in on the Data tab to make lists|Lists need an account/],
+      ['people', /Sign in on the Data tab to follow people|needs sync configured/],
+    ]) {
+      await plane.goto(`${BASE}/${path}`, { waitUntil: 'domcontentloaded' });
+      await plane.waitForTimeout(1200);
+      const body = (await plane.locator('body').innerText()).replace(/\s+/g, ' ');
+      check(`/${path} says something true with no network`, expected.test(body), body.slice(0, 130));
+    }
+
+    // And it still records what you did.
+    await plane.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await plane.waitForTimeout(1200);
+    await plane.getByRole('button', { name: /^Mark Offline Show/ }).first().click();
+    await plane.waitForTimeout(1200);
+    const stored = await plane.evaluate(async () => {
+      const open = indexedDB.open('reviewies');
+      await new Promise((resolve) => {
+        open.onsuccess = resolve;
+      });
+      const db = open.result;
+      const count = (name) =>
+        new Promise((resolve) => {
+          const request = db.transaction(name).objectStore(name).count();
+          request.onsuccess = () => resolve(request.result);
+        });
+      const result = { watches: await count('watches'), outbox: await count('outbox') };
+      db.close();
+      return result;
+    });
+    check(
+      'a watch marked offline is written, and queued to go out',
+      stored.watches === 1 && stored.outbox >= 1,
+      JSON.stringify(stored),
+    );
+
+    // Back on the network: the queue is still one row, not two, and nothing was lost.
+    await air.setOffline(false);
+    await plane.goto(BASE, { waitUntil: 'networkidle' });
+    await plane.waitForTimeout(2000);
+    const after = await plane.evaluate(async () => {
+      const open = indexedDB.open('reviewies');
+      await new Promise((resolve) => {
+        open.onsuccess = resolve;
+      });
+      const db = open.result;
+      const request = db.transaction('watches').objectStore('watches').count();
+      const watches = await new Promise((resolve) => {
+        request.onsuccess = () => resolve(request.result);
+      });
+      db.close();
+      return watches;
+    });
+    check('and coming back online does not duplicate it', after === 1, `${after} watches`);
+    await plane.screenshot({ path: OUT + '22-offline.png' });
+  } finally {
+    await air.close();
   }
 } catch (err) {
   check(

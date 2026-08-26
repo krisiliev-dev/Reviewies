@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { useSync } from '../sync/useSync';
 import {
   createList,
   describeMix,
@@ -22,6 +23,9 @@ export function Lists() {
   const [name, setName] = useState('');
   const [openId, setOpenId] = useState<string>();
   const [failed, setFailed] = useState<string>();
+  const [createFailed, setCreateFailed] = useState(false);
+
+  const { session } = useSync();
 
   const load = useCallback(async () => {
     const result = await fetchLists();
@@ -41,10 +45,33 @@ export function Lists() {
     );
   }
 
+  /**
+   * Signed out, on a build that has sync.
+   *
+   * This screen used to gate on the build alone, so somebody signed out met "No lists
+   * yet. Make one above" over a Create box whose button did nothing at all — `createList`
+   * returns undefined without a session. People has had both gates since it shipped.
+   */
+  if (!session) {
+    return (
+      <div className="p-6">
+        <h1 className="mb-2 text-2xl font-semibold">Lists</h1>
+        <p className="text-muted">{COPY.lists.signInToMake('Data tab')}</p>
+      </div>
+    );
+  }
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    await createList(name);
+    setCreateFailed(false);
+    const id = await createList(name);
+    // A create that did not happen used to clear the box and reload an unchanged list,
+    // which reads as an app that forgot rather than a write that failed.
+    if (!id) {
+      setCreateFailed(true);
+      return;
+    }
     setName('');
     await load();
   }
@@ -74,6 +101,12 @@ export function Lists() {
           Create
         </button>
       </form>
+
+      {createFailed && (
+        <p className="mb-3 px-1 text-accent" role="status">
+          {COPY.lists.createFailed}
+        </p>
+      )}
 
       {lists === undefined && <p className="px-1 text-muted">Loading…</p>}
       {/* "No lists yet" was shown for both having none and failing to ask, which is a
