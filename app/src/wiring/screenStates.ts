@@ -71,11 +71,11 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'empty query', verdict: 'suite' },
       { name: 'results, series and film', verdict: 'suite' },
       { name: 'the quick-log note composer', verdict: 'suite' },
-      {
-        name: 'the provider failed',
-        verdict: 'unit',
-        why: 'the fixture provider cannot be made to fail from a browser',
-      },
+      // Was 'unit', excused as "the fixture provider cannot be made to fail from a
+      // browser" — true of the fixtures and beside the point: §6.58 builds with a token
+      // and intercepts the provider instead. Three failures, including a hang.
+      { name: 'the provider failed', verdict: 'suite' },
+      { name: 'the provider never answered, and the deadline fired', verdict: 'suite' },
     ],
   },
   {
@@ -97,6 +97,8 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'rated, and with a poster override', verdict: 'suite' },
       { name: 'where to watch, per region', verdict: 'suite' },
       { name: 'add-to-list offered', verdict: 'suite' },
+      { name: 'the title could not be loaded, with a retry', verdict: 'suite' },
+      { name: 'where to watch could not be checked', verdict: 'suite' },
       { name: 'content warnings, expanded', verdict: 'never', why: NO_ACCOUNT },
     ],
   },
@@ -137,7 +139,7 @@ export const SCREEN_STATES: ScreenStates[] = [
     states: [
       { name: 'suggestions, with reasons', verdict: 'suite' },
       { name: 'nothing to suggest', verdict: 'unit', why: 'the fixture set always suggests' },
-      { name: 'the provider failed', verdict: 'unit', why: 'cannot be made to fail from a browser' },
+      { name: 'the provider failed', verdict: 'suite' },
     ],
   },
   {
@@ -159,7 +161,10 @@ export const SCREEN_STATES: ScreenStates[] = [
     platform: 'web',
     route: '/lists',
     states: [
-      { name: 'no lists yet', verdict: 'suite' },
+      // "No lists yet" was marked `suite` — and stopped being what the suite renders in
+      // §6.56, which put a sign-in gate in front of it. It needs a session now.
+      { name: 'no lists yet', verdict: 'never', why: NO_ACCOUNT },
+      { name: 'signed out, on a build that has sync', verdict: 'suite' },
       { name: 'sync not configured', verdict: 'unit', why: 'this checkout has credentials' },
       { name: 'the read failed, said as a failure', verdict: 'unit' },
       { name: 'a list open, with items', verdict: 'never', why: NO_ACCOUNT },

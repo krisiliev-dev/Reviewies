@@ -2936,6 +2936,69 @@ whether the page was *non-blank*, and a page sitting on "Loading…" with a five
 widget under it is not blank. It passed. Reading the detail it printed is what found the
 bug — which is the third sprint running where the finding came from distrusting a pass.
 
+### 6.59 Reading every written excuse back
+
+§6.58 ended on an uncomfortable note: `getProvidersCached` had sat on the swallowed-failure
+list with a written reason, and the reason was wrong. Not stale — *wrong*, from the day it
+was written, and readable as sound because its four neighbours said something similar.
+
+There are nine explained-exemption maps in this repository now. Every one has a
+stale-entry check, so no entry can outlive the thing it describes. Not one checks whether
+the reason is **true**. That is a judgement, so this sprint made the judgement, entry by
+entry. Roughly fifty of them. Four were wrong.
+
+**`fetchEdge`** — following and followers — returned `[]` on an error, and its entry said
+the distinction was *"worth distinguishing eventually"* and had *"not been wired through"*.
+That is a to-do wearing a reason's clothes. Worse, `people.ts` already spelled out the
+consequence in its own comment: a wrong query *"does not throw, it returns
+`{ data: null, error }` and every caller here reads that as 'you follow nobody'."* Somebody's
+own social graph, reported as empty because a request failed — written down twice, in two
+files, and left.
+
+**`fetchBlocked`** said it *"feeds a filter, never a screen"*, and that failing closed was
+the safe direction. Half true. It feeds the filter **and** the Blocked section of the
+People screen, which quietly disappeared on a failure — telling you that you had unblocked
+everybody. Both now return `{ people, failed }`; the filter still reads the empty list,
+which is what the safety argument was actually about.
+
+**`clearDatabase`** was excused as needed by *"the suites that swap Dexie for SQLite between
+files"*. They do not: they call `setDatabase`. Nothing called it at all — and the same
+false claim sat in the function's own doc comment, two statements agreeing with each other
+and neither checked. Rather than delete the seam, it now drives the error nobody had ever
+seen: the `db` proxy's *"call setDatabase() first"*, which is the message every screen in
+both apps would hit if the core were ever used unbound.
+
+**The injection guard was watching two symbols that do not exist.** `INJECTED` listed
+`getConfig`, `getDatabase` and `getStorage`; only the first is real — the database is
+reached through the `db` proxy and storage through `readPreference`. For its whole life
+that guard covered one accessor while reading as though it covered three. It now watches
+the real three, and a new check insists every name in the list is an actual core export —
+the cheap mechanical half of this sprint, and the one thing here a machine can keep doing.
+
+Three more entries were not wrong but had gone stale from my own recent changes, which the
+stale checks could not see because the *keys* still matched: `/search` and `/discover` both
+recorded "the provider failed" as unreachable from a browser, which §6.58 made false a
+sprint earlier; and `/lists` recorded "no lists yet" as something the suite renders, which
+§6.56 replaced with a sign-in gate.
+
+**What I actually verified, and what I only read.** The distinction matters more than the
+count. Mechanically re-derived: every one of the fourteen `UNREACHED` symbols, by counting
+references across all six workspaces; the `INJECTED` names, by grepping the core's exports;
+the lopsided-call entries, by confirming the phone has no relay and no socket at all
+(`useRemote.ts` says so in as many words); the platform-number entries, by reading the two
+`LANES` values — both four, which is a coincidence and is now written down as one. Read and
+agreed with, but not independently derived: the `skips` prose describing what each live
+suite covers, and the half-dozen `SILENT` entries whose argument is about design intent —
+that a stored position which will not parse is the same as never having watched, that a
+blocked key/value store must not be able to break marking an episode watched. I read the
+code, I agree, and agreeing is weaker than checking. The next person should know which is
+which.
+
+The general lesson is not "write better excuses". It is that **an exemption list is a place
+where a wrong reason is safe**, because it is surrounded by right ones and nothing ever asks
+it a question again. A stale-entry check keeps the list describing the code. Only somebody
+reading it keeps the list *true*.
+
 ---
 
 ## 7. What is still not known

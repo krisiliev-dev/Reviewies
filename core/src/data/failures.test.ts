@@ -73,10 +73,20 @@ const SILENT: Record<string, string> = {
   'social/comments.ts:readFunctionError':
     'Digs the sentence out of an edge function\'s error response. Failing to find one leaves the caller with its generic message, which is the fallback by design.',
 
-  'social/people.ts:fetchBlocked':
-    'Feeds a filter, never a screen. Failing open would show blocked people; failing closed shows nobody, which is the safe direction and is what an empty list does.',
-  'social/people.ts:fetchEdge':
-    'Following and followers. Worth distinguishing eventually; the screens say "Nobody yet" and the distinction has not been wired through. Named here rather than left looking deliberate.',
+  // Two entries stood here until §6.59 read them back.
+  //
+  // `fetchBlocked` said it "feeds a filter, never a screen", and failing closed was the
+  // safe direction. Half true: it feeds the filter *and* the Blocked section of the
+  // People screen, which quietly disappeared on a failure — saying you had unblocked
+  // everybody. It reports now, and the filter still reads the empty list, which is what
+  // the safety argument was actually about.
+  //
+  // `fetchEdge` said the distinction was "worth distinguishing eventually" and had "not
+  // been wired through". That is not a reason, it is a to-do wearing a reason's clothes
+  // — and this file's neighbour in `people.ts` already spelled out the consequence in a
+  // comment: a wrong query "does not throw, it returns `{ data: null, error }` and every
+  // caller here reads that as 'you follow nobody'." Your own social graph, reported as
+  // empty because a request failed. Both now return `{ people, failed }`.
   'social/contentWarnings.ts:fetchMyWarningVotes':
     'Your own positions, used to highlight buttons. Losing them shows no highlight rather than a wrong one.',
 };

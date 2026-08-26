@@ -53,6 +53,8 @@ export default function PeopleScreen() {
     return onAuthChange(setSession);
   }, []);
 
+  const [listsFailed, setListsFailed] = useState(false);
+
   const load = useCallback(async () => {
     const [profile, out, back, hidden] = await Promise.all([
       fetchMyProfile(),
@@ -61,9 +63,12 @@ export default function PeopleScreen() {
       fetchBlocked(),
     ]);
     setMe(profile);
-    setFollowing(out);
-    setFollowers(back);
-    setBlocked(hidden);
+    setFollowing(out.people);
+    setFollowers(back.people);
+    setBlocked(hidden.people);
+    // "Nobody yet" is a claim about somebody's own social graph. It may not be made
+    // because a request failed. §6.59.
+    setListsFailed(!!(out.failed || back.failed || hidden.failed));
   }, []);
 
   useEffect(() => {
@@ -99,6 +104,12 @@ export default function PeopleScreen() {
     <>
       <Stack.Screen options={{ title: 'People' }} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {listsFailed && (
+          <Text style={styles.failed} accessibilityLiveRegion="polite">
+            {COPY.people.listFailed}
+          </Text>
+        )}
+
         <View style={styles.card}>
           <Text style={styles.cardHeading}>You</Text>
           {handle === undefined ? (

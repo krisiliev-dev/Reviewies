@@ -30,6 +30,8 @@ export function People() {
   const [followers, setFollowers] = useState<Person[]>([]);
   const [blocked, setBlocked] = useState<Person[]>([]);
 
+  const [listsFailed, setListsFailed] = useState(false);
+
   const load = useCallback(async () => {
     const [profile, out, back, hidden] = await Promise.all([
       fetchMyProfile(),
@@ -38,9 +40,12 @@ export function People() {
       fetchBlocked(),
     ]);
     setMe(profile);
-    setFollowing(out);
-    setFollowers(back);
-    setBlocked(hidden);
+    setFollowing(out.people);
+    setFollowers(back.people);
+    setBlocked(hidden.people);
+    // "Nobody yet" is a claim about somebody's own social graph. It may not be made
+    // because a request failed. §6.59.
+    setListsFailed(!!(out.failed || back.failed || hidden.failed));
   }, []);
 
   useEffect(() => {
@@ -70,6 +75,12 @@ export function People() {
   return (
     <div className="flex flex-col gap-6 p-4">
       <h1 className="px-1 text-2xl font-semibold">People</h1>
+
+      {listsFailed && (
+        <p className="px-1 text-sm text-accent" role="status">
+          {COPY.people.listFailed}
+        </p>
+      )}
 
       <ProfileEditor me={me} onSaved={load} />
       <FindPeople following={following} blocked={blocked} onChanged={load} />

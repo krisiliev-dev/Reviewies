@@ -188,14 +188,30 @@ export async function searchPeople(query: string): Promise<PeopleResult> {
   if (error) return { people: [], failed: error.message };
   if (!data) return { people: [] };
 
-  const blocked = new Set((await fetchBlocked()).map((p) => p.id));
+  // The filter's half of the two-sided answer above: on a failure this is empty,
+  // which hides nobody rather than showing somebody blocked.
+  const blocked = new Set((await fetchBlocked()).people.map((p) => p.id));
   return { people: data.map(toPerson).filter((p) => !blocked.has(p.id)) };
 }
 
-async function fetchEdge(column: 'follower_id' | 'followee_id'): Promise<Person[]> {
+/**
+ * A list of people, and whether asking for it worked.
+ *
+ * `Person[]` alone cannot say the difference between "you follow nobody" and "I could not
+ * ask", and the screens showed the first for both — which this file's own comment below
+ * pointed out, and which sat unfixed with a written excuse on the swallowed-failure list
+ * until §6.59 read the excuse back.
+ */
+export interface PeopleResult {
+  people: Person[];
+  failed?: string;
+}
+
+async function fetchEdge(column: 'follower_id' | 'followee_id'): Promise<PeopleResult> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return [];
+  // Signed out is not a failure: there is nothing to ask.
+  if (!client || !session) return { people: [] };
 
   // Two foreign keys point at profiles, so the join needs naming explicitly — PostgREST
   // cannot guess which side is wanted. The names are Postgres's own, derived from the
@@ -213,18 +229,19 @@ async function fetchEdge(column: 'follower_id' | 'followee_id'): Promise<Person[
 
   const { data, error } = await client.from('follows').select(embed).eq(column, session.user.id);
 
-  if (error || !data) return [];
+  if (error) return { people: [], failed: error.message };
+  if (!data) return { people: [] };
 
-  return data
-    .map((row) => embeddedPerson(row.profiles))
-    .filter((p): p is Person => Boolean(p));
+  return {
+    people: data.map((row) => embeddedPerson(row.profiles)).filter((p): p is Person => Boolean(p)),
+  };
 }
 
 /** People you follow. */
-export const fetchFollowing = (): Promise<Person[]> => fetchEdge('follower_id');
+export const fetchFollowing = (): Promise<PeopleResult> => fetchEdge('follower_id');
 
 /** People who follow you. Only visible to you; see the note at the top of this file. */
-export const fetchFollowers = (): Promise<Person[]> => fetchEdge('followee_id');
+export const fetchFollowers = (): Promise<PeopleResult> => fetchEdge('followee_id');
 
 export async function follow(
   personId: string,
@@ -323,19 +340,24 @@ export async function unblockPerson(
  * policy for accounts you blocked yourself. Without it this list would be a column of
  * UUIDs with no way to tell who they were, or to undo anything.
  */
-export async function fetchBlocked(): Promise<Person[]> {
+export async function fetchBlocked(): Promise<PeopleResult> {
   const client = getClient();
   const session = await getSession();
-  if (!client || !session) return [];
+  if (!client || !session) return { people: [] };
 
   const { data, error } = await client
     .from('blocks')
     .select('profiles!blocks_blocked_id_fkey (id, handle, display_name)')
     .eq('user_id', session.user.id);
 
-  if (error || !data) return [];
+  // Two readers, and they want opposite things from a failure. The *filter* wants an
+  // empty list — failing open would show people somebody blocked. The *screen* wants to
+  // know, because a Blocked section that quietly disappears says you have unblocked
+  // everybody. Both are served by reporting and letting the caller choose. §6.59.
+  if (error) return { people: [], failed: error.message };
+  if (!data) return { people: [] };
 
-  return data
-    .map((row) => embeddedPerson(row.profiles))
-    .filter((p): p is Person => Boolean(p));
+  return {
+    people: data.map((row) => embeddedPerson(row.profiles)).filter((p): p is Person => Boolean(p)),
+  };
 }

@@ -24,8 +24,27 @@ import { join, relative, resolve } from 'node:path';
  */
 const ROOT = resolve(import.meta.dirname, '../../..');
 
-/** The injection points. Reading any of these at module scope is the bug. */
-const INJECTED = ['getConfig', 'getDatabase', 'getStorage'];
+/**
+ * The injection points. Reading any of these at module scope is the bug.
+ *
+ * Two of the three names here — `getDatabase` and `getStorage` — never existed. The
+ * database is reached through the `db` proxy and storage through `readPreference`, so
+ * for its whole life this guard was watching one real accessor and two ghosts, while
+ * reading as though it covered three. §6.59 found it by grepping the names, and the
+ * check below now insists every one of them is a real core export.
+ */
+const INJECTED = ['getConfig', 'readPreference', 'writePreference'];
+
+/** Every `export function name` / `export const name` in the core. */
+function coreExports(): Set<string> {
+  const found = new Set<string>();
+  for (const file of sources(resolve(ROOT, 'core/src'))) {
+    const source = readFileSync(file, 'utf8');
+    for (const m of source.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)) found.add(m[1]);
+    for (const m of source.matchAll(/export\s+const\s+(\w+)/g)) found.add(m[1]);
+  }
+  return found;
+}
 
 function sources(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -115,6 +134,15 @@ describe('reading injected configuration', () => {
       }
     }
     expect(early).toEqual([]);
+  });
+
+  it('watches accessors that exist', () => {
+    // A guard naming a symbol nothing exports is a guard that covers less than it reads
+    // — which is what this one did for its whole life, with two of its three names
+    // pointing at nothing. §6.59.
+    const exported = coreExports();
+    expect(INJECTED.filter((name) => !exported.has(name))).toEqual([]);
+    expect(exported.size).toBeGreaterThan(50);
   });
 
   it('can tell module scope from a function body', () => {

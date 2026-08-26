@@ -24,7 +24,7 @@ const ROOT = resolve(__dirname, '../../..');
  */
 const UNREACHED: Record<string, string> = {
   'data/db#clearDatabase':
-    'Unbinds the database. Only the suites that swap Dexie for SQLite between files need it.',
+    'Test seam: unbinds the database so the proxy\'s "call setDatabase() first" error can be read. Its previous reason here said the suites that swap Dexie for SQLite need it — they do not, they call setDatabase, and nothing called this at all. §6.59 pointed the seam at the error it is good for rather than deleting it; core/src/data/db.test.ts drives it now, which this scan reads as test code.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',
   'metadata/index#resetProvider':
     'Test seam: the provider is chosen once and kept, and a suite binds its config after some file has already asked. Called from core/src/test/setup.ts, which this scan reads as test code.',

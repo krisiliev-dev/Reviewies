@@ -34,8 +34,8 @@ const PLATFORM_NUMBERS: Record<string, string> = {
   'app/src/remote/useBridge.ts RECONNECT_MS':
     'how long the browser waits before redialling a dropped relay socket — the phone has no long-lived socket of its own to redial',
   'app/src/watching/ReactionStream.tsx LANES':
-    'how many rows of drifting emoji fit above the controls, which is a question about one layout at one size and is answered separately on each',
-  'mobile/src/ui/ReactionStream.tsx LANES': 'as above, for the phone’s layout',
+    'how many rows of drifting emoji fit above the controls, which is a question about one layout at one size and is answered separately on each. Both happen to be four today; that is a coincidence rather than a constraint, and either may change without the other (§6.59 checked this rather than assuming it)',
+  'mobile/src/ui/ReactionStream.tsx LANES': 'as above, for the phone’s layout and its own strip height',
   'app/src/watching/extensionBridge.ts STALE_AFTER_MS':
     'how old a position from the browser extension may be before it is ignored; there is no extension on the phone',
   'mobile/src/ui/StarRating.tsx MIN_HALF':

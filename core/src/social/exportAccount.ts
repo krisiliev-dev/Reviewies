@@ -108,7 +108,7 @@ export async function fetchAccountExport(): Promise<AccountExport | undefined> {
   return {
     handle: (profile.data as { handle?: string } | null)?.handle,
     lists: exported,
-    following: following.map((person) => person.handle).filter(Boolean),
+    following: following.people.map((person) => person.handle).filter(Boolean),
     comments: ((comments.data ?? []) as Array<Record<string, string | null>>).map((row) => ({
       targetId: String(row.target_id),
       body: String(row.body),

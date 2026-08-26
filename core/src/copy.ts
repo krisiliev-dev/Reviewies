@@ -171,6 +171,15 @@ export const COPY = {
      */
     /** A follow or unfollow that did not happen, rather than a button that does nothing. */
     followFailed: 'That did not go through. Try again in a moment.',
+    /**
+     * The lists themselves, when the asking failed.
+     *
+     * They said "Nobody yet" — your own social graph, reported as empty because a
+     * request came back with an error. The code that returned the empty list said so in
+     * a comment, and the swallowed-failure guard carried a written excuse for it, and it
+     * stayed that way until somebody read the excuse back. §6.59.
+     */
+    listFailed: 'Could not load these just now. Nothing has changed — try again.',
     signInToFollow: (where: string) =>
       `Sign in on the ${where} to follow people. Your history stays on this device either way.`,
   },
