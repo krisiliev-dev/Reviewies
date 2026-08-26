@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
 import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } from '@reviewies/core/metadata/index';
+import { SEARCH_TIMEOUT_MS } from '@reviewies/core/metadata/provider';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 
@@ -24,22 +25,13 @@ export function Search() {
     }
 
     const controller = new AbortController();
-    /**
-     * Give up rather than say "Searching…" for ever.
-     *
-     * A request that hangs never rejects, so the error state below could not be reached
-     * by the failure people actually meet — a network that has stopped answering. The
-     * word *Searching…* stayed on screen indefinitely and there was nothing to press.
-     * Doc 10 §6.
-     *
-     * Ten seconds because a search somebody is waiting on has already failed at three,
-     * and because aborting a slow-but-alive request is worse than waiting a moment more.
-     */
+    // Give up rather than say "Searching…" for ever. The deadline itself lives in the
+    // core beside the provider — the phone needs the same one.
     timedOut.current = false;
     const giveUp = setTimeout(() => {
       timedOut.current = true;
       controller.abort('timeout');
-    }, 10_000);
+    }, SEARCH_TIMEOUT_MS);
 
     // Debounced so typing doesn't fire a request per keystroke.
     const timer = setTimeout(async () => {

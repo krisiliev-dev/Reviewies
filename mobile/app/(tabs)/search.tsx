@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -17,7 +17,7 @@ import {
   getTitleCached,
   getProvider,
 } from '@reviewies/core/metadata/index';
-import type { SearchResult } from '@reviewies/core/metadata/provider';
+import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
 import { radius, theme } from '../../src/ui/theme';
 
@@ -26,6 +26,9 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  /** Told apart from an abort caused by typing, which is not a failure. */
+  const timedOut = useRef(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const q = query.trim();
@@ -36,6 +39,17 @@ export default function SearchScreen() {
     }
 
     const controller = new AbortController();
+    // Give up rather than spin for ever: a request that hangs never rejects, so without
+    // this the failure people actually meet — a network that has stopped answering —
+    // leaves the spinner turning with nothing to press. The web has had this deadline
+    // since doc 10 §6; the phone, which is the platform most likely to be on a bad
+    // connection, did not.
+    timedOut.current = false;
+    const giveUp = setTimeout(() => {
+      timedOut.current = true;
+      controller.abort();
+    }, SEARCH_TIMEOUT_MS);
+
     // Debounced so typing does not fire a request per keystroke.
     const timer = setTimeout(async () => {
       setBusy(true);
@@ -43,10 +57,14 @@ export default function SearchScreen() {
       try {
         setResults(await getProvider().search(q, controller.signal));
       } catch (e) {
-        if (!controller.signal.aborted) {
+        if (timedOut.current) {
+          setError('That took too long. Check your connection and try again.');
+          setBusy(false);
+        } else if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Search failed');
         }
       } finally {
+        clearTimeout(giveUp);
         if (!controller.signal.aborted) setBusy(false);
       }
     }, 300);
@@ -54,8 +72,9 @@ export default function SearchScreen() {
     return () => {
       controller.abort();
       clearTimeout(timer);
+      clearTimeout(giveUp);
     };
-  }, [query]);
+  }, [query, attempt]);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -72,7 +91,23 @@ export default function SearchScreen() {
         />
 
         {busy && <ActivityIndicator color={theme.accent} style={styles.loading} />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <View style={styles.failed}>
+            <Text style={styles.error} accessibilityLiveRegion="polite">
+              {error}
+            </Text>
+            {/* Something to press. A message with no action is only a nicer way of
+                being stuck, which is what a spinner that never stops already was. */}
+            <Pressable
+              onPress={() => setAttempt((n) => n + 1)}
+              style={styles.retry}
+              accessibilityRole="button"
+              accessibilityLabel="Try that search again"
+            >
+              <Text style={styles.retryText}>Try again</Text>
+            </Pressable>
+          </View>
+        )}
 
         {results.map((result) => (
           <ResultRow key={result.id} result={result} />
@@ -221,6 +256,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loading: { marginTop: 12 },
+  failed: { gap: 10, alignItems: 'flex-start' },
+  retry: {
+    backgroundColor: theme.surface2,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryText: { color: theme.text, fontSize: 14, fontWeight: '600' },
   error: { color: theme.accent, fontSize: 14 },
 
   row: {

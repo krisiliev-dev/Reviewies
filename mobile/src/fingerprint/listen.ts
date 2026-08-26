@@ -16,7 +16,11 @@ import {
   type ContinuousMatch,
 } from '@reviewies/core/fingerprint/continuous';
 import { ContributionRecorder } from '@reviewies/core/fingerprint/contribute';
-import { contributeReference, fetchReference } from '@reviewies/core/fingerprint/references';
+import {
+  contributeReference,
+  fetchReference,
+  MIN_REFERENCE_MS,
+} from '@reviewies/core/fingerprint/references';
 
 /**
  * The microphone, and the two things worth doing with it.
@@ -300,7 +304,11 @@ export function useListenSync({
   const submit = useCallback(
     async (recorder: ContributionRecorder) => {
       const { hashes, frames } = recorder.finish();
-      if (recorder.frameCount < framesForMs(20_000, HOP_SIZE, SAMPLE_RATE)) {
+      // The floor itself lives in the core, where every caller passes through — the web
+      // recorded a fixed thirty seconds and never checked, so a recording cut short went
+      // up as a reference anyway. Checked here too, only to avoid a pointless upload and
+      // to say so before the network is involved.
+      if (recorder.frameCount < framesForMs(MIN_REFERENCE_MS, HOP_SIZE, SAMPLE_RATE)) {
         setState('idle');
         setNote('That was too short to be useful. Twenty seconds is about the minimum.');
         return;

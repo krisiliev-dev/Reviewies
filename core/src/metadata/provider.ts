@@ -44,6 +44,20 @@ export interface MetadataProvider {
  * attributed to JustWatch. Both must be visible in the UI — this is a licence
  * condition, not a nicety.
  */
+/**
+ * How long a search waits before giving up on the provider.
+ *
+ * A request that hangs never rejects, so without a deadline the only failure people
+ * actually meet — a network that has stopped answering — reaches no error state at all
+ * and the screen says "Searching…" for ever with nothing to press (doc 10 §6).
+ *
+ * Ten seconds because a search somebody is waiting on has already failed at three, and
+ * because aborting a slow-but-alive request is worse than waiting a moment longer. Here
+ * rather than in one screen: the web had it and the phone did not, which is the same
+ * decision made once and then not carried across.
+ */
+export const SEARCH_TIMEOUT_MS = 10_000;
+
 export const TMDB_ATTRIBUTION =
   'This product uses the TMDB API but is not endorsed or certified by TMDB.';
 export const JUSTWATCH_ATTRIBUTION = 'Streaming availability data provided by JustWatch.';

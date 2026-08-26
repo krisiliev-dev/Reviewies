@@ -64,6 +64,8 @@ const LOPSIDED: Record<string, string> = {
     'Listens for the browser extension. There is no browser extension on a phone, and nothing else posts a window message at it — the equivalent there is listening to the room, which is a different mechanism for a different situation.',
   'app only: calendar/upcoming#notificationsSupported':
     'Asks about the Web Notification API. The phone has its own stack in mobile/src/notifications.ts and its own capability check.',
+  'app only: fingerprint/references#CONTRIBUTION_MS':
+    'How long to record a contribution, which only the web decides: it takes one bounded capture of that length, while the phone records for as long as you hold the button and is bounded by MIN_REFERENCE_MS at the other end. Both numbers live together in the core so the pair can be read at once (§6.52).',
   'mobile only: devices/direct#createDirectRokuAdapter':
     'The phone is on the same network as the television and can speak to it. A browser cannot, so the web goes through the local bridge.',
   'mobile only: fingerprint/continuous#ContinuousMatcher':

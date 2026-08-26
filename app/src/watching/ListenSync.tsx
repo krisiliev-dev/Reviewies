@@ -6,7 +6,11 @@ import {
   HOP_SIZE,
   SAMPLE_RATE,
 } from '../fingerprint/capture';
-import { contributeReference, fetchReference } from '@reviewies/core/fingerprint/references';
+import {
+  contributeReference,
+  CONTRIBUTION_MS,
+  fetchReference,
+} from '@reviewies/core/fingerprint/references';
 
 /**
  * Listen-to-sync, and contributing the timeline that makes it possible.
@@ -67,11 +71,14 @@ export function ListenSync({
     setBusy('contributing');
     setNote(undefined);
     try {
-      // Thirty seconds is enough to be useful without asking someone to sit still.
-      // Where the clock is now is where the recording starts in the episode. Without
-      // it the contribution claims the episode begins wherever this person happened to
-      // press the button.
-      const { hashes, frames } = await captureContribution(30_000, { startMs: positionMs });
+      // How long to record is one decision, made in the core: it was a fixed thirty
+      // here and a twenty-second floor on the phone, neither of which knew about the
+      // other. Where the clock is now is where the recording starts in the episode —
+      // without it the contribution claims the episode begins wherever this person
+      // happened to press the button.
+      const { hashes, frames } = await captureContribution(CONTRIBUTION_MS, {
+        startMs: positionMs,
+      });
       const result = await contributeReference({
         targetId,
         hashes,

@@ -2548,6 +2548,64 @@ side, because reworded copy keeps most of its nouns.
 Both platform guards now read one pairing list, `app/src/wiring/pairs.ts`. Two lists of
 which screen is which would be precisely the failure these guards exist to catch.
 
+### 6.52 The numbers, which nobody had compared
+
+Twice running the finding worth having arrived in disguise. §6.51 was a sweep for
+divergent wording and turned up a calendar that looked sixty days ahead on the web and
+thirty on the phone; §6.50 was a sweep for missing controls and turned up a screen that
+could not do its job. Both times the interesting thing was a behaviour difference wearing
+something cosmetic. So: look for the behaviour differences directly.
+
+Two readings, both about one decision made twice. What numbers does each app pass into
+the same core function, and what tuning constants does each app keep of its own.
+
+**The reaction lifetime.** `TRAVEL_MS = 7000` on the web against `LIFETIME_MS = 4000` on
+the phone — how long a stranger's reaction stays readable, in the feature the product is
+built around, differing by three seconds because the two streams were written months
+apart and named their constant differently. Neither number had a comment. The phone's had
+the better provenance: the paragraph above it is about danmaku, and four seconds is
+roughly Niconico's own figure, which is a reason rather than a preference. `REACTION_VISIBLE_MS`
+lives in the core now. The web's traverse is derived from it — the keyframe covers 120vw
+of which 100vw is on screen, so `TRAVEL_MS = REACTION_VISIBLE_MS × 1.2` puts a reaction in
+front of you for the same four seconds on both.
+
+**The contributed reference.** The phone refused any recording under twenty seconds. The
+web recorded a fixed thirty and checked nothing — so a capture cut short by a lost
+microphone went to the server as a reference *everybody else would then be matched
+against*. Two numbers, two places, one of them not enforced at all. `MIN_REFERENCE_MS` and
+`CONTRIBUTION_MS` are in the core beside `contributeReference`, and the floor is enforced
+inside it, where every caller passes through rather than in whichever screen remembered.
+
+Enforcing it there broke a test, which is the part worth reporting: *"Audio never leaves
+this device"* contributed a three-frame recording to prove that only hashes are uploaded,
+and the new floor refused it before it reached the fake client. The test was right and
+still is — it now contributes twenty-one seconds' worth. A guard that makes an old test
+fail for the right reason is the cheapest evidence that it does something.
+
+**The phone's search had no deadline.** The web got a ten-second give-up in doc 10 §6,
+because a hanging request never rejects and *"Searching…"* otherwise stays on screen for
+ever with nothing to press. The phone — the platform far more likely to be on a bad
+connection — kept spinning indefinitely. It has the same deadline now, from the same
+`SEARCH_TIMEOUT_MS` in the core, and the same **Try again**.
+
+`app/src/wiring/numbers.test.ts` keeps both readings. Every module-scope `const NAME = <number>`
+in either app must now be imported from the core or named in `PLATFORM_NUMBERS` with a line
+saying why it is one platform's own — six are, and each says so: a wire protocol version,
+a socket's reconnect delay, how many lanes of emoji fit above the controls, how stale an
+extension's position may be, the smallest half-star target on a native control. And where
+both apps call the same core function, the numbers they pass must match, `getUpcoming(60)`
+against `getUpcoming()` being exactly the shape that got past everything else.
+
+Both halves were proved by planting rather than by reading — the standing method since
+§6.51's guard nearly shipped with a hole. Restoring `getUpcoming(60)` fails the argument
+check; putting `LIFETIME_MS` back into the phone's stream fails the constant check.
+
+What the guard cannot see is the same decision under two different names, which is how
+the reaction lifetime hid in the first place: `TRAVEL_MS` and `LIFETIME_MS` are unrelated
+identifiers holding one product decision. Only reading finds those. The exemption list is
+where that reading gets written down, so the next person reads six explained lines instead
+of the whole tree.
+
 ---
 
 ## 7. What is still not known

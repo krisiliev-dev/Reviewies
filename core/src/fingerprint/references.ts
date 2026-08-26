@@ -84,6 +84,41 @@ export async function fetchReference(
  * instead of stacking — one enthusiastic contributor must not be able to outvote
  * everyone else.
  */
+/**
+ * How long a contributed reference has to be, and how long the apps record for.
+ *
+ * Twenty seconds is the floor: shorter than that and there is not enough of the episode
+ * to place anybody else in it, so the contribution costs a stranger a failed sync rather
+ * than helping. Thirty is what the apps record, which leaves room for the first second
+ * or two being someone still settling.
+ *
+ * Both numbers were made up twice. The phone refused anything under twenty seconds and
+ * the web never checked at all — it recorded a fixed thirty and uploaded whatever came
+ * back, so a recording cut short by a lost microphone went to the server as a reference
+ * everybody else would then be matched against. The floor is enforced here now, where
+ * every caller passes through, rather than in whichever screen remembered it.
+ */
+export const MIN_REFERENCE_MS = 20_000;
+export const CONTRIBUTION_MS = 30_000;
+
+/**
+ * Is this recording too short to be worth anybody's time?
+ *
+ * Frames, not wall-clock: what reaches the server is a spectrogram, and a recording
+ * interrupted half way through has the frames it managed rather than the ones it was
+ * asked for. Pulled out of `contributeReference` so it can be tested without a signed-in
+ * client — the check it guards was previously only reachable against a live backend,
+ * which is to say never (§7).
+ */
+export function tooShortToContribute(
+  frameCount: number,
+  hopSize: number,
+  sampleRate: number,
+): boolean {
+  if (frameCount <= 0) return true;
+  return (frameCount * hopSize * 1000) / sampleRate < MIN_REFERENCE_MS;
+}
+
 export async function contributeReference(opts: {
   targetId: string;
   hashes: Uint32Array;
@@ -96,6 +131,13 @@ export async function contributeReference(opts: {
   const session = await getSession();
   if (!client || !session) return { ok: false, reason: 'Sign in to contribute.' };
   if (opts.frameCount <= 0) return { ok: false, reason: 'Nothing was recorded.' };
+
+  if (tooShortToContribute(opts.frameCount, opts.hopSize, opts.sampleRate)) {
+    return {
+      ok: false,
+      reason: 'That was too short to be useful. Twenty seconds is about the minimum.',
+    };
+  }
 
   const { error } = await client.from('fingerprint_contributions').upsert(
     {

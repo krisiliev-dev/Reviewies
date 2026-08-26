@@ -15,6 +15,19 @@ import type { Reaction } from '../domain/types.ts';
  * and gating them would leave every first-time viewer with an empty screen.
  */
 
+/**
+ * How long one reaction stays readable, on either platform.
+ *
+ * Four seconds, which is danmaku's own figure — Niconico has used roughly this since
+ * 2006, and the number is doing real work: long enough to read a stranger's emoji while
+ * your eyes are on the show, short enough that a busy moment does not become a wall.
+ *
+ * It was four seconds on the phone and seven on the web, which nobody had decided; the
+ * web's stream reads it as a traverse (see `TRAVEL_MS` there) and the phone's as a window
+ * behind the playback position, but both now show a reaction for the same length of time.
+ */
+export const REACTION_VISIBLE_MS = 4000;
+
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 

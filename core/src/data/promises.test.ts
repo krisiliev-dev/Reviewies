@@ -5,7 +5,8 @@ import { expireMetadata } from '../metadata/index.ts';
 import { METADATA_TTL_MS } from '../domain/types.ts';
 import { TABLES } from './adapters/schema.ts';
 import * as auth from '../sync/auth.ts';
-import { contributeReference } from '../fingerprint/references.ts';
+import { contributeReference, MIN_REFERENCE_MS } from '../fingerprint/references.ts';
+import { framesForMs } from '../fingerprint/continuous.ts';
 
 /**
  * The sentences the app says out loud, checked against what it does.
@@ -175,7 +176,10 @@ describe('"Audio never leaves this device"', () => {
     await contributeReference({
       targetId: 'tmdb:ep:1',
       hashes: Uint32Array.from([1, 2, 3]),
-      frameCount: 3,
+      // Long enough to clear MIN_REFERENCE_MS: a three-frame recording is now refused
+      // before it reaches the network, which is the point of the floor but would make
+      // this promise untestable.
+      frameCount: framesForMs(MIN_REFERENCE_MS + 1000, 512, 16_000),
       hopSize: 512,
       sampleRate: 16_000,
     });

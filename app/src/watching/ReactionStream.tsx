@@ -2,9 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from '../ui/useReducedMotion';
 import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
+import { REACTION_VISIBLE_MS } from '@reviewies/core/watching/reactions';
 
 const LANES = 4;
-const TRAVEL_MS = 7000;
+/**
+ * The traverse, derived from how long a reaction should be readable.
+ *
+ * The keyframe below covers 120vw — in from 100vw, out to -20vw — of which 100vw is on
+ * screen, so a reaction is visible for five sixths of the traverse. Seven seconds here
+ * meant nearly six seconds on screen against the phone's four, which was two platforms
+ * answering the same question differently rather than a decision anybody made.
+ */
+const TRAVEL_MS = Math.round(REACTION_VISIBLE_MS * 1.2);
 
 interface Flying {
   key: string;

@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from './useReducedMotion';
 import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
+import { REACTION_VISIBLE_MS } from '@reviewies/core/watching/reactions';
 
 /**
  * Other people's reactions, arriving as you reach their moment.
@@ -17,7 +18,7 @@ import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce'
  * tonight is still busy. A live-only version is empty on day one, which is precisely
  * the number people rank trackers by (doc 8 §2).
  */
-const LIFETIME_MS = 4000;
+
 const LANES = 4;
 
 export function ReactionStream({
@@ -64,7 +65,7 @@ export function ReactionStream({
   const at = paused ? held.current : positionMs;
 
   const visible = reactions
-    .filter((r) => r.tMs <= at && at - r.tMs < LIFETIME_MS)
+    .filter((r) => r.tMs <= at && at - r.tMs < REACTION_VISIBLE_MS)
     .slice(0, density);
 
   // Collected as their moment passes, from the same set that is shown — density thins
@@ -137,7 +138,7 @@ function Floater({
   still: boolean;
   slot: number;
 }) {
-  const progress = useRef(new Animated.Value(Math.min(1, age / LIFETIME_MS))).current;
+  const progress = useRef(new Animated.Value(Math.min(1, age / REACTION_VISIBLE_MS))).current;
 
   useEffect(() => {
     if (still) {
@@ -149,7 +150,7 @@ function Floater({
     }
     Animated.timing(progress, {
       toValue: 1,
-      duration: Math.max(0, LIFETIME_MS - age),
+      duration: Math.max(0, REACTION_VISIBLE_MS - age),
       easing: Easing.linear,
       // The native driver keeps this off the JS thread, which matters here: the pad
       // is being tapped at the same time and a stutter would be felt immediately.
