@@ -17,6 +17,7 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 import { COPY } from '@reviewies/core/copy';
+import { formatDay } from '@reviewies/core/time';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -33,12 +34,15 @@ export function Calendar() {
   );
 
   const [pushNote, setPushNote] = useState<string>();
+  const [syncNote, setSyncNote] = useState<string>();
 
   async function choose(next: NotifyPreference) {
     setPref(next);
     setPreference(next);
-    // Mirror the choice server-side so it can filter before spending a send.
-    void syncPreference(next);
+    // Mirror the choice server-side so it can filter before spending a send, and say so
+    // when that fails: `void` here meant a setting that looked saved and was not. §6.66.
+    const mirrored = await syncPreference(next);
+    setSyncNote(mirrored.ok ? undefined : mirrored.reason);
 
     if (next === 'off') {
       await disablePush();
@@ -89,6 +93,11 @@ export function Calendar() {
           </p>
         )}
         {pushNote && <p className="mt-2 text-xs text-accent">{pushNote}</p>}
+        {syncNote && (
+          <p className="mt-2 text-xs text-accent" role="status">
+            {syncNote}
+          </p>
+        )}
         {preference !== 'off' && !vapidPublicKey() && (
           <p className="mt-2 text-xs text-muted">
             Push delivery is not configured on this build, so alerts will not arrive.
@@ -172,13 +181,3 @@ function Row({ entry }: { entry: UpcomingEntry }) {
   );
 }
 
-function formatDay(day: string): string {
-  const date = new Date(`${day}T00:00:00`);
-  const today = new Date();
-  const diffDays = Math.round((date.getTime() - today.setHours(0, 0, 0, 0)) / 86_400_000);
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays < 7) return date.toLocaleDateString(undefined, { weekday: 'long' });
-  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}

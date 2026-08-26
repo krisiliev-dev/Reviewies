@@ -65,7 +65,10 @@ describe('summary shape', () => {
   });
 
   it('finds the busiest day', () => {
-    const base = Date.parse('2026-06-15T20:00:00Z');
+    // Local 8pm, not 20:00Z. The UTC spelling made this a claim about the runner's
+    // timezone rather than about the code: at UTC+14 it is already the 16th, and the
+    // test failed while `summarise` was right. §6.66.
+    const base = new Date(2026, 5, 15, 20).getTime();
     const s = summarise(
       [ev({ watchedAt: base }), ev({ watchedAt: base + 1000 }), ev({ watchedAt: base + 3 * DAY })],
       names,

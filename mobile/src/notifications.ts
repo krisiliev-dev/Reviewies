@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { getClient, getSession } from '@reviewies/core/sync/auth';
+import { syncPreference as syncPreferenceToServer } from '@reviewies/core/calendar/preference';
 import { setPreference, type NotifyPreference } from '@reviewies/core/calendar/upcoming';
 
 /**
@@ -137,16 +138,14 @@ export async function unregisterFromPush(): Promise<void> {
   }
 }
 
-/** Mirror the local granularity setting to the server, which filters before sending. */
-export async function syncPreference(preference: NotifyPreference): Promise<void> {
+/**
+ * Mirror the local granularity setting to the server, which filters before sending.
+ *
+ * The server half is the core's, shared with the web — it was the same six lines here
+ * and there. The phone additionally writes the choice to its own store first, which the
+ * web does at its call site. §6.66.
+ */
+export async function syncPreference(preference: NotifyPreference) {
   setPreference(preference);
-
-  const client = getClient();
-  const session = await getSession();
-  if (!client || !session) return;
-
-  await client.from('notification_preferences').upsert(
-    { user_id: session.user.id, preference, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id' },
-  );
+  return syncPreferenceToServer(preference);
 }

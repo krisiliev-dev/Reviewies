@@ -40,6 +40,7 @@ directory.
 | `0010_promotion_by_content.sql` | Drops length-only promotion; adds `record_fingerprint_reference` |
 | `0011_reaction_sampling.sql` | `reactions_sample`, so a busy episode returns a spread rather than its first minutes |
 | `0012_expo_push_tokens.sql` | `push_tokens`, so a phone can be notified at all — Web Push cannot reach one |
+| `0013_notification_timezone.sql` | `notification_preferences.time_zone`, so "airs today" means the person's today rather than UTC's |
 
 ## Push notifications
 
@@ -75,10 +76,14 @@ openly callable.
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- Queue the day's notifications each morning.
+-- Queue the day's notifications each morning — each person's own morning.
+-- Hourly, not daily: the function only queues for somebody whose local clock has
+-- reached the hour given, so a single daily run at a fixed UTC hour would be 8am for
+-- one timezone and the middle of the night for the rest. Re-runs are harmless — the
+-- queue's unique (user_id, target_id) sees to that.
 select cron.schedule(
-  'queue-notifications', '0 8 * * *',
-  $$ select queue_todays_notifications() $$
+  'queue-notifications', '0 * * * *',
+  $$ select queue_todays_notifications(8) $$
 );
 
 -- Drain the queue every fifteen minutes.

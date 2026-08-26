@@ -6,12 +6,14 @@ import {
   catchUpTo,
   getStats,
   getUpNext,
+  hasAired,
   markWatched,
   unwatchLatest,
   watchCount,
   watchedEpisodeIds,
 } from './repo.ts';
 import { makeId } from '../domain/types.ts';
+import { dayKey } from '../time.ts';
 
 const SERIES = makeId('tmdb', 'tv', 1);
 const ep = (n: number) => makeId('tmdb', 'ep', `1-1-${n}`);
@@ -38,7 +40,7 @@ async function seedSeries(episodeCount: number, opts: { futureFrom?: number } = 
       season: 1,
       number: i,
       name: `Episode ${i}`,
-      airDate: new Date(Date.now() + offset).toISOString().slice(0, 10),
+      airDate: dayKey(Date.now() + offset),
       runtimeMin: 50,
       fetchedAt: Date.now(),
     });
@@ -145,6 +147,47 @@ describe('Up Next', () => {
     expect(entry.remaining).toBe(2);
   });
 
+  /**
+   * The boundary Up Next is decided on, which nothing tested.
+   *
+   * Every air date above is *weeks* from now, so reading one as UTC midnight and
+   * comparing it to an instant never changed an answer. The evening before an episode
+   * airs is where it changed one — and that is the evening people open this app. §6.66.
+   */
+  describe('an episode airing tomorrow', () => {
+    async function seedOne(airDate: string) {
+      await db.titles.put({ id: SERIES, kind: 'show', name: 'The Long Dark', fetchedAt: Date.now() });
+      await db.episodes.put({
+        id: ep(1),
+        seriesId: SERIES,
+        season: 1,
+        number: 1,
+        name: 'Pilot',
+        airDate,
+        runtimeMin: 50,
+        fetchedAt: Date.now(),
+      });
+      await addToLibrary(SERIES, 'show');
+    }
+
+    it('is not offered at any hour of today', async () => {
+      await seedOne('2026-08-27');
+      const tomorrows = { ...(await db.episodes.get(ep(1)))! };
+      for (const hour of [0, 9, 17, 20, 23]) {
+        const now = new Date(2026, 7, 26, hour).getTime();
+        expect(hasAired(tomorrows, now)).toBe(false);
+      }
+      // And the screen agrees with the predicate: nothing to watch tonight.
+      expect(await getUpNext(new Date(2026, 7, 26, 20).getTime())).toHaveLength(0);
+    });
+
+    it('is offered from the first minute of the day it airs', async () => {
+      await seedOne('2026-08-27');
+      const [entry] = await getUpNext(new Date(2026, 7, 27, 0, 1).getTime());
+      expect(entry?.episode.name).toBe('Pilot');
+    });
+  });
+
   it('ignores shows that are not currently being watched', async () => {
     await seedSeries(3);
     await db.library.update(SERIES, { status: 'paused' });
@@ -215,7 +258,7 @@ describe('spoiler-free catch-up', () => {
           season,
           number: n,
           name: `S${season}E${n}`,
-          airDate: new Date(Date.now() - (20 - season * 6 - n) * DAY).toISOString().slice(0, 10),
+          airDate: dayKey(Date.now() - (20 - season * 6 - n) * DAY),
           runtimeMin: 50,
           fetchedAt: Date.now(),
         });
@@ -355,7 +398,7 @@ describe('a finished show leaves "watching" on its own', () => {
     // complete, or would complete too early.
     await seedEnded(6);
     await db.episodes.update(ep(6), {
-      airDate: new Date(Date.now() + 30 * DAY).toISOString().slice(0, 10),
+      airDate: dayKey(Date.now() + 30 * DAY),
     });
     await catchUpTo(SERIES, 1, 5);
     expect(await status()).toBe('completed');

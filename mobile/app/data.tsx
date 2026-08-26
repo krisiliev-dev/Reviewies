@@ -14,6 +14,7 @@ import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
+import { todayKey } from '@reviewies/core/time';
 
 /**
  * Getting your history in, and getting it back out.
@@ -33,7 +34,10 @@ export default function DataScreen() {
   const [cleared, setCleared] = useState<number>();
   const [exportNote, setExportNote] = useState<string>();
 
-  const today = new Date().toISOString().slice(0, 10);
+  // The person's date, not UTC's. Exporting at 9pm in Los Angeles used to write a file
+  // stamped tomorrow, which is a small lie in the one place people go looking for the
+  // file they made "yesterday". §6.66.
+  const today = todayKey();
 
   return (
     <>

@@ -3312,6 +3312,146 @@ the configuration, not about Vercel's behaviour, and it is recorded as such in �
 browser half is real: the message and the Reload button were produced by a genuinely stale
 tab in Chromium.
 
+### 6.66 Move the clock
+
+Everything in this repository has only ever run in one timezone. The container's clock is
+UTC, and UTC is the one place on earth where the two readings of a date agree.
+
+Two kinds of thing get called a date here. A **watch** happens at an instant — a number of
+milliseconds, the same everywhere. An **air date** is a calendar date: `2026-08-26`, a
+square on somebody's wall, with no hour attached to it at all. Converting the second into
+the first is where every timezone bug lives, because JavaScript does it silently:
+`Date.parse('2026-08-26')` is **UTC midnight**, and `new Date(ms).toISOString().slice(0, 10)`
+is **UTC's day**.
+
+**The first experiment found nothing, and that was the finding.** Running the whole core
+suite at `America/Los_Angeles`: 689 passed, nothing failed. At `Pacific/Kiritimati`
+(UTC+14): two failures, and neither was a product bug — one test had hardcoded
+`2026-06-15` as the day of `2026-06-15T20:00:00Z`, which is a claim about the runner
+rather than about the code, and one was a scale test timing out under parallel load.
+
+The reason is worth stating plainly, because it is the shape of the whole sprint: **every
+air-date fixture in the suite is days away from `now`.** `dateAt(3)`, `dateAt(-5)`,
+`dateAt(90)`. An error of at most fourteen hours never crosses a boundary that is three
+days wide. The tests were not wrong; they were pointed somewhere the bug is not.
+
+So the bug was demonstrated directly instead — what `hasAired` says about an episode
+airing *today*, at each hour, in three zones:
+
+| local time | Los Angeles | UTC | Kiritimati |
+|---|---|---|---|
+| 00:00 | aired | aired | **not aired** |
+| 09:00 | aired | aired | **not aired** |
+| 17:00 | aired | aired | aired |
+
+and about an episode airing *tomorrow*, seen from the west:
+
+| local time on the 26th | airing on the 27th |
+|---|---|
+| 16:00 | not aired |
+| **17:00** | **"aired"** |
+| 23:00 | "aired" |
+
+`hasAired` is the predicate Up Next is built on. So: **in Los Angeles this app offered you
+an episode that had not been broadcast, from teatime onwards — on exactly the evening
+people open it.** In Kiritimati it hid the episode that aired this morning until 2pm.
+Fourteen hours late in one direction, seven early in the other, and nothing in the product
+could tell.
+
+The same reading was in five more places:
+
+- **The calendar** dropped today's episodes as soon as UTC's midnight passed, and its
+  window started at `now` rather than at the start of today, so today's episode vanished
+  from Upcoming at lunchtime regardless of timezone.
+- **The phone's calendar** printed the raw `2026-08-26` as a day heading while the web
+  said *Today* / *Tomorrow* / *Friday*. The §6.51 shape again: the same screen, two
+  answers, because `formatDay` lived in one platform's file.
+- **Export filenames** — `reviewies-2026-08-27.json` for a file made at 9pm on the 26th
+  in California. Small, and in the one place somebody goes looking for the file they made
+  "yesterday".
+- **The notification scheduler**, which is the one part of this product that reaches out
+  to a person unprompted, matched `air_date = current_date` — UTC's date, for everybody.
+- And it ran **once a day at 08:00 UTC**, which is 8am in exactly one timezone and 10pm
+  in Kiritimati.
+
+#### One converter
+
+`core/src/time.ts` is now the only place a calendar date and an instant meet: `dayKey`,
+`todayKey`, `startOfDay`, `dayHasArrived`, `daysUntil`, `formatDay`. Everything reads the
+date in the viewer's own calendar, which is the only reading a person can check by looking
+at their wall. `hasAired`, `getUpcoming`, the stats day key, both calendars and both export
+filenames go through it.
+
+`longestStreak` is the deliberate exception and now says so: it parses `yyyy-mm-dd` keys as
+UTC midnights precisely *because* that is the wrong reading everywhere else — two UTC
+midnights are exactly a day apart even across a daylight-saving change, where two local
+midnights are 23 or 25 hours apart. It reads the keys back rather than the instants they
+came from, and a comment explains why the rule is inverted there.
+
+Server-side, migration `0013` adds `notification_preferences.time_zone` — an IANA name, not
+an offset, because an offset is wrong for half the year anywhere that observes daylight
+saving — and `queue_todays_notifications` compares against the person's own date. It also
+takes an hour: run hourly rather than daily, and each person is queued when *their* morning
+reaches 8am, the queue's unique key making the other twenty-three runs harmless. Somebody
+who has never touched the setting falls back to UTC, which is exactly what they had before.
+
+Mirroring that setting was six identical lines in `app/src/calendar/push.ts` and
+`mobile/src/notifications.ts` — which is how the timezone would have reached one platform
+and not the other. It is one core function now, and while moving it the §6.57 guard caught
+that it returned `void` and swallowed its error. It reports one, and both screens show it:
+a mirror that failed means somebody who just turned notifications **off** keeps getting
+them, which is the direction of this people notice and resent.
+
+#### Proving it
+
+Nothing here is trusted because it passes. Every fix was planted against.
+
+- Restoring the UTC reading in `hasAired`: **34 passed at UTC**, one failure in Los Angeles
+  (*"is not offered at any hour of today"*), a different one in Kiritimati (*"is offered
+  from the first minute of the day it airs"*). The same one-line bug, invisible at UTC,
+  caught from opposite sides by two different tests.
+- Restoring the old `getUpcoming`: fails even at UTC, because `from = now` was wrong
+  everywhere; Los Angeles fails a second test on top.
+- Reverting the scheduler to `current_date`: both new Postgres tests fail, one with nothing
+  queued and one with two people queued instead of one. Those two use Kiritimati (UTC+14)
+  and Honolulu (UTC-10) — exactly a day apart, so their calendar dates differ by one at
+  *every* instant, which is what makes them deterministic rather than dependent on when the
+  suite runs.
+- Removing the local-hour gate: the *"does not queue before breakfast"* test fails.
+
+The boundary tests that catch all of this are new, and they are the point: today and
+tomorrow, at midnight, at 9am, at 5pm, at 23:59. Not `dateAt(3)`.
+
+#### The guard, and the third run
+
+`app/src/wiring/calendarDates.test.ts` bans the four spellings that convert without saying
+whose calendar they mean — `toISOString().slice(0, 10)`, `.split('T')[0]`,
+`Date.parse(airDate)`, and `` `${day}T00:00:00` `` — across core, web, phone and extension.
+Each was planted into a real file and each was caught with the right message.
+
+Its exemption map is **empty**, and that is a result rather than an oversight. `time.ts` was
+written expecting to need an entry — it is the file allowed to convert — and does not:
+building a date from its parts and reading one back through `getFullYear`/`getMonth`/
+`getDate` never needs the UTC spellings at all. So the ban is total, including inside the
+converter.
+
+A guard is not enough on its own, because a UTC runner cannot see a UTC bug. `npm run
+verify` now runs the core suite a third time at UTC+14 (`test:tz`). That is what makes the
+planted proofs above reproducible by anyone, and what stops the next date-handling file
+from being written the old way and passing.
+
+Four other guards caught this sprint's own changes without being asked, which is the
+argument for having them: the backend-query checker found `time_zone` missing from its
+schema (its `alter table … add column` regex required a single space and the migration
+wrapped over two lines — fixed, since a guard that stops seeing a column because somebody
+reformatted the SQL reports a clean sweep while covering less); the docs checker demanded
+`test:tz` be documented; the wiring checker noticed the web re-exporting `syncPreference`
+rather than calling it, which reads as the web not using it; and the failure checker found
+the `void`.
+
+§7 records what a container still cannot reach: a device whose timezone is its own, a phone
+carried across one, and a `time_zone` column that has never been written by a real client.
+
 ---
 
 ## 7. What is still not known
@@ -3404,6 +3544,19 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **No clock here belongs to a person.** §6.66 fixed how dates are read and proved it by
+  planting the old reading and watching it fail in Los Angeles and Kiritimati but not at
+  UTC — which is real, and is a claim about a container running with `TZ` set. What has
+  never happened: a phone whose timezone is its own operating system's, a device carried
+  across a timezone mid-session (the app reads `Intl.DateTimeFormat().resolvedOptions()`
+  once per settings change, so a traveller's server-side timezone is wherever they last
+  touched the notification setting, not where they are), and a `time_zone` column written
+  by a real client — that needs a session, which this checkout has never had. Migration
+  `0013` runs against real Postgres in `schema.test.ts`, so what it *does* is verified;
+  that it has been applied to the deployed project is not, and cannot be without the
+  Supabase token. The daylight-saving arithmetic is checked against every transition of a
+  year in `America/New_York` by asking the runtime where the offsets change, rather than
+  against a hand-picked weekend — but no test has run *during* one.
 - **The asset rewrite has never been tested against Vercel.** §6.65 found, in a real
   browser, that a tab open across a deployment asks for chunks that are gone and gets the
   app shell back as `200 text/html`. The half of the fix a person sees — the update

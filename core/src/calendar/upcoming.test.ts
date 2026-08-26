@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../data/db.ts';
+import { dayKey } from '../time.ts';
 import { classify, getUpcoming, groupByDay, shouldNotify } from './upcoming.ts';
 import type { CachedEpisode } from '../domain/types.ts';
 
@@ -78,9 +79,12 @@ describe('notification preference', () => {
 });
 
 describe('upcoming feed', () => {
-  const now = Date.parse('2026-08-24T12:00:00Z');
-  const dateAt = (offsetDays: number) =>
-    new Date(now + offsetDays * DAY).toISOString().slice(0, 10);
+  // Local noon, and the day keys derived from it locally. The UTC spelling made every
+  // fixture here a claim about the runner's timezone rather than about the code, and it
+  // is what kept the boundary tests below from ever being written: whole days away from
+  // now, an error of a few hours never shows. §6.66.
+  const now = new Date(2026, 7, 24, 12).getTime();
+  const dateAt = (offsetDays: number) => dayKey(now + offsetDays * DAY);
 
   beforeEach(async () => {
     await Promise.all([db.library.clear(), db.episodes.clear(), db.titles.clear()]);
@@ -106,6 +110,37 @@ describe('upcoming feed', () => {
   it('excludes episodes that already aired', async () => {
     await db.episodes.bulkPut([ep(1, 1, { airDate: dateAt(-5) })]);
     expect(await getUpcoming(30, now)).toHaveLength(0);
+  });
+
+  /**
+   * The boundary, which is where the whole bug lived and which nothing tested.
+   *
+   * Every fixture above is *days* from now, so reading an air date as UTC midnight and
+   * comparing it to a real instant — an error of at most the viewer's offset — never
+   * changed an answer. Today and tomorrow are the two days it changes.
+   */
+  describe('at the edges of today', () => {
+    const at = (h: number, m = 0) => new Date(2026, 7, 24, h, m).getTime();
+
+    it("keeps today's episode all day, including the last minute of it", async () => {
+      await db.episodes.bulkPut([ep(1, 1, { airDate: '2026-08-24' })]);
+      for (const moment of [at(0), at(9), at(18), at(23, 59)]) {
+        expect(await getUpcoming(30, moment)).toHaveLength(1);
+      }
+    });
+
+    it("does not let tomorrow's episode arrive this evening", async () => {
+      await db.episodes.bulkPut([ep(1, 1, { airDate: '2026-08-25' })]);
+      // Present, but dated tomorrow rather than counted as gone.
+      const evening = await getUpcoming(30, at(23, 59));
+      expect(evening).toHaveLength(1);
+      expect(evening[0].day).toBe('2026-08-25');
+    });
+
+    it("drops yesterday's episode from the first minute of today", async () => {
+      await db.episodes.bulkPut([ep(1, 1, { airDate: '2026-08-23' })]);
+      expect(await getUpcoming(30, at(0, 0))).toHaveLength(0);
+    });
   });
 
   it('excludes episodes beyond the window', async () => {

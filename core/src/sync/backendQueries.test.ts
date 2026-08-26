@@ -86,8 +86,12 @@ function readSchema(): Map<string, Column[]> {
 
   // `alter table ... add column` is rare here but it exists, and a column added in a
   // later migration is exactly the sort of thing a create-table-only parser misses.
+  //
+  // `\s+` rather than a literal space: 0013 wraps the statement over two lines, and a
+  // guard that stops seeing a column because somebody reformatted the SQL is a guard
+  // that reports a clean sweep while covering less. §6.66.
   for (const match of sql.matchAll(
-    /alter table ([a-z_]+) add column(?: if not exists)? ([a-z_]+)/g,
+    /alter table\s+([a-z_]+)\s+add column(?:\s+if not exists)?\s+([a-z_]+)/g,
   )) {
     tables.get(match[1])?.push({ name: match[2] });
   }

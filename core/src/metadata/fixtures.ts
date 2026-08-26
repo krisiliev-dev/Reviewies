@@ -1,6 +1,7 @@
 import { makeId } from '../domain/types.ts';
 import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types.ts';
 import type { MetadataProvider, SearchResult } from './provider.ts';
+import { dayKey } from '../time.ts';
 
 /**
  * Offline provider used when no TMDB token is configured.
@@ -115,7 +116,10 @@ export class FixtureProvider implements MetadataProvider {
           season: si + 1,
           number: e,
           name: `Episode ${e}`,
-          airDate: new Date(airedAt).toISOString().slice(0, 10),
+          // The viewer's calendar, so a fixture episode dated "today" really is today
+          // wherever the run happens. The UTC spelling put the boundary in a different
+          // place from the code reading it back. §6.66.
+          airDate: dayKey(airedAt),
           runtimeMin: season.runtime,
           fetchedAt: Date.now(),
         });

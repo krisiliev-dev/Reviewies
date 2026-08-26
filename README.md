@@ -167,6 +167,7 @@ npx playwright install chromium       # once, unless your environment ships one
 npm test                              # every workspace that has tests
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
 npm run test:sqlite --workspace core  # the same core tests, against SQLite
+npm run test:tz --workspace core      # the same core tests again, at UTC+14
 
 npm run smoke                         # all four end-to-end suites, in order
 
@@ -192,6 +193,13 @@ ways: refused, answered with a 500, and left hanging with no answer at all. The 
 the one worth the trouble. A hang never rejects, so no `catch` in the app can see it, and
 only the deadline in `SEARCH_TIMEOUT_MS` ends it. No network is needed: interception
 happens before the request leaves the browser.
+
+`test:tz` runs the core suite a third time at `Pacific/Kiritimati`, UTC+14. It is in
+`npm run verify` because a UTC runner cannot see a UTC bug: a calendar date read as UTC
+midnight is right in Greenwich and wrong for most of the world, and the planted proof in
+doc 9 §6.66 passes every test at UTC and fails four of them anywhere else. Kiritimati
+rather than a nearer offset because it is the far edge — a date read wrongly is wrong by
+the whole fourteen hours there, so nothing squeaks through on a rounding.
 
 Two suites are deliberately not part of `npm test`:
 

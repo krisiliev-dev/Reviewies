@@ -1,6 +1,7 @@
 import { db } from '../data/db.ts';
 import { readPreference, writePreference } from '../data/storage.ts';
 import type { CachedEpisode } from '../domain/types.ts';
+import { dayKey, startOfDay } from '../time.ts';
 
 /**
  * Upcoming episodes, and how loudly to announce them.
@@ -75,7 +76,13 @@ export const UPCOMING_DAYS = 60;
  * deliberately stopped is exactly the noise people complain about.
  */
 export async function getUpcoming(days = UPCOMING_DAYS, now = Date.now()): Promise<UpcomingEntry[]> {
-  const until = now + days * 86_400_000;
+  // Both ends of the window in the viewer's own calendar, and compared against air dates
+  // read the same way. Before §6.66 an air date was parsed as UTC midnight and compared
+  // against a real instant, so the boundary moved by the viewer's offset: west of
+  // Greenwich tomorrow's episode appeared this evening, and east of it today's episode
+  // was already "past" before breakfast.
+  const from = startOfDay(dayKey(now));
+  const until = from + days * 86_400_000;
   const tracked = await db.library.where('status').equals('watching').toArray();
   const titles = new Map((await db.titles.toArray()).map((t) => [t.id, t]));
 
@@ -87,8 +94,8 @@ export async function getUpcoming(days = UPCOMING_DAYS, now = Date.now()): Promi
 
     for (const episode of all) {
       if (!episode.airDate) continue;
-      const airs = Date.parse(episode.airDate);
-      if (!Number.isFinite(airs) || airs < now || airs > until) continue;
+      const airs = startOfDay(episode.airDate);
+      if (!Number.isFinite(airs) || airs < from || airs > until) continue;
 
       const title = titles.get(item.titleId);
       entries.push({
@@ -102,9 +109,9 @@ export async function getUpcoming(days = UPCOMING_DAYS, now = Date.now()): Promi
     }
   }
 
-  return entries.sort(
-    (a, b) => Date.parse(a.episode.airDate!) - Date.parse(b.episode.airDate!),
-  );
+  // By day string: same order, and no second reading of the date to disagree with the
+  // first one.
+  return entries.sort((a, b) => a.day.localeCompare(b.day));
 }
 
 export function groupByDay(entries: UpcomingEntry[]): Array<[string, UpcomingEntry[]]> {

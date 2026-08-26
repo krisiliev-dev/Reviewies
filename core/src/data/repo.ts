@@ -7,6 +7,7 @@ import type {
   MediaKind,
   WatchEvent,
 } from '../domain/types.ts';
+import { dayHasArrived } from '../time.ts';
 
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -269,10 +270,18 @@ export async function getUpNext(now = Date.now()): Promise<UpNextEntry[]> {
   return entries.sort((a, b) => a.remaining - b.remaining);
 }
 
+/**
+ * Whether an episode has aired where the viewer is.
+ *
+ * `Date.parse` on a bare `yyyy-mm-dd` reads it as UTC midnight, which made this the most
+ * consequential timezone bug in the product: it decides what Up Next offers. West of
+ * Greenwich it offered tomorrow's episode from teatime today; east of it, it hid today's
+ * episode all morning. `dayHasArrived` reads the date in the viewer's own calendar
+ * instead. §6.66.
+ */
 export function hasAired(episode: CachedEpisode, now = Date.now()): boolean {
   if (!episode.airDate) return false;
-  const t = Date.parse(episode.airDate);
-  return Number.isFinite(t) && t <= now;
+  return dayHasArrived(episode.airDate, now);
 }
 
 // ---------------------------------------------------------------------------

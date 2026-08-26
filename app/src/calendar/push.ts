@@ -1,6 +1,7 @@
 import { getClient, getSession } from '@reviewies/core/sync/auth';
-import { getConfig } from '@reviewies/core/config';
+import { syncPreference as syncPreferenceToServer } from '@reviewies/core/calendar/preference';
 import type { NotifyPreference } from '@reviewies/core/calendar/upcoming';
+import { getConfig } from '@reviewies/core/config';
 
 /**
  * Web Push subscription management.
@@ -131,14 +132,15 @@ export async function disablePush(): Promise<void> {
   }
 }
 
-/** Mirror the local granularity setting to the server, which filters before sending. */
-export async function syncPreference(preference: NotifyPreference): Promise<void> {
-  const client = getClient();
-  const session = await getSession();
-  if (!client || !session) return;
-
-  await client.from('notification_preferences').upsert(
-    { user_id: session.user.id, preference, updated_at: new Date().toISOString() },
-    { onConflict: 'user_id' },
-  );
+/**
+ * Mirror the local granularity setting to the server, which filters before sending.
+ *
+ * The body is the core's, shared with the phone — this file and
+ * `mobile/src/notifications.ts` held the same six lines, which is how the timezone the
+ * scheduler needs would have reached one platform and not the other. Called rather than
+ * re-exported so that both apps are visibly reaching for the same core function; a
+ * re-export reads as the web not using it at all. §6.66.
+ */
+export async function syncPreference(preference: NotifyPreference) {
+  return syncPreferenceToServer(preference);
 }

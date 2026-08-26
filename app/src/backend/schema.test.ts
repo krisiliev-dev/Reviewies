@@ -371,7 +371,7 @@ describe('notification scheduler', () => {
 
   it('queues a premiere for someone tracking the show', async () => {
     await seedUpcoming('premiere');
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
 
     const rows = await queued();
     expect(rows).toHaveLength(1);
@@ -381,21 +381,21 @@ describe('notification scheduler', () => {
 
   it('does not queue a regular episode on the milestones default', async () => {
     await seedUpcoming('regular');
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(0);
   });
 
   it('queues a regular episode when the user asked for everything', async () => {
     await seedUpcoming('regular');
     await asAdmin("insert into notification_preferences (user_id, preference) values ($1, 'all')", [ALICE]);
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(1);
   });
 
   it('queues nothing when notifications are off', async () => {
     await seedUpcoming('premiere');
     await asAdmin("insert into notification_preferences (user_id, preference) values ($1, 'off')", [ALICE]);
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(0);
   });
 
@@ -405,30 +405,106 @@ describe('notification scheduler', () => {
       'insert into watches (id, user_id, target_id, watched_at) values (gen_random_uuid(), $1, $2, now())',
       [ALICE, EP],
     );
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(0);
   });
 
   it('ignores shows the user paused', async () => {
     await seedUpcoming('premiere');
     await asAdmin("update library set status = 'paused' where user_id = $1", [ALICE]);
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(0);
   });
 
   it('is safe to run twice', async () => {
     await seedUpcoming('premiere');
-    await asAdmin('select queue_todays_notifications()');
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
+    await asAdmin('select queue_todays_notifications(0)');
     // The unique constraint means a re-run cannot double-send.
     expect(await queued()).toHaveLength(1);
   });
 
   it('does not queue for users who are not tracking the show', async () => {
     await seedUpcoming('premiere');
-    await asAdmin('select queue_todays_notifications()');
+    await asAdmin('select queue_todays_notifications(0)');
     const rows = await queued();
     expect(rows.every((r) => r.user_id === ALICE)).toBe(true);
+  });
+
+  /**
+   * "Airs today" has to mean the person's today.
+   *
+   * It used to mean UTC's, for everybody: fourteen hours late in Kiritimati, and ten
+   * hours early in Honolulu - where somebody would be told an episode airs today on the
+   * evening of the day before. See doc 9 SS6.66.
+   *
+   * Kiritimati is UTC+14 and Honolulu UTC-10, exactly a day apart, so at *any* instant
+   * their calendar dates differ by exactly one. That is what makes these deterministic
+   * rather than passing depending on when the suite happens to run.
+   */
+  describe('whose today it is', () => {
+    const EAST = 'Pacific/Kiritimati'; // UTC+14
+    const WEST = 'Pacific/Honolulu'; // UTC-10
+
+    async function seedFor(zone: string) {
+      await asAdmin(
+        `insert into upcoming_episodes (target_id, series_id, series_name, season, number, air_date, kind)
+         values ($1, $2, 'The Long Dark', 2, 1, (now() at time zone $3)::date, 'premiere')`,
+        [EP, SERIES, zone],
+      );
+    }
+
+    async function tracks(user: string, zone: string) {
+      await asAdmin(
+        "insert into library (user_id, title_id, kind, status, added_at) values ($1, $2, 'show', 'watching', now())",
+        [user, SERIES],
+      );
+      await asAdmin(
+        'insert into notification_preferences (user_id, preference, time_zone) values ($1, $2, $3)',
+        [user, 'milestones', zone],
+      );
+    }
+
+    it('tells the person whose day it is, and not the one whose day it is not', async () => {
+      await seedFor(EAST);
+      await tracks(ALICE, EAST);
+      await tracks(BOB, WEST);
+
+      await asAdmin('select queue_todays_notifications(0)');
+      const rows = await queued();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].user_id).toBe(ALICE);
+    });
+
+    it('and the other way round, so this is the timezone and not the ordering', async () => {
+      await seedFor(WEST);
+      await tracks(ALICE, EAST);
+      await tracks(BOB, WEST);
+
+      await asAdmin('select queue_todays_notifications(0)');
+      const rows = await queued();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].user_id).toBe(BOB);
+    });
+
+    it('does not queue before breakfast where the person is', async () => {
+      // 25 is unreachable, so this asserts the gate exists and is applied rather than
+      // asserting a particular hour — which would make the test depend on when the
+      // suite runs, the exact sin this sprint was about. The schedule passes 8; every
+      // other test here passes 0 to take the gate out of the question.
+      await seedFor(EAST);
+      await tracks(ALICE, EAST);
+      await asAdmin('select queue_todays_notifications(25)');
+      expect(await queued()).toHaveLength(0);
+    });
+
+    it('falls back to UTC for somebody who has never touched the setting', async () => {
+      // Which is exactly what everybody had before the column existed, so an upgrade
+      // does not silently stop notifying people who never open Settings.
+      await seedUpcoming('premiere');
+      await asAdmin('select queue_todays_notifications(0)');
+      expect(await queued()).toHaveLength(1);
+    });
   });
 });
 

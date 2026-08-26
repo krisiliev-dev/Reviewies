@@ -15,6 +15,7 @@ import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { COPY } from '@reviewies/core/copy';
+import { todayKey } from '@reviewies/core/time';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -86,7 +87,7 @@ export function Settings() {
             // complete and is missing their lists.
             setExportNote(bundle.accountUnavailable);
             downloadFile(
-              `reviewies-${new Date().toISOString().slice(0, 10)}.json`,
+              `reviewies-${todayKey()}.json`,
               JSON.stringify(bundle, null, 2),
               'application/json',
             );
@@ -104,7 +105,7 @@ export function Settings() {
         <button
           onClick={async () =>
             downloadFile(
-              `reviewies-watches-${new Date().toISOString().slice(0, 10)}.csv`,
+              `reviewies-watches-${todayKey()}.csv`,
               await exportWatchesCsv(),
               'text/csv',
             )

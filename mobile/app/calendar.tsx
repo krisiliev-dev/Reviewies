@@ -21,6 +21,7 @@ import {
   whyNotSupported,
 } from '../src/notifications';
 import { COPY } from '@reviewies/core/copy';
+import { formatDay } from '@reviewies/core/time';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -35,6 +36,7 @@ export default function CalendarScreen() {
   const [entries, setEntries] = useState<UpcomingEntry[]>();
   const [preference, setPref] = useState<NotifyPreference>(getPreference);
   const [delivery, setDelivery] = useState<string>();
+  const [syncNote, setSyncNote] = useState<string>();
   const [registered, setRegistered] = useState(false);
   const router = useRouter();
 
@@ -65,11 +67,14 @@ export default function CalendarScreen() {
           {NOTIFY_OPTIONS.map((option) => (
             <Pressable
               key={option.key}
-              onPress={() => {
+              onPress={async () => {
                 setPref(option.key);
                 // Mirrored to the server, which filters before sending — a stale setting
-                // there would cost a delivery, or send one nobody asked for.
-                void syncPreference(option.key);
+                // there would cost a delivery, or send one nobody asked for. Bound rather
+                // than fired and forgotten: a mirror that failed used to be silent on
+                // both platforms. §6.66.
+                const mirrored = await syncPreference(option.key);
+                setSyncNote(mirrored.ok ? undefined : mirrored.reason);
                 if (option.key === 'off') void unregisterFromPush();
               }}
               style={[styles.option, preference === option.key && styles.optionOn]}
@@ -90,6 +95,12 @@ export default function CalendarScreen() {
             </Pressable>
           ))}
         </View>
+
+        {syncNote && (
+          <Text style={styles.deliveryNote} accessibilityLiveRegion="polite">
+            {syncNote}
+          </Text>
+        )}
 
         {/* Choosing a granularity used to be the whole of it: the phone offered the
             same three options as the web and had nothing that could ever act on them,
@@ -150,7 +161,10 @@ export default function CalendarScreen() {
 
         {days.map(([day, list]) => (
           <View key={day} style={styles.day}>
-            <Text style={styles.dayHeading}>{day}</Text>
+            {/* "Today" / "Tomorrow" / "Friday", the same words the web uses — this
+                printed the raw `2026-08-26` and left you to work out which day that
+                was. §6.66. */}
+            <Text style={styles.dayHeading}>{formatDay(day)}</Text>
             {list.map((entry) => (
               <Pressable
                 key={entry.episode.id}

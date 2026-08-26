@@ -135,6 +135,23 @@ export const COPY = {
       'Nothing airing in the next two months. Track a show that is still running and it will show up here.',
     /** The way out of that empty state, on both platforms since §6.50. */
     findSomething: 'Find something to watch',
+    /**
+     * The two days a person does not want spelled as a date.
+     *
+     * The web said "Today"; the phone printed `2026-08-26` and left you to work it out.
+     * Both go through `formatDay` in `core/src/time.ts` now. §6.66.
+     */
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    /**
+     * The setting saved here but not there.
+     *
+     * The server filters before spending a send, so a mirror that failed means somebody
+     * who just turned notifications off keeps getting them. Both screens say this now;
+     * before §6.66 both fired the call with `void` and neither could have said anything.
+     */
+    notifySyncFailed:
+      'Saved on this device. We could not tell the server, so notifications may not match this until you are back online.',
   },
 
   watching: {
