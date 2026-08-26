@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "vitest run",
     "build": "node build.mjs",
     "typecheck": "tsc --noEmit",
     "smoke": "npm run build && node smoke.mjs"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.28",
+    "@types/node": "^24.13.3",
     "esbuild": "^0.28.0",
-    "playwright": "^1.62.1"
+    "jsdom": "^30.0.1",
+    "playwright": "^1.62.1",
+    "vitest": "^4.1.10"
   }
 }

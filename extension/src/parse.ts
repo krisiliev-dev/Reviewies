@@ -99,6 +99,36 @@ export function parseTitle(raw: string | null | undefined): { show?: string } & 
  */
 export function isConfident(d: { show?: string } & EpisodeRef): boolean {
   if (!d.show || d.show.length < 2) return false;
+  if (isServiceName(d.show)) return false;
   // A film needs only a title; an episode needs a number.
   return d.episode == null || Number.isFinite(d.episode);
+}
+
+/**
+ * The services' own names, which are not programmes.
+ *
+ * A browse page's `document.title` is often just the service — Netflix's is literally
+ * "Netflix", YouTube's home page is "YouTube" — and with no site selector matching, the
+ * page-title fallback reads that as a film. The duration gate stops most of it, but a
+ * billboard preview that loops past two minutes would be scrobbled at ninety percent as
+ * a film called *Netflix*, straight into somebody's history.
+ *
+ * `parseTitle` already strips a trailing " - Netflix" from an episode's title; this is
+ * the case where the service name is the *whole* of it. §6.68.
+ */
+const SERVICE_NAMES = new Set([
+  'netflix',
+  'prime video',
+  'amazon prime video',
+  'disney+',
+  'disneyplus',
+  'max',
+  'hbo max',
+  'hulu',
+  'crunchyroll',
+  'youtube',
+]);
+
+function isServiceName(show: string): boolean {
+  return SERVICE_NAMES.has(show.trim().toLowerCase());
 }

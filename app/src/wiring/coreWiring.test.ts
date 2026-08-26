@@ -46,6 +46,8 @@ const UNREACHED: Record<string, string> = {
   'metadata/animeMapping#isAnime':
     'Answers the question the season correction asks implicitly. Nothing asks it directly.',
   'metadata/animeMapping#clearMappingCache': 'Test seam for the mapping cache.',
+  'metadata/index#setProvider':
+    'Test seam, in the house style of setDatabase / setStorage / setFileSaver. Added by \u00a76.68 because the cache layer above it \u2014 getProvidersCached, which \u00a76.58 rewrote so a failure could be told apart from an empty answer \u2014 had never been executed: there was no way to make a provider *fail*, since the fixture catalogue always succeeds and the real one needs a token and a network.',
   'sync/clock#resetClock':
     'Test seam: the learned server offset is module state and a case must not inherit the previous one\u2019s. Nothing in the product forgets it — the offset describes the device, not the account, so signing out is not a reason to unlearn it.',
 };

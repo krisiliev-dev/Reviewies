@@ -201,6 +201,25 @@ doc 9 §6.66 passes every test at UTC and fails four of them anywhere else. Kiri
 rather than a nearer offset because it is the far edge — a date read wrongly is wrong by
 the whole fourteen hours there, so nothing squeaks through on a rounding.
 
+### What has never run
+
+```bash
+npm run coverage
+```
+
+Runs every workspace's tests in one process and prints the only part of a coverage report
+worth reading: files nothing entered at all, and functions nothing ever called. There is
+no threshold and no percentage in `verify` — the standard here is a named guard that fails
+for a stated reason, and a number drifts, can be gamed by testing the easy half, and says
+nothing about *which* line matters.
+
+It has to be the whole monorepo at once. Measured per workspace the report is wrong in
+both directions and silent about it: `core/src/devices/relayUrl.ts` comes back entirely
+dead because the suite that executes it lives in `relay/`, and
+`core/src/data/adapters/sqlite.ts` comes back three-quarters dead because the SQLite
+config is a separate run. Doc 9 §6.68 has the details, including what it still cannot see
+— the five browser suites drive a *built bundle*, so nothing they exercise appears here.
+
 Two suites are deliberately not part of `npm test`:
 
 ```bash

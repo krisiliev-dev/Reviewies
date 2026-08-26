@@ -49,6 +49,22 @@ export function resetProvider(): void {
 }
 
 /**
+ * Use this provider instead of choosing one.
+ *
+ * A test seam, in the house style of `setDatabase` / `setStorage` / `setFileSaver`, and
+ * added because §6.68 found that the cache layer above it — `getProvidersCached`, the
+ * function §6.58 rewrote so a failure could be told apart from an empty answer — had
+ * never been executed by any test. There was no way to make the provider *fail*: the
+ * fixture catalogue always succeeds and the real one needs a token and a network.
+ *
+ * Nothing in the product calls this. That is the point, and it is recorded as such in
+ * the wiring guard's exemption list rather than left to be rediscovered.
+ */
+export function setProvider(provider: MetadataProvider): void {
+  resolved = provider;
+}
+
+/**
  * Read-through cache. Serves from IndexedDB, refetches when past the TTL, and falls
  * back to stale data if the network is unavailable — offline should degrade to
  * slightly-old metadata, never to an error.

@@ -3598,6 +3598,119 @@ but dates and what is airing will look wrong until it is fixed."* The bar is del
 high; a few minutes is invisible and a warning about it would be noise. An unknown offset
 says nothing at all, which is most people, because most people have never signed in.
 
+### 6.68 What has never run
+
+§6.67's second bug was not a logic error. `SupabaseBackend.fromEnv()` is the only backend
+the shipped app ever builds, it was catastrophically wrong for the life of the product,
+and **nothing had ever called it** — both sync test files construct the backend with a
+client they signed in themselves. The tested path and the shipped path were different
+paths.
+
+No guard here can see that class. `coreWiring` asks whether an export is *reached from
+somewhere*, and `fromEnv` was reached — by `driver.ts`. Nothing asks whether a line has
+ever **run**. So, for the first time in this repository: measure it.
+
+#### Distrusting the measurement first
+
+Per workspace, a coverage report is wrong in both directions and silent about it.
+
+`core/src/devices/relayUrl.ts` came back **entirely dead** — every statement, zero
+executions. It is executed on every run, by `relay/src/pairing.test.ts`, which lives in a
+different workspace. `--coverage.include='../core/src/**'` is ignored: the reporter only
+ever emits files under the project root. And `core/src/data/adapters/sqlite.ts` came back
+65/127 with every table accessor dead, because the run being measured was the Dexie
+config and SQLite is a separate one.
+
+A report that names live code as dead is the dangerous direction — it sends somebody to
+delete it. Which is why the file list was checked against what the suites obviously do,
+before a single conclusion was drawn from the numbers.
+
+`vitest.coverage.config.ts` runs all seven projects in one process from the repo root. The
+arithmetic is the check that nothing is missing: 768 + 765 + 300 + 7 + 24 + 24 + 32 =
+**1920**, which is what the merged run reports. Under the merged report `sqlite.ts` is
+110/127 and `relayUrl.ts` is not on the list at all.
+
+Two smaller traps on the way there. `extends` does not carry a project's `root`, so a
+workspace's `setupFiles: ['./src/test/setup.ts']` gets looked for at the repo root and
+309 of 312 files fail at once — loud, at least. And `testTimeout` set in the root config
+loses to each project's own, so three tests with five-second budgets timed out under
+instrumentation and were reported as failures. Instrumentation roughly doubles a suite's
+runtime; a timeout it causes is not a finding and must not be printed as one.
+
+#### The workspace nothing tested
+
+Adding up which project produced which number is how the first finding appeared.
+`npm run verify` had been printing `7` where the extension should be, and seven is the
+*phone's* count. The extension had **no `test` script and no unit tests at all** — and
+`npm run test --workspaces --if-present` skips a workspace with no test script **in
+silence**. Five hundred lines, reported green by a run that never looked at them.
+
+The same silence, one step later, is `--passWithNoTests`: `mobile` carried it while
+holding exactly one test file, so deleting that file would have gone unnoticed.
+
+`app/src/wiring/everyWorkspaceRuns.test.ts` holds the rule now — every workspace has a
+test script, contains tests for it to run, and does not pass itself when they disappear —
+with an exemption map that is **empty** and a stale-entry check so it cannot fill up with
+excuses for workspaces that no longer exist. All three conditions were planted and caught.
+
+The extension has 32 unit tests now, and writing them found a bug (below). Its browser
+smoke suite (§6.42) is unchanged and still the only thing that runs the real thing.
+
+#### A film called *Netflix*
+
+`detect()` falls back to the page title when a site's selectors find nothing — which is
+the property that makes a rotted selector cost precision rather than function, and is
+right. But a browse page's `document.title` is often just the service: Netflix's is
+literally `Netflix`, YouTube's home page is `YouTube`. `isConfident` accepted it, because
+a film legitimately has a title and no episode number.
+
+So a billboard preview looping past the two-minute gate would be scrobbled at ninety
+percent as a film called *Netflix*, straight into somebody's history — exactly the
+"silent corruption of history the user has to find and undo" that `isConfident`'s own
+comment says it exists to prevent. `parseTitle` already strips a trailing " – Netflix"
+from an episode's title; nobody had considered the case where the service name is the
+whole of it.
+
+#### Five things in the middle of the product
+
+Filtering the merged report to *pure, local, session-free* functions — no account, no
+network, no browser, nothing that §7 already excuses — left a short list, and it was not
+where anyone would have guessed:
+
+- **`addToWatchlist`, `setWatchlistNote`, `removeFromWatchlist`.** Three of the plainest
+  functions in the product, under a headline feature, with zero executions. What they
+  have to do is not plain at all: each must reach the *outbox* as well as the table, and
+  a delete that skips it is the `clearRating` bug — it looks like it worked and the next
+  pull puts it straight back.
+- **`getPreference` / `setPreference`** for notifications — including the **default**
+  somebody gets without choosing, which §6.55 spent a sprint arguing is a decision like
+  any other.
+- **`getRegion` / `setRegion`.** Where-to-watch is entirely a statement about one
+  country; every pure function *around* these was tested and the two the screen calls
+  were not.
+- **`deviceTimeZone`**, written last sprint and never run.
+- **`getProvidersCached`.** §6.58 rewrote this function's whole shape so a failure could
+  be told apart from an empty answer — the named bug class of this repository — and the
+  fix had never been executed. It could not be: there was no way to make a provider
+  *fail*, since the fixture catalogue always succeeds and the real one needs a token and
+  a network. A `setProvider` seam, in the house style of `setDatabase`/`setStorage`, and
+  the distinction now has eight tests instead of a comment.
+
+Forty-one new tests across the five, and none of them found a second bug. That is worth
+saying plainly rather than dressing up: the code was right, and it was right *unverified*,
+which is a different thing from being right.
+
+#### What this deliberately is not
+
+There is no threshold and no percentage in `verify`. A number drifts, can be raised by
+testing the easy half, and says nothing about which line matters — the standard here is a
+named guard that fails for a stated reason. `npm run coverage` prints the two lists worth
+reading (files nothing entered, functions nothing called) and is documented in the README
+as something to run and think about, not something to satisfy.
+
+§7 records what it still cannot see: the five browser suites drive a *built bundle*, so
+every screen in both apps shows as untouched and none of that is evidence of anything.
+
 ---
 
 ## 7. What is still not known
@@ -3690,6 +3803,19 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
+- **Coverage cannot see the five browser suites.** §6.68 measures every workspace's unit
+  tests in one process, and that is the whole of what it measures. The web, phone,
+  extension, bridge and failure suites all drive a *built bundle* in a real browser, so
+  every screen in both apps shows as entirely untouched and none of that is evidence of
+  anything — the screens are the most heavily exercised code in the product. What the
+  report is good for is the opposite case: code no suite of either kind enters, which is
+  what §6.67's `fromEnv` was. Treat a "never entered" line on a screen as noise and one
+  on a pure function as a question.
+- **The report is a snapshot, not a guard.** Nothing fails when a function stops being
+  executed; `npm run coverage` has to be run and read. The guard that *did* come out of
+  this covers the coarser failure — a workspace nothing tests at all — and there is no
+  mechanical check that, say, `getProvidersCached` still has a test tomorrow beyond the
+  test itself existing.
 - **No two real devices have ever synced with each other.** §6.67's clock fixes are
   proved by planting each one and watching the right test fail, and the server half runs
   against real Postgres with the real migrations — so what the trigger *does* is verified.

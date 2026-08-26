@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^30.0.1",
     "playwright": "^1.62.1",
     "serve": "^14.2.4",
@@ -41,7 +42,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "export:web": "expo export --platform web",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "smoke": "expo export --platform web && (npx serve dist -p 4200 --no-clipboard & sleep 6) && node smoke.mjs",
     "typecheck": "tsc --noEmit"
   },

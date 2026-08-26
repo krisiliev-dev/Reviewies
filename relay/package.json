@@ -12,10 +12,11 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@reviewies/core": "*",
     "@types/node": "^24.13.3",
     "@types/ws": "^8.5.13",
+    "@vitest/coverage-v8": "^4.1.11",
     "typescript": "~6.0.2",
-    "vitest": "^4.1.10",
-    "@reviewies/core": "*"
+    "vitest": "^4.1.10"
   }
 }
