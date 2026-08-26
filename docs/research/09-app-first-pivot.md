@@ -4123,6 +4123,116 @@ sprint did not get to.
 
 ---
 
+### 6.73 What each guard actually proves, against what its name says
+
+§6.72 asked whether the guards could be *fooled*. This one asks something narrower and
+more embarrassing: whether each guard's title is true. Sixteen suites in
+`app/src/wiring/` are named as claims — *every workspace runs*, *the copy file is used*,
+*every screen has a driven state*. A title is what the next person reads instead of the
+assertions. If the assertion is weaker than the title, nobody finds out by reading.
+
+Every claim was re-read against its own body, and where the two disagreed the gap was
+proved by building the thing the title forbids and watching the suite stay green.
+
+#### A workspace with tests, a test script, and a runner that collects none of them
+
+`everyWorkspaceRuns` was §6.68's answer to a workspace nothing tested. It checks that
+each workspace is listed, has a `test` script, and has test files on disk. All three were
+true of `mobile`. Its `include` was:
+
+```js
+include: ['src/**/*.test.ts']
+```
+
+expo-router puts screens in `app/`, and screens are `.tsx`. So the pattern excluded two
+entire categories at once — everything under `app/`, which is nearly all of this
+workspace's code, and every `.tsx` test anywhere.
+
+Proved by dropping a deliberately failing test into each place:
+
+```
+$ npm run test --workspace mobile
+ Test Files  3 passed (3)
+      Tests  7 passed (7)
+```
+
+Two failing files sitting on disk, and both the runner and the guard reported the
+workspace covered. That is §6.68's silence one layer down: §6.68 asked *is there a
+runner*, and the honest question is *what does the runner collect*.
+
+The fix is one line in `mobile/vitest.config.mts` — `include: ['{src,app}/**/*.test.{ts,tsx}']` —
+and a fourth check that stops guessing from filenames and asks:
+
+```js
+npx vitest list --filesOnly   // run in each workspace, compared against what is on disk
+```
+
+Planted both ways: narrow the `include` again and the guard names the excluded files;
+delete a test file and the disk side shrinks with it.
+
+#### The string literal, from §6.72's last paragraph
+
+§6.72 closed by recording the one probe it had not run: a violation inside a **string
+literal**, which reads as code to a regular expression and as data to a compiler. It was
+run against all twenty guards. Five fired — `dials`, `calendarDates`, `oneClient`,
+`runnable`, `backendQueries` — and three that might have been expected to did not.
+
+They stay that way, and the reasoning is now in `core/src/test/source.ts` beside the
+stripper rather than in a sprint note:
+
+- Stripping strings would **blind the guards that read them**. `screenStates` asks
+  whether a suite names a screen; `commands` reads fenced shell lines; `copy` compares
+  sentences. All three work by reading string content. That is a real loss traded for a
+  hypothetical one.
+- All five are **false positives**, on input nobody writes: a file containing the literal
+  text of a banned construct without performing it. A false positive fails loudly at the
+  moment of the edit and is understood in a minute. A false negative is silent for a
+  year — which is the entire subject of §6.72.
+
+§7 records this as deliberately unfixed rather than done, because that is what it is.
+
+#### The one title that was doing less than it said
+
+Most claims survived the audit. `numbers`, `shape`, `openState`, `failureShown` and
+`commands` all assert the thing on the label; several assert more.
+
+`copy`'s did not. Its last check reads:
+
+> `it('is used, rather than being a file of strings nobody reads', …)`
+
+and its body was `expect(importers.length).toBeGreaterThan(8)`. That proves the *file* is
+imported by nine screens. It says nothing about any particular sentence, which is what
+"strings nobody reads" sounds like it covers.
+
+Proved by adding a group to `COPY` and referencing it from nothing. All **75** wiring
+tests passed. The words sat in the file looking maintained.
+
+This grows more likely as the file grows — `COPY.sync.*` arrived in §6.71 and
+`COPY.app.*` in §6.65. If a screen stopped rendering one, the sentence would remain, and
+the next person to edit it would be editing something nobody sees. Two checks now walk
+every leaf of `COPY` and grep the stripped sources of `core/src`, `app/src`, `mobile/app`
+and `mobile/src` for `COPY.<group>.<name>` — with the §6.41 exemption map and its
+staleness check, currently empty. Three plants fire: an orphan group, an orphan leaf, and
+a stale entry in the exemption list.
+
+The haystack includes `core/src` on purpose. Two sentences are read there and nowhere
+else: `time.ts` formats a day with `COPY.calendar.today`, and `sync/clock.ts` builds its
+warning from `COPY.app.clockWrong`. A guard scoped to the two app trees would have called
+both of them orphans on its first run.
+
+#### What this sprint is really about
+
+Three sprints in a row have found the same shape and it is worth naming: **a check that
+is easier to satisfy than its name suggests is worse than no check**, because the name is
+what gets trusted. §6.68 shipped a guard called *every workspace runs* that could not see
+a runner collecting nothing. §6.72 shipped guards that read prose as code. This one
+shipped a claim about sentences that only knew about a file.
+
+The method that finds them is the same every time and it is not reading: build the thing
+the title forbids, run the suite, and require it to go red.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4213,14 +4323,23 @@ and which single claim in this document could not be checked at all:
   provider, that means no browser suite here can exercise a credentialed build, and the
   quality of real search results, real import matching and real where-to-watch has never
   been seen inside the app. Doc 10's evening was driven entirely on the fixture catalogue.
-- **No guard has been fooled with a string literal.** §6.72 asked every source-reading
-  guard the two questions it had never been asked — does prose trip it, and does a
-  commented-out violation trip it — and fixed the five that answered wrongly. The third
-  way a text scan can be fooled is a violation inside a string: `const banned = "new
-  WebSocket("` reads as code to a regex and as data to a compiler. The shared stripper
-  removes comments and deliberately not strings, because these suites *use* strings as
-  selectors and stripping them would blind the checks that read them. Whether that trade
-  costs anything has not been measured.
+- **Five guards can be fooled by a string literal, on purpose.** §6.72 asked every
+  source-reading guard whether prose trips it and whether a commented-out violation trips
+  it, and fixed the five that answered wrongly. §6.73 ran the third probe: a violation
+  inside a string, which reads as code to a regex and as data to a compiler. `dials`,
+  `calendarDates`, `oneClient`, `runnable` and `backendQueries` fire on it. They are being
+  left that way — the reasoning is in `core/src/test/source.ts` — because stripping
+  strings would blind the guards that read them (`screenStates`, `commands`, `copy` all
+  work by reading string content), and because all five are false positives, which fail
+  loudly, on input nobody writes. That is a judgement, not a measurement: nobody has hit
+  one of these in the course of ordinary work, so the cost of the trade is estimated
+  rather than observed.
+- **`vitest list` proves collection, not execution.** §6.73's new check asks each
+  workspace's runner which files it would collect and compares that against what is on
+  disk. That closes the gap it found — a workspace whose `include` silently excluded most
+  of its own tests — but a file can be collected and still contribute nothing: every test
+  inside it skipped, or the whole file wrapped in a `describe.skip`. Nothing asks that
+  question yet, and the answer would have to come from a reporter rather than a list.
 - **Eleven web screens were checked for the first time today.** `screenStates` had never
   examined a single-segment web route, so its claim that the suite renders them rested on
   nothing until §6.72. They pass now — but "passes a mention check" was always a weak

@@ -14,6 +14,20 @@ export default defineConfig({
   envDir: '..',
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    /**
+     * Everywhere the phone's code lives, not just half of it.
+     *
+     * This was `src/**\/*.test.ts`, which silently excluded two whole categories: every
+     * test under `app/` — where nearly all of this workspace's code is, because
+     * expo-router puts screens there — and every `.tsx` test anywhere. §6.73 proved it
+     * by dropping a deliberately failing test into each: `npm run test --workspace
+     * mobile` reported **7 passed** with both sitting there, and `everyWorkspaceRuns`
+     * agreed the workspace was covered.
+     *
+     * That is §6.68's silence one layer down. A workspace with a test script and test
+     * files can still run none of them, and nothing was asking the runner what it had
+     * actually collected.
+     */
+    include: ['{src,app}/**/*.test.{ts,tsx}'],
   },
 });

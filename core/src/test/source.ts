@@ -22,6 +22,29 @@
  */
 
 /**
+ * ## Why strings are not stripped
+ *
+ * A third way a text scan can be fooled: `const banned = 'new WebSocket('` reads as code
+ * to a regular expression and as data to a compiler. §6.73 measured it rather than
+ * guessing — the violation was placed inside a string literal for every guard, and five
+ * fired: `dials`, `calendarDates`, `oneClient`, `runnable`, `backendQueries`.
+ *
+ * They stay that way, deliberately, for two reasons.
+ *
+ * The first is that stripping strings would blind the checks that *read* them. These
+ * suites use strings as selectors and route names; `screenStates` asks whether a suite
+ * names a screen, `commands` reads fenced shell lines, `copy` compares sentences. Take
+ * the strings out and those stop working — a real loss traded for a hypothetical one.
+ *
+ * The second is the asymmetry. Every one of the five is a **false positive**, and on
+ * input nobody writes: a source file that contains the literal text of a banned
+ * construct without performing it. A false positive fails loudly, at the moment somebody
+ * makes the edit, and is understood in a minute. A false negative — which is what
+ * stripping too much would risk — is silent for a year. §6.72 spent a whole sprint on
+ * exactly that difference.
+ */
+
+/**
  * Source with comments removed and their line structure kept.
  *
  * Block comments collapse to the newlines they spanned, so a match's line number still

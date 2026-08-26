@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { NOTIFY_OPTIONS, UPCOMING_DAYS } from '@reviewies/core/calendar/upcoming';
 import { PAIRS, ROOT } from './pairs';
@@ -136,6 +136,25 @@ function drifted(route: string): Array<{ key: string; web: string; phone: string
   return out;
 }
 
+/**
+ * Sentences nothing reads, and why that is allowed.
+ *
+ * Empty, and it should stay that way: a sentence in this file that no screen renders is
+ * either dead or a screen that forgot it. §6.73.
+ */
+/** Every source file under a tree, skipping tests and build output. */
+function sources(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (['node_modules', 'dist', '.expo'].includes(entry.name)) continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) sources(path, out);
+    else if (/\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
+
+const UNREAD_ON_PURPOSE: string[] = [];
+
 describe('the words, on both platforms', () => {
   it('does not say the same thing two ways', () => {
     const unexplained = Object.keys(PAIRS)
@@ -171,6 +190,54 @@ describe('the words, on both platforms', () => {
       ...Object.values(PAIRS).flatMap((p) => p.phone.map((f) => `mobile/app/${f}`)),
     ].filter((file) => read(file).includes('@reviewies/core/copy'));
     expect(importers.length).toBeGreaterThan(8);
+  });
+
+  /**
+   * Every sentence is read by something, not just the file.
+   *
+   * The check above proves `copy.ts` is *imported* — nine paired screens reach for it —
+   * and §6.73 found that is a weaker claim than its neighbours read as. A whole group
+   * added to `COPY` and referenced by nothing passed every assertion in this file and
+   * every other guard in the directory: the words sat there looking maintained.
+   *
+   * That matters more as the file grows. `COPY.sync.*` arrived in §6.71 and
+   * `COPY.app.*` in §6.65; if a screen stopped rendering one, the sentence would stay,
+   * and the next person to change it would be editing something nobody sees.
+   *
+   * The same shape as `coreWiring`'s unreached-export check, one layer down — and like
+   * that one, it carries an explained-exemption map rather than a blanket allowance.
+   */
+  it('has no sentence that nothing anywhere reads', () => {
+    /** Leaves of COPY, as `group.name`. */
+    const leaves: string[] = [];
+    for (const [group, entries] of Object.entries(COPY)) {
+      for (const name of Object.keys(entries as Record<string, unknown>)) {
+        leaves.push(`${group}.${name}`);
+      }
+    }
+    expect(leaves.length).toBeGreaterThan(30);
+
+    // Every place a sentence could legitimately be reached from. The core counts:
+    // `time.ts` formats a day with `COPY.calendar.today`, and `sync/clock.ts` builds its
+    // warning from `COPY.app.clockWrong`.
+    const haystack = ['core/src', 'app/src', 'mobile/app', 'mobile/src']
+      .flatMap((tree) => sources(resolve(ROOT, tree)))
+      .filter((file) => !file.includes('copy.ts'))
+      .map((file) => strip(readFileSync(file, 'utf8')))
+      .join('\n');
+
+    const unread = leaves.filter((leaf) => !haystack.includes(`COPY.${leaf}`));
+    expect(unread, `nothing reads ${unread.join(', ')}`).toEqual(UNREAD_ON_PURPOSE);
+  });
+
+  it('keeps no reason for a sentence that is read after all', () => {
+    // §6.41's rule again: an excuse outlives the thing it excuses unless something says.
+    const leaves = new Set(
+      Object.entries(COPY).flatMap(([group, entries]) =>
+        Object.keys(entries as Record<string, unknown>).map((name) => `${group}.${name}`),
+      ),
+    );
+    expect(UNREAD_ON_PURPOSE.filter((leaf) => !leaves.has(leaf))).toEqual([]);
   });
 
   it('says "two months" only while that is how far the calendar looks', () => {

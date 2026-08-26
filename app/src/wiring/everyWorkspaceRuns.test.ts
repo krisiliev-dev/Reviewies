@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 /**
  * Every workspace runs tests, and none of them passes by having none.
@@ -78,6 +79,52 @@ describe('every workspace', () => {
     });
     expect(empty).toEqual([]);
   });
+
+  /**
+   * And the runner collects them — which is a different claim from either of the above.
+   *
+   * This check was named "every workspace runs tests" and proved two weaker things: a
+   * `test` script exists, and files matching `*.test.ts` exist somewhere beneath. A
+   * config whose `include` does not reach them satisfies both and runs nothing.
+   *
+   * `mobile` was exactly that. Its `include` was `src/**\/*.test.ts`, so every test under
+   * `app/` — where expo-router puts the screens, which is most of the workspace — and
+   * every `.tsx` test anywhere were silently excluded. §6.73 dropped a deliberately
+   * failing test into each and `npm run test --workspace mobile` reported **7 passed**.
+   *
+   * So stop guessing from filenames and ask the runner. `vitest list --filesOnly` prints
+   * exactly what a run would collect, which is the only thing that answers this.
+   */
+  it('and its runner collects every one of them', () => {
+    const missed: string[] = [];
+    for (const name of names) {
+      if (NO_TESTS[name] || MAY_BE_EMPTY[name]) continue;
+      const dir = resolve(ROOT, name);
+      const onDisk = testFiles(dir).map((f) => relative(dir, f).replace(/\\/g, '/')).sort();
+      if (onDisk.length === 0) continue;
+
+      let listed: string[];
+      try {
+        listed = execFileSync('npx', ['vitest', 'list', '--filesOnly'], {
+          cwd: dir,
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+        })
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .sort();
+      } catch {
+        missed.push(`${name}: could not ask its runner what it collects`);
+        continue;
+      }
+
+      for (const file of onDisk) {
+        if (!listed.includes(file)) missed.push(`${name}: ${file} is never run`);
+      }
+    }
+    expect(missed).toEqual([]);
+  }, 120_000);
 
   it('does not pass itself when its tests disappear', () => {
     const vacuous = names.filter((name) => {
