@@ -10,6 +10,7 @@
  * Run against `npx expo export --platform web && npx serve dist`.
  */
 import { chromium } from 'playwright';
+import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 
 const BASE = process.env.BASE ?? 'http://localhost:4200';
@@ -22,10 +23,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
 };
 
-const browser = await chromium.launch({
-  executablePath:
-    process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+// A pinned Chromium when this environment has one, and whatever Playwright downloaded
+// otherwise — see scripts/browser.mjs.
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

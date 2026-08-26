@@ -1,32 +1,61 @@
-# React + TypeScript + Vite
+# The web app
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Reviewies in a browser. React, Vite and Dexie over IndexedDB, with every decision that is
+not a screen living in [`@reviewies/core`](../core/README.md) so the phone app can make the
+same ones.
 
-Currently, two official plugins are available:
+This used to be the whole product. [Doc 9](../docs/research/09-app-first-pivot.md) moved it
+to second place: the phone can reach a television on the local network, hold an audio
+session in the background and survive iOS's storage eviction, and none of those are things
+a page can do. What the browser is still better at is a laptop — where the position of what
+you are watching is sitting on a `<video>` element and the [extension](../extension/README.md)
+can read it exactly.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Everything works with nothing configured. No account, no keys: the metadata provider falls
+back to fixtures, sync is absent rather than broken, and the account panel names the two
+variables it would want. That is not a courtesy to developers — it is the product's
+position, and the first screen a person arriving from TV Time sees is the import, not a
+sign-up.
 
-## React Compiler
+## Running it
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From the repository root, because it is a workspace:
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev --workspace app
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`.env` at the *root* rather than here: `vite.config.ts` sets `envDir: '..'`, so one file
+configures the app, the core's tests and the phone. `.env.example` lists the variables and
+what each one turns on.
+
+## Layout
+
+```
+src/screens/     One file per route. The route table is in App.tsx.
+src/ui/          Shared components, the error boundary, the failure banner.
+src/data/        Binds the Dexie adapter and this platform's config into the core.
+src/remote/      The remote-control drawer and the relay socket behind it.
+src/watching/    Receiving playback position from the browser extension.
+src/backend/     Tests that read the SQL migrations rather than the client.
+src/wiring/      Guards that read the repository itself — see below.
+```
+
+`src/wiring/` is worth knowing about. It holds checks that no unit test can make because
+they are about the repository rather than about code: which core exports nothing calls,
+which screen states nothing has ever rendered, whether a documented command names a file
+that exists, whether a plain Node process could load what it is asked to. Each one exists
+because something got past everything else.
+
+## Tests
+
+```bash
+cd app
+npm test                              # unit and component tests
+npm run smoke                         # the whole app, in a real browser
+```
+
+The smoke suite builds, serves and drives the app end to end — the core loop, Watching
+Mode, the import, accessibility, and every screen audited for named controls, target size
+and behaviour at 200% text. It is the check that has found the most, by some margin.

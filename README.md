@@ -163,17 +163,25 @@ covers installing it on an iPhone — and why that matters more than it sounds.
 ### Tests
 
 ```bash
+npx playwright install chromium       # once, unless your environment ships one
 npm test                              # every workspace that has tests
 SB_SECRET=sb_secret_... npm test      # includes live Supabase round-trips
 npm run test:sqlite --workspace core  # the same core tests, against SQLite
 
+npm run smoke                         # all four end-to-end suites, in order
+
+# …or one at a time. Pin the ports: vite and serve pick a free one if the default is
+# taken, and the suites dial the default regardless.
 cd app && npm run build
-npx vite preview &
-node smoke.mjs                        # end-to-end checks in a real browser
+npx vite preview --port 4173 &
+node smoke.mjs                        # the web app, in a real browser
 
 cd ../mobile && npm run export:web     # or: npx expo export --platform web
-npx serve dist &
+npx serve dist -p 4200 &
 node smoke.mjs                        # the same, driving the phone app
+
+cd ../extension && npm run smoke       # loads the extension into a real browser
+cd ../bridge && npm run smoke          # app → relay → bridge → a fake Roku
 ```
 
 Two suites are deliberately not part of `npm test`:

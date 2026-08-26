@@ -32,6 +32,7 @@
  * they agree with each other, which is not the same as being right.
  */
 import { chromium } from 'playwright';
+import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -97,9 +98,9 @@ const APP = `<!doctype html>
 <h1>Reviewies</h1>`;
 
 const profile = mkdtempSync(join(tmpdir(), 'reviewies-ext-'));
-const context = await chromium.launchPersistentContext(profile, {
-  executablePath:
-    process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+// A pinned Chromium when this environment has one, and whatever Playwright downloaded
+// otherwise — see scripts/browser.mjs.
+const context = await chromium.launchPersistentContext(profile, chromiumOptions({
   args: [
     `--disable-extensions-except=${EXT}`,
     `--load-extension=${EXT}`,
@@ -113,7 +114,7 @@ const context = await chromium.launchPersistentContext(profile, {
   ],
   headless: true,
   viewport: { width: 1280, height: 720 },
-});
+}));
 
 const wav = silence();
 

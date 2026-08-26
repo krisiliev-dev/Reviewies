@@ -8,6 +8,7 @@
  * Run against `npm run preview`. Screenshots land in ./screenshots.
  */
 import { chromium } from 'playwright';
+import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { strToU8, zipSync } from 'fflate';
 import { execFileSync } from 'node:child_process';
@@ -79,11 +80,9 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
 };
 
-// The environment ships a pinned Chromium; point at it rather than downloading one.
-const browser = await chromium.launch({
-  executablePath:
-    process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-});
+// A pinned Chromium when this environment has one, and whatever Playwright downloaded
+// otherwise — see scripts/browser.mjs.
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => check('no page errors', false, e.message));
 

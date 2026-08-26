@@ -2193,6 +2193,62 @@ although its README documented `node src/index.ts` — which is the command §6.
 not run at all. It has one now, and refusing without `REVIEWIES_RELAY` prints one line and
 exits 2.
 
+### 6.46 Following the README as a stranger
+
+§6.45 checked that every documented command names a file that exists, and ran those
+commands in a container where everything was installed, built and warm. That is not what a
+person does. A person clones the repository and reads the README from the top.
+
+So: `git clone` into a scratch directory, and follow it literally, typing only what is
+written.
+
+Most of it held. `npm install` at the root is genuinely enough — 1,010 packages, 52
+seconds, and every workspace works afterwards including the extension, which only became
+one in §6.41. `npm run dev --workspace app` serves. The app boots with **no `.env` at all**
+and no page errors, opening on the migration screen rather than a sign-up, and the account
+panel names the two variables it would want rather than saying "error". `npm test` passes.
+`npm run build` builds. `cd extension && npm install && npm run build` works from a fresh
+clone.
+
+Four things did not.
+
+**The smoke suites cannot be run by anyone outside this container.** All three browser
+suites hardcoded `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, the pinned build
+this environment ships. Anywhere else the run dies with an uncaught
+`browserType.launch: Failed to launch chromium because executable doesn't exist at
+/opt/pw-browsers/…` — a directory the reader has never heard of, from a command the README
+hands them without warning. `scripts/browser.mjs` now uses the pinned build when it is
+actually there and otherwise says nothing, letting Playwright resolve the browser it
+downloaded, whose own error message is the useful one. An explicitly set `CHROMIUM_PATH`
+that does not exist is refused by name instead, because silently ignoring what somebody
+asked for is worse than failing. The README gained `npx playwright install chromium`.
+
+**The root README's server commands do not pin their ports.** `npx serve dist &` with no
+`-p 4200` serves on 3000 while the phone suite dials 4200; `npx vite preview &` picks a free
+port if 4173 is taken and the web suite dials 4173 regardless. `mobile/README.md` had the
+port and the root did not — the two had drifted apart, and following the root one produces
+a connection error rather than a failing check. Both are pinned now, and `npm run smoke`
+is offered first as the command that does the whole thing.
+
+**`extension/smoke.mjs` imports `playwright` and the extension declared no such
+dependency.** It works here because npm hoists the app's copy to the root, which is a
+coincidence of layout rather than a fact anybody can rely on.
+
+**`app/README.md` was Vite's scaffold.** Untouched: "This template provides a minimal
+setup…", the React Compiler paragraph, the boilerplate advice about editing an
+`.oxlintrc.json` that this repository has already configured. Every other README here is
+written for this project. A stranger opening the one for the web app — the largest package
+in the repository — learned about `@vitejs/plugin-react-swc`. It says what `app/` is now,
+including what `src/wiring/` is for, since that directory is the least self-explanatory
+thing in the tree and exists entirely because of the last ten sprints.
+
+**One number worth knowing.** A clean clone reports `644 passed | 48 skipped` in core where
+this checkout reports `658 passed | 34 skipped`. Nothing is wrong: the difference is the
+root `.env`, whose TMDB token lets `tmdb.live.test.ts` and `anime.live.test.ts` run. The
+counts quoted in these notes are a credentialed checkout's. Somebody cloning this should
+expect fourteen fewer, and §6.41's `skips.test.ts` names every suite that can make that
+difference.
+
 ---
 
 ## 7. What is still not known
