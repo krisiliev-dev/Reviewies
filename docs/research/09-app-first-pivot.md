@@ -3064,6 +3064,65 @@ plant has to be the violation the guard *claims*, not merely a change nearby. An
 guards fail loudly for reasons other than the plant if you are careless — a mutation that
 breaks parsing makes everything fail, which proves nothing at all.
 
+### 6.61 Looking at it
+
+Thirty sprints have asked whether this app is correct, honest, fast, consistent, or
+recoverable. None has asked whether it is any good to look at — and the pivot was to an
+app-first product, where that is not a garnish. The suites have been saving thirty-odd
+screenshots of real screens all along. Nobody had opened one.
+
+**The screenshots were lying.** The web suite's 200%-text check injects
+`html { font-size: 32px !important }` and never removed it, so every screenshot taken
+between a call to it and the next navigation was a picture of the app at twice the text
+size. That included `05-watching-live.png` — the one image of the feature the product is
+built around, showing controls wrapped onto three rows and the emoji pad pushed off the
+bottom. The phone's version of the same check restores what it changed; the web's did not.
+Nothing caught it because a screenshot is only wrong to somebody looking at it.
+
+Fixing that first is what made the rest of this sprint possible, and it is the finding
+worth having: **an artefact nobody reads can be false for as long as it likes.**
+
+With honest pictures, three things:
+
+**Watching Mode opened on a void.** The top fifth of the screen — a hundred and twenty-eight
+pixels — is the band where other people's reactions cross. Before any arrive it was pure
+black with nothing to say what it was: the flagship element of the flagship screen,
+rendered as a gap. It now says *"Other people's reactions appear here as you reach their
+moments"*, quietly, and gets out of the way the moment anything arrives. Both platforms,
+from the core's copy, because §6.51's guard would otherwise have caught me writing it
+twice.
+
+**Three control idioms with no rule between them.** The title page had an underlined text
+link (*Add to list*), a ghost pill (*Content warnings*) and a filled accent button, all
+secondary actions, all styled differently. The rule the app follows now, written down
+rather than felt: filled accent for the one action a row exists for; a ghost pill for the
+others; underlined text only for a rare aside that opens something else — *Use a different
+poster*, *Caught up further?*. Only *Add to list* actually moved.
+
+**The rating row read as a divider.** Five grey stars floating in an empty band under the
+poster, unlabelled, repeated again in every episode row below. A screen reader always knew
+what it was — the aria-labels have said "3.5 stars" since it shipped — which is exactly the
+gap a picture finds and an assertion cannot. It is captioned **YOUR RATING** now, in the
+same small-caps as *WHERE TO WATCH* and *SEASON 1*, so the page has one heading idiom
+instead of two. The word *your* is doing work as well: this is your rating, not a crowd
+score, which is the whole difference from every site that shows you an average.
+
+That caption immediately broke the 200% check by pushing two stars off the right edge —
+the precise failure the comment above the widget already described, reproduced by adding
+four words, and caught by the check written after it happened the first time. Stacked
+above the stars instead of beside them, it passes.
+
+What I looked at and left alone, because a design pass that changes everything it notices
+is a redesign: **Up Next's hierarchy is right** (show at 16px medium, episode at 14px muted
+— the row has a subject); **the Mark/Watched emphasis is already correct** (filled accent
+when unwatched, quiet when done, on both the home screen and the episode list — I had
+written it down as an inconsistency from the 200% screenshot, and the real one disproved
+it); **the emoji pad is the best-looking thing in the product.** Two things I noticed and
+deliberately did not act on: the poster is small for a product whose ancestors were
+artwork-led, and the star widget repeats once per episode row, which reads as texture
+rather than as controls. Both are judgement calls that want a person's eye, and neither is
+a defect I can argue for in a sentence.
+
 ---
 
 ## 7. What is still not known

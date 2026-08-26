@@ -110,7 +110,18 @@ export function TitleDetail() {
           does not bend: in the column left of the poster it was pushed off the right of
           the screen once the text around it grew, taking two stars through five with
           it. A rating you cannot reach is a rating you cannot give. */}
+      {/* Labelled, because five grey stars in an empty band read as a divider rather
+          than a control. §6.61 looked at the screenshot and could not tell what the row
+          was; the screen reader always could, which is exactly the gap a picture finds
+          and an assertion does not. The word also says whose rating it is — this is
+          yours, not an average, which is the whole difference from every site that shows
+          you a crowd score. */}
+      {/* Stacked, not beside. On one line the label ate the width the stars need and
+          pushed two of them off the screen at 200% text — the exact failure the comment
+          above describes, reproduced by adding four words, and caught by the check that
+          was written after it happened the first time. */}
       <div className="mb-5">
+        <span className="mb-1 block text-xs tracking-wide text-muted uppercase">Your rating</span>
         <StarRating
           value={rating?.value}
           onChange={(value) =>

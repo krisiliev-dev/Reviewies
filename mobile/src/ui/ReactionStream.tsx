@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import type { Reaction } from '@reviewies/core/domain/types';
 import { useReducedMotion } from './useReducedMotion';
+import { theme } from './theme';
 import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
 import { REACTION_VISIBLE_MS } from '@reviewies/core/watching/reactions';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Other people's reactions, arriving as you reach their moment.
@@ -100,6 +102,14 @@ export function ReactionStream({
     >
       {/* The only thing here that speaks. The emoji are a visual swell; read one at a
           time they are noise. */}
+      {/* The web's copy of this, for the same reason: the band is the feature, and an
+          unmarked black gap does not say so. §6.61. */}
+      {visible.length === 0 && (
+        <Text style={styles.resting} numberOfLines={2}>
+          {COPY.watching.streamResting}
+        </Text>
+      )}
+
       <Text
         accessibilityLiveRegion="polite"
         style={styles.announcement}
@@ -196,5 +206,15 @@ const styles = StyleSheet.create({
   stream: { height: LANES * 34, overflow: 'hidden' },
   floater: { position: 'absolute', right: 0 },
   emoji: { fontSize: 26 },
+  resting: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    top: '38%',
+    textAlign: 'center',
+    color: theme.muted,
+    fontSize: 11,
+    opacity: 0.75,
+  },
   announcement: { position: 'absolute', left: -10000, width: 1, height: 1 },
 });

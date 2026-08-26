@@ -6,6 +6,7 @@ import {
   DEFAULT_REACTION_DENSITY,
   REACTION_VISIBLE_MS,
 } from '@reviewies/core/watching/reactions';
+import { COPY } from '@reviewies/core/copy';
 
 const LANES = 4;
 /**
@@ -194,6 +195,20 @@ export function ReactionStream({
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>
+
+      {/*
+        A resting state, because the band is the feature.
+        §6.61 looked at the screenshots for the first time and found the top fifth of
+        Watching Mode — the part where other people's reactions cross — was a hundred and
+        twenty-eight pixels of pure black with nothing to say it was anything. Somebody
+        opening the flagship screen saw a gap. This says what the space is for, quietly,
+        and gets out of the way the moment anything arrives.
+      */}
+      {flying.length === 0 && (
+        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-muted/70">
+          {COPY.watching.streamResting}
+        </p>
+      )}
       {flying.map((f, index) => (
         <span
           key={f.key}

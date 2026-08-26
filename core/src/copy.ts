@@ -119,6 +119,14 @@ export const COPY = {
      */
     densityChoice: (many: number) => `Show at most ${many} reactions on screen at once`,
     densityLabel: 'Density',
+    /**
+     * What the empty reaction band says while nothing is crossing it.
+     *
+     * §6.61 looked at the screenshots and found the top of Watching Mode — the part the
+     * whole product is built around — was an unmarked black gap until somebody else's
+     * reaction happened to arrive. A space that is the feature should say so.
+     */
+    streamResting: 'Other people’s reactions appear here as you reach their moments',
   },
 
   title: {

@@ -45,7 +45,13 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="tap text-xs text-muted underline"
+        // A pill, like every other secondary action on a row. It was an underlined text
+        // link sitting among pills, which is a third control idiom on a screen that
+        // already has two — §6.61 counted them rather than felt them. The rule the app
+        // follows now: filled accent for the one action a row exists for, a ghost pill
+        // for the others, and underlined text only for a rare aside that opens something
+        // else ("Use a different poster", "Caught up further?").
+        className="tap rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
       >
         {open ? 'Cancel' : 'Add to list'}
       </button>

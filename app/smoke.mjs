@@ -225,7 +225,12 @@ async function audit(screen, atLeast) {
  * pushes a page sideways. A phone that scrolls horizontally has lost the layout.
  */
 async function scaled(screen) {
-  await page.addStyleTag({ content: 'html { font-size: 32px !important; }' });
+  // Injected, measured, and then *removed*. It used to be left in place, so every
+  // screenshot taken between a call to this and the next navigation was a picture of the
+  // app at twice the text size — including 05-watching-live.png, the one image of the
+  // feature this product is built around. Nobody noticed for as long as nobody looked at
+  // the screenshots, which was until §6.61.
+  const doubled = await page.addStyleTag({ content: 'html { font-size: 32px !important; }' });
   await page.waitForTimeout(400);
 
   const result = await page.evaluate(() => {
@@ -263,6 +268,9 @@ async function scaled(screen) {
     result.scrollWidth <= result.viewport + 1 && result.clipped.length === 0,
     `${result.scrollWidth} wide in ${result.viewport}${result.clipped.length ? `, off screen: ${result.clipped.join(', ')}` : ''}`,
   );
+
+  await doubled.evaluate((el) => el.remove());
+  await page.waitForTimeout(300);
 }
 
 try {
