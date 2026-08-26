@@ -18,6 +18,7 @@ import {
   getProvider,
 } from '@reviewies/core/metadata/index';
 import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/provider';
+import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { radius, theme } from '../../src/ui/theme';
 
@@ -238,6 +239,12 @@ function ResultRow({ result }: { result: SearchResult }) {
             </Pressable>
           )}
         </View>
+
+        {/* The web's result row has offered this since lists shipped; the phone's made
+            you open the title first. Not a route and not a core call from this file — it
+            is a component, which is why §6.50's guard could not see it and §6.63's,
+            which compares what each screen renders, could. */}
+        <AddToList titleId={result.id} kind={result.kind} />
       </View>
     </View>
   );

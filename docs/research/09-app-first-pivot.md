@@ -3162,6 +3162,51 @@ is not available here; removing the in-page heading costs the name beside the po
 removing the bar's copy costs the context that stays put while somebody scrolls forty
 episodes. I could not argue either in a sentence, so it stays, written down.
 
+### 6.63 The shape of a screen
+
+Four guards compare the platforms: where a screen lets you go (§6.50), its words (§6.51),
+the numbers it passes into the core (§6.52), the state it opens in (§6.55). None of them
+saw that the phone's rating row had no caption for a sprint after the web's got one, or
+that the two put the same three blocks in a different order. A section heading and a
+sequence are not routes, words, numbers or defaults — and the sequence is the thing a
+person notices first, because it is what a screen *looks like*.
+
+So the fifth: the ordered list of **named things** a screen renders — components, and
+sentences taken from `COPY`. Coarse enough to survive two frameworks, specific enough that
+a missing block shows up. It found three real ones.
+
+**The phone's search results could not be added to a list.** The web's result row has
+carried `AddToList` since lists shipped; the phone's made you open the title first. Not a
+route, and not a core writer called from the screen's own file — it is a *component*, which
+is exactly the hole §6.50's guard left and this one fills.
+
+**The phone's calendar had no artwork.** The web's upcoming row carries a poster; the
+phone's was three lines of text. For a product whose ancestors were artwork-led, a list of
+what is coming that you cannot recognise at a glance is a list of sentences.
+
+**And the title page's blocks were in a different order** — §6.62 fixed the description
+and the stars; the guard then found `AddToList` still sitting on the far side of the
+rating on the phone. Same set, wrong sequence, and once the two are printed side by side it
+takes a second to see which is right.
+
+Seven pairs differ for reasons that belong, and each says so in a sentence: the web splits
+Watching Mode's clock into three components where the phone renders one; the phone extracts
+a `ListItem` where the web writes the row inline; the phone's Settings is two pushed
+screens. Naming is not structure, which is why the guard normalises a list's row component
+— `UpNextRow`, `SuggestionRow`, `Row` are one thing — and leaves the rest to be explained.
+
+Two notes on building it. The first draft reported `NotifyPreference`, `StatsSummary` and
+`Window` as things the screens render; they are **type parameters** — `useState<Window>`
+looks exactly like an element to a regex. The discriminator is what precedes the `<`: an
+identifier means a generic, punctuation means JSX. And the limits are written into the
+guard rather than left to be discovered: source order is not visual order once flex and
+absolute positioning are involved, a heading inside a shared component is invisible to a
+reader of the screen's file, and names are the comparison — two platforms doing the same
+thing under different local names read as a difference until somebody says otherwise.
+
+Proved by planting §6.62's own findings back: remove the phone's caption, swap the two
+blocks, delete `AddToList` from the search row. All three fail it.
+
 ---
 
 ## 7. What is still not known

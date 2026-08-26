@@ -125,6 +125,8 @@ export default function TitleScreen() {
             end. A rating you cannot reach is a rating you cannot give.
             Captioned, and after the description rather than before it: the phone asked
             you to rate the thing above the sentence that says what it is. §6.62. */}
+        {title && <AddToList titleId={titleId} kind={title.kind} />}
+
         <View style={styles.ratingBlock}>
           <Text style={styles.ratingLabel}>{COPY.title.yourRating.toUpperCase()}</Text>
           <StarRating
@@ -134,8 +136,6 @@ export default function TitleScreen() {
             }
           />
         </View>
-
-        {title && <AddToList titleId={titleId} kind={title.kind} />}
 
         {/* Only for something you are tracking: an override is stored on the library
             row, so there is nowhere to put one otherwise. */}

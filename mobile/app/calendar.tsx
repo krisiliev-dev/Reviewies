@@ -11,6 +11,7 @@ import {
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
+import { Poster } from '../src/ui/Poster';
 import { radius, theme } from '../src/ui/theme';
 import {
   pushSupported,
@@ -160,6 +161,12 @@ export default function CalendarScreen() {
                 accessibilityRole="link"
                 accessibilityLabel={`Open ${entry.seriesName}`}
               >
+                {/* Artwork, as the web's copy of this row has had since Calendar
+                    shipped. A list of upcoming episodes with no posters is a list of
+                    sentences; recognising a show by its artwork is most of what these
+                    screens are for. §6.63. */}
+                <Poster url={entry.posterUrl} name={entry.seriesName} width={44} height={64} />
+
                 <View style={styles.entryBody}>
                   <Text numberOfLines={1} style={styles.entryName}>
                     {entry.seriesName}
