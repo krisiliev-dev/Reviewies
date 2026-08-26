@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["chrome"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    // Every entry point is bundled by esbuild as `format: 'esm'`, so at runtime each
+    // file is a module and its top-level names are its own. Without this, TypeScript
+    // reads a file with no import or export as a global script — which is how
+    // `const status = document.getElementById('status')` in options.ts came out as a
+    // redeclaration of `window.status` and `status.textContent` as a property access
+    // on a string. Nothing had ever typechecked this directory, so nothing said so.
+    // See doc 9 §6.41.
+    "moduleDetection": "force"
+  },
+  "include": ["src"]
+}

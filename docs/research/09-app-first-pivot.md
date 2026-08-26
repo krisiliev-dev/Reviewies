@@ -1874,6 +1874,64 @@ one was proved non-vacuous by breaking what it watches: reverting the catch-all 
 turns the not-found checks red and reports 6 controls, which is the tab bar and the skip
 link — the blank page, measured.
 
+### 6.41 What else was reported green that nothing ran
+
+§6.40's build had been broken for sixteen commits, and the reason was not the tsconfig —
+it was that nothing ran the build except a person deciding to. So the same question,
+asked of the whole verification surface: which checks exist in this repository, and which
+of them does no routine execute? Enumerated from disk rather than memory.
+
+**Three directories were outside every routine.** `scripts/`, `supabase/functions/` and
+`extension/` were not workspaces, so `npm run test --workspaces` had never seen them, and
+none had a typecheck of its own.
+
+**The extension had never been typechecked, and the first attempt found something.** Its
+build is esbuild with `bundle: true`, which strips types without reading them, so no
+compiler had ever looked at the directory. `options.ts` has no import or export, so
+TypeScript reads it as a global script — and its `const status = document.getElementById(
+'status')` is then a redeclaration of `window.status`, with `status.textContent` a
+property access on a string. The runtime was never wrong: esbuild emits each entry as
+ESM, so the name is the module's own. The right fix is therefore `moduleDetection: force`,
+which makes the typechecker model what the bundler actually does, and it clears the error
+on its own — which is also the evidence for that diagnosis rather than a guess at it. The
+extension is now a workspace with `tsc --noEmit`, and both its typecheck and its build are
+in `verify`.
+
+**Thirty-four skipped tests, and nothing anywhere said which.** A core run reports "639
+passed | 34 skipped" every sprint. Thirty-four could be nine live suites waiting on
+credentials or eight of them plus somebody's `it.skip` from a debugging session, and the
+total reads the same either way. `core/src/data/skips.test.ts` now names all nine, each
+with the environment variable it needs and one line on what it covers that nothing else
+can; a skip outside the list fails, and so does an entry naming a variable nothing reads.
+That last check earned itself immediately: the first draft said `TMDB_TOKEN` and the
+variable is `VITE_TMDB_TOKEN`, arriving through `setConfig` in the test setup rather than
+being read in the suite at all.
+
+**The edge functions and the deploy scripts are read by nothing.** There is no Deno in
+this container, so `supabase/functions/` cannot be typechecked here and that stays in §7.
+What can be checked is what actually breaks them. They parse — through TypeScript's own
+parser, not a compiler that would fail on `jsr:` specifiers for the wrong reason — and
+every relative import they make into `core/` still resolves. That second one is the point:
+the functions reach into core by relative path deliberately, so that a server and a client
+cannot come to disagree about what a fingerprint means, and the price of that decision is
+that moving a file in core breaks a deployment nobody will run for weeks. Nothing else in
+this repository would have noticed. Proved by pointing one at `wireX.ts`: it fails, naming
+the function and the import.
+
+**Two typechecks existed and were never invoked, and one did not exist at all.** `relay`
+and `bridge` each had a `typecheck` script no command called; `core` — the package both
+apps are built on — had none. All three pass, which is the boring outcome and still worth
+knowing rather than assuming. `verify` now runs typechecks across every workspace, both
+builds, both core database configurations, every workspace's tests and the linter.
+
+**And the smoke suites had no single command.** The phone had one; the web had none at
+all, so its suite was a build, a preview server and a node invocation somebody remembered
+in that order. `npm run smoke` runs both.
+
+The shape across §6.40 and §6.41 is the same one, twice: work that is only performed when
+somebody remembers to perform it is work that eventually is not performed, and the record
+of it says green either way. The answer both times was a command that exits non-zero.
+
 ---
 
 ## 7. What is still not known
@@ -1894,7 +1952,20 @@ and which single claim in this document could not be checked at all:
   routes to it on a device is the framework's business and is not under test here.
 - **The fingerprinter has never heard real audio through a real microphone.**
 - **The Roku and MPRIS adapters have never spoken to hardware.**
-- **The extension's site selectors have never met a real streaming site.**
+- **The extension's site selectors have never met a real streaming site**, and the
+  extension has never been loaded into a browser at all. Since §6.41 it is a workspace,
+  typechecked and built by `npm run verify`, and its parser and adapters are covered by
+  `app/src/extension/parse.test.ts` — but `background.ts`, `content.ts` and `inject.ts`
+  have no tests, and nothing has ever run them.
+- **The edge functions have never been typechecked.** They are Deno, and there is no Deno
+  in this container. `app/src/wiring/runnable.test.ts` checks the two things that actually
+  break them — that they parse, and that their relative imports into `core/` still exist —
+  and `backendQueries.test.ts` covers what the migrations promise. Their behaviour has been
+  exercised live only through the deployments recorded in §6.8 and §6.20.
+- **The deploy scripts have never been run in this container** beyond `whats-live`.
+  `deploy-web.mjs` needs a Vercel token; `apply-migrations.mjs` and `deploy-functions.mjs`
+  need a Supabase one. All five parse, which is all that can be established without
+  credentials.
 - **Nothing has ever been signed in, on either platform.** The live Supabase suites —
   `supabase.live.test.ts` and `account.live.test.ts` — both need a service key to make and
   unmake their own user, and this checkout has none. What that costs is no longer one line:

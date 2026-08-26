@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:sqlite": "vitest run --config vitest.sqlite.config.ts"
+    "test:sqlite": "vitest run --config vitest.sqlite.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
