@@ -7,7 +7,7 @@ import {
   Relay,
   type Peer,
   type Role,
-} from './relay';
+} from './relay.ts';
 
 const TOKEN = 'a'.repeat(MIN_TOKEN_LENGTH);
 

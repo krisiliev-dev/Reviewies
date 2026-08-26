@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { scanSubnet, subnetHosts } from './scan';
+import { scanSubnet, subnetHosts } from './scan.ts';
 
 describe('working out which addresses to probe', () => {
   it('covers the rest of the /24', () => {

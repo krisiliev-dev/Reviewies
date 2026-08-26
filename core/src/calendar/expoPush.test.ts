@@ -6,7 +6,7 @@ import {
   mergeOutcomes,
   readTickets,
   type ExpoTicket,
-} from './expoPush';
+} from './expoPush.ts';
 
 const notification = {
   title: 'The Long Dark',

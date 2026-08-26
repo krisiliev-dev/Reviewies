@@ -6,8 +6,8 @@ import {
   filterByEffort,
   uploadCommentImage,
   type Comment,
-} from './comments';
-import * as auth from '../sync/auth';
+} from './comments.ts';
+import * as auth from '../sync/auth.ts';
 
 const make = (over: Partial<Comment> = {}): Comment => ({
   id: crypto.randomUUID(),

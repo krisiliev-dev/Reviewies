@@ -1,4 +1,4 @@
-import type { CachedEpisode, CachedProviders, CachedTitle, MediaKind } from '../domain/types';
+import type { CachedEpisode, CachedProviders, CachedTitle, MediaKind } from '../domain/types.ts';
 
 /**
  * The boundary that keeps TMDB swappable.

@@ -2,7 +2,7 @@ import { createSocket } from 'node:dgram';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { RokuTransport } from '@reviewies/core/devices/roku';
-import type { MprisPlayer, MprisTransport } from './mpris';
+import type { MprisPlayer, MprisTransport } from './mpris.ts';
 
 const run = promisify(execFile);
 

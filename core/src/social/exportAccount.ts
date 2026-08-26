@@ -1,5 +1,5 @@
-import { getClient, getSession } from '../sync/auth';
-import { fetchFollowing } from './people';
+import { getClient, getSession } from '../sync/auth.ts';
+import { fetchFollowing } from './people.ts';
 
 /**
  * The half of your data that does not live on the device.

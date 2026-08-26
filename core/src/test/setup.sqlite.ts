@@ -1,9 +1,9 @@
-import { setConfig } from '../config';
-import { setDatabase } from '../data/db';
-import { SqliteDatabase } from '../data/adapters/sqlite';
-import { setSqlJsLoader } from '../data/sqlWasm';
-import { createSqlJsDriver } from './sqlJsDriver';
-import { nodeSqlJsLoader } from './sqlLoader.node';
+import { setConfig } from '../config.ts';
+import { setDatabase } from '../data/db.ts';
+import { SqliteDatabase } from '../data/adapters/sqlite.ts';
+import { setSqlJsLoader } from '../data/sqlWasm.ts';
+import { createSqlJsDriver } from './sqlJsDriver.ts';
+import { nodeSqlJsLoader } from './sqlLoader.node.ts';
 
 /**
  * The same tests, against SQLite.

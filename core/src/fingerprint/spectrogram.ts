@@ -1,4 +1,4 @@
-import { FFT_SIZE, HOP_SIZE } from './fingerprint';
+import { FFT_SIZE, HOP_SIZE } from './fingerprint.ts';
 
 /**
  * Turning raw audio into the spectrogram the fingerprinter expects.

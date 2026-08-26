@@ -1,5 +1,5 @@
-import { getClient, getSession } from '../sync/auth';
-import type { MediaKind } from '../domain/types';
+import { getClient, getSession } from '../sync/auth.ts';
+import type { MediaKind } from '../domain/types.ts';
 
 /**
  * User lists, mixing film and television freely.

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { signIn, signOut } from '../sync/auth';
-import { fetchAccountExport } from './exportAccount';
-import { restoreAccount } from './restoreAccount';
-import { createList, addToList, fetchLists } from './lists';
+import { getConfig } from '../config.ts';
+import { signIn, signOut } from '../sync/auth.ts';
+import { fetchAccountExport } from './exportAccount.ts';
+import { restoreAccount } from './restoreAccount.ts';
+import { createList, addToList, fetchLists } from './lists.ts';
 
 /**
  * The account half of an export, against a real project.

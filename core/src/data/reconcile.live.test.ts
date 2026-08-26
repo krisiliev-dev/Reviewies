@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { TmdbProvider } from '../metadata/tmdb';
-import { chooseConfident, scoreCandidate } from './reconcile';
-import type { MediaKind } from '../domain/types';
+import { getConfig } from '../config.ts';
+import { TmdbProvider } from '../metadata/tmdb.ts';
+import { chooseConfident, scoreCandidate } from './reconcile.ts';
+import type { MediaKind } from '../domain/types.ts';
 
 /**
  * What the matcher does against the real thing.

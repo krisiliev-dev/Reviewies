@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeMix, type ListItem } from './lists';
+import { describeMix, type ListItem } from './lists.ts';
 
 const item = (kind: 'show' | 'film', titleId = Math.random().toString()): ListItem => ({
   titleId,

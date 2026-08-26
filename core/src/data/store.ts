@@ -7,7 +7,7 @@ import type {
   Reaction,
   WatchEvent,
   WatchlistItem,
-} from '../domain/types';
+} from '../domain/types.ts';
 
 /**
  * The database surface the core actually uses.

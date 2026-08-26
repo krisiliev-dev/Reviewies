@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { embeddedPerson, normaliseHandle, validateHandle } from './people';
+import { embeddedPerson, normaliseHandle, validateHandle } from './people.ts';
 
 /**
  * The handle rules live in a database check constraint. These tests exist so the

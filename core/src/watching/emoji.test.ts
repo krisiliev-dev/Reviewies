@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from './emoji';
+import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from './emoji.ts';
 
 describe('emoji search', () => {
   it('returns nothing for an empty query', () => {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { classify, getUpcoming, groupByDay, shouldNotify } from './upcoming';
-import type { CachedEpisode } from '../domain/types';
+import { db } from '../data/db.ts';
+import { classify, getUpcoming, groupByDay, shouldNotify } from './upcoming.ts';
+import type { CachedEpisode } from '../domain/types.ts';
 
 const DAY = 86_400_000;
 

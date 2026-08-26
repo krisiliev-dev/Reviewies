@@ -1,9 +1,9 @@
-import { getSqlJsLoader, type SqlJsLoader } from './sqlWasm';
-import { db } from './db';
-import { enqueueAll } from '../sync/engine';
-import { applyWal } from './sqliteWal';
-import { parseDioCache, type DioLibrary } from './diocacheParse';
-import { tvtimeEpisodeId, tvtimeMovieId, tvtimeSeriesId } from './tvtimeRescue';
+import { getSqlJsLoader, type SqlJsLoader } from './sqlWasm.ts';
+import { db } from './db.ts';
+import { enqueueAll } from '../sync/engine.ts';
+import { applyWal } from './sqliteWal.ts';
+import { parseDioCache, type DioLibrary } from './diocacheParse.ts';
+import { tvtimeEpisodeId, tvtimeMovieId, tvtimeSeriesId } from './tvtimeRescue.ts';
 import type {
   CachedEpisode,
   CachedTitle,
@@ -12,7 +12,7 @@ import type {
   Rating,
   WatchEvent,
   WatchlistItem,
-} from '../domain/types';
+} from '../domain/types.ts';
 
 /**
  * Recover a TV Time library straight from `DioCache.db`.

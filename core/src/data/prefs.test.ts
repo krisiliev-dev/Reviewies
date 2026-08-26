@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from './prefs';
+import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from './prefs.ts';
 
 beforeEach(() => {
   localStorage.clear();

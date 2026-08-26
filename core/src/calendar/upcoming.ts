@@ -1,6 +1,6 @@
-import { db } from '../data/db';
-import { readPreference, writePreference } from '../data/storage';
-import type { CachedEpisode } from '../domain/types';
+import { db } from '../data/db.ts';
+import { readPreference, writePreference } from '../data/storage.ts';
+import type { CachedEpisode } from '../domain/types.ts';
 
 /**
  * Upcoming episodes, and how loudly to announce them.

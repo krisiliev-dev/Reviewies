@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ContinuousMatcher, framesForMs, positionNow, shouldCorrect } from './continuous';
-import { SpectrogramStream } from './stream';
-import { spectrogramFromPcm } from './spectrogram';
+import { ContinuousMatcher, framesForMs, positionNow, shouldCorrect } from './continuous.ts';
+import { SpectrogramStream } from './stream.ts';
+import { spectrogramFromPcm } from './spectrogram.ts';
 import {
   CAPTURE_MS,
   HOP_SIZE,
@@ -9,7 +9,7 @@ import {
   buildReference,
   fingerprint,
   framesToMs,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 /**
  * A stand-in for an episode's soundtrack.

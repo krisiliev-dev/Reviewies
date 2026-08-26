@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke": "node e2e.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
     "typescript": "~6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "ws": "^8.18.0"
   },
   "dependencies": {
     "@reviewies/core": "*"

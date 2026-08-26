@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { isVideoLike, MprisAdapter, playerName, toPlayback, type MprisTransport } from './mpris';
-import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, isValidCommand } from './protocol';
+import { isVideoLike, MprisAdapter, playerName, toPlayback, type MprisTransport } from './mpris.ts';
+import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, isValidCommand } from './protocol.ts';
 import type { Device } from '@reviewies/core/devices/types';
 
 describe('MPRIS', () => {

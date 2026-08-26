@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { getConfig } from '../config';
+import { getConfig } from '../config.ts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /**

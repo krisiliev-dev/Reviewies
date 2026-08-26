@@ -1,7 +1,7 @@
-import { db } from '../data/db';
-import { enqueue } from '../sync/engine';
-import { getClient, getSession } from '../sync/auth';
-import type { Reaction } from '../domain/types';
+import { db } from '../data/db.ts';
+import { enqueue } from '../sync/engine.ts';
+import { getClient, getSession } from '../sync/auth.ts';
+import type { Reaction } from '../domain/types.ts';
 
 /**
  * Reactions: local-first, shared when signed in.

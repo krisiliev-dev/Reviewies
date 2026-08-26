@@ -1,5 +1,5 @@
-import { db } from '../data/db';
-import { searchAnime } from './anilist';
+import { db } from '../data/db.ts';
+import { searchAnime } from './anilist.ts';
 
 /**
  * Cross-database anime ID mapping.

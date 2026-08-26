@@ -3,8 +3,8 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
-import { importDioCache } from './diocache';
+import { db } from './db.ts';
+import { importDioCache } from './diocache.ts';
 
 /**
  * End to end against a real `DioCache.db`, built by real SQLite, with real write-ahead

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { SupabaseBackend } from './supabaseBackend';
+import { SupabaseBackend } from './supabaseBackend.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { SyncTable } from './types';
+import type { SyncTable } from './types.ts';
 
 /**
  * What happens when there is more to pull than one page holds.

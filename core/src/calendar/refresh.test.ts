@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { REFRESH_EVERY_MS, refreshTracked, type RefreshLookup } from './refresh';
-import { getUpcoming } from './upcoming';
-import type { CachedEpisode, CachedTitle, LibraryItem } from '../domain/types';
+import { db } from '../data/db.ts';
+import { REFRESH_EVERY_MS, refreshTracked, type RefreshLookup } from './refresh.ts';
+import { getUpcoming } from './upcoming.ts';
+import type { CachedEpisode, CachedTitle, LibraryItem } from '../domain/types.ts';
 
 const DAY = 86_400_000;
 const NOW = Date.UTC(2026, 0, 15);

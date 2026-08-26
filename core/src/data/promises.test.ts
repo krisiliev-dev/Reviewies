@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from './db';
-import { exportAll, importBundle } from './transfer';
-import { expireMetadata } from '../metadata/index';
-import { METADATA_TTL_MS } from '../domain/types';
-import { TABLES } from './adapters/schema';
-import * as auth from '../sync/auth';
-import { contributeReference } from '../fingerprint/references';
+import { db } from './db.ts';
+import { exportAll, importBundle } from './transfer.ts';
+import { expireMetadata } from '../metadata/index.ts';
+import { METADATA_TTL_MS } from '../domain/types.ts';
+import { TABLES } from './adapters/schema.ts';
+import * as auth from '../sync/auth.ts';
+import { contributeReference } from '../fingerprint/references.ts';
 
 /**
  * The sentences the app says out loud, checked against what it does.

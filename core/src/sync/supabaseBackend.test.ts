@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { SupabaseBackend } from './supabaseBackend';
+import { SupabaseBackend } from './supabaseBackend.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Change } from './types';
+import type { Change } from './types.ts';
 
 /**
  * The mapping layer between local camelCase records and the database's snake_case

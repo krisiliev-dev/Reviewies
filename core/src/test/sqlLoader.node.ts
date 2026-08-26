@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import initSqlJs from 'sql.js';
-import type { SqlJsLoader } from '../data/sqlWasm';
+import type { SqlJsLoader } from '../data/sqlWasm.ts';
 
 /**
  * SQLite for the tests.

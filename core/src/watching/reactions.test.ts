@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { addReaction, estimateDriftMs } from './reactions';
+import { db } from '../data/db.ts';
+import { addReaction, estimateDriftMs } from './reactions.ts';
 
 /** The outbox lives in the main database now; see sync/engine.ts. */
-const outbox = db.outbox as unknown as import('../data/store').Table<{
+const outbox = db.outbox as unknown as import('../data/store.ts').Table<{
   key: string;
   row: Record<string, unknown>;
   attempts: number;

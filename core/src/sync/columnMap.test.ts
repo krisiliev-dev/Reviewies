@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COLUMN_MAP, fromRemote, toRemote } from './supabaseBackend';
-import type { SyncTable } from './types';
+import { COLUMN_MAP, fromRemote, toRemote } from './supabaseBackend.ts';
+import type { SyncTable } from './types.ts';
 
 /**
  * The mapping, against the schema it claims to map to.

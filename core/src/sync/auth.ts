@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient, type Session } from '@supabase/supabase-js';
-import { getConfig } from '../config';
+import { getConfig } from '../config.ts';
 
 /**
  * Supabase auth, kept deliberately optional.

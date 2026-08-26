@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Resampler, SpectrogramStream, downmix, int16ToFloat } from './stream';
-import { spectrogramFromPcm } from './spectrogram';
-import { FFT_SIZE, HOP_SIZE, SAMPLE_RATE } from './fingerprint';
+import { Resampler, SpectrogramStream, downmix, int16ToFloat } from './stream.ts';
+import { spectrogramFromPcm } from './spectrogram.ts';
+import { FFT_SIZE, HOP_SIZE, SAMPLE_RATE } from './fingerprint.ts';
 
 /** A pure tone, so the spectrum has a known answer. */
 function tone(hz: number, samples: number, rate = SAMPLE_RATE): Float32Array {

@@ -7,6 +7,10 @@
     "types": ["node"],
     "strict": true,
     "noEmit": true,
+    // Relative imports carry their `.ts` extension so plain Node can follow them.
+    // Node's ESM resolver does not guess, and the bridge is a plain Node process — see
+    // doc 9 §6.44.
+    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
     "noUnusedLocals": true,

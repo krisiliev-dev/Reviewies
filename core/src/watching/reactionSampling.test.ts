@@ -38,14 +38,14 @@ function selectChain(result: { data?: unknown[]; error?: unknown }) {
 describe('asking for a sample rather than a prefix', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { db } = await import('../data/db');
+    const { db } = await import('../data/db.ts');
     await db.reactions.clear();
   });
 
   it('calls the sampling function with the density the screen can show', async () => {
     rpc.mockResolvedValue({ data: [row('a', 1000), row('b', 2_000_000)], error: null });
-    const { fetchRemoteReactions } = await import('./reactions');
-    const { db } = await import('../data/db');
+    const { fetchRemoteReactions } = await import('./reactions.ts');
+    const { db } = await import('../data/db.ts');
 
     const merged = await fetchRemoteReactions('tmdb:ep:1');
 
@@ -66,7 +66,7 @@ describe('asking for a sample rather than a prefix', () => {
     rpc.mockResolvedValue({ data: null, error: { message: 'function does not exist' } });
     from.mockReturnValue(selectChain({ data: [row('a', 1000)] }));
 
-    const { fetchRemoteReactions } = await import('./reactions');
+    const { fetchRemoteReactions } = await import('./reactions.ts');
     expect(await fetchRemoteReactions('tmdb:ep:1')).toBe(1);
     expect(from).toHaveBeenCalledWith('reactions');
   });
@@ -75,7 +75,7 @@ describe('asking for a sample rather than a prefix', () => {
     rpc.mockResolvedValue({ data: null, error: { message: 'nope' } });
     from.mockReturnValue(selectChain({ error: { message: 'offline' } }));
 
-    const { fetchRemoteReactions } = await import('./reactions');
+    const { fetchRemoteReactions } = await import('./reactions.ts');
     expect(await fetchRemoteReactions('tmdb:ep:1')).toBe(0);
   });
 });

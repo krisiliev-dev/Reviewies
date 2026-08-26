@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectRegion, regionFromLocale, regionName } from './region';
+import { detectRegion, regionFromLocale, regionName } from './region.ts';
 
 describe('reading a region from a locale', () => {
   it('takes the region from a full tag', () => {

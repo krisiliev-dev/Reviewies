@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
-import { detectRescueFile, importRescueCsv, parseBool, stripBom } from './tvtimeRescue';
-import { getUpNext, unmatchedImportCount } from './repo';
+import { db } from './db.ts';
+import { detectRescueFile, importRescueCsv, parseBool, stripBom } from './tvtimeRescue.ts';
+import { getUpNext, unmatchedImportCount } from './repo.ts';
 
 /**
  * Fixtures use the exact headers the rescue tool emits, taken from its source

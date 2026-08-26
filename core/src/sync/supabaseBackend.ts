@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { getConfig } from '../config';
-import { type Change, type PullResult, type SyncBackend, SyncError, type SyncTable } from './types';
+import { getConfig } from '../config.ts';
+import { type Change, type PullResult, type SyncBackend, SyncError, type SyncTable } from './types.ts';
 
 /**
  * Supabase implementation of the sync contract.

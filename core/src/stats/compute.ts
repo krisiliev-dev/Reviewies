@@ -1,5 +1,5 @@
-import { db } from '../data/db';
-import type { WatchEvent } from '../domain/types';
+import { db } from '../data/db.ts';
+import type { WatchEvent } from '../domain/types.ts';
 
 /**
  * Stats, computed from watch events.

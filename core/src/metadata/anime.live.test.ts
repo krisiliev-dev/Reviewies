@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { getSeasonChain } from './anilist';
-import { resolveFromTmdb } from './animeMapping';
-import { TmdbProvider } from './tmdb';
-import { getEpisodesCached } from './index';
-import { db } from '../data/db';
+import { getConfig } from '../config.ts';
+import { getSeasonChain } from './anilist.ts';
+import { resolveFromTmdb } from './animeMapping.ts';
+import { TmdbProvider } from './tmdb.ts';
+import { getEpisodesCached } from './index.ts';
+import { db } from '../data/db.ts';
 
 /**
  * Live verification that the anime correction fixes the case it was built for.

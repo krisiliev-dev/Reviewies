@@ -1,8 +1,8 @@
-import { db } from './db';
-import { enqueueAll } from '../sync/engine';
-import { makeId } from '../domain/types';
-import { fetchAccountExport, type AccountExport } from '../social/exportAccount';
-import type { MediaKind, WatchEvent } from '../domain/types';
+import { db } from './db.ts';
+import { enqueueAll } from '../sync/engine.ts';
+import { makeId } from '../domain/types.ts';
+import { fetchAccountExport, type AccountExport } from '../social/exportAccount.ts';
+import type { MediaKind, WatchEvent } from '../domain/types.ts';
 
 /**
  * Import and export.

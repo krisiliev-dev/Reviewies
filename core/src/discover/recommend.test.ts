@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { excludedTitleIds, getSuggestions, mergeSuggestions, seedTitles } from './recommend';
-import type { SearchResult } from '../metadata/provider';
+import { db } from '../data/db.ts';
+import { excludedTitleIds, getSuggestions, mergeSuggestions, seedTitles } from './recommend.ts';
+import type { SearchResult } from '../metadata/provider.ts';
 
 const res = (id: string, name = id): SearchResult => ({ id, kind: 'show', name });
 

@@ -1,5 +1,5 @@
-import type { Command, Device, DeviceAdapter, Playback } from './types';
-import { DeviceError } from './types';
+import type { Command, Device, DeviceAdapter, Playback } from './types.ts';
+import { DeviceError } from './types.ts';
 
 /**
  * Roku, via its External Control Protocol.

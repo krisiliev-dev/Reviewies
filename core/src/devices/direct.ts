@@ -1,6 +1,6 @@
-import { RokuAdapter, type RokuTransport } from './roku';
-import { scanSubnet, subnetHosts, type ProbeOptions } from './scan';
-import type { Command, Device, Playback } from './types';
+import { RokuAdapter, type RokuTransport } from './roku.ts';
+import { scanSubnet, subnetHosts, type ProbeOptions } from './scan.ts';
+import type { Command, Device, Playback } from './types.ts';
 
 /**
  * Talking to a television directly, with nothing in between.

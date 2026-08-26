@@ -1,7 +1,7 @@
 import { zipSync, strToU8 } from 'fflate';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
-import { importArchive, importArchiveEntry, pairWal } from './archiveImport';
+import { db } from './db.ts';
+import { importArchive, importArchiveEntry, pairWal } from './archiveImport.ts';
 
 const EPISODES_CSV =
   'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id\n' +

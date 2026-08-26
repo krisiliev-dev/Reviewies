@@ -22,7 +22,7 @@ import {
   framesToMs,
   matchSample,
   type Reference,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 /** Frames needed to cover a given duration at the analysis rate. */
 export function framesForMs(ms: number, hopSize = HOP_SIZE, sampleRate = SAMPLE_RATE): number {

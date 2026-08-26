@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { markWatched } from '../data/repo';
-import { applyScrobble, isScrobble, matchLibraryTitle, type ScrobbleDeps } from './scrobble';
-import type { CachedEpisode } from '../domain/types';
+import { db } from '../data/db.ts';
+import { markWatched } from '../data/repo.ts';
+import { applyScrobble, isScrobble, matchLibraryTitle, type ScrobbleDeps } from './scrobble.ts';
+import type { CachedEpisode } from '../domain/types.ts';
 
 /**
  * The rule under all of this: a scrobble may only ever confirm something you already

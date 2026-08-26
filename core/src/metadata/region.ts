@@ -1,4 +1,4 @@
-import { readPreference, writePreference } from '../data/storage';
+import { readPreference, writePreference } from '../data/storage.ts';
 
 /**
  * Which country's streaming availability to show.

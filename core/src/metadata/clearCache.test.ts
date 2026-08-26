@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { clearMetadataCache } from './index';
-import type { CachedEpisode, CachedTitle } from '../domain/types';
+import { db } from '../data/db.ts';
+import { clearMetadataCache } from './index.ts';
+import type { CachedEpisode, CachedTitle } from '../domain/types.ts';
 
 const NOW = Date.UTC(2026, 0, 15);
 

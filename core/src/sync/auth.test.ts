@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { authStorageKey } from './auth';
+import { authStorageKey } from './auth.ts';
 
 describe('auth storage key', () => {
   it('is namespaced per test worker', () => {

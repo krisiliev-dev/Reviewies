@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { getConfig } from '../config';
+import { getConfig } from '../config.ts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { SupabaseBackend } from './supabaseBackend';
-import type { Change } from './types';
+import { SupabaseBackend } from './supabaseBackend.ts';
+import type { Change } from './types.ts';
 
 /**
  * Live round-trip of the real sync adapter against a real Supabase project.

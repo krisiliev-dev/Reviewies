@@ -1,6 +1,6 @@
-import { db } from '../data/db';
-import { syncSeriesStatus } from '../data/repo';
-import { expireMetadata, getEpisodesCached, getTitleCached } from '../metadata/index';
+import { db } from '../data/db.ts';
+import { syncSeriesStatus } from '../data/repo.ts';
+import { expireMetadata, getEpisodesCached, getTitleCached } from '../metadata/index.ts';
 
 /**
  * Keep the calendar's idea of what is coming up from going quietly stale.

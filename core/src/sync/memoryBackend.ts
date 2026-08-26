@@ -1,4 +1,4 @@
-import { type Change, type PullResult, type SyncBackend, SyncError } from './types';
+import { type Change, type PullResult, type SyncBackend, SyncError } from './types.ts';
 
 /**
  * An in-memory server, used to test the sync engine without a live backend.

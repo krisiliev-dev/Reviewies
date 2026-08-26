@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ContributionRecorder } from './contribute';
-import { spectrogramFromPcm } from './spectrogram';
-import { SpectrogramStream } from './stream';
+import { ContributionRecorder } from './contribute.ts';
+import { spectrogramFromPcm } from './spectrogram.ts';
+import { SpectrogramStream } from './stream.ts';
 import {
   HOP_SIZE,
   SAMPLE_RATE,
@@ -9,7 +9,7 @@ import {
   deserialiseReference,
   fingerprint,
   matchSample,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 /** Audio whose spectrum keeps changing, so landmarks are distinctive over time. */
 function signal(seconds: number, rate: number, seed = 4242): Float32Array {

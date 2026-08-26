@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { TmdbProvider } from './tmdb';
+import { getConfig } from '../config.ts';
+import { TmdbProvider } from './tmdb.ts';
 
 /**
  * Live TMDB checks. Skipped automatically when no token is configured, so CI and

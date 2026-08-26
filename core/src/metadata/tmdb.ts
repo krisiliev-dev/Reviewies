@@ -1,6 +1,6 @@
-import { makeId } from '../domain/types';
-import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
-import type { MetadataProvider, SearchResult } from './provider';
+import { makeId } from '../domain/types.ts';
+import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types.ts';
+import type { MetadataProvider, SearchResult } from './provider.ts';
 
 const BASE = 'https://api.themoviedb.org/3';
 const IMG = 'https://image.tmdb.org/t/p';

@@ -1,4 +1,4 @@
-import { getClient, getSession } from '../sync/auth';
+import { getClient, getSession } from '../sync/auth.ts';
 
 /**
  * Profiles, following and blocking.

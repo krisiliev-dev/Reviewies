@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
-import { enqueue, pendingCount, resetSyncState, syncOnce } from './engine';
-import { MemoryBackend } from './memoryBackend';
-import { importRescueCsv } from '../data/tvtimeRescue';
+import { db } from '../data/db.ts';
+import { enqueue, pendingCount, resetSyncState, syncOnce } from './engine.ts';
+import { MemoryBackend } from './memoryBackend.ts';
+import { importRescueCsv } from '../data/tvtimeRescue.ts';
 import {
   addToLibrary,
   clearRating,
@@ -10,11 +10,11 @@ import {
   rate,
   setPosterOverride,
   syncSeriesStatus,
-} from '../data/repo';
-import { SyncError } from './types';
+} from '../data/repo.ts';
+import { SyncError } from './types.ts';
 
 /** The outbox lives in the main database now; see sync/engine.ts. */
-const outboxTable = db.outbox as unknown as import('../data/store').Table<{
+const outboxTable = db.outbox as unknown as import('../data/store.ts').Table<{
   key: string;
   table: string;
   pk: string;

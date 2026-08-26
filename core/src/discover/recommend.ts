@@ -1,6 +1,6 @@
-import { db } from '../data/db';
-import { provider } from '../metadata/index';
-import type { SearchResult } from '../metadata/provider';
+import { db } from '../data/db.ts';
+import { provider } from '../metadata/index.ts';
+import type { SearchResult } from '../metadata/provider.ts';
 
 /**
  * Discovery.

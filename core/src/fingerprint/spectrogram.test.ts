@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fft, frameMagnitudes, hannWindow, spectrogramFromPcm } from './spectrogram';
-import { FFT_SIZE, HOP_SIZE } from './fingerprint';
+import { fft, frameMagnitudes, hannWindow, spectrogramFromPcm } from './spectrogram.ts';
+import { FFT_SIZE, HOP_SIZE } from './fingerprint.ts';
 
 /** A pure tone, which has a known answer: one peak, at a known bin. */
 function tone(hz: number, sampleRate: number, length: number): Float32Array {

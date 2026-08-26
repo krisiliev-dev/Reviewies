@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { RokuAdapter } from '@reviewies/core/devices/roku';
 import { relayConnectionUrl } from '@reviewies/core/devices/relayUrl';
-import { MprisAdapter } from './mpris';
-import { gdbusMprisTransport, nodeRokuTransport } from './transports';
-import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, type BridgeMessage } from './protocol';
+import { MprisAdapter } from './mpris.ts';
+import { gdbusMprisTransport, nodeRokuTransport } from './transports.ts';
+import { parseClientMessage, PROTOCOL_VERSION, tokensMatch, type BridgeMessage } from './protocol.ts';
 import type { Device, DeviceAdapter } from '@reviewies/core/devices/types';
 
 /**

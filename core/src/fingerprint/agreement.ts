@@ -30,7 +30,7 @@ import {
   matchSample,
   unpackHashes,
   type Hash,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 export interface Contribution {
   /** Whatever identifies it to the caller — a row id, a user id. Never interpreted. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labelFor, summarise } from './announce';
+import { labelFor, summarise } from './announce.ts';
 
 /**
  * What the stream says out loud, and how often.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { discoverRokus } from './direct';
+import { discoverRokus } from './direct.ts';
 
 /**
  * Discovery is the part with the interesting failure modes: almost every address

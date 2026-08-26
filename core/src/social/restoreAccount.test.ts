@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { restoreAccount } from './restoreAccount';
-import * as auth from '../sync/auth';
-import * as lists from './lists';
-import * as people from './people';
-import type { AccountExport } from './exportAccount';
+import { restoreAccount } from './restoreAccount.ts';
+import * as auth from '../sync/auth.ts';
+import * as lists from './lists.ts';
+import * as people from './people.ts';
+import type { AccountExport } from './exportAccount.ts';
 
 /**
  * Putting an export's lists and follows back.

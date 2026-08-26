@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
+import { db } from './db.ts';
 import {
   addToLibrary,
   airedSeasonSizes,
@@ -10,8 +10,8 @@ import {
   unwatchLatest,
   watchCount,
   watchedEpisodeIds,
-} from './repo';
-import { makeId } from '../domain/types';
+} from './repo.ts';
+import { makeId } from '../domain/types.ts';
 
 const SERIES = makeId('tmdb', 'tv', 1);
 const ep = (n: number) => makeId('tmdb', 'ep', `1-1-${n}`);

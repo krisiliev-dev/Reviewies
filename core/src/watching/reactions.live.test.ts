@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { getClient, signIn, signOut } from '../sync/auth';
-import { db } from '../data/db';
-import { fetchRemoteReactions } from './reactions';
+import { getConfig } from '../config.ts';
+import { getClient, signIn, signOut } from '../sync/auth.ts';
+import { db } from '../data/db.ts';
+import { fetchRemoteReactions } from './reactions.ts';
 
 /**
  * The shared half of Watching Mode, against the real project.

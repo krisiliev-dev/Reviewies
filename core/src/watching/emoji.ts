@@ -84,7 +84,7 @@ let loading: Promise<void> | undefined;
  * Safe to call repeatedly — the work happens once.
  */
 export function loadEmojiIndex(): Promise<void> {
-  loading ??= import('./emojiIndex')
+  loading ??= import('./emojiIndex.ts')
     .then(({ EMOJI_INDEX_RAW }) => {
       indexed = parseIndex(EMOJI_INDEX_RAW);
     })

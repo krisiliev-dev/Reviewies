@@ -2073,6 +2073,74 @@ One smaller thing in the same family, found on the way past: `mobile/src/platfor
 web push is a browser mechanism and this app uses Expo's, and the phone reaches a television
 directly, which is what §1.1 was about. Three keys read from a place they can never arrive.
 
+### 6.44 The bridge had never started
+
+§6.43 got a message across the relay. The next hop had never been taken: no command this
+product has sent has ever reached a device, and §7 has said since they were written that
+the Roku and MPRIS adapters have never spoken to hardware.
+
+There is no Roku here, but a Roku's External Control Protocol is why it is the first
+adapter rather than the third — plain HTTP on port 8060, no authentication, no pairing. So
+a fake is a small server answering `/query/device-info`, `/query/media-player` and
+`/keypress/*`, recording what it was asked for. Discovery turned out to be real too, which
+was not obvious: the bridge sends an SSDP M-SEARCH to 239.255.255.250, multicast loops back
+inside this container, and a responder here answers it. That makes every box in the chain
+real but the last one.
+
+**The bridge could not start.** `node src/index.ts` — the command in its own README — died
+on the first import:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/user/Reviewies/bridge/src/mpris'
+```
+
+Node's ESM resolver does not guess extensions. `import { MprisAdapter } from './mpris'` is
+an error, not a hint. Fixing those three imports moved the failure one layer down into
+`core/src/devices/roku.ts` importing `'./types'` — and core is written extensionless
+throughout, 277 specifiers across 102 files, because Vite, Metro and Vitest all resolve
+that form. The bridge's 24 unit tests pass and always did, because Vitest resolves what
+Node will not.
+
+Two consumers were paying for it. The bridge could not run at all. And `supabase/functions/
+deno.json` carries an unstable `sloppy-imports` flag whose stated reason is exactly this —
+"lets Deno follow the extensionless relative imports inside @reviewies/core".
+
+So core spells them out now, mechanically, and `mobile` and `bridge` gained
+`allowImportingTsExtensions` to match what `app`, `core` and `relay` already had. Package
+specifiers are untouched: `@reviewies/core/devices/roku` goes through the exports map,
+which resolves to a file, and adding an extension there produces `roku.ts.ts`. The Deno
+flag is left in place with a note, because there is no Deno in this container to prove it
+redundant with and finding out by breaking a deploy is not a plan.
+
+**Then the chain ran, and it works.** Twenty-one checks in `bridge/e2e.mjs`: the app
+reaches the bridge through the relay, the bridge answers the handshake, discovery finds the
+fake by asking the network and describes it in the shape the drawer's `RemoteDevice`
+declares, a pause pressed by the app arrives at the device as `POST /keypress/Play` — which
+is the ECP key the adapter documents, because ECP has no separate pause and Play toggles —
+position polling reports 754 of 2700 seconds with the title and the app it is playing in,
+the position follows when the device moves, unsubscribing stops the polling, and a command
+for a device that is not there comes back as `no-device` rather than vanishing.
+
+The one specifically hunted for came back clean: a device that stops answering is reported
+as `playbackEnded` rather than leaving the drawer following a position that has stopped
+moving. That is §6.42's staleness bug in a different costume, and here the poll already
+does the right thing — the adapter returns `undefined` when the device goes away and the
+bridge says so.
+
+Two harness notes worth keeping, because each looked like a product bug. The bridge retries
+every five seconds, so spawning it before the relay is listening produces a five-second
+hole that is indistinguishable from a bridge that cannot connect — the suite now waits for
+each process to say it is up rather than sleeping. And the fake video's bytes are served
+with range support by hand for the same class of reason as §6.42's.
+
+**MPRIS, as far as it goes.** `gdbus`, `busctl` and `dbus-daemon` are all present here, so
+the suite starts a session bus with `dbus-run-session` and runs itself inside it. What that
+proves is the half nothing had touched: the `gdbus` command line the transport builds is
+accepted by a real `gdbus` against a real bus, and its output parses — an empty bus comes
+back as no players rather than as a throw. Registering an actual MPRIS player needs a D-Bus
+binding, and there is none installable here, so no media player has ever been driven. That
+stays in §7 rather than letting the Roku result stand in for it.
+
 ---
 
 ## 7. What is still not known
@@ -2092,10 +2160,16 @@ and which single claim in this document could not be checked at all:
   because the static server answers an unknown path before the app boots; that expo-router
   routes to it on a device is the framework's business and is not under test here.
 - **The fingerprinter has never heard real audio through a real microphone.**
-- **The Roku and MPRIS adapters have never spoken to hardware.** The relay between the app
-  and the bridge is exercised now — §6.43's `relay/src/pairing.test.ts` stands up the real
-  server and pairs two real clients — but what crosses it in that test is a message, not a
-  television. No `pause` this product has sent has ever reached a device.
+- **The Roku and MPRIS adapters have never spoken to hardware.** §6.44 runs the whole chain
+  — app, relay, bridge, adapter — against a fake Roku on port 8060 found by real SSDP
+  discovery, so a keypress does now leave the product and arrive somewhere. But the fake
+  answers with the XML the parser expects, so a passing run says the adapter and the fixture
+  agree with each other, not that either is right about a television. No physical Roku has
+  ever been sent a command.
+- **No MPRIS player has ever been driven.** The transport's `gdbus` command line is
+  exercised against a real session bus in §6.44 and an empty bus parses correctly, which is
+  more than a mock proves and less than a laptop. Registering a media player on the bus needs
+  a D-Bus binding, and none is installable here.
 - **The extension's site selectors have never met a real streaming site.** §6.42 runs the
   whole extension in a real browser against a fixture player page, which is the first time
   any of `content.ts`, `background.ts` or `inject.ts` has executed — but that fixture was

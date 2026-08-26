@@ -1,6 +1,10 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // `@reviewies/core` spells its relative imports with the `.ts` extension, so that a
+    // plain Node process can follow them — Metro, Vite and Vitest resolve either form.
+    // See doc 9 §6.44.
+    "allowImportingTsExtensions": true
   }
 }

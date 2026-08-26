@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { db } from '../data/db';
-import { enqueue, resetSyncState } from './engine';
-import { setStorage } from '../data/storage';
-import { MemoryBackend } from './memoryBackend';
-import { onSyncStatus, requestSync, resetSyncDriver, startSyncDriver, syncStatus } from './driver';
-import * as auth from './auth';
+import { db } from '../data/db.ts';
+import { enqueue, resetSyncState } from './engine.ts';
+import { setStorage } from '../data/storage.ts';
+import { MemoryBackend } from './memoryBackend.ts';
+import { onSyncStatus, requestSync, resetSyncDriver, startSyncDriver, syncStatus } from './driver.ts';
+import * as auth from './auth.ts';
 
 /**
  * The driver, which is the part that was missing rather than broken.

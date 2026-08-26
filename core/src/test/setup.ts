@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
-import { setConfig } from '../config';
-import { setDatabase } from '../data/db';
-import { createDexieDatabase } from '../data/adapters/dexie';
-import { setSqlJsLoader } from '../data/sqlWasm';
-import { nodeSqlJsLoader } from './sqlLoader.node';
+import { setConfig } from '../config.ts';
+import { setDatabase } from '../data/db.ts';
+import { createDexieDatabase } from '../data/adapters/dexie.ts';
+import { setSqlJsLoader } from '../data/sqlWasm.ts';
+import { nodeSqlJsLoader } from './sqlLoader.node.ts';
 
 /**
  * Bind a database for the core's tests.

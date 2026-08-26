@@ -1,6 +1,6 @@
 import initSqlJs from 'sql.js';
 import { createRequire } from 'node:module';
-import type { SqlDriver } from '../data/adapters/sqlite';
+import type { SqlDriver } from '../data/adapters/sqlite.ts';
 
 /**
  * A `SqlDriver` backed by sql.js, so the SQLite implementation can be exercised in

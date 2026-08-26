@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
-import { markWatched } from './repo';
+import { db } from './db.ts';
+import { markWatched } from './repo.ts';
 import {
   exportAll,
   exportWatchesCsv,
@@ -8,8 +8,8 @@ import {
   importWatchHistoryCsv,
   parseCsv,
   toCsv,
-} from './transfer';
-import { makeId } from '../domain/types';
+} from './transfer.ts';
+import { makeId } from '../domain/types.ts';
 
 beforeEach(async () => {
   await Promise.all([

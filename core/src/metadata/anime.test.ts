@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { splitIntoSeasons, type AniListSeason } from './anilist';
-import { clearMappingCache, lookupAnimeIds, resolveFromTmdb } from './animeMapping';
-import { db } from '../data/db';
+import { splitIntoSeasons, type AniListSeason } from './anilist.ts';
+import { clearMappingCache, lookupAnimeIds, resolveFromTmdb } from './animeMapping.ts';
+import { db } from '../data/db.ts';
 
 const season = (episodes?: number, title = 'S'): AniListSeason => ({
   anilistId: Math.random(),

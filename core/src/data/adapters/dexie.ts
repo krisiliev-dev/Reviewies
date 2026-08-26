@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Database } from '../store';
+import type { Database } from '../store.ts';
 import type {
   CachedEpisode,
   CachedProviders,
@@ -9,7 +9,7 @@ import type {
   Reaction,
   WatchEvent,
   WatchlistItem,
-} from '../../domain/types';
+} from '../../domain/types.ts';
 
 /**
  * IndexedDB implementation of the core's `Database`.

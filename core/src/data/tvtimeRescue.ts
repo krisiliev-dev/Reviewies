@@ -1,7 +1,7 @@
-import { db } from './db';
-import { enqueueAll } from '../sync/engine';
-import { makeId } from '../domain/types';
-import { parseCsv } from './transfer';
+import { db } from './db.ts';
+import { enqueueAll } from '../sync/engine.ts';
+import { makeId } from '../domain/types.ts';
+import { parseCsv } from './transfer.ts';
 import type {
   CachedEpisode,
   CachedTitle,
@@ -10,7 +10,7 @@ import type {
   Rating,
   WatchEvent,
   WatchlistItem,
-} from '../domain/types';
+} from '../domain/types.ts';
 
 /**
  * Import from the TV Time rescue tool.

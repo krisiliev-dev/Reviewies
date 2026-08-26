@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
+import { db } from './db.ts';
 import {
   acceptMatch,
   runMatching,
@@ -9,11 +9,11 @@ import {
   scoreCandidate,
   similarity,
   unmatchedTitles,
-} from './reconcile';
-import { importRescueCsv } from './tvtimeRescue';
-import { DEFAULT_LOOKUP } from './reconcile';
-import { getEpisodesCached } from '../metadata/index';
-import type { MatchCandidate } from './reconcile';
+} from './reconcile.ts';
+import { importRescueCsv } from './tvtimeRescue.ts';
+import { DEFAULT_LOOKUP } from './reconcile.ts';
+import { getEpisodesCached } from '../metadata/index.ts';
+import type { MatchCandidate } from './reconcile.ts';
 
 /**
  * Matching an imported history to the provider.

@@ -1,8 +1,8 @@
-import { getSession } from '../sync/auth';
-import { addToList, createList, fetchLists } from './lists';
-import { findByHandle, follow } from './people';
-import type { AccountExport } from './exportAccount';
-import type { MediaKind } from '../domain/types';
+import { getSession } from '../sync/auth.ts';
+import { addToList, createList, fetchLists } from './lists.ts';
+import { findByHandle, follow } from './people.ts';
+import type { AccountExport } from './exportAccount.ts';
+import type { MediaKind } from '../domain/types.ts';
 
 /**
  * Put back the half of an export that does not live on the device.

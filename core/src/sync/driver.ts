@@ -1,8 +1,8 @@
-import { readPreference, writePreference } from '../data/storage';
-import { ensureProfile, getSession, onAuthChange, syncConfigured } from './auth';
-import { onEnqueue, pendingCount, resetSyncState, syncOnce, type SyncResult } from './engine';
-import { SupabaseBackend } from './supabaseBackend';
-import type { SyncBackend } from './types';
+import { readPreference, writePreference } from '../data/storage.ts';
+import { ensureProfile, getSession, onAuthChange, syncConfigured } from './auth.ts';
+import { onEnqueue, pendingCount, resetSyncState, syncOnce, type SyncResult } from './engine.ts';
+import { SupabaseBackend } from './supabaseBackend.ts';
+import type { SyncBackend } from './types.ts';
 
 /**
  * The thing that actually runs sync.

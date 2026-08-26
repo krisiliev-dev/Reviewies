@@ -1,6 +1,6 @@
-import { makeId } from '../domain/types';
-import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
-import type { MetadataProvider, SearchResult } from './provider';
+import { makeId } from '../domain/types.ts';
+import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types.ts';
+import type { MetadataProvider, SearchResult } from './provider.ts';
 
 /**
  * Offline provider used when no TMDB token is configured.

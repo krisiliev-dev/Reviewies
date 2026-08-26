@@ -5,7 +5,7 @@ import {
   summariseWarnings,
   warningLabel,
   type WarningVotes,
-} from './contentWarnings';
+} from './contentWarnings.ts';
 
 const votes = (warning: string, yesVotes: number, noVotes: number): WarningVotes => ({
   warning,

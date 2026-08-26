@@ -1,5 +1,5 @@
-import type { Database, Query, Table, WhereClause } from '../store';
-import { TABLES, createTableSql, quote, type TableSpec } from './schema';
+import type { Database, Query, Table, WhereClause } from '../store.ts';
+import { TABLES, createTableSql, quote, type TableSpec } from './schema.ts';
 
 /**
  * SQLite implementation of the core's `Database`.

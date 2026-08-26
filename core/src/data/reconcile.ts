@@ -1,9 +1,9 @@
-import { db } from './db';
-import { enqueue } from '../sync/engine';
-import { provider } from '../metadata/index';
-import { getEpisodesCached, getTitleCached } from '../metadata/index';
-import type { SearchResult } from '../metadata/provider';
-import type { CachedEpisode, CachedTitle, InternalId, MediaKind } from '../domain/types';
+import { db } from './db.ts';
+import { enqueue } from '../sync/engine.ts';
+import { provider } from '../metadata/index.ts';
+import { getEpisodesCached, getTitleCached } from '../metadata/index.ts';
+import type { SearchResult } from '../metadata/provider.ts';
+import type { CachedEpisode, CachedTitle, InternalId, MediaKind } from '../domain/types.ts';
 
 /**
  * Matching an imported history to the metadata provider.

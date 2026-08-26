@@ -1,12 +1,12 @@
-import { db } from './db';
-import { enqueue } from '../sync/engine';
+import { db } from './db.ts';
+import { enqueue } from '../sync/engine.ts';
 import type {
   CachedEpisode,
   InternalId,
   LibraryStatus,
   MediaKind,
   WatchEvent,
-} from '../domain/types';
+} from '../domain/types.ts';
 
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;

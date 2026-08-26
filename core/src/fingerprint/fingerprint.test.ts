@@ -11,7 +11,7 @@ import {
   matchSample,
   packHash,
   serialiseReference,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 /**
  * Synthetic audio, deterministic so the tests do not flake.
@@ -250,7 +250,7 @@ describe('frame conversion', () => {
 
 describe('capture configuration', () => {
   it('uses a hop and FFT size consistent with the sizing work', async () => {
-    const { FFT_SIZE, HOP_SIZE, CAPTURE_MS } = await import('./fingerprint');
+    const { FFT_SIZE, HOP_SIZE, CAPTURE_MS } = await import('./fingerprint.ts');
     expect(FFT_SIZE).toBe(2048);
     expect(HOP_SIZE).toBe(512);
     // Long enough to be distinctive, short enough not to feel like surveillance.
@@ -262,33 +262,33 @@ describe('capture configuration', () => {
 
 describe('reference transport encoding', () => {
   it('round-trips hashes through base64', async () => {
-    const { encodeHashes, decodeHashes } = await import('./references');
+    const { encodeHashes, decodeHashes } = await import('./references.ts');
     const original = Uint32Array.from([1, 2, 4_294_967_295, 0, 12345]);
     expect(Array.from(decodeHashes(encodeHashes(original)))).toEqual(Array.from(original));
   });
 
   it('handles a large payload without overflowing the stack', async () => {
     // A megabyte spread into String.fromCharCode in one call would throw.
-    const { encodeHashes, decodeHashes } = await import('./references');
+    const { encodeHashes, decodeHashes } = await import('./references.ts');
     const big = Uint32Array.from({ length: 200_000 }, (_, i) => i);
     expect(decodeHashes(encodeHashes(big)).length).toBe(big.length);
   });
 
   it('handles an empty array', async () => {
-    const { encodeHashes, decodeHashes } = await import('./references');
+    const { encodeHashes, decodeHashes } = await import('./references.ts');
     expect(decodeHashes(encodeHashes(new Uint32Array(0))).length).toBe(0);
   });
 
   it('truncates a misaligned payload rather than misreading it', async () => {
     // Uint32Array needs 4-byte alignment; a truncated transfer must not be read
     // as wildly wrong numbers.
-    const { decodeHashes } = await import('./references');
+    const { decodeHashes } = await import('./references.ts');
     const misaligned = btoa('abcdefg'); // 7 bytes
     expect(decodeHashes(misaligned).length).toBe(1);
   });
 
   it('survives a round trip into a usable reference', async () => {
-    const { encodeHashes, decodeHashes } = await import('./references');
+    const { encodeHashes, decodeHashes } = await import('./references.ts');
     const episode = makeSpectrogram(300, 21);
     const packed = serialiseReference(buildReference(fingerprint(episode)));
     const restored = deserialiseReference(decodeHashes(encodeHashes(packed)));

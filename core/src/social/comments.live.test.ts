@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { getClient, signIn, signOut } from '../sync/auth';
-import { fetchComments, postComment } from './comments';
+import { getConfig } from '../config.ts';
+import { getClient, signIn, signOut } from '../sync/auth.ts';
+import { fetchComments, postComment } from './comments.ts';
 
 /**
  * Live comment tests against the real project.

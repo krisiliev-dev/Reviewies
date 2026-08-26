@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatTimecode, usePlaybackClock } from './usePlaybackClock';
+import { formatTimecode, usePlaybackClock } from './usePlaybackClock.ts';
 
 describe('formatTimecode', () => {
   it('formats under an hour as m:ss', () => {

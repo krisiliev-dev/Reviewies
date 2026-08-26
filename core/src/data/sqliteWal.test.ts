@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyWal, databasePageSize, walChecksum } from './sqliteWal';
+import { applyWal, databasePageSize, walChecksum } from './sqliteWal.ts';
 
 /**
  * These run against write-ahead logs produced by real SQLite, not hand-built bytes.

@@ -35,7 +35,7 @@ import {
   type FingerprintOptions,
   type Hash,
   type Peak,
-} from './fingerprint';
+} from './fingerprint.ts';
 
 /** The default fanout window, which sets how far behind the flush point trails. */
 const DEFAULT_FANOUT_FRAMES = 24;

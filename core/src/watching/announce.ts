@@ -1,4 +1,4 @@
-import { EMOJI_PAD, bare, searchEmoji } from './emoji';
+import { EMOJI_PAD, bare, searchEmoji } from './emoji.ts';
 
 /**
  * What the reaction stream says out loud.

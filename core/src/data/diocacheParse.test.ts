@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseDioCache } from './diocacheParse';
+import { parseDioCache } from './diocacheParse.ts';
 
 /**
  * Fixtures mirror the response shapes documented by the rescue tool's own test file

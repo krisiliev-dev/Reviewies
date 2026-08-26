@@ -22,8 +22,8 @@
  *  - framing, which carries `fftSize - hopSize` samples of overlap between frames.
  */
 
-import { FFT_SIZE, HOP_SIZE, SAMPLE_RATE } from './fingerprint';
-import { frameMagnitudes } from './spectrogram';
+import { FFT_SIZE, HOP_SIZE, SAMPLE_RATE } from './fingerprint.ts';
+import { frameMagnitudes } from './spectrogram.ts';
 
 /**
  * Collapse interleaved channels to mono by averaging.

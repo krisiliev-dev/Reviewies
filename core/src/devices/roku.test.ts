@@ -6,8 +6,8 @@ import {
   parseSsdpLocations,
   RokuAdapter,
   type RokuTransport,
-} from './roku';
-import type { Device } from './types';
+} from './roku.ts';
+import type { Device } from './types.ts';
 
 const PLAYING = `<?xml version="1.0"?>
 <player error="false" state="play">

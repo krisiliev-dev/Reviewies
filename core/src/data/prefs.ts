@@ -1,4 +1,4 @@
-import { readPreference, writePreference } from './storage';
+import { readPreference, writePreference } from './storage.ts';
 
 /**
  * Small on-device preferences.

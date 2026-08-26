@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from './db';
-import { importDioLibrary } from './diocache';
-import type { DioLibrary } from './diocacheParse';
+import { db } from './db.ts';
+import { importDioLibrary } from './diocache.ts';
+import type { DioLibrary } from './diocacheParse.ts';
 
 const empty = (over: Partial<DioLibrary> = {}): DioLibrary => ({
   movies: [],
@@ -52,7 +52,7 @@ describe('films', () => {
 
   it('agrees with the CSV importer on IDs, so the two do not double up', async () => {
     // Someone may recover both the rescue tool's CSVs and the raw cache.
-    const { importRescueCsv } = await import('./tvtimeRescue');
+    const { importRescueCsv } = await import('./tvtimeRescue.ts');
     await importDioLibrary(empty({ movies: [film] }));
     await importRescueCsv(
       'title,year,genres,watched,watch_later,watched_at,rewatch_count,rating,runtime_min,imdb_id,overview\n' +

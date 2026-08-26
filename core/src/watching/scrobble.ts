@@ -1,8 +1,8 @@
-import { db } from '../data/db';
-import { markWatched, watchedEpisodeIds } from '../data/repo';
-import { normaliseName, similarity } from '../data/reconcile';
-import { getEpisodesCached } from '../metadata';
-import type { CachedEpisode, InternalId } from '../domain/types';
+import { db } from '../data/db.ts';
+import { markWatched, watchedEpisodeIds } from '../data/repo.ts';
+import { normaliseName, similarity } from '../data/reconcile.ts';
+import { getEpisodesCached } from '../metadata/index.ts';
+import type { CachedEpisode, InternalId } from '../domain/types.ts';
 
 /**
  * Marking an episode watched because a browser extension saw you finish it.

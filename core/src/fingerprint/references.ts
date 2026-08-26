@@ -1,6 +1,6 @@
-import { getClient, getSession } from '../sync/auth';
-import { deserialiseReference, type Reference } from './fingerprint';
-import { decodeHashes, encodeHashes } from './wire';
+import { getClient, getSession } from '../sync/auth.ts';
+import { deserialiseReference, type Reference } from './fingerprint.ts';
+import { decodeHashes, encodeHashes } from './wire.ts';
 
 // Re-exported because callers have always imported them from here, and the split is an
 // implementation detail of where the code can run rather than a change to the API.

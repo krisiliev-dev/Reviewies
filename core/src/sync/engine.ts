@@ -1,5 +1,5 @@
-import { db } from '../data/db';
-import { type Change, type SyncBackend, SyncError, type SyncTable } from './types';
+import { db } from '../data/db.ts';
+import { type Change, type SyncBackend, SyncError, type SyncTable } from './types.ts';
 
 /**
  * Offline-first sync engine.
@@ -32,8 +32,8 @@ export interface SyncMeta {
  * were always written together — and it made the engine depend on a browser database
  * directly, which is exactly what stops the core running on a phone.
  */
-const outbox = () => db.outbox as unknown as import('../data/store').Table<OutboxEntry>;
-const meta = () => db.syncState as unknown as import('../data/store').Table<SyncMeta>;
+const outbox = () => db.outbox as unknown as import('../data/store.ts').Table<OutboxEntry>;
+const meta = () => db.syncState as unknown as import('../data/store.ts').Table<SyncMeta>;
 
 const PK_FIELDS: Record<SyncTable, string[]> = {
   watches: ['id'],

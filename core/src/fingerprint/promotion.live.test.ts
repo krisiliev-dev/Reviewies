@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { getConfig } from '../config';
-import { signIn, signOut } from '../sync/auth';
-import { spectrogramFromPcm } from './spectrogram';
-import { ContributionRecorder } from './contribute';
-import { SAMPLE_RATE } from './fingerprint';
-import { contributeReference, fetchReference } from './references';
+import { getConfig } from '../config.ts';
+import { signIn, signOut } from '../sync/auth.ts';
+import { spectrogramFromPcm } from './spectrogram.ts';
+import { ContributionRecorder } from './contribute.ts';
+import { SAMPLE_RATE } from './fingerprint.ts';
+import { contributeReference, fetchReference } from './references.ts';
 
 /**
  * Cross-validation, end to end, against the deployed project.

@@ -1,4 +1,4 @@
-import type { Database } from './store';
+import type { Database } from './store.ts';
 
 /**
  * The database the core writes to, bound at startup by whichever app is running.

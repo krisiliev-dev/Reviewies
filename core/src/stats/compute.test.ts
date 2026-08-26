@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../data/db';
+import { db } from '../data/db.ts';
 import {
   availableYears,
   formatDuration,
@@ -7,8 +7,8 @@ import {
   longestStreak,
   summarise,
   windowStart,
-} from './compute';
-import type { WatchEvent } from '../domain/types';
+} from './compute.ts';
+import type { WatchEvent } from '../domain/types.ts';
 
 const DAY = 86_400_000;
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { agreesWith, chooseReference, type Contribution } from './agreement';
-import { ContributionRecorder } from './contribute';
-import { spectrogramFromPcm } from './spectrogram';
-import { HOP_SIZE, SAMPLE_RATE } from './fingerprint';
+import { agreesWith, chooseReference, type Contribution } from './agreement.ts';
+import { ContributionRecorder } from './contribute.ts';
+import { spectrogramFromPcm } from './spectrogram.ts';
+import { HOP_SIZE, SAMPLE_RATE } from './fingerprint.ts';
 
 /** Audio whose spectrum keeps changing, so any stretch is distinguishable. */
 function episode(seconds: number, seed: number, rate = SAMPLE_RATE): Float32Array {

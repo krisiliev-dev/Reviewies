@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { onFailure, reportFailure, resetFailures } from './failure';
+import { onFailure, reportFailure, resetFailures } from './failure.ts';
 
 /**
  * The bus, and the window before anybody is listening.

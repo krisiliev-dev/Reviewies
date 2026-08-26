@@ -1,12 +1,12 @@
-import { db } from '../data/db';
-import { getConfig } from '../config';
-import { isStale } from '../domain/types';
-import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types';
-import { FixtureProvider } from './fixtures';
-import type { MetadataProvider } from './provider';
-import { TmdbProvider } from './tmdb';
-import { getSeasonChain, splitIntoSeasons } from './anilist';
-import { resolveFromTmdb } from './animeMapping';
+import { db } from '../data/db.ts';
+import { getConfig } from '../config.ts';
+import { isStale } from '../domain/types.ts';
+import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types.ts';
+import { FixtureProvider } from './fixtures.ts';
+import type { MetadataProvider } from './provider.ts';
+import { TmdbProvider } from './tmdb.ts';
+import { getSeasonChain, splitIntoSeasons } from './anilist.ts';
+import { resolveFromTmdb } from './animeMapping.ts';
 
 /**
  * Picks the provider once, at startup. Without a token the app runs on fixtures
@@ -217,4 +217,4 @@ export async function expireMetadata(now = Date.now()): Promise<number> {
   return titles.length + episodes.length + providers.length;
 }
 
-export * from './provider';
+export * from './provider.ts';

@@ -1,7 +1,7 @@
 import { unzipSync } from 'fflate';
-import { importBundle, importWatchHistoryCsv, parseCsv, type ImportReport } from './transfer';
-import { detectRescueFile, importRescueCsv, stripBom } from './tvtimeRescue';
-import { importDioCache } from './diocache';
+import { importBundle, importWatchHistoryCsv, parseCsv, type ImportReport } from './transfer.ts';
+import { detectRescueFile, importRescueCsv, stripBom } from './tvtimeRescue.ts';
+import { importDioCache } from './diocache.ts';
 
 /**
  * Import a whole archive: a TV Time GDPR zip, or a folder of recovered files.

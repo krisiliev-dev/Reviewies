@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { longestStreak } from './compute';
+import { longestStreak } from './compute.ts';
 
 /**
  * Stats as seen from somewhere that is not Greenwich.
@@ -28,8 +28,8 @@ describe('watching in the evening in New York', () => {
   });
 
   it('files an evening under the day it actually was', async () => {
-    const { getSummary } = await import('./compute');
-    const { db } = await import('../data/db');
+    const { getSummary } = await import('./compute.ts');
+    const { db } = await import('../data/db.ts');
 
     await db.watches.clear();
     // 8pm on a Monday in New York. In UTC this is 1am on the Tuesday.
@@ -51,8 +51,8 @@ describe('watching in the evening in New York', () => {
   it('counts an evening and the next morning as two days, not one', async () => {
     // The streak bug. Both of these are 1am UTC on consecutive days plus a morning, so
     // in UTC the Monday evening and the Tuesday morning share a date.
-    const { getSummary } = await import('./compute');
-    const { db } = await import('../data/db');
+    const { getSummary } = await import('./compute.ts');
+    const { db } = await import('../data/db.ts');
 
     await db.watches.clear();
     const times = [
@@ -75,8 +75,8 @@ describe('watching in the evening in New York', () => {
   });
 
   it('keeps New Year’s Eve in the year the viewer watched it', async () => {
-    const { getSummary } = await import('./compute');
-    const { db } = await import('../data/db');
+    const { getSummary } = await import('./compute.ts');
+    const { db } = await import('../data/db.ts');
 
     await db.watches.clear();
     // 8pm on 31 December in New York is 1am on 1 January in UTC.
