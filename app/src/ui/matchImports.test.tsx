@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MatchImports } from './MatchImports';
+import { MatchImports, resetAutoMatch } from './MatchImports';
 import type { Proposal, RunProgress } from '@reviewies/core/data/reconcile';
 
 /**
@@ -25,6 +25,10 @@ const ask = (over: Partial<Proposal> = {}): Proposal => ({
   ...over,
 });
 
+// Each case is a fresh launch. Auto-matching runs once per session by design, so
+// without this the second test in the file would silently never start one.
+beforeEach(() => resetAutoMatch());
+
 const progress = (over: Partial<RunProgress> = {}): RunProgress => ({
   done: 3,
   left: 0,
@@ -38,6 +42,7 @@ describe('matching imported shows', () => {
     const user = userEvent.setup();
     render(
       <MatchImports
+        autoStart={false}
         run={async () => progress({ asks: [ask()] })}
         accept={async () => ({ watches: 0, ratings: 0, episodesMapped: 0, orphanedWatches: 0 })}
       />,
@@ -62,7 +67,7 @@ describe('matching imported shows', () => {
       orphanedWatches: 0,
     }));
 
-    render(<MatchImports run={async () => progress({ asks: [ask()] })} accept={accept} />);
+    render(<MatchImports autoStart={false} run={async () => progress({ asks: [ask()] })} accept={accept} />);
     await user.click(screen.getByRole('button', { name: 'Match imported shows' }));
 
     // The second one. Picking the first would pass this test if the component ignored
@@ -82,7 +87,7 @@ describe('matching imported shows', () => {
       orphanedWatches: 0,
     }));
 
-    render(<MatchImports run={async () => progress({ asks: [ask()] })} accept={accept} />);
+    render(<MatchImports autoStart={false} run={async () => progress({ asks: [ask()] })} accept={accept} />);
     await user.click(screen.getByRole('button', { name: 'Match imported shows' }));
     await user.click(await screen.findByRole('button', { name: 'Leave The Office unmatched' }));
 
@@ -98,6 +103,7 @@ describe('matching imported shows', () => {
 
     render(
       <MatchImports
+        autoStart={false}
         run={async (options) => {
           report = options?.onProgress;
           // Held open so the running state can be looked at.
@@ -121,6 +127,7 @@ describe('matching imported shows', () => {
     const user = userEvent.setup();
     render(
       <MatchImports
+        autoStart={false}
         run={async () => {
           throw new Error('provider said no');
         }}
@@ -134,5 +141,48 @@ describe('matching imported shows', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Match imported shows' })).toBeInTheDocument(),
     );
+  });
+
+  it('starts itself, so an import is not followed by a chore', async () => {
+    // Doc 10 §4: the first thing somebody saw after importing years of history was an
+    // empty screen and a button. Importing is already a deliberate act.
+    const run = vi.fn(async () => progress({ asks: [] }));
+    render(<MatchImports run={run} />);
+
+    // Nothing was clicked. That is the whole assertion: the run happened because an
+    // import happened, not because somebody was handed a task.
+    await waitFor(() => expect(run).toHaveBeenCalled());
+  });
+
+  it('only starts once, however many times it is mounted', async () => {
+    // Up Next mounts this on every visit while anything is unmatched, and matching is a
+    // request per show.
+    const run = vi.fn(async () => progress({ asks: [] }));
+    const first = render(<MatchImports run={run} />);
+    await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+    first.unmount();
+
+    render(<MatchImports run={run} />);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not claim there is a choice when there is nothing to choose', async () => {
+    // Doc 10 §5. "More than one show could be this" above an empty list, whose only
+    // control is "None of these", is the opposite of the truth and an offer to give up.
+    render(
+      <MatchImports
+        autoStart={false}
+        run={async () => progress({ asks: [ask({ candidates: [] })] })}
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Match imported shows' }));
+
+    expect(await screen.findByText(/Nothing came back under that name/)).toBeTruthy();
+    expect(screen.queryByText('More than one show could be this.', { exact: false })).toBeNull();
+    // And something to do about it.
+    expect(
+      screen.getByRole('textbox', { name: /Search for the show The Office really is/ }),
+    ).toBeTruthy();
   });
 });

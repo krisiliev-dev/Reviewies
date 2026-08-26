@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   acceptMatch,
   runMatching,
   type Proposal,
   type RunProgress,
 } from '@reviewies/core/data/reconcile';
+import { getProvider, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from './Poster';
 
 /**
@@ -19,9 +20,32 @@ import { Poster } from './Poster';
  * there is no way for them to notice. So the run takes only what it is sure of and
  * leaves the rest here as questions — and the questions are shown as a choice with
  * posters and years, not as a yes/no on a name.
+ *
+ * It starts itself, since doc 10 §4. The button was the first thing somebody saw after
+ * importing years of history: an empty Up Next, and a chore. Importing is already a
+ * deliberate act and matching is the rest of it, so it follows without being asked, and
+ * the only thing that reaches the person is what genuinely could not be decided.
  */
+/**
+ * Once per session, not once per visit.
+ *
+ * Up Next mounts this whenever anything is unmatched, and that includes every time
+ * somebody returns to the tab. Matching asks the provider once per show, so re-running
+ * it on each visit would be a burst of requests to answer a question already answered.
+ * Module scope rather than component state because remounting is exactly what has to
+ * stop mattering.
+ */
+let startedThisSession = false;
+
+/** Only for tests, which need each case to look like a fresh launch. */
+export function resetAutoMatch(): void {
+  startedThisSession = false;
+}
+
 export function MatchImports({
   onDone,
+  /** Off for the panel shown right after an import, which explains itself first. */
+  autoStart = true,
   /**
    * The two things this screen does, injectable for the same reason the core's are:
    * their real implementations talk to the provider, and this component's whole job is
@@ -32,6 +56,7 @@ export function MatchImports({
   accept = acceptMatch,
 }: {
   onDone?: () => void;
+  autoStart?: boolean;
   run?: typeof runMatching;
   accept?: typeof acceptMatch;
 }) {
@@ -39,6 +64,14 @@ export function MatchImports({
   const [running, setRunning] = useState(false);
   const [asks, setAsks] = useState<Proposal[]>([]);
   const [error, setError] = useState<string>();
+
+  const startRef = useRef<() => Promise<void>>(undefined);
+
+  useEffect(() => {
+    if (!autoStart || startedThisSession) return;
+    startedThisSession = true;
+    void startRef.current?.();
+  }, [autoStart]);
 
   async function start() {
     setRunning(true);
@@ -61,6 +94,8 @@ export function MatchImports({
       onDone?.();
     }
   }
+
+  startRef.current = start;
 
   async function choose(proposal: Proposal, providerId: string) {
     await accept(proposal.localId, providerId);
@@ -106,11 +141,26 @@ export function MatchImports({
           <p className="font-medium">{ask.name}</p>
           {/* Said plainly, because the honest reason to ask is not "we failed" — it is
               that more than one answer looked right, and picking one would be a guess
-              about somebody's history. */}
-          <p className="mb-2 text-sm text-muted">
-            More than one show could be this. Picking the wrong one would move your
-            history onto it.
-          </p>
+              about somebody's history.
+              …unless there is nothing to choose between, which is a different sentence
+              and used to be this one. A screen saying "more than one show could be this"
+              above an empty list, whose only control is "None of these", tells somebody
+              the opposite of the truth and then offers them nothing but giving up.
+              Doc 10 §5. */}
+          {ask.candidates.length > 0 ? (
+            <p className="mb-2 text-sm text-muted">
+              More than one show could be this. Picking the wrong one would move your
+              history onto it.
+            </p>
+          ) : (
+            <>
+              <p className="mb-2 text-sm text-muted">
+                Nothing came back under that name — it may be listed differently, or be a
+                show the provider has never had. You know what it is; search for it.
+              </p>
+              <FindIt ask={ask} onChosen={(id) => void choose(ask, id)} />
+            </>
+          )}
           <ul className="flex flex-col gap-1.5">
             {ask.candidates.map((candidate) => (
               <li key={candidate.id}>
@@ -139,10 +189,104 @@ export function MatchImports({
             aria-label={`Leave ${ask.name} unmatched`}
             className="tap mt-2 text-xs text-muted underline"
           >
-            None of these
+            {ask.candidates.length > 0 ? 'None of these' : 'Leave it for now'}
           </button>
         </div>
       ))}
     </section>
+  );
+}
+
+/**
+ * Search for the show yourself, when the matcher had nothing.
+ *
+ * The person knows what they watched; the matcher only had a string from an export that
+ * may have been spelled differently, localised, or belong to a show no provider carries.
+ * Asking them is better than the alternative, which was telling them to give up.
+ *
+ * The same shape as the candidates above on purpose — poster, name, year — because it is
+ * the same decision, and choosing here writes the same irreversible match.
+ */
+function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: string) => void }) {
+  const [query, setQuery] = useState(ask.name);
+  const [results, setResults] = useState<SearchResult[]>();
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string>();
+
+  async function look() {
+    if (!query.trim()) return;
+    setBusy(true);
+    setFailed(undefined);
+    try {
+      setResults(await getProvider().search(query.trim()));
+    } catch (e) {
+      // Said rather than swallowed: an empty list and a failed request look identical,
+      // and one of them is worth trying again.
+      setFailed(e instanceof Error ? e.message : 'Could not reach the metadata provider');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mb-2 flex flex-col gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void look();
+        }}
+        className="flex gap-1.5"
+      >
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label={`Search for the show ${ask.name} really is`}
+          placeholder="Search by name"
+          className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm outline-none placeholder:text-muted"
+        />
+        <button
+          type="submit"
+          disabled={busy || !query.trim()}
+          className="rounded-xl bg-accent px-3 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+        >
+          {busy ? 'Looking…' : 'Search'}
+        </button>
+      </form>
+
+      {failed && (
+        <p className="text-xs text-accent" role="status">
+          {failed}
+        </p>
+      )}
+
+      {results?.length === 0 && !failed && (
+        <p className="text-xs text-muted">
+          Nothing under that name either. Leaving it unmatched keeps your watches — it
+          just has no episode list.
+        </p>
+      )}
+
+      <ul className="flex flex-col gap-1.5">
+        {results?.map((result) => (
+          <li key={result.id}>
+            <button
+              onClick={() => onChosen(result.id)}
+              aria-label={`${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`}
+              className="flex w-full items-center gap-2.5 rounded-xl bg-surface-2 p-2 text-left"
+            >
+              <Poster
+                url={result.posterUrl}
+                name={result.name}
+                className="h-14 w-10 shrink-0 rounded-md"
+              />
+              <span className="min-w-0">
+                <span className="block truncate text-sm">{result.name}</span>
+                <span className="block text-xs text-muted">{result.year ?? 'Year unknown'}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

@@ -2305,6 +2305,59 @@ proxy, while Node does. So the browser suites can only be run against a credenti
 build from here, and real-world search, matching and where-to-watch quality could not be
 judged in the app at all. That is in §7 rather than glossed.
 
+### 6.48 Four of doc 10, in the order that mattered
+
+§6.47 fixed the two worst things the evening found. These are the next four, taken in the
+order the list gives — what would make somebody stop using it, rather than what was easy.
+
+**The import no longer hands you a chore.** After importing years of TV Time history the
+app said *"Nothing here yet. 4 shows came from an import and have no episode lists until
+they are matched"* and gave you a button. An empty screen and a task, at the single most
+important moment in the product. Matching now follows the import without being asked —
+once per session, because Up Next mounts the panel on every visit and matching is a
+request per show — and the screen says what is happening rather than what is missing:
+*"Bringing in 4 shows from your import. Episodes appear as each one is found."*
+
+The panel shown immediately after an import deliberately does *not* auto-start: it has
+just finished explaining what matching is for, and starting underneath that explanation
+would be talking over itself.
+
+**And an ask with nothing to choose from says so.** When the matcher had no candidates at
+all the screen still read *"More than one show could be this. Picking the wrong one would
+move your history onto it"* above an empty list, with **None of these** as the only
+control. The opposite of the truth, and an offer to give up. It now says the name came
+back with nothing and gives a search box seeded with it, because the person knows what
+they watched and the matcher only had a string from an export. Choosing from that search
+writes the same match as choosing a candidate, so the safety property is unchanged: no
+guess is ever made on somebody's behalf.
+
+**Your own reaction is visible.** The stream shows reactions whose timestamp falls in
+`(last tick, now]`, and a reaction you have just left is stamped at exactly `now` — so by
+the next tick the window has moved past it and it never flew. Tapping an emoji stored a
+reaction and changed nothing, which is indistinguishable from a tap that missed, in the
+feature the product is built on. Yours flies immediately now, not subject to density and
+not held by the pause: thinning the crowd is about other people and holding the stream
+still is about the drift. Two things that had to be got right with it — everything already
+on screen when you arrive is primed as history, or re-entering an episode would empty
+every past reaction of yours across it at once; and the window path skips anything the own
+path has already flown, or the same reaction crosses twice.
+
+**Search gives up rather than saying "Searching…" for ever.** A request that hangs never
+rejects, so the error state below it could not be reached by the failure people actually
+meet. Ten seconds, then a sentence and a **Try again** — because a message with no action
+is only a nicer way of being stuck. An abort the app asked for is told apart from an abort
+caused by somebody typing again, which is not a failure and says nothing.
+
+Left alone on purpose: doc 10 §7, that Watching Mode carries more chrome than the brief
+asked for. That is a design judgement about the screen rather than a defect in it, and
+patching it piecemeal would be worse than deciding it properly.
+
+Two suite checks changed rather than being made to pass. The web smoke asserted the old
+copy and the presence of the button; it now asserts the new sentence and the button's
+*absence*, because "gets on with it" is the behaviour. And the matching component's tests
+gained a `resetAutoMatch()` between cases — a once-per-session guard that a suite does not
+reset is a second test silently never starting a run.
+
 ---
 
 ## 7. What is still not known

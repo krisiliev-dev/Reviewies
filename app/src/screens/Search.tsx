@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
@@ -11,6 +11,9 @@ export function Search() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  /** Told apart from an abort caused by typing, which is not a failure. */
+  const timedOut = useRef(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const q = query.trim();
@@ -21,6 +24,23 @@ export function Search() {
     }
 
     const controller = new AbortController();
+    /**
+     * Give up rather than say "Searching…" for ever.
+     *
+     * A request that hangs never rejects, so the error state below could not be reached
+     * by the failure people actually meet — a network that has stopped answering. The
+     * word *Searching…* stayed on screen indefinitely and there was nothing to press.
+     * Doc 10 §6.
+     *
+     * Ten seconds because a search somebody is waiting on has already failed at three,
+     * and because aborting a slow-but-alive request is worse than waiting a moment more.
+     */
+    timedOut.current = false;
+    const giveUp = setTimeout(() => {
+      timedOut.current = true;
+      controller.abort('timeout');
+    }, 10_000);
+
     // Debounced so typing doesn't fire a request per keystroke.
     const timer = setTimeout(async () => {
       setBusy(true);
@@ -28,8 +48,16 @@ export function Search() {
       try {
         setResults(await getProvider().search(q, controller.signal));
       } catch (e) {
-        if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'Search failed');
+        // An abort we asked for is a timeout and has to be said; an abort from the
+        // cleanup below is somebody typing again, and says nothing.
+        if (timedOut.current) {
+          setError('That took too long. Check your connection and try again.');
+          setBusy(false);
+        } else if (!controller.signal.aborted) {
+          setError(e instanceof Error ? e.message : 'Search failed');
+        }
       } finally {
+        clearTimeout(giveUp);
         if (!controller.signal.aborted) setBusy(false);
       }
     }, 300);
@@ -37,8 +65,9 @@ export function Search() {
     return () => {
       controller.abort();
       clearTimeout(timer);
+      clearTimeout(giveUp);
     };
-  }, [query]);
+  }, [query, attempt]);
 
   return (
     <div className="p-4">
@@ -52,7 +81,21 @@ export function Search() {
       />
 
       {busy && <p className="mt-4 px-1 text-sm text-muted">Searching…</p>}
-      {error && <p className="mt-4 px-1 text-sm text-accent">{error}</p>}
+      {error && (
+        <div className="mt-4 flex flex-col items-start gap-2 px-1">
+          <p className="text-sm text-accent" role="status">
+            {error}
+          </p>
+          {/* Something to press. A message with no action is only a nicer way of being
+              stuck, which is what "Searching…" for ever already was. */}
+          <button
+            onClick={() => setAttempt((n) => n + 1)}
+            className="rounded-full bg-surface-2 px-4 py-2 text-sm"
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       <ul className="mt-4 flex flex-col gap-2">
         {results.map((r) => (

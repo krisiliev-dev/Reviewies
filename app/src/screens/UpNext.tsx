@@ -70,7 +70,10 @@ export function UpNext() {
           the real shows fills in the artwork, the air dates and everything you have not
           watched yet.
         </p>
-        <MatchImports />
+        {/* Not auto-started here: this panel has just explained what matching is for, and
+            starting it underneath that explanation would talk over itself. The Up Next
+            screen below runs it without asking. */}
+        <MatchImports autoStart={false} />
         <button
           onClick={() => setImported(undefined)}
           className="tap self-start text-sm text-muted underline"
@@ -87,12 +90,15 @@ export function UpNext() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Up Next</h1>
+        {/* "Nothing here yet … until they are matched" plus a button was what somebody
+            saw after importing years of history: an empty screen and a chore. Matching
+            runs itself now, so what this says is what is happening. Doc 10 §4. */}
         <p className="text-muted">
           {unmatched
-            ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched.`
+            ? `Bringing in ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} from your import. Episodes appear as each one is found.`
             : 'All caught up — nothing has aired that you have not seen.'}
         </p>
-        {/* Offered where the gap is felt, not filed under a settings screen. */}
+        {/* Run where the gap is felt, not filed under a settings screen. */}
         {unmatched ? <MatchImports /> : null}
         <Link
           to="/search"

@@ -10,13 +10,15 @@ what did not match, watch two episodes with Watching Mode running, react, step a
 back, catch up a season, rate something, and look at Stats to see whether the evening is
 legible in it. Judged as a product, not as a test.
 
-Ordered by what would make somebody stop using it, not by what is easy.
+Ordered by what would make somebody stop using it, not by what is easy. Six of the eight
+are fixed — §6.47 took the first two, §6.48 the next four. What is left is §7, which is a
+design judgement rather than a defect, and §8, which is small.
 
 ---
 
 ## 1. The provider was chosen before the app was configured — so it was always fixtures
 
-**Fixed in this sprint.** The web app has run on the four-show fixture catalogue for its
+**Fixed in §6.47.** The web app has run on the four-show fixture catalogue for its
 entire life, whatever `VITE_TMDB_TOKEN` held.
 
 `core/src/metadata/index.ts` had `export const provider = createProvider()` at module scope,
@@ -43,7 +45,7 @@ call away, which is the shape this had.
 
 ## 2. Coming back to an episode loses your place
 
-**The sharpest thing in the evening.** Start Watching Mode, get three seconds in, leave —
+**Fixed in §6.47.** The sharpest thing in the evening. Start Watching Mode, get three seconds in, leave —
 and come back to `0:00` and *Start watching*.
 
 `usePlaybackClock` keeps its position in React state and nothing else. The one screen whose
@@ -56,6 +58,9 @@ playing while you were away.
 
 ## 3. A reaction gives you nothing back
 
+**Fixed in §6.48.** Your own reaction flies immediately, whatever the density says and whether or not the stream is held — thinning the crowd is about other people, holding it still is about the drift, and yours is the one you asked for.
+
+
 Tapping an emoji sends it and the screen does not change: no count, no mark, nothing joins
 the stream at the top. Your own reaction is indistinguishable from a tap that missed, in the
 feature the whole product is built around.
@@ -64,6 +69,9 @@ The reaction stream renders other people's. Yours should be the one thing you ar
 landed.
 
 ## 4. After an import, the app hands you a chore
+
+**Fixed in §6.48.** Matching follows the import without being asked, once per session, and Up Next says what is happening instead of what is missing.
+
 
 The most important moment in this product is the one where somebody arrives with years of
 TV Time history. What they get is:
@@ -81,6 +89,9 @@ only what genuinely cannot be resolved should ever become a question.
 
 ## 5. "More than one show could be this" — with nothing to choose from
 
+**Fixed in §6.48.** An empty candidate list says so and offers a search box, since the person knows what the show is.
+
+
 When the matcher cannot resolve a title it renders the ask-flow: the show's name, the
 sentence *"More than one show could be this. Picking the wrong one would move your history
 onto it"*, and a list of candidates. When the candidate list is empty — which is what happens
@@ -91,6 +102,9 @@ So the screen says the opposite of the truth, and the only possible action is to
 a credential-free build, that is every unmatched show.
 
 ## 6. Search says "Searching…" for ever
+
+**Fixed in §6.48.** Ten seconds, then a sentence and a Try again.
+
 
 A request that hangs never becomes an error. `Search.tsx` has an error state and no timeout,
 so a slow or unreachable provider leaves the word *Searching…* on screen indefinitely. This

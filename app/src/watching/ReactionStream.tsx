@@ -70,7 +70,11 @@ export function ReactionStream({
     if (to < from || to - from > 5000) return;
     if (paused) return;
 
-    const due = reactions.filter((r) => r.tMs > from && r.tMs <= to);
+    // Not anything of yours that has already flown on its own account, or the same
+    // reaction crosses the screen twice.
+    const due = reactions.filter(
+      (r) => r.tMs > from && r.tMs <= to && !ownFlown.current.has(r.id),
+    );
     if (due.length === 0) return;
 
     const shown = density >= 1 ? due : due.filter(() => Math.random() < density);
@@ -91,6 +95,44 @@ export function ReactionStream({
       }),
     ]);
   }, [positionMs, reactions, density, paused]);
+
+  /**
+   * Your own reaction, immediately.
+   *
+   * The window above is `(last tick, now]`, and a reaction you have just left is stamped
+   * at exactly `now` — so by the next tick the window has moved past it and it never
+   * flies. Tapping an emoji stored a reaction and changed nothing on screen, which is
+   * indistinguishable from a tap that missed, in the feature the product is built
+   * around. Doc 10 §3.
+   *
+   * Not subject to density and not skipped while held: thinning the crowd is about other
+   * people, and holding the stream still is about the drift. Yours is the one thing you
+   * asked for.
+   */
+  const ownFlown = useRef(new Set<string>());
+  const primed = useRef(false);
+  useEffect(() => {
+    // Everything already there when this screen opened is history, not something you
+    // just did. Without this, re-entering an episode you have reacted to before would
+    // empty every one of your past reactions across the screen at once.
+    if (!primed.current) {
+      primed.current = true;
+      for (const r of reactions) if (r.mine) ownFlown.current.add(r.id);
+      return;
+    }
+
+    const fresh = reactions.filter((r) => r.mine && !ownFlown.current.has(r.id));
+    if (fresh.length === 0) return;
+    for (const r of fresh) ownFlown.current.add(r.id);
+
+    setFlying((current) => [
+      ...current,
+      ...fresh.map((r) => {
+        lane.current = (lane.current + 1) % LANES;
+        return { key: `${r.id}-own-${seq.current++}`, emoji: r.emoji, lane: lane.current, mine: true };
+      }),
+    ]);
+  }, [reactions]);
 
   /**
    * Speak at most one summary per window, and only while the stream is moving.

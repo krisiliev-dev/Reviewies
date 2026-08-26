@@ -1221,13 +1221,17 @@ try {
     const quiet = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
     check(
       'Up Next explains its own silence rather than claiming you are caught up',
-      /no episode lists until they are matched/.test(quiet),
+      /Bringing in \d+ shows? from your import/.test(quiet),
       quiet.slice(0, 130),
     );
-    // Offered where the gap is felt, not filed under a settings screen.
+    // Doc 10 §4: this used to say the shows "have no episode lists until they are
+    // matched" above a button. An empty screen and a chore, at the moment somebody has
+    // just handed over years of history. It does the work instead, and says so — which
+    // is why what this checks is the absence of the button rather than its presence.
     check(
-      'and offers the fix there too',
-      (await fresh.getByRole('button', { name: 'Match imported shows' }).count()) === 1,
+      'and gets on with it rather than handing over a task',
+      (await fresh.getByRole('button', { name: 'Match imported shows' }).count()) === 0,
+      quiet.slice(0, 130),
     );
 
     await fresh.goto(new URL('stats', BASE + '/').href, { waitUntil: 'networkidle' });
