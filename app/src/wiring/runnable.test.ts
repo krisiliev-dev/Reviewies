@@ -60,6 +60,27 @@ describe('the code nothing else runs', () => {
     }
   });
 
+  it('every relative import a script makes still exists', () => {
+    // Parsing is not enough, and this file said so from the start: the two failures it
+    // names are "it does not parse" and "it imports something that is no longer there".
+    // The second was only ever checked for the edge functions — a script could import a
+    // file that had moved and `node --check` would pass it, which is §6.44's bug exactly.
+    // §6.60 planted one and this suite said nothing.
+    const broken: string[] = [];
+    for (const script of scripts) {
+      const source = readFileSync(script, 'utf8');
+      for (const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g)) {
+        const spec = match[1];
+        const target = resolve(dirname(script), spec);
+        const found = [target, `${target}.mjs`, `${target}.js`, join(target, 'index.mjs')].some(
+          existsSync,
+        );
+        if (!found) broken.push(`${relative(ROOT, script)} → ${spec}`);
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+
   it('every edge function parses', () => {
     // Parsed as TypeScript rather than typechecked: Deno's globals and its jsr:/npm:
     // specifiers are not something tsc can resolve, and pretending otherwise would be a

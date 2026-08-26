@@ -2999,6 +2999,71 @@ where a wrong reason is safe**, because it is surrounded by right ones and nothi
 it a question again. A stale-entry check keeps the list describing the code. Only somebody
 reading it keeps the list *true*.
 
+### 6.60 Planting a violation against every guard
+
+§6.59 found the injection guard watching two accessors that had never existed. It passed
+either way, and read as though it covered three times what it did. Since §6.51 every new
+guard has been proved by planting the bug it exists to catch; the older ones never were,
+and that guard is the evidence the habit arrived too late.
+
+So: nineteen guards, one planted violation each. Backup, mutate, run that suite alone,
+read what it said, restore.
+
+```
+guard             planted                                          verdict
+────────────────────────────────────────────────────────────────────────────
+coreWiring        a core export nothing calls                      caught
+injection         getConfig() at module scope in the core          caught
+nodeResolvable    './types.ts' spelled './types'                   caught
+screenStates      a route added to ROUTES, no states entry         caught
+dials             a socket dialled without role and token          caught
+commands          a README command naming a missing file           caught
+failures          a new catch-returns-empty read, unexplained      caught
+skips             describe.skip added, no SKIPS entry              caught
+columnMap         a mapped column the schema does not have         caught
+backendQueries    a column misspelled in a select                  caught
+docs              an undocumented process.env switch               caught
+schema            a follows policy loosened to `using (true)`      caught
+offers            markWatched removed from the phone's Search      caught
+copy              the phone's stats sentence reworded              caught
+numbers           getUpcoming(60) restored on the web              caught
+openState         the phone's stats window back to '30d'           caught
+failureShown      a backend write returned to Promise<void>        caught
+promises          the export's reactions read replaced with []     MISSED
+runnable          a script importing a file that is not there      MISSED
+```
+
+**`promises` — "Everything, in full".** The test walks the schema's user tables and
+asserts each appears in the export bundle. It asserted the *key*, so a table that was
+fetched and came back empty passed: the sentence "in full" was being held up by
+`Object.keys`. It seeds a row in each table now and asserts the row arrives — which is the
+§6.56 class one layer down, an empty result standing in for one that was never really
+fetched.
+
+**`runnable` — the second failure it names.** Its own doc comment says the two ways this
+code fails are *"it does not parse"* and *"it imports something that is no longer there"*.
+The second was only ever checked for the edge functions. Scripts got `node --check`, which
+parses a broken import perfectly happily — and an unresolvable import in a script is
+precisely §6.44's bug, the one that kept the bridge from starting and was the reason this
+file exists. Scripts get the import-exists check now.
+
+Both repairs were themselves planted against, and both now catch.
+
+**Should the planting be kept?** The obvious idea is a directory of deliberately-broken
+sources the guards are pointed at. I decided against it, and the reason is worth writing
+down rather than the decision: every one of these guards walks the repository, so a fixture
+of broken files needs an exclusion in each of them — and an exclusion is exactly the thing
+this repository keeps finding to have silently widened. The cost is nineteen new blind
+spots to protect a check that runs once. What is worth keeping is the habit and this table:
+a guard written without a planted violation is a guard nobody has read the output of.
+
+Two smaller notes on method. The first pass at the `promises` and `docs` plants tested
+nothing — I mutated something the guard does not look at, which reports as a guard failure
+and is really a bad plant. That distinction is the whole difficulty of this exercise: a
+plant has to be the violation the guard *claims*, not merely a change nearby. And several
+guards fail loudly for reasons other than the plant if you are careless — a mutation that
+breaks parsing makes everything fail, which proves nothing at all.
+
 ---
 
 ## 7. What is still not known

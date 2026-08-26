@@ -48,9 +48,22 @@ describe('"Everything, in full, with no account and no upsell. It is yours."', (
     // If this drops to nothing the assertion below passes vacuously.
     expect(yours.length).toBeGreaterThan(4);
 
+    // A row in each, so "carries" means carries. Checking only for the *key* let an
+    // export that fetched nothing pass: §6.60 replaced one table's read with an empty
+    // array and this assertion did not notice, which is the same shape as an empty state
+    // standing in for a failure (§6.56) one layer down.
+    await db.watches.put({ id: 'p1', targetId: 'tmdb:ep:1', watchedAt: 1 } as never);
+    await db.library.put({ titleId: 'tmdb:1', kind: 'show', status: 'watching', addedAt: 1 } as never);
+    await db.watchlist.put({ titleId: 'tmdb:2', kind: 'film', addedAt: 1 } as never);
+    await db.ratings.put({ targetId: 'tmdb:1', stars: 4, ratedAt: 1 } as never);
+    await db.reactions.put({ id: 'p2', targetId: 'tmdb:ep:1', tMs: 10, emoji: '🙂', createdAt: 1 } as never);
+
     const bundle = await exportAll({ account: async () => undefined });
 
-    for (const table of yours) expect(Object.keys(bundle)).toContain(table);
+    for (const table of yours) {
+      expect(Object.keys(bundle), table).toContain(table);
+      expect((bundle as unknown as Record<string, unknown[]>)[table].length, table).toBeGreaterThan(0);
+    }
   });
 
   it('carries the lists, follows and comments that live on the server', async () => {
