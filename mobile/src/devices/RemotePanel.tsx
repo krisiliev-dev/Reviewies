@@ -109,12 +109,17 @@ export function RemotePanel({ remote }: { remote: Remote }) {
           <Key label="Vol +" name="Volume up" onPress={() => press('volumeUp')} wide />
         </View>
 
+        {/* What somebody standing here needs to know, and nothing else.
+            *
+            * This was a paragraph about adapter architecture — that there is no
+            * vendor-neutral protocol, that every universal remote is a pile of adapters
+            * behind one set of buttons, that Cast and AirPlay need their vendors' SDKs.
+            * All true, and all reasoning about the implementation, in a drawer somebody
+            * opens mid-episode to press pause. The reasons live in doc 6 §2 and doc 9
+            * §1.2 where they belong. Doc 10, second evening. */}
         <Text style={styles.footnote}>
-          Roku over Wi-Fi, and a laptop through the companion bridge. Every device type is
-          its own adapter — there is no vendor-neutral protocol to use instead, which is
-          why every universal remote is a pile of them behind one set of buttons. Cast and
-          AirPlay need their vendors&apos; SDKs and are not built; Bluetooth is not a way
-          to control a television at all.
+          Works with Roku over Wi-Fi, and with a laptop through the companion bridge.
+          Chromecast and AirPlay are not supported.
         </Text>
     </>
   );

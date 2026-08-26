@@ -2358,6 +2358,49 @@ copy and the presence of the button; it now asserts the new sentence and the but
 gained a `resetAutoMatch()` between cases — a once-per-session guard that a suite does not
 reset is a second test silently never starting a run.
 
+### 6.49 A second evening, on the phone
+
+Doc 10 was an evening with the web app. The phone is what this product pivoted to *be*,
+and nobody had sat with it that way — its suite drives it screen by screen, which §6.47
+is the standing proof of not being the same thing. The findings are the second half of
+[doc 10](10-an-evening-with-it.md); three are fixed here.
+
+Two things were checked rather than assumed, because half the fixes above live in code the
+phone does not share. **The resume reached it** — 0:06 out, 0:09 back, *Resume* offered —
+which it should have, being in the core, and now has been seen. **Reactions are visible**,
+because the phone's stream is a different implementation that renders a window *behind* the
+position rather than between ticks, so a reaction stamped at now appears at once. The web's
+bug never existed here.
+
+**Watching Mode had no entry point on Up Next.** The differentiator of the product, on the
+platform the product is now for, was reachable only by opening a show, finding the episode
+in its season list and tapping there. Three taps and a scroll. The web has offered *Watch
+along* in that row since it shipped.
+
+What is worth noticing is why no audit caught it. §6.10 compared the two platforms screen
+by screen and both have the screen. §6.27 compared what each app imports from the core and
+both reach the same code. The difference was neither a screen nor a symbol — it was an
+*offer*, and nothing in this repository looks at those.
+
+**The remote drawer explained itself instead of working.** Opened mid-episode, under the
+keys, a paragraph about how every device type is its own adapter, that there is no
+vendor-neutral protocol, that Cast and AirPlay need their vendors' SDKs. All true, all
+reasoning about the implementation, in a control surface somebody opened to press pause.
+Two lines now — what works, what does not — and the reasons stay in doc 6 §2 and doc 9
+§1.2.
+
+**And the same states say different things on each platform.** Measured across four: Stats
+says "in this period" on one and "in this window" on the other; the empty Upcoming, the
+Watching Mode start line and the empty Watchlist each have two versions. The useful part is
+that the phone is *better* in two of the four — it says what to do about the emptiness
+where the web only describes it — so the answer is not "make the phone match the web".
+
+Two are fixed, chosen because one side was plainly worse rather than merely different: the
+phone's start line was circular ("press start when the episode starts"), and the web's empty
+Upcoming was a dead end with Discover one tap away, which is doc 10 §8 and is closed with
+it. The other two are recorded rather than churned — a repository where one state has two
+sentences will keep growing them, and the fix is a decision about who owns the words.
+
 ---
 
 ## 7. What is still not known

@@ -163,7 +163,7 @@ export default function WatchingScreen() {
         {!clock.running && clock.positionMs === 0 ? (
           <View style={styles.startBlock}>
             <Text style={styles.startBlurb}>
-              Press start when the episode starts. You can nudge the clock any time.
+              Tap the moment you press play. You can nudge the timing at any point.
             </Text>
             <Pressable
               style={styles.start}

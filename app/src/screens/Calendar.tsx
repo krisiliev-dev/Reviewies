@@ -118,9 +118,22 @@ export function Calendar() {
 
       {entries === undefined && <p className="px-1 text-muted">Loading…</p>}
       {entries?.length === 0 && (
-        <p className="px-1 text-muted">
-          Nothing airing in the next two months from the shows you are watching.
-        </p>
+        <div className="flex flex-col items-start gap-3 px-1">
+          {/* Doc 10 §8: this said nothing was on and stopped, with Discover a tap away.
+              A screen whose job is "what shall I watch" should not be a dead end — and
+              the phone's version of this sentence already said what to do about it, so
+              this is the phone's copy rather than a third one. */}
+          <p className="text-muted">
+            Nothing airing in the next two months from the shows you are watching. Track
+            something that is still running and it will show up here.
+          </p>
+          <Link
+            to="/discover"
+            className="rounded-full bg-surface-2 px-4 py-2 text-sm"
+          >
+            Find something to watch
+          </Link>
+        </div>
       )}
 
       <div className="flex flex-col gap-5">

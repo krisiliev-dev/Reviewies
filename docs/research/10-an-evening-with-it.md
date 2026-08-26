@@ -10,9 +10,9 @@ what did not match, watch two episodes with Watching Mode running, react, step a
 back, catch up a season, rate something, and look at Stats to see whether the evening is
 legible in it. Judged as a product, not as a test.
 
-Ordered by what would make somebody stop using it, not by what is easy. Six of the eight
-are fixed — §6.47 took the first two, §6.48 the next four. What is left is §7, which is a
-design judgement rather than a defect, and §8, which is small.
+Ordered by what would make somebody stop using it, not by what is easy. Seven of the eight
+are fixed — §6.47 took the first two, §6.48 the next four, §6.49 the last of them. What is
+left is §7, which is a design judgement rather than a defect.
 
 ---
 
@@ -123,6 +123,9 @@ reason. Together they are a control panel with a reaction pad underneath it.
 
 ## 8. Upcoming has no answer, and offers no alternative
 
+**Fixed in §6.49**, with the phone's better sentence and a way through to Discover.
+
+
 *"Nothing airing in the next two months from the shows you are watching."* True, and a dead
 end: the screen that exists to answer "what shall I watch tonight" says nothing is on and
 does not suggest looking anywhere else, with a Discover tab one tap away.
@@ -155,3 +158,87 @@ The container has no route to TMDB from a browser — Node reaches it, Chromium 
 or without the proxy — so everything above was driven on the fixture catalogue. Real-world
 matching quality, search results and where-to-watch could not be exercised in the app. The
 live suites cover the matcher itself in Node, and §6.47's fix means the app would now use it.
+
+---
+
+# A second evening, on the phone
+
+The first evening was the web app. The phone is what this product pivoted to *be*, and
+nobody had sat with it that way either — its suite drives it screen by screen, which is
+not the same thing, and §6.47 is the standing proof of that distinction.
+
+Same session, against the react-native-web export. One thing could not be done: the
+phone's import goes through the system document picker, which the export cannot drive, so
+this started from search rather than from an import.
+
+## What had already reached it
+
+Worth checking rather than assuming, since two of the six fixes above live in code the
+phone does not share.
+
+- **The resume works.** Left an episode at 0:06, came back at 0:09, with *Resume* rather
+  than *Start watching*. That one is in the core and both screens call it, so it reached
+  the phone by construction — and now by measurement.
+- **Reactions are visible.** The phone's stream is a separate implementation and does not
+  have the web's bug: it renders everything within a window *behind* the current position
+  rather than between ticks, so a reaction stamped at now appears at once. Tapping 👍 put
+  it on screen beside the timecode.
+
+## 1. Watching Mode was not reachable from Up Next
+
+**Fixed.** The differentiator of the product, on the platform the product is now for, had
+no entry point on the screen you land on. The web has offered *Watch along* in the Up Next
+row since it shipped; on the phone the only route in was to open a show, find the episode
+in the season list, and tap it there. Three taps and a scroll, for the feature everything
+else is arranged around.
+
+Nothing said so, because the parity audit of §6.10 compared screens and the wiring audit of
+§6.27 compared exports — and both platforms have the screen and both call the same code.
+What differed was the offer.
+
+## 2. The remote drawer explained itself instead of working
+
+**Fixed.** Opening the remote mid-episode showed the keys and then a paragraph:
+
+> Every device type is its own adapter — there is no vendor-neutral protocol to use
+> instead, which is why every universal remote is a pile of them behind one set of
+> buttons. Cast and AirPlay need their vendors' SDKs and are not built; Bluetooth is not a
+> way to control a television at all.
+
+All true, all reasoning about the implementation, in a drawer somebody opened to press
+pause. It now says what works and what does not, in two lines, and the reasons stay in
+doc 6 §2 and doc 9 §1.2 where somebody looking for them will find them.
+
+## 3. The same states say different things on each platform
+
+Measured across four:
+
+| State | Web | Phone |
+|---|---|---|
+| Stats, nothing in range | "Nothing watched in this **period** yet." | "Nothing watched in this **window** yet." |
+| Upcoming, empty | "Nothing airing in the next two months from the shows you are watching." | "Nothing scheduled. Track a show that is still airing and it will show up here." |
+| Watching Mode, before starting | "Tap the moment you press play. You can nudge the timing at any point." | "Press start when the episode starts. You can nudge the clock any time." |
+| Watchlist, empty | "Nothing saved yet." | "Nothing saved yet. Add something from Search, then say why you saved it." |
+
+The interesting part is that the phone is *better* in two of the four: it says what to do
+about the emptiness where the web only describes it. So the answer is not "make the phone
+match the web", it is "one of these is better and both should have it".
+
+Two are fixed here, chosen because one side was plainly worse rather than merely
+different. The phone's start line was circular — *press start when the episode starts* —
+and now says what the web says. And the web's empty Upcoming was a dead end with Discover
+one tap away, which is doc 10 §8 above; it now carries the phone's sentence and a way
+through, and §8 is closed with it.
+
+The other two are noted rather than churned. A repository where the same state has two
+sentences will keep growing them, and the fix for that is a decision about who owns the
+words, not four more edits.
+
+## 4. Still open, from the phone
+
+- The import cannot be exercised at all from here, so the phone's migration path — the
+  thing the product exists for — has never been driven end to end on the platform it is
+  for. That is §7's "nothing has run on a physical device" with a sharper edge.
+- Watching Mode's controls read *Pause Hold −5s +5s Density 8 24 60*. Three bare numbers
+  with no unit, for a control the web labels. Small, and the same family as doc 10 §7's
+  judgement about how much chrome that screen carries.

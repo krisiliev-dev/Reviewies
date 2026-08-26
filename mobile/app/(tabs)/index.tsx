@@ -233,17 +233,33 @@ function Row({
         </Pressable>
       </View>
 
-      <Pressable
-        onPress={onWatched}
-        disabled={busy}
-        // Large target: this gets tapped in the dark, one-handed.
-        style={({ pressed }) => [styles.watched, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: busy }}
-        accessibilityLabel={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
-      >
-        <Text style={styles.watchedText}>Watched</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          onPress={onWatched}
+          disabled={busy}
+          // Large target: this gets tapped in the dark, one-handed.
+          style={({ pressed }) => [styles.watched, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: busy }}
+          accessibilityLabel={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
+        >
+          <Text style={styles.watchedText}>Watched</Text>
+        </Pressable>
+
+        {/* Watching Mode, from the screen somebody is actually on.
+            *
+            * It was reachable on the phone only from a title page — open the show,
+            * find the episode, tap there — while the web has offered it in this row
+            * since it shipped. The differentiator of the product, three taps deep on
+            * the platform the product pivoted to be. Doc 10, second evening. */}
+        <Link
+          href={`/watching/${encodeURIComponent(episode.id)}`}
+          accessibilityLabel={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
+          style={styles.watchAlong}
+        >
+          Watch along
+        </Link>
+      </View>
     </View>
   );
 }
@@ -291,6 +307,17 @@ const styles = StyleSheet.create({
   title: { color: theme.text, fontSize: 16, fontWeight: '600' },
   subtitle: { color: theme.muted, fontSize: 14 },
   catchUp: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
+  actions: { gap: 6, alignItems: 'stretch' },
+  watchAlong: {
+    backgroundColor: theme.surface2,
+    color: theme.muted,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    textAlign: 'center',
+    minHeight: 24,
+  },
   remaining: { color: theme.muted, fontSize: 12 },
 
   watched: {
