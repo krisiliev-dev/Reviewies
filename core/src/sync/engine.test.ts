@@ -324,7 +324,23 @@ describe('pull', () => {
     expect(await db.watches.get('gone')).toBeUndefined();
   });
 
-  it('does not clobber a pending local edit with an older remote one', async () => {
+  /**
+   * Push before pull, and what that does and does not prove.
+   *
+   * This was called "does not clobber a pending local edit with an older remote one" and
+   * neither of its assertions could fail: a count is never below zero, and `?? 'mine'`
+   * handed the other one a passing value whenever the row was missing altogether. §6.74
+   * tightened both and the test went red — `conflictsResolvedLocally` was 0, because the
+   * scenario in the name never happened here. The push lands first and supersedes the
+   * older server row, so the pull brings back the local edit and no conflict is ever
+   * reached.
+   *
+   * That ordering is worth a test of its own, and this is now it. The case the old name
+   * described — an edit still queued when the pull arrives — cannot be built from here,
+   * because a failed push returns before the pull runs. It is driven in
+   * `clockSkew.test.ts`, which makes the second edit *during* the push.
+   */
+  it('pushes a local edit before pulling, so an older server copy never reaches the device', async () => {
     await enqueue('watchlist', { titleId: 'x', note: 'mine' }, { updatedAt: 9000 });
     backend.seed({
       pk: 'x',
@@ -335,9 +351,9 @@ describe('pull', () => {
     });
 
     const result = await syncOnce(backend);
-    // The local edit is pushed and the stale remote copy is discarded.
-    expect(result.conflictsResolvedLocally).toBeGreaterThanOrEqual(0);
-    expect((await db.watchlist.get('x'))?.note ?? 'mine').not.toBe('theirs');
+    expect(result.pushed).toBe(1);
+    expect(result.conflictsResolvedLocally).toBe(0);
+    expect((await db.watchlist.get('x'))?.note).toBe('mine');
   });
 
   it('reports a pull failure without discarding pushed work', async () => {

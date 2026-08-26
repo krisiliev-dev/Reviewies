@@ -4233,6 +4233,165 @@ the title forbids, run the suite, and require it to go red.
 
 ---
 
+### 6.74 A test that is collected, run, and proves nothing
+
+§6.73 taught the runner to say which files it collects, and admitted in the same breath
+what that leaves open: a file can be collected, and a test inside it can run to
+completion, and still prove nothing. That failure is completely silent — it adds one to
+the passed count like every other test.
+
+Four classes were swept across all six workspaces: a test with no assertion at all, an
+assertion that cannot fail, an assertion inside a loop that may never run, and — one
+level up — a check whose needle is satisfied by something present on every screen.
+
+#### The check satisfied by the tab bar it navigated away from
+
+The web smoke suite opens four screens against a ten-year library and times them:
+
+```js
+for (const [path, expected] of [
+  ['stats', /Watched/i],
+  ['calendar', /Upcoming|Tell me about/i],
+  ['watchlist', /Watchlist/i],
+  ['discover', /Discover/i],
+]) { … check(`${path} renders against a real library`, expected.test(body) && ms < 20000) }
+```
+
+The tab bar prints **Up Next · Search · Discover · Watchlist · More** at the bottom of
+every screen in the app. Two of those four needles are tab labels.
+
+Proved by pointing all four at `/zzz-not-a-screen`, which renders the not-found screen —
+the plant carrying its own control:
+
+```
+FAIL  stats renders against a real library — 5769ms
+FAIL  calendar renders against a real library — 5763ms
+PASS  watchlist renders against a real library — 932ms
+PASS  discover renders against a real library — 721ms
+```
+
+The two screen-specific needles failed, as they should. The two tab words passed against
+a screen that is not a screen. And the timings say the rest of it: the `waitForSelector`
+in front of each check also matched the tab bar, so it returned in under a second instead
+of waiting for anything, which made the `ms < 20000` half meaningless too. A performance
+check that never waited for the thing whose performance it was measuring.
+
+A level-1 heading is what says a screen rendered — the not-found screen's is "Nothing at
+this address" — and the navigation block twenty lines above this one was already doing
+that correctly. Both now go through one `arrivedAt(target, heading)` helper, and the
+suite proves its own instrument on every run:
+
+```js
+await page.goto(`${BASE}/zzz-not-a-screen`, …);
+check(
+  'an address that is not a screen does not count as arriving at one',
+  (await arrivedAt(page, /^Nothing at this address$/, 5000)) &&
+    !(await arrivedAt(page, /^Watchlist$/, 2000)) &&
+    !(await arrivedAt(page, /^Discover$/, 2000)),
+);
+```
+
+That is the difference between fixing two checks and keeping them fixed: an instrument
+that has stopped discriminating reports exactly the same green as one that works.
+
+The fixed check also puts a number on what was being skipped. Waiting for the real
+heading, `watchlist renders against a real library` takes **6,959ms** against the
+ten-year library. The tab-bar version reported 932ms — it had been timing how long the
+navigation took to paint, on a screen it never reached.
+
+#### Two assertions that could not fail, and the scenario underneath them
+
+`engine.test.ts` had a test called *does not clobber a pending local edit with an older
+remote one*:
+
+```js
+expect(result.conflictsResolvedLocally).toBeGreaterThanOrEqual(0);
+expect((await db.watchlist.get('x'))?.note ?? 'mine').not.toBe('theirs');
+```
+
+A count is never below zero. And `?? 'mine'` hands the second assertion a passing value
+whenever the row is missing altogether — so a sync that lost the edit entirely read the
+same as one that kept it.
+
+Tightening both to `toBe(1)` and `toBe('mine')` turned it red, and the reason is the
+finding: `conflictsResolvedLocally` was **0**, because the scenario in the name never
+happened. The engine pushes before it pulls, and the push supersedes the older server
+row, so the conflict path is never reached from here. It cannot be reached from here at
+all — a failed push returns before the pull runs. The case the name described is driven
+in `clockSkew.test.ts` (§6.67), which makes the second edit *during* the push.
+
+So the test now asserts the ordering it actually exercises, under a name that says so,
+with three assertions that can all fail — proved by seeding the server row one second
+newer, which turns it red on `'theirs'`.
+
+#### Skips were enumerated in one workspace out of six
+
+§6.40 built `skips.test.ts` so that "811 passed | 34 skipped" could not hide an `it.skip`
+from a debugging session among nine live suites waiting on credentials. Every skip is
+listed with what it needs and what it uniquely covers, and an unlisted skip fails.
+
+It scanned `core/src`. Planting `it.skip` in `app/src`:
+
+```
+core   $ vitest run src/data/skips.test.ts   →  Tests  4 passed (4)
+app    $ vitest run src/wiring               →  Tests  77 passed | 1 skipped (78)
+```
+
+The guard was satisfied, and the only trace was a number in a different workspace's
+summary that nothing reads. The scan now starts at the repository root and walks every
+workspace named in `package.json`, so a new workspace is covered the day it is added
+rather than the day somebody remembers this file — with a check that each one was
+actually reached, planted by making the walker skip `extension` and watching it name it.
+
+#### A loop that may never run
+
+`schema.test.ts`'s *comes back in timeline order* puts every assertion inside
+`for (let i = 1; i < sampled.length; i++)`. An empty or single-row sample passes it
+without comparing anything — and an empty sample is precisely the failure that sampling
+is most likely to have. One line in front of the loop fixes it.
+
+Twenty-four tests across the repository have every assertion inside a loop. Twenty-three
+of them iterate a literal table written into the test, which cannot be empty. This was
+the one that iterated something the code under test produced.
+
+#### What the sweep did not find
+
+Worth recording, because the point of a sweep is the shape of the answer, not only the
+findings:
+
+- **No test anywhere lacks an assertion.** All 1,192 of them were read.
+- **No `await expect(…)` is missing its `.rejects`/`.resolves`** — the mistake that turns
+  an async assertion into a promise nobody waits for.
+- **No `catch` swallows an assertion.**
+
+The first of those is now held by `app/src/wiring/assertions.test.ts`, which walks every
+workspace and accepts either `expect(` in the body or a call to an `expectSomething(`
+helper declared in the same file that asserts on its own — `tombstones.test.ts` has two
+of those and inlining them would make the suite worse to read. Three plants fire: a test
+that asserts nothing, an exemption for a test that asserts after all, and a parser that
+finds nothing at all.
+
+#### The scanner was wrong twice before the tests were
+
+Same shape as §6.72's two bad plants, and worth the same paragraph.
+
+The first pass reported **35** assertionless tests. Its match for a test declaration was
+`\b(it|test)\s*\(` — and `\btest(` is also the tail of `/\.tsx?$/.test(entry.name)`. Every
+regex `.test(` in a guard read as a test declaration whose body was the argument list, so
+of course none of them asserted. Fifty-four phantoms, all reported as findings.
+
+The second pass fixed that and found bodies by matching braces — which a brace inside a
+string or a regex character class ends early. Eleven files misread.
+
+Both are the same lesson as §6.72: a scan of source text is fooled by source text. There
+is now a `blankLiterals` beside `stripComments` in `core/src/test/source.ts`, with its own
+tests, and the two are deliberately different readings of a file: `stripComments` leaves
+strings alone because guards read them, and `blankLiterals` blanks everything because a
+caller looking for *structure* must not see text at all. No guard should use both
+readings for the same claim.
+
+---
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -4334,12 +4493,22 @@ and which single claim in this document could not be checked at all:
   loudly, on input nobody writes. That is a judgement, not a measurement: nobody has hit
   one of these in the course of ordinary work, so the cost of the trade is estimated
   rather than observed.
-- **`vitest list` proves collection, not execution.** §6.73's new check asks each
-  workspace's runner which files it would collect and compares that against what is on
-  disk. That closes the gap it found — a workspace whose `include` silently excluded most
-  of its own tests — but a file can be collected and still contribute nothing: every test
-  inside it skipped, or the whole file wrapped in a `describe.skip`. Nothing asks that
-  question yet, and the answer would have to come from a reporter rather than a list.
+- **`vitest list` proves collection, not execution.** §6.73's check asks each workspace's
+  runner which files it would collect and compares that against what is on disk. §6.74
+  went one layer in: every test in every workspace now has to assert something, and every
+  skip in every workspace now has to be named and explained. What neither reaches is a
+  test that is collected, runs, asserts — and cannot fail. §6.74 found two of those by
+  reading (`toBeGreaterThanOrEqual(0)` on a counter, and a `?? 'mine'` fallback that
+  passed when the row was missing) and there is no mechanical check for more. Telling a
+  real assertion from an unfailable one means knowing what the code could have done
+  instead, which is what mutation testing is for and what nothing here does. The honest
+  version of this claim is: no test is silent, and some may still be toothless.
+- **Nobody has run the suites against a mutated codebase.** Every guard in this repository
+  is proved by planting the one violation it claims to catch — deliberately, one at a
+  time, by hand, and recorded when it misfires (§6.72, §6.74). That is much better than
+  nothing and it is not coverage: it proves each guard catches the case its author thought
+  of. A mutation run would answer the other question — which lines can be changed with
+  every suite still green — and it has never been done here.
 - **Eleven web screens were checked for the first time today.** `screenStates` had never
   examined a single-segment web route, so its claim that the suite renders them rested on
   nothing until §6.72. They pass now — but "passes a mention check" was always a weak

@@ -273,7 +273,38 @@ async function scaled(screen) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Did the browser arrive at a screen, or only at the tab bar?
+ *
+ * A level-1 heading is what says a screen rendered. Body text is not: the tab bar prints
+ * "Up Next", "Search", "Discover", "Watchlist" and "More" at the bottom of every screen
+ * in the app, so a check that reads `body.innerText` for one of those words is satisfied
+ * wherever the browser happens to be — including on an address that is not a screen at
+ * all. §6.74 found two checks doing exactly that and proved it by pointing them at
+ * `/zzz-not-a-screen`, where both passed in under a second.
+ *
+ * The self-test below runs every time, because an instrument that has stopped
+ * discriminating reports the same green as one that works.
+ */
+async function arrivedAt(target, heading, timeout = 30000) {
+  try {
+    await target.getByRole('heading', { name: heading, level: 1 }).waitFor({ timeout });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 try {
+  // --- The instrument, before anything is measured with it ---------------------
+  await page.goto(`${BASE}/zzz-not-a-screen`, { waitUntil: 'domcontentloaded' });
+  check(
+    'an address that is not a screen does not count as arriving at one',
+    (await arrivedAt(page, /^Nothing at this address$/, 5000)) &&
+      !(await arrivedAt(page, /^Watchlist$/, 2000)) &&
+      !(await arrivedAt(page, /^Discover$/, 2000)),
+  );
+
   // --- The first minute ------------------------------------------------------
   // This app exists because TV Time shut down. For a long time the first thing it said
   // to somebody arriving with years of history in a zip was "Nothing tracked yet" and a
@@ -1662,22 +1693,36 @@ try {
     );
     await loaded.screenshot({ path: OUT + '20-heavy-upnext.png' });
 
-    for (const [path, expected] of [
-      ['stats', /Watched/i],
-      ['calendar', /Upcoming|Tell me about/i],
-      ['watchlist', /Watchlist/i],
-      ['discover', /Discover/i],
+    /**
+     * The heading, not the tab bar.
+     *
+     * This read `body.innerText` for a word — and two of the four words it looked for,
+     * *Watchlist* and *Discover*, are printed in the tab bar at the bottom of every
+     * screen in the app. So both checks passed wherever the browser happened to be, and
+     * the `waitForSelector` in front of them returned instantly from that same tab bar,
+     * which made the elapsed-time half meaningless too.
+     *
+     * §6.74 proved it by pointing all four at an address that is not a screen: `stats`
+     * and `calendar` failed, as they should have, and these two passed in under a
+     * second against the not-found screen.
+     *
+     * A level-1 heading is what says a screen rendered — the not-found screen's is
+     * "Nothing at this address" — which is what the navigation block above this one was
+     * already doing correctly.
+     */
+    for (const [path, heading] of [
+      ['stats', /^Stats$/],
+      ['calendar', /^Upcoming$/],
+      ['watchlist', /^Watchlist$/],
+      ['discover', /^Discover$/],
     ]) {
       const startedAt = Date.now();
       await loaded.goto(`${BASE}/${path}`, { waitUntil: 'domcontentloaded' });
-      await loaded.waitForSelector(`text=${expected.source.split('|')[0].replace(/[^\w ]/g, '')}`, {
-        timeout: 30000,
-      });
+      const arrived = await arrivedAt(loaded, heading);
       // Let whatever the screen computes actually finish before stopping the clock.
       await loaded.waitForTimeout(500);
       const ms = Date.now() - startedAt;
-      const body = await loaded.locator('body').innerText();
-      check(`${path} renders against a real library`, expected.test(body) && ms < 20000, `${ms}ms`);
+      check(`${path} renders against a real library`, arrived && ms < 20000, `${ms}ms`);
     }
 
     // Stats, on a library whose history runs back ten years.

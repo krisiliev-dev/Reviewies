@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stripComments, stripMarkdownComments } from './source.ts';
+import { blankLiterals, stripComments, stripMarkdownComments } from './source.ts';
 
 /**
  * The helper every source-level guard now leans on, tested for the two mistakes it
@@ -40,5 +40,42 @@ describe('reading source as code', () => {
 
   it('leaves the Markdown alone', () => {
     expect(stripMarkdownComments('`npm run real`')).toContain('npm run real');
+  });
+});
+
+describe('blanking every literal', () => {
+  it('keeps a brace inside a string from ending a block', () => {
+    const blanked = blankLiterals('function f() { const a = "}"; return a; }');
+    expect(blanked.indexOf('}')).toBe(blanked.lastIndexOf('}'));
+  });
+
+  it('keeps a brace inside a regex character class from ending one either', () => {
+    const blanked = blankLiterals('if (x) { const r = /[}]/; }');
+    expect(blanked.split('}')).toHaveLength(2);
+  });
+
+  it('does not mistake division for a regex', () => {
+    const blanked = blankLiterals('const half = total / 2; const rest = other / 3;');
+    expect(blanked).toContain('total / 2');
+    expect(blanked).toContain('other / 3');
+  });
+
+  it('leaves every character position where it was', () => {
+    const source = 'const a = "hello";\nconst b = /world/;\n';
+    const blanked = blankLiterals(source);
+    expect(blanked).toHaveLength(source.length);
+    expect(blanked.split('\n')).toHaveLength(source.split('\n').length);
+  });
+
+  it('blanks a template literal, including what it interpolates', () => {
+    const blanked = blankLiterals('const s = `a${{ b: 1 }}c`;');
+    expect(blanked).not.toContain('{');
+  });
+
+  it('does not eat the rest of a file after a URL', () => {
+    // The same hazard `stripComments` has, in the other direction: `//` inside a string
+    // is not a comment, and the string blanking must reach it first.
+    const blanked = blankLiterals('const u = "https://example.com"; const kept = 1;');
+    expect(blanked).toContain('const kept = 1');
   });
 });

@@ -66,3 +66,92 @@ export function stripComments(source: string): string {
 export function stripMarkdownComments(source: string): string {
   return source.replace(/<!--[\s\S]*?-->/g, (block) => block.replace(/[^\n]/g, ''));
 }
+
+/**
+ * Every comment, string, template and regex literal replaced by spaces, in place.
+ *
+ * `stripComments` is enough to stop a guard reading prose as code. Finding the *body* of
+ * a test needs more than that: brace matching, and a brace inside a string or a regex
+ * character class ends the block early. `/\{\s*\}/` and `` `${a}` `` both do it, and
+ * §6.74's first attempt at counting assertions misread eleven files that way.
+ *
+ * Character positions are preserved — every removed character becomes a space, newlines
+ * survive — so an offset into the result is an offset into the original, and a line
+ * number still means something.
+ *
+ * This is deliberately not `stripComments`'s job. That one leaves strings alone on
+ * purpose (see above); this one is for a caller that needs to find structure rather than
+ * read text, and no guard should use both readings of the same file for the same claim.
+ */
+export function blankLiterals(source: string): string {
+  const out = source.split('');
+  const blank = (from: number, to: number) => {
+    for (let k = from; k < to && k < out.length; k++) if (out[k] !== '\n') out[k] = ' ';
+  };
+  // What came just before, to tell a regex literal from a division sign.
+  let previous = '';
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i];
+    const two = source.slice(i, i + 2);
+    if (two === '//') {
+      const end = source.indexOf('\n', i);
+      blank(i, end < 0 ? source.length : end);
+      i = end < 0 ? source.length : end;
+      continue;
+    }
+    if (two === '/*') {
+      const end = source.indexOf('*/', i + 2);
+      const stop = end < 0 ? source.length : end + 2;
+      blank(i, stop);
+      i = stop;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1;
+      while (j < source.length) {
+        if (source[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (source[j] === c) break;
+        j++;
+      }
+      blank(i + 1, j);
+      i = Math.min(j + 1, source.length);
+      previous = 'x';
+      continue;
+    }
+    // A `/` after a value is division; after an operator, a bracket or nothing, it opens
+    // a regex. Getting this wrong in the safe direction only leaves text unblanked.
+    if (c === '/' && /[=(,:[!&|?{};+\-*%<>~^]$|^$|\b(return|typeof)$/.test(previous)) {
+      let j = i + 1;
+      let inClass = false;
+      let closed = false;
+      while (j < source.length) {
+        const d = source[j];
+        if (d === '\\') {
+          j += 2;
+          continue;
+        }
+        if (d === '\n') break;
+        if (d === '[') inClass = true;
+        else if (d === ']') inClass = false;
+        else if (d === '/' && !inClass) {
+          closed = true;
+          break;
+        }
+        j++;
+      }
+      if (closed) {
+        blank(i + 1, j);
+        i = j + 1;
+        previous = 'x';
+        continue;
+      }
+    }
+    if (!/\s/.test(c)) previous = (previous + c).slice(-8);
+    i++;
+  }
+  return out.join('');
+}

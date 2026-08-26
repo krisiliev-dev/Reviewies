@@ -824,6 +824,10 @@ describe('sampling an episode\'s reactions', () => {
   it('comes back in timeline order', async () => {
     await fillEpisode(200, 200);
     const sampled = await sample(ALICE);
+    // Every assertion below sits inside the loop, so an empty or single-row sample would
+    // pass this without comparing anything — which is the shape of failure sampling is
+    // most likely to have. §6.74.
+    expect(sampled.length).toBeGreaterThan(1);
     for (let i = 1; i < sampled.length; i++) {
       expect(sampled[i].t_ms).toBeGreaterThanOrEqual(sampled[i - 1].t_ms);
     }
