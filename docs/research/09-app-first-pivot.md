@@ -2660,6 +2660,62 @@ check got wrong and the run said so. And the new Dexie suite skips itself under
 `npm run test:sqlite`, where there is no IndexedDB; the skip guard from §6.41 immediately
 demanded a written reason for it, which is exactly what that guard is for.
 
+### 6.54 A library somebody has actually used
+
+The pitch is to people leaving a tracker they had used for years. Every suite in this
+repository runs against a handful of rows. `platform.ts` says write-ahead logging *"is
+what makes marking an episode feel instant"* — a claim about a database with ten things
+in it.
+
+So: a hundred and twenty shows, five thousand seven hundred episodes, three and a half
+thousand watch events spread across a decade, two thousand reactions on one episode. The
+same suite runs on both stores, because `npm test` and `npm run test:sqlite` are the same
+tests pointed at different implementations, and the SQLite one falls back to
+`json_extract` for any sort on a field that is not a real column — a table scan nobody had
+timed.
+
+The core came out of it well. Nothing is superlinear: at five times the data, `getUpNext`
+went from 87ms to 420ms, which is the ratio you want. On Dexie, at the size above:
+
+```
+getUpNext 89ms   getSummary(all) 17ms   getUpcoming 40ms   markWatched 17ms
+excludedTitleIds 13ms   reactions for one episode 16ms   enqueueAll (3000 rows) 1058ms
+```
+
+SQLite is faster on all of them. The one number worth keeping an eye on is the last:
+`enqueueAll` is deliberately sequential — each row reads the existing outbox entry so a
+stale write cannot clobber a newer one — so an import of a few thousand watches spends a
+second in the queue. Sequential is not quadratic, and the budget is what keeps it that
+way.
+
+**Then the screens, which is where the finding was.** The web smoke now seeds a hundred
+and fifty shows straight into IndexedDB and opens the app on top of them. The home screen
+comes up in 1.6 seconds with all hundred and fifty rows — but Stats sat on *Loading…*, and
+the first version of the check accepted that as a pass, because it was written as *"does
+it not say it is empty"*. Pressing on the wrong-looking pass is what found the real thing.
+
+**Stats opens on this year, and tells somebody with ten years of history that they have
+watched nothing.** Not a bug in the query — the window genuinely was empty for that
+fixture — but the screen's answer to it was a flat sentence with nine year-buttons sitting
+above it, which reads as an app that has lost your history rather than a period that
+happens to be quiet. Somebody who imports a decade in January meets exactly this. The
+empty state now offers **Show all time**, which is the same rule as §6.50: a screen that
+knows what you should do next should not make you find it.
+
+It also turned out the two platforms opened on *different windows* — `ytd` on the web,
+`30d` on the phone. §6.52's guard could not see it: it is a string, not a number.
+`DEFAULT_STATS_WINDOW` is in the core now, set to this year, because the year is the period
+people think in about what they have watched and Year in Review is built on it.
+
+Two things in the fixture were wrong before they were right, and both are worth recording
+because they are the failure mode of this kind of test. The first counted the Up Next rows
+at first paint and found nineteen — React yields part way through a hundred and fifty rows
+— so the check now waits for the list to settle and reports when the last row arrived. The
+second skewed each show's air dates *forward* by an hour per show, which made every next
+episode unaired, so Up Next correctly showed almost nothing and the check looked like a
+missing list. A fixture that is wrong in the direction of "the app is broken" is the
+expensive kind, and neither of those was visible without reading what the numbers meant.
+
 ---
 
 ## 7. What is still not known
@@ -2678,6 +2734,14 @@ and which single claim in this document could not be checked at all:
   screen is reached in the suite by its own address rather than by asking for a wrong one,
   because the static server answers an unknown path before the app boots; that expo-router
   routes to it on a device is the framework's business and is not under test here.
+- **The scale measurements are a container's, not a phone's.** §6.54 runs the app's own
+  queries against a hundred and twenty shows and six thousand episodes on both stores, and
+  the screens against a hundred and fifty in Chromium. Nothing there says what a five-year-old
+  Android does with the same library: no thermal throttling, no cold storage, no
+  contention with anything else. What the budgets catch is a query that changes shape —
+  indexed to scanning, one round trip per show to one per episode — which is an order of
+  magnitude and survives the difference between machines. An absolute millisecond count
+  here does not.
 - **No real upgrade has happened on a device.** §6.53 opens a version 1 database with the
   current code on both stores — the browser's in the app's own smoke run, in Chromium, and
   SQLite's against sql.js, which is real SQLite rather than a stand-in. What neither can be

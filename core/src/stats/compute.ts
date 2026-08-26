@@ -19,6 +19,19 @@ const DEFAULT_RUNTIME_MIN = 30;
 
 export type Window = '30d' | 'ytd' | 'year' | 'all';
 
+/**
+ * Which stretch of time the stats screen opens on.
+ *
+ * It was `ytd` on the web and `30d` on the phone — the same screen opening on a
+ * different answer depending on which one you held, which nobody had decided (§6.54).
+ * This year, because the year is the period people actually think in about what they
+ * have watched, and because Year in Review is built on it.
+ *
+ * Whatever it is, it can be empty for somebody whose history is real — see
+ * `COPY.stats.showAllTime`, which is the way out of that.
+ */
+export const DEFAULT_STATS_WINDOW: Window = 'ytd';
+
 export interface TitleTally {
   titleId: string;
   name: string;

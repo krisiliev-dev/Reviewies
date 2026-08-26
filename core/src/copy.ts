@@ -56,6 +56,16 @@ export const COPY = {
 
   stats: {
     /**
+     * The way out of an empty period.
+     *
+     * A person with ten years of history opening Stats in January is told "Nothing
+     * watched in this period yet" with nine year-buttons above it, which reads as an app
+     * that has lost their history rather than a window that happens to be empty. The
+     * sentence stays; it now comes with the thing to press. Same rule as §6.50: a screen
+     * that knows what you should do next should not make you find it.
+     */
+    showAllTime: 'Show all time',
+    /**
      * "Period", not the phone's "window": the control offers *All time*, and all time
      * is not a window. The word has to be true of every choice the screen offers.
      */

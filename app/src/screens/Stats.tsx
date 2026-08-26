@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   availableYears,
+  DEFAULT_STATS_WINDOW,
   formatDuration,
   getSummary,
   type StatsSummary,
@@ -25,7 +26,7 @@ const WINDOWS: Array<{ key: Window; label: string }> = [
 ];
 
 export function Stats() {
-  const [window, setWindow] = useState<Window>('ytd');
+  const [window, setWindow] = useState<Window>(DEFAULT_STATS_WINDOW);
   const [year, setYear] = useState<number>();
 
   const years = useLiveQuery(() => availableYears(), [], []);
@@ -79,7 +80,23 @@ export function Stats() {
       {summary === undefined ? (
         <p className="text-muted">Loading…</p>
       ) : summary.episodes === 0 ? (
-        <p className="text-muted">{COPY.stats.empty}</p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-muted">{COPY.stats.empty}</p>
+          {/* There is history, just not in this window. Saying "nothing" to somebody
+              with ten years in the app reads as a lost library rather than an empty
+              period, and the years above are not an obvious answer to it. §6.54. */}
+          {years.length > 0 && (window !== 'all' || year !== undefined) && (
+            <button
+              onClick={() => {
+                setYear(undefined);
+                setWindow('all');
+              }}
+              className="rounded-full bg-surface-2 px-4 py-2 text-sm"
+            >
+              {COPY.stats.showAllTime}
+            </button>
+          )}
+        </div>
       ) : (
         <Summary summary={summary} isYearReview={year !== undefined} year={year} />
       )}

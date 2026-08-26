@@ -1355,6 +1355,183 @@ try {
   } finally {
     await returning.close();
   }
+
+  // --- 20. A library somebody has actually used --------------------------------
+  //
+  // Every other check in this file runs against a handful of rows, and the core's own
+  // measurements (§6.54) are of the queries alone. This is the screens: a hundred and
+  // fifty shows, four thousand episodes and three thousand watches seeded straight into
+  // IndexedDB, then the app opened on top of it. What it is looking for is not a
+  // millisecond count — a container says little about a phone — but the shape of a
+  // mistake: a home screen that takes ten seconds, or a list that renders one row.
+  const heavy = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const loaded = await heavy.newPage();
+  try {
+    await loaded.addInitScript(() => {
+      indexedDB.deleteDatabase('reviewies');
+      const request = indexedDB.open('reviewies', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        const library = db.createObjectStore('library', { keyPath: 'titleId' });
+        for (const index of ['kind', 'status', 'addedAt']) library.createIndex(index, index);
+        const watches = db.createObjectStore('watches', { keyPath: 'id' });
+        for (const index of ['targetId', 'seriesId', 'watchedAt']) watches.createIndex(index, index);
+        const titles = db.createObjectStore('titles', { keyPath: 'id' });
+        for (const index of ['kind', 'fetchedAt']) titles.createIndex(index, index);
+        const episodes = db.createObjectStore('episodes', { keyPath: 'id' });
+        episodes.createIndex('seriesId', 'seriesId');
+        episodes.createIndex('fetchedAt', 'fetchedAt');
+        episodes.createIndex('[seriesId+season]', ['seriesId', 'season']);
+      };
+      request.onsuccess = () => {
+        const now = Date.now();
+        const day = 86_400_000;
+        const tx = request.result.transaction(
+          ['library', 'titles', 'episodes', 'watches'],
+          'readwrite',
+        );
+        for (let s = 0; s < 150; s++) {
+          const seriesId = `tmdb:${2000 + s}`;
+          tx.objectStore('titles').put({
+            id: seriesId,
+            kind: 'show',
+            name: `Long Running Show ${s}`,
+            year: 2006 + (s % 18),
+            runtimeMin: 42,
+            fetchedAt: now,
+          });
+          tx.objectStore('library').put({
+            titleId: seriesId,
+            kind: 'show',
+            status: 'watching',
+            addedAt: now - s * day,
+          });
+          for (let e = 1; e <= 28; e++) {
+            const id = `tmdb:ep:${s}:${e}`;
+            // Ten years of history ending now, with the last two episodes still to air —
+            // so Up Next has something to offer, Calendar has something to list, and
+            // this year's stats are not empty.
+            // Skewed backwards by an hour per show, never forwards: an "aired" episode
+            // dated a few hours from now is not aired, and Up Next correctly drops the
+            // show — which is how the first version of this fixture ended up with one
+            // row where it meant a hundred and fifty.
+            const aired =
+              e > 26 ? now + (e - 26) * 20 * day : now - (26 - e) * 140 * day - s * 3600_000;
+            tx.objectStore('episodes').put({
+              id,
+              seriesId,
+              season: 1 + Math.floor((e - 1) / 14),
+              number: ((e - 1) % 14) + 1,
+              name: `Episode ${e}`,
+              airDate: new Date(aired).toISOString().slice(0, 10),
+              runtimeMin: 42,
+              fetchedAt: now,
+            });
+            // Watched up to the most recent aired episode but one, so this year has
+            // something in it, Up Next has something to offer, and Calendar has the two
+            // that have not aired.
+            if (e <= 25) {
+              tx.objectStore('watches').put({
+                id: `w:${s}:${e}`,
+                targetId: id,
+                seriesId,
+                watchedAt: aired + day,
+                runtimeMin: 42,
+              });
+            }
+          }
+        }
+        tx.oncomplete = () => request.result.close();
+      };
+    });
+
+    const openedAt = Date.now();
+    await loaded.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await loaded.waitForSelector('text=Long Running Show', { timeout: 30000 });
+    const homeMs = Date.now() - openedAt;
+    check(
+      'the home screen comes up with a hundred and fifty shows in it',
+      homeMs < 20000,
+      `${homeMs}ms`,
+    );
+
+    // Counted after the list settles rather than at first paint: React yields part way
+    // through a hundred and fifty rows, and the first version of this check counted
+    // nineteen and called it a missing list. What is being measured is when the last row
+    // is there, which is the number somebody scrolling actually waits for.
+    let rows = 0;
+    const settleBy = Date.now() + 20000;
+    while (Date.now() < settleBy) {
+      const now = await loaded.getByRole('button', { name: /^Mark / }).count();
+      if (now >= 150) {
+        rows = now;
+        break;
+      }
+      rows = now;
+      await loaded.waitForTimeout(250);
+    }
+    check(
+      'and lists them all, not the first few',
+      rows >= 150,
+      `${rows} rows after ${Date.now() - openedAt}ms`,
+    );
+    await loaded.screenshot({ path: OUT + '20-heavy-upnext.png' });
+
+    for (const [path, expected] of [
+      ['stats', /Watched/i],
+      ['calendar', /Upcoming|Tell me about/i],
+      ['watchlist', /Watchlist/i],
+      ['discover', /Discover/i],
+    ]) {
+      const startedAt = Date.now();
+      await loaded.goto(`${BASE}/${path}`, { waitUntil: 'domcontentloaded' });
+      await loaded.waitForSelector(`text=${expected.source.split('|')[0].replace(/[^\w ]/g, '')}`, {
+        timeout: 30000,
+      });
+      // Let whatever the screen computes actually finish before stopping the clock.
+      await loaded.waitForTimeout(500);
+      const ms = Date.now() - startedAt;
+      const body = await loaded.locator('body').innerText();
+      check(`${path} renders against a real library`, expected.test(body) && ms < 20000, `${ms}ms`);
+    }
+
+    // Stats, on a library whose history runs back ten years.
+    //
+    // The first version of this check accepted "Loading…" as a pass, and pressing on it
+    // is what found §6.54's real bug: the screen opens on this year, and somebody whose
+    // watching was all in previous years is told "Nothing watched in this period yet"
+    // with nine year-buttons sitting above it — an app that looks like it has lost the
+    // history it is in fact holding. It now offers the way out, and this drives it.
+    const statsAt = Date.now();
+    await loaded.goto(`${BASE}/stats`, { waitUntil: 'domcontentloaded' });
+    await loaded.getByText('Episodes', { exact: true }).waitFor({ timeout: 30000 });
+    const statsMs = Date.now() - statsAt;
+    const stats = (await loaded.locator('body').innerText()).replace(/\s+/g, ' ');
+    check('stats counts this year of a ten-year history', /Episodes \d/.test(stats), stats.slice(0, 160));
+    check('and does not sit on Loading', !/Loading…/.test(stats), `${statsMs}ms`);
+
+    // An empty window with history behind it: nothing here was watched in the last
+    // thirty days, and every year of the decade has something in it.
+    await loaded.getByRole('radio', { name: '30 days' }).click();
+    await loaded.waitForTimeout(800);
+    const emptyYear = (await loaded.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      'an empty year says so and offers a way out of it',
+      /Nothing watched in this period yet/.test(emptyYear) && /Show all time/.test(emptyYear),
+      emptyYear.slice(0, 160),
+    );
+    await loaded.getByRole('button', { name: 'Show all time' }).click();
+    await loaded.getByText('Episodes', { exact: true }).waitFor({ timeout: 15000 });
+    const allTime = (await loaded.locator('body').innerText()).replace(/\s+/g, ' ');
+    check(
+      'and the way out lands on the whole history',
+      /Episodes 3\d{3}/.test(allTime),
+      allTime.slice(0, 160),
+    );
+    await loaded.screenshot({ path: OUT + '21-heavy-stats.png' });
+  } finally {
+    await heavy.close();
+  }
 } catch (err) {
   check(
     'smoke run completed',

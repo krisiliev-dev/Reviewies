@@ -200,6 +200,20 @@ Two environment variables appear only inside tests: `TZ`, which the stats suite 
 prove day boundaries are local rather than UTC, and `DATA`, which carries a base64
 SQLite fixture into a subprocess in the write-ahead-log test.
 
+`core/src/data/scale.test.ts` runs the app's own queries against a library somebody has
+actually used — a hundred and twenty shows, six thousand episodes, a decade of watches —
+on whichever store the run is using, and fails if any of them stops being quick. Three
+switches steer it, none of them needed for a normal run:
+
+```bash
+SCALE_REPORT=1 npx vitest run src/data/scale.test.ts   # print the timings
+SCALE_SHOWS=300 SCALE_SEASONS=8 …                      # a harsher library, for probing
+```
+
+The budgets in it are deliberately loose. A container's timings say nothing exact about a
+phone; what a budget catches is the shape of a mistake — a query that went from indexed to
+scanning — which shows up as an order of magnitude rather than as fifty milliseconds.
+
 The browser checks work either way. They ask the app once whether it has credentials and
 then assert the correct behaviour for that build — an account-only control has to hide
 itself when there is no account behind it and appear when there is, and both are worth

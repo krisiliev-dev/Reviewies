@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { Stack } from 'expo-router';
 import {
   availableYears,
+  DEFAULT_STATS_WINDOW,
   formatDuration,
   getSummary,
   type StatsSummary,
@@ -29,7 +30,7 @@ const WINDOWS: Array<{ key: Window; label: string }> = [
 ];
 
 export default function StatsScreen() {
-  const [window, setWindow] = useState<Window>('30d');
+  const [window, setWindow] = useState<Window>(DEFAULT_STATS_WINDOW);
   const [year, setYear] = useState<number>();
   const [years, setYears] = useState<number[]>([]);
   const [summary, setSummary] = useState<StatsSummary>();
@@ -130,7 +131,24 @@ export default function StatsScreen() {
             )}
 
             {summary.episodes === 0 && (
-              <Text style={styles.note}>{COPY.stats.empty}</Text>
+              <View style={styles.emptyBlock}>
+                <Text style={styles.note}>{COPY.stats.empty}</Text>
+                {/* The web's copy of this, for the same reason: nine year-buttons above
+                    an empty period is not an answer somebody reads as one. §6.54. */}
+                {years.length > 0 && (window !== 'all' || year !== undefined) && (
+                  <Pressable
+                    onPress={() => {
+                      setYear(undefined);
+                      setWindow('all');
+                    }}
+                    style={styles.allTime}
+                    accessibilityRole="button"
+                    accessibilityLabel={COPY.stats.showAllTime}
+                  >
+                    <Text style={styles.allTimeText}>{COPY.stats.showAllTime}</Text>
+                  </Pressable>
+                )}
+              </View>
             )}
           </>
         )}
@@ -193,6 +211,14 @@ const styles = StyleSheet.create({
   },
   figureLabel: { color: theme.muted, fontSize: 12 },
   figureValue: { color: theme.text, fontSize: 22, fontWeight: '700' },
+  emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
+  allTime: {
+    backgroundColor: theme.surface2,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  allTimeText: { color: theme.text, fontSize: 14, fontWeight: '600' },
   note: { color: theme.muted, fontSize: 13 },
 
   section: { gap: 10, marginTop: 6 },
