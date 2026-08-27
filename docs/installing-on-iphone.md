@@ -119,6 +119,48 @@ xcodebuild -workspace ios/Reviewies.xcworkspace -scheme Reviewies -configuration
 `xcrun xctrace list devices` gives the UDID. Send it to a file and read it — a failing
 Expo build is around ten thousand lines and the real error is not near the end.
 
+### Installing it without Xcode's UI
+
+Once it builds, `devicectl` does the rest and says what went wrong when it does not:
+
+```sh
+xcrun devicectl device install app --device <udid> \
+  ios/build/Build/Products/Release-iphoneos/Reviewies.app
+xcrun devicectl device process launch --device <udid> dev.krisiliev.reviewies
+```
+
+Build **Release** rather than Debug for an app you actually want to use: Debug expects a
+Metro server on your machine and shows a red screen without one, while Release embeds the
+JS bundle and runs standalone.
+
+The first launch is refused whatever you use:
+
+```
+Unable to launch dev.krisiliev.reviewies because it has an invalid code signature,
+inadequate entitlements or its profile has not been explicitly trusted by the user.
+```
+
+That is step 7 above, not a signing mistake.
+
+### Two dependency traps, both guarded
+
+Neither is visible until something compiles for iOS, which is why both survived a long
+time. `mobile/src/nativeConfig.test.ts` covers them now.
+
+- **Every `expo-*` package must be on the SDK's own version.** Expo renumbered its
+  packages to track the SDK, so an `expo-image-picker@~17.0.0` sitting in a list of
+  `~57.0.x` is four SDKs behind and fails with errors that read like broken code
+  (`cannot find 'EXFatal' in scope`).
+- **`react-native-reanimated` and `react-native-worklets` need pinning in the root
+  `overrides`**, not just in `mobile/package.json`. They arrive transitively through
+  `expo-router`, and npm will honour a workspace pin in `mobile/node_modules` while the
+  hoisted copy the pods actually resolve keeps the drifted version. `npm ls` reports the
+  mismatch as `invalid` on every install; nothing reads it.
+
+`npm install` also runs `scripts/patch-expo-modules-jsi.mjs`, which applies Expo's own
+canary fix for a header Xcode 26.3 rejects. It is idempotent and becomes a no-op once
+Expo releases the fix.
+
 ### Why `REVIEWIES_PERSONAL_TEAM=1`
 
 `expo-notifications` is autolinked, so prebuild writes this whether anybody asked or not:

@@ -35,6 +35,17 @@ The cost is no push; everything else, including background audio, survives.
 [docs/installing-on-iphone.md](../docs/installing-on-iphone.md) has the Xcode steps and
 what each route actually gets you.
 
+It needs **Xcode 26 or newer**: `expo-modules-jsi` builds from a Swift package declaring
+`swift-tools-version: 6.2`, which no earlier Xcode carries. The repository's root
+`postinstall` runs `scripts/patch-expo-modules-jsi.mjs`, applying Expo's own canary fix
+for a header that Xcode 26.3 rejects; it is idempotent and turns into a no-op once Expo
+releases the fix. `mobile/src/nativeConfig.test.ts` fails if it has not run.
+
+Two version rules that only a native build can enforce, and both are guarded there too:
+every `expo-*` dependency has to be on the SDK's own version, and
+`react-native-reanimated` / `react-native-worklets` have to be pinned in the **root**
+`overrides` — a pin in this file alone loses to the hoisted copy the pods resolve.
+
 ## Checks
 
 ```bash

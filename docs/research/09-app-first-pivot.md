@@ -5383,6 +5383,104 @@ remote drawer finds a real TV, whether the fingerprinter hears a real room, and 
 the notification screen says push is unavailable rather than offering a dead switch.
 
 
+### 6.83 It runs on a phone
+
+The first time this application has existed on hardware. §6.82 found the toolchain; past
+it were three more failures and then a working app.
+
+#### Five blockers, and what they had in common
+
+| | What stopped it | What it actually was |
+|---|---|---|
+| 1 | `package 'apple' is using Swift tools version 6.2.0 but the installed version is 6.1.0` | Xcode 16.4 |
+| 2 | `Device is busy (Waiting to reconnect to iPhone)` | `connected (no DDI)`: no iOS 26 platform, and Developer Mode off |
+| 3 | `'RuntimeScheduler' cannot be annotated with either SWIFT_RETURNS_RETAINED…` | Expo bug against Xcode 26.3 |
+| 4 | `cannot find 'EXFatal' in scope` | `expo-image-picker@17.0.11` against `expo-modules-core@57` |
+| 5 | `no member named 'executeSync' in 'worklets::WorkletRuntime'` | `react-native-worklets@0.12.1`, drifted past Expo's `^0.10` |
+
+Three of the five were **versions**, and none of the five was catchable by anything this
+repository runs. That is the finding, more than any individual fix. `expo export
+--platform web` never compiles a pod, so a dependency set that cannot build for iOS is
+not a failing test anywhere — it is a line in `npm ls` output nobody prints:
+
+```
+react-native-worklets@0.12.1 invalid: "^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0"
+  from node_modules/expo-modules-core
+```
+
+npm had been saying that on every install for as long as the drift existed.
+
+#### The one that was a declaration, not a drift
+
+`mobile/package.json` had `"expo-image-picker": "~17.0.0"` in a list where every other
+Expo package read `~57.0.x`. Expo renumbered its packages to track the SDK, so that was
+an SDK 54-era release. It is the kind of thing that is obvious in a list and invisible
+in a diff, and it survived because nothing ever compiled it.
+
+`nativeConfig.test.ts` now reads every `expo`/`expo-*` dependency and requires its major
+to match the installed SDK. Planting `~17.0.0` back fails it by name.
+
+#### The pin that did not win
+
+`reanimated` and `worklets` are nobody's direct dependency — they arrive through
+`expo-router` → `react-native-drawer-layout`, whose range let them past what
+`expo-modules-core` accepts. Declaring the right versions in `mobile/package.json` was
+not enough: npm honoured them in `mobile/node_modules` while the hoisted copy at the
+repository root — the one the pods resolve — kept the drifted pair. It took `overrides`
+at the workspace root, and then deleting the lock entries, because npm reported "up to
+date" and left the old tree in place.
+
+So there are two guards rather than one: that the pin is declared, and that the pin is
+what actually resolves. Only the second one is about what gets compiled.
+
+#### A fix that had to live somewhere other than node_modules
+
+Xcode 26.3 rejects `SWIFT_RETURNS_RETAINED` on two `RuntimeScheduler` constructors,
+because the class's `SWIFT_SHARED_REFERENCE` annotation is thirty lines further down and
+clang has not seen it yet. Swift 6.1 tolerated the ordering. This is not our bug, and
+not our fix either — `expo-modules-jsi@58.0.0-canary` deletes exactly those two
+annotations and changes nothing else. Checked by diffing the file: after patching, zero
+difference from upstream.
+
+Applying it in `node_modules` works until the next `npm install`, which is the same
+shape as deleting the push entitlement in Xcode (§6.81) and the reason `ios/` is
+gitignored. `scripts/patch-expo-modules-jsi.mjs` runs from `postinstall`, is idempotent,
+and stops matching the moment Expo ships the fix. The guard asserts the *installed
+header*, not the script, because a postinstall that quietly stopped running looks
+exactly like one that ran.
+
+#### What the hardware confirmed
+
+The signed binary settles what §6.81 could only infer from generated files:
+
+```
+application-identifier = 5F87J4VA23.dev.krisiliev.reviewies
+com.apple.developer.team-identifier = 5F87J4VA23
+get-task-allow = true
+```
+
+No `aps-environment`. A free personal team signed it and installed it, and
+`withPersonalTeamSigning.js` is why. 47 MB, with the JS bundle embedded and all three
+configuration values in `EXConstants.bundle/app.config` — so it runs against the real
+provider and the real backend, not fixtures. The `.env` reading in §6.81 works.
+
+And the fingerprinter hears a real room: landmark counts climb while it listens. That
+had been a prediction since doc 9 §5 and is now an observation.
+
+#### Still not known, narrowed
+
+The remote drawer is **not** confirmed. There is no Roku on this network, and discovery
+probes the subnet for one over HTTP, so finding nothing is the correct behaviour of an
+untested feature rather than evidence about it. What a device would tell us that the
+simulator could not is whether iOS raises the local-network permission prompt at all —
+that, and not the drawer's contents, is what `NSLocalNetworkUsageDescription` and the
+Bonjour service types buy.
+
+Push is not confirmed either, though it is the easiest of the three: `pushSupported()`
+is false here for want of an EAS project id, so the calendar screen should be showing
+its explanation rather than a switch. Reading it is the whole test.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
