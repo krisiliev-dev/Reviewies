@@ -101,6 +101,35 @@ const NOT_ON_DISK: Record<string, string> = {
   // send people to. A faithful quotation of a wrong path is the one honest reason to
   // name a file that is not there.
   'app/src/metadata/provider.ts': '§6.79 quotes the sentence that used to name it',
+
+  /**
+   * Files the design system specifies but nobody has built yet.
+   *
+   * A specification names the path it intends, which is the opposite failure from a
+   * document pointing at a file that moved — and this guard was written for the second.
+   * These are deliberately NOT permanent: the stale-exemption test below fails the
+   * moment any of them exists, so each entry deletes itself as the work lands, and the
+   * list doubles as what is left to build.
+   */
+  'core/src/tokens.ts': 'docs/design/tokens.md specifies it — the one owner, not yet built',
+  'scripts/tokens-to-css.mjs': 'docs/design/tokens.md specifies it — emits the web’s custom properties',
+  'app/src/ui/tokens.generated.test.ts': 'docs/design/tokens.md specifies it — the no-drift guard',
+  'core/src/ui/button.ts': 'docs/design/components.md specifies the shared button contract',
+  'app/src/ui/Button.tsx': 'docs/design/components.md specifies the web half of it',
+  'mobile/src/ui/Button.tsx': 'docs/design/components.md specifies the phone half of it',
+
+  // The nine guards and the font module the token spec proposes. Each one is a
+  // build-failing check for one layer of the system; none exists yet.
+  'app/src/ui/contrast.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/flat.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/fontBundle.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/labelSet.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/motion.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/space.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/typeScale.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/watchingDim.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'app/src/ui/zOrder.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  'mobile/src/ui/fonts.ts': 'docs/design/tokens.md specifies it — not yet built',
 };
 
 /** Every markdown file in docs/, not just the research directory. */
