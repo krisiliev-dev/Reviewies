@@ -161,6 +161,16 @@ time. `mobile/src/nativeConfig.test.ts` covers them now.
 canary fix for a header Xcode 26.3 rejects. It is idempotent and becomes a no-op once
 Expo releases the fix.
 
+`scripts/patch-expo-network.mjs` runs alongside it, and matters the moment you test the
+remote. `expo-network` reports the address of the *last* interface named `en*`, and a
+phone plugged into a Mac has one more of those than a phone on a desk — the USB link,
+carrying a self-assigned `169.254.x.x`. Untreated, the device scanner reads the cable
+instead of the Wi-Fi, finds no subnet worth probing, and reports it as though the
+television were asleep. The patch reads `en0`.
+
+If you ever see the remote report a `169.254.x.x` address as its own, that is this bug
+returning: check the patch applied.
+
 ### Why `REVIEWIES_PERSONAL_TEAM=1`
 
 `expo-notifications` is autolinked, so prebuild writes this whether anybody asked or not:

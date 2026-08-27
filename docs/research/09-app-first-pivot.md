@@ -5481,6 +5481,108 @@ is false here for want of an EAS project id, so the calendar screen should be sh
 its explanation rather than a switch. Reading it is the whole test.
 
 
+### 6.84 The cable was a network, and the message blamed the television
+
+§6.83 left three things unobserved. Checking them on the device settled two immediately
+and turned the third into the most interesting bug of the sprint.
+
+#### Two confirmations
+
+**The fingerprinter hears a real room.** Landmark counts climb while it listens. That had
+been a prediction since doc 9 §5.
+
+**The notification screen is honest.** `pushSupported()` is false on the device for want
+of an EAS project id, and the screen says so — text, not a switch:
+
+> Nothing can be delivered to this device yet. This build has no Expo project id, so no
+> push token can be issued. Your choice above is saved and will apply once it can.
+
+§6.50 asserted that in tests. It is now something somebody has read on a phone.
+
+#### And a scan that never happened, reported as a scan that found nothing
+
+"Scan Wi-Fi" failed. What it said was:
+
+> Nothing found. The TV has to be on the same Wi-Fi, and awake — a Roku in deep sleep
+> does not answer.
+
+Every word of which was a red herring. Two observations placed it before any code was
+read: the failure was **instant, with no progress**, and the app **did not appear under
+Settings → Privacy & Security → Local Network**. iOS lists an app there once it attempts
+a local connection. Not being listed means it never attempted one — no probe, no packet,
+nothing to find. The screen had described a television that was never contacted.
+
+`subnetHosts` refuses loopback, link-local and anything that is not four octets, and
+`discoverRokus` returns an empty list when it has nothing to ask. The screen could not
+tell that from 253 addresses all saying no. §6.57's distinction — unconfigured against
+configured and failing — collapsed into the more reassuring half, which is the half that
+sends somebody to go and look at their television.
+
+The fix was to say which, and to name the address, because the address is the whole
+diagnosis and it only exists on the device.
+
+#### What the address turned out to be
+
+`169.254.227.90`. On a phone whose Wi-Fi was on and working.
+
+`expo-network`'s iOS implementation walks every interface and keeps the address of any
+whose name begins with `en` — no `break`, no preference:
+
+```swift
+if name.starts(with: "en") {
+  ...
+  address = String(cString: hostname)   // the last one wins
+}
+```
+
+On iOS `en0` is Wi-Fi. **Plugging the phone into a Mac adds another `en` interface**, later
+in the list, carrying a self-assigned `169.254.x.x` because nothing serves DHCP over a USB
+cable. The Mac end of the same link was visible from the other side the whole time:
+`en11 ... inet 169.254.44.67`.
+
+So the remote was broken by the cable that was there to develop it. Unplugging fixed it
+instantly — the scan found the device, and every key arrived.
+
+That is worth stating plainly: **the feature failed only under the exact conditions in
+which it was being tested.** A tethered phone is the one state a developer sees and no
+user ever does. Had the first hardware test been done over Wi-Fi alone, the bug would
+have shipped and nobody would have reproduced it.
+
+`scripts/patch-expo-network.mjs` restricts the read to `en0`, which loses nothing —
+cellular is `pdp_ip0` and that loop never matched it either way.
+
+#### Proving it with something that was not a television
+
+There is no Roku here, which is why §6.83 left this open. There did not need to be one:
+discovery is an HTTP GET to port 8060 looking for `<device-info>`, so a thirty-line node
+server on the same Wi-Fi is indistinguishable from a television as far as the app can
+tell. It answered `/query/device-info` and `/query/media-player` and logged every
+keypress:
+
+```
+GET  /query/device-info      from 192.168.0.200
+POST /keypress/Fwd  ×3
+POST /keypress/Play, Up, Right, Down, Left, Select, VolumeDown, VolumeUp, Home
+```
+
+The `Fwd` triple is correct: Roku's ECP has no seek, so skipping is repeated fixed-step
+presses, which `RemotePanel` already said in a comment.
+
+A stand-in worth remembering as a technique. The feature was "untestable without hardware"
+for exactly as long as nobody looked at what the hardware was being asked.
+
+#### What the guards say now
+
+`scanFailure` is a module of its own rather than part of the hook, because importing
+`useRemote` pulls in react-native, whose Flow syntax vitest cannot parse — which is why
+the remote had no tests on this side at all. Planting the single old message back fails
+four of ten cases, the first being `127.0.0.1 still blames the TV`.
+
+Both upstream patches are asserted against the *installed sources* rather than against
+the scripts that write them, because a postinstall that has quietly stopped running looks
+exactly like one that ran.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

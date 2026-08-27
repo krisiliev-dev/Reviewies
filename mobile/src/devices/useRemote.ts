@@ -4,6 +4,8 @@ import {
   createDirectRokuAdapter,
   discoverRokus,
 } from '@reviewies/core/devices/direct';
+import { subnetHosts } from '@reviewies/core/devices/scan';
+import { scanFailure } from './scanFailure';
 import type { Command, Device, Playback } from '@reviewies/core/devices/types';
 import { readPreference, writePreference } from '@reviewies/core/data/storage';
 
@@ -66,6 +68,9 @@ export function useRemote(): Remote {
       }
 
       const localAddress = await Network.getIpAddressAsync();
+      // Counted here rather than inferred from the result, so the screen can tell an
+      // empty subnet from an empty answer. `discoverRokus` computes the same list.
+      const hostCount = subnetHosts(localAddress).length;
       const found = await discoverRokus({
         localAddress,
         onProgress: (done, total) => setProgress(done / total),
@@ -73,10 +78,7 @@ export function useRemote(): Remote {
 
       setDevices(found);
       if (found.length === 0) {
-        setError(
-          'Nothing found. The TV has to be on the same Wi-Fi, and awake — a Roku ' +
-            'in deep sleep does not answer.',
-        );
+        setError(scanFailure(localAddress, hostCount));
       } else if (!device) {
         setDevice(found[0]);
       }

@@ -355,8 +355,32 @@ describe('the native dependency tree', () => {
     ).not.toMatch(/SWIFT_RETURNS_RETAINED\s+RuntimeScheduler\(/);
   });
 
-  it('runs that patch from postinstall rather than expecting anybody to remember', () => {
+  /**
+   * The second upstream fix, for the reason the remote found nothing on a real phone.
+   *
+   * `expo-network` kept the address of the *last* interface named `en*`, so a phone
+   * plugged into a Mac reported the USB cable's self-assigned `169.254.x.x` instead of
+   * its Wi-Fi address. Nothing was ever probed, iOS never raised the local-network
+   * prompt, and the app never appeared in Settings to be granted anything. 6.84.
+   */
+  it('has the en0 fix applied to expo-network', () => {
+    const module = join(
+      dirname(require_.resolve('expo-network/package.json')),
+      'ios/NetworkModule.swift',
+    );
+    const source = readFileSync(module, 'utf8');
+    expect(source, 'the postinstall patch has not run — `npm install` applies it').not.toContain(
+      'if name.starts(with: "en")',
+    );
+    expect(source, 'expo-network no longer reads interfaces the way this patch assumed').toContain(
+      'if name == "en0"',
+    );
+  });
+
+  it('runs those patches from postinstall rather than expecting anybody to remember', () => {
     const scripts = json(resolve(ROOT, 'package.json')).scripts as Record<string, string>;
-    expect(scripts.postinstall ?? '').toContain('patch-expo-modules-jsi');
+    for (const patch of ['patch-expo-modules-jsi', 'patch-expo-network']) {
+      expect(scripts.postinstall ?? '', `${patch} is not wired into postinstall`).toContain(patch);
+    }
   });
 });

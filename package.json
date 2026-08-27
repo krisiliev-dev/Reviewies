@@ -10,7 +10,7 @@
     "extension"
   ],
   "scripts": {
-    "postinstall": "node scripts/patch-expo-modules-jsi.mjs",
+    "postinstall": "node scripts/patch-expo-modules-jsi.mjs && node scripts/patch-expo-network.mjs",
     "test": "npm run test --workspaces --if-present",
     "verify": "npm run test --workspaces --if-present && npm run test:sqlite --workspace core && npm run test:tz --workspace core && npm run typecheck --workspaces --if-present && npm run build --workspace app && npm run build --workspace extension && npx oxlint",
     "coverage": "vitest run --config vitest.coverage.config.ts --testTimeout=60000 && node scripts/coverage-report.mjs",
