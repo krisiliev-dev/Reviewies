@@ -43,6 +43,28 @@ describe('text scaling on the phone', () => {
     expect(optedOut).toEqual([]);
   });
 
+  /**
+   * The sequel to the check above, one line further on.
+   *
+   * `allowFontScaling={false}` switches scaling off and is the obvious defect.
+   * `maxFontSizeMultiplier={1.4}` leaves it on and caps it, which is the same defect
+   * wearing a reasonable face — and it is the change most likely to be made in good
+   * faith, by somebody stopping a heading wrap at 200% without realising they have just
+   * decided how large this app is allowed to be for everyone who needs it larger.
+   *
+   * Geometry reflows instead. That is what the equal-width transport cells are for.
+   */
+  it('never caps how far text may scale', () => {
+    const files = phoneSources();
+    expect(files.length).toBeGreaterThan(15);
+
+    const capped = files
+      .filter(({ source }) => /maxFontSizeMultiplier/.test(source))
+      .map(({ path }) => path);
+
+    expect(capped, 'let the layout reflow rather than capping the type').toEqual([]);
+  });
+
   it('keeps the rating targets in absolute units', () => {
     // 24 CSS pixels is what WCAG 2.5.8 asks for, and it does not scale with text. On
     // the phone that is a plain number, which is already absolute; the web equivalent

@@ -22,6 +22,36 @@ export const theme = {
 export const radius = { sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
 /**
+ * The token layer, re-exported so a screen can reach it without a second import path.
+ *
+ * The seven colours above and the four radii are the OLD system and are still what most
+ * of this app is drawn from. They are not deleted yet on purpose: `docs/design/tokens.md`
+ * costs the space migration at ~99 sites and the radius one at ~84, and the spec is
+ * explicit that those guards land WITH their migration or not at all — a guard carrying
+ * an allowlist of its own violations is the shape §6.59 caught being wrong for a year.
+ *
+ * So this is a bridge with a visible end, not a permanent pair. New work reads `tokens`;
+ * the old names go when the sprint that migrates them lands, and `palette.test.ts` still
+ * holds the seven to their measured ratios until then.
+ */
+export {
+  color,
+  label,
+  space,
+  size,
+  ratio,
+  border,
+  elevation,
+  duration,
+  reduced,
+  stagger,
+  reducedStagger,
+  linger,
+  easing,
+  z,
+} from '@reviewies/core/tokens';
+
+/**
  * The minimum a control can be and still be a target.
  *
  * WCAG 2.5.8 asks for 24x24 CSS pixels. Several controls here are a line of text and

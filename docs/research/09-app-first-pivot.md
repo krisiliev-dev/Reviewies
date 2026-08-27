@@ -5599,6 +5599,92 @@ the scripts that write them, because a postinstall that has quietly stopped runn
 exactly like one that ran.
 
 
+### 6.82 The token layer, and two defects it was the fix for
+
+`docs/design/tokens.md` decides the whole system; this is the first slice of it built.
+`core/src/tokens.ts` sits beside `copy.ts` under the same no-imports rule — guards read it
+as text as well as importing it, and a token file that can reach the database is one that
+will eventually be asked to.
+
+#### Two live contrast defects, found by specifying rather than by looking
+
+The spec corrected the direction on one point and it was load-bearing. Late Edition draws
+five *state-bearing* things in the hairline colour — the empty-slot outline, the crosshair,
+the NO SIGNAL hatch, the outlined Watchlist button, the search field's border — and at
+1.42:1 none of them exists as far as WCAG 1.4.11 is concerned. The fix costs no new
+colours: the stroke that means something is the tertiary ink, worst case 4.51.
+
+That token then had two callers waiting for it:
+
+- **The remote drawer's handle was `surface2` on `ink` — 1.21:1.** A 24pt handle has been
+  on that edge for sprints, and every one of the three design directions independently
+  reported the drawer as having no affordance. It was there the whole time and could not
+  be seen.
+- **The web drew the identical defect**, `bg-surface-2/90 text-muted backdrop-blur`, in a
+  different file with different words. Two platforms hid the same control the same way
+  without either knowing, which is the argument for one owner rather than two palettes
+  that agree.
+
+#### What the guards caught in their own author
+
+Three, and each is the useful kind.
+
+**The focus ring test was wrong, not the tokens.** Written as "the inset separates from
+every fill", it failed at 1.77:1 — light-mode inset against amber, the same 1.77 that
+forced the `workingMark` split. The real property is that **one of the two rings**
+separates: in light the near-black outer ring clears amber at 9.04 and the inset does the
+work against the near-black pill instead. The spec computed these for dark and nobody had
+checked light.
+
+**The label set's hue floor was a dark-mode measurement applied to both.** The spec derived
+"25 degrees apart" from the dark set, where the tightest pair is yellow/orange at 28.8.
+Light is the same pair at **24.0** — its yellow sits at 80 degrees where dark's is at 84.
+Locked at the measured floor per theme rather than relaxed to a number that would pass,
+because a threshold chosen to be satisfied is §6.73's shape.
+
+**`coreWiring` refused eleven token exports.** Its own header says the answer is to wire it
+up or delete it, never to add a line — but the space and radius guards cannot land without
+their ~99 and ~84 site migrations, and the spec is explicit that a guard carrying an
+allowlist of its own violations is not a guard. So the values arrive first and the call
+sites arrive per sprint, and that is admitted in the exemption list rather than hidden.
+
+What makes that defensible is a property the check already had and its comment did not
+claim: `live` is what is unreached *now*, so an entry drops out either because the export
+was deleted **or because something finally called it**. The comment said only the first.
+Corrected, and the token entries lean on it — each reason ends the day its migration
+lands, with nobody having to remember. The comment was underselling the check, which is
+the mirror of every other finding in this document.
+
+#### The plants
+
+Ten, each the violation the spec named for its guard, five of them at the token and five
+in the source:
+
+- dark `ink.tertiary` at `#7F7670` — 4.13 on `ground`, **3.83 on `raised`**, and a guard
+  that tested only `ground` would pass text that fails where it is printed
+- light `workingMark` collapsed back onto the fill — 1.77
+- dark blue at `#3355FF` — chroma 0.24, past print saturation
+- a `duration.heat` with no `reduced.heat`, so a new moving thing cannot ship without an
+  answer for Reduce Motion
+- two layers sharing a stacking number
+- `duration: reduced ? 0 : 200` restored to the line the motion guard was written for
+- `zIndex: 45` typed onto a screen, colliding with the scrim
+- `maxFontSizeMultiplier={1.4}` on the masthead — the change most likely to be made in
+  good faith, by somebody stopping a heading wrapping at 200%
+- `backdrop-blur` back on the web drawer
+- `elevation: 4` on a phone component
+
+All ten failed for their stated reason.
+
+#### What is deliberately not here
+
+The type scale, the space scale and the radius scale exist as values and not as call
+sites. `theme.ts` keeps its seven old colours and four old radii and re-exports the new
+layer beside them — a bridge with a visible end rather than a permanent pair. The `Theme`
+union and an aggregate `tokens` object were both written and both deleted the same hour:
+nothing reached them, and an export in anticipation is the same debt as a function.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -5880,3 +5966,13 @@ and which single claim in this document could not be checked at all:
   whether background audio *keeps* working — `UIBackgroundModes: ["audio"]` is present,
   which is necessary and not sufficient, and iOS suspends a recording session for
   reasons no plist declares.
+- **The token layer is specified in full and built in part, and only the built part is
+  guarded.** §6.82 landed colour, motion, z-order and elevation with guards proved by
+  planting. The type, space and radius layers are values in `core/src/tokens.ts` that no
+  screen reads: 222 `fontSize` literals, ~99 off-scale spacing values and ~84 radius uses
+  are still there, and their guards cannot land until the sites do. Until then the app is
+  drawn from `theme.ts`'s original seven colours and four radii, so the system is real in
+  the specification, real in the tests, and mostly not yet real on screen. The gap is
+  visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
+  and each line deletes itself when its sprint lands — but nobody should read "the design
+  system is in" as "the app looks like the design system".

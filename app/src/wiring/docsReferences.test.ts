@@ -111,24 +111,19 @@ const NOT_ON_DISK: Record<string, string> = {
    * moment any of them exists, so each entry deletes itself as the work lands, and the
    * list doubles as what is left to build.
    */
-  'core/src/tokens.ts': 'docs/design/tokens.md specifies it — the one owner, not yet built',
   'scripts/tokens-to-css.mjs': 'docs/design/tokens.md specifies it — emits the web’s custom properties',
   'app/src/ui/tokens.generated.test.ts': 'docs/design/tokens.md specifies it — the no-drift guard',
   'core/src/ui/button.ts': 'docs/design/components.md specifies the shared button contract',
   'app/src/ui/Button.tsx': 'docs/design/components.md specifies the web half of it',
   'mobile/src/ui/Button.tsx': 'docs/design/components.md specifies the phone half of it',
 
-  // The nine guards and the font module the token spec proposes. Each one is a
-  // build-failing check for one layer of the system; none exists yet.
-  'app/src/ui/contrast.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'app/src/ui/flat.test.ts': 'docs/design/tokens.md specifies it — not yet built',
+  // What the token and component specs still name and nobody has built. Six entries
+  // were here this morning and are gone because the files landed — the stale check
+  // below took them out rather than anybody remembering to.
   'app/src/ui/fontBundle.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'app/src/ui/labelSet.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'app/src/ui/motion.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/space.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/typeScale.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/watchingDim.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'app/src/ui/zOrder.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'mobile/src/ui/fonts.ts': 'docs/design/tokens.md specifies it — not yet built',
 };
 

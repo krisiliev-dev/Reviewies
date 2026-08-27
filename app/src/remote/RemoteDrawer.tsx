@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
 import { useDialog } from '../ui/useDialog';
+import { color, z } from '@reviewies/core/tokens';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -78,7 +79,14 @@ export function RemoteDrawer() {
         onClick={() => setOpen(true)}
         aria-label="Open remote"
         inert={open}
-        className={`fixed top-1/2 right-0 z-40 -translate-y-1/2 rounded-l-xl bg-surface-2/90 py-4 pr-1 pl-1.5 text-muted backdrop-blur transition-opacity ${
+        /* Was `bg-surface-2/90 text-muted backdrop-blur` — the same 1.21:1 handle the
+           phone had, plus a blur. Both platforms hid the drawer's only affordance the
+           same way and independently, which is the argument for one owner rather than
+           two palettes that agree. Solid now, in the stroke that means something.
+           Inline because the generated custom properties land in the next sprint; the
+           token is the source either way, so there is no hex to find and replace. */
+        style={{ backgroundColor: color.dark.strokeSignal, color: color.dark.ground, zIndex: z.drawerHandle }}
+        className={`fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl py-4 pr-1 pl-1.5 transition-opacity ${
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >

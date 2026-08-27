@@ -5,6 +5,7 @@ import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
 import { radius, tap, theme } from '../ui/theme';
 import { useReducedMotion } from '../ui/useReducedMotion';
+import { color, duration, reduced as reducedMotion, z } from '@reviewies/core/tokens';
 
 /**
  * The remote, hidden in a drawer to the side — which is what the brief asked for.
@@ -33,7 +34,11 @@ export function RemoteDrawer() {
       toValue: open ? 1 : 0,
       // Reduced motion means it is simply there or not there. A slide across most of
       // the screen is exactly the kind of movement the setting is asking about.
-      duration: reduced ? 0 : 200,
+      //
+      // Read from a table rather than decided here. This line was the reason
+      // `motion.test.ts` exists: an accessibility decision made at a call site is one a
+      // future call site can silently omit.
+      duration: (reduced ? reducedMotion : duration).drawer,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
@@ -120,12 +125,16 @@ const styles = StyleSheet.create({
     // target rather than a decoration.
     minWidth: 24,
     alignItems: 'center',
-    backgroundColor: theme.surface2,
+    // Was `theme.surface2` on `theme.ink` — 1.21:1. A 24pt handle has been on this edge
+    // for sprints and every design reviewer independently reported the drawer as having
+    // no affordance, because at that ratio it is not there. `strokeSignal` is the token
+    // for a mark that means something, at 4.51 in the worst case.
+    backgroundColor: color.dark.strokeSignal,
     borderTopLeftRadius: radius.md,
     borderBottomLeftRadius: radius.md,
-    zIndex: 40,
+    zIndex: z.drawerHandle,
   },
-  tabGlyph: { color: theme.muted, fontSize: 18 },
+  tabGlyph: { color: color.dark.ground, fontSize: 18 },
   scrim: {
     position: 'absolute',
     top: 0,
@@ -133,7 +142,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    zIndex: 45,
+    zIndex: z.drawerScrim,
   },
   drawer: {
     position: 'absolute',
@@ -144,7 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.ink,
     borderLeftWidth: 1,
     borderLeftColor: theme.edge,
-    zIndex: 50,
+    zIndex: z.drawer,
   },
   head: {
     flexDirection: 'row',

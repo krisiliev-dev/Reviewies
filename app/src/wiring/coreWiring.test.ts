@@ -50,6 +50,36 @@ const UNREACHED: Record<string, string> = {
   'metadata/animeMapping#clearMappingCache': 'Test seam for the mapping cache.',
   'metadata/index#setProvider':
     'Test seam, in the house style of setDatabase / setStorage / setFileSaver. Added by \u00a76.68 because the cache layer above it \u2014 getProvidersCached, which \u00a76.58 rewrote so a failure could be told apart from an empty answer \u2014 had never been executed: there was no way to make a provider *fail*, since the fixture catalogue always succeeds and the real one needs a token and a network.',
+  /**
+   * The token layers that have landed as values and not yet as call sites.
+   *
+   * `docs/design/tokens.md` decides the whole system at once — that is what one owner
+   * means — but the spec is equally explicit that the space and radius guards land WITH
+   * their ~99 and ~84 site migrations or not at all, because a guard carrying an
+   * allowlist of its own violations is not a guard. So the values arrive first and the
+   * call sites arrive per sprint.
+   *
+   * Each of these is reached today by exactly one thing: the guard that holds it to its
+   * specification. That is not nothing — `elevation` exists so `flat.test.ts` can assert
+   * the app has no shadow scale, and it caught a `backdrop-blur` on the web drawer the
+   * day it landed — but it is not a call site, and this list is where that difference is
+   * admitted rather than hidden.
+   *
+   * None of these needs deleting when it is used: the stale check above removes the
+   * entry the moment product code reaches the export.
+   */
+  'tokens#space': 'Values landed; the ~99-site migration is its own sprint.',
+  'tokens#size': 'Values landed; migrates with space.',
+  'tokens#ratio': 'Values landed; migrates with the poster component.',
+  'tokens#radius': 'Values landed; the ~84-site migration is its own sprint.',
+  'tokens#border': 'Values landed; migrates with the components that draw rules.',
+  'tokens#elevation': 'Reached only by flat.test.ts, which is the point of it.',
+  'tokens#label': 'Reached only by labelSet.test.ts and contrast.test.ts until the spine lands.',
+  'tokens#stagger': 'Reached only by motion.test.ts until a staggered list lands.',
+  'tokens#reducedStagger': 'The Reduce Motion half of the above; lands with it.',
+  'tokens#linger': 'Reached only by motion.test.ts until the undo chip lands.',
+  'tokens#easing': 'Reached only by its own table; the drawer keeps its shipped easing.',
+
   'sync/clock#resetClock':
     'Test seam: the learned server offset is module state and a case must not inherit the previous one\u2019s. Nothing in the product forgets it — the offset describes the device, not the account, so signing out is not a reason to unlearn it.',
 };
@@ -62,6 +92,17 @@ const UNREACHED: Record<string, string> = {
  * read aloud.
  */
 const LOPSIDED: Record<string, string> = {
+  /**
+   * The phone's remote drawer is the only thing in either app that animates from a
+   * table yet, so it is the only caller of the motion tokens.
+   *
+   * Not a platform difference and not meant to last: the web's drawer has the same
+   * slide and still writes its own timing. It moves when the web drawer is migrated,
+   * and the stale check above deletes these two lines the day it does.
+   */
+  'mobile only: tokens#duration': 'Only the phone drawer reads the motion table so far.',
+  'mobile only: tokens#reduced': 'The Reduce Motion half of the same table.',
+
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',
   'app only: devices/relayUrl#relayConnectionUrl':
@@ -101,9 +142,13 @@ describe('what the core offers, and who calls it', () => {
     expect(explain(lopsided(rows), LOPSIDED)).toEqual([]);
   });
 
-  it('does not keep reasons for exports that no longer exist', () => {
-    // Otherwise the lists fill up with excuses for code that was deleted, and the next
-    // person reading them cannot tell which ones still mean anything.
+  it('does not keep reasons that have stopped being true', () => {
+    // Two ways a reason expires, and the comment here used to name only the first.
+    // `live` is what is unreached or lopsided *now*, so an entry drops out of it either
+    // because the export was deleted or because something finally started calling it —
+    // and an excuse that outlives the condition it describes is the §6.59 shape. The
+    // design tokens below lean on this: each one's reason ends the day its migration
+    // lands, without anybody having to remember.
     const live = new Set([...unreached(rows), ...lopsided(rows)]);
     const stale = [...Object.keys(UNREACHED), ...Object.keys(LOPSIDED)].filter(
       (key) => !live.has(key),
