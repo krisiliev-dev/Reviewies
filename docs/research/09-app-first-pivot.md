@@ -6170,6 +6170,79 @@ than none. `Section`, `Poster`, `Masthead` and the other twelve are behind it. T
 is in `docs/design/components.md` and unchanged.
 
 
+### 6.92 Measuring the pixels, because three sprints of colour bugs went past every guard
+
+This sprint was supposed to be `Button`. §7 named a different thing as open and unowned —
+*nothing catches a `bg-ink` painting a page near-white, because both halves are legitimate
+names* — and the case for doing it first is simply the record:
+
+| sprint | defect | what caught it |
+| --- | --- | --- |
+| §6.90 | the page turned near-white when a token collision was resolved | a check that reads `--ground` off the document |
+| §6.91 | the active tab painted near-black **on near-black** | reading the diff |
+| §6.91 | two more elements the same way | grepping for what remained |
+
+Every colour guard in this repository measures the **token table**. `contrast.test.ts`
+proves `ink.secondary` on `ground.raised` is 8.14:1 — true, and true throughout all three
+defects, because none of them was a bad *pair*. They were correct colours arriving on the
+wrong surface. That is a property of the rendered page and can only be read from the
+rendered page.
+
+So: `legible(screen)` walks every element that owns visible text, finds what is actually
+behind it, composites any translucency, and measures. It runs inside `audit()` rather than
+from a list, so a screen added to the audit is a screen measured — sixteen today.
+
+**Two wrong answers before the right one, both of which looked like findings.**
+
+The first run reported Watching Mode's placeholder at **1.12:1**. Tailwind v4 writes an
+opacity modifier as `oklab(0.740621 0.00742719 0.0155848 / 0.7)` and Chrome returns that
+verbatim; the parser pulled three numbers out and read them as red, green and blue. A
+precise, confident, invented number about a real element.
+
+The second version handed the string to a canvas `fillStyle`, which normalises named
+colours and hex and hsl() — and **rejects** Oklab, silently keeping whatever it held
+before. That was black, so the same placeholder came back at **1.08:1** against the
+near-black ground. A different wrong answer, arrived at by a mechanism that looks more
+rigorous than the first.
+
+The third converts Oklab and Oklch here, from the published matrices, and keeps the canvas
+for everything it is actually good at. The placeholder passes.
+
+It is worth being blunt about what nearly happened: a new instrument reporting a real
+element at a plausible-sounding ratio, twice, in a codebase where the honest response to a
+red check is to fix the app. Both times the app was fine and the instrument was wrong.
+§6.73's rule — distrust a pass — has a mirror, and this is it.
+
+**Two plants, and the first is the whole point.** Putting §6.91's `text-action-label` back
+on the tab bar reports:
+
+```
+Search: every word is legible on what is behind it
+  a "Search" 1.00:1 (needs 4.5) rgb(19, 17, 20) on rgb(19, 17, 20)
+```
+
+— named exactly, on every screen that has a tab bar. The defect that got past a colour
+guard, a render probe and 226 browser checks is now a one-line failure. The second plant
+is a *marginal* case rather than an identity: `stroke.hairline` as body text on a card,
+which is 1.31:1 and is the shape of the mistake somebody actually makes.
+
+No exception list, deliberately. If it is visible, has text, and fails, it is reported —
+a false positive costs a minute, and the alternative is a check whose list of excuses
+grows until it means nothing (§6.59).
+
+Web smoke 226 → 242.
+
+**`Button` has now been deferred twice** — once in §6.91 for the tally rule and once here.
+That is the point at which a deferral becomes a habit, so it is stated rather than
+repeated: the next sprint is Button and nothing else, and this section is the last one
+allowed to push it back.
+
+**What this does not cover.** The phone has no equivalent. `mobile/smoke.mjs` drives the
+react-native-web export, which is a real DOM, so the same helper would work there almost
+unchanged — it is a port, not a research problem, and it is not done. Until it is, the
+platform this product pivoted to *be* has no measurement of what its words land on.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6465,14 +6538,13 @@ and which single claim in this document could not be checked at all:
   contract that moves a whole class of mis-naming to compile time. Until it lands,
   `action.quiet`'s pressed state does not exist, the poster has one state instead of four,
   and every screen still specifies its own padding.
-- **A colour name can be wrong in a way no name-based guard can see.** §6.91 shipped
-  `text-action-label` — near-black — onto a near-black tab bar, and the colour guard, the
-  render probe and 224 browser checks all passed it, because every name involved is real.
-  The fix checks a *relationship* (a label needs its fill) rather than a name. The general
-  version of that problem is open: nothing catches a `bg-ink` painting a page near-white,
-  because `ink` is a legitimate token and `bg-` is a legitimate namespace. What would
-  catch it is a check that reads background and foreground off the same rendered element
-  and measures them, which is `contrast.test.ts` moved from the token table to the pixels.
+- **The web measures its rendered colour; the phone does not.** §6.92 closed the general
+  problem on the web — sixteen screens now have every word measured against what is
+  actually behind it, and the plant that reproduces §6.91's invisible tab reports it as
+  `1.00:1`. `mobile/smoke.mjs` drives a real DOM and could run the same helper almost
+  unchanged, and does not. The platform this product pivoted to *be* has no measurement of
+  what its words land on, which is the same asymmetry §6.38 found for text scaling and
+  §6.85 found for the palette itself.
 - **One browser check is flaky.** `two tabs racing do not record the same episode twice`
   failed once during §6.91 and passed on the next run against the same build. It races two
   contexts against one IndexedDB on purpose, so a flake is plausible rather than

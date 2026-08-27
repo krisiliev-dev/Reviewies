@@ -214,6 +214,154 @@ async function audit(screen, atLeast) {
     found.small.length === 0,
     found.small.join(' | '),
   );
+
+  // Measured on every screen this suite already looks at, rather than on a list somebody
+  // maintains. A screen added to the audit is a screen measured for contrast, which is
+  // the coupling that stops the second check falling behind the first.
+  await legible(screen);
+}
+
+/**
+ * Every word on the screen, measured against what is actually behind it.
+ *
+ * Three sprints running, a colour defect shipped and nothing saw it. §6.90 turned the
+ * page near-white by deleting a token that a stylesheet had been silently relying on.
+ * §6.91 painted the active tab `action.label` — near-black on a near-black bar, the same
+ * colour, not merely a low ratio. Both were found by reading the diff.
+ *
+ * Every existing colour guard measures the *token table*: it proves `ink.secondary` on
+ * `ground.raised` is 8.14:1, which is true and was true throughout both defects. What
+ * neither could say is which colour a given word ended up on. That is a property of the
+ * rendered page and can only be read from it, so this reads it from there.
+ *
+ * Deliberately not clever about the failures it excuses. If it is visible, has text, and
+ * fails, it is reported — a real false positive costs a minute, and the alternative is a
+ * check with a list of exceptions that grows until it means nothing (§6.59).
+ */
+async function legible(screen) {
+  const bad = await page.evaluate(() => {
+    /*
+     * `getComputedStyle` does not promise rgb(), and a canvas will not translate it.
+     *
+     * Tailwind v4 writes an opacity modifier as `oklab(0.74 0.007 0.015 / 0.7)` and
+     * Chrome returns that verbatim. Reading three numbers out of it as red, green and
+     * blue is how the first version of this check reported Watching Mode's placeholder
+     * at 1.12:1 — a precise, confident, invented number. The second version passed the
+     * string to a canvas `fillStyle`, which *rejects* it and silently keeps the previous
+     * value: black, giving 1.08:1 against the near-black ground. Two different wrong
+     * answers that both looked like a finding.
+     *
+     * So the conversion is done here, from the published Oklab matrices. The canvas is
+     * still used for everything else — named colours, hex, hsl() — where it is correct.
+     */
+    const canvas = document.createElement('canvas').getContext('2d');
+    const gamma = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+    const fromOklab = (L, a, bb, alpha) => {
+      const l = (L + 0.3963377774 * a + 0.2158037573 * bb) ** 3;
+      const m = (L - 0.1055613458 * a - 0.0638541728 * bb) ** 3;
+      const s2 = (L - 0.0894841775 * a - 1.291485548 * bb) ** 3;
+      const to255 = (v) => Math.max(0, Math.min(255, Math.round(gamma(v) * 255)));
+      return {
+        r: to255(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s2),
+        g: to255(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s2),
+        b: to255(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s2),
+        a: alpha,
+      };
+    };
+    const parse = (colour) => {
+      const oklab = colour.match(/^oklab\(([^)]*)\)/);
+      if (oklab) {
+        const [L, a, bb, alpha = 1] = oklab[1].split(/[\s/]+/).filter(Boolean).map(Number);
+        return fromOklab(L, a, bb, alpha);
+      }
+      const oklch = colour.match(/^oklch\(([^)]*)\)/);
+      if (oklch) {
+        const [L, C, H, alpha = 1] = oklch[1].split(/[\s/]+/).filter(Boolean).map(Number);
+        const rad = (H * Math.PI) / 180;
+        return fromOklab(L, C * Math.cos(rad), C * Math.sin(rad), alpha);
+      }
+      canvas.fillStyle = '#000';
+      canvas.fillStyle = colour;
+      const normalised = canvas.fillStyle;
+      if (normalised.startsWith('#')) {
+        const hex = normalised.slice(1);
+        const wide = hex.length > 4;
+        const at = (i) => parseInt(wide ? hex.slice(i * 2, i * 2 + 2) : hex[i].repeat(2), 16);
+        return { r: at(0), g: at(1), b: at(2), a: 1 };
+      }
+      const [r, g, b, a = 1] = (normalised.match(/[\d.]+/g) ?? []).map(Number);
+      return { r, g, b, a };
+    };
+    const luminance = ({ r, g, b }) => {
+      const lin = [r, g, b].map((c) => {
+        const v = c / 255;
+        return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    };
+    const ratio = (a, b) => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    /** Composite over what is behind, because a translucent fill is not a colour. */
+    const over = (top, bottom) => ({
+      r: top.r * top.a + bottom.r * (1 - top.a),
+      g: top.g * top.a + bottom.g * (1 - top.a),
+      b: top.b * top.a + bottom.b * (1 - top.a),
+      a: 1,
+    });
+
+    const page = parse(getComputedStyle(document.body).backgroundColor);
+    const failures = [];
+    for (const el of document.querySelectorAll('*')) {
+      // Its OWN text, not its descendants'. A container inherits a colour it never uses.
+      const own = [...el.childNodes]
+        .filter((n) => n.nodeType === Node.TEXT_NODE)
+        .map((n) => n.textContent.trim())
+        .join(' ')
+        .trim();
+      if (!own) continue;
+
+      const style = getComputedStyle(el);
+      if (style.visibility === 'hidden' || style.display === 'none') continue;
+      if (Number(style.opacity) === 0) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width < 1 || box.height < 1) continue;
+      // Parked off-screen to keep an accessibility tree while invisible, which is an
+      // idiom this app uses on purpose and is not a contrast question.
+      if (box.right < 0 || box.bottom < 0) continue;
+      if (el.closest('[aria-hidden="true"], [inert]')) continue;
+
+      // What is behind it: the first ancestor that actually paints, composited down.
+      let behind = page;
+      for (let node = el; node; node = node.parentElement) {
+        const fill = parse(getComputedStyle(node).backgroundColor);
+        if (fill.a > 0) {
+          behind = fill.a === 1 ? fill : over(fill, page);
+          break;
+        }
+      }
+
+      // Translucent text is genuinely lower contrast, so it composites too rather than
+      // being measured at full strength.
+      const inkRaw = parse(style.color);
+      const ink = inkRaw.a === 1 ? inkRaw : over(inkRaw, behind);
+      const size = parseFloat(style.fontSize);
+      const bold = Number(style.fontWeight) >= 700;
+      // WCAG 1.4.3: 18.66px bold or 24px is "large" and takes 3.0 instead of 4.5.
+      const floor = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;
+      const measured = ratio(ink, behind);
+      if (measured + 0.005 < floor) {
+        failures.push(
+          `${el.tagName.toLowerCase()} "${own.slice(0, 24)}" ${measured.toFixed(2)}:1 ` +
+            `(needs ${floor}) ${style.color} on rgb(${Math.round(behind.r)}, ` +
+            `${Math.round(behind.g)}, ${Math.round(behind.b)})`,
+        );
+      }
+    }
+    return failures;
+  });
+  check(`${screen}: every word is legible on what is behind it`, bad.length === 0, bad.join(' | '));
 }
 
 /**
