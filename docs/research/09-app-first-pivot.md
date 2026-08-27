@@ -5571,6 +5571,22 @@ presses, which `RemotePanel` already said in a comment.
 A stand-in worth remembering as a technique. The feature was "untestable without hardware"
 for exactly as long as nobody looked at what the hardware was being asked.
 
+#### And then the fix was checked in the state that broke it
+
+Unplugging proved the cause. It does not prove the fix — the cable being gone is not the
+same as the cable being handled. So the patched build went back on a **tethered** phone,
+with the Mac still reporting `en11 ... 169.254.225.140, status: active`, and the scan came
+from `192.168.0.200`:
+
+```
+GET  /query/device-info   from 192.168.0.200
+POST /keypress/Fwd ×3, Rev ×3, Home, VolumeDown, VolumeUp
+```
+
+The Wi-Fi address, while the cable was plugged in. Worth the extra round trip: a fix
+verified only in the condition that never failed is not verified at all, and this one was
+one step away from being reported that way.
+
 #### What the guards say now
 
 `scanFailure` is a module of its own rather than part of the hook, because importing
