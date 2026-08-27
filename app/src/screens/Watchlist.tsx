@@ -5,6 +5,7 @@ import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
+import { Button } from '../ui/Button';
 
 /**
  * Uncapped, deliberately. Trakt limiting free watchlists and doubling its price is
@@ -28,12 +29,14 @@ export function Watchlist() {
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Watchlist</h1>
         <p className="text-ink-secondary">{COPY.watchlist.empty}</p>
-        <Link
+        <Button
           to="/search"
-          className="mt-5 inline-block rounded-pill bg-action-fill px-5 py-3 font-medium text-action-label"
-        >
-          Find something
-        </Link>
+          tone="primary"
+          size="page"
+          label="Find something"
+          name="Find something"
+          className="mt-5"
+        />
       </div>
     );
   }

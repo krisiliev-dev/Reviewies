@@ -6243,6 +6243,90 @@ unchanged — it is a port, not a research problem, and it is not done. Until it
 platform this product pivoted to *be* has no measurement of what its words land on.
 
 
+### 6.93 Button, and six things the existing guards said about it
+
+Forty-five button styles across twenty-five files — `cta`, `ctaQuiet`, `retry`,
+`retryQuiet`, `enable`, `allTime`, `small`, `link`, `toggle`, `vote`, `add`, `restore`,
+`skip`, `done`, `mark`, `react`, `posterSave` — and no two screens agreeing on what
+"secondary" means. Four tones and three sizes, in three files: `core/src/ui/button.ts`
+decides, `app/src/ui/Button.tsx` renders it in Tailwind, `mobile/src/ui/Button.tsx`
+renders it in a `StyleSheet`. There is no shared component and there cannot be; what is
+shared is the table.
+
+**`name` is required and never defaults to `label`.** Every mis-named control this
+codebase has found — "Watchlist", "Follow", "Remove", "Yes", "No", "React", "Talk",
+"−5s", "Close" — was one where the printed word and the announced word had to differ and
+only one got written, and every one was found by a person reading. Requiring both moves
+the class to the compiler. The first migrated call site proves the point: Watchlist's
+empty state prints *Find something* and announces *Find something*, while Up Next prints
+and announces *Find something to watch* — two sites, three strings, all now explicit.
+
+`secondary` is the tone that pays for the sprint: no fill, a `stroke.signal` rule, an ink
+label. It is the fix for the grey `Watchlist` button beside a filled `Track` button that
+every design review independently read as *disabled* — the single most-repeated
+observation across three reviews.
+
+**Four plants against the contract guard, all caught on the right clause:** a
+`disabled:opacity` fade, a `transition` on press, a tone whose label fails on its own
+fill, and the row floor typed as `40` instead of `size.target`.
+
+---
+
+**Then the guards that already existed had six things to say, and every one was right.**
+
+*`ui/button#DISABLED` is reached by nothing.* A one-field constant `{ fades: false }`
+asserting a rule the renderers implement directly, read only by its own test — and
+`expect(DISABLED.fades).toBe(false)` is a constant checked against its own literal, which
+is §6.74's shape exactly. Deleted; the rule is asserted against the renderers, where it
+can actually be wrong.
+
+*`core/src/ui/button.ts → ../tokens` is not spelled out.* Relative imports carry their
+extension here so a plain Node process can load them.
+
+*`BOX_RADIUS` and `PRESSED` are mobile-only.* True, and the interesting one. Tailwind
+compiles from source text, so a class assembled at runtime is never built — the web must
+write `rounded-pill` and `active:border-2` as literals where the phone reads the table.
+That is a fact about the toolchain, and an explanation alone would be the free pass §6.59
+is about, so `button.test.ts` holds the literals to the numbers. Change `border.mark` to 3
+and the web fails until it follows.
+
+*`mobile only: tokens#color` has stopped being true.* `theme.ts` is `color.dark` now and
+the web reaches the same export through two guards. The excuse expired on its own, which
+is the property that made writing it defensible.
+
+*Two `NOT_ON_DISK` excuses expired* the moment the files landed, without anybody
+remembering to remove them.
+
+*`/watchlist web-only →/search`.* The best of the six. The shared `Button` takes a
+destination as `to` on **both** platforms — one prop name is the point of a shared
+contract — where the phone had only ever written `href` on an `expo-router` `<Link>`. So
+`offers.test.ts`, which exists to notice when one platform offers a screen the other does
+not, saw the migrated phone call site vanish. A third way to say "go here" had appeared and
+nothing knew the word. Teaching it makes the check wider, not narrower.
+
+**A scar avoided by reading one.** Every phone CTA is wrapped in `<Link href asChild>`, and
+`index.tsx` carries a comment about why its styles are written out in full: `asChild`
+clones its child and merges props, and an array style through that path reached the DOM as
+an index-keyed object, which React refuses to set — *the export booted to a blank page*.
+`Button`'s style is a function, which would go through the same cloning. It takes the
+destination itself instead, so there is nothing to clone.
+
+**Both renderers have executed.** The web's on Up Next, Watchlist and the failure banner;
+the phone's on the empty Watchlist, which its smoke suite reaches. §6.68's lesson is that
+code which ships and has never run is not built — a component that only typechecks is a
+component nobody has seen.
+
+Web smoke 242, phone 166, app unit tests 425 → 435.
+
+**Five of forty-five call sites.** The component ships; the migration does not. The
+call-site guard — no bare `Pressable` or `<button>` carrying its own background, border or
+padding — cannot land until the other forty do, because landing it now would need an
+allowlist of exactly the violations it is meant to prevent, which is the shape this
+project has refused three times (§6.88, §6.89, §6.90). The remaining forty are mechanical
+in the way the radius migration was mechanical: each is a judgement about which tone, and
+the judgements are the work.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6531,13 +6615,14 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **The tokens are in and the components are not.** §6.91 closed the specific regression —
-  the tab bar carries its `border.tally` rule on both platforms now — but that is one of
-  sixteen components in `docs/design/components.md` and the smallest. `Button` alone is 45
-  styles across 25 files reducing to four tones and three sizes, with an accessibility
-  contract that moves a whole class of mis-naming to compile time. Until it lands,
-  `action.quiet`'s pressed state does not exist, the poster has one state instead of four,
-  and every screen still specifies its own padding.
+- **`Button` exists and forty of its forty-five call sites do not use it.** §6.93 shipped
+  the component, its contract and its guard, and migrated five sites — enough that both
+  renderers have actually executed. The call-site guard cannot land until the rest do,
+  which means that until then a screen can still write its own padding and its own fill
+  and nothing will say so. Fifteen of the sixteen components in
+  `docs/design/components.md` have not been started at all: `Section`, `Poster`, `Row`,
+  `Note`, `Field`, `CrossOff` and the rest. The poster is the one holding `ratio` in
+  `coreWiring`'s exemption list.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { onFailure, reportFailure, type Failure } from '@reviewies/core/data/failure';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from './Button';
 
 /**
  * What a failure nobody caught looks like.
@@ -67,20 +68,23 @@ export function FailureBanner() {
         )}
       </p>
       {stale && (
-        <button
-          onClick={() => window.location.reload()}
-          className="shrink-0 rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label"
-        >
-          {COPY.app.reload}
-        </button>
+        <Button
+          onPress={() => window.location.reload()}
+          tone="primary"
+          size="inline"
+          label={COPY.app.reload}
+          name={COPY.app.reload}
+          className="shrink-0"
+        />
       )}
-      <button
-        onClick={() => setFailure(undefined)}
-        aria-label="Dismiss this message"
-        className="min-h-[24px] shrink-0 rounded-pill px-2 text-sm text-ink-secondary underline"
-      >
-        Dismiss
-      </button>
+      <Button
+        onPress={() => setFailure(undefined)}
+        tone="quiet"
+        size="inline"
+        label="Dismiss"
+        name="Dismiss this message"
+        className="shrink-0"
+      />
     </div>
   );
 }

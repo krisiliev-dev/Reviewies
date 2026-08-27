@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { COPY } from '@reviewies/core/copy';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
@@ -8,6 +8,7 @@ import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo
 import { Poster } from '../../src/ui/Poster';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
+import { Button } from '../../src/ui/Button';
 
 /**
  * Things you mean to watch, and why.
@@ -36,11 +37,7 @@ export default function WatchlistScreen() {
                 the web's Calendar: the screen knows exactly what you should do next and
                 makes you find it yourself. The web's empty watchlist has had this
                 button since it shipped. */}
-            <Link href="/search" asChild>
-              <Pressable style={styles.cta} accessibilityRole="link">
-                <Text style={styles.ctaText}>Find something</Text>
-              </Pressable>
-            </Link>
+            <Button to="/search" tone="primary" size="page" label="Find something" name="Find something" />
           </View>
         )}
 

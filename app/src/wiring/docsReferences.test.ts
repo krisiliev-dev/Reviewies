@@ -153,9 +153,6 @@ const NOT_ON_DISK: Record<string, string> = {
    * moment any of them exists, so each entry deletes itself as the work lands, and the
    * list doubles as what is left to build.
    */
-  'core/src/ui/button.ts': 'docs/design/components.md specifies the shared button contract',
-  'app/src/ui/Button.tsx': 'docs/design/components.md specifies the web half of it',
-  'mobile/src/ui/Button.tsx': 'docs/design/components.md specifies the phone half of it',
 
   // What the token and component specs still name and nobody has built. Six entries
   // were here this morning and are gone because the files landed — the stale check

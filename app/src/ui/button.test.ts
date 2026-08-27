@@ -1,0 +1,159 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { stripComments } from '@reviewies/core/test/source';
+import { BOX_RADIUS, BUSY, PRESSED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { border, color, radius, size } from '@reviewies/core/tokens';
+
+/**
+ * One table, two renderers, and something that notices when they part.
+ *
+ * `app/src/ui/Button.tsx` is Tailwind class strings and `mobile/src/ui/Button.tsx` is a
+ * `StyleSheet`; they cannot share code, so what they share is `core/src/ui/button.ts`.
+ * "These two agree" is otherwise something a person has to notice, which is exactly the
+ * failure §6.51 catalogued for words and §6.85 for colour — six of seven values had
+ * already drifted by the time anybody compared them.
+ */
+const ROOT = resolve(import.meta.dirname, '../../..');
+const read = (path: string) => stripComments(readFileSync(resolve(ROOT, path), 'utf8'));
+const WEB = read('app/src/ui/Button.tsx');
+const PHONE = read('mobile/src/ui/Button.tsx');
+
+describe('the button contract', () => {
+  it('reads two renderers rather than nothing', () => {
+    expect(WEB.length).toBeGreaterThan(1000);
+    expect(PHONE.length).toBeGreaterThan(1000);
+    expect(Object.keys(TONE)).toEqual(['primary', 'secondary', 'quiet', 'destructive']);
+    expect(Object.keys(SIZE)).toEqual(['page', 'row', 'inline']);
+  });
+
+  it('names every tone on the web, which cannot look them up', () => {
+    /*
+     * Asymmetric on purpose, and the asymmetry is a fact about Tailwind rather than a
+     * concession. Its scanner reads source text, so a class assembled at runtime is a
+     * class that never gets compiled — the web keeps a written-out table and must name
+     * every tone in it. The phone reads `TONE[tone]` and so names none of them, which is
+     * why the first version of this check reported the correct renderer as broken.
+     */
+    for (const tone of Object.keys(TONE)) {
+      expect(WEB, `web is missing ${tone}`).toContain(tone);
+    }
+  });
+
+  it('has both renderers consume the whole shape', () => {
+    /*
+     * What the phone must do instead: read every field. A field added to the table and
+     * honoured by one platform is the drift this file exists for, and it is invisible to
+     * a name check because the phone's renderer is generic.
+     */
+    for (const field of Object.keys(TONE.primary)) {
+      expect(PHONE, `phone ignores ${field}`).toContain(field);
+    }
+    // And both must take their metrics from the table rather than retyping them.
+    for (const source of [WEB, PHONE]) {
+      expect(source).toMatch(/from '@reviewies\/core\/ui\/button'/);
+    }
+    expect(PHONE).toContain('SIZE[size]');
+  });
+
+  it('gives every tone a label that is legible on its own fill', () => {
+    /*
+     * Measured, not asserted by name. §6.91 shipped `action.label` — near-black — onto a
+     * near-black tab bar, and every name involved was real. The only thing that catches
+     * that class of mistake is arithmetic.
+     */
+    const luminance = (hex: string) => {
+      const v = hex.replace('#', '');
+      const ch = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
+      const lin = ch.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+    };
+    const contrast = (a: string, b: string) => {
+      const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    for (const theme of ['dark', 'light'] as const) {
+      const table = color[theme];
+      for (const [name, shape] of Object.entries(TONE)) {
+        // An unfilled tone sits on whatever ground it is dropped on; the tightest of the
+        // three is the honest test, not the flattering one.
+        const grounds = shape.fill
+          ? [table[shape.fill]]
+          : [table.ground, table.groundRaised, table.groundWell];
+        for (const ground of grounds) {
+          const ratio = contrast(table[shape.label], ground);
+          expect(ratio, `${theme}/${name}: label on ${ground}`).toBeGreaterThanOrEqual(4.5);
+        }
+        // Disabled drops the fill, so its label always lands on a ground.
+        for (const ground of [table.ground, table.groundRaised, table.groundWell]) {
+          const ratio = contrast(table[shape.disabledLabel], ground);
+          expect(ratio, `${theme}/${name}: disabled label on ${ground}`).toBeGreaterThan(3);
+        }
+      }
+    }
+  });
+
+  it('keeps the box off the reader’s text setting', () => {
+    // 44 is a thumb and a thumb is not a font size. `phoneTextScaling.test.ts` exists
+    // because the web's floor was once written in rem and doubled with the text.
+    expect(SIZE.row.minHeight).toBe(size.target);
+    expect(SIZE.page.minHeight).toBeGreaterThanOrEqual(size.target);
+    expect(SIZE.inline.minHeight).toBeGreaterThanOrEqual(size.target);
+    for (const metrics of Object.values(SIZE)) {
+      expect(Number.isInteger(metrics.minHeight)).toBe(true);
+    }
+  });
+
+  it('never fades a disabled action, on either platform', () => {
+    /*
+     * `appearance.test.ts` bans `disabled:opacity` on a filled action on the web and
+     * records why — "a maroon block with dark red lettering: it read as broken rather
+     * than as waiting". The phone had eight of these and no guard at all. The rule is in
+     * the table now, so both renderers are held to it.
+     */
+    expect(WEB).not.toMatch(/disabled:opacity/);
+    expect(PHONE).not.toMatch(/opacity:\s*0?\.\d/);
+    for (const shape of Object.values(TONE)) expect(shape.disabledFill).toBeNull();
+  });
+
+  it('feels the same with motion reduced, because press was never motion', () => {
+    // A thickening and a ground step at 0ms. No transition, no duration, and therefore
+    // no `reduced ? … : …` for `motion.test.ts` to find. §6.59 substitutes rather than
+    // removes; this is the case where there is nothing to substitute.
+    expect(PRESSED.stroke).toBe(border.mark);
+    expect(WEB).not.toMatch(/transition|duration-/);
+    expect(PHONE).not.toMatch(/Animated|withTiming|duration/);
+  });
+
+  it('keeps the label while busy', () => {
+    // Never a spinner in place of the words: a spinner has no text to read, which
+    // `account.tsx` worked around with an accessibilityLabel rather than avoided.
+    expect(BUSY.underline).toBe(border.mark);
+    expect(PHONE).toMatch(/\{label\}/);
+    expect(WEB).toMatch(/\{label\}/);
+  });
+
+  it('has the web’s literal classes agree with the table it cannot read', () => {
+    /*
+     * The one place the two renderers genuinely diverge, and it is a fact about Tailwind
+     * rather than a concession: its scanner reads source text, so the web writes
+     * `rounded-pill` and `active:border-2` as literals where the phone reads `BOX_RADIUS`
+     * and `PRESSED`. `coreWiring` reported that as a mobile-only export, correctly.
+     *
+     * An explanation on its own would be a free pass — §6.59 — so the literals are held
+     * to the numbers here. Change `border.mark` to 3 and this fails until the web's
+     * `active:border-2` follows.
+     */
+    expect(BOX_RADIUS).toBe(radius.pill);
+    expect(WEB).toContain('rounded-pill');
+    expect(WEB).toContain(`active:border-${PRESSED.stroke}`);
+    expect(WEB).toContain(`active:bg-ground-raised`);
+    expect(PRESSED.fill).toBe('groundRaised');
+  });
+
+  it('is a pill where it has a box at all', () => {
+    expect(BOX_RADIUS).toBe(radius.pill);
+    expect(TONE.quiet.fill).toBeNull();
+    expect(TONE.quiet.stroke).toBeNull();
+  });
+});

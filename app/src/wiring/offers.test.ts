@@ -61,12 +61,22 @@ const firstSegment = (route: string) => {
 
 export function routesOffered(source: string, platform: 'web' | 'phone'): Set<string> {
   const src = strip(source);
+  /*
+   * `to=` is in the phone's list too, and that is new.
+   *
+   * The shared `Button` takes a destination as `to` on both platforms — one prop name is
+   * the point of a shared contract — where the phone had only ever written `href` on an
+   * `expo-router` `<Link>`. This guard reported the first migrated call site as a web-only
+   * offer, correctly: a third way to express a destination had appeared and nothing here
+   * knew the word. Teaching it makes the check wider rather than narrower.
+   */
   const patterns =
     platform === 'web'
       ? [/\bto=["'`]([^"'`]+)["'`]/g, /\bto=\{`([^`]+)`\}/g, /navigate\(\s*[`'"]([^`'"]+)[`'"]/g]
       : [
           /\bhref=["'`]([^"'`]+)["'`]/g,
           /\bhref=\{`([^`]+)`\}/g,
+          /\bto=["'`]([^"'`]+)["'`]/g,
           /router\.(?:push|replace|navigate)\(\s*[`'"]([^`'"]+)[`'"]/g,
         ];
   const found = new Set<string>();

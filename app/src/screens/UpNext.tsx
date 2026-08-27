@@ -18,6 +18,7 @@ import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from '../ui/Button';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -113,12 +114,14 @@ export function UpNext() {
             over a library still being written. Matching what has landed so far leaves
             the rest of the import behind it, unmatched and unoffered. */}
         {unmatched && !importing ? <MatchImports /> : null}
-        <Link
+        <Button
           to="/search"
-          className="mt-5 inline-block rounded-pill bg-action-fill px-5 py-3 font-medium text-action-label"
-        >
-          Find something to watch
-        </Link>
+          tone="primary"
+          size="page"
+          label="Find something to watch"
+          name="Find something to watch"
+          className="mt-5"
+        />
       </div>
     );
   }
@@ -151,12 +154,14 @@ export function UpNext() {
             one, which is the opposite of what this screen is for — the migration is the
             offer and searching is the fallback. Nothing but looking at it would have
             said so: both were named, both were reachable, both were big enough. */}
-        <Link
+        <Button
           to="/search"
-          className="self-start rounded-pill border border-stroke-signal px-5 py-3 font-medium text-ink"
-        >
-          Find something to watch
-        </Link>
+          tone="secondary"
+          size="page"
+          label="Find something to watch"
+          name="Find something to watch"
+          className="self-start"
+        />
       </div>
     );
   }

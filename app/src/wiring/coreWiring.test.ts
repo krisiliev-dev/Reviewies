@@ -116,8 +116,19 @@ const LOPSIDED: Record<string, string> = {
    *
    * `tokens.generated.test.ts` is what holds the two ends together.
    */
-  'mobile only: tokens#color': 'The web takes the same values as generated custom properties.',
   'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
+
+  /*
+   * Tailwind compiles from source text, so a class assembled at runtime is a class that
+   * never gets built. The web's Button therefore writes `rounded-pill` and
+   * `active:border-2` as literals where the phone reads these two exports. That is a fact
+   * about the toolchain rather than a decision, and it is the same shape as the entries
+   * above — but an explanation alone would be the free pass §6.59 is about, so
+   * `app/src/ui/button.test.ts` holds the literals to these numbers. Change `border.mark`
+   * and the web fails until it follows.
+   */
+  'mobile only: ui/button#BOX_RADIUS': 'Tailwind needs a literal class; button.test.ts couples the two.',
+  'mobile only: ui/button#PRESSED': 'Tailwind needs a literal class; button.test.ts couples the two.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',
