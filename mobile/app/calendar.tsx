@@ -23,6 +23,7 @@ import {
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Button } from '../src/ui/Button';
+import { Choice } from '../src/ui/Choice';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -60,42 +61,26 @@ export default function CalendarScreen() {
         <Text style={styles.sectionHeading} accessibilityRole="header">
           Tell me about
         </Text>
-        <View
-          accessibilityRole="radiogroup"
-          accessibilityLabel="Tell me about"
-          style={styles.options}
-        >
-          {NOTIFY_OPTIONS.map((option) => (
-            <Pressable
-              key={option.key}
-              onPress={async () => {
-                setPref(option.key);
-                // Mirrored to the server, which filters before sending — a stale setting
-                // there would cost a delivery, or send one nobody asked for. Bound rather
-                // than fired and forgotten: a mirror that failed used to be silent on
-                // both platforms. §6.66.
-                const mirrored = await syncPreference(option.key);
-                setSyncNote(mirrored.ok ? undefined : mirrored.reason);
-                if (option.key === 'off') void unregisterFromPush();
-              }}
-              style={[styles.option, preference === option.key && styles.optionOn]}
-              // One of three, not three independent buttons: which one is on is the
-              // entire content of this control, and a button role cannot say it.
-              accessibilityRole="radio"
-              accessibilityState={{
-                selected: preference === option.key,
-                checked: preference === option.key,
-              }}
-              accessibilityLabel={`${option.label} — ${option.hint}`}
-            >
-              <View style={styles.optionBody}>
-                <Text style={styles.optionLabel}>{option.label}</Text>
-                <Text style={styles.optionDetail}>{option.hint}</Text>
-              </View>
-              {preference === option.key && <Text style={styles.tick}>✓</Text>}
-            </Pressable>
-          ))}
-        </View>
+        {/* This control is where `Choice` came from. It was the only one of five that
+            said `radiogroup`/`radio` and put the hint in the announced name; the other
+            four were buttons carrying a `selected` flag. The component is this one,
+            generalised, and the reasoning below travelled with it. */}
+        <Choice<(typeof NOTIFY_OPTIONS)[number]['key']>
+          name="Tell me about"
+          density="rows"
+          value={preference}
+          options={NOTIFY_OPTIONS}
+          onChange={async (key) => {
+            setPref(key);
+            // Mirrored to the server, which filters before sending — a stale setting
+            // there would cost a delivery, or send one nobody asked for. Bound rather
+            // than fired and forgotten: a mirror that failed used to be silent on both
+            // platforms. §6.66.
+            const mirrored = await syncPreference(key);
+            setSyncNote(mirrored.ok ? undefined : mirrored.reason);
+            if (key === 'off') void unregisterFromPush();
+          }}
+        />
 
         {syncNote && (
           <Text style={styles.deliveryNote} accessibilityLiveRegion="polite">
@@ -229,19 +214,6 @@ const styles = StyleSheet.create({
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
 
-  options: { gap: 8 },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 16,
-  },
-  optionOn: { borderWidth: 1, borderColor: theme.strokeSignal },
-  optionBody: { flex: 1 },
-  optionLabel: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  optionDetail: { color: theme.inkSecondary, fontSize: 12 },
-  tick: { color: theme.workingMark, fontSize: 18 },
 
   day: { gap: 6, marginTop: 8 },
   dayHeading: { color: theme.inkSecondary, fontSize: 12 },

@@ -31,6 +31,7 @@ import {
   REACTION_DENSITY_CHOICES,
 } from '@reviewies/core/watching/reactions';
 import { Button } from '../../src/ui/Button';
+import { Choice } from '../../src/ui/Choice';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -220,28 +221,21 @@ export default function WatchingScreen() {
             />
             <View style={styles.densityBlock}>
               <Text style={styles.densityLabel}>{COPY.watching.densityLabel}</Text>
-              <View style={styles.densityRow}>
-                {REACTION_DENSITY_CHOICES.map((value) => (
-                  <Pressable
-                    key={value}
-                    onPress={() => setDensity(value)}
-                    style={[styles.densityChip, density === value && styles.densityChipOn]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: density === value }}
-                    // "8", "24", "60" on their own are three numbers next to each other.
-                    // The sentence used to say "a minute", which the code never did:
-                    // twenty-four inside a four-second window is three hundred and sixty
-                    // a minute. §6.55.
-                    accessibilityLabel={COPY.watching.densityChoice(value)}
-                  >
-                    <Text
-                      style={[styles.densityText, density === value && styles.densityTextOn]}
-                    >
-                      {value}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+              {/* "8", "24", "60" on their own are three numbers next to each other. The
+                  sentence used to say "a minute", which the code never did: twenty-four
+                  inside a four-second window is three hundred and sixty a minute. §6.55.
+                  `Choice` carries that as the option's hint, which is part of the
+                  announced name rather than a second node to arrow past. */}
+              <Choice<number>
+                name={COPY.watching.densityLabel}
+                value={density}
+                onChange={setDensity}
+                options={REACTION_DENSITY_CHOICES.map((value) => ({
+                  key: value,
+                  label: String(value),
+                  hint: COPY.watching.densityChoice(value),
+                }))}
+              />
             </View>
           </View>
         )}
@@ -379,21 +373,6 @@ const styles = StyleSheet.create({
   // line and is what carried it past the edge once the row wrapped.
   densityBlock: { alignItems: 'flex-end', gap: 4 },
   densityLabel: { color: theme.inkSecondary, fontSize: 10 },
-  densityRow: { flexDirection: 'row', gap: 4 },
-  densityChip: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.plate,
-    // 24x24 is the floor WCAG 2.5.8 sets, and three numbers in a row is exactly the
-    // shape that ends up under it.
-    minWidth: 26,
-    minHeight: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-  },
-  densityChipOn: { backgroundColor: theme.actionFill },
-  densityText: { color: theme.inkSecondary, fontSize: 11 },
-  densityTextOn: { color: theme.actionLabel, fontWeight: '600' },
 
   drift: {
     marginHorizontal: 16,

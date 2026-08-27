@@ -6395,6 +6395,64 @@ App unit tests 435 → 438. Web smoke 242, phone 166, both unchanged, which for 
 of this size is the point.
 
 
+### 6.95 A radio wearing a button's role, at half the size, on the flagship screen
+
+Five controls in this build are the same thing: Stats' period chips, the comment effort
+levels, Watching Mode's reaction density, WhereToWatch's regions, and the calendar's
+notification options. Four of the five already take their option data from `core`. None of
+them agreed on what they *were*.
+
+`calendar.tsx` was exemplary — `radiogroup`, `radio`,
+`accessibilityState={{ checked, selected }}`, and a label reading *"Premieres and finales —
+the moments worth knowing about"*. Watching Mode's density chips were
+`accessibilityRole="button"` carrying `accessibilityState={{ selected }}` at
+`minWidth: 26, minHeight: 24`. Written by the same hand a fortnight apart.
+
+A button says "this does something". A radio says "this is one of several and it is the one
+that is on", which is the entire content of the control. And 24 is WCAG 2.5.8's floor, not
+the house standard of 44 — a control the size of a fingernail on the screen this product
+exists for. The web's version of the same control was `min-h-6`, which is the same 24.
+
+`Choice` is the calendar's version, generalised. Both platforms, one contract, 44 either
+way.
+
+**Selection is a rule and a weight, never a fill.** §6.90 spent 822 sites turning fills
+into rules, and a selected chip is the one control that would have quietly kept one — every
+one of the five painted `action.fill` when chosen. It is `border.tally` in `working.mark`
+now, under the label on a chip and down the leading edge on a row, with the label stepping
+`ink.secondary → ink`. Two channels rather than colour alone, which is §6.91's argument for
+the tab bar one control further down, and the guard measures the mark on all three grounds
+in both themes.
+
+**A difference the guards had never noticed.** The web showed *one* hint, in a paragraph
+below the chips — so choosing between three options meant selecting each in turn to read
+what it did. The phone showed all three inline. Nothing compared them because they render
+the same tags in the same order; the difference is in what the tags *contain*. §6.51's rule
+settles it: the better version wins regardless of which platform had it, and the phone's
+was better. The web is rows now.
+
+**And a defect that only showed up by looking.** The first `rows` renderer stacked its tick
+*under* the hint instead of at the right edge — a missing `flexDirection: 'row'`. Named,
+reachable, big enough, and in the wrong place, so nothing in either suite had anything to
+say about it. It was in the screenshot.
+
+Three plants, all caught: the chip back below the target floor, selection as a fill, and a
+one-of-several wearing a button's role somewhere else in the app.
+
+App unit tests 438 → 444. Smoke unchanged at 242 and 166.
+
+**`Row`, `Key` and `CrossOff` did not land, so neither did the call-site guard.** Seven
+`Pressable`s still carry their own box: More's links and MatchImports' candidates (`Row`),
+Watching Mode's transport and RemotePanel's keys (`Key`), the 44pt mark (`CrossOff`), and
+two dismiss surfaces that are not controls at all. Guarding now would report seven things
+that are not violations — which is worse than the stale allowlist §6.59 warns about, because
+it would be *wrong* rather than merely out of date.
+
+`CrossOff` in particular deserves its own pass: it is the app's most-repeated action, it
+carries the undo window, and `title/[id].tsx` currently puts `aria-checked` on a `button`
+role — the same defect this section is about, on the control where it matters most.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6683,13 +6741,13 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **`Button` is migrated and its call-site guard still cannot land.** §6.94 moved every
-  button on the phone and the web screens that had to follow. What is left holding its own
-  box is ten `Pressable`s that are each a *different* component — `Row`, `Choice`, `Key`,
-  `CrossOff` and two dismiss surfaces — so "no bare `Pressable` outside `Button`" would
-  report ten things that are not violations. Until those four components exist, a screen
-  can still write its own fill and padding and nothing will say so. Fifteen of the sixteen
-  in `docs/design/components.md` are unstarted; the poster is the one holding `ratio` in
+- **Two of sixteen components exist, and the call-site guard needs three more.** `Button`
+  (§6.93, §6.94) and `Choice` (§6.95) are in. Seven `Pressable`s still carry their own box
+  and each is a `Row`, a `Key`, a `CrossOff` or a dismiss surface, so the guard would
+  report seven non-violations. Until it lands a screen can still write its own fill and
+  padding and nothing will say so. `CrossOff` is the one that matters most — the app's
+  most-repeated action, and the control that still puts `aria-checked` on a `button` role,
+  which is exactly the defect §6.95 was about. The poster is the one holding `ratio` in
   `coreWiring`'s exemption list.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is

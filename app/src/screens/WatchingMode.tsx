@@ -15,6 +15,7 @@ import {
 } from '../watching/extensionBridge';
 import { ListenSync } from '../watching/ListenSync';
 import { COPY } from '@reviewies/core/copy';
+import { Choice } from '../ui/Choice';
 import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
@@ -365,23 +366,19 @@ function SyncBar({
           until §6.55. */}
       <div className="ml-auto flex items-center gap-1.5 text-xs text-ink-secondary">
         {COPY.watching.densityLabel}
-        <div role="radiogroup" aria-label={COPY.watching.densityLabel} className="flex gap-1">
-          {REACTION_DENSITY_CHOICES.map((value) => (
-            <button
-              key={value}
-              onClick={() => onDensity(value)}
-              role="radio"
-              aria-checked={density === value}
-              // "8", "24", "60" on their own are three numbers next to each other.
-              aria-label={COPY.watching.densityChoice(value)}
-              className={`min-h-6 rounded-plate px-3 py-1 ${
-                density === value ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
-              }`}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
+        {/* `min-h-6` was 24px — WCAG 2.5.8's floor rather than the house standard of 44,
+            on the flagship screen. The phone's version of this control was worse still at
+            26×24 and wearing a button's role. `Choice` is 44 on both. */}
+        <Choice<number>
+          name={COPY.watching.densityLabel}
+          value={density}
+          onChange={onDensity}
+          options={REACTION_DENSITY_CHOICES.map((value) => ({
+            key: value,
+            label: String(value),
+            hint: COPY.watching.densityChoice(value),
+          }))}
+        />
       </div>
     </div>
   );

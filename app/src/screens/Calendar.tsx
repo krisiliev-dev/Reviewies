@@ -18,6 +18,7 @@ import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
+import { Choice } from '../ui/Choice';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -68,24 +69,17 @@ export function Calendar() {
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
         <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>
-        <div role="radiogroup" aria-label="Tell me about" className="flex flex-wrap gap-1.5">
-          {NOTIFY_OPTIONS.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => choose(p.key)}
-              role="radio"
-              aria-checked={preference === p.key}
-              className={`rounded-plate px-3 py-1.5 text-xs ${
-                preference === p.key ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <p className="mt-2 text-xs text-ink-secondary">
-          {NOTIFY_OPTIONS.find((p) => p.key === preference)?.hint}
-        </p>
+        {/* Rows, and every hint visible, which is what the phone did and the web did not:
+            the web showed one hint in a paragraph underneath, so choosing between three
+            options meant selecting each in turn to read what it does. §6.51's rule is
+            that the better version wins regardless of which platform had it. */}
+        <Choice<NotifyPreference>
+          name="Tell me about"
+          density="rows"
+          value={preference}
+          options={NOTIFY_OPTIONS}
+          onChange={choose}
+        />
 
         {preference !== 'off' && !notificationsSupported() && (
           <p className="mt-2 text-xs text-trouble">
