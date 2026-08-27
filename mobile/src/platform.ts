@@ -69,8 +69,14 @@ class HydratedStore implements KeyValueStore {
 /**
  * Read configuration from the Expo manifest.
  *
- * `extra` in app.json is populated from the environment at build time, which is the
- * Metro equivalent of Vite replacing `import.meta.env`.
+ * `extra` is populated from the environment at build time by `mobile/app.config.ts`,
+ * which is the Metro equivalent of Vite replacing `import.meta.env`.
+ *
+ * That sentence used to name `app.json` and was simply untrue: a static JSON file
+ * interpolates nothing, and the three keys were empty strings there. No native build
+ * had ever been made, so nothing noticed that the phone would have shipped with no
+ * provider token and no backend. `mobile/src/nativeConfig.test.ts` now requires every
+ * key read here to be one the build-time config actually produces.
  */
 function readConfig() {
   // Three keys, and only three. This also read `vapidPublicKey`, `bridgeRelay` and

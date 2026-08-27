@@ -5158,6 +5158,71 @@ each one is found, which is only true where matching starts itself — so the ph
 on the panel straight after an import, which explains what matching is before doing it.
 
 
+### 6.81 The phone would have shipped with no configuration at all
+
+Not a sprint from the list. The question was "how do we get this on an iPhone", and
+answering it honestly meant reading what a real build would actually contain.
+
+`mobile/src/platform.ts` reads three keys from `Constants.expoConfig.extra` — the TMDB
+token, the Supabase URL, the anon key — and said so in a comment:
+
+> `extra` in app.json is populated from the environment at build time, which is the
+> Metro equivalent of Vite replacing `import.meta.env`.
+
+It is not. `app.json` is a static file; it interpolates nothing. The three keys sat in it
+as empty strings, and Expo only substitutes an environment through a *JavaScript* config,
+which this project did not have. Every native build ever made would have started with no
+provider and no backend: Search and Discover silently on fixtures, sync unconfigured, and
+no screen able to say why, because from the app's point of view nobody had configured
+anything.
+
+This is §6.68's shape exactly — the shipped path and the tested path being different code
+— and it survived for the same reason: **nobody has ever made a native build**. `expo
+export --platform web` does not read `extra`, so the five browser suites that run on
+every change could not have noticed. The one thing that would have caught it is the thing
+§7 has said all along has never happened.
+
+`mobile/app.config.ts` now produces the three, and `mobile/src/nativeConfig.test.ts`
+requires that every key `platform.ts` reads is one the build-time config actually
+produces. Planting the old arrangement back fails it by name, listing all three.
+
+#### Three things fell out of writing the test
+
+**A test helper that lied.** `Object.assign(process.env, { KEY: undefined })` sets the
+variable to the *string* `'undefined'`, because Node coerces every environment value.
+So the case asserting a token was absent was handing the config a five-letter one — and
+the service-key case passed without the check ever running. A pass that came from the
+harness rather than the subject, which is the failure §6.74 is named after.
+
+**A precedence bug in the new code.** The config reads the repository's root `.env`,
+since that is where the file actually is and Expo only looks in the project directory.
+The skip was `if (process.env[key]) continue` — truthiness — so somebody exporting
+`VITE_TMDB_TOKEN=` to mean *no token* would have it silently overwritten by the file. It
+tests presence now: a deliberately empty value is a decision, not an absence.
+
+**A guard changing its own premise.** Making the config load `.env` broke the case that
+cleared the environment and expected nothing — correctly, because the config now finds
+values on disk. The property worth asserting was never "no environment"; it is that an
+empty value arrives as `undefined` rather than `''`, so the app can tell *unconfigured*
+from *configured and failing* (§6.57).
+
+#### And what the answer to the question turned out to be
+
+Worth writing down because it was nearly got wrong. A **free** Apple ID can sign and
+install this app on your own iPhone — Xcode gives any Apple ID a "personal team" — but
+only through Xcode on a Mac. EAS's cloud builders cannot: they create certificates
+through Apple's Developer Portal API, and personal teams are not exposed there.
+
+What that route gets is better than it sounds. `expo prebuild` runs the config plugins,
+so the real Info.plist carries the Bonjour service types the remote drawer needs and the
+microphone descriptions the fingerprinter needs — **the two features Expo Go cannot
+have**. What it costs is a seven-day provisioning profile and no push, since
+`aps-environment` is an entitlement. The app already handles the last part honestly:
+`pushSupported()` is false and `whyNotSupported()` says why (§6.50).
+
+`docs/installing-on-iphone.md` has the steps.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -5426,3 +5491,13 @@ and which single claim in this document could not be checked at all:
   mid-transaction sees either all of a write or none of it, and nothing measured which
   other screens read a table an import is in the middle of filling. It was found by
   watching a number change on a screen, which is not a method that scales.
+- **No native build has still ever been made, and that is now the only thing standing
+  between the phone and its first real run.** §6.81 found, by reading rather than
+  running, that every iOS build would have shipped with an empty configuration. The fix
+  is guarded and the guard is proved by planting — but the guard checks that the config
+  *produces* what the app *reads*, which is a statement about two files agreeing. It is
+  not a statement that `expo prebuild` succeeds, that the plugins write the Info.plist
+  entries the remote and the fingerprinter depend on, that the entitlement Xcode refuses
+  is the one predicted, or that the app launches. Nothing in this container can run any
+  of that. The first person to open Xcode will find out several things at once, and the
+  §6.81 entry should be read as a prediction until they do.
