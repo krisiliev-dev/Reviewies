@@ -51,16 +51,16 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         // follows now: filled accent for the one action a row exists for, a ghost pill
         // for the others, and underlined text only for a rare aside that opens something
         // else ("Use a different poster", "Caught up further?").
-        className="tap rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted"
+        className="tap rounded-pill border border-stroke-signal px-3 py-1.5 text-xs text-ink-secondary"
       >
         {open ? 'Cancel' : 'Add to list'}
       </button>
 
       {open && (
-        <div className="mt-2 rounded-plate bg-surface-2 p-3">
-          {lists === undefined && <p className="text-xs text-muted">Loading…</p>}
+        <div className="mt-2 rounded-plate border border-stroke-signal p-3">
+          {lists === undefined && <p className="text-xs text-ink-secondary">Loading…</p>}
           {lists?.length === 0 && (
-            <p className="mb-2 text-xs text-muted">No lists yet — make one below.</p>
+            <p className="mb-2 text-xs text-ink-secondary">No lists yet — make one below.</p>
           )}
 
           <ul className="flex flex-col gap-1">
@@ -69,7 +69,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
                 <button
                   onClick={() => add(list.id, list.name)}
                   aria-label={`Add to ${list.name}`}
-                  className="w-full truncate rounded-plate bg-surface px-3 py-1.5 text-left text-sm"
+                  className="w-full truncate rounded-plate bg-ground-raised px-3 py-1.5 text-left text-sm"
                 >
                   {list.name}
                 </button>
@@ -83,13 +83,13 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               onChange={(e) => setNewName(e.target.value)}
               placeholder="New list…"
               maxLength={120}
-              className="min-w-0 flex-1 rounded-none bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
             />
             <button
               type="submit"
               disabled={!newName.trim()}
               aria-label="Make this list and add the title to it"
-              className="rounded-pill bg-accent px-3 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
             >
               Add
             </button>
@@ -97,7 +97,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         </div>
       )}
 
-      {note && <p className="mt-1 text-xs text-muted">{note}</p>}
+      {note && <p className="mt-1 text-xs text-ink-secondary">{note}</p>}
     </div>
   );
 }

@@ -102,7 +102,7 @@ function Row({
               value={draft}
               onChangeText={setDraft}
               placeholder={COPY.watchlist.notePlaceholder}
-              placeholderTextColor={theme.muted}
+              placeholderTextColor={theme.inkSecondary}
               style={styles.input}
               multiline
               autoFocus
@@ -154,42 +154,42 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink },
+  screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
-  empty: { color: theme.muted, fontSize: 15, lineHeight: 22 },
+  heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
+  empty: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   // The same shape as Up Next's, which is the other empty state somebody meets first.
   cta: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: radius.pill,
   },
-  ctaText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
+  ctaText: { color: theme.actionLabel, fontWeight: '600', fontSize: 16 },
   row: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
-  title: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  year: { color: theme.muted, fontSize: 12 },
-  note: { color: theme.text, fontSize: 13, fontStyle: 'italic' },
-  addNote: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
+  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  year: { color: theme.inkSecondary, fontSize: 12 },
+  note: { color: theme.ink, fontSize: 13, fontStyle: 'italic' },
+  addNote: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
   editor: { gap: 6 },
   input: {
-    color: theme.text,
+    color: theme.ink,
     fontSize: 14,
-    backgroundColor: theme.surface2,
+    backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
     minHeight: 44,
   },
-  save: { color: theme.accent, fontSize: 13, fontWeight: '600' },
-  remove: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
+  save: { color: theme.ink, fontSize: 13, fontWeight: '600' },
+  remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
 });

@@ -6002,6 +6002,118 @@ that the phone's real compiler is the export rather than the test run.
 Web smoke 220 → 221. App unit tests 417 → 421.
 
 
+### 6.90 Fills become rules, and a find-and-replace whose output was its own input
+
+The order changed on purpose, and the reason is worth stating rather than quietly
+reordering. Sprint 4's plan named type next. Recapturing the screenshots after §6.89
+showed why it could not be: the app had become square-cornered blocks with fills and
+gutters — an intermediate state that reads as *less* finished than what it replaced,
+because the shapes only mean something once the fills they sat in become rules. Landing
+type on top would have been a third layer arriving before the second made the first mean
+anything.
+
+822 sites: 403 on the phone, 445 on the web (the counts overlap by the sites that carry
+two classes). The seven legacy colours are gone from both platforms, `palette.test.ts`
+is deleted, and `mobile/src/ui/theme.ts` is now `export const theme = color.dark` — the
+token table itself rather than a copy of it.
+
+**The rename inverts, and that is the whole reason it was one pass.** Legacy `theme.ink`
+was the *page background*; legacy `theme.text` was the writing on it. In the token table
+`ink` **is** the writing. A sequential find-and-replace would have painted every page
+near-white and every word near-black, and every test would have stayed green because
+nothing in the suites reads a colour off a phone screen.
+
+One site slipped through anyway, and it is the clearest possible illustration. The
+StyleSheet form `color: theme.ink` was rewritten to `actionLabel` correctly; the JSX form
+`color={theme.ink}` was a different pattern and was not, so
+`account.tsx`'s spinner — a *dark* legacy ink on a pink button — became a near-white
+spinner on a near-white button. Invisible. It was found by grepping for what remained
+rather than by anything running.
+
+**The decisions, where a rename was not enough:**
+
+| was | became | why |
+| --- | --- | --- |
+| `accent` as text, 41 of 56 sites | `trouble` | They were all `error`, `failed`, `listsFailed`, `rejectedText`. Red now means failure, and only failure. |
+| `accent` as text, the star and the notify tick | `workingMark` | Amber's one job: this is happening, or you did this. |
+| `accent` as text, the active tab and two text-buttons | `ink` | A chosen thing is written in the ink; the tab's state is carried by the rule under it. |
+| `accent` as a fill | `actionFill` + `actionLabel` | Graft 4's near-white/near-black pill. 16.41:1. |
+| `accent` as a progress fill, 3 sites | `workingFill` | A bar filling is not an action. |
+| `surface2` behind a pill | **no fill, `stroke.signal` rule** | The sprint's name. `action.quiet` reads as available; a grey fill next to a bright one reads as disabled. |
+| `surface2` behind a field, track or inset tile | `groundWell` | The third ground step, which is what "sunken" was always for. |
+| `muted` | `inkSecondary` | 8.14:1, a full step up from the 4.6 it was. |
+
+The `surface2` split needed no site list: the radius class already said what each thing
+was. Anything inside a `rounded-pill` is a quiet action and loses its fill for a rule;
+everything else is sunken. §6.89's classification, read back a sprint later as data.
+
+**A find-and-replace whose output is a prefix of its own input.** The first web pass
+reported *249* `text-ink` rewrites where the census said 34. `\btext-ink\b` matches inside
+`text-ink-secondary` — `\b` sits happily between "ink" and "-" — so the rule ate the
+output the `text-muted` rule had written one line earlier and left
+`text-action-label-secondary` across the app. Reverted and redone with `(?![\w-])` on
+every pattern. Worth recording as its own shape: a migration where the new names are
+prefixes of each other cannot be done with word boundaries, and the failure is silent
+because both the input and the output look like plausible class names.
+
+**Three things the migration exposed that were already wrong.**
+
+*The generated `@theme` block defined `--color-ink` twice.* Once from the new table and
+once from the legacy one, and the legacy line came second, so it won. Every `text-ink` in
+the app had been resolving to the legacy near-black rather than the new near-white for
+two sprints. Harmless by luck — the sites wanted a dark label — but a token collision that
+`tokens.generated.test.ts` could not see, because byte-comparing a file says nothing about
+what CSS does with it. Deleting the legacy table resolves it.
+
+*Two "note" styles paint success and failure the same colour.* `ListenSync`'s note carries
+both *"Synced, 87% confident"* and *"Recording failed"* through one style, as does
+`People`'s and the calendar's `pushNote`. They could not become `trouble` without painting
+success red, so they are `inkSecondary` — which means a failure there is now no louder
+than a success. That is a real regression in a state this codebase has spent two sprints
+distinguishing (§6.56, §6.57), and the fix is a `tone` on the note rather than a colour on
+the style. Recorded rather than bodged.
+
+*Nothing had a focus ring after this change, and no design document noticed.* The ring was
+`var(--color-accent)`, and the direction deletes accent. `focus.ring` is the ink and
+`focus.inset` the ground, as two rings — because one near-white ring around a near-white
+`action.fill` pill is **1.00:1**, the ring and the fill being the same colour.
+
+The Stats hero's `bg-gradient-to-br from-accent/25 to-surface` is a flat plate now. A
+gradient is the one surface `contrast.test.ts` cannot measure, having no single colour —
+the same argument that refuses `backdrop-blur`, which §6.85 already lost an argument with
+and won.
+
+The unfilled star was `stroke.hairline` on the web at **1.42:1**. It carries the rating —
+it is the difference between three stars and four — so it is state-bearing and needs 3:1.
+`stroke.signal`, which is the token that exists for exactly this and which the phone
+already used for the same glyph. A parity bug found by a guard rather than by looking.
+
+**What the screenshots said afterwards.** The direction has landed: outlined quiet actions
+where grey fills were, a near-white plate for the selected chip, warm near-black instead of
+the blue-grey. It reads as print.
+
+One thing got worse and should be said. The tab bar's active item was pink on grey; it is
+now `ink` on `ink.secondary` — a brightness step, where it used to be a hue. The
+replacement signal is the direction's 3pt `border.tally` rule under the active tab, and
+that is a component, not a token, so it is not in this sprint. Until it lands, the
+strongest wayfinding cue in the app is weaker than it was. That is the cost of migrating a
+palette before the components that were meant to carry its structure, and it is the
+argument for doing components next rather than type.
+
+**Two more render checks, and one that finally went red on purpose.** §6.87's probe could
+only test `bg-stroke-signal`, the one new-token class with a call site. There are now
+three checks reading `bg-ground-raised`, `border-stroke-signal` and `text-ink-secondary`
+off a rendered screen rather than an injected div — the difference being that a probe
+proves the stylesheet compiled, and these prove the app is drawn from it.
+
+And §6.87 left a check whose comment read *"when this goes red, some screen has started
+reading the new palette and this line should be deleted with a cheer."* It went red. It now
+asserts the opposite — that the heading differs between the themes, because `ink` has a
+light value and the legacy palette never did.
+
+Web smoke 221 → 224. App unit tests 424 (three deleted with `palette.test.ts`, three added).
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6285,21 +6397,23 @@ and which single claim in this document could not be checked at all:
   reasons no plist declares.
 - **The token layer is specified in full and built in part, and only the built part is
   guarded.** §6.85 landed colour, motion, z-order and elevation with guards proved by
-  planting; §6.88 landed space the same way, with its 156 sites in the same commit as its
-  guard, and §6.89 did the same for radius across 244. Type is the layer still specified
-  and not built: 222 `fontSize` literals, nine font faces nobody has shipped, and four
-  guards (G6, G7, G8, G12) that cannot land until the sites do. The app is still drawn
-  from `theme.ts`'s original seven colours, so colour is the other half-migration. The gap
-  is visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
-  and each line deletes itself when its sprint lands — but nobody should read "the design
-  system is in" as "the app looks like the design system".
-- **The app is half-redesigned, and the half that landed makes the other half more
-  visible.** Radius is square now and space is on the scale, but the fills and the gutters
-  those shapes sat inside have not been touched: the More screen is a column of square
-  `surface` blocks with 12pt gutters where the direction wants full-bleed rows separated
-  by a hairline. Nothing is wrong, and it does not yet look like anything. Judging the
-  direction from the current screenshots would be judging an intermediate state — the
-  fill-and-rule sprint is what makes the shapes mean something.
+  planting; §6.88 landed space across 156 sites, §6.89 radius across 244, and §6.90 colour
+  across 822 — each with its guard in the same commit. **Type is the only layer left
+  specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
+  and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
+  in `core/src/tokens.ts` is now read by product code rather than only by a guard.
+- **The tokens are in and the components are not, and one signal is weaker for it.** The
+  tab bar's active item was pink on grey and is now `ink` on `ink.secondary` — a
+  brightness step where there was a hue. Its replacement is the direction's 3pt
+  `border.tally` rule under the active tab, which is a component rather than a token and
+  so was not in §6.90's scope. The same gap exists for `action.quiet`'s pressed state, the
+  four-state poster, and every screen that still specifies its own padding. Components
+  next, not type: the palette is doing work the components were meant to do.
+- **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
+  rather than structure precisely because they are — the direction's `radius.none` is for
+  full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those
+  sites move to `none` when the layout does, which is a scoped, predicted change and not
+  a correction.
 - **Space is on the scale, and is not yet reading the scale.** The values migrated; the
   spellings did not. 348 phone literals and ~500 web utilities now land on the ten steps,
   checkably, but they are still numbers typed into a `StyleSheet` rather than references

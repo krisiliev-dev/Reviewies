@@ -48,7 +48,7 @@ export function UpNext() {
   const importing = useImporting();
 
   if (entries === undefined) {
-    return <p className="p-6 text-muted">Loading…</p>;
+    return <p className="p-6 text-ink-secondary">Loading…</p>;
   }
 
   /**
@@ -71,7 +71,7 @@ export function UpNext() {
             a set of shows with no artwork, no air dates and no episode lists beyond what
             was watched. Matching them is the next thing to do, and it is offered here
             rather than mentioned, because here is where somebody is standing. */}
-        <p className="text-muted">
+        <p className="text-ink-secondary">
           They are in your library under the names your export carried. Matching them to
           the real shows fills in the artwork, the air dates and everything you have not
           watched yet.
@@ -82,7 +82,7 @@ export function UpNext() {
         <MatchImports autoStart={false} />
         <button
           onClick={() => setImported(undefined)}
-          className="tap self-start text-sm text-muted underline"
+          className="tap self-start text-sm text-ink-secondary underline"
         >
           Later
         </button>
@@ -102,7 +102,7 @@ export function UpNext() {
             is happening (doc 10 §4). §6.80 found the third: while the import is still
             running, both of those are claims about a library that is still being
             written, and the count in them keeps changing. */}
-        <p className="text-muted">
+        <p className="text-ink-secondary">
           {importing
             ? COPY.upNext.stillImporting(importing)
             : unmatched
@@ -115,7 +115,7 @@ export function UpNext() {
         {unmatched && !importing ? <MatchImports /> : null}
         <Link
           to="/search"
-          className="mt-5 inline-block rounded-pill bg-accent px-5 py-3 font-medium text-ink"
+          className="mt-5 inline-block rounded-pill bg-action-fill px-5 py-3 font-medium text-action-label"
         >
           Find something to watch
         </Link>
@@ -138,13 +138,13 @@ export function UpNext() {
     return (
       <div className="flex flex-col gap-3 p-6">
         <h1 className="text-2xl font-semibold">Bring your history with you</h1>
-        <p className="text-muted">
+        <p className="text-ink-secondary">
           TV Time is gone. If you got your data out — or pulled it off your phone — this
           reads it and picks up where you left off.
         </p>
         <ImportFormats />
         <ImportFiles label="Import from TV Time" onImported={setImported} primary />
-        <p className="mt-2 px-1 text-sm text-muted">
+        <p className="mt-2 px-1 text-sm text-ink-secondary">
           Nothing to import? Search for a show and start from there.
         </p>
         {/* The secondary of the two. It was the bright one and the import was the muted
@@ -153,7 +153,7 @@ export function UpNext() {
             said so: both were named, both were reachable, both were big enough. */}
         <Link
           to="/search"
-          className="self-start rounded-pill bg-surface-2 px-5 py-3 font-medium text-text"
+          className="self-start rounded-pill border border-stroke-signal px-5 py-3 font-medium text-action-label"
         >
           Find something to watch
         </Link>
@@ -171,13 +171,13 @@ export function UpNext() {
           from a mark nobody meant. Also the answer to the ordinary mis-tap. */}
       {marked && (
         <div className="mb-3 flex items-center gap-3 px-1" role="status">
-          <span className="text-sm text-muted">{COPY.upNext.justMarked(marked.label)}</span>
+          <span className="text-sm text-ink-secondary">{COPY.upNext.justMarked(marked.label)}</span>
           <button
             onClick={async () => {
               await unwatchLatest(marked.targetId);
               setMarked(undefined);
             }}
-            className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm"
+            className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm"
           >
             {COPY.upNext.undo}
           </button>
@@ -238,7 +238,7 @@ function UpNextRow({
     // wider than a phone, and with `flex-nowrap` the actions went past the right edge —
     // half a Watched button is as unusable as none. The smoke suite's 200% check only
     // noticed controls that were *entirely* gone, which these never were.
-    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-surface p-3">
+    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-ground-raised p-3">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}
@@ -253,11 +253,11 @@ function UpNextRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{entry.seriesName}</p>
-        <p className="truncate text-sm text-muted">
+        <p className="truncate text-sm text-ink-secondary">
           S{episode.season}E{episode.number} · {episode.name}
         </p>
         {/* A count, not a vague "NEW" badge — the most repeated complaint on Trakt's roadmap. */}
-        <p className="mt-0.5 text-xs text-muted">
+        <p className="mt-0.5 text-xs text-ink-secondary">
           {entry.remaining === 0
             ? 'Last one'
             : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`}
@@ -268,7 +268,7 @@ function UpNextRow({
           <button
             onClick={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
             aria-label={`Catch up on ${entry.seriesName}`}
-            className="tap mt-1 text-xs text-muted underline"
+            className="tap mt-1 text-xs text-ink-secondary underline"
           >
             Caught up further?
           </button>
@@ -279,7 +279,7 @@ function UpNextRow({
         <button
           onClick={onWatched}
           // Large target: this gets tapped in the dark, one-handed.
-          className="rounded-pill bg-accent px-4 py-3 text-sm font-semibold text-ink active:scale-95"
+          className="rounded-pill bg-action-fill px-4 py-3 text-sm font-semibold text-action-label active:scale-95"
           aria-label={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
         >
           Watched
@@ -287,7 +287,7 @@ function UpNextRow({
         <Link
           to={`/watching/${encodeURIComponent(episode.id)}`}
           aria-label={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
-          className="rounded-pill bg-surface-2 px-4 py-2 text-center text-xs text-muted"
+          className="rounded-pill border border-stroke-signal px-4 py-2 text-center text-xs text-ink-secondary"
         >
           Watch along
         </Link>

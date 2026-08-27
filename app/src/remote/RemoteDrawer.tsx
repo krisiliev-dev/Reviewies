@@ -78,7 +78,7 @@ export function RemoteDrawer() {
         onClick={() => setOpen(true)}
         aria-label="Open remote"
         inert={open}
-        /* Was `bg-surface-2/90 text-muted backdrop-blur` — the same 1.21:1 handle the
+        /* Was `bg-ground-well/90 text-ink-secondary backdrop-blur` — the same 1.21:1 handle the
            phone had, plus a blur. Both platforms hid the drawer's only affordance the
            same way and independently, which is the argument for one owner rather than
            two palettes that agree. Solid now, in the stroke that means something.
@@ -108,7 +108,7 @@ export function RemoteDrawer() {
         ref={drawer}
         // Always mounted so the connection is not torn down each time it closes.
         style={{ zIndex: 'var(--z-drawer)' }}
-        className={`safe-top safe-bottom fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-edge bg-ink p-4 transition-transform duration-200 outline-none ${
+        className={`safe-top safe-bottom fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-stroke-hairline bg-ground p-4 transition-transform duration-200 outline-none ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"
@@ -126,7 +126,7 @@ export function RemoteDrawer() {
           <button
             onClick={() => setOpen(false)}
             aria-label="Close remote"
-            className="text-sm text-muted"
+            className="text-sm text-ink-secondary"
           >
             Close
           </button>
@@ -135,12 +135,12 @@ export function RemoteDrawer() {
         <Status bridge={bridge} />
 
         {bridge.devices.length > 0 && (
-          <label className="flex flex-col gap-1 text-xs text-muted">
+          <label className="flex flex-col gap-1 text-xs text-ink-secondary">
             Device
             <select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
-              className="rounded-none bg-surface px-3 py-2 text-base text-white outline-none"
+              className="rounded-none bg-ground-raised px-3 py-2 text-base text-white outline-none"
             >
               <option value="">Choose…</option>
               {bridge.devices.map((device) => (
@@ -153,11 +153,11 @@ export function RemoteDrawer() {
         )}
 
         {bridge.playback && (
-          <div className="rounded-plate bg-surface p-3">
+          <div className="rounded-plate bg-ground-raised p-3">
             {bridge.playback.title && (
               <p className="truncate text-sm font-medium">{bridge.playback.title}</p>
             )}
-            <p className="font-mono text-xs tabular-nums text-muted">
+            <p className="font-mono text-xs tabular-nums text-ink-secondary">
               {formatTime(bridge.playback.positionSec)}
               {bridge.playback.durationSec
                 ? ` / ${formatTime(bridge.playback.durationSec)}`
@@ -188,13 +188,13 @@ export function RemoteDrawer() {
 
           <button
             onClick={() => press('home')}
-            className="rounded-pill bg-surface-2 py-3 text-sm text-muted"
+            className="rounded-pill border border-stroke-signal py-3 text-sm text-ink-secondary"
           >
             Home
           </button>
         </fieldset>
 
-        {bridge.error && <p className="text-xs text-accent">{bridge.error}</p>}
+        {bridge.error && <p className="text-xs text-trouble">{bridge.error}</p>}
       </aside>
     </>
   );
@@ -207,7 +207,7 @@ function Key({ spec, onPress }: { spec: ButtonSpec; onPress: (c: RemoteCommand) 
       aria-label={spec.label}
       // Exactly one aspect utility: emitting both `aspect-square` and `aspect-auto`
       // leaves the winner to stylesheet order rather than intent.
-      className={`flex items-center justify-center rounded-pill bg-surface text-xl active:scale-90 ${
+      className={`flex items-center justify-center rounded-pill bg-ground-raised text-xl active:scale-90 ${
         spec.wide ? 'col-span-2' : 'aspect-square'
       }`}
     >
@@ -219,9 +219,9 @@ function Key({ spec, onPress }: { spec: ButtonSpec; onPress: (c: RemoteCommand) 
 function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
   if (bridge.status === 'connected' && bridge.devices.length === 0) {
     return (
-      <div className="rounded-plate bg-surface p-3 text-xs text-muted">
+      <div className="rounded-plate bg-ground-raised p-3 text-xs text-ink-secondary">
         <p>Bridge connected, but no devices found.</p>
-        <button onClick={bridge.refresh} className="mt-2 text-accent">
+        <button onClick={bridge.refresh} className="mt-2 text-action-label">
           Scan again
         </button>
       </div>
@@ -230,7 +230,7 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
 
   if (bridge.status !== 'connected') {
     return (
-      <p className="rounded-pill bg-surface p-3 text-xs text-muted">
+      <p className="rounded-pill bg-ground-raised p-3 text-xs text-ink-secondary">
         {bridge.status === 'connecting'
           ? 'Connecting to your bridge…'
           : 'Bridge offline. It will reconnect on its own.'}

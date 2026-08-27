@@ -374,7 +374,12 @@ try {
   );
   check(
     'the body is painted in the ground token, not a browser default',
-    resolved.body === 'rgb(11, 11, 15)',
+    // #131114. This expected rgb(11, 11, 15) — the LEGACY near-black — until §6.90, and
+    // was right the whole time for the wrong reason: `index.css` said `--color-ink`, the
+    // generated @theme defined that name twice, and the legacy definition came second and
+    // won. Deleting the legacy table flipped the page to near-white and this went red in
+    // the same run, which is the entire argument for reading colour off the pixels.
+    resolved.body === 'rgb(19, 17, 20)',
     resolved.body,
   );
   check(
@@ -382,6 +387,52 @@ try {
     // #8A8079 — stroke.signal, the stroke that means something.
     utility === 'rgb(138, 128, 121)',
     `bg-stroke-signal painted "${utility}"`,
+  );
+
+  /**
+   * And the classes the screens actually write, now that they write them.
+   *
+   * §6.87 could only probe `bg-stroke-signal`, because Tailwind v4 is JIT and that was
+   * the single new-token class with a call site anywhere in the source. §6.90 gave the
+   * whole palette call sites, so the probe can stop being a proof about one class.
+   *
+   * Read off a rendered screen rather than an injected div: a probe proves the stylesheet
+   * compiled, and this proves the app is drawn from it. `bg-ground-raised` is the plate
+   * every card is, and `border-stroke-signal` is the rule that replaced the fills.
+   */
+  // On /more, because the first-run screen is deliberately bare and has no plate on it.
+  // The first version probed the arrival screen and reported "no such element" for
+  // `bg-ground-raised` — which is not the stylesheet failing, it is the check looking at
+  // a screen that has nothing of the kind. A probe has to be pointed at something.
+  await page.goto(`${BASE}/more`, { waitUntil: 'networkidle' });
+  const painted = await page.evaluate(() => {
+    const seen = (selector, prop) => {
+      const el = document.querySelector(selector);
+      return el ? getComputedStyle(el)[prop] : 'no such element';
+    };
+    return {
+      plate: seen('.bg-ground-raised', 'backgroundColor'),
+      rule: seen('.border-stroke-signal', 'borderTopColor'),
+      secondary: seen('.text-ink-secondary', 'color'),
+    };
+  });
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  check(
+    'a card on screen is painted in the plate token',
+    painted.plate === 'rgb(28, 25, 30)',
+    `bg-ground-raised on a real element painted "${painted.plate}"`,
+  );
+  check(
+    'and the rule that replaced the fills is drawn in stroke.signal',
+    // The whole argument of §6.90: a quiet action outlined at 4.51:1 reads as available,
+    // where the grey fill it replaced read as disabled.
+    painted.rule === 'rgb(138, 128, 121)',
+    `border-stroke-signal on a real element painted "${painted.rule}"`,
+  );
+  check(
+    'and secondary text is the secondary ink, not the old 4.6 grey',
+    painted.secondary === 'rgb(179, 169, 160)',
+    `text-ink-secondary on a real element painted "${painted.secondary}"`,
   );
 
   /**
@@ -448,11 +499,18 @@ try {
     `bg-stroke-signal under light painted "${light.probe}"`,
   );
   check(
-    'and no screen reads a new token yet, which is the state this is in',
-    // Stated as a check rather than left to a document: when this goes red, some screen
-    // has started reading the new palette and this line should be deleted with a cheer.
-    light.heading === resolved.heading,
-    `h1 is ${resolved.heading} in both themes — still on the legacy palette`,
+    'and the screens follow the theme, now that they read it',
+    /*
+     * This line used to assert the opposite, and its comment said so: "when this goes
+     * red, some screen has started reading the new palette and this line should be
+     * deleted with a cheer." §6.90 turned it red.
+     *
+     * The heading is `ink` — #F4EFE7 dark, #191419 light — so it must now DIFFER between
+     * the themes. An app still on the legacy palette would report the same colour twice,
+     * which is what this asserted for three sprints and no longer accepts.
+     */
+    light.heading !== resolved.heading,
+    `h1 is ${resolved.heading} in dark and ${light.heading} in light`,
   );
   // Three different things arrive under the name "my TV Time data", and someone holding
   // one of them has to see their own case named before they will believe it works.

@@ -40,8 +40,8 @@ export function More() {
     <div className="flex flex-col gap-3 p-4">
       <h1 className="text-2xl font-semibold">More</h1>
 
-      <section className="rounded-plate bg-surface p-4">
-        <p className="text-sm text-muted">
+      <section className="rounded-plate bg-ground-raised p-4">
+        <p className="text-sm text-ink-secondary">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
         </p>
@@ -53,7 +53,7 @@ export function More() {
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-sm text-ink-secondary">
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
           </p>
         )}
@@ -65,13 +65,13 @@ export function More() {
             key={link.to}
             to={link.to}
             aria-label={`${link.label} — ${link.detail}`}
-            className="flex items-center justify-between gap-3 rounded-plate bg-surface px-4 py-4"
+            className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4"
           >
             <span className="min-w-0">
               <span className="block">{link.label}</span>
-              <span className="block text-sm text-muted">{link.detail}</span>
+              <span className="block text-sm text-ink-secondary">{link.detail}</span>
             </span>
-            <span aria-hidden="true" className="shrink-0 text-muted">
+            <span aria-hidden="true" className="shrink-0 text-ink-secondary">
               ›
             </span>
           </Link>
@@ -83,8 +83,8 @@ export function More() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-plate bg-surface-2 px-3 py-2">
-      <dt className="text-xs text-muted">{label}</dt>
+    <div className="rounded-plate bg-ground-well px-3 py-2">
+      <dt className="text-xs text-ink-secondary">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
     </div>
   );

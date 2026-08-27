@@ -15,7 +15,7 @@ import { color, label } from '@reviewies/core/tokens';
  * fact to hold, not a number to nudge.
  */
 
-/** WCAG 2.1 relative luminance. Same arithmetic as `palette.test.ts`, checked below. */
+/** WCAG 2.1 relative luminance. Checked against a published value below. */
 function luminance(hex: string): number {
   const value = hex.replace('#', '');
   const channels = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16) / 255);

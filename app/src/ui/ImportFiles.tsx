@@ -104,7 +104,7 @@ export function ImportFiles({
     <>
       <label
         className={`cursor-pointer rounded-pill px-4 py-3 text-center ${
-          primary ? 'bg-accent font-medium text-ink' : 'bg-surface-2'
+          primary ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal'
         }`}
       >
         {busy ? 'Reading…' : label}
@@ -119,9 +119,9 @@ export function ImportFiles({
         />
       </label>
 
-      {error && <p className="px-1 text-sm text-accent">{error}</p>}
+      {error && <p className="px-1 text-sm text-trouble">{error}</p>}
       {report && (
-        <div className="rounded-plate bg-surface p-3 text-sm">
+        <div className="rounded-plate bg-ground-raised p-3 text-sm">
           <p>
             Imported {report.watches} watch{report.watches === 1 ? '' : 'es'}
             {report.watchlist > 0 && `, ${report.watchlist} watchlist items`}.
@@ -129,14 +129,14 @@ export function ImportFiles({
           {files && files.length > 0 && (
             <ul className="mt-2 flex flex-col gap-1">
               {files.map((f) => (
-                <li key={f.name} className="text-xs text-muted">
+                <li key={f.name} className="text-xs text-ink-secondary">
                   <span className="font-medium">{f.name}</span> — {f.outcome}
                 </li>
               ))}
             </ul>
           )}
           {report.warnings.map((w) => (
-            <p key={w} className="mt-1 text-muted">
+            <p key={w} className="mt-1 text-ink-secondary">
               {w}
             </p>
           ))}
@@ -152,7 +152,7 @@ export function ImportFiles({
                 setRestoring(false);
               }}
               disabled={restoring}
-              className="mt-3 min-h-[44px] w-full rounded-pill bg-surface-2 px-4 py-3 disabled:opacity-50"
+              className="mt-3 min-h-[44px] w-full rounded-pill border border-stroke-signal px-4 py-3 disabled:opacity-50"
             >
               {restoring ? 'Restoring…' : 'Restore lists and follows'}
             </button>
@@ -165,7 +165,7 @@ export function ImportFiles({
                 {restored.follows} follow{restored.follows === 1 ? '' : 's'}.
               </p>
               {restored.skipped.map((s) => (
-                <p key={s} className="mt-1 text-muted">
+                <p key={s} className="mt-1 text-ink-secondary">
                   {s}
                 </p>
               ))}
@@ -187,7 +187,7 @@ export function ImportFiles({
 export function ImportFormats() {
   return (
     <>
-      <p className="px-1 text-sm text-muted">
+      <p className="px-1 text-sm text-ink-secondary">
         A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl
         or Letterboxd — or a recovered <code>DioCache.db</code> straight off your phone.
         Files are recognised by what is in them, not what they are called, and anything we
@@ -195,7 +195,7 @@ export function ImportFormats() {
       </p>
       {/* The -wal is the difference between a complete history and one quietly missing
           its most recent months, so it has to be asked for by name. */}
-      <p className="px-1 text-sm text-muted">
+      <p className="px-1 text-sm text-ink-secondary">
         If you have a <code>DioCache.db</code>, select its <code>DioCache.db-wal</code> at
         the same time. TV Time wrote its most recent months there, and importing the
         database alone loses them without telling you.

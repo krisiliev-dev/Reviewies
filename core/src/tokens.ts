@@ -161,29 +161,6 @@ const labelLight = [
   '#A93B37', '#3A568C', '#9C5A26', '#5A6470',
 ] as const;
 
-/**
- * The palette every screen is still drawn from, and the one this replaces.
- *
- * Seven colours and four radii, unchanged. They are here rather than in `index.css` and
- * `theme.ts` for one reason: while they live in two files, "the two platforms agree" is
- * something a test has to *notice*, and `palette.test.ts` was written to notice it after
- * six of the seven had already drifted. Generated from here, there is one copy and
- * nothing to compare.
- *
- * This export has a defined end. It shrinks as each migration sprint lands and is gone
- * when the last screen reads a real token — at which point `palette.test.ts` goes with
- * it. Anything added here is a mistake; the new system is above.
- */
-export const legacy = {
-  ink: '#0b0b0f',
-  surface: '#15151d',
-  surface2: '#1f1f2b',
-  edge: '#2b2b3a',
-  text: '#f2f2f7',
-  muted: '#9a9ab0',
-  accent: '#ff5c7a',
-} as const;
-
 export const color = { dark, light } as const;
 export const label = { dark: labelDark, light: labelLight } as const;
 

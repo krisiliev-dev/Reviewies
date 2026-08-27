@@ -54,7 +54,7 @@ export function FailureBanner() {
       /* Above everything: this is the thing that says the app could not do what you
          asked, and a layer that can be covered is a message that can be missed. */
       style={{ zIndex: 'var(--z-banner)' }}
-      className="safe-top fixed inset-x-0 top-0 flex items-start gap-3 border-b border-edge bg-surface px-4 py-3"
+      className="safe-top fixed inset-x-0 top-0 flex items-start gap-3 border-b border-stroke-hairline bg-ground-raised px-4 py-3"
     >
       <p className="min-w-0 flex-1 text-sm">
         {stale ? (
@@ -69,7 +69,7 @@ export function FailureBanner() {
       {stale && (
         <button
           onClick={() => window.location.reload()}
-          className="shrink-0 rounded-pill bg-accent px-3 py-1.5 text-sm font-medium text-ink"
+          className="shrink-0 rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label"
         >
           {COPY.app.reload}
         </button>
@@ -77,7 +77,7 @@ export function FailureBanner() {
       <button
         onClick={() => setFailure(undefined)}
         aria-label="Dismiss this message"
-        className="min-h-[24px] shrink-0 rounded-pill px-2 text-sm text-muted underline"
+        className="min-h-[24px] shrink-0 rounded-pill px-2 text-sm text-ink-secondary underline"
       >
         Dismiss
       </button>

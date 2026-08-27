@@ -182,7 +182,7 @@ export function WatchingMode() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-ink">
+    <div className="flex h-full flex-col bg-ground">
       {/* Wraps, and the title is allowed more than one line. Close, the title and the
           timecode in one nowrap row fits a phone once; at twice the text size the show
           came out as "The L…" and the episode as "S1E2 · …", which is not a truncation
@@ -191,7 +191,7 @@ export function WatchingMode() {
         {/* Two things on this screen say "Close": this and the remote drawer. */}
         <button
           onClick={() => navigate(-1)}
-          className="tap text-sm text-muted"
+          className="tap text-sm text-ink-secondary"
           aria-label="Leave Watching Mode"
         >
           Close
@@ -200,12 +200,12 @@ export function WatchingMode() {
           {/* Two lines before it gives up, rather than one character. */}
           <p className="line-clamp-2 text-sm font-medium">{series?.name ?? 'Watching'}</p>
           {episode && (
-            <p className="line-clamp-2 text-xs text-muted">
+            <p className="line-clamp-2 text-xs text-ink-secondary">
               S{episode.season}E{episode.number} · {episode.name}
             </p>
           )}
         </div>
-        <span className="min-w-12 text-right font-mono text-sm tabular-nums text-muted">
+        <span className="min-w-12 text-right font-mono text-sm tabular-nums text-ink-secondary">
           {formatTimecode(clock.positionMs)}
         </span>
       </header>
@@ -223,7 +223,7 @@ export function WatchingMode() {
       ) : (
         <>
           {autoSynced && (
-            <p className="px-4 pb-1 text-xs text-muted">
+            <p className="px-4 pb-1 text-xs text-ink-secondary">
               Synced automatically from your browser.
             </p>
           )}
@@ -266,23 +266,23 @@ export function WatchingMode() {
             key={e.emoji + e.label}
             onClick={() => react(e.emoji)}
             disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-surface text-3xl active:scale-90 disabled:opacity-30"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-ground-raised text-3xl active:scale-90 disabled:opacity-30"
             // The emoji is aria-hidden, so this is the whole name — "Funny" alone does
             // not say it is something you do.
             aria-label={`React with ${e.label.toLowerCase()}`}
           >
             <span aria-hidden="true">{e.emoji}</span>
-            <span className="text-[0.5625rem] leading-none text-muted">{e.label}</span>
+            <span className="text-[0.5625rem] leading-none text-ink-secondary">{e.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="safe-bottom border-t border-edge p-3">
+      <div className="safe-bottom border-t border-stroke-hairline p-3">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search any emoji…"
-          className="w-full rounded-none bg-surface px-4 py-3 text-base outline-none placeholder:text-muted"
+          className="w-full rounded-none bg-ground-raised px-4 py-3 text-base outline-none placeholder:text-ink-secondary"
           aria-label="Search emoji"
         />
       </div>
@@ -295,11 +295,11 @@ function StartPanel({ onStart }: { onStart: () => void }) {
     <div className="px-4 pb-3">
       <button
         onClick={onStart}
-        className="w-full rounded-pill bg-accent py-4 text-lg font-semibold text-ink active:scale-[0.98]"
+        className="w-full rounded-pill bg-action-fill py-4 text-lg font-semibold text-action-label active:scale-[0.98]"
       >
         Start watching
       </button>
-      <p className="mt-2 text-center text-xs text-muted">
+      <p className="mt-2 text-center text-xs text-ink-secondary">
         Tap the moment you press play. You can nudge the timing at any point.
       </p>
     </div>
@@ -326,7 +326,7 @@ function SyncBar({
       <button
         onClick={clock.toggle}
         aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}
-        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
       >
         {clock.running ? 'Pause' : 'Resume'}
       </button>
@@ -336,14 +336,14 @@ function SyncBar({
       <button
         onClick={() => clock.nudge(-5000)}
         aria-label="Move the clock back 5 seconds"
-        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
       >
         −5s
       </button>
       <button
         onClick={() => clock.nudge(5000)}
         aria-label="Move the clock forward 5 seconds"
-        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
       >
         +5s
       </button>
@@ -354,7 +354,7 @@ function SyncBar({
           streamPaused ? 'Let other people’s reactions move again' : 'Hold other people’s reactions still'
         }
         className={`rounded-plate px-3 py-2 text-sm ${
-          streamPaused ? 'bg-accent text-ink' : 'bg-surface-2'
+          streamPaused ? 'bg-action-fill text-action-label' : 'bg-ground-well'
         }`}
       >
         {streamPaused ? 'Held' : 'Hold'}
@@ -363,7 +363,7 @@ function SyncBar({
           proportion is not a promise anybody can act on — a quarter of a quiet episode
           is nothing — and the two platforms meant different things by the same word
           until §6.55. */}
-      <div className="ml-auto flex items-center gap-1.5 text-xs text-muted">
+      <div className="ml-auto flex items-center gap-1.5 text-xs text-ink-secondary">
         {COPY.watching.densityLabel}
         <div role="radiogroup" aria-label={COPY.watching.densityLabel} className="flex gap-1">
           {REACTION_DENSITY_CHOICES.map((value) => (
@@ -375,7 +375,7 @@ function SyncBar({
               // "8", "24", "60" on their own are three numbers next to each other.
               aria-label={COPY.watching.densityChoice(value)}
               className={`min-h-6 rounded-plate px-3 py-1 ${
-                density === value ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
+                density === value ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
               }`}
             >
               {value}
@@ -411,21 +411,21 @@ function DriftHint({
   const behind = driftMs < 0;
 
   return (
-    <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate bg-surface-2 px-3 py-2 text-sm">
-      <span className="flex-1 text-muted">
+    <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate border border-stroke-signal px-3 py-2 text-sm">
+      <span className="flex-1 text-ink-secondary">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
       </span>
       <button
         onClick={onApply}
         aria-label={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
-        className="rounded-pill bg-accent px-3 py-1.5 text-xs font-semibold text-ink"
+        className="rounded-pill bg-action-fill px-3 py-1.5 text-xs font-semibold text-action-label"
       >
         Fix
       </button>
       <button
         onClick={onDismiss}
         aria-label="Ignore the drift correction"
-        className="px-2 py-1.5 text-xs text-muted"
+        className="px-2 py-1.5 text-xs text-ink-secondary"
       >
         Ignore
       </button>

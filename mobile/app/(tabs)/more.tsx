@@ -111,30 +111,30 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink },
+  screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
+  heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardText: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
+  cardText: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
   stats: { flexDirection: 'row', gap: 12 },
-  stat: { flex: 1, backgroundColor: theme.surface2, borderRadius: radius.plate, padding: 12 },
-  statLabel: { color: theme.muted, fontSize: 11 },
-  statValue: { color: theme.text, fontSize: 20, fontWeight: '700' },
+  stat: { flex: 1, backgroundColor: theme.groundWell, borderRadius: radius.plate, padding: 12 },
+  statLabel: { color: theme.inkSecondary, fontSize: 11 },
+  statValue: { color: theme.ink, fontSize: 20, fontWeight: '700' },
 
   link: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
   linkBody: { flex: 1 },
-  linkLabel: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  linkDetail: { color: theme.muted, fontSize: 13 },
-  chevron: { color: theme.muted, fontSize: 22 },
+  linkLabel: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  linkDetail: { color: theme.inkSecondary, fontSize: 13 },
+  chevron: { color: theme.inkSecondary, fontSize: 22 },
 
   footer: { marginTop: 16, gap: 4 },
-  footerText: { color: theme.muted, fontSize: 10, lineHeight: 15 },
+  footerText: { color: theme.inkSecondary, fontSize: 10, lineHeight: 15 },
 });

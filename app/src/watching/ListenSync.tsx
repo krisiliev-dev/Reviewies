@@ -99,13 +99,13 @@ export function ListenSync({
   }
 
   return (
-    <div className="mx-3 mb-2 rounded-plate bg-surface-2 px-3 py-2">
+    <div className="mx-3 mb-2 rounded-plate border border-stroke-signal px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={listen}
           disabled={!!busy}
           aria-busy={busy === 'listening'}
-          className="rounded-pill bg-surface px-3 py-1.5 text-xs disabled:opacity-50"
+          className="rounded-pill bg-ground-raised px-3 py-1.5 text-xs disabled:opacity-50"
         >
           {busy === 'listening' ? 'Listening…' : 'Sync by listening'}
         </button>
@@ -120,21 +120,21 @@ export function ListenSync({
               ? 'Help map this episode — start the episode first'
               : 'Help map this episode'
           }
-          className="rounded-pill bg-surface px-3 py-1.5 text-xs text-muted disabled:opacity-40"
+          className="rounded-pill bg-ground-raised px-3 py-1.5 text-xs text-ink-secondary disabled:opacity-40"
           title={positionMs < 1000 ? 'Start the episode first' : undefined}
         >
           {busy === 'contributing' ? 'Recording…' : 'Help map this episode'}
         </button>
       </div>
 
-      <p className="mt-1.5 text-[0.6875rem] leading-snug text-muted">
+      <p className="mt-1.5 text-[0.6875rem] leading-snug text-ink-secondary">
         {/* Specific about scope: what is recorded, for how long, and what leaves the
             device. Vague reassurance would be worse than none. */}
         Uses the microphone for a few seconds. Audio never leaves this device — only a
         one-way digest of it is sent, which cannot be turned back into sound.
       </p>
 
-      {note && <p className="mt-1 text-[0.6875rem] text-accent">{note}</p>}
+      {note && <p className="mt-1 text-[0.6875rem] text-ink-secondary">{note}</p>}
     </div>
   );
 }

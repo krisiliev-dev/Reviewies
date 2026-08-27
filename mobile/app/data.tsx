@@ -12,7 +12,7 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
-import { radius, theme } from '../src/ui/theme';
+import { border, radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
@@ -169,42 +169,42 @@ function Section({ heading, children }: { heading: string; children: React.React
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 24, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
+  content: { padding: 16, gap: 24, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   section: { gap: 12 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   toggleText: { flex: 1, minWidth: 0, gap: 2 },
-  toggleLabel: { color: theme.text, fontSize: 15 },
-  toggleHint: { color: theme.muted, fontSize: 13 },
+  toggleLabel: { color: theme.ink, fontSize: 15 },
+  toggleHint: { color: theme.inkSecondary, fontSize: 13 },
   sectionHeading: {
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  blurb: { color: theme.muted, fontSize: 13, lineHeight: 19 },
-  clockWarning: { color: theme.accent, fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  blurb: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
+  clockWarning: { color: theme.trouble, fontSize: 13, lineHeight: 19, marginBottom: 4 },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  primaryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
+  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
   secondary: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  secondaryText: { color: theme.text, fontSize: 15 },
+  secondaryText: { color: theme.ink, fontSize: 15 },
 
 });

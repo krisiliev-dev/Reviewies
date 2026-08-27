@@ -20,13 +20,13 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.ink,
-          borderTopColor: theme.edge,
+          backgroundColor: theme.ground,
+          borderTopColor: theme.strokeHairline,
         },
-        tabBarActiveTintColor: theme.accent,
-        tabBarInactiveTintColor: theme.muted,
+        tabBarActiveTintColor: theme.ink,
+        tabBarInactiveTintColor: theme.inkSecondary,
         tabBarLabelStyle: { fontSize: 10 },
-        sceneStyle: { backgroundColor: theme.ink },
+        sceneStyle: { backgroundColor: theme.ground },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Up Next', tabBarIcon: icon('▶') }} />

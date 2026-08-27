@@ -79,7 +79,7 @@ function Shell() {
       {!immersive && (
         <a
           href="#tabs"
-          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-pill focus-visible:bg-surface-2 focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-pill focus-visible:border border-stroke-signal focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
         >
           Skip to navigation
         </a>
@@ -190,7 +190,7 @@ function TabBar() {
       // Opaque. At 95% the content behind showed through, which is a subtle grubbiness at
       // the default text size and unreadable at twice it, where this bar wraps to four
       // rows and covers nearly half the screen with two layers of text at once.
-      className="safe-bottom fixed inset-x-0 bottom-0 border-t border-edge bg-ink"
+      className="safe-bottom fixed inset-x-0 bottom-0 border-t border-stroke-hairline bg-ground"
     >
       {/* Wraps rather than truncating or scrolling. Eight tabs fit a phone at the
           default text size and cannot at twice it. A label cut short is content lost,
@@ -210,7 +210,7 @@ function TabBar() {
                 // reader's setting entirely — while the icons beside them, sized in em,
                 // doubled. Exactly inverted.
                 `flex flex-col items-center gap-0.5 px-1 py-3 text-center text-[0.625rem] leading-tight break-words ${
-                  isActive ? 'text-accent' : 'text-muted'
+                  isActive ? 'text-action-label' : 'text-ink-secondary'
                 }`
               }
             >

@@ -21,7 +21,7 @@ import {
 } from '@reviewies/core/sync/auth';
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
-import { radius, theme } from '../src/ui/theme';
+import { border, radius, theme } from '../src/ui/theme';
 
 /**
  * Signing in, framed as optional throughout.
@@ -143,7 +143,7 @@ export default function AccountScreen() {
               value={email}
               onChangeText={setEmail}
               placeholder="Email"
-              placeholderTextColor={theme.muted}
+              placeholderTextColor={theme.inkSecondary}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -153,7 +153,7 @@ export default function AccountScreen() {
               value={password}
               onChangeText={setPassword}
               placeholder="Password (8+ characters)"
-              placeholderTextColor={theme.muted}
+              placeholderTextColor={theme.inkSecondary}
               secureTextEntry
               style={styles.input}
             />
@@ -168,7 +168,7 @@ export default function AccountScreen() {
               accessibilityState={{ disabled: busy, busy }}
             >
               {busy ? (
-                <ActivityIndicator color={theme.ink} />
+                <ActivityIndicator color={theme.actionLabel} />
               ) : (
                 <Text style={styles.primaryText}>
                   {mode === 'in' ? 'Sign in' : 'Create account'}
@@ -196,35 +196,35 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1 },
-  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
-  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.text, fontSize: 17, fontWeight: '700' },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
+  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
+  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
+  cardHeading: { color: theme.ink, fontSize: 17, fontWeight: '700' },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
   rejected: { marginTop: 12, gap: 8 },
-  rejectedText: { color: theme.accent, fontSize: 14, lineHeight: 20 },
+  rejectedText: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
   input: {
-    backgroundColor: theme.surface2,
+    backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 15,
   },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  primaryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
+  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
   secondary: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingVertical: 12,
     alignItems: 'center',
   },
-  secondaryText: { color: theme.text, fontSize: 15 },
-  toggle: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
-  error: { color: theme.accent, fontSize: 13 },
+  secondaryText: { color: theme.ink, fontSize: 15 },
+  toggle: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  error: { color: theme.trouble, fontSize: 13 },
 });

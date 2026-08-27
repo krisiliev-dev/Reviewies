@@ -2,7 +2,7 @@
 
 What sits on the tokens. Read `docs/design/tokens.md` first.
 
-I read all three directions in full, the fourteen screenshots, `OBSERVED.md`, `theme.ts`, `palette.test.ts`, `copy.ts`, every route file under `/home/user/Reviewies/mobile/app/`, every component under `/home/user/Reviewies/mobile/src/`, and the web counterparts under `/home/user/Reviewies/app/src/`.
+I read all three directions in full, the fourteen screenshots, `OBSERVED.md`, `theme.ts`, the palette guard that then existed, `copy.ts`, every route file under `/home/user/Reviewies/mobile/app/`, every component under `/home/user/Reviewies/mobile/src/`, and the web counterparts under `/home/user/Reviewies/app/src/`.
 
 ---
 
@@ -418,7 +418,7 @@ Phone-only: `Masthead` (the web has no push stack), `ChannelStrip` (the web's na
 
 ## Guards to extend, so this does not drift back
 
-1. **`/home/user/Reviewies/app/src/ui/palette.test.ts`** — currently asserts seven token names are byte-identical across `index.css` and `theme.ts`, and AA for three foregrounds on three grounds. Extend to the Late Edition set: every text token ≥4.5:1 on every ground it can land on; every one of the eight label colours ≥3:1 on its theme's ground (WCAG 1.4.11); and **amber is never a text token in light mode** — the direction names this as the rule people get wrong, and a rule you cannot check is a rule you do not have.
+1. **The palette guard** — when this was written it was one file under `app/src/ui/` asserting seven token names byte-identical across `index.css` and `theme.ts`, plus AA for three foregrounds on three grounds. It was replaced by `/home/user/Reviewies/app/src/ui/contrast.test.ts` and `/home/user/Reviewies/app/src/ui/labelSet.test.ts` and then deleted in §6.90 when the seven colours it held went. What it should assert, and now does: every text token ≥4.5:1 on every ground it can land on; every one of the eight label colours ≥3:1 on its theme's ground (WCAG 1.4.11); and **amber is never a text token in light mode** — the direction names this as the rule people get wrong, and a rule you cannot check is a rule you do not have.
 2. **`appearance.test.ts`** — today it only globs `app/src/**/*.tsx`. Add `mobile/{app,src}/**/*.tsx` and the "never fade a filled button" check, which the phone violates eight times and has never been asked about.
 3. **New: one geometry guard.** No `borderRadius`, `paddingHorizontal`/`paddingVertical`, or `backgroundColor: theme.accent` outside `mobile/src/ui/` and `app/src/ui/`. This is the mechanical form of the thing this whole layer exists to stop, and it is the same shape as `oneClient.test.ts` and `dials.test.ts` — a rule with an exemption list you have to be uncomfortable to write in.
 4. **`copy.test.ts`** — it did not catch that `COPY.calendar.findSomething` is written as a literal at four call sites on both platforms. Add: no string literal in a component may equal a `COPY` value.

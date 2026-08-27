@@ -46,17 +46,17 @@ export function Settings() {
           demand in the research. */}
       <Link
         to="/people"
-        className="flex items-center justify-between rounded-plate bg-surface px-4 py-4"
+        className="flex items-center justify-between rounded-plate bg-ground-raised px-4 py-4"
       >
         <span>
           <span className="font-semibold">People</span>
-          <span className="block text-sm text-muted">Your handle, following, blocking</span>
+          <span className="block text-sm text-ink-secondary">Your handle, following, blocking</span>
         </span>
-        <span aria-hidden className="text-muted">›</span>
+        <span aria-hidden className="text-ink-secondary">›</span>
       </Link>
 
-      <section className="rounded-plate bg-surface p-4">
-        <p className="text-sm text-muted">
+      <section className="rounded-plate bg-ground-raised p-4">
+        <p className="text-sm text-ink-secondary">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
         </p>
@@ -69,7 +69,7 @@ export function Settings() {
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-sm text-muted">
+          <p className="mt-3 text-sm text-ink-secondary">
             {/* formatDuration rather than minutes/60: 90 minutes was rendering as
                 "1 hours watched", which is wrong twice over. */}
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
@@ -81,14 +81,14 @@ export function Settings() {
           corrects for it and needs no help; the calendar and "aired today" cannot be
           corrected from here, so the honest thing is to say where the trouble is. §6.67. */}
       {clockWarning() && (
-        <p role="status" className="rounded-plate bg-surface px-4 py-3 text-sm text-accent">
+        <p role="status" className="rounded-plate bg-ground-raised px-4 py-3 text-sm text-trouble">
           {clockWarning()}
         </p>
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Export</h2>
-        <p className="px-1 text-sm text-muted">{COPY.settings.exportBlurb}</p>
+        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Export</h2>
+        <p className="px-1 text-sm text-ink-secondary">{COPY.settings.exportBlurb}</p>
         <button
           onClick={async () => {
             const bundle = await exportAll();
@@ -102,12 +102,12 @@ export function Settings() {
               'application/json',
             );
           }}
-          className="rounded-pill bg-accent px-4 py-3 font-medium text-ink"
+          className="rounded-pill bg-action-fill px-4 py-3 font-medium text-action-label"
         >
           Export everything (JSON)
         </button>
         {exportNote && (
-          <p className="px-1 text-sm text-muted" role="status">
+          <p className="px-1 text-sm text-ink-secondary" role="status">
             Saved, but your lists, follows and comments could not be read: {exportNote}. The
             rest of the file is complete.
           </p>
@@ -120,29 +120,29 @@ export function Settings() {
               'text/csv',
             )
           }
-          className="rounded-pill bg-surface-2 px-4 py-3"
+          className="rounded-pill border border-stroke-signal px-4 py-3"
         >
           Export watch history (CSV)
         </button>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Import</h2>
+        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Import</h2>
         <ImportFormats />
         <ImportFiles />
 
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
           Watching
         </h2>
-        <label className="flex items-center justify-between gap-3 rounded-plate bg-surface px-4 py-4">
+        <label className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4">
           <span className="min-w-0">
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
-            <span className="block text-sm text-muted">How TV Time worked. Needs an account.</span>
+            <span className="block text-sm text-ink-secondary">How TV Time worked. Needs an account.</span>
           </span>
           <input
             type="checkbox"
@@ -151,34 +151,34 @@ export function Settings() {
               setOpenComments(e.target.checked);
               setOpenCommentsAfterWatch(e.target.checked);
             }}
-            className="size-5 shrink-0 accent-accent"
+            className="size-5 shrink-0 accent-action-fill"
           />
         </label>
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
           Metadata cache
         </h2>
-        <p className="px-1 text-sm text-muted">
+        <p className="px-1 text-sm text-ink-secondary">
           Artwork and episode listings are cached from the metadata provider and expire
           automatically. Clearing them never touches your own history, and shows carried
           over from an import keep their names.
         </p>
         <button
           onClick={() => void clearMetadataCache().then((n) => setCleared(n))}
-          className="rounded-pill bg-surface-2 px-4 py-3"
+          className="rounded-pill border border-stroke-signal px-4 py-3"
         >
           Clear cached metadata
         </button>
         {cleared !== undefined && (
-          <p className="px-1 text-sm text-muted" role="status">
+          <p className="px-1 text-sm text-ink-secondary" role="status">
             {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
           </p>
         )}
       </section>
 
-      <footer className="px-1 pb-4 text-xs leading-relaxed text-muted">
+      <footer className="px-1 pb-4 text-xs leading-relaxed text-ink-secondary">
         {usingFixtures() ? (
           <p className="mb-2">
             Running on sample data. Set <code>VITE_TMDB_TOKEN</code> to use real metadata.
@@ -196,8 +196,8 @@ export function Settings() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-plate bg-surface-2 px-3 py-2">
-      <dt className="text-xs text-muted">{label}</dt>
+    <div className="rounded-plate bg-ground-well px-3 py-2">
+      <dt className="text-xs text-ink-secondary">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
     </div>
   );

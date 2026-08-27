@@ -68,21 +68,21 @@ export function Search() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Shows, films, anime…"
-        className="w-full rounded-none bg-surface px-4 py-3 text-base outline-none placeholder:text-muted"
+        className="w-full rounded-none bg-ground-raised px-4 py-3 text-base outline-none placeholder:text-ink-secondary"
         autoFocus
       />
 
-      {busy && <p className="mt-4 px-1 text-sm text-muted">Searching…</p>}
+      {busy && <p className="mt-4 px-1 text-sm text-ink-secondary">Searching…</p>}
       {error && (
         <div className="mt-4 flex flex-col items-start gap-2 px-1">
-          <p className="text-sm text-accent" role="status">
+          <p className="text-sm text-trouble" role="status">
             {error}
           </p>
           {/* Something to press. A message with no action is only a nicer way of being
               stuck, which is what "Searching…" for ever already was. */}
           <button
             onClick={() => setAttempt((n) => n + 1)}
-            className="rounded-pill bg-surface-2 px-4 py-2 text-sm"
+            className="rounded-pill border border-stroke-signal px-4 py-2 text-sm"
           >
             Try again
           </button>
@@ -173,7 +173,7 @@ function ResultRow({ result }: { result: SearchResult }) {
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
       <Link
         to={`/title/${encodeURIComponent(result.id)}`}
         aria-label={`Open ${result.name}`}
@@ -184,7 +184,7 @@ function ResultRow({ result }: { result: SearchResult }) {
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{result.name}</p>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-ink-secondary">
           {result.kind === 'show' ? 'Series' : 'Film'}
           {result.year ? ` · ${result.year}` : ''}
         </p>
@@ -195,13 +195,13 @@ function ResultRow({ result }: { result: SearchResult }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Why? e.g. Ana recommended"
-              className="min-w-0 flex-1 rounded-none bg-surface-2 px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
               autoFocus
             />
             <button
               onClick={saveToWatchlist}
               aria-label={`Save ${result.name} to your watchlist`}
-              className="rounded-pill bg-accent px-3 text-sm font-medium text-ink"
+              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
             >
               Save
             </button>
@@ -212,7 +212,7 @@ function ResultRow({ result }: { result: SearchResult }) {
               onClick={track}
               disabled={added === 'library'}
               aria-label={`Track ${result.name}`}
-              className="rounded-pill bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+              className="rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
             >
               {added === 'library' ? 'Tracking' : 'Track'}
             </button>
@@ -220,7 +220,7 @@ function ResultRow({ result }: { result: SearchResult }) {
               onClick={() => setNoting(true)}
               disabled={added === 'watchlist'}
               aria-label={`Add ${result.name} to your watchlist`}
-              className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
+              className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
             >
               {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
             </button>
@@ -231,7 +231,7 @@ function ResultRow({ result }: { result: SearchResult }) {
                 onClick={log}
                 disabled={added === 'logged'}
                 aria-label={`Log that you have seen ${result.name}`}
-                className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
+                className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
               >
                 {added === 'logged' ? 'Logged' : 'Seen it'}
               </button>

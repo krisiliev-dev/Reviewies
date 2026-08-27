@@ -82,7 +82,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               value={newName}
               onChangeText={setNewName}
               placeholder="New list…"
-              placeholderTextColor={theme.muted}
+              placeholderTextColor={theme.inkSecondary}
               maxLength={120}
               style={styles.input}
               onSubmitEditing={createAndAdd}
@@ -109,28 +109,28 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
 const styles = StyleSheet.create({
   block: { marginTop: 8, gap: 6 },
-  toggle: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
+  toggle: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
   panel: {
     padding: 12,
     borderRadius: radius.plate,
-    backgroundColor: theme.surface2,
+    backgroundColor: theme.groundWell,
     gap: 6,
   },
-  muted: { color: theme.muted, fontSize: 12 },
+  muted: { color: theme.inkSecondary, fontSize: 12 },
   listRow: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.plate,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
   },
-  listName: { color: theme.text, fontSize: 14 },
+  listName: { color: theme.ink, fontSize: 14 },
   newRow: { flexDirection: 'row', gap: 6, alignItems: 'stretch' },
   input: {
     flex: 1,
     minWidth: 0,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 14,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -139,9 +139,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     borderRadius: radius.pill,
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
   },
-  addText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  addText: { color: theme.actionLabel, fontSize: 14, fontWeight: '600' },
   disabled: { opacity: 0.4 },
-  note: { color: theme.muted, fontSize: 12 },
+  note: { color: theme.inkSecondary, fontSize: 12 },
 });

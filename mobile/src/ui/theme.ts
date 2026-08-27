@@ -1,23 +1,26 @@
+import { color } from '@reviewies/core/tokens';
+
 /**
- * The palette, carried over from the web app so the two do not drift apart.
+ * The palette the phone draws from, which is the dark half of the token table.
  *
- * Dark by default and not as a preference: this app gets used in a dark room with the
- * television on, which is the whole premise of Watching Mode.
+ * This used to be seven hand-written hexes with a comment saying they were "carried over
+ * from the web app so the two do not drift apart" — while six of the seven had drifted.
+ * §6.86 made the web generate its stylesheet from `core/src/tokens.ts`; §6.90 does the
+ * same thing for the phone, in the only form React Native accepts: one flat object of
+ * resolved values, because RN has no custom properties and no cascade.
  *
- * They had drifted anyway — six of the seven differed by a shade or two, and the
- * phone's muted grey came out a full contrast step behind the web's. These are now the
- * web's values exactly, and app/src/ui/palette.test.ts fails if they part again or if
- * any pair of them drops below WCAG AA.
+ * `color.dark` and not a theme choice. The app is dark by decision — the premise of
+ * Watching Mode is a dark room with the television on — and §6.87 removed the
+ * `prefers-color-scheme` block that had briefly made that a preference. The light table
+ * exists, is measured, and is consumed by nothing.
+ *
+ * The rename was not mechanical, and one pair is worth stating because it inverts:
+ * legacy `theme.ink` was the *page background* and legacy `theme.text` was the writing on
+ * it. In the token table `ink` is the writing. Every call site was rewritten in a single
+ * pass for that reason — a sequential find-and-replace would have turned every page
+ * background into near-white and every word into near-black.
  */
-export const theme = {
-  ink: '#0b0b0f',
-  surface: '#15151d',
-  surface2: '#1f1f2b',
-  edge: '#2b2b3a',
-  text: '#f2f2f7',
-  muted: '#9a9ab0',
-  accent: '#ff5c7a',
-} as const;
+export const theme = color.dark;
 
 
 /**
@@ -29,9 +32,9 @@ export const theme = {
  * arrived — the names were deleted rather than deprecated, because a legacy export that
  * survives its last call site is the next thing somebody reaches for by habit.
  *
- * The seven colours above are the OLD system and are still what most of this app is
- * drawn from; they go with the colour migration. New work reads `tokens`, and
- * `palette.test.ts` holds the seven to their measured ratios until then.
+ * The seven colours went the same way in §6.90, and `palette.test.ts` — whose own header
+ * said "this whole file goes when the last of them does" — went with them. `theme` above
+ * is now the token table itself rather than a copy of anything.
  */
 export {
   color,

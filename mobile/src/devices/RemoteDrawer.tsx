@@ -150,9 +150,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     width: WIDTH,
-    backgroundColor: theme.ink,
+    backgroundColor: theme.ground,
     borderLeftWidth: 1,
-    borderLeftColor: theme.edge,
+    borderLeftColor: theme.strokeHairline,
     zIndex: z.drawer,
   },
   head: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingBottom: 12,
   },
-  title: { color: theme.text, fontSize: 17, fontWeight: '600' },
-  close: { color: theme.muted, fontSize: 15 },
+  title: { color: theme.ink, fontSize: 17, fontWeight: '600' },
+  close: { color: theme.inkSecondary, fontSize: 15 },
   body: { padding: 16, paddingBottom: 48, gap: 16 },
 });

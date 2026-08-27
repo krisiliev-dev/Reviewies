@@ -23,7 +23,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
-import { radius, theme } from '../../src/ui/theme';
+import { border, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 
 /**
@@ -158,7 +158,7 @@ export default function CommentsScreen() {
               value={draft}
               onChangeText={setDraft}
               placeholder="What did you think?"
-              placeholderTextColor={theme.muted}
+              placeholderTextColor={theme.inkSecondary}
               multiline
               style={styles.input}
             />
@@ -203,7 +203,7 @@ export default function CommentsScreen() {
             </Pressable>
             {error && <Text style={styles.error}>{error}</Text>}
 
-            {loading && <ActivityIndicator color={theme.accent} />}
+            {loading && <ActivityIndicator color={theme.workingFill} />}
 
             {!loading && visible.length === 0 && (
               <Text style={styles.blurb}>
@@ -262,62 +262,62 @@ export default function CommentsScreen() {
 
 const styles = StyleSheet.create({
   attached: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  attachedImage: { width: 72, height: 72, borderRadius: radius.plate, backgroundColor: theme.surface2 },
+  attachedImage: { width: 72, height: 72, borderRadius: radius.plate, backgroundColor: theme.groundWell },
   removeAttached: { minHeight: 24, minWidth: 44, justifyContent: 'center' },
   commentHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   commentWho: { flex: 1, minWidth: 0 },
   // 24px is the WCAG 2.5.8 minimum, and it is a CSS pixel count rather than a font
   // size, so it must not be expressed in anything that scales with text.
   deleteComment: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
-  deleteCommentText: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
-  content: { padding: 16, gap: 12, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
-  episode: { color: theme.muted, fontSize: 14 },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 8 },
-  cardHeading: { color: theme.text, fontSize: 16, fontWeight: '700' },
+  deleteCommentText: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  episode: { color: theme.inkSecondary, fontSize: 14 },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 8 },
+  cardHeading: { color: theme.ink, fontSize: 16, fontWeight: '700' },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   chip: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.plate,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  chipOn: { backgroundColor: theme.accent },
-  chipText: { color: theme.muted, fontSize: 12 },
-  chipTextOn: { color: theme.ink, fontWeight: '600' },
-  hidden: { color: theme.muted, fontSize: 11 },
+  chipOn: { backgroundColor: theme.actionFill },
+  chipText: { color: theme.inkSecondary, fontSize: 12 },
+  chipTextOn: { color: theme.actionLabel, fontWeight: '600' },
+  hidden: { color: theme.inkSecondary, fontSize: 11 },
 
   input: {
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     padding: 16,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 15,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   primary: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
+  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
   secondary: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  secondaryText: { color: theme.text, fontSize: 14 },
+  secondaryText: { color: theme.ink, fontSize: 14 },
   disabled: { opacity: 0.4 },
-  error: { color: theme.accent, fontSize: 13 },
+  error: { color: theme.trouble, fontSize: 13 },
 
-  comment: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 12, gap: 6 },
-  handle: { color: theme.muted, fontSize: 11 },
-  body: { color: theme.text, fontSize: 14, lineHeight: 20 },
+  comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },
+  handle: { color: theme.inkSecondary, fontSize: 11 },
+  body: { color: theme.ink, fontSize: 14, lineHeight: 20 },
   image: { width: '100%', height: 180, borderRadius: radius.plate },
 });

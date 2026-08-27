@@ -40,7 +40,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Lists</h1>
-        <p className="text-muted">{COPY.lists.needsAccount}</p>
+        <p className="text-ink-secondary">{COPY.lists.needsAccount}</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Lists</h1>
-        <p className="text-muted">{COPY.lists.signInToMake('Your data')}</p>
+        <p className="text-ink-secondary">{COPY.lists.signInToMake('Your data')}</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export function Lists() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-2xl font-semibold">Lists</h1>
-      <p className="mb-4 px-1 text-sm text-muted">Films and series together, in one list.</p>
+      <p className="mb-4 px-1 text-sm text-ink-secondary">Films and series together, in one list.</p>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">
         <input
@@ -87,7 +87,7 @@ export function Lists() {
           onChange={(e) => setName(e.target.value)}
           placeholder="New list name"
           maxLength={120}
-          className="min-w-0 flex-1 rounded-none bg-surface px-3 py-3 outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-3 outline-none placeholder:text-ink-secondary"
         />
         <button
           type="submit"
@@ -96,27 +96,27 @@ export function Lists() {
           // dark red lettering — it read as broken rather than as waiting. Disabled
           // controls are exempt from the contrast rules, which is a reason they are
           // allowed to be quiet and not a reason to make them illegible.
-          className="rounded-pill bg-accent px-4 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-pill bg-action-fill px-4 font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
         >
           Create
         </button>
       </form>
 
       {createFailed && (
-        <p className="mb-3 px-1 text-accent" role="status">
+        <p className="mb-3 px-1 text-trouble" role="status">
           {COPY.lists.createFailed}
         </p>
       )}
 
-      {lists === undefined && <p className="px-1 text-muted">Loading…</p>}
+      {lists === undefined && <p className="px-1 text-ink-secondary">Loading…</p>}
       {/* "No lists yet" was shown for both having none and failing to ask, which is a
           strange thing to tell somebody about work they did. */}
       {failed && (
-        <p className="px-1 text-accent" role="status">
+        <p className="px-1 text-trouble" role="status">
           Could not load your lists ({failed}). They are still there — try again.
         </p>
       )}
-      {!failed && lists?.length === 0 && <p className="px-1 text-muted">{COPY.lists.empty}</p>}
+      {!failed && lists?.length === 0 && <p className="px-1 text-ink-secondary">{COPY.lists.empty}</p>}
 
       <ul className="flex flex-col gap-2">
         {lists?.map((list) => (
@@ -160,7 +160,7 @@ function ListCard({
   }, [open, list.id]);
 
   return (
-    <li className="rounded-plate bg-surface p-3">
+    <li className="rounded-plate bg-ground-raised p-3">
       <button
         onClick={onToggle}
         aria-expanded={open}
@@ -169,13 +169,13 @@ function ListCard({
       >
         <span className="min-w-0">
           <span className="block truncate font-medium">{list.name}</span>
-          <span className="text-xs text-muted">
+          <span className="text-xs text-ink-secondary">
             {items ? describeMix(items) : `${list.itemCount} items`}
             {list.isPublic ? ' · public' : ' · private'}
             {!list.mine && ' · shared with you'}
           </span>
         </span>
-        <span aria-hidden="true" className="shrink-0 text-muted">
+        <span aria-hidden="true" className="shrink-0 text-ink-secondary">
           {open ? '▴' : '▾'}
         </span>
       </button>
@@ -194,36 +194,36 @@ function ListCard({
                 onChanged();
               }}
               aria-label={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
-              className="mb-2 text-xs text-accent"
+              className="mb-2 text-xs text-trouble"
             >
               {list.isPublic ? 'Make private' : 'Publish'}
             </button>
           )}
 
           {changeFailed && (
-            <p className="mb-2 text-sm text-accent" role="status">
+            <p className="mb-2 text-sm text-trouble" role="status">
               {COPY.lists.changeFailed}
             </p>
           )}
           {itemsFailed && (
-            <p className="text-sm text-accent" role="status">
+            <p className="text-sm text-trouble" role="status">
               {COPY.lists.itemsFailed}
             </p>
           )}
           {!itemsFailed && items?.length === 0 && (
-            <p className="text-sm text-muted">{COPY.lists.listEmpty}</p>
+            <p className="text-sm text-ink-secondary">{COPY.lists.listEmpty}</p>
           )}
 
           <ul className="flex flex-col gap-1">
             {items?.map((item) => (
-              <li key={item.titleId} className="flex items-center gap-2 rounded-plate bg-surface-2 px-3 py-2">
+              <li key={item.titleId} className="flex items-center gap-2 rounded-plate bg-ground-well px-3 py-2">
                 <Link
                   to={`/title/${encodeURIComponent(item.titleId)}`}
                   className="min-w-0 flex-1 truncate text-sm"
                 >
                   {item.titleId}
                 </Link>
-                <span className="shrink-0 text-[0.625rem] text-muted uppercase">
+                <span className="shrink-0 text-[0.625rem] text-ink-secondary uppercase">
                   {item.kind === 'show' ? 'Series' : 'Film'}
                 </span>
                 {list.mine && (
@@ -242,7 +242,7 @@ function ListCard({
                       setItemsFailed(reloaded.failed);
                       onChanged();
                     }}
-                    className="shrink-0 px-1 text-xs text-muted"
+                    className="shrink-0 px-1 text-xs text-ink-secondary"
                     aria-label={`Remove from ${list.name}`}
                   >
                     ✕

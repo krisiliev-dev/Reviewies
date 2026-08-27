@@ -36,15 +36,6 @@
   --label-5: #4A6FB0;
   --label-6: #C97A3E;
   --label-7: #77808C;
-
-  /* The palette every screen is still drawn from. Shrinks as the migration lands. */
-  --legacy-ink: #0b0b0f;
-  --legacy-surface: #15151d;
-  --legacy-surface2: #1f1f2b;
-  --legacy-edge: #2b2b3a;
-  --legacy-text: #f2f2f7;
-  --legacy-muted: #9a9ab0;
-  --legacy-accent: #ff5c7a;
 }
 
 /*
@@ -125,14 +116,6 @@
   --color-label-5: var(--label-5);
   --color-label-6: var(--label-6);
   --color-label-7: var(--label-7);
-
-  --color-ink: var(--legacy-ink);
-  --color-surface: var(--legacy-surface);
-  --color-surface2: var(--legacy-surface2);
-  --color-edge: var(--legacy-edge);
-  --color-text: var(--legacy-text);
-  --color-muted: var(--legacy-muted);
-  --color-accent: var(--legacy-accent);
 
   --spacing-s2: 2px;
   --spacing-s4: 4px;

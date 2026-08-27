@@ -9,7 +9,7 @@ import { COPY } from '@reviewies/core/copy';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
-import { radius, theme } from '../../src/ui/theme';
+import { border, radius, theme } from '../../src/ui/theme';
 
 /**
  * Suggestions that exclude what you have already seen.
@@ -46,7 +46,7 @@ export default function DiscoverScreen() {
         <Text accessibilityRole="header" style={styles.heading}>Discover</Text>
         <Text style={styles.blurb}>{COPY.discover.blurb}</Text>
 
-        {items === undefined && !error && <ActivityIndicator color={theme.accent} />}
+        {items === undefined && !error && <ActivityIndicator color={theme.workingFill} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {items?.length === 0 && (
           <Text style={styles.blurb}>{COPY.discover.empty}</Text>
@@ -161,39 +161,39 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
     justifyContent: 'center',
   },
-  primaryText: { color: theme.ink, fontSize: 13, fontWeight: '600' },
+  primaryText: { color: theme.actionLabel, fontSize: 13, fontWeight: '600' },
   secondary: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
     justifyContent: 'center',
   },
-  secondaryText: { color: theme.muted, fontSize: 13 },
+  secondaryText: { color: theme.inkSecondary, fontSize: 13 },
   disabled: { opacity: 0.5 },
-  screen: { flex: 1, backgroundColor: theme.ink },
+  screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700' },
-  blurb: { color: theme.muted, fontSize: 14, marginBottom: 4 },
-  error: { color: theme.accent, fontSize: 14 },
+  heading: { color: theme.ink, fontSize: 30, fontWeight: '700' },
+  blurb: { color: theme.inkSecondary, fontSize: 14, marginBottom: 4 },
+  error: { color: theme.trouble, fontSize: 14 },
   row: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
-  title: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  year: { color: theme.muted, fontSize: 12 },
-  because: { color: theme.muted, fontSize: 12 },
-  attribution: { color: theme.muted, fontSize: 10, marginTop: 12 },
+  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  year: { color: theme.inkSecondary, fontSize: 12 },
+  because: { color: theme.inkSecondary, fontSize: 12 },
+  attribution: { color: theme.inkSecondary, fontSize: 10, marginTop: 12 },
 });

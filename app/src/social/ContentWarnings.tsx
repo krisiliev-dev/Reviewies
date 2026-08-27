@@ -60,28 +60,28 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
     <section className="mb-5">
       <button
         onClick={() => setOpen(!open)}
-        className="rounded-plate bg-surface px-3 py-1.5 text-xs text-muted"
+        className="rounded-plate bg-ground-raised px-3 py-1.5 text-xs text-ink-secondary"
         aria-expanded={open}
       >
         {open ? 'Hide content warnings' : 'Content warnings'}
       </button>
 
       {open && (
-        <div className="mt-2 rounded-plate bg-surface p-3">
-          {summaries === undefined && <p className="text-xs text-muted">Loading…</p>}
+        <div className="mt-2 rounded-plate bg-ground-raised p-3">
+          {summaries === undefined && <p className="text-xs text-ink-secondary">Loading…</p>}
 
           {/* Not the same sentence. A request that did not arrive is not an answer, and
               this is the one screen where being told the wrong one matters — somebody
               avoiding a trigger would take "nobody has flagged anything" as a fact. */}
           {failed && (
-            <p className="text-xs text-accent" role="status">
+            <p className="text-xs text-trouble" role="status">
               Could not read the warnings for this title. Nothing here means nothing is
               known, not that there is nothing.
             </p>
           )}
 
           {!failed && summaries?.length === 0 && (
-            <p className="text-xs text-muted">
+            <p className="text-xs text-ink-secondary">
               Nobody has flagged anything yet. If you have seen it, you can below.
             </p>
           )}
@@ -93,17 +93,17 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                   <span
                     className={`h-1.5 w-1.5 shrink-0 rounded-pill ${
                       s.verdict === 'yes'
-                        ? 'bg-accent'
+                        ? 'bg-action-fill'
                         : s.verdict === 'contested'
-                          ? 'bg-muted'
-                          : 'bg-surface-2'
+                          ? 'bg-stroke-signal'
+                          : 'border border-stroke-signal'
                     }`}
                     aria-hidden
                   />
-                  <span className={`text-sm ${s.verdict === 'no' ? 'text-muted' : ''}`}>
+                  <span className={`text-sm ${s.verdict === 'no' ? 'text-ink-secondary' : ''}`}>
                     {s.label}
                   </span>
-                  <span className="ml-auto shrink-0 text-xs text-muted">
+                  <span className="ml-auto shrink-0 text-xs text-ink-secondary">
                     {s.verdict === 'contested' && 'disputed · '}
                     {s.singleVote && 'one person · '}
                     {describeVotes(s)}
@@ -115,7 +115,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           <button
             onClick={() => setVoting(!voting)}
-            className="tap text-xs text-muted underline"
+            className="tap text-xs text-ink-secondary underline"
             aria-expanded={voting}
             aria-label={voting ? 'Done flagging' : 'Flag something'}
           >
@@ -137,7 +137,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                       // being voted on.
                       aria-label={`Yes, this has ${w.label.toLowerCase()}`}
                       className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
-                        own === true ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
+                        own === true ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
                       }`}
                     >
                       Yes
@@ -149,7 +149,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                       aria-pressed={own === false}
                       aria-label={`No, this does not have ${w.label.toLowerCase()}`}
                       className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
-                        own === false ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
+                        own === false ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
                       }`}
                     >
                       No
@@ -160,9 +160,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             </ul>
           )}
 
-          {note && <p className="mt-2 text-xs text-accent">{note}</p>}
+          {note && <p className="mt-2 text-xs text-trouble">{note}</p>}
 
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-3 text-xs text-ink-secondary">
             Community-reported, so treat it as a heads-up rather than a guarantee.
             Nothing here hides anything.
           </p>

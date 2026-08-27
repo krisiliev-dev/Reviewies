@@ -67,9 +67,9 @@ export function StarRating({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   star: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  glyph: { color: theme.surface2 },
-  on: { color: theme.accent },
+  glyph: { color: theme.strokeSignal },
+  on: { color: theme.workingMark },
   half: { position: 'absolute', top: 0, bottom: 0, left: 0, width: MIN_HALF },
   right: { left: undefined, right: 0 },
-  value: { color: theme.muted, fontSize: 12, marginLeft: 6 },
+  value: { color: theme.inkSecondary, fontSize: 12, marginLeft: 6 },
 });

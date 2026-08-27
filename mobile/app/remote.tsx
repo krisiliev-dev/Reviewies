@@ -25,5 +25,5 @@ export default function RemoteScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 20, backgroundColor: theme.ink, flexGrow: 1 },
+  content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
 });

@@ -284,7 +284,7 @@ export function ReactionStream({
         and gets out of the way the moment anything arrives.
       */}
       {flying.length === 0 && (
-        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-muted/70">
+        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-ink-secondary/70">
           {COPY.watching.streamResting}
         </p>
       )}

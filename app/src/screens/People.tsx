@@ -56,7 +56,7 @@ export function People() {
     return (
       <div className="p-4">
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
-        <p className="px-1 text-sm text-muted">{COPY.people.withoutAccount}</p>
+        <p className="px-1 text-sm text-ink-secondary">{COPY.people.withoutAccount}</p>
       </div>
     );
   }
@@ -67,7 +67,7 @@ export function People() {
         <h1 className="mb-3 px-1 text-2xl font-semibold">People</h1>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
-        <p className="px-1 text-sm text-muted">{COPY.people.signInToFollow('Your data')}</p>
+        <p className="px-1 text-sm text-ink-secondary">{COPY.people.signInToFollow('Your data')}</p>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export function People() {
       <h1 className="px-1 text-2xl font-semibold">People</h1>
 
       {listsFailed && (
-        <p className="px-1 text-sm text-accent" role="status">
+        <p className="px-1 text-sm text-trouble" role="status">
           {COPY.people.listFailed}
         </p>
       )}
@@ -140,12 +140,12 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
   }
 
   return (
-    <section className="rounded-plate bg-surface p-4">
+    <section className="rounded-plate bg-ground-raised p-4">
       <h2 className="mb-1 font-semibold">You</h2>
 
       {!editing ? (
         <>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-ink-secondary">
             {me ? `@${me.handle}` : 'Loading…'}
             {me?.displayName ? ` · ${me.displayName}` : ''}
           </p>
@@ -155,7 +155,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
               setDisplayName(me?.displayName ?? '');
             }}
             disabled={!me}
-            className="tap mt-2 text-xs text-muted underline disabled:opacity-40"
+            className="tap mt-2 text-xs text-ink-secondary underline disabled:opacity-40"
           >
             Change how you appear
           </button>
@@ -166,7 +166,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             placeholder="Handle"
-            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-ground-well px-3 py-3 outline-none placeholder:text-ink-secondary"
             autoFocus
           />
           <input
@@ -174,13 +174,13 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Display name (optional)"
             maxLength={60}
-            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
           <div className="flex gap-2">
             <button
               onClick={save}
               aria-label="Save how you appear"
-              className="rounded-pill bg-accent px-4 py-2 font-medium text-ink"
+              className="rounded-pill bg-action-fill px-4 py-2 font-medium text-action-label"
             >
               Save
             </button>
@@ -190,7 +190,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
                 setDisplayName(undefined);
                 setNote(undefined);
               }}
-              className="rounded-pill bg-surface-2 px-4 py-2"
+              className="rounded-pill border border-stroke-signal px-4 py-2"
             >
               Cancel
             </button>
@@ -198,7 +198,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
         </div>
       )}
 
-      {note && <p className="mt-2 text-sm text-accent">{note}</p>}
+      {note && <p className="mt-2 text-sm text-ink-secondary">{note}</p>}
     </section>
   );
 }
@@ -244,29 +244,29 @@ function FindPeople({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">Find people</h2>
+      <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Find people</h2>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Handle or name"
-        className="w-full rounded-none bg-surface px-4 py-3 outline-none placeholder:text-muted"
+        className="w-full rounded-none bg-ground-raised px-4 py-3 outline-none placeholder:text-ink-secondary"
       />
 
       {/* "Nobody by that name" was said for both no match and no answer, and somebody
           would conclude a friend is not here and stop looking. */}
       {actionFailed && (
-        <p className="px-1 text-sm text-accent" role="status">
+        <p className="px-1 text-sm text-trouble" role="status">
           {COPY.people.followFailed}
         </p>
       )}
       {searchFailed && (
-        <p className="px-1 text-sm text-accent" role="status">
+        <p className="px-1 text-sm text-trouble" role="status">
           Could not search right now ({searchFailed}). This says nothing about whether
           they are here.
         </p>
       )}
       {!searchFailed && searched && results.length === 0 && (
-        <p className="px-1 text-sm text-muted">Nobody by that name.</p>
+        <p className="px-1 text-sm text-ink-secondary">Nobody by that name.</p>
       )}
 
       <ul className="flex flex-col gap-1.5">
@@ -274,7 +274,7 @@ function FindPeople({
           const already = following.some((f) => f.id === p.id);
           const isBlocked = blocked.some((b) => b.id === p.id);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-surface px-3 py-3">
+            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-ground-raised px-3 py-3">
               <PersonName person={p} />
               <button
                 onClick={async () => {
@@ -289,7 +289,7 @@ function FindPeople({
                 disabled={isBlocked}
                 aria-label={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
                 className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-40 ${
-                  already ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
+                  already ? 'border border-stroke-signal text-ink-secondary' : 'bg-action-fill text-action-label'
                 }`}
               >
                 {already ? 'Following' : 'Follow'}
@@ -305,7 +305,7 @@ function FindPeople({
                   onChanged();
                 }}
                 aria-label={`Block @${p.handle}`}
-                className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted"
+                className="shrink-0 rounded-pill border border-stroke-signal px-3 py-1.5 text-xs text-ink-secondary"
               >
                 Block
               </button>
@@ -337,14 +337,14 @@ function PersonList({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+      <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
         {heading}
         {people.length > 0 && <span className="ml-1.5 normal-case">{people.length}</span>}
       </h2>
 
-      {people.length === 0 && empty && <p className="px-1 text-sm text-muted">{empty}</p>}
+      {people.length === 0 && empty && <p className="px-1 text-sm text-ink-secondary">{empty}</p>}
       {failed && (
-        <p className="px-1 text-sm text-accent" role="status">
+        <p className="px-1 text-sm text-trouble" role="status">
           {COPY.people.followFailed}
         </p>
       )}
@@ -353,7 +353,7 @@ function PersonList({
         {people.map((p) => {
           const act = action(p);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-surface px-3 py-3">
+            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-ground-raised px-3 py-3">
               <PersonName person={p} />
               {act && (
                 <button
@@ -367,7 +367,7 @@ function PersonList({
                     onChanged();
                   }}
                   aria-label={`${act.label} @${p.handle}`}
-                  className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted"
+                  className="shrink-0 rounded-pill border border-stroke-signal px-3 py-1.5 text-xs text-ink-secondary"
                 >
                   {act.label}
                 </button>
@@ -384,7 +384,7 @@ function PersonName({ person }: { person: Person }) {
   return (
     <div className="min-w-0 flex-1">
       <p className="truncate text-sm">{person.displayName ?? `@${person.handle}`}</p>
-      {person.displayName && <p className="truncate text-xs text-muted">@{person.handle}</p>}
+      {person.displayName && <p className="truncate text-xs text-ink-secondary">@{person.handle}</p>}
     </div>
   );
 }

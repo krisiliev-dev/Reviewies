@@ -12,7 +12,7 @@ import {
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { Poster } from '../src/ui/Poster';
-import { radius, theme } from '../src/ui/theme';
+import { border, radius, theme } from '../src/ui/theme';
 import {
   pushSupported,
   registerForPush,
@@ -144,7 +144,7 @@ export default function CalendarScreen() {
         {/* Sixty days on both platforms now — it was thirty here and sixty on the
             web, the same screen showing a different amount of the future. */}
         <Text style={[styles.sectionHeading, styles.spaced]}>Next two months</Text>
-        {entries === undefined && <ActivityIndicator color={theme.accent} />}
+        {entries === undefined && <ActivityIndicator color={theme.workingFill} />}
         {entries?.length === 0 && (
           <View style={styles.emptyBlock}>
             <Text style={styles.blurb}>{COPY.calendar.empty}</Text>
@@ -208,15 +208,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: radius.pill,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
   },
-  enableOn: { backgroundColor: theme.accent },
-  enableText: { color: theme.text, fontSize: 14 },
-  enableTextOn: { color: theme.ink, fontWeight: '600' },
-  deliveryNote: { color: theme.muted, fontSize: 13, lineHeight: 19 },
-  content: { padding: 16, gap: 8, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
+  enableOn: { backgroundColor: theme.actionFill },
+  enableText: { color: theme.ink, fontSize: 14 },
+  enableTextOn: { color: theme.actionLabel, fontWeight: '600' },
+  deliveryNote: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
+  content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   sectionHeading: {
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
@@ -226,40 +226,40 @@ const styles = StyleSheet.create({
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   cta: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: radius.pill,
   },
-  ctaText: { color: theme.text, fontWeight: '600', fontSize: 15 },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  ctaText: { color: theme.ink, fontWeight: '600', fontSize: 15 },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
 
   options: { gap: 8 },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 16,
   },
-  optionOn: { borderWidth: 1, borderColor: theme.accent },
+  optionOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   optionBody: { flex: 1 },
-  optionLabel: { color: theme.text, fontSize: 15, fontWeight: '600' },
-  optionDetail: { color: theme.muted, fontSize: 12 },
-  tick: { color: theme.accent, fontSize: 18 },
+  optionLabel: { color: theme.ink, fontSize: 15, fontWeight: '600' },
+  optionDetail: { color: theme.inkSecondary, fontSize: 12 },
+  tick: { color: theme.workingMark, fontSize: 18 },
 
   day: { gap: 6, marginTop: 8 },
-  dayHeading: { color: theme.muted, fontSize: 12 },
+  dayHeading: { color: theme.inkSecondary, fontSize: 12 },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   entryBody: { flex: 1, minWidth: 0 },
-  entryName: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  entryMeta: { color: theme.muted, fontSize: 12 },
-  kind: { color: theme.accent, fontSize: 11 },
+  entryName: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  entryMeta: { color: theme.inkSecondary, fontSize: 12 },
+  kind: { color: theme.inkSecondary, fontSize: 11 },
 });

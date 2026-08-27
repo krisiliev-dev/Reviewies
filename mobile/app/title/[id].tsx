@@ -27,7 +27,7 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { radius, tap, theme } from '../../src/ui/theme';
+import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 
@@ -158,7 +158,7 @@ export default function TitleScreen() {
                   value={posterDraft}
                   onChangeText={setPosterDraft}
                   placeholder="Image URL"
-                  placeholderTextColor={theme.muted}
+                  placeholderTextColor={theme.inkSecondary}
                   autoFocus
                   autoCapitalize="none"
                   style={styles.posterInput}
@@ -197,7 +197,7 @@ export default function TitleScreen() {
         <ContentWarnings titleId={titleId} />
 
         {loading && seasons.length === 0 && (
-          <ActivityIndicator color={theme.accent} style={styles.loading} />
+          <ActivityIndicator color={theme.workingFill} style={styles.loading} />
         )}
 
         {seasons.map(([season, list]) => (
@@ -321,14 +321,14 @@ function EpisodeRow({
 
 const styles = StyleSheet.create({
   posterEdit: { marginBottom: 12 },
-  posterToggle: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
+  posterToggle: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
   posterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   posterInput: {
     flex: 1,
     minWidth: 0,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 14,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -337,32 +337,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
   },
-  posterSaveText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
-  posterCancel: { color: theme.muted, fontSize: 14 },
-  content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
+  posterSaveText: { color: theme.actionLabel, fontSize: 14, fontWeight: '600' },
+  posterCancel: { color: theme.inkSecondary, fontSize: 14 },
+  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
   retry: {
     alignSelf: 'flex-start',
     marginTop: 12,
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  retryText: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  title: { color: theme.text, fontSize: 20, fontWeight: '700' },
-  year: { color: theme.muted, fontSize: 14 },
-  overview: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  retryText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  title: { color: theme.ink, fontSize: 20, fontWeight: '700' },
+  year: { color: theme.inkSecondary, fontSize: 14 },
+  overview: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
   ratingBlock: { gap: 6 },
-  ratingLabel: { color: theme.muted, fontSize: 11, letterSpacing: 0.6 },
+  ratingLabel: { color: theme.inkSecondary, fontSize: 11, letterSpacing: 0.6 },
   loading: { marginTop: 24 },
 
   season: { gap: 6 },
   seasonHeading: {
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
@@ -375,33 +375,33 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
   episodeBody: { flex: 1, minWidth: 0, gap: 2 },
-  episodeName: { color: theme.text, fontSize: 14 },
-  episodeNumber: { color: theme.muted },
-  episodeMeta: { color: theme.muted, fontSize: 11 },
+  episodeName: { color: theme.ink, fontSize: 14 },
+  episodeNumber: { color: theme.inkSecondary },
+  episodeMeta: { color: theme.inkSecondary, fontSize: 11 },
   episodeRating: { width: '100%', marginTop: 4 },
 
   react: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
   },
-  reactText: { color: theme.muted, fontSize: 12 },
+  reactText: { color: theme.inkSecondary, fontSize: 12 },
 
   mark: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.pill,
   },
-  marked: { backgroundColor: theme.surface2 },
-  markText: { color: theme.ink, fontSize: 12, fontWeight: '700' },
-  markedText: { color: theme.muted, fontWeight: '400' },
+  marked: { backgroundColor: theme.groundWell },
+  markText: { color: theme.actionLabel, fontSize: 12, fontWeight: '700' },
+  markedText: { color: theme.inkSecondary, fontWeight: '400' },
   disabled: { opacity: 0.3 },
 });

@@ -26,17 +26,17 @@ export function NotFound() {
   return (
     <div className="flex flex-col gap-3 p-6">
       <h1 className="text-2xl font-semibold">Nothing at this address</h1>
-      <p className="text-muted">
-        <code className="rounded-plate bg-surface px-1.5 py-0.5 text-sm">{pathname}</code> is not
+      <p className="text-ink-secondary">
+        <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-sm">{pathname}</code> is not
         a screen in this app. It may be an old link, or a typo.
       </p>
       <Link
         to="/"
-        className="rounded-pill bg-accent px-4 py-3 text-center font-medium text-ink"
+        className="rounded-pill bg-action-fill px-4 py-3 text-center font-medium text-action-label"
       >
         Go to Up Next
       </Link>
-      <Link to="/more" className="rounded-pill bg-surface px-4 py-3 text-center">
+      <Link to="/more" className="rounded-pill bg-ground-raised px-4 py-3 text-center">
         See everything else
       </Link>
     </div>

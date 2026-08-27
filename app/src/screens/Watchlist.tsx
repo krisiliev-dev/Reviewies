@@ -21,16 +21,16 @@ export function Watchlist() {
     undefined,
   );
 
-  if (items === undefined) return <p className="p-6 text-muted">Loading…</p>;
+  if (items === undefined) return <p className="p-6 text-ink-secondary">Loading…</p>;
 
   if (items.length === 0) {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Watchlist</h1>
-        <p className="text-muted">{COPY.watchlist.empty}</p>
+        <p className="text-ink-secondary">{COPY.watchlist.empty}</p>
         <Link
           to="/search"
-          className="mt-5 inline-block rounded-pill bg-accent px-5 py-3 font-medium text-ink"
+          className="mt-5 inline-block rounded-pill bg-action-fill px-5 py-3 font-medium text-action-label"
         >
           Find something
         </Link>
@@ -79,7 +79,7 @@ function Row({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
       <Link
         to={`/title/${encodeURIComponent(titleId)}`}
         aria-label={`Open ${name}`}
@@ -90,7 +90,7 @@ function Row({
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{name}</p>
-        {year && <p className="text-xs text-muted">{year}</p>}
+        {year && <p className="text-xs text-ink-secondary">{year}</p>}
 
         {editing ? (
           <div className="mt-2 flex gap-1.5">
@@ -98,13 +98,13 @@ function Row({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={COPY.watchlist.notePlaceholder}
-              className="min-w-0 flex-1 rounded-none bg-surface-2 px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
               autoFocus
             />
             <button
               onClick={save}
               aria-label={`Save note for ${name}`}
-              className="rounded-pill bg-accent px-3 text-sm font-medium text-ink"
+              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
             >
               Save
             </button>
@@ -114,7 +114,7 @@ function Row({
             onClick={() => setEditing(true)}
             // Every row says "Add a note…". Which row is a visual fact only.
             aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
-            className="tap mt-1.5 text-left text-sm text-muted italic"
+            className="tap mt-1.5 text-left text-sm text-ink-secondary italic"
           >
             {/* "The amount of things I have in my wishlist that i have ZERO memory for
                 why they're there" — r/Letterboxd. */}
@@ -125,7 +125,7 @@ function Row({
 
       <button
         onClick={() => removeFromWatchlist(titleId)}
-        className="shrink-0 px-2 py-1 text-xs text-muted"
+        className="shrink-0 px-2 py-1 text-xs text-ink-secondary"
         aria-label={`Remove ${name} from watchlist`}
       >
         Remove

@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
-import { radius, theme } from '../src/ui/theme';
+import { border, radius, theme } from '../src/ui/theme';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
@@ -119,7 +119,7 @@ export default function RootLayout() {
   if (!ready) {
     return (
       <View style={styles.centre}>
-        <ActivityIndicator color={theme.accent} />
+        <ActivityIndicator color={theme.workingFill} />
       </View>
     );
   }
@@ -130,10 +130,10 @@ export default function RootLayout() {
       <FailureBanner />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: theme.ink },
-          headerTintColor: theme.text,
+          headerStyle: { backgroundColor: theme.ground },
+          headerTintColor: theme.ink,
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: theme.ink },
+          contentStyle: { backgroundColor: theme.ground },
         }}
       >
         {/* The tab group draws its own chrome. */}
@@ -146,28 +146,28 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   retry: {
     marginTop: 16,
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  retryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
+  retryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
   retryQuiet: {
     marginTop: 12,
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  retryQuietText: { color: theme.text, fontWeight: '600', fontSize: 15 },
+  retryQuietText: { color: theme.ink, fontWeight: '600', fontSize: 15 },
   centre: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.ink,
+    backgroundColor: theme.ground,
     padding: 24,
     gap: 8,
   },
-  title: { color: theme.text, fontSize: 18, fontWeight: '600' },
-  detail: { color: theme.muted, fontSize: 14, textAlign: 'center' },
+  title: { color: theme.ink, fontSize: 18, fontWeight: '600' },
+  detail: { color: theme.inkSecondary, fontSize: 14, textAlign: 'center' },
 });

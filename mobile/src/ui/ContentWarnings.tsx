@@ -11,7 +11,7 @@ import {
   type ContentWarningId,
   type WarningSummary,
 } from '@reviewies/core/social/contentWarnings';
-import { radius, theme } from './theme';
+import { border, radius, theme } from './theme';
 
 /**
  * Content warnings, voted on by whoever has seen it.
@@ -167,34 +167,34 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 }
 
 const styles = StyleSheet.create({
-  warningFailed: { color: theme.accent, fontSize: 13, lineHeight: 19 },
+  warningFailed: { color: theme.trouble, fontSize: 13, lineHeight: 19 },
   wrap: { gap: 8 },
   toggle: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  toggleText: { color: theme.muted, fontSize: 12 },
-  panel: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 12, gap: 12 },
+  toggleText: { color: theme.inkSecondary, fontSize: 12 },
+  panel: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dot: { width: 6, height: 6, borderRadius: radius.pill, backgroundColor: theme.surface2 },
-  dotYes: { backgroundColor: theme.accent },
-  dotContested: { backgroundColor: theme.muted },
-  label: { color: theme.text, fontSize: 13, flex: 1 },
-  labelMuted: { color: theme.muted },
-  votes: { color: theme.muted, fontSize: 11 },
+  dot: { width: 6, height: 6, borderRadius: radius.pill, backgroundColor: theme.strokeSignal },
+  dotYes: { backgroundColor: theme.workingMark },
+  dotContested: { backgroundColor: theme.inkTertiary },
+  label: { color: theme.ink, fontSize: 13, flex: 1 },
+  labelMuted: { color: theme.inkSecondary },
+  votes: { color: theme.inkSecondary, fontSize: 11 },
   vote: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  voteOn: { backgroundColor: theme.accent },
-  voteText: { color: theme.muted, fontSize: 12 },
-  voteTextOn: { color: theme.ink, fontWeight: '600' },
-  link: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
-  blurb: { color: theme.muted, fontSize: 11, lineHeight: 16 },
-  error: { color: theme.accent, fontSize: 12 },
+  voteOn: { backgroundColor: theme.actionFill },
+  voteText: { color: theme.inkSecondary, fontSize: 12 },
+  voteTextOn: { color: theme.actionLabel, fontWeight: '600' },
+  link: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  blurb: { color: theme.inkSecondary, fontSize: 11, lineHeight: 16 },
+  error: { color: theme.trouble, fontSize: 12 },
 });

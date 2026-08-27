@@ -92,14 +92,14 @@ export function TitleDetail() {
                 setLoading(true);
                 setAttempt((n) => n + 1);
               }}
-              className="mt-2 rounded-pill bg-surface-2 px-4 py-2 text-sm"
+              className="mt-2 rounded-pill border border-stroke-signal px-4 py-2 text-sm"
             >
               {COPY.title.tryAgain}
             </button>
           )}
-          {title?.year && <p className="text-sm text-muted">{title.year}</p>}
+          {title?.year && <p className="text-sm text-ink-secondary">{title.year}</p>}
           {title?.overview && (
-            <p className="mt-2 line-clamp-3 text-sm text-muted">{title.overview}</p>
+            <p className="mt-2 line-clamp-3 text-sm text-ink-secondary">{title.overview}</p>
           )}
 
           {title && <AddToList titleId={titleId} kind={title.kind} />}
@@ -121,7 +121,7 @@ export function TitleDetail() {
           above describes, reproduced by adding four words, and caught by the check that
           was written after it happened the first time. */}
       <div className="mb-5">
-        <span className="mb-1 block text-xs tracking-wide text-muted uppercase">
+        <span className="mb-1 block text-xs tracking-wide text-ink-secondary uppercase">
           {COPY.title.yourRating}
         </span>
         <StarRating
@@ -139,7 +139,7 @@ export function TitleDetail() {
           {posterDraft === undefined ? (
             <button
               onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-              className="tap text-xs text-muted underline"
+              className="tap text-xs text-ink-secondary underline"
             >
               {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
             </button>
@@ -149,7 +149,7 @@ export function TitleDetail() {
                 value={posterDraft}
                 onChange={(e) => setPosterDraft(e.target.value)}
                 placeholder="Image URL"
-                className="min-w-0 flex-1 rounded-none bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+                className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
               <button
@@ -158,14 +158,14 @@ export function TitleDetail() {
                   setPosterDraft(undefined);
                 }}
                 aria-label="Save this poster"
-                className="rounded-pill bg-accent px-3 text-sm font-medium text-ink"
+                className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
               >
                 Save
               </button>
               <button
                 onClick={() => setPosterDraft(undefined)}
                 aria-label="Cancel changing the poster"
-                className="px-2 text-sm text-muted"
+                className="px-2 text-sm text-ink-secondary"
               >
                 Cancel
               </button>
@@ -180,11 +180,11 @@ export function TitleDetail() {
           heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
       <ContentWarnings titleId={titleId} />
 
-      {loading && episodes.length === 0 && <p className="text-sm text-muted">Loading episodes…</p>}
+      {loading && episodes.length === 0 && <p className="text-sm text-ink-secondary">Loading episodes…</p>}
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+          <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
             Season {season}
           </h2>
           <ul className="flex flex-col gap-1.5">
@@ -219,12 +219,12 @@ function EpisodeRow({
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-surface px-3 py-3">
+    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-ground-raised px-3 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm">
-          <span className="text-muted">{episode.number}.</span> {episode.name}
+          <span className="text-ink-secondary">{episode.number}.</span> {episode.name}
         </p>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-ink-secondary">
           {aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}
           {episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''}
           {/* Rewatch counts: requested across r/Letterboxd, r/Simkl and r/Serializd. */}
@@ -239,7 +239,7 @@ function EpisodeRow({
       <Link
         to={`/watching/${encodeURIComponent(episode.id)}`}
         aria-label={`React along with episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-plate bg-surface-2 px-3 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
       >
         React
       </Link>
@@ -247,7 +247,7 @@ function EpisodeRow({
       <Link
         to={`/comments/${encodeURIComponent(episode.id)}`}
         aria-label={`Comments on episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-plate bg-surface-2 px-3 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
       >
         Talk
       </Link>
@@ -266,7 +266,7 @@ function EpisodeRow({
             : `Mark episode ${episode.number}, ${episode.name} watched`
         }
         className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-30 ${
-          watched ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
+          watched ? 'border border-stroke-signal text-ink-secondary' : 'bg-action-fill text-action-label'
         }`}
       >
         {watched ? 'Watched' : 'Mark'}

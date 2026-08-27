@@ -49,18 +49,18 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
     (providers && !providers.flatrate.length && !providers.rent.length && !providers.buy.length);
 
   return (
-    <section className="mb-5 rounded-plate bg-surface p-4">
+    <section className="mb-5 rounded-plate bg-ground-raised p-4">
       {/* Wraps, and the country is allowed to shrink. `shrink-0` beside a heading that
           takes three lines at twice the text size pushed "United Kingdom" out through
           the side of its own card — visible in a screenshot and invisible to the
           viewport check, because it escaped the card and not the screen. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">Where to watch</h2>
+        <h2 className="text-sm font-semibold tracking-wide text-ink-secondary uppercase">Where to watch</h2>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
           aria-label={`Change country — currently ${regionName(region)}`}
-          className="tap text-xs text-muted underline"
+          className="tap text-xs text-ink-secondary underline"
         >
           {regionName(region)}
         </button>
@@ -77,7 +77,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               // Two-letter country codes read aloud as words: "de", "gb".
               aria-label={`Show availability in ${r.name}`}
               className={`rounded-pill px-3 py-1.5 text-xs ${
-                r.code === region ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
+                r.code === region ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
               }`}
             >
               {r.code}
@@ -86,16 +86,16 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </div>
       )}
 
-      {providers === undefined && <p className="mt-2 text-sm text-muted">Checking…</p>}
+      {providers === undefined && <p className="mt-2 text-sm text-ink-secondary">Checking…</p>}
 
       {failed && (
-        <p className="mt-2 text-sm text-accent" role="status">
+        <p className="mt-2 text-sm text-trouble" role="status">
           {COPY.whereToWatch.failed}
         </p>
       )}
 
       {!failed && nothing && (
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm text-ink-secondary">
           Not on any service in {regionName(region)} that we can see. Try another country
           above.
         </p>
@@ -112,14 +112,14 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               href={providers.link}
               target="_blank"
               rel="noreferrer noopener"
-              className="tap mt-2 inline-block text-xs text-muted underline"
+              className="tap mt-2 inline-block text-xs text-ink-secondary underline"
             >
               Open on JustWatch
             </a>
           )}
 
           {/* Licence condition, not a courtesy. */}
-          <p className="mt-2 text-xs text-muted">{JUSTWATCH_ATTRIBUTION}</p>
+          <p className="mt-2 text-xs text-ink-secondary">{JUSTWATCH_ATTRIBUTION}</p>
         </>
       )}
     </section>
@@ -130,9 +130,9 @@ function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
     <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-      <span className="text-xs text-muted">{label}</span>
+      <span className="text-xs text-ink-secondary">{label}</span>
       {names.map((name) => (
-        <span key={name} className="rounded-plate bg-surface-2 px-3 py-1 text-sm">
+        <span key={name} className="rounded-plate bg-ground-well px-3 py-1 text-sm">
           {name}
         </span>
       ))}

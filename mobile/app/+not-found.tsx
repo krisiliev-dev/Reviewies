@@ -39,13 +39,13 @@ export default function NotFoundScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink, padding: 20, gap: 12 },
-  title: { color: theme.text, fontSize: 22, fontWeight: '600', marginTop: 8 },
-  body: { color: theme.muted, fontSize: 15, lineHeight: 22 },
-  path: { color: theme.text },
+  screen: { flex: 1, backgroundColor: theme.ground, padding: 20, gap: 12 },
+  title: { color: theme.ink, fontSize: 22, fontWeight: '600', marginTop: 8 },
+  body: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
+  path: { color: theme.ink },
   cta: {
-    backgroundColor: theme.accent,
-    color: theme.ink,
+    backgroundColor: theme.actionFill,
+    color: theme.actionLabel,
     borderRadius: radius.pill,
     paddingVertical: 16,
     textAlign: 'center',
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     minHeight: 24,
   },
   ctaQuiet: {
-    backgroundColor: theme.surface,
-    color: theme.text,
+    backgroundColor: theme.groundRaised,
+    color: theme.ink,
     borderRadius: radius.pill,
     paddingVertical: 16,
     textAlign: 'center',

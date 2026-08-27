@@ -23,7 +23,7 @@ import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../../src/ui/ReactionStream';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
-import { radius, tap, theme } from '../../src/ui/theme';
+import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import {
@@ -300,7 +300,7 @@ export default function WatchingScreen() {
           value={query}
           onChangeText={setQuery}
           placeholder="Search any emoji…"
-          placeholderTextColor={theme.muted}
+          placeholderTextColor={theme.inkSecondary}
           style={styles.search}
           autoCorrect={false}
           accessibilityLabel="Search any emoji"
@@ -343,23 +343,23 @@ const styles = StyleSheet.create({
   // `translateX(300)` while closed — so with nothing clipping it the page measured 690
   // in a 390 viewport and could be scrolled sideways to reveal a drawer that is supposed
   // to be shut. True at any text size; the 200% check is simply what looked.
-  screen: { flex: 1, backgroundColor: theme.ink, overflow: 'hidden' },
+  screen: { flex: 1, backgroundColor: theme.ground, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   headerMiddle: { flex: 1, alignItems: 'center' },
-  close: { color: theme.muted, fontSize: 15 },
-  series: { color: theme.text, fontSize: 15, fontWeight: '600' },
-  episode: { color: theme.muted, fontSize: 12 },
-  clock: { color: theme.text, fontSize: 15, fontVariant: ['tabular-nums'] },
+  close: { color: theme.inkSecondary, fontSize: 15 },
+  series: { color: theme.ink, fontSize: 15, fontWeight: '600' },
+  episode: { color: theme.inkSecondary, fontSize: 12 },
+  clock: { color: theme.ink, fontSize: 15, fontVariant: ['tabular-nums'] },
 
   startBlock: { padding: 16, gap: 12 },
-  startBlurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  startBlurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
   start: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  startText: { color: theme.ink, fontWeight: '700', fontSize: 17 },
+  startText: { color: theme.actionLabel, fontWeight: '700', fontSize: 17 },
 
   // Wraps. Five controls and a density picker fit a phone once and not at twice the
   // text size, where the row measured 690px in a 390px viewport and pushed all three
@@ -373,21 +373,21 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   control: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.plate,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  controlOn: { backgroundColor: theme.accent },
-  controlText: { color: theme.text, fontSize: 14 },
-  controlTextOn: { color: theme.ink, fontWeight: '600' },
+  controlOn: { backgroundColor: theme.actionFill },
+  controlText: { color: theme.ink, fontSize: 14 },
+  controlTextOn: { color: theme.actionLabel, fontWeight: '600' },
   // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
   // line and is what carried it past the edge once the row wrapped.
   densityBlock: { alignItems: 'flex-end', gap: 4 },
-  densityLabel: { color: theme.muted, fontSize: 10 },
+  densityLabel: { color: theme.inkSecondary, fontSize: 10 },
   densityRow: { flexDirection: 'row', gap: 4 },
   densityChip: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.plate,
     // 24x24 is the floor WCAG 2.5.8 sets, and three numbers in a row is exactly the
     // shape that ends up under it.
@@ -397,41 +397,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  densityChipOn: { backgroundColor: theme.accent },
-  densityText: { color: theme.muted, fontSize: 11 },
-  densityTextOn: { color: theme.ink, fontWeight: '600' },
+  densityChipOn: { backgroundColor: theme.actionFill },
+  densityText: { color: theme.inkSecondary, fontSize: 11 },
+  densityTextOn: { color: theme.actionLabel, fontWeight: '600' },
 
   drift: {
     marginHorizontal: 16,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
-  driftText: { color: theme.muted, fontSize: 12 },
+  driftText: { color: theme.inkSecondary, fontSize: 12 },
 
   pad: { padding: 12 },
   padGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   padButton: {
     width: '23%',
     aspectRatio: 1,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
-  padPressed: { backgroundColor: theme.surface2, transform: [{ scale: 0.94 }] },
+  padPressed: { backgroundColor: theme.groundWell, transform: [{ scale: 0.94 }] },
   padEmoji: { fontSize: 30 },
-  padLabel: { color: theme.muted, fontSize: 9, textAlign: 'center' },
-  noMatch: { color: theme.muted, fontSize: 13, padding: 8 },
+  padLabel: { color: theme.inkSecondary, fontSize: 9, textAlign: 'center' },
+  noMatch: { color: theme.inkSecondary, fontSize: 13, padding: 8 },
 
   search: {
     margin: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 15,
   },
 });

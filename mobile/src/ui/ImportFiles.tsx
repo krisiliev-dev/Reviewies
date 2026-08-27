@@ -4,7 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
-import { radius, theme } from './theme';
+import { border, radius, theme } from './theme';
 
 /**
  * Bring a history in from somewhere else.
@@ -114,7 +114,7 @@ export function ImportFiles({
         accessibilityState={{ disabled: busy, busy }}
       >
         {busy ? (
-          <ActivityIndicator color={theme.muted} />
+          <ActivityIndicator color={theme.workingFill} />
         ) : (
           <Text style={[styles.buttonText, primary ? styles.buttonPrimaryText : null]}>{label}</Text>
         )}
@@ -205,24 +205,24 @@ export function ImportFormats() {
 }
 
 const styles = StyleSheet.create({
-  buttonPrimary: { backgroundColor: theme.accent },
-  buttonPrimaryText: { color: theme.ink, fontWeight: '700' },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  buttonPrimary: { backgroundColor: theme.actionFill },
+  buttonPrimaryText: { color: theme.actionLabel, fontWeight: '700' },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
   button: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  buttonText: { color: theme.text, fontSize: 15, fontWeight: '600' },
-  error: { color: theme.accent, fontSize: 13 },
-  report: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 12, gap: 4 },
-  reportHead: { color: theme.text, fontSize: 14 },
-  reportLine: { color: theme.muted, fontSize: 12 },
-  reportName: { color: theme.text },
+  buttonText: { color: theme.ink, fontSize: 15, fontWeight: '600' },
+  error: { color: theme.trouble, fontSize: 13 },
+  report: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 4 },
+  reportHead: { color: theme.ink, fontSize: 14 },
+  reportLine: { color: theme.inkSecondary, fontSize: 12 },
+  reportName: { color: theme.ink },
   restore: {
     marginTop: 8,
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     // 44 rather than 24: this is a primary action in a report, not a link beside text.
     minHeight: 44,
@@ -230,5 +230,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  restoreText: { color: theme.text, fontSize: 14 },
+  restoreText: { color: theme.ink, fontSize: 14 },
 });

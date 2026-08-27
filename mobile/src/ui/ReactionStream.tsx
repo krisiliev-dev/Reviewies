@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     right: 12,
     top: '38%',
     textAlign: 'center',
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 11,
     opacity: 0.75,
   },

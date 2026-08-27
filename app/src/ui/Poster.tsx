@@ -13,7 +13,7 @@ export function Poster({ url, name, className = '' }: PosterProps) {
   if (!url) {
     return (
       <div
-        className={`flex items-center justify-center bg-surface-2 text-center text-[0.625rem] leading-tight text-muted ${className}`}
+        className={`flex items-center justify-center bg-ground-well text-center text-[0.625rem] leading-tight text-ink-secondary ${className}`}
         aria-hidden="true"
       >
         <span className="line-clamp-3 px-1">{name}</span>
@@ -26,7 +26,7 @@ export function Poster({ url, name, className = '' }: PosterProps) {
       alt=""
       loading="lazy"
       decoding="async"
-      className={`bg-surface-2 object-cover ${className}`}
+      className={`bg-ground-well object-cover ${className}`}
     />
   );
 }

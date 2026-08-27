@@ -20,7 +20,7 @@ import {
 import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/provider';
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
-import { radius, theme } from '../../src/ui/theme';
+import { border, radius, theme } from '../../src/ui/theme';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -85,13 +85,13 @@ export default function SearchScreen() {
           value={query}
           onChangeText={setQuery}
           placeholder="Shows, films, anime…"
-          placeholderTextColor={theme.muted}
+          placeholderTextColor={theme.inkSecondary}
           style={styles.input}
           autoFocus
           autoCorrect={false}
         />
 
-        {busy && <ActivityIndicator color={theme.accent} style={styles.loading} />}
+        {busy && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
         {error && (
           <View style={styles.failed}>
             <Text style={styles.error} accessibilityLiveRegion="polite">
@@ -251,53 +251,53 @@ function ResultRow({ result }: { result: SearchResult }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink },
+  screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700' },
+  heading: { color: theme.ink, fontSize: 30, fontWeight: '700' },
   input: {
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 16,
   },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },
   retry: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  retryText: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  error: { color: theme.accent, fontSize: 14 },
+  retryText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  error: { color: theme.trouble, fontSize: 14 },
 
   row: {
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 2 },
-  title: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  subtitle: { color: theme.muted, fontSize: 12 },
+  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  subtitle: { color: theme.inkSecondary, fontSize: 12 },
 
   actions: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.pill,
   },
-  primaryText: { color: theme.ink, fontWeight: '600', fontSize: 14 },
+  primaryText: { color: theme.actionLabel, fontWeight: '600', fontSize: 14 },
   secondary: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.pill,
   },
-  secondaryText: { color: theme.muted, fontSize: 14 },
+  secondaryText: { color: theme.inkSecondary, fontSize: 14 },
   disabled: { opacity: 0.5 },
 });

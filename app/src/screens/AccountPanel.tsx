@@ -22,9 +22,9 @@ export function AccountPanel() {
 
   if (!configured) {
     return (
-      <section className="rounded-plate bg-surface p-4">
+      <section className="rounded-plate bg-ground-raised p-4">
         <h2 className="mb-1 font-semibold">Sync</h2>
-        <p className="text-sm text-muted">
+        <p className="text-sm text-ink-secondary">
           Not configured. Reviewies works fully offline without it — set
           <code className="mx-1">VITE_SUPABASE_URL</code> and
           <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> to sync across devices.
@@ -51,9 +51,9 @@ export function AccountPanel() {
 
   if (!session) {
     return (
-      <section className="rounded-plate bg-surface p-4">
+      <section className="rounded-plate bg-ground-raised p-4">
         <h2 className="mb-1 font-semibold">Sync across devices</h2>
-        <p className="mb-3 text-sm text-muted">
+        <p className="mb-3 text-sm text-ink-secondary">
           Optional. Everything already works on this device — an account adds sync and
           shared reactions.
         </p>
@@ -65,7 +65,7 @@ export function AccountPanel() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-ground-well px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
           <input
             type="password"
@@ -74,39 +74,39 @@ export function AccountPanel() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (8+ characters)"
-            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
-          <button type="submit" className="rounded-pill bg-accent px-4 py-3 font-medium text-ink">
+          <button type="submit" className="rounded-pill bg-action-fill px-4 py-3 font-medium text-action-label">
             {mode === 'in' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
         <button
           onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
-          className="tap mt-2 text-sm text-muted underline"
+          className="tap mt-2 text-sm text-ink-secondary underline"
         >
           {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
         </button>
 
-        {error && <p className="mt-2 text-sm text-accent">{error}</p>}
-        {notice && <p className="mt-2 text-sm text-muted">{notice}</p>}
+        {error && <p className="mt-2 text-sm text-trouble">{error}</p>}
+        {notice && <p className="mt-2 text-sm text-ink-secondary">{notice}</p>}
       </section>
     );
   }
 
   return (
-    <section className="rounded-plate bg-surface p-4">
+    <section className="rounded-plate bg-ground-raised p-4">
       <h2 className="mb-1 font-semibold">Sync</h2>
-      <p className="text-sm text-muted">Signed in as {session.user.email}</p>
+      <p className="text-sm text-ink-secondary">Signed in as {session.user.email}</p>
 
       <dl className="mt-3 flex gap-4 text-sm">
         <div>
-          <dt className="text-xs text-muted">Waiting to upload</dt>
+          <dt className="text-xs text-ink-secondary">Waiting to upload</dt>
           <dd className="text-lg font-semibold tabular-nums">{pending}</dd>
         </div>
         {lastRunAt && (
           <div>
-            <dt className="text-xs text-muted">Last sync</dt>
+            <dt className="text-xs text-ink-secondary">Last sync</dt>
             <dd className="text-lg">{new Date(lastRunAt).toLocaleTimeString()}</dd>
           </div>
         )}
@@ -115,7 +115,7 @@ export function AccountPanel() {
       {lastResult?.error && (
         // Surfaced rather than hidden: a silent sync failure is how people lose
         // confidence in a tracker.
-        <p className="mt-2 text-sm text-accent">Last sync failed: {lastResult.error}</p>
+        <p className="mt-2 text-sm text-trouble">Last sync failed: {lastResult.error}</p>
       )}
 
       {/* Writes the server refused, which this device is still holding.
@@ -124,15 +124,15 @@ export function AccountPanel() {
           written and read by nothing until §6.71, so a queue stuck for a week looked
           exactly like one that was empty. */}
       {rejected > 0 && (
-        <div className="mt-3 rounded-plate bg-ink/40 p-3" role="status">
-          <p className="text-sm text-accent">{COPY.sync.rejected(rejected)}</p>
+        <div className="mt-3 rounded-plate bg-ground/40 p-3" role="status">
+          <p className="text-sm text-trouble">{COPY.sync.rejected(rejected)}</p>
           <button
             onClick={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
-            className="mt-2 rounded-pill bg-surface2 px-3 py-1.5 text-sm font-medium"
+            className="mt-2 rounded-pill border border-stroke-signal px-3 py-1.5 text-sm font-medium"
           >
             {COPY.sync.retryRejected}
           </button>
-          {retryNote && <p className="mt-2 text-xs text-muted">{retryNote}</p>}
+          {retryNote && <p className="mt-2 text-xs text-ink-secondary">{retryNote}</p>}
         </div>
       )}
 
@@ -142,14 +142,14 @@ export function AccountPanel() {
           disabled={busy}
           aria-label="Sync now"
           aria-busy={busy}
-          className="rounded-pill bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-pill bg-action-fill px-4 py-2 font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
         >
           {busy ? 'Syncing…' : 'Sync now'}
         </button>
         <button
           onClick={() => void signOut()}
           aria-label="Sign out of your account"
-          className="rounded-pill bg-surface-2 px-4 py-2"
+          className="rounded-pill border border-stroke-signal px-4 py-2"
         >
           Sign out
         </button>

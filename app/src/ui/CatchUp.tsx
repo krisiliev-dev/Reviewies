@@ -48,7 +48,7 @@ export function CatchUp({
   return (
     <div
       style={{ zIndex: 'var(--z-sheet)' }}
-      className="fixed inset-0 flex items-end bg-ink/70"
+      className="fixed inset-0 flex items-end bg-ground/70"
       onClick={onDone}
     >
       {/* The backdrop dismisses on click, which is what a sheet does; the sheet itself
@@ -59,7 +59,7 @@ export function CatchUp({
         aria-modal="true"
         aria-label={`Catch up on ${seriesName}`}
         tabIndex={-1}
-        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-none bg-surface p-4 outline-none"
+        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-none bg-ground-raised p-4 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -67,7 +67,7 @@ export function CatchUp({
           <button
             onClick={onDone}
             aria-label={marked === undefined ? 'Cancel catching up' : 'Done catching up'}
-            className="tap shrink-0 text-sm text-muted"
+            className="tap shrink-0 text-sm text-ink-secondary"
           >
             {marked === undefined ? 'Cancel' : 'Done'}
           </button>
@@ -80,12 +80,12 @@ export function CatchUp({
               : `Marked ${marked} episode${marked === 1 ? '' : 's'} as watched.`}
           </p>
         ) : seasons === undefined ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <p className="text-sm text-ink-secondary">Loading…</p>
         ) : seasons.length === 0 ? (
-          <p className="text-sm text-muted">No episodes have aired yet.</p>
+          <p className="text-sm text-ink-secondary">No episodes have aired yet.</p>
         ) : (
           <>
-            <p className="mb-3 text-sm text-muted">
+            <p className="mb-3 text-sm text-ink-secondary">
               How far have you got? Nothing here shows episode names, so you cannot be
               spoiled by catching up.
             </p>
@@ -106,12 +106,12 @@ export function CatchUp({
                 {seasons.length > 1 && (
                   <button
                     onClick={() => setSeason(undefined)}
-                    className="tap mt-3 text-xs text-muted underline"
+                    className="tap mt-3 text-xs text-ink-secondary underline"
                   >
                     Pick a different season
                   </button>
                 )}
-                <p className="mt-3 text-xs text-muted">
+                <p className="mt-3 text-xs text-ink-secondary">
                   {/* Said plainly: the app cannot know when these were really watched,
                       and inventing plausible past dates would be worse. */}
                   Everything up to and including that episode is logged as watched today.
@@ -136,7 +136,7 @@ function Grid({
 }) {
   return (
     <>
-      <p className="mb-2 text-xs tracking-wide text-muted uppercase">{label}</p>
+      <p className="mb-2 text-xs tracking-wide text-ink-secondary uppercase">{label}</p>
       <div className="flex flex-wrap gap-1.5">
         {values.map((value) => (
           <button
@@ -145,7 +145,7 @@ function Grid({
             // A grid of bare numbers: "3" says nothing about season or episode.
             aria-label={`${label}: ${value}`}
             // Big enough to hit one-handed; this is a grid of small numbers.
-            className="min-w-11 rounded-pill bg-surface-2 px-3 py-3 text-sm font-medium tabular-nums"
+            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3 text-sm font-medium tabular-nums"
           >
             {value}
           </button>

@@ -25,7 +25,7 @@ import { CatchUp } from '../../src/ui/CatchUp';
 import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
-import { radius, tap, theme } from '../../src/ui/theme';
+import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
@@ -61,7 +61,7 @@ export default function UpNextScreen() {
   if (entries === undefined) {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
-        <ActivityIndicator color={theme.accent} style={styles.loading} />
+        <ActivityIndicator color={theme.workingFill} style={styles.loading} />
       </SafeAreaView>
     );
   }
@@ -312,63 +312,63 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ink },
+  screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
   undoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  undoText: { color: theme.muted, fontSize: 14, flexShrink: 1 },
+  undoText: { color: theme.inkSecondary, fontSize: 14, flexShrink: 1 },
   undo: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
     justifyContent: 'center',
   },
-  undoLabel: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
+  undoLabel: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
-  firstHeading: { color: theme.text, fontSize: 20, fontWeight: '700' },
-  later: { color: theme.muted, fontSize: 14, textDecorationLine: 'underline' },
-  emptyText: { color: theme.muted, fontSize: 16 },
+  firstHeading: { color: theme.ink, fontSize: 20, fontWeight: '700' },
+  later: { color: theme.inkSecondary, fontSize: 14, textDecorationLine: 'underline' },
+  emptyText: { color: theme.inkSecondary, fontSize: 16 },
   cta: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: radius.pill,
   },
-  ctaText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
+  ctaText: { color: theme.actionLabel, fontWeight: '600', fontSize: 16 },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
   // `<Link asChild>`, which clones its child and merges props — and an array style
   // through that path reached the DOM as an index-keyed object, which React refuses to
   // set. The export booted to a blank page; the smoke suite caught it.
   ctaQuiet: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: radius.pill,
   },
-  ctaQuietText: { color: theme.text, fontWeight: '600', fontSize: 16 },
+  ctaQuietText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
 
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 2 },
-  title: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  subtitle: { color: theme.muted, fontSize: 14 },
-  catchUp: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
+  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  subtitle: { color: theme.inkSecondary, fontSize: 14 },
+  catchUp: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
   actions: { gap: 6, alignItems: 'stretch' },
   watchAlong: {
-    backgroundColor: theme.surface2,
-    color: theme.muted,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
+    color: theme.inkSecondary,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -376,14 +376,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     minHeight: 24,
   },
-  remaining: { color: theme.muted, fontSize: 12 },
+  remaining: { color: theme.inkSecondary, fontSize: 12 },
 
   watched: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: radius.pill,
   },
   pressed: { transform: [{ scale: 0.96 }] },
-  watchedText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
+  watchedText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
 });

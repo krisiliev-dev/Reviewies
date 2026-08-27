@@ -21,7 +21,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, legacy, space, size, radius,
+  color, label, space, size, radius,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -52,9 +52,6 @@ const swatches = (theme) => {
 
 w(':root {');
 lines.push(...swatches('dark'));
-w('');
-w('  /* The palette every screen is still drawn from. Shrinks as the migration lands. */');
-for (const [name, hex] of Object.entries(legacy)) w(`  --legacy-${kebab(name)}: ${hex};`);
 w('}');
 w();
 w('/*');
@@ -80,10 +77,6 @@ w();
 w('@theme {');
 for (const name of Object.keys(color.dark)) w(`  --color-${kebab(name)}: var(--${kebab(name)});`);
 label.dark.forEach((_, i) => w(`  --color-label-${i}: var(--label-${i});`));
-w('');
-for (const name of Object.keys(legacy)) {
-  w(`  --color-${kebab(name)}: var(--legacy-${kebab(name)});`);
-}
 w('');
 for (const [name, px] of Object.entries(space)) w(`  --spacing-${name}: ${px}px;`);
 for (const [name, px] of Object.entries(size)) w(`  --spacing-${name}: ${px}px;`);

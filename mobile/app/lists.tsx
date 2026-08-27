@@ -109,7 +109,7 @@ export default function ListsScreen() {
             value={name}
             onChangeText={setName}
             placeholder="New list…"
-            placeholderTextColor={theme.muted}
+            placeholderTextColor={theme.inkSecondary}
             maxLength={120}
             style={styles.input}
           />
@@ -131,7 +131,7 @@ export default function ListsScreen() {
           </Text>
         )}
 
-        {lists === undefined && <ActivityIndicator color={theme.accent} />}
+        {lists === undefined && <ActivityIndicator color={theme.workingFill} />}
         {/* See the web's copy of this: "No lists yet" was shown for both having none
             and failing to ask. */}
         {failed && (
@@ -213,7 +213,7 @@ function ListCard({
 
       {expanded && (
         <View style={styles.cardItems}>
-          {items === undefined && !itemsFailed && <ActivityIndicator color={theme.accent} />}
+          {items === undefined && !itemsFailed && <ActivityIndicator color={theme.workingFill} />}
           {itemsFailed && (
             <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
               {COPY.lists.itemsFailed}
@@ -299,42 +299,42 @@ function ListCard({
 }
 
 const styles = StyleSheet.create({
-  listsFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
-  content: { padding: 16, gap: 12, backgroundColor: theme.ink, flexGrow: 1 },
-  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
+  listsFailed: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
+  content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
+  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
 
   newRow: { flexDirection: 'row', gap: 8 },
   input: {
     flex: 1,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 15,
   },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
-  primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
+  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
   disabled: { opacity: 0.4 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.plate, overflow: 'hidden' },
+  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   cardBody: { flex: 1 },
-  cardName: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  cardMeta: { color: theme.muted, fontSize: 12 },
-  chevron: { color: theme.muted, fontSize: 20 },
+  cardName: { color: theme.ink, fontSize: 16, fontWeight: '600' },
+  cardMeta: { color: theme.inkSecondary, fontSize: 12 },
+  chevron: { color: theme.inkSecondary, fontSize: 20 },
   cardItems: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
-  mix: { color: theme.muted, fontSize: 11 },
+  mix: { color: theme.inkSecondary, fontSize: 11 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   // minHeight, not padding: the row is inside a scroll view where a taller target is
   // free, and WCAG 2.5.8 wants 24px whether or not the name is one line.
   itemOpen: { flex: 1, minHeight: 24, justifyContent: 'center' },
-  itemName: { color: theme.text, fontSize: 14 },
-  remove: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
+  itemName: { color: theme.ink, fontSize: 14 },
+  remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
 });

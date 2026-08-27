@@ -56,7 +56,7 @@ export function Stats() {
             role="radio"
             aria-checked={!year && window === w.key}
             className={`rounded-plate px-4 py-1.5 text-sm ${
-              !year && window === w.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
+              !year && window === w.key ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
             }`}
           >
             {w.label}
@@ -70,7 +70,7 @@ export function Stats() {
             aria-checked={year === y}
             aria-label={`Your ${y}`}
             className={`rounded-plate px-4 py-1.5 text-sm ${
-              year === y ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
+              year === y ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
             }`}
           >
             {y}
@@ -79,10 +79,10 @@ export function Stats() {
       </div>
 
       {summary === undefined ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-ink-secondary">Loading…</p>
       ) : summary.episodes === 0 ? (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-muted">{COPY.stats.empty}</p>
+          <p className="text-ink-secondary">{COPY.stats.empty}</p>
           {/* There is history, just not in this window. Saying "nothing" to somebody
               with ten years in the app reads as a lost library rather than an empty
               period, and the years above are not an obvious answer to it. §6.54. */}
@@ -92,7 +92,7 @@ export function Stats() {
                 setYear(undefined);
                 setWindow('all');
               }}
-              className="rounded-pill bg-surface-2 px-4 py-2 text-sm"
+              className="rounded-pill border border-stroke-signal px-4 py-2 text-sm"
             >
               {COPY.stats.showAllTime}
             </button>
@@ -119,10 +119,10 @@ function Summary({
   return (
     <div className="flex flex-col gap-5">
       {isYearReview && (
-        <div className="rounded-plate bg-gradient-to-br from-accent/25 to-surface p-4">
-          <p className="text-sm text-muted">Your {year}</p>
+        <div className="rounded-plate bg-ground-raised p-4">
+          <p className="text-sm text-ink-secondary">Your {year}</p>
           <p className="mt-1 text-3xl font-semibold">{formatDuration(summary.minutes)}</p>
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-ink-secondary">
             across {summary.episodes} episodes and {summary.distinctTitles}{' '}
             {summary.distinctTitles === 1 ? 'title' : 'titles'}
           </p>
@@ -140,31 +140,31 @@ function Summary({
       </dl>
 
       {summary.busiestDay && (
-        <p className="px-1 text-sm text-muted">
+        <p className="px-1 text-sm text-ink-secondary">
           {COPY.stats.busiestDay(formatDay(summary.busiestDay.date), summary.busiestDay.episodes)}
         </p>
       )}
 
       <section>
-        <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-muted uppercase">
+        <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
           Most watched
         </h2>
         <ul className="flex flex-col gap-1.5">
           {summary.topTitles.map((t) => (
-            <li key={t.titleId} className="rounded-plate bg-surface p-3">
+            <li key={t.titleId} className="rounded-plate bg-ground-raised p-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate font-medium">{t.name}</span>
-                <span className="shrink-0 text-sm text-muted">{formatDuration(t.minutes)}</span>
+                <span className="shrink-0 text-sm text-ink-secondary">{formatDuration(t.minutes)}</span>
               </div>
               {/* Bar length is time, not episode count — the whole point of
                   runtime weighting. */}
-              <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-2">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-pill border border-stroke-signal">
                 <div
-                  className="h-full rounded-pill bg-accent"
+                  className="h-full rounded-pill bg-working-fill"
                   style={{ width: `${Math.max(4, (t.minutes / maxMinutes) * 100)}%` }}
                 />
               </div>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-xs text-ink-secondary">
                 {t.episodes} {t.episodes === 1 ? 'episode' : 'episodes'}
               </p>
             </li>
@@ -177,8 +177,8 @@ function Summary({
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-plate bg-surface px-3 py-3">
-      <dt className="text-xs text-muted">{label}</dt>
+    <div className="rounded-plate bg-ground-raised px-3 py-3">
+      <dt className="text-xs text-ink-secondary">{label}</dt>
       <dd className="text-xl font-semibold tabular-nums">{value}</dd>
     </div>
   );

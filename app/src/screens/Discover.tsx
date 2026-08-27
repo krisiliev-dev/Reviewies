@@ -35,12 +35,12 @@ export function Discover() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-2xl font-semibold">Discover</h1>
-      <p className="mb-4 px-1 text-sm text-muted">{COPY.discover.blurb}</p>
+      <p className="mb-4 px-1 text-sm text-ink-secondary">{COPY.discover.blurb}</p>
 
-      {error && <p className="px-1 text-sm text-accent">{error}</p>}
-      {suggestions === undefined && <p className="px-1 text-muted">Finding something…</p>}
+      {error && <p className="px-1 text-sm text-trouble">{error}</p>}
+      {suggestions === undefined && <p className="px-1 text-ink-secondary">Finding something…</p>}
       {suggestions?.length === 0 && !error && (
-        <p className="px-1 text-muted">{COPY.discover.empty}</p>
+        <p className="px-1 text-ink-secondary">{COPY.discover.empty}</p>
       )}
 
       <ul className="flex flex-col gap-2">
@@ -90,7 +90,7 @@ function SuggestionRow({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
       <Link
         to={`/title/${encodeURIComponent(suggestion.id)}`}
         aria-label={`Open ${suggestion.name}`}
@@ -101,11 +101,11 @@ function SuggestionRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{suggestion.name}</p>
-        <p className="text-xs text-muted">
+        <p className="text-xs text-ink-secondary">
           {suggestion.kind === 'show' ? 'Series' : 'Film'}
           {suggestion.year ? ` · ${suggestion.year}` : ''}
         </p>
-        <p className="mt-1 truncate text-xs text-muted">
+        <p className="mt-1 truncate text-xs text-ink-secondary">
           {COPY.discover.because(suggestion.because)}
         </p>
 
@@ -115,7 +115,7 @@ function SuggestionRow({
             onClick={track}
             disabled={busy}
             aria-label={`Track ${suggestion.name}`}
-            className="rounded-pill bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+            className="rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
           >
             Track
           </button>
@@ -123,7 +123,7 @@ function SuggestionRow({
             onClick={save}
             disabled={busy}
             aria-label={`Add ${suggestion.name} to your watchlist`}
-            className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
+            className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
           >
             Watchlist
           </button>

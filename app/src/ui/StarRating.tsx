@@ -54,21 +54,21 @@ export function StarRating({
           />
           <span aria-hidden="true" className={`${text} leading-none`}>
             {shown >= star ? (
-              <span className="text-accent">★</span>
+              <span className="text-working-mark">★</span>
             ) : shown >= star - 0.5 ? (
               // Half star: a filled star clipped to its left half over an empty one.
               <span className="relative inline-block">
-                <span className="text-edge">★</span>
-                <span className="absolute inset-0 w-1/2 overflow-hidden text-accent">★</span>
+                <span className="text-stroke-signal">★</span>
+                <span className="absolute inset-0 w-1/2 overflow-hidden text-working-mark">★</span>
               </span>
             ) : (
-              <span className="text-edge">★</span>
+              <span className="text-stroke-signal">★</span>
             )}
           </span>
         </span>
       ))}
       {value !== undefined && (
-        <span className="ml-1.5 text-xs text-muted tabular-nums">{value.toFixed(1)}</span>
+        <span className="ml-1.5 text-xs text-ink-secondary tabular-nums">{value.toFixed(1)}</span>
       )}
     </div>
   );

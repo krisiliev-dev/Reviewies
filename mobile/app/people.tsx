@@ -131,7 +131,7 @@ export default function PeopleScreen() {
                 value={handle}
                 onChangeText={setHandle}
                 placeholder="Handle"
-                placeholderTextColor={theme.muted}
+                placeholderTextColor={theme.inkSecondary}
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={styles.input}
@@ -240,7 +240,7 @@ function FindPeople({
         value={query}
         onChangeText={setQuery}
         placeholder="Handle or name"
-        placeholderTextColor={theme.muted}
+        placeholderTextColor={theme.inkSecondary}
         autoCapitalize="none"
         autoCorrect={false}
         style={styles.input}
@@ -385,56 +385,56 @@ function PersonName({ person }: { person: Person }) {
 }
 
 const styles = StyleSheet.create({
-  searchFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
-  content: { padding: 16, gap: 20, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
-  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
-  blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  failed: { color: theme.accent, fontSize: 13, lineHeight: 19 },
-  link: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
-  error: { color: theme.accent, fontSize: 13 },
+  searchFailed: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
+  content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
+  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  failed: { color: theme.trouble, fontSize: 13, lineHeight: 19 },
+  link: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  error: { color: theme.trouble, fontSize: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.text, fontSize: 16, fontWeight: '700' },
+  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
+  cardHeading: { color: theme.ink, fontSize: 16, fontWeight: '700' },
   section: { gap: 8 },
   sectionHeading: {
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: theme.surface2,
+    backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: theme.text,
+    color: theme.ink,
     fontSize: 15,
   },
   primary: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.actionFill,
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
+  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
 
   person: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
   personBody: { flex: 1, minWidth: 0 },
-  personName: { color: theme.text, fontSize: 14 },
-  personHandle: { color: theme.muted, fontSize: 11 },
+  personName: { color: theme.ink, fontSize: 14 },
+  personHandle: { color: theme.inkSecondary, fontSize: 11 },
   small: { borderRadius: radius.plate, paddingHorizontal: 12, paddingVertical: 8 },
-  smallOn: { backgroundColor: theme.accent },
-  smallOnText: { color: theme.ink, fontSize: 12, fontWeight: '600' },
-  smallMuted: { backgroundColor: theme.surface2 },
-  smallMutedText: { color: theme.muted, fontSize: 12 },
+  smallOn: { backgroundColor: theme.actionFill },
+  smallOnText: { color: theme.actionLabel, fontSize: 12, fontWeight: '600' },
+  smallMuted: { backgroundColor: theme.groundWell },
+  smallMutedText: { color: theme.inkSecondary, fontSize: 12 },
   disabled: { opacity: 0.4 },
 });

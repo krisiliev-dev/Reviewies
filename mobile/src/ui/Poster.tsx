@@ -34,10 +34,10 @@ export function Poster({
 
 const styles = StyleSheet.create({
   fallback: {
-    backgroundColor: theme.surface2,
+    backgroundColor: theme.groundWell,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 4,
   },
-  fallbackText: { color: theme.muted, fontSize: 10, textAlign: 'center' },
+  fallbackText: { color: theme.inkSecondary, fontSize: 10, textAlign: 'center' },
 });

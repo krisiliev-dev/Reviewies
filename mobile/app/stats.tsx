@@ -9,7 +9,7 @@ import {
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
-import { radius, theme } from '../src/ui/theme';
+import { border, radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 
@@ -87,7 +87,7 @@ export default function StatsScreen() {
           ))}
         </View>
 
-        {!summary && <ActivityIndicator color={theme.accent} style={styles.loading} />}
+        {!summary && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
 
         {summary && (
           <>
@@ -201,42 +201,42 @@ function Figure({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1 },
+  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.plate,
   },
-  chipOn: { backgroundColor: theme.accent },
-  chipText: { color: theme.muted, fontSize: 12 },
-  chipTextOn: { color: theme.ink, fontWeight: '600' },
+  chipOn: { backgroundColor: theme.actionFill },
+  chipText: { color: theme.inkSecondary, fontSize: 12 },
+  chipTextOn: { color: theme.actionLabel, fontWeight: '600' },
   loading: { marginTop: 32 },
 
   figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   figure: {
     flexGrow: 1,
     minWidth: '45%',
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 16,
   },
-  figureLabel: { color: theme.muted, fontSize: 12 },
-  figureValue: { color: theme.text, fontSize: 22, fontWeight: '700' },
+  figureLabel: { color: theme.inkSecondary, fontSize: 12 },
+  figureValue: { color: theme.ink, fontSize: 22, fontWeight: '700' },
   emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
   allTime: {
-    backgroundColor: theme.surface2,
+    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  allTimeText: { color: theme.text, fontSize: 14, fontWeight: '600' },
-  note: { color: theme.muted, fontSize: 13 },
+  allTimeText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  note: { color: theme.inkSecondary, fontSize: 13 },
 
   section: { gap: 12, marginTop: 6 },
   sectionHeading: {
-    color: theme.muted,
+    color: theme.inkSecondary,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
@@ -247,14 +247,14 @@ const styles = StyleSheet.create({
   // than as a chart. §6.62.
   tallyCard: {
     gap: 6,
-    backgroundColor: theme.surface,
+    backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
-  tallyCount: { color: theme.muted, fontSize: 11 },
+  tallyCount: { color: theme.inkSecondary, fontSize: 11 },
   tallyHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  tallyName: { color: theme.text, fontSize: 14, flex: 1 },
-  tallyTime: { color: theme.muted, fontSize: 12 },
-  barTrack: { height: 6, backgroundColor: theme.surface2, borderRadius: radius.pill, overflow: 'hidden' },
-  barFill: { height: 6, backgroundColor: theme.accent, borderRadius: radius.pill },
+  tallyName: { color: theme.ink, fontSize: 14, flex: 1 },
+  tallyTime: { color: theme.inkSecondary, fontSize: 12 },
+  barTrack: { height: 6, backgroundColor: theme.groundWell, borderRadius: radius.pill, overflow: 'hidden' },
+  barFill: { height: 6, backgroundColor: theme.workingFill, borderRadius: radius.pill },
 });
