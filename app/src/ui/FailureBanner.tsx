@@ -51,7 +51,10 @@ export function FailureBanner() {
   return (
     <div
       role="alert"
-      className="safe-top fixed inset-x-0 top-0 z-50 flex items-start gap-3 border-b border-edge bg-surface px-4 py-3"
+      /* Above everything: this is the thing that says the app could not do what you
+         asked, and a layer that can be covered is a message that can be missed. */
+      style={{ zIndex: 'var(--z-banner)' }}
+      className="safe-top fixed inset-x-0 top-0 flex items-start gap-3 border-b border-edge bg-surface px-4 py-3"
     >
       <p className="min-w-0 flex-1 text-sm">
         {stale ? (

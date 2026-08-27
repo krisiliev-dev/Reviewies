@@ -51,7 +51,17 @@ const UNREACHED: Record<string, string> = {
   'metadata/index#setProvider':
     'Test seam, in the house style of setDatabase / setStorage / setFileSaver. Added by \u00a76.68 because the cache layer above it \u2014 getProvidersCached, which \u00a76.58 rewrote so a failure could be told apart from an empty answer \u2014 had never been executed: there was no way to make a provider *fail*, since the fixture catalogue always succeeds and the real one needs a token and a network.',
   /**
-   * The token layers that have landed as values and not yet as call sites.
+   * The two token layers with no consumer at all yet.
+   *
+   * There were eleven of these yesterday. Nine went the moment
+   * `scripts/tokens-to-css.mjs` started emitting them, without anybody editing this
+   * list — the stale check above took them out, which is the property that made adding
+   * them defensible in the first place.
+   *
+   * These two are genuinely unreached. `elevation` is read by `flat.test.ts` and by
+   * nothing else, which is the point of it: it exists so the app can assert it has no
+   * shadow scale, and it caught a `backdrop-blur` the day it landed. `ratio` waits for
+   * the poster component.
    *
    * `docs/design/tokens.md` decides the whole system at once — that is what one owner
    * means — but the spec is equally explicit that the space and radius guards land WITH
@@ -68,17 +78,9 @@ const UNREACHED: Record<string, string> = {
    * None of these needs deleting when it is used: the stale check above removes the
    * entry the moment product code reaches the export.
    */
-  'tokens#space': 'Values landed; the ~99-site migration is its own sprint.',
-  'tokens#size': 'Values landed; migrates with space.',
+
+  'tokens#elevation': 'Reached only by flat.test.ts, which is what it is for.',
   'tokens#ratio': 'Values landed; migrates with the poster component.',
-  'tokens#radius': 'Values landed; the ~84-site migration is its own sprint.',
-  'tokens#border': 'Values landed; migrates with the components that draw rules.',
-  'tokens#elevation': 'Reached only by flat.test.ts, which is the point of it.',
-  'tokens#label': 'Reached only by labelSet.test.ts and contrast.test.ts until the spine lands.',
-  'tokens#stagger': 'Reached only by motion.test.ts until a staggered list lands.',
-  'tokens#reducedStagger': 'The Reduce Motion half of the above; lands with it.',
-  'tokens#linger': 'Reached only by motion.test.ts until the undo chip lands.',
-  'tokens#easing': 'Reached only by its own table; the drawer keeps its shipped easing.',
 
   'sync/clock#resetClock':
     'Test seam: the learned server offset is module state and a case must not inherit the previous one\u2019s. Nothing in the product forgets it — the offset describes the device, not the account, so signing out is not a reason to unlearn it.',
@@ -102,6 +104,20 @@ const LOPSIDED: Record<string, string> = {
    */
   'mobile only: tokens#duration': 'Only the phone drawer reads the motion table so far.',
   'mobile only: tokens#reduced': 'The Reduce Motion half of the same table.',
+  /**
+   * The web reads tokens as generated CSS, not as TypeScript.
+   *
+   * This is the architecture rather than a gap: `scripts/tokens-to-css.mjs` emits custom
+   * properties and Tailwind utilities from the same file the phone imports, so a web
+   * component writes `bg-stroke-signal` where a phone component writes
+   * `color.dark.strokeSignal`. Both come from `core/src/tokens.ts`; only the delivery
+   * differs, because a stylesheet cannot import TypeScript and a React Native style
+   * cannot read a custom property.
+   *
+   * `tokens.generated.test.ts` is what holds the two ends together.
+   */
+  'mobile only: tokens#color': 'The web takes the same values as generated custom properties.',
+  'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',

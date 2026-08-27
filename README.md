@@ -156,6 +156,22 @@ edge functions — and exits non-zero if anything is behind. It exists because t
 site once sat three weeks behind without anything reporting a problem, not because a
 warning was ignored but because there was no way to ask.
 
+### The design tokens
+
+Every colour, size, radius, duration and stacking order lives in `core/src/tokens.ts`.
+The phone imports it; the web gets the same values as generated CSS:
+
+```bash
+npm run tokens          # regenerate app/src/tokens.generated.css
+npm run tokens:check    # fail if the checked-in file is stale
+```
+
+Never edit `app/src/tokens.generated.css`. `app/src/ui/tokens.generated.test.ts`
+regenerates it in memory and byte-compares, so a hand edit fails the build rather than
+quietly becoming a second palette — which is how the two platforms drifted apart last
+time. [docs/design/tokens.md](docs/design/tokens.md) has the reasoning and every
+computed contrast ratio.
+
 [docs/deploying.md](docs/deploying.md) has the reasoning behind each step, including why
 deploying from inside the checkout fails with an error naming the wrong cause. It also
 covers installing it on an iPhone — and why that matters more than it sounds.

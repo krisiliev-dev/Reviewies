@@ -46,7 +46,11 @@ export function CatchUp({
   const chosen = seasons?.find((s) => s.season === season);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end bg-ink/70" onClick={onDone}>
+    <div
+      style={{ zIndex: 'var(--z-sheet)' }}
+      className="fixed inset-0 flex items-end bg-ink/70"
+      onClick={onDone}
+    >
       {/* The backdrop dismisses on click, which is what a sheet does; the sheet itself
           is the dialog, and Cancel is the route to the same place without a pointer. */}
       <div

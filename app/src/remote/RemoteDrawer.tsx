@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
 import { useDialog } from '../ui/useDialog';
-import { color, z } from '@reviewies/core/tokens';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -83,10 +82,11 @@ export function RemoteDrawer() {
            phone had, plus a blur. Both platforms hid the drawer's only affordance the
            same way and independently, which is the argument for one owner rather than
            two palettes that agree. Solid now, in the stroke that means something.
-           Inline because the generated custom properties land in the next sprint; the
-           token is the source either way, so there is no hex to find and replace. */
-        style={{ backgroundColor: color.dark.strokeSignal, color: color.dark.ground, zIndex: z.drawerHandle }}
-        className={`fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl py-4 pr-1 pl-1.5 transition-opacity ${
+           Reading generated utilities rather than inline hexes since the generator
+           landed; the stacking order stays a custom property because Tailwind has no
+           namespace for one. */
+        style={{ zIndex: 'var(--z-drawer-handle)' }}
+        className={`fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl bg-stroke-signal py-4 pr-1 pl-1.5 text-ground transition-opacity ${
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -97,7 +97,8 @@ export function RemoteDrawer() {
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40"
+          style={{ zIndex: 'var(--z-drawer-scrim)' }}
+          className="fixed inset-0 bg-black/40"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -106,7 +107,8 @@ export function RemoteDrawer() {
       <aside
         ref={drawer}
         // Always mounted so the connection is not torn down each time it closes.
-        className={`safe-top safe-bottom fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-edge bg-ink p-4 transition-transform duration-200 outline-none ${
+        style={{ zIndex: 'var(--z-drawer)' }}
+        className={`safe-top safe-bottom fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-edge bg-ink p-4 transition-transform duration-200 outline-none ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"

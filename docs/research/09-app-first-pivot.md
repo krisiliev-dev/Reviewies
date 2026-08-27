@@ -5685,6 +5685,83 @@ union and an aggregate `tokens` object were both written and both deleted the sa
 nothing reached them, and an export in anticipation is the same debt as a function.
 
 
+### 6.83 One copy, not two that agree
+
+`palette.test.ts` compared the web's palette against the phone's and found six of seven
+colours already drifted. That check was worth having and it was the wrong shape: both
+files had to be edited by hand, so the best it could ever do was report the mistake after
+somebody made it.
+
+`scripts/tokens-to-css.mjs` emits the web's stylesheet from `core/src/tokens.ts`, and
+`tokens.generated.test.ts` regenerates it in memory and byte-compares. The seven legacy
+colours moved into the same file as `legacy`, so `app/src/index.css` now contains no
+colour at all — which is checked, because a hex creeping back into it would mean the web
+had quietly grown a second source again and the sprint had been undone.
+
+Three things had to be separate, and the reason is Tailwind's: `@theme` is a single set
+and cannot hold two themes, so the values live in plain custom properties, `@theme` points
+at them, and motion and stacking are plain properties because Tailwind has no namespace
+for either. `npm run tokens:check` is the first thing `npm run verify` does, so a stale
+generated file fails the build rather than the review.
+
+#### The comparison's deletion is the point
+
+`palette.test.ts` survives as a smaller thing: it holds the seven legacy colours to their
+ratios and asserts there are exactly seven, which fences the set being replaced against
+growing. Its `name.replace('-', '')` trick — which turned `--color-surface-2` into
+`surface2` and would have silently mangled `--color-ink-secondary` into `inksecondary` —
+is gone with the test that needed it.
+
+#### The exemption list emptied itself
+
+Yesterday eleven token exports were exempted in `coreWiring` as "landed as values, not yet
+as call sites". Nine of them disappeared today without anybody editing that list: the
+generator started reading them, so they left `unreached()`, so their reasons went stale
+and the check that catches a stale reason failed until they were deleted. That property
+was the argument for adding them at all, and it paid within a day.
+
+Two remain and both are honest. `elevation` is read by `flat.test.ts` and nothing else,
+which is exactly what it is for — it exists so the app can assert it has no shadow scale,
+and it caught a `backdrop-blur` the day it landed. `ratio` waits for the poster component.
+
+A new asymmetry is recorded rather than papered over: `color` and `z` are now
+phone-only imports, because **the web reads tokens as generated CSS and not as
+TypeScript**. A web component writes `bg-stroke-signal` where a phone component writes
+`color.dark.strokeSignal`. That is the architecture, not a gap — a stylesheet cannot
+import TypeScript and a React Native style cannot read a custom property — and
+`tokens.generated.test.ts` is what holds the two ends together.
+
+#### Seven z-indexes, and two that are not layers
+
+Extending the stacking guard to catch bare `z-40` as well as `z-[45]` found seven on the
+web. The bare form is the one that had actually shipped, because it looks like a utility
+rather than a number.
+
+Four were app layers and moved to the table — and one was wrong on the way: the web's
+remote scrim carried 40, which is the *handle's* number, while the phone has had scrim 45
+since it was written. Two more were not layers at all: `StarRating` stacks two halves of
+one star inside its own positioned parent, which is not competing with the drawer, and
+giving it an app-level name would imply a relationship that does not exist. It is
+exempted with that reason and a stale check that fires if the file stops stacking.
+
+The last one produced a token. A skip link must be visible when focused or a keyboard user
+cannot see where focus went, so `skipLink` sits above `banner` — and the guard caught that
+change, because it had asserted "the banner is above everything" an hour earlier and that
+had just stopped being true.
+
+#### A guard reading prose as code
+
+The check that `index.css` holds no colour failed on `#0b0b0f` — inside a comment
+explaining why the focus ring was rewritten. §6.72's lesson was that a guard reading prose
+as code catches nothing; this is the same mistake with the sign flipped, catching
+something that was never there. Comments are stripped first now.
+
+Six plants, all caught: a hand-edited hex in the generated file, a changed token with no
+regeneration, a colour creeping back into `index.css`, the light override deleted from the
+generator, a bare `z-40` restored to a sheet, and the local-stacking exemption left behind
+after its file stopped stacking.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -5976,3 +6053,11 @@ and which single claim in this document could not be checked at all:
   visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
   and each line deletes itself when its sprint lands — but nobody should read "the design
   system is in" as "the app looks like the design system".
+- **Nothing has looked at the web with the generated stylesheet in place.** §6.83 replaced
+  `index.css`'s palette with an import and the browser suites stayed green at 213 — but
+  those assert text, roles and geometry, and every one of them runs in dark. The light
+  override, the `@theme` indirection and the Tailwind utilities the generator now emits
+  are proved to be *emitted*, byte for byte, and not proved to *render*: no check sets
+  `data-theme="light"`, no check reads a computed colour off an element, and the contrast
+  guard measures the token table rather than the pixels. A generated stylesheet that
+  Tailwind silently declined to process would look exactly like this.

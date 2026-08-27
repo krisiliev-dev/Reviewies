@@ -1,14 +1,15 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-ink: #0b0b0f;
-  --color-surface: #15151d;
-  --color-surface-2: #1f1f2b;
-  --color-edge: #2b2b3a;
-  --color-muted: #9a9ab0;
-  --color-accent: #ff5c7a;
-  --color-text: #f2f2f7;
-}
+/*
+ * Every colour, size, radius, duration and stacking order, generated from
+ * core/src/tokens.ts. There is no palette in this file any more.
+ *
+ * The seven colours that used to sit here were the web's copy of a set the phone also
+ * kept, and palette.test.ts existed to notice when the two disagreed — which it did,
+ * after six of the seven had already drifted. They come from the same place as the
+ * phone's now, so there is nothing left to compare.
+ */
+@import './tokens.generated.css';
 
 html,
 body,

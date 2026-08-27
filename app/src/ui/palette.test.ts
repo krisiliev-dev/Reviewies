@@ -1,19 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { legacy } from '@reviewies/core/tokens';
 
 /**
- * The palette, checked rather than asserted in a comment.
+ * The palette every screen is still drawn from, held to its measured ratios until it is
+ * gone.
  *
- * Two things had gone unverified. The phone's theme.ts says it is "carried over from
- * the web app so the two do not drift apart", and six of its seven colours had drifted
- * anyway. And nothing had ever measured the contrast of the muted grey that carries
- * most of the secondary text in both apps — every episode subtitle, every remaining
- * count, every footnote — against the surfaces it sits on.
+ * This file used to do two jobs. It compared the web's copy of the palette against the
+ * phone's — which found six of seven colours already drifted — and it measured the muted
+ * grey against the surfaces it sits on, which nothing had ever done.
  *
- * Prose does not fail. This does.
+ * **The comparison is deleted, and its deletion is the point.** There is one copy now:
+ * `core/src/tokens.ts` owns these seven and `scripts/tokens-to-css.mjs` emits the web's
+ * from them. A test that notices two files disagreeing is a weaker contract than not
+ * having two files, and keeping it would have meant maintaining the very second copy it
+ * was written to police. Its `name.replace('-', '')` trick — which turned
+ * `--color-surface-2` into `surface2` and would have silently mangled `--color-ink-secondary`
+ * into `inksecondary` — dies with it. `tokens.generated.test.ts` byte-compares instead.
+ *
+ * The measurement stays, because these colours are still on screen. This whole file goes
+ * when the last of them does.
  */
-const ROOT = resolve(__dirname, '../../..');
 
 /** WCAG 2.1 relative luminance. */
 function luminance(hex: string): number {
@@ -28,35 +34,11 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The web's palette, read out of the `@theme` block Tailwind compiles from. */
-function webPalette(): Record<string, string> {
-  const css = readFileSync(resolve(ROOT, 'app/src/index.css'), 'utf8');
-  const out: Record<string, string> = {};
-  for (const [, name, hex] of css.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-f]{6})/gi)) {
-    out[name.replace('-', '')] = hex.toLowerCase();
-  }
-  return out;
-}
-
-/** The phone's, read out of the object literal rather than imported: this package
- *  cannot resolve react-native, and the point is the text on disk either way. */
-function phonePalette(): Record<string, string> {
-  const source = readFileSync(resolve(ROOT, 'mobile/src/ui/theme.ts'), 'utf8');
-  const body = source.slice(source.indexOf('export const theme = {'));
-  const out: Record<string, string> = {};
-  for (const [, name, hex] of body.matchAll(/(\w+):\s*'(#[0-9a-f]{6})'/gi)) {
-    out[name.toLowerCase()] = hex.toLowerCase();
-  }
-  return out;
-}
-
-describe('the palette', () => {
-  it('is the same on both platforms', () => {
-    const web = webPalette();
-    const phone = phonePalette();
-
-    // Non-vacuous: a parser that found nothing would otherwise pass this happily.
-    expect(Object.keys(web).sort()).toEqual([
+describe('the palette still on screen', () => {
+  it('is the seven it has always been, and no more', () => {
+    // Non-vacuous, and a fence: `legacy` shrinks as the migration lands and must never
+    // grow. An eighth colour added here is somebody extending the thing being replaced.
+    expect(Object.keys(legacy).sort()).toEqual([
       'accent',
       'edge',
       'ink',
@@ -65,16 +47,14 @@ describe('the palette', () => {
       'surface2',
       'text',
     ]);
-    expect(phone).toEqual(web);
   });
 
   it('clears WCAG AA for every text colour on every surface it sits on', () => {
-    const palette = webPalette();
     const failures: string[] = [];
 
-    for (const fg of ['text', 'muted', 'accent']) {
-      for (const bg of ['ink', 'surface', 'surface2']) {
-        const ratio = contrast(palette[fg], palette[bg]);
+    for (const fg of ['text', 'muted', 'accent'] as const) {
+      for (const bg of ['ink', 'surface', 'surface2'] as const) {
+        const ratio = contrast(legacy[fg], legacy[bg]);
         // 4.5:1, the threshold for body text. Not 3:1 — almost none of this is large:
         // the muted grey is 9–12px in most of the places it appears.
         if (ratio < 4.5) failures.push(`${fg} on ${bg}: ${ratio.toFixed(2)}`);
