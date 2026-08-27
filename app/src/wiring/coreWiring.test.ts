@@ -123,6 +123,17 @@ describe('pointed at the commit before sync was wired up', () => {
    */
   const BEFORE_SYNC_WAS_WIRED = 'c2aa930^';
 
+  /**
+   * This case reads a whole tree out of git history and scans it, which is slower than
+   * anything else in this suite by an order of magnitude. Vitest's default five seconds
+   * is enough when it runs alone and not enough when it runs alongside thirty-five other
+   * files on a machine whose disk is busy — it took 3.7s alone and 6.3s in the suite the
+   * first time this ran on a Mac, so the check failed for its own cost rather than for
+   * anything it was looking at. An explicit budget rather than a faster check: the work
+   * is the point, and a guard that fails on timing teaches people to ignore it. 6.82.
+   */
+  const READING_HISTORY_IS_SLOW = 30_000;
+
   it('finds the engine the phone never called', () => {
     let rows;
     try {
@@ -136,5 +147,5 @@ describe('pointed at the commit before sync was wired up', () => {
 
     expect(lopsided(rows)).toContain('app only: sync/engine#syncOnce');
     expect(lopsided(rows)).toContain('app only: sync/engine#pendingCount');
-  });
+  }, READING_HISTORY_IS_SLOW);
 });

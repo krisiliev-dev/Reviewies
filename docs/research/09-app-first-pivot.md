@@ -5255,6 +5255,134 @@ entitlement: what has to survive belongs in the config, not in generated output.
 `docs/installing-on-iphone.md` has the steps.
 
 
+### 6.82 The first build on a Mac, which failed before reaching our code
+
+6.81 ended by saying the prediction had been checked. Half of it had. `expo prebuild` is
+template generation plus config plugins, so it ran in the Linux container and everything
+6.81 claims about the *generated* files is true — verified again here on macOS, where
+prebuild and the `pod install` it runs both finish clean and the entitlements are an
+empty `<dict/>` with `REVIEWIES_PERSONAL_TEAM=1` and carry `aps-environment: development`
+without it.
+
+The other half — that the generated project then *compiles and installs* — had never run
+anywhere, and could not have. It ran here. It failed, and not for any of the five reasons
+worth guessing at.
+
+#### The error, which is one line in ten thousand
+
+```
+PhaseScriptExecution [CP-User] Build ExpoModulesJSI xcframework
+[ExpoModulesJSI] Building framework slice for iphonesimulator...
+xcodebuild: error: Could not resolve package dependencies:
+  package 'apple' is using Swift tools version 6.2.0 but the installed version is 6.1.0
+```
+
+`expo-modules-jsi` does not build as an ordinary pod. A build phase compiles it into an
+xcframework from `node_modules/expo-modules-jsi/apple/Package.swift`, whose first line
+reads `// swift-tools-version: 6.2`. Swift 6.2 first ships with **Xcode 26**. The Mac has
+Xcode 16.4, which carries Swift 6.1.2.
+
+So the build is not misconfigured, it is impossible. No flag, plugin, entitlement or
+bundle identifier reaches it — the failure is upstream of every lever this repository
+has. `** BUILD FAILED **` arrives 1,700 lines later, and the summary at the bottom names
+the *script phase* rather than the reason, which is why the guide now tells you to build
+from the command line into a file and read it.
+
+#### And a second cause underneath, which reads like the first
+
+The phone never got as far as being a destination:
+
+```
+xcodebuild: error: Timed out waiting for all destinations matching the provided
+destination specifier to become available
+	{ platform:iOS, arch:arm64, id:…, name:iPhone, error:Device is busy (Waiting to reconnect to iPhone) }
+```
+
+"Device is busy" is not what it is. `xcrun devicectl list devices` says the real thing:
+
+```
+iPhone   iPhone.coredevice.local   …   connected (no DDI)   iPhone 13 Pro Max
+```
+
+No developer disk image. Two independent things cause that and the message is identical
+for both — Xcode 16.4 has no disk image for a phone on iOS 26.5.2, *and*
+`developerModeStatus: disabled`, which is the iOS default and needs a toggle and a reboot
+on the phone itself. Xcode 26 fixes the first. Only the user fixes the second.
+
+Worth noticing that the compile failure and the install failure have the same remedy from
+opposite directions: the toolchain is behind the dependencies, and the toolchain is behind
+the device. One upgrade, two causes, no relationship between them.
+
+#### What was actually wrong with the guide
+
+Not the entitlement — 6.81 got that right, and the free-signing story holds up exactly as
+described. What was wrong is that `docs/installing-on-iphone.md` described a procedure
+without ever saying what the machine running it had to be. It named a Mac and stopped.
+Every real obstacle encountered was a version of something the page did not mention:
+which Xcode, which iOS, whether the phone was in developer mode, and CocoaPods.
+
+That is the same failure the whole document keeps finding, one level further out. 6.81
+found a value read from a place it could never arrive. This is a procedure written for a
+machine nobody had checked the shape of — instructions whose preconditions were never
+stated, so the first person to follow them meets them one at a time as errors that do not
+say what they are.
+
+#### The guard
+
+A stated requirement with nothing holding it to the thing it is a requirement for goes
+stale silently, which is how it would have got here anyway on the next Expo bump.
+`mobile/src/nativeConfig.test.ts` now reads `swift-tools-version` out of the Expo Swift
+packages that actually build themselves, maps it to the Xcode that first carried that
+toolchain, and requires the install guide to name it. Planting `Xcode 16` back into the
+guide fails it by name:
+
+> the pods need Xcode 26 and docs/installing-on-iphone.md does not say so
+
+An Expo bump to a Swift version the map does not know fails the other case instead, which
+is the right failure: it asks a person which Xcode that is rather than guessing.
+
+#### A lockfile that only worked on the machine that wrote it
+
+Found on the way, because `npm run verify` would not start:
+
+```
+Error: Cannot find native binding. npm has a bug related to optional dependencies
+```
+
+`package-lock.json` listed `@rolldown/binding-linux-x64-gnu` and `-musl` and no others,
+though `rolldown` declares fifteen. npm records the optional dependencies it actually
+installed when a package is added incrementally, so a lock written in a Linux container
+describes a Linux machine. Every other native package here — esbuild, rollup,
+lightningcss, oxlint, tailwind's oxide — carries all its platforms, which is what a
+lock resolved from scratch looks like and why nothing else broke.
+
+The two darwin entries are added rather than the lock regenerated: regenerating it on a
+Mac swaps the problem round and takes the container's turn to fail. Worth stating plainly
+that this repository had never had `npm install` run on anything but Linux either, which
+is the same sentence as the rest of this section.
+
+#### And a guard that failed for its own cost
+
+`verify` then failed on something with no connection to any of this: the case in
+`app/src/wiring/coreWiring.test.ts` that reads the tree at `c2aa930^` out of git history
+and scans it, timed out at vitest's default five seconds. It takes 3.7s run alone and
+6.3s run alongside the other thirty-five files in that workspace, every time.
+
+Nothing was wrong with it. It is the most expensive check in the repository and it had
+only ever been measured on one machine. It has an explicit thirty-second budget now, with
+the numbers in a comment, because a guard that fails on timing is one people learn to
+re-run rather than read — and this one exists precisely to be believed when it fails.
+
+#### Still not run on hardware
+
+This did not get the app onto the phone. It got a precise reason, which is the thing 6.81
+did not have, and the reason is an Xcode download rather than anything in this repository.
+Everything §7 lists as never having been observed on a device is still never having been
+observed on a device — including the three that were queued behind this build: whether the
+remote drawer finds a real TV, whether the fingerprinter hears a real room, and whether
+the notification screen says push is unavailable rather than offering a dead switch.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

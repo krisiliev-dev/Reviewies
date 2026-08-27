@@ -28,6 +28,50 @@ What it costs instead of money:
   program. The app knows: `pushSupported()` returns false and the notification screen
   says why rather than offering a switch that does nothing.
 
+### What the Mac needs
+
+Checked on a real Mac, which none of the rest of this page had been:
+
+- **Xcode 26 or newer.** Not a recommendation. `expo-modules-jsi` compiles itself into
+  an xcframework from a Swift package that declares `swift-tools-version: 6.2`, and
+  Swift 6.2 first shipped with Xcode 26. On Xcode 16.4 the build dies in a pod build
+  phase, before it reaches a single line of this repository's own code:
+
+  ```
+  xcodebuild: error: Could not resolve package dependencies:
+    package 'apple' is using Swift tools version 6.2.0 but the installed version is 6.1.0
+  ```
+
+  Nothing in the Expo config reaches this. `mobile/src/nativeConfig.test.ts` ties the
+  sentence above to that dependency, so a future Expo bump cannot leave this page
+  naming an Xcode that has quietly stopped being enough.
+
+- **An Xcode new enough for the iPhone's own iOS.** Xcode carries the developer disk
+  image a device needs before it will accept a development build, and only for iOS
+  versions it knows about. A phone on a newer iOS reads as `connected (no DDI)` in
+  `xcrun devicectl list devices`, and `xcodebuild` then refuses the destination with
+
+  ```
+  { platform:iOS, ..., name:iPhone, error:Device is busy (Waiting to reconnect to iPhone) }
+  xcodebuild: error: Timed out waiting for all destinations matching the provided
+  destination specifier to become available
+  ```
+
+  which does not sound like a version problem and is one. Xcode 26 covers this and the
+  point above together.
+
+- **Developer Mode on the iPhone.** iOS 16 and later: **Settings → Privacy & Security →
+  Developer Mode → on**, then let it reboot. It is off by default, and off reports as
+  `no DDI` as well — the same symptom from a different cause, so check both:
+
+  ```sh
+  xcrun devicectl device info details --device <udid> | grep -E 'developerMode|osVersion'
+  ```
+
+- **CocoaPods**, `brew install cocoapods`. `expo prebuild` runs `pod install` itself and
+  ends with `✔ Installed CocoaPods`. Without it there is no `.xcworkspace` at all, and
+  opening `Reviewies.xcodeproj` instead fails in a way that reads like broken code.
+
 ### Steps
 
 ```sh
@@ -53,6 +97,27 @@ In Xcode:
 6. Plug the iPhone in, pick it as the run destination, press **Run**.
 7. The first launch is refused. On the phone: **Settings → General → VPN & Device
    Management → your Apple ID → Trust**. Once per Apple ID per device.
+
+#### Or build it from the command line
+
+Worth doing at least once, because Xcode reports a failed build as one red line and the
+thing you need is thirty lines above it:
+
+```sh
+npx expo run:ios --device
+```
+
+`xcodebuild` directly is the same build with nothing between you and the log. Substitute
+the team from your own signing certificate — `security find-identity -v -p codesigning`
+shows the identity and `openssl x509 -noout -subject` on it prints the team as `OU=`:
+
+```sh
+xcodebuild -workspace ios/Reviewies.xcworkspace -scheme Reviewies -configuration Debug \
+  -destination 'id=<device-udid>' -allowProvisioningUpdates DEVELOPMENT_TEAM=<team-id> build
+```
+
+`xcrun xctrace list devices` gives the UDID. Send it to a file and read it — a failing
+Expo build is around ten thousand lines and the real error is not near the end.
 
 ### Why `REVIEWIES_PERSONAL_TEAM=1`
 

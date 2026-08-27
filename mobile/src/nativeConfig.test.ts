@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
 
 /**
@@ -172,5 +173,82 @@ describe("the phone's build-time configuration", () => {
     });
     expect(config.extra?.tmdbToken).toBeUndefined();
     expect(config.extra?.supabaseUrl).toBeUndefined();
+  });
+});
+
+/**
+ * The Mac toolchain the native build needs, which nothing in this repository stated.
+ *
+ * §6.81 checked what prebuild *generates* and stopped there, because prebuild is the
+ * part that runs without a Mac. The part that needs one was left as a prediction, and
+ * the first time it ran the compile failed before any of this project's own code was
+ * touched:
+ *
+ * > xcodebuild: error: Could not resolve package dependencies:
+ * >   package 'apple' is using Swift tools version 6.2.0 but the installed version is 6.1.0
+ *
+ * `expo-modules-jsi` builds itself as an xcframework from a Swift package during
+ * `pod install`'s build phase, and that package declares `swift-tools-version: 6.2`.
+ * Swift 6.2 ships with Xcode 26. Xcode 16.4 carries 6.1, so the build is impossible
+ * rather than misconfigured — no flag, plugin or entitlement reaches it.
+ *
+ * The guide now says so. This ties that sentence to the dependency it describes, so a
+ * future Expo bump cannot leave the guide quietly naming an Xcode that stopped being
+ * enough — the §6.68 shape again, a stated requirement with nothing holding it to the
+ * thing it is a requirement for.
+ */
+describe('the Mac toolchain the native build needs', () => {
+  /** The Expo packages that compile themselves from a Swift package, not a podspec. */
+  const SWIFT_PACKAGES = ['expo-modules-jsi', '@expo/expo-modules-macros-plugin'];
+
+  /** The first Xcode to carry each Swift toolchain, written as the guide writes it. */
+  const XCODE_FOR_SWIFT: Record<string, string> = {
+    '5.9': '15',
+    '5.10': '15.3',
+    '6.0': '16',
+    '6.1': '16.3',
+    '6.2': '26',
+  };
+
+  const older = (a: string, b: string) => {
+    const [x, y] = [a, b].map((v) => v.split('.').map(Number));
+    for (let i = 0; i < Math.max(x.length, y.length); i++) {
+      if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) < (y[i] ?? 0);
+    }
+    return false;
+  };
+
+  /**
+   * Read rather than parsed: `swift-tools-version` lives in a *comment* on the first
+   * line of `Package.swift`, which is why `stripComments` is not used here — it would
+   * remove the only line that matters.
+   */
+  function requiredSwiftTools(): string {
+    const require_ = createRequire(join(ROOT, 'mobile/'));
+    let highest = '0';
+    for (const name of SWIFT_PACKAGES) {
+      const file = join(dirname(require_.resolve(`${name}/package.json`)), 'apple/Package.swift');
+      const match = /swift-tools-version:\s*([\d.]+)/.exec(readFileSync(file, 'utf8'));
+      expect(match, `no swift-tools-version in ${file}`).not.toBeNull();
+      if (older(highest, match![1])) highest = match![1];
+    }
+    return highest;
+  }
+
+  it('needs a Swift toolchain the guide can name an Xcode for', () => {
+    const swift = requiredSwiftTools();
+    expect(
+      XCODE_FOR_SWIFT[swift],
+      `Expo now wants Swift ${swift} and nothing here says which Xcode carries it`,
+    ).toBeDefined();
+  });
+
+  it('names that Xcode in the install guide', () => {
+    const xcode = XCODE_FOR_SWIFT[requiredSwiftTools()];
+    const guide = readFileSync(resolve(ROOT, 'docs/installing-on-iphone.md'), 'utf8');
+    expect(
+      guide,
+      `the pods need Xcode ${xcode} and docs/installing-on-iphone.md does not say so`,
+    ).toContain(`Xcode ${xcode}`);
   });
 });
