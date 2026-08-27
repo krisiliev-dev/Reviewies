@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+  <style>
+    body { margin: 0; background: #131114; }
+    a { color: #F0A93B; } a:hover { color: #D9A521; }
+    .an { font-family: 'Archivo Narrow', 'Helvetica Neue', sans-serif; }
+    .ar { font-family: 'Archivo', 'Helvetica Neue', sans-serif; }
+    .pm { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .eyebrow { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 11px; line-height: 14px;
+               letter-spacing: 0.10em; text-transform: uppercase; color: #918780; }
+    .card { width: 128px; height: 192px; border-radius: 2px; border: 1px solid #332E36; overflow: hidden;
+            display: flex; flex-direction: column; }
+    .cap { font-family: 'Archivo', sans-serif; font-size: 13px; line-height: 18px; color: #B3A9A0; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #131114; padding: 20px 16px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 20px; overflow: hidden;">
+
+  <div>
+    <div class="an" style="font-weight: 700; font-size: 30px; line-height: 34px; color: #F4EFE7;">The title card</div>
+    <div class="ar" style="font-size: 15px; line-height: 22px; color: #B3A9A0; margin-top: 6px;">
+      Four states, one locked API. Today all four render as the same grey box.
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px;">
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="card" style="background: #2A2118; position: relative;">
+        <div style="flex-grow: 1; background: linear-gradient(160deg, #4A3520 0%, #2A2118 60%, #1C191E 100%);
+                    display: flex; align-items: flex-end; padding: 10px;">
+          <span class="an" style="font-weight: 700; font-size: 20px; line-height: 22px; color: #F4EFE7;">Shogun</span>
+        </div>
+      </div>
+      <div class="eyebrow">1 · Has artwork</div>
+      <div class="cap">2:3, 2pt radius, 1pt rule border so a dark poster still has an edge.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="card" style="background: #1C191E;">
+        <div style="height: 10px; background: #3E9EA8;"></div>
+        <div style="flex-grow: 1; padding: 12px 10px; display: flex; flex-direction: column;
+                    justify-content: space-between;">
+          <span class="an" style="font-weight: 700; font-size: 19px; line-height: 21px; color: #F4EFE7;">
+            Halt and Catch&nbsp;Fire</span>
+          <span class="pm" style="font-size: 13px; line-height: 16px; color: #918780;">SERIES · 2014</span>
+        </div>
+      </div>
+      <div class="eyebrow">2 · No artwork — the tape spine</div>
+      <div class="cap">Hand-labelled, band keyed to a hash of the title. The whole of an imported
+        library looks like this until matching finishes.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="card" style="background: #1C191E; align-items: center; justify-content: center;">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="#4A434E" stroke-width="1.2">
+          <circle cx="17" cy="17" r="11"/>
+          <path d="M17 2 L17 9 M17 25 L17 32 M2 17 L9 17 M25 17 L32 17"/>
+        </svg>
+      </div>
+      <div class="eyebrow">3 · Loading</div>
+      <div class="cap">A still crosshair. No shimmer — a skeleton that pulses says “something is
+        arriving” even when nothing is.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div class="card" style="background: repeating-linear-gradient(45deg, #1C191E 0 7px, #211D24 7px 8px);
+                  align-items: center; justify-content: center;">
+        <span class="pm" style="font-size: 13px; line-height: 16px; color: #B3A9A0; border: 1px solid #4A434E;
+              border-radius: 2px; padding: 5px 9px; letter-spacing: 0.06em; background: #131114;">NO SIGNAL</span>
+      </div>
+      <div class="eyebrow">4 · Failed</div>
+      <div class="cap">A 404 is not an absence. Retry lives on the card.</div>
+    </div>
+  </div>
+
+  <div style="height: 1px; background: #332E36;"></div>
+
+  <div>
+    <div class="eyebrow" style="margin-bottom: 10px;">A shelf of unmatched imports</div>
+    <div style="display: flex; gap: 8px;">
+      <div style="width: 58px; height: 87px; border-radius: 2px; border: 1px solid #332E36; background: #1C191E;
+                  display: flex; flex-direction: column; overflow: hidden;">
+        <div style="height: 6px; background: #D9A521;"></div>
+        <div style="flex-grow: 1; padding: 5px;"><span class="an" style="font-weight: 700; font-size: 10px;
+             line-height: 11px; color: #F4EFE7;">Dark</span></div></div>
+      <div style="width: 58px; height: 87px; border-radius: 2px; border: 1px solid #332E36; background: #1C191E;
+                  display: flex; flex-direction: column; overflow: hidden;">
+        <div style="height: 6px; background: #4F8F55;"></div>
+        <div style="flex-grow: 1; padding: 5px;"><span class="an" style="font-weight: 700; font-size: 10px;
+             line-height: 11px; color: #F4EFE7;">Andor</span></div></div>
+      <div style="width: 58px; height: 87px; border-radius: 2px; border: 1px solid #332E36; background: #1C191E;
+                  display: flex; flex-direction: column; overflow: hidden;">
+        <div style="height: 6px; background: #B65C93;"></div>
+        <div style="flex-grow: 1; padding: 5px;"><span class="an" style="font-weight: 700; font-size: 10px;
+             line-height: 11px; color: #F4EFE7;">Frieren</span></div></div>
+      <div style="width: 58px; height: 87px; border-radius: 2px; border: 1px solid #332E36; background: #1C191E;
+                  display: flex; flex-direction: column; overflow: hidden;">
+        <div style="height: 6px; background: #C97A3E;"></div>
+        <div style="flex-grow: 1; padding: 5px;"><span class="an" style="font-weight: 700; font-size: 10px;
+             line-height: 11px; color: #F4EFE7;">The Bear</span></div></div>
+      <div style="width: 58px; height: 87px; border-radius: 2px; border: 1px solid #332E36; background: #1C191E;
+                  display: flex; flex-direction: column; overflow: hidden;">
+        <div style="height: 6px; background: #4A6FB0;"></div>
+        <div style="flex-grow: 1; padding: 5px;"><span class="an" style="font-weight: 700; font-size: 10px;
+             line-height: 11px; color: #F4EFE7;">Mr. Robot</span></div></div>
+    </div>
+    <div class="cap" style="margin-top: 10px;">
+      The app's ugliest technical reality becomes its best picture. Nothing else in the App Store
+      looks like a shelf.
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

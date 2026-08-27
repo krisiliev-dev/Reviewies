@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+  <style>
+    body { margin: 0; background: #0C0B0D; }
+    a { color: #F0A93B; } a:hover { color: #D9A521; }
+    .an { font-family: 'Archivo Narrow', 'Helvetica Neue', sans-serif; }
+    .ar { font-family: 'Archivo', 'Helvetica Neue', sans-serif; }
+    .pm { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .eyebrow { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 11px; line-height: 14px;
+               letter-spacing: 0.10em; text-transform: uppercase; color: #918780; }
+    .pad { border-radius: 2px; background: #1C191E; border: 1px solid #332E36; display: flex;
+           flex-direction: column; align-items: center; justify-content: center; gap: 2px; height: 76px; }
+    .padlabel { font-family: 'Archivo', sans-serif; font-size: 11px; line-height: 14px; color: #918780; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #0C0B0D; display: flex; flex-direction: column;
+            overflow: hidden;">
+
+  <div style="padding: 16px; border-bottom: 1px solid #332E36; display: flex; align-items: center; gap: 12px;">
+    <button style="width: 44px; height: 44px; background: none; border: none; padding: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;" aria-label="Leave Watching Mode">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B3A9A0" stroke-width="1.8"
+           stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>
+    </button>
+    <div style="flex-grow: 1; min-width: 0;">
+      <div class="an" style="font-weight: 600; font-size: 17px; line-height: 22px; color: #F4EFE7;">Frieren</div>
+      <div class="pm" style="font-size: 13px; line-height: 16px; color: #918780;">S01E14 · Privilege of the Young</div>
+    </div>
+    <button style="height: 44px; padding: 0 14px; border-radius: 2px; background: #F0A93B; border: none;
+            cursor: pointer;" aria-label="Mark this episode watched">
+      <span class="an" style="font-weight: 700; font-size: 15px; color: #131114;">Watched</span>
+    </button>
+  </div>
+
+  <div style="padding: 14px 16px 10px; border-bottom: 1px solid #332E36;">
+    <div class="eyebrow" style="margin-bottom: 8px;">Reactions from earlier viewings</div>
+    <div style="height: 62px; position: relative; overflow: hidden;">
+      <div style="position: absolute; left: 6px; top: 4px; opacity: 0.28; display: flex; align-items: center;
+                  gap: 6px;"><span style="font-size: 22px;">&#128514;</span></div>
+      <div style="position: absolute; left: 74px; top: 22px; opacity: 0.55; display: flex; align-items: center;
+                  gap: 6px;"><span style="font-size: 26px;">&#128557;</span></div>
+      <div style="position: absolute; left: 168px; top: 2px; display: flex; align-items: center; gap: 7px;">
+        <span style="font-size: 30px;">&#128561;</span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0;">+4</span></div>
+      <div style="position: absolute; left: 268px; top: 26px; opacity: 0.7;">
+        <span style="font-size: 26px;">&#128525;</span></div>
+      <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 40px;
+                  background: linear-gradient(90deg, rgba(12,11,13,0) 0%, #0C0B0D 100%);"></div>
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 56px;
+                  background: linear-gradient(270deg, rgba(12,11,13,0) 0%, #0C0B0D 100%);"></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+      <span class="pm" style="font-size: 34px; line-height: 36px; color: #F0A93B;">00:14:22</span>
+      <div style="flex-grow: 1; height: 3px; background: #211D24; border-radius: 2px; position: relative;">
+        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 58%; background: #F0A93B;
+                    border-radius: 2px;"></div>
+        <div style="position: absolute; left: 22%; top: -3px; width: 1px; height: 9px; background: #4A434E;"></div>
+        <div style="position: absolute; left: 41%; top: -3px; width: 1px; height: 9px; background: #4A434E;"></div>
+        <div style="position: absolute; left: 74%; top: -3px; width: 1px; height: 9px; background: #4A434E;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 10px; height: 44px; border: 1px solid #332E36;
+                border-radius: 2px; padding: 0 12px; background: #131114;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#918780" stroke-width="1.8"
+           stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 L21 21"/></svg>
+      <span class="ar" style="font-size: 15px; color: #756C67;">Search any emoji</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex-grow: 1;">
+      <div class="pad"><span style="font-size: 34px;">&#128514;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128557;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128561;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#10084;&#65039;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128064;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128293;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#129327;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128546;</span></div>
+      <div class="pad"><span style="font-size: 34px;">&#128076;</span></div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 18px; border-top: 1px solid #332E36; display: flex; align-items: center;
+              gap: 8px;">
+    <button style="flex-grow: 1; height: 52px; border-radius: 2px; background: #1C191E; border: 1px solid #332E36;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px;" aria-label="Rewind 15 seconds">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F4EFE7" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 L5 10 L11 15"/><path d="M5 10 L15 10 A5 5 0 1 1 10 15"/></svg>
+      <span class="pm" style="font-size: 11px; color: #918780;">15s</span>
+    </button>
+    <button style="flex-grow: 1; height: 52px; border-radius: 2px; background: #1C191E; border: 1px solid #332E36;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;" aria-label="Pause">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F4EFE7" stroke-width="2"
+           stroke-linecap="round"><path d="M9 5 L9 19 M15 5 L15 19"/></svg>
+    </button>
+    <button style="flex-grow: 1; height: 52px; border-radius: 2px; background: #1C191E; border: 1px solid #332E36;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px;" aria-label="Skip forward 15 seconds">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F4EFE7" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M13 5 L19 10 L13 15"/><path d="M19 10 L9 10 A5 5 0 1 0 14 15"/></svg>
+      <span class="pm" style="font-size: 11px; color: #918780;">15s</span>
+    </button>
+    <div style="width: 1px; height: 34px; background: #332E36; margin: 0 4px;"></div>
+    <button style="width: 52px; height: 52px; border-radius: 2px; background: #2A2118; border: 1.5px solid #F0A93B;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 1px;" aria-label="Living room Roku, connected">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0A93B" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1"/>
+           <path d="M8 21 L16 21"/></svg>
+      <span class="pm" style="font-size: 9px; color: #F0A93B;">TV</span>
+    </button>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

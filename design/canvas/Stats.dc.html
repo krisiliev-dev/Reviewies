@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+  <style>
+    body { margin: 0; background: #131114; }
+    a { color: #F0A93B; } a:hover { color: #D9A521; }
+    .an { font-family: 'Archivo Narrow', 'Helvetica Neue', sans-serif; }
+    .ar { font-family: 'Archivo', 'Helvetica Neue', sans-serif; }
+    .pm { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .eyebrow { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 11px; line-height: 14px;
+               letter-spacing: 0.10em; text-transform: uppercase; color: #918780; }
+    .rule-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .rule-row .line { flex-grow: 1; height: 1px; background: #332E36; }
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #131114; padding: 20px 16px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 20px; overflow: hidden;">
+
+  <div>
+    <div class="an" style="font-weight: 700; font-size: 30px; line-height: 34px; color: #F4EFE7;">Stats</div>
+    <div class="pm" style="font-size: 13px; line-height: 16px; color: #918780; margin-top: 4px;">
+      All time · since Mar 2014
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 8px;">
+    <span style="height: 34px; padding: 0 12px; border-radius: 2px; border: 1.5px solid #F0A93B;
+          background: #2A2118; display: flex; align-items: center;">
+      <span class="ar" style="font-size: 13px; font-weight: 500; color: #F0A93B;">All time</span></span>
+    <span style="height: 34px; padding: 0 12px; border-radius: 2px; border: 1px solid #332E36;
+          display: flex; align-items: center;">
+      <span class="ar" style="font-size: 13px; font-weight: 500; color: #B3A9A0;">2024</span></span>
+    <span style="height: 34px; padding: 0 12px; border-radius: 2px; border: 1px solid #332E36;
+          display: flex; align-items: center;">
+      <span class="ar" style="font-size: 13px; font-weight: 500; color: #B3A9A0;">30 days</span></span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px;">
+    <div class="stat"><span class="eyebrow">Watched</span>
+      <span class="pm" style="font-size: 20px; line-height: 24px; color: #F4EFE7;">5.5 days</span></div>
+    <div class="stat"><span class="eyebrow">Episodes</span>
+      <span class="pm" style="font-size: 20px; line-height: 24px; color: #F4EFE7;">264</span></div>
+    <div class="stat"><span class="eyebrow">Titles</span>
+      <span class="pm" style="font-size: 20px; line-height: 24px; color: #F4EFE7;">12</span></div>
+    <div class="stat"><span class="eyebrow">Longest streak</span>
+      <span class="pm" style="font-size: 20px; line-height: 24px; color: #F4EFE7;">19 days</span></div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">2024 · the almanac</span><span class="line"></span></div>
+    <div style="display: flex; flex-direction: column; gap: 9px;">
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">JAN</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 62%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">31</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">FEB</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 34%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">17</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">MAR</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 88%; top: 5px; height: 1.5px; background: #F0A93B;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #F0A93B; width: 24px; text-align: right;">44</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">APR</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 51%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">26</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">MAY</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 12%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">6</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">JUN</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 24px; text-align: right;">—</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">JUL</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 71%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">35</span></div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 26px; flex-shrink: 0;">AUG</span>
+        <span style="flex-grow: 1; height: 12px; position: relative;">
+          <span style="position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: #211D24;"></span>
+          <span style="position: absolute; left: 0; width: 43%; top: 5px; height: 1.5px; background: #918780;"></span>
+        </span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0; width: 24px; text-align: right;">21</span></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">Most of your year</span><span class="line"></span></div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 4px; height: 20px; background: #3E9EA8; flex-shrink: 0;"></span>
+        <span class="an" style="font-weight: 600; font-size: 17px; color: #F4EFE7; flex-grow: 1;">Halt and Catch Fire</span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0;">1d 14h</span></div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 4px; height: 20px; background: #B65C93; flex-shrink: 0;"></span>
+        <span class="an" style="font-weight: 600; font-size: 17px; color: #F4EFE7; flex-grow: 1;">Frieren</span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0;">0d 11h</span></div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="width: 4px; height: 20px; background: #C97A3E; flex-shrink: 0;"></span>
+        <span class="an" style="font-weight: 600; font-size: 17px; color: #F4EFE7; flex-grow: 1;">The Bear</span>
+        <span class="pm" style="font-size: 13px; color: #B3A9A0;">0d 9h</span></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

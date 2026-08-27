@@ -1,0 +1,20 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",    "x": 0,    "y": 0,    "w": 640, "h": 1180, "title": "Late Edition — the system" },
+    { "file": "UpNext.dc.html",  "x": 760,  "y": 0,    "w": 390, "h": 844,  "title": "Up Next — the cross-off", "is_interactive": true },
+    { "file": "Posters.dc.html", "x": 1240, "y": 0,    "w": 390, "h": 844,  "title": "The title card — four states" },
+    { "file": "Watching.dc.html","x": 1720, "y": 0,    "w": 390, "h": 844,  "title": "Watching Mode" },
+    { "file": "Stats.dc.html",   "x": 2200, "y": 0,    "w": 390, "h": 844,  "title": "Stats — the almanac" },
+    { "file": "Before.dc.html",  "x": 760,  "y": 1060, "w": 390, "h": 844,  "title": "Discover — shipping today" },
+    { "file": "After.dc.html",   "x": 1240, "y": 1060, "w": 390, "h": 844,  "title": "Discover — Late Edition" }
+  ],
+  "annotations": [
+    { "id": "crossoff", "x": 760, "y": -150, "w": 390,
+      "text": "Tap the rings. The stroke draws across the title, the ring takes a tick, the row steps back.\n\nThis is the loop the product exists for, and today it is a control with no character attached to it." },
+    { "id": "beforeafter", "x": 250, "y": 1300, "w": 420,
+      "text": "Same screen, same data.\n\nLeft: three floating cards, three identical reason lines, a grey box with the title repeated inside it, and two competing pink buttons per card.\n\nRight: the reason is printed once as a section rule, the spine carries a title with no artwork, and one quiet control per row." },
+    { "id": "honesty", "x": 2680, "y": 0, "w": 360,
+      "text": "What is NOT traded away:\n\n44pt targets · every control named and roled · 200% Dynamic Type · reduced motion (the stroke appears in one frame, the haptic stays) · the nothing / could-not-look / still-working distinction.\n\nThe direction was overruled where it cost any of these — three typefaces cut to two, a 34pt spine raised to 44, auto-shrinking text deleted, and caps cut back to the eyebrow alone." }
+  ],
+  "launch": { "view": "canvas" }
+}

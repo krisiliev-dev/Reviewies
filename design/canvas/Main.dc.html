@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+  <style>
+    body { margin: 0; background: #131114; }
+    a { color: #F0A93B; } a:hover { color: #D9A521; }
+    .an { font-family: 'Archivo Narrow', 'Helvetica Neue', sans-serif; }
+    .ar { font-family: 'Archivo', 'Helvetica Neue', sans-serif; }
+    .pm { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .eyebrow { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 11px; line-height: 14px;
+               letter-spacing: 0.10em; text-transform: uppercase; color: #918780; }
+    .rule-row { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+    .rule-row .line { flex-grow: 1; height: 1px; background: #332E36; }
+    .sw { display: flex; flex-direction: column; gap: 6px; }
+    .chip { height: 44px; border-radius: 2px; border: 1px solid #332E36; }
+  </style>
+</helmet>
+
+<div style="width: 640px; min-height: 1180px; background: #131114; padding: 40px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 36px;">
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="eyebrow">Reviewies · design direction</div>
+    <div class="an" style="font-weight: 700; font-size: 44px; line-height: 46px; color: #F4EFE7;">Late Edition</div>
+    <div class="ar" style="font-weight: 400; font-size: 15px; line-height: 22px; color: #B3A9A0; max-width: 46ch;">
+      Every other tracker looks like a streaming service, because a streaming service sells you the
+      next thing. A tracker is the record of what you already watched — and the objects that did
+      that job were printed.
+    </div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">Grounds</span><span class="line"></span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px;">
+      <div class="sw"><div class="chip" style="background: #131114;"></div>
+        <div class="pm" style="font-size: 13px; line-height: 16px; color: #B3A9A0;">#131114</div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; font-weight: 500; color: #918780;">page</div></div>
+      <div class="sw"><div class="chip" style="background: #1C191E;"></div>
+        <div class="pm" style="font-size: 13px; line-height: 16px; color: #B3A9A0;">#1C191E</div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; font-weight: 500; color: #918780;">raised</div></div>
+      <div class="sw"><div class="chip" style="background: #0C0B0D;"></div>
+        <div class="pm" style="font-size: 13px; line-height: 16px; color: #B3A9A0;">#0C0B0D</div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; font-weight: 500; color: #918780;">well</div></div>
+      <div class="sw"><div class="chip" style="background: #2A2118;"></div>
+        <div class="pm" style="font-size: 13px; line-height: 16px; color: #B3A9A0;">#2A2118</div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; font-weight: 500; color: #918780;">selected</div></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">Two hues, four jobs, one law</span><span class="line"></span></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="height: 44px; border-radius: 2px; background: #F0A93B; display: flex; align-items: center;
+                    justify-content: center;">
+          <span class="an" style="font-weight: 700; font-size: 17px; color: #131114;">Amber filled</span></div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; color: #B3A9A0;">
+          The one most consequential action on the screen. <strong style="color:#F4EFE7">Maximum one.</strong></div>
+        <div style="height: 44px; border-radius: 2px; border: 1.5px solid #F0A93B; display: flex;
+                    align-items: center; justify-content: center; background: #2A2118;">
+          <span class="an" style="font-weight: 600; font-size: 17px; color: #F0A93B;">Amber outlined</span></div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; color: #B3A9A0;">
+          The current selection. An outline, never a fill — that is what stops “you chose this”
+          reading as “tap this”.</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="height: 44px; border-radius: 2px; display: flex; align-items: center; gap: 10px;
+                    padding: 0 12px; box-sizing: border-box; background: #1C191E;">
+          <span style="width: 22px; height: 22px; border-radius: 50%; background: #F0A93B; display: flex;
+                       align-items: center; justify-content: center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#131114" stroke-width="3.4"
+                 stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5 L9.5 18 L20 6.5"/></svg></span>
+          <span class="an" style="font-weight: 600; font-size: 17px; color: #B3A9A0;">Amber mark</span></div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; color: #B3A9A0;">
+          You did this. The cross-off ring, stars, the active-tab rule.</div>
+        <div style="height: 44px; border-radius: 2px; border: 1.5px solid #F2585C; display: flex;
+                    align-items: center; justify-content: center;">
+          <span class="an" style="font-weight: 600; font-size: 17px; color: #F2585C;">Signal red</span></div>
+        <div class="ar" style="font-size: 13px; line-height: 18px; color: #B3A9A0;">
+          Failure and destructive only. Never a primary action, so red always means something.</div>
+      </div>
+    </div>
+    <div class="ar" style="font-size: 13px; line-height: 18px; color: #918780; margin-top: 16px; max-width: 62ch;">
+      Today one hue does all five jobs. <span class="pm" style="color:#B3A9A0;">#ff5c7a</span> has 66 uses,
+      of which 14 are failure styles — so failure is rendered in the happy colour, and on the Remote a pink
+      “Scan Wi-Fi” and a pink “could not reach it” occupy the same 40 points.
+    </div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">Label set · categorical only, never text</span><span class="line"></span></div>
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px;">
+      <div style="height: 56px; border-radius: 2px; background: #D9A521;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #3E9EA8;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #4F8F55;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #C97A3E;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #77808C;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #B65C93;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #C24A45;"></div>
+      <div style="height: 56px; border-radius: 2px; background: #4A6FB0;"></div>
+    </div>
+    <div class="ar" style="font-size: 13px; line-height: 18px; color: #918780; margin-top: 10px; max-width: 62ch;">
+      SMPTE test-card bars pulled to print saturation. Assigned by a hash of the title id, so a shelf of
+      unmatched imports reads as varied spines rather than uniform sludge. All clear 3:1 as UI components;
+      the last three do not clear 4.5:1, hence never text.
+    </div>
+  </div>
+
+  <div>
+    <div class="rule-row"><span class="eyebrow">Type · two families, four files, eleven tokens</span><span class="line"></span></div>
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">display 30/34</span>
+        <span class="an" style="font-weight: 700; font-size: 30px; line-height: 34px; color: #F4EFE7;">Up Next</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">title 20/26</span>
+        <span class="an" style="font-weight: 700; font-size: 20px; line-height: 26px; color: #F4EFE7;">Tonight</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">row 17/22</span>
+        <span class="an" style="font-weight: 600; font-size: 17px; line-height: 22px; color: #F4EFE7;">Halt and Catch Fire</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">body 15/22</span>
+        <span class="ar" style="font-weight: 400; font-size: 15px; line-height: 22px; color: #F4EFE7;">Prose, and the one that collapses eighty-two raw sizes into a token.</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">label 13/18</span>
+        <span class="ar" style="font-weight: 500; font-size: 13px; line-height: 18px; color: #F4EFE7;">Control labels</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">eyebrow 11/14</span>
+        <span class="eyebrow" style="color: #F4EFE7;">The only caps in the app</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">data 13/16</span>
+        <span class="pm" style="font-size: 13px; line-height: 16px; color: #F4EFE7;">S02E07 · 44m · 21:00</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">dataLarge 20/24</span>
+        <span class="pm" style="font-size: 20px; line-height: 24px; color: #F4EFE7;">5.5 days</span></div>
+      <div style="display: flex; align-items: baseline; gap: 16px;">
+        <span class="pm" style="font-size: 13px; color: #756C67; width: 108px; flex-shrink: 0;">timecode 34/36</span>
+        <span class="pm" style="font-size: 34px; line-height: 36px; color: #F0A93B;">00:21:14</span></div>
+    </div>
+    <div class="ar" style="font-size: 13px; line-height: 18px; color: #918780; margin-top: 18px; max-width: 62ch;">
+      Every number in the app is monospaced with tabular figures — so the personality lives in the one
+      thing a data-dense tracker has most of, and columns align for free.
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
