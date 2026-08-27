@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
-import { color, label } from '@reviewies/core/tokens';
+import { border, color, label } from '@reviewies/core/tokens';
 
 /**
  * A colour class that names nothing paints nothing, and says so to no one.
@@ -50,15 +50,37 @@ const DEFINED = new Set<string>([
   'black', 'white', 'transparent', 'current', 'inherit',
 ]);
 
-/** The seven that were the whole build until §6.90. */
-const LEGACY = /\b(?:bg|text|border|from|to|via|ring|fill|stroke|divide|placeholder|caret|outline|decoration|accent|shadow)-(ink|surface-?2|surface|edge|text|muted|accent)(?![\w-])/g;
+/**
+ * Six of the seven that were the whole build until §6.90.
+ *
+ * `ink` is deliberately not in the list, and the reason is the sharpest thing in this
+ * file. The legacy palette's `ink` was the page *background*, near-black; the token
+ * table's `ink` is the *writing*, near-white. The string survived the migration with an
+ * inverted meaning, so a guard keyed on the string cannot tell a stale `bg-ink` from a
+ * correct `text-ink` — and listing it here reported all three legitimate uses as
+ * violations the moment they were written.
+ *
+ * What catches the real failure is the clause below on `action.label`, which checks a
+ * relationship rather than a name. A stray `bg-ink` — a near-white page — is not caught
+ * by anything and is written down in §7 rather than pretended about.
+ */
+const LEGACY = /\b(?:bg|text|border|from|to|via|ring|fill|stroke|divide|placeholder|caret|outline|decoration|accent|shadow)-(surface-?2|surface|edge|text|muted|accent)(?![\w-])/g;
 
 /** Namespaces whose every value is a colour, so an unknown name is unambiguous. */
 const COLOUR_ONLY =
   /(?<![\w-])(?:bg|border|from|to|via|fill|stroke|divide|caret|accent)-([a-z][a-z0-9-]*)(?:\/\d+)?(?![\w-])/g;
 
-/** `border-t`, `border-2`, `bg-gradient-to-br` and friends are not colours. */
+/**
+ * `border-t`, `border-2`, `bg-gradient-to-br` and friends are not colours.
+ *
+ * `border-` was listed as a colour-only namespace and is not: Tailwind shares it between
+ * colour and width, exactly as it shares `text-` between colour and size. `border-t-tally`
+ * — the tab bar's rule, 3pt — was reported as an undefined colour called "tally" the
+ * moment it was written. The width tokens are read from the table rather than listed, so
+ * a fifth one cannot be added without this knowing.
+ */
 const NOT_A_COLOUR = new Set([
+  ...Object.keys(border),
   't', 'b', 'l', 'r', 'x', 'y', 's', 'e', 'solid', 'dashed', 'dotted', 'none', 'hidden',
   'gradient-to-br', 'gradient-to-b', 'gradient-to-r', 'gradient-to-t', 'gradient-to-l',
   'clip-text', 'clip-border', 'cover', 'contain', 'center', 'no-repeat', 'fixed', 'local',
@@ -87,6 +109,40 @@ describe('every colour a class names', () => {
     expect(off, 'the seven went with their call sites in §6.90').toEqual([]);
   });
 
+  it('writes the action label only where there is an action fill under it', () => {
+    /*
+     * `action.label` is #131114 — near-black, and the ONLY thing it is for is the label
+     * printed on the near-white `action.fill` pill. On any other surface it is invisible.
+     *
+     * §6.90's migration put it on three elements that have no fill: the web's active tab
+     * (near-black on the near-black tab bar), the remote drawer's refresh button, and Up
+     * Next's outlined secondary pill. Two of those were the migration script eating its
+     * own output a second time — a rule mapping `text-text` to `text-ink` ran before the
+     * rule mapping `text-ink` to `text-action-label`, so a legacy name arrived at the
+     * wrong token through the right one — and neither the colour-name guard nor the
+     * render probe could see it, because every name involved is real and defined.
+     *
+     * The rule is the token's own definition: a label needs its fill in the same class
+     * list. Nothing else in the app pairs them, so nothing else has to be excused.
+     */
+    const FILLS = /\bbg-(?:action-fill|working-fill|working-mark|ink|trouble)\b/;
+    const off: string[] = [];
+    let seen = 0;
+    for (const path of WEB.filter((p) => p.endsWith('.tsx'))) {
+      const text = stripComments(readFileSync(path, 'utf8'));
+      text.split('\n').forEach((line, index) => {
+        if (!/\btext-action-label\b/.test(line)) return;
+        seen++;
+        // The fill is often on the same element and sometimes on the ternary's other
+        // branch, so the line is the unit. A line with both is a pill.
+        if (FILLS.test(line)) return;
+        off.push(`${relative(ROOT, path)}:${index + 1}  ${line.trim().slice(0, 70)}`);
+      });
+    }
+    expect(seen, 'nothing writes the action label at all').toBeGreaterThan(10);
+    expect(off, 'action.label is near-black and only legible on the action fill').toEqual([]);
+  });
+
   it('names only colours the token table defines', () => {
     /*
      * Class attributes only, so `.css` is out of scope here. The first version scanned
@@ -101,8 +157,10 @@ describe('every colour a class names', () => {
       const text = stripComments(readFileSync(path, 'utf8'));
       text.split('\n').forEach((line, index) => {
         for (const match of line.matchAll(COLOUR_ONLY)) {
-          const name = match[1];
-          if (NOT_A_COLOUR.has(name) || /^\d/.test(name)) continue;
+          // `border-t-tally` captures as `t-tally`: the side is part of the utility, not
+          // part of the name. Strip it before looking anything up.
+          const name = match[1].replace(/^(?:t|b|l|r|x|y|s|e)-/, '');
+          if (NOT_A_COLOUR.has(name) || NOT_A_COLOUR.has(match[1]) || /^\d/.test(name)) continue;
           seen++;
           if (DEFINED.has(name)) continue;
           off.push(`${relative(ROOT, path)}:${index + 1}  ${match[0]}`);

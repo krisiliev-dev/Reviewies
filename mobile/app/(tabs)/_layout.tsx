@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Text, type ColorValue } from 'react-native';
-import { theme } from '../../src/ui/theme';
+import { Text, View, type ColorValue } from 'react-native';
+import { border, space, theme } from '../../src/ui/theme';
 
 /**
  * Five tabs, and no more.
@@ -29,6 +29,16 @@ export default function TabLayout() {
         sceneStyle: { backgroundColor: theme.ground },
       }}
     >
+      {/*
+        The active tab is marked by a rule, not only by being brighter.
+
+        §6.90 replaced a pink active tint with `ink` on `ink.secondary`, which is a
+        brightness step where there used to be a hue — and said so as a regression rather
+        than shipping it quietly. This is the replacement the direction specified: a 3pt
+        `border.tally` rule above the active tab. Colour is no longer the only channel
+        carrying the most important piece of wayfinding in the app, which is also what
+        makes it survive being read by somebody who cannot separate those two greys.
+      */}
       <Tabs.Screen name="index" options={{ title: 'Up Next', tabBarIcon: icon('▶') }} />
       <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: icon('⌕') }} />
       <Tabs.Screen name="discover" options={{ title: 'Discover', tabBarIcon: icon('✦') }} />
@@ -46,7 +56,22 @@ export default function TabLayout() {
  * point to reach for one.
  */
 function icon(glyph: string) {
-  return ({ color }: { color: ColorValue }) => (
-    <Text style={{ color, fontSize: 18, lineHeight: 22 }}>{glyph}</Text>
+  return ({ color, focused }: { color: ColorValue; focused: boolean }) => (
+    <View style={{ alignItems: 'center' }}>
+      {/*
+        Above the glyph and the width of it, so the rule reads as a marker on the tab
+        rather than as an underline on the word. `border.tally` is 3 — the same token the
+        shelf rule uses, because they are the same idea: this one, of several.
+      */}
+      <View
+        style={{
+          height: border.tally,
+          width: space.s24,
+          marginBottom: space.s4,
+          backgroundColor: focused ? theme.ink : 'transparent',
+        }}
+      />
+      <Text style={{ color, fontSize: 18, lineHeight: 22 }}>{glyph}</Text>
+    </View>
   );
 }

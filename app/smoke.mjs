@@ -532,6 +532,46 @@ try {
   const firstStop = await page.evaluate(() => document.activeElement?.textContent?.trim());
   check('the first tab stop is a way past the page', firstStop === 'Skip to navigation', firstStop);
 
+  /**
+   * Which tab you are on, told twice.
+   *
+   * §6.90 traded a pink active tint for `ink` on `ink.secondary` and wrote that down as a
+   * regression: a brightness step where there had been a hue, which is one channel doing
+   * the app's most important piece of wayfinding. §6.91 adds the `border.tally` rule the
+   * direction specified.
+   *
+   * Both halves are asserted, because either alone can be satisfied by an accident: a
+   * rule on every tab marks nothing, and a rule on none is the regression still standing.
+   */
+  const tally = await page.evaluate(() => {
+    const links = [...document.querySelectorAll('nav#tabs a')];
+    const marks = links.map((a) => {
+      const rule = a.querySelector('span[aria-hidden="true"]');
+      const style = rule && getComputedStyle(rule);
+      return {
+        current: a.getAttribute('aria-current') === 'page',
+        width: style ? parseFloat(style.borderTopWidth) : 0,
+        colour: style ? style.borderTopColor : 'none',
+      };
+    });
+    return {
+      tabs: marks.length,
+      ruled: marks.filter((m) => m.colour !== 'rgba(0, 0, 0, 0)').map((m) => m.colour),
+      onCurrent: marks.find((m) => m.current) ?? null,
+    };
+  });
+  check(
+    'the tab you are on carries a rule, not only a brighter grey',
+    // 3 is border.tally; #F4EFE7 is the ink.
+    tally.onCurrent?.width === 3 && tally.onCurrent?.colour === 'rgb(244, 239, 231)',
+    JSON.stringify(tally.onCurrent),
+  );
+  check(
+    'and only that one carries it',
+    tally.tabs >= 5 && tally.ruled.length === 1,
+    `${tally.ruled.length} of ${tally.tabs} tabs ruled`,
+  );
+
   await page.keyboard.press('Enter');
   await page.waitForTimeout(200);
   await page.keyboard.press('Tab');

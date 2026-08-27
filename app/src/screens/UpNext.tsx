@@ -153,7 +153,7 @@ export function UpNext() {
             said so: both were named, both were reachable, both were big enough. */}
         <Link
           to="/search"
-          className="self-start rounded-pill border border-stroke-signal px-5 py-3 font-medium text-action-label"
+          className="self-start rounded-pill border border-stroke-signal px-5 py-3 font-medium text-ink"
         >
           Find something to watch
         </Link>

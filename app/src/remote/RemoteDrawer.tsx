@@ -221,7 +221,7 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
     return (
       <div className="rounded-plate bg-ground-raised p-3 text-xs text-ink-secondary">
         <p>Bridge connected, but no devices found.</p>
-        <button onClick={bridge.refresh} className="mt-2 text-action-label">
+        <button onClick={bridge.refresh} className="mt-2 text-ink">
           Scan again
         </button>
       </div>

@@ -209,13 +209,37 @@ function TabBar() {
                 // which made them the one piece of text in the app that ignored the
                 // reader's setting entirely — while the icons beside them, sized in em,
                 // doubled. Exactly inverted.
-                `flex flex-col items-center gap-0.5 px-1 py-3 text-center text-[0.625rem] leading-tight break-words ${
-                  isActive ? 'text-action-label' : 'text-ink-secondary'
+                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-[0.625rem] leading-tight break-words ${
+                  isActive ? 'text-ink' : 'text-ink-secondary'
                 }`
               }
             >
-              <TabIcon name={tab.icon} />
-              {tab.label}
+              {/*
+                Children as a function, because the rule below needs `isActive` and the
+                static form does not have it.
+
+                The active tab is marked by a rule, not only by being brighter. §6.90
+                replaced a pink active tint with `ink` on `ink.secondary` — a brightness
+                step where there was a hue — and recorded that as a regression rather
+                than shipping it quietly. This is the replacement: `border.tally`, the
+                same 3pt token the phone's tab bar now uses and the shelf rule uses,
+                because they are the same idea. Two channels, so the wayfinding survives
+                being read by somebody who cannot separate those two greys.
+
+                A top border rather than a filled box: 3 is `border.tally` and has a
+                token, where a 3px height would be an off-scale arbitrary value that
+                `space.test.ts` correctly refuses.
+              */}
+              {({ isActive }) => (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className={`w-6 border-t-tally ${isActive ? 'border-ink' : 'border-transparent'}`}
+                  />
+                  <TabIcon name={tab.icon} />
+                  {tab.label}
+                </>
+              )}
             </NavLink>
           </li>
         ))}

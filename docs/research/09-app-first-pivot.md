@@ -6114,6 +6114,62 @@ light value and the legacy palette never did.
 Web smoke 221 → 224. App unit tests 424 (three deleted with `palette.test.ts`, three added).
 
 
+### 6.91 The active tab was invisible, and the check that would have said so did not exist
+
+Sprint 4's plan said type next; §6.90 said components instead, because the palette had been
+left doing work the components were meant to do. This sprint is the smallest honest piece
+of that: the regression §6.90 named, and the bug found on the way to fixing it.
+
+**The web's active tab was near-black on a near-black bar.** `text-action-label` is
+`#131114`, and the tab bar is `bg-ground`, which is `#131114`. Not low contrast — the same
+colour. It shipped in §6.90, one commit earlier, and neither the colour-name guard nor the
+render probe nor 224 browser checks noticed, because every name involved is a real token
+and every check that looks at the tab bar looks at its *text*, not its colour.
+
+Two more sites had it: the remote drawer's refresh button and Up Next's outlined secondary
+pill. All three arrived the same way, and it is §6.90's own lesson recurring one layer
+down. My migration script mapped `text-text → text-ink` and then, later in the same pass,
+`text-ink → text-action-label`. The first rule's output was the second rule's input. I
+wrote that failure up in §6.90 as a thing that had happened to class *prefixes* and fixed
+it with `(?![\w-])`; what I did not see is that the same script was doing it again through
+an entirely different mechanism — not a prefix collision but an ordering one — and that
+`text-action-label` is a *valid token name*, so nothing downstream could tell.
+
+**The guard checks a relationship, because a name cannot carry this.** `action.label` is
+near-black and exists for exactly one purpose: the label printed on the near-white
+`action.fill` pill. So the rule is that the two appear together, and a `text-action-label`
+with no fill on the same element is a failure by definition. Nothing else in the app pairs
+them, so nothing has to be excused.
+
+**And a flaw in the guard I wrote yesterday.** `colourNames.test.ts` listed all seven
+legacy colours as forbidden strings. Six are gone; `ink` is not, because the legacy `ink`
+was the page *background* and the token table's `ink` is the *writing*. The string
+survived with an inverted meaning, so the guard reported all three correct `text-ink` uses
+as violations the moment they were written. It now lists six, and says why the seventh
+cannot be checked by name. A stray `bg-ink` — a near-white page — remains uncatchable and
+is in §7 rather than pretended about.
+
+**The tally rule.** `border.tally` above the active tab, on both platforms, in `ink`. The
+point is two channels rather than one: colour is no longer alone in carrying the app's most
+important piece of wayfinding, which also means it survives being read by somebody who
+cannot separate `ink` from `ink.secondary`. On the web it is a top border rather than a
+filled box, because 3 has a token and a 3px height would be an off-scale arbitrary value
+that `space.test.ts` correctly refuses.
+
+Both halves are asserted, and both plants go red: a rule on **every** tab marks nothing
+(`5 of 5 tabs ruled`), and a rule on **none** is the regression still standing
+(`width: 0`). Either check alone can be satisfied by an accident.
+
+Web smoke 224 → 226.
+
+**What did not land.** `Button` — 45 styles across 25 files reducing to four tones and
+three sizes — is the component that pays for this sprint, and it is not here. It is a new
+API with an accessibility contract (`name` required and never defaulted to `label`, which
+moves a whole class of defect to compile time), not a rename, and half of it would be worse
+than none. `Section`, `Poster`, `Masthead` and the other twelve are behind it. The roster
+is in `docs/design/components.md` and unchanged.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6402,13 +6458,26 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **The tokens are in and the components are not, and one signal is weaker for it.** The
-  tab bar's active item was pink on grey and is now `ink` on `ink.secondary` — a
-  brightness step where there was a hue. Its replacement is the direction's 3pt
-  `border.tally` rule under the active tab, which is a component rather than a token and
-  so was not in §6.90's scope. The same gap exists for `action.quiet`'s pressed state, the
-  four-state poster, and every screen that still specifies its own padding. Components
-  next, not type: the palette is doing work the components were meant to do.
+- **The tokens are in and the components are not.** §6.91 closed the specific regression —
+  the tab bar carries its `border.tally` rule on both platforms now — but that is one of
+  sixteen components in `docs/design/components.md` and the smallest. `Button` alone is 45
+  styles across 25 files reducing to four tones and three sizes, with an accessibility
+  contract that moves a whole class of mis-naming to compile time. Until it lands,
+  `action.quiet`'s pressed state does not exist, the poster has one state instead of four,
+  and every screen still specifies its own padding.
+- **A colour name can be wrong in a way no name-based guard can see.** §6.91 shipped
+  `text-action-label` — near-black — onto a near-black tab bar, and the colour guard, the
+  render probe and 224 browser checks all passed it, because every name involved is real.
+  The fix checks a *relationship* (a label needs its fill) rather than a name. The general
+  version of that problem is open: nothing catches a `bg-ink` painting a page near-white,
+  because `ink` is a legitimate token and `bg-` is a legitimate namespace. What would
+  catch it is a check that reads background and foreground off the same rendered element
+  and measures them, which is `contrast.test.ts` moved from the token table to the pixels.
+- **One browser check is flaky.** `two tabs racing do not record the same episode twice`
+  failed once during §6.91 and passed on the next run against the same build. It races two
+  contexts against one IndexedDB on purpose, so a flake is plausible rather than
+  mysterious — but a check that is sometimes red is a check nobody will believe when it
+  matters. It needs to be made deterministic or made to report what it could not observe.
 - **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
   rather than structure precisely because they are — the direction's `radius.none` is for
   full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those
