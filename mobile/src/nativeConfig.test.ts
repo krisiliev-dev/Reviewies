@@ -62,7 +62,7 @@ async function configWith(env: Record<string, string | undefined>) {
   }
   try {
     const mod = await import(/* @vite-ignore */ `file://${CONFIG}?v=${evaluation++}`);
-    return mod.default as { extra?: Record<string, unknown> };
+    return mod.default as { extra?: Record<string, unknown>; plugins?: unknown[] };
   } finally {
     process.env = before;
   }
@@ -103,6 +103,38 @@ describe("the phone's build-time configuration", () => {
       VITE_TMDB_TOKEN: 'vite-name',
     });
     expect(config.extra?.tmdbToken).toBe('expo-name');
+  });
+
+  /**
+   * Signing with a free Apple ID.
+   *
+   * `expo-notifications` is autolinked, so prebuild writes `aps-environment` into the
+   * entitlements whether anybody asked for it or not — and a personal team cannot sign
+   * an app that declares it. Verified by running prebuild both ways: without the flag
+   * the entitlements carry `aps-environment: development`, with it they are empty, and
+   * the Bonjour services, background audio mode and microphone description survive
+   * either way. §6.81.
+   */
+  it('leaves the push entitlement alone by default', async () => {
+    const config = await configWith({ REVIEWIES_PERSONAL_TEAM: undefined });
+    expect(JSON.stringify(config.plugins)).not.toContain('withPersonalTeamSigning');
+  });
+
+  it('strips the push entitlement when signing with a personal team', async () => {
+    const config = await configWith({ REVIEWIES_PERSONAL_TEAM: '1' });
+    expect(JSON.stringify(config.plugins)).toContain('withPersonalTeamSigning');
+  });
+
+  it('keeps the plugins app.json already declared either way', async () => {
+    for (const flag of [undefined, '1']) {
+      const config = await configWith({ REVIEWIES_PERSONAL_TEAM: flag });
+      const plugins = JSON.stringify(config.plugins);
+      // The four the phone cannot work without: routing, the store, and the two that
+      // write the Info.plist entries the remote and the fingerprinter depend on.
+      for (const name of ['expo-router', 'expo-sqlite', 'expo-audio', 'expo-image-picker']) {
+        expect(plugins, `${name} missing with flag ${String(flag)}`).toContain(name);
+      }
+    }
   });
 
   /**

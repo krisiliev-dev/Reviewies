@@ -15,6 +15,26 @@ Then press `i` for the iOS simulator, `a` for Android, or scan the QR code with 
 Go. `npm run web --workspace @reviewies/mobile` runs the same app in a browser, and
 `npm run ios` / `npm run android` go straight to a simulator without the menu.
 
+## On a real iPhone
+
+Expo Go cannot run the remote drawer or background fingerprinting: both need Info.plist
+entries that config plugins write at build time, and Expo Go's plist is fixed. A native
+build is the only way to see them.
+
+```bash
+cd mobile
+npm run ios:native         # generates ios/, then open the .xcworkspace in Xcode
+npm run ios:native:free    # the same, signable with a free Apple ID
+```
+
+`ios:native:free` sets `REVIEWIES_PERSONAL_TEAM=1`, which strips the `aps-environment`
+entitlement `expo-notifications` causes prebuild to write. A free personal team cannot
+sign it, and deleting it in Xcode does not last — `ios/` is generated and gitignored.
+The cost is no push; everything else, including background audio, survives.
+
+[docs/installing-on-iphone.md](../docs/installing-on-iphone.md) has the Xcode steps and
+what each route actually gets you.
+
 ## Checks
 
 ```bash

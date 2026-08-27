@@ -5220,6 +5220,38 @@ have**. What it costs is a seven-day provisioning profile and no push, since
 `aps-environment` is an entitlement. The app already handles the last part honestly:
 `pushSupported()` is false and `whyNotSupported()` says why (§6.50).
 
+#### Then the prediction was checked, and one part of it was wrong
+
+`expo prebuild` is template generation plus config plugins. It needs no Mac, so the
+claim did not have to stay a prediction — it ran here.
+
+What was right: the generated `Info.plist` carries `NSBonjourServices` with all three
+service types, `NSMicrophoneUsageDescription`, and `UIBackgroundModes: ["audio"]`. The
+last is the happy one — background modes are an Info.plist key rather than an
+entitlement, so **background fingerprinting survives free signing**, which the first
+draft of the guide was not confident enough to claim.
+
+What was wrong: "delete the Push Notifications capability in Xcode" is not a fix.
+`expo-notifications` is autolinked, so prebuild writes
+
+```xml
+<key>aps-environment</key><string>development</string>
+```
+
+into a **generated** file. Deleting it in Xcode lasts exactly until the next prebuild.
+Advice that puts somebody in a loop they cannot see the edge of is worse than no advice,
+and this was one sprint away from being handed over as a procedure.
+
+`plugins/withPersonalTeamSigning.js` strips the entitlement, applied when
+`REVIEWIES_PERSONAL_TEAM=1`, off by default so the paid build keeps push. Prebuild run
+both ways confirms it: `aps-environment: development` without the flag, empty
+entitlements with it, and the Bonjour services, background audio and microphone
+description identical either way.
+
+`npm run ios:native` and `npm run ios:native:free` are the two commands, named rather
+than remembered (§6.53). `ios/` is gitignored, which is the same lesson as the
+entitlement: what has to survive belongs in the config, not in generated output.
+
 `docs/installing-on-iphone.md` has the steps.
 
 
@@ -5494,10 +5526,13 @@ and which single claim in this document could not be checked at all:
 - **No native build has still ever been made, and that is now the only thing standing
   between the phone and its first real run.** §6.81 found, by reading rather than
   running, that every iOS build would have shipped with an empty configuration. The fix
-  is guarded and the guard is proved by planting — but the guard checks that the config
-  *produces* what the app *reads*, which is a statement about two files agreeing. It is
-  not a statement that `expo prebuild` succeeds, that the plugins write the Info.plist
-  entries the remote and the fingerprinter depend on, that the entitlement Xcode refuses
-  is the one predicted, or that the app launches. Nothing in this container can run any
-  of that. The first person to open Xcode will find out several things at once, and the
-  §6.81 entry should be read as a prediction until they do.
+  is guarded and the guard is proved by planting. Three of the four things that entry
+  originally listed as unverifiable turned out to be checkable here after all — prebuild
+  needs no Mac, and it confirms that it succeeds, that the Info.plist carries what the
+  remote and the fingerprinter need, and that the entitlement blocking free signing is
+  the predicted one. What remains genuinely unknown is everything downstream of that:
+  `pod install`, whether Xcode signs it, whether it launches, and whether any of the
+  three flagship features work against real hardware once it does. Also unknown is
+  whether background audio *keeps* working — `UIBackgroundModes: ["audio"]` is present,
+  which is necessary and not sufficient, and iOS suspends a recording session for
+  reasons no plist declares.

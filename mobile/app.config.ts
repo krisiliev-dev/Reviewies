@@ -78,8 +78,19 @@ if (supabaseAnonKey?.startsWith('sb_secret_')) {
   );
 }
 
+/**
+ * A free Apple ID cannot sign the push entitlement that `expo-notifications` causes
+ * prebuild to write. See `plugins/withPersonalTeamSigning.js`; this is opt-in so the
+ * paid build keeps push.
+ */
+const personalTeam = process.env.REVIEWIES_PERSONAL_TEAM === '1';
+
 const config: ExpoConfig = {
   ...base.expo,
+  plugins: [
+    ...(base.expo.plugins ?? []),
+    ...(personalTeam ? ['./plugins/withPersonalTeamSigning.js'] : []),
+  ],
   extra: {
     ...base.expo.extra,
     tmdbToken: env('EXPO_PUBLIC_TMDB_TOKEN', 'VITE_TMDB_TOKEN'),

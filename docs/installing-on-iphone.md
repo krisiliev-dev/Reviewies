@@ -4,7 +4,7 @@ Three routes, and the free one is better than it looks.
 
 | | Cost | Needs | Remote drawer | Audio sync | Push |
 |---|---|---|---|---|---|
-| **Xcode, free Apple ID** | free | a Mac | yes | yes | no |
+| **Xcode, free Apple ID** | free | a Mac | yes | yes (background too) | no |
 | **EAS Build** | $99/yr | nothing but an Expo account | yes | yes | yes |
 | **Expo Go** | free | a computer on the same Wi-Fi | no | foreground only | no |
 | **Home-screen PWA** | free | a deployed web build | no | in Safari only | web push |
@@ -33,25 +33,59 @@ What it costs instead of money:
 ```sh
 # 1. From the repository root, with .env in place (see below).
 cd mobile
-npx expo prebuild -p ios       # generates ios/, applying every config plugin
 
-# 2. Open the workspace — not the .xcodeproj.
+# 2. The free-signing build. `npm run ios:native` is the paid one — see below.
+npm run ios:native:free
+
+# 3. Open the workspace — not the .xcodeproj. It exists because prebuild ran
+#    `pod install`; if you passed --no-install there will not be one.
 open ios/Reviewies.xcworkspace
 ```
 
 In Xcode:
 
-3. **Xcode → Settings → Accounts**, add your Apple ID. A "Personal Team" appears.
-4. Select the **Reviewies** target → **Signing & Capabilities**:
+4. **Xcode → Settings → Accounts**, add your Apple ID. A "Personal Team" appears.
+5. Select the **Reviewies** target → **Signing & Capabilities**:
    - tick **Automatically manage signing**
    - set **Team** to your personal team
    - if the bundle identifier is rejected as taken, change it to something unique —
      `dev.<yourname>.reviewies` — in `app.json` and re-run `prebuild`
-   - **delete the Push Notifications capability** if `expo-notifications` added one; a
-     personal team cannot sign it and the build will fail on the entitlement
-5. Plug the iPhone in, pick it as the run destination, press **Run**.
-6. The first launch is refused. On the phone: **Settings → General → VPN & Device
+6. Plug the iPhone in, pick it as the run destination, press **Run**.
+7. The first launch is refused. On the phone: **Settings → General → VPN & Device
    Management → your Apple ID → Trust**. Once per Apple ID per device.
+
+### Why `REVIEWIES_PERSONAL_TEAM=1`
+
+`expo-notifications` is autolinked, so prebuild writes this whether anybody asked or not:
+
+```xml
+<key>aps-environment</key><string>development</string>
+```
+
+A personal team cannot sign an app that declares it, and the build fails on the
+entitlement before it ever reaches the device. **Deleting it in Xcode is not a fix** —
+that file is generated, and the next `prebuild` writes it back. `ios/` is gitignored for
+that reason: anything that has to survive belongs in the config.
+
+The flag applies `plugins/withPersonalTeamSigning.js`, which strips the entitlement. It
+is off by default so the eventual paid build keeps push.
+
+### What is actually in the build (checked, not assumed)
+
+Running prebuild both ways and reading the generated files:
+
+| | default | `REVIEWIES_PERSONAL_TEAM=1` |
+|---|---|---|
+| `aps-environment` | `development` | *absent* |
+| `NSBonjourServices` | `_roku-rcp._tcp`, `_googlecast._tcp`, `_airplay._tcp` | same |
+| `UIBackgroundModes` | `["audio"]` | same |
+| `NSMicrophoneUsageDescription` | present | same |
+| `NSPhotoLibraryUsageDescription` | present | same |
+
+The second column is the point: **background audio survives free signing**.
+`UIBackgroundModes` is an Info.plist key, not an entitlement, so a personal team can
+carry it. The remote's Bonjour discovery and the fingerprinter's microphone are both
+plain Info.plist too. Push is the only casualty.
 
 ### The environment
 

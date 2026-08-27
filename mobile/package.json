@@ -40,6 +40,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "ios:native": "expo prebuild -p ios",
+    "ios:native:free": "REVIEWIES_PERSONAL_TEAM=1 expo prebuild -p ios",
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "test": "vitest run",
