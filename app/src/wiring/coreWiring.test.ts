@@ -146,6 +146,14 @@ const LOPSIDED: Record<string, string> = {
     'The other half of the same difference, and hidden until \u00a76.75. Finding a Roku means an SSDP broadcast over UDP, which a browser cannot send at all — the web asks the bridge for the list instead. This was not reported as lopsided before, because the file that declares it mentions the name once more in a comment and the scan counted that as a second use; stripping comments made the truth visible.',
   'mobile only: fingerprint/continuous#ContinuousMatcher':
     'The phone holds a background audio session and corrects for drift as it goes. The web takes one bounded capture with the microphone on only for those few seconds, which is a privacy decision rather than a missing feature.',
+  'mobile only: ui/button#SIZE':
+    'The two renderers of a shared component read its table differently, and only one of them reads it at runtime. React Native takes the numbers and colour names straight out of `core/src/ui/` and puts them in a `StyleSheet`; the DOM writes Tailwind class strings, because Tailwind\u2019s scanner reads *source text* \u2014 a class assembled from a token name at runtime is never compiled, so `bg-working-fill` has to appear literally in the file. `button.test.ts`, `choice.test.ts`, `crossOff.test.ts` and `key.test.ts` are what hold the web\u2019s written-out classes to the table instead. This was hidden until \u00a76.96 by a re-export in each web component \u2014 `BUTTON_SIZE = SIZE` and four more \u2014 that nothing anywhere imported: seven exports whose only effect was to make this scan count a read. Deleting them made the real asymmetry visible, which is the asymmetry described here.',
+  'mobile only: ui/button#TONE': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/choice#CHOICE_SIZE': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/choice#CHOSEN': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/crossOff#RING': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/crossOff#STRUCK': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/key#KEY_DISABLED': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',
   'mobile only: fingerprint/continuous#shouldCorrect': 'Part of the same continuous session.',
 };

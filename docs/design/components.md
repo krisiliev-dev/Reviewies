@@ -33,7 +33,7 @@ Two things the component layer cannot fix alone, stated up front:
 
 | # | Component | Routes | Shared? |
 |---|---|---|---|
-| 1 | `Button` | 15 of 16 + 9 components | Shared |
+| 1 | `Button` | 15 of 16 + 9 components | Shared — **built** |
 | 2 | `Section` | 8 today, all after | Shared |
 | 3 | `Masthead` | 16 | **Phone-only expression**, shared contract |
 | 4 | `Poster` | 6 (7 call sites) | Shared |
@@ -41,12 +41,12 @@ Two things the component layer cannot fix alone, stated up front:
 | 6 | `Data` | every screen with a number | Shared |
 | 7 | `Note` | 21 + 12 spinners | Shared |
 | 8 | `Field` | 9 (11 inputs) | Shared |
-| 9 | `Choice` | 5 | Shared |
-| 10 | `CrossOff` | 3, the app's most-repeated action | Shared |
+| 9 | `Choice` | 5 | Shared — **built** |
+| 10 | `CrossOff` | 3, the app's most-repeated action | Shared — **built** |
 | 11 | `Progress` | 4 | Shared |
 | 12 | `Sheet` | 2 | Contract shared, mechanics diverge |
 | 13 | `ChannelStrip` | 1 file / 5 tabs | **Phone-only**; icon paths shared |
-| 14 | `Key` | 2 hosts | Shared |
+| 14 | `Key` | 2 hosts | Shared — **built** |
 | 15 | `PadCell` | 1 (flagship) | Shared |
 | 16 | `ReactionStrip` | 1 (flagship) | Contract shared, motion diverges |
 
@@ -332,6 +332,8 @@ A 44pt open ring at the row's right edge. Tap: the stroke draws left-to-right ac
 
 **Replaces:** `index.tsx` `watched`/`undoRow`/`undo`, `title/[id].tsx` `mark`/`marked`, and the web's equivalents in `UpNext.tsx`/`TitleDetail.tsx`.
 
+**Built, with two departures from the above (§6.96).** The undo chip is a *sibling* of the ring, not the occupant of its slot: replacing the ring hides the filled state somebody just earned, and on the web unmounting the button that was just activated drops focus to the body. And the `drawing` state is not built — neither renderer draws a travelling stroke, so `duration.crossOff` stays in `tokens.ts` and is not in the contract; a number in a table that nothing reads is a decision that looks made and is not. The ink step is owned by the component (`crossedOffText` / `crossedOff`) rather than spelled at each row, and `crossOff.test.ts` checks that nothing outside it draws a line.
+
 ---
 
 ## 11. `Progress`
@@ -375,6 +377,7 @@ Hosts `CatchUp` and Watching Mode's new `Adjust` sheet. **Diverges:** React Nati
 **Cost to name:** the phone has no `react-native-svg`. Three of the five marks are rules and rectangles and can be Views; the crosshair and magnifier need arcs. Add `react-native-svg` (Expo-supported) and share the path table with the web's existing `/home/user/Reviewies/app/src/ui/TabIcon.tsx`, which already holds nine drawn paths for exactly the reasons this direction gives. Roles come from expo-router's `Tabs` (`tab` inside `tablist`) unchanged.
 
 **`Key`** — the printed remote fascia, shared by `/home/user/Reviewies/mobile/app/remote.tsx` and `RemoteDrawer`, and by the web's `/home/user/Reviewies/app/src/remote/RemoteDrawer.tsx` over the relay. `KeySize = 'pad' | 'wide' | 'centre'`. Mono legends replace the emoji: screen 14 shows orange `⏪`/`⏩` colour emoji sitting beside flat vector triangles, at whatever size the emoji font decides. States must include **`disabled` until a device is found** — today every key renders pressable with nothing attached, which is a defect this component closes (`accessibilityState.disabled` + `rule` strokes). Names are already right in `RemotePanel` and are kept verbatim.
+**Built (§6.96).** One table in `core/src/ui/key.ts`; the three surfaces had three of their own, disagreeing about the mark, the name and how far one press of skip moves. Legends carry `U+FE0E` where a triangle is still right, because a bare `▶` is emoji-presentation by default on several platforms. Disabled is per key rather than a `fieldset` at 40% opacity, and it is a hairline rule with tertiary ink — the fade the doc bans was doing the work of telling somebody there is no television yet. The web's duplicate `RemoteCommand` union now re-exports the core's `Command`.
 
 **`PadCell`** — Watching Mode. 3 columns, 108pt tall, cells sharing 1pt rules with no gaps, emoji 40pt, label Archivo Narrow 700 caps 11 in **primary** text. Today it is 4-across at 23% width with a 9pt muted label — unreadable in a dark room at arm's length, which is the only room this screen is used in. `accessibilityLabel = 'React with {label}'` is already correct and is kept.
 

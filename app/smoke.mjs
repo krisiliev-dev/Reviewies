@@ -165,6 +165,8 @@ async function audit(screen, atLeast) {
     let named = 0;
     const nameless = [];
     const small = [];
+    /** Accessible name → how many controls answer to it. */
+    const byName = new Map();
     for (const el of document.querySelectorAll(selector)) {
       if (el.closest('[aria-hidden="true"], [inert]')) continue;
       const labelledBy = (el.getAttribute('aria-labelledby') ?? '')
@@ -182,8 +184,10 @@ async function audit(screen, atLeast) {
         (labelledBy.trim() || clone.textContent) ??
         ''
       ).trim();
-      if (name) named++;
-      else nameless.push(el.outerHTML.slice(0, 90));
+      if (name) {
+        named++;
+        byName.set(name, (byName.get(name) ?? 0) + 1);
+      } else nameless.push(el.outerHTML.slice(0, 90));
 
       // WCAG 2.5.8 asks for 24x24 CSS pixels of target. Measured on the box the
       // pointer actually has to hit, so padding counts and a bare line of text does
@@ -196,7 +200,20 @@ async function audit(screen, atLeast) {
         small.push(`${name || el.tagName} ${Math.round(box.width)}x${Math.round(box.height)}`);
       }
     }
-    return { named, nameless, small };
+    /*
+     * Two controls a screen reader cannot tell apart.
+     *
+     * A repeated name is fine when the controls are interchangeable — five "React" links
+     * down a season all do the same thing to different rows, and are reached by reading
+     * the row they sit in. What is not fine is a *pair*: two rings both called "Unmark
+     * episode 5, Episode 5", one in each season, doing different things to different
+     * episodes. So the signal is exactly two, and the check is named for that rather than
+     * for the broader rule it is reaching for.
+     */
+    const collisions = [...byName.entries()]
+      .filter(([, count]) => count === 2)
+      .map(([name]) => name);
+    return { named, nameless, small, collisions };
   });
 
   check(
@@ -213,6 +230,22 @@ async function audit(screen, atLeast) {
     `${screen}: every control is big enough to hit`,
     found.small.length === 0,
     found.small.join(' | '),
+  );
+  check(
+    /*
+     * Found by a locator that matched two rings on the title page: season 1 and season 2
+     * each have an "episode 5, Episode 5", so both answered to the same sentence. Doc 6
+     * §5's rule is that every name in a list of rows carries what tells it from its
+     * neighbours, and the episode number alone stops doing that at two seasons.
+     *
+     * Named for what it measures rather than the rule it is reaching for. "No two controls
+     * share a name" is not the rule — five "React" links down a season share one and are
+     * fine, because each is reached by reading the row it sits in. A *pair* is the shape a
+     * collision takes, and a pair is what this says.
+     */
+    `${screen}: no name is shared by exactly two controls`,
+    found.collisions.length === 0,
+    found.collisions.join(' | '),
   );
 
   // Measured on every screen this suite already looks at, rather than on a list somebody
@@ -873,7 +906,11 @@ try {
   await page.screenshot({ path: OUT + '03-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
-  await page.getByRole('button', { name: /Mark The Long Dark S1E1 watched/i }).click();
+  // A checkbox, not a button. The pill that used to be here announced `aria-pressed`,
+  // which says "a toggle button" rather than "a thing that is or is not done"; an open
+  // circle you fill is exactly what `aria-checked` is for. This locator failing is how
+  // the migration announced itself.
+  await page.getByRole('checkbox', { name: /Mark The Long Dark S1E1 watched/i }).click();
 
   // Opening the conversation after marking watched is how TV Time worked and was named
   // as a failing in two of its successors — but only when there is an account behind
@@ -1675,13 +1712,13 @@ try {
   await page.locator('li').filter({ hasText: 'The Long Dark' }).first().locator('a').first().click();
   await page.waitForSelector('text=Season 1', { timeout: 8000 });
 
-  await page.getByRole('button', { name: '4 stars' }).first().click();
+  await page.getByRole('button', { name: /^Rate .* 4 stars$/ }).first().click();
   await page.waitForTimeout(400);
   const rated = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('title can be rated in half stars', /4\.0/.test(rated), rated.slice(0, 80));
 
   // Tapping the same star again clears it — the escape from a mis-tap.
-  await page.getByRole('button', { name: '4 stars' }).first().click();
+  await page.getByRole('button', { name: /^Rate .* 4 stars$/ }).first().click();
   await page.waitForTimeout(400);
   const cleared = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('tapping the same star clears the rating', !/4\.0/.test(cleared));
@@ -1721,7 +1758,74 @@ try {
       : 'content warnings are hidden without an account',
     ((await page.getByRole('button', { name: 'Content warnings' }).count()) > 0) === configured,
   );
-  // Eighteen episodes, each with React, Talk and Mark, plus the stars and the rest.
+  /*
+   * The cross-off, and the way back beside it.
+   *
+   * Asserted here rather than on Up Next because Up Next navigates to the conversation
+   * after a mark when there is an account behind it — so a check placed there ran in
+   * exactly one of the two builds and was silently absent in the other. This screen marks
+   * in place either way.
+   *
+   * The first version of this component swapped the ring for the undo chip in the same
+   * slot, which costs the two things the mark is for: the filled ring is the confirmation
+   * just earned, and unmounting the button somebody activated drops focus to the body — a
+   * keyboard user returned to the top of the page as a reward for marking an episode.
+   */
+  // The first *unmarked* ring, found by its name rather than by episode number: S1E1 was
+  // marked earlier in this run, so asking for episode 1 asked for a control that no longer
+  // exists under that name and waited thirty seconds for it.
+  const unmarked = page.getByRole('checkbox', { name: /^Mark season \d+ episode / }).first();
+  // The whole name, episode title included. Matching on `episode 5` alone matched two
+  // rings, because season 2 has an episode 5 as well — a locator that is unique on the
+  // fixture it was written against and not on the screen it runs on.
+  const markName = (await unmarked.getAttribute('aria-label')) ?? '';
+  const unmarkName = markName.replace(/^Mark /, 'Unmark ').replace(/ watched$/, '');
+  await unmarked.click();
+
+  // `Mark episode 5, Whiteout watched` → `Undo marking episode 5, Whiteout watched`.
+  const undo = page
+    .getByRole('button', { name: `Undo marking ${markName.replace(/^Mark /, '')}` })
+    .first();
+  await undo.waitFor({ timeout: 5000 });
+  // Waited for, not sampled. The undo chip appears in the click's own render and the
+  // ring's filled state arrives when the live query re-runs a moment later, so counting
+  // immediately after the chip caught the ring mid-flight and called it missing.
+  const struck = page.getByRole('checkbox', { name: unmarkName, exact: true });
+  await struck.first().waitFor({ timeout: 5000 });
+  check(
+    'the way back appears beside the ring, not instead of it',
+    (await struck.count()) === 1,
+    `${markName}: ${await undo.count()} undo, ${await struck.count()} rings`,
+  );
+  check(
+    'and the ring it sits beside is filled',
+    (await struck.first().getAttribute('aria-checked')) === 'true',
+  );
+  check(
+    'and focus is still on the ring itself, not on whatever replaced it',
+    // The role as well as the name. React reuses a DOM element when the type and position
+    // match, so a component that swapped the ring's `<button>` for the undo's could keep
+    // focus on the same node while turning it into a different control — which reads as
+    // "focus survived" and is not. Only a checkbox is the ring.
+    await page.evaluate(() => {
+      const el = document.activeElement;
+      return (
+        el?.getAttribute('role') === 'checkbox' &&
+        /^Unmark season \d+ episode /.test(el.getAttribute('aria-label') ?? '')
+      );
+    }),
+    await page.evaluate(
+      () =>
+        `${document.activeElement?.getAttribute('role') ?? '<none>'} / ${
+          document.activeElement?.getAttribute('aria-label') ?? '<body>'
+        }`,
+    ),
+  );
+  // Put back, so the screens after this see the library they expect.
+  await struck.first().click();
+  await page.waitForTimeout(300);
+
+  // Eighteen episodes, each with React, Talk and a ring, plus the stars and the rest.
   await audit('the title page', 30);
   await noGhosts('the title page');
   await scaled('the title page');
@@ -2138,7 +2242,7 @@ try {
     let rows = 0;
     const settleBy = Date.now() + 20000;
     while (Date.now() < settleBy) {
-      const now = await loaded.getByRole('button', { name: /^Mark / }).count();
+      const now = await loaded.getByRole('checkbox', { name: /^Mark / }).count();
       if (now >= 150) {
         rows = now;
         break;
@@ -2318,7 +2422,7 @@ try {
     // And it still records what you did.
     await plane.goto(BASE, { waitUntil: 'domcontentloaded' });
     await plane.waitForTimeout(1200);
-    await plane.getByRole('button', { name: /^Mark Offline Show/ }).first().click();
+    await plane.getByRole('checkbox', { name: /^Mark Offline Show/ }).first().click();
     await plane.waitForTimeout(1200);
     const stored = await plane.evaluate(async () => {
       const open = indexedDB.open('reviewies');
@@ -2425,7 +2529,7 @@ try {
     // The one that matters: a mark in one tab has to reach the other without a reload.
     // Somebody with the app open on two screens marking an episode on one and seeing the
     // other still offering it is being invited to mark it twice.
-    await first.getByRole('button', { name: /^Mark Two Tabs Show S1E1/ }).first().click();
+    await first.getByRole('checkbox', { name: /^Mark Two Tabs Show S1E1/ }).first().click();
     await other.waitForSelector('text=S1E2', { timeout: 15000 }).catch(() => {});
     const moved = (await other.locator('body').innerText()).replace(/\s+/g, ' ');
     check(
@@ -2464,8 +2568,8 @@ try {
     await other.goto(BASE, { waitUntil: 'networkidle' });
     await other.waitForTimeout(1200);
     await Promise.all([
-      first.getByRole('button', { name: /^Mark Two Tabs Show/ }).first().click(),
-      other.getByRole('button', { name: /^Mark Two Tabs Show/ }).first().click(),
+      first.getByRole('checkbox', { name: /^Mark Two Tabs Show/ }).first().click(),
+      other.getByRole('checkbox', { name: /^Mark Two Tabs Show/ }).first().click(),
     ]);
     await first.waitForTimeout(2000);
 

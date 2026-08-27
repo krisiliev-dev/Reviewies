@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { BUSY, SIZE, TONE, type ButtonContract } from '@reviewies/core/ui/button';
+import { BUSY, type ButtonContract } from '@reviewies/core/ui/button';
 
 /**
  * The DOM renderer of `core/src/ui/button.ts`. The decisions are there; this is Tailwind.
@@ -114,6 +114,3 @@ export function Button({
   );
 }
 
-/** Re-exported so a screen never has to reach past the component for its own metrics. */
-export const BUTTON_SIZE = SIZE;
-export const BUTTON_TONE = TONE;

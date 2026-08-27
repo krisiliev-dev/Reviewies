@@ -30,6 +30,7 @@ import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
 import { Button } from '../../src/ui/Button';
+import { CrossOff } from '../../src/ui/CrossOff';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -48,7 +49,6 @@ export default function UpNextScreen() {
   // removing its own row from Up Next, so a sheet living inside that row unmounts at
   // the exact moment it has something to tell you.
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
-  const [marked, setMarked] = useState<{ targetId: string; label: string }>();
   // Held until dismissed rather than swapped out the moment the library stops being
   // empty. Importing puts shows in the library, which is exactly what stops this being
   // the first-run screen — and took the confirmation with it.
@@ -72,25 +72,10 @@ export default function UpNextScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.heading}>Up Next</Text>
 
-        {/* The web's copy of this, for the reason §6.64 found by racing two tabs: the
-            row can change under the press, and a one-tap write with no way back is what
-            makes that expensive. It answers the ordinary mis-tap too. */}
-        {marked && (
-          <View style={styles.undoRow}>
-            <Text style={styles.undoText}>{COPY.upNext.justMarked(marked.label)}</Text>
-            <Pressable
-              onPress={async () => {
-                await unwatchLatest(marked.targetId);
-                setMarked(undefined);
-              }}
-              style={styles.undo}
-              accessibilityRole="button"
-              accessibilityLabel={`${COPY.upNext.undo} ${COPY.upNext.justMarked(marked.label)}`}
-            >
-              <Text style={styles.undoLabel}>{COPY.upNext.undo}</Text>
-            </Pressable>
-          </View>
-        )}
+        {/* §6.64's undo — the row can change under the press when two devices are racing,
+            and the ordinary mis-tap needs the same way back — used to be a banner here,
+            a screen away from the tap that caused it and above a list that had already
+            reflowed. It sits beside the ring now, within reach of the thumb that made the mark. */}
 
         {imported ? (
           <View style={styles.empty}>
@@ -187,7 +172,6 @@ export default function UpNextScreen() {
               key={entry.seriesId}
               entry={entry}
               onCatchUp={setCatchingUp}
-              onMarked={setMarked}
             />
           ))
         )}
@@ -207,42 +191,57 @@ export default function UpNextScreen() {
 function Row({
   entry,
   onCatchUp,
-  onMarked,
 }: {
   entry: UpNextEntry;
   onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
-  onMarked: (marked: { targetId: string; label: string }) => void;
 }) {
   const { episode } = entry;
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  /**
+   * Which episode this row's ring was last filled for, so that the fill is a confirmation
+   * of something rather than a decoration.
+   *
+   * The row is keyed by series and its `episode` becomes the *next* one the moment the
+   * query re-runs, so a plain boolean would carry the mark across onto an episode nobody
+   * has watched. Holding the id instead makes it self-clearing: it stops matching the
+   * second the list moves on. It is also what undo has to name — `unwatchLatest` on the
+   * episode now in the row would take back the wrong one.
+   *
+   * The `busy` flag this replaces put a disabled state on the most-pressed control in the
+   * product while a local SQLite write completed. `crossOff.ts` says why there is no such
+   * state: a control that waits claims the app is asking somebody's permission.
+   */
+  const [markedId, setMarkedId] = useState<string>();
+  const justMarked = markedId === episode.id;
 
-  async function onWatched() {
-    setBusy(true);
-    try {
-      // Optimistic by construction: the write goes to SQLite and the change listener
-      // re-runs the query. Nothing waits on a network round-trip.
-      await markWatched({
-        targetId: episode.id,
-        seriesId: entry.seriesId,
-        runtimeMin: episode.runtimeMin,
-      });
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onMarked({ targetId: episode.id, label: `S${episode.season}E${episode.number}` });
+  function onWatched() {
+    // Optimistic by construction: the write goes to SQLite and the change listener
+    // re-runs the query. Nothing waits on a network round-trip, and nothing here
+    // awaits it either.
+    void markWatched({
+      targetId: episode.id,
+      seriesId: entry.seriesId,
+      runtimeMin: episode.runtimeMin,
+    });
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setMarkedId(episode.id);
 
-      // How TV Time worked, and named as a failing in two of its successors. Only when
-      // there is an account behind it — otherwise there is no conversation to open and
-      // this would be a dead end. Catching up in bulk uses its own control, which never
-      // navigates, so this cannot interrupt a run of episodes.
-      //
-      // The web has done this since it shipped; the phone, which is the platform this
-      // product is now built around, quietly did not.
-      if (openCommentsAfterWatch() && syncConfigured()) {
-        router.push(`/comments/${encodeURIComponent(episode.id)}`);
-      }
-    } finally {
-      setBusy(false);
+    // How TV Time worked, and named as a failing in two of its successors. Only when
+    // there is an account behind it — otherwise there is no conversation to open and
+    // this would be a dead end. Catching up in bulk uses its own control, which never
+    // navigates, so this cannot interrupt a run of episodes.
+    //
+    // The web has done this since it shipped; the phone, which is the platform this
+    // product is now built around, quietly did not.
+    if (openCommentsAfterWatch() && syncConfigured()) {
+      router.push(`/comments/${encodeURIComponent(episode.id)}`);
     }
+  }
+
+  function undoMark() {
+    // The id, not `episode.id`: by now the row is showing the next episode.
+    if (markedId) void unwatchLatest(markedId);
+    setMarkedId(undefined);
   }
 
   return (
@@ -286,17 +285,20 @@ function Row({
       </View>
 
       <View style={styles.actions}>
-        <Pressable
-          onPress={onWatched}
-          disabled={busy}
-          // Large target: this gets tapped in the dark, one-handed.
-          style={({ pressed }) => [styles.watched, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: busy }}
-          accessibilityLabel={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
-        >
-          <Text style={styles.watchedText}>Watched</Text>
-        </Pressable>
+        {/* Was a filled "Watched" pill that disabled itself for the length of a local
+            write, with its undo a screen away. The ring is the same tap in the dark,
+            one-handed, and the way back is beside it. */}
+        <CrossOff
+          watched={justMarked}
+          name={
+            justMarked
+              ? `Unmark ${entry.seriesName} S${episode.season}E${episode.number}`
+              : `Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`
+          }
+          onChange={(next) => (next ? onWatched() : undoMark())}
+          onUndo={undoMark}
+          undoName={`Undo marking ${entry.seriesName} S${episode.season}E${episode.number} watched`}
+        />
 
         {/* Watching Mode, from the screen somebody is actually on.
             *
@@ -320,17 +322,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
-  undoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  undoText: { color: theme.inkSecondary, fontSize: 14, flexShrink: 1 },
-  undo: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 24,
-    justifyContent: 'center',
-  },
-  undoLabel: { color: theme.ink, fontSize: 14, fontWeight: '600' },
   heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
@@ -354,7 +345,10 @@ const styles = StyleSheet.create({
   title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
   subtitle: { color: theme.inkSecondary, fontSize: 14 },
   catchUp: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
-  actions: { gap: 6, alignItems: 'stretch' },
+  // Right-aligned, not stretched. `alignItems: 'stretch'` put the 44pt ring at the *left*
+  // edge of the action column with a full-width pill under it, so the one control meant to
+  // be in the same place on every row of every list was floating in the middle of the row.
+  actions: { gap: 6, alignItems: 'flex-end' },
   watchAlong: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     color: theme.inkSecondary,
@@ -367,12 +361,4 @@ const styles = StyleSheet.create({
   },
   remaining: { color: theme.inkSecondary, fontSize: 12 },
 
-  watched: {
-    backgroundColor: theme.actionFill,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-  },
-  pressed: { transform: [{ scale: 0.96 }] },
-  watchedText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
 });

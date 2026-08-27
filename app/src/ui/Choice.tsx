@@ -1,4 +1,4 @@
-import { CHOICE_SIZE, CHOSEN, announce, type ChoiceContract } from '@reviewies/core/ui/choice';
+import { announce, type ChoiceContract } from '@reviewies/core/ui/choice';
 
 /**
  * The DOM renderer of `core/src/ui/choice.ts`. The decisions are there.
@@ -59,6 +59,3 @@ export function Choice<T extends string | number>({
   );
 }
 
-/** Re-exported so a screen never reaches past the component for its own metrics. */
-export const CHOICE_METRICS = CHOICE_SIZE;
-export const CHOICE_MARK = CHOSEN;

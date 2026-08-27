@@ -9,8 +9,8 @@
     "test": "vitest run",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "node ../scripts/portFree.mjs 4173 && VITE_TMDB_TOKEN= npm run build && (npx vite preview --port 4173 --strictPort & sleep 6) && node smoke.mjs",
-    "smoke:failures": "npm run build && (npx vite preview --port 4173 & sleep 6) && node failures.mjs"
+    "smoke": "node ../scripts/portFree.mjs 4173 && VITE_TMDB_TOKEN= npm run build && node ../scripts/served.mjs 4173 \"npx vite preview --port 4173 --strictPort\" node smoke.mjs",
+    "smoke:failures": "npm run build && node ../scripts/served.mjs 4173 \"npx vite preview --port 4173 --strictPort\" node failures.mjs"
   },
   "dependencies": {
     "@reviewies/core": "*",

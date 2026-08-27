@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getConfig } from '@reviewies/core/config';
 import { relayConnectionUrl } from '@reviewies/core/devices/relayUrl';
+import type { Command } from '@reviewies/core/devices/types';
 
 /**
  * Client half of the bridge connection.
@@ -13,21 +14,15 @@ import { relayConnectionUrl } from '@reviewies/core/devices/relayUrl';
  * is an enhancement; a missing bridge must never interfere with tracking.
  */
 
-export type RemoteCommand =
-  | 'play'
-  | 'pause'
-  | 'playpause'
-  | 'forward'
-  | 'back'
-  | 'up'
-  | 'down'
-  | 'left'
-  | 'right'
-  | 'select'
-  | 'home'
-  | 'volumeUp'
-  | 'volumeDown'
-  | 'mute';
+/**
+ * The core's `Command`, not a second copy of it.
+ *
+ * This union was written out here character for character alongside the one in
+ * `core/src/devices/types.ts` — the same list, maintained twice, with nothing checking
+ * that they still agreed. Re-exported under the old name so the drawer's imports keep
+ * reading naturally.
+ */
+export type RemoteCommand = Command;
 
 export interface RemoteDevice {
   id: string;

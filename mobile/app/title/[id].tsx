@@ -30,6 +30,7 @@ import { StarRating } from '../../src/ui/StarRating';
 import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
+import { CrossOff, crossedOff } from '../../src/ui/CrossOff';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -130,6 +131,7 @@ export default function TitleScreen() {
         <View style={styles.ratingBlock}>
           <Text style={styles.ratingLabel}>{COPY.title.yourRating.toUpperCase()}</Text>
           <StarRating
+            of={title?.name ?? 'this title'}
             value={rating?.value}
             onChange={(value) =>
               value === undefined ? clearRating(titleId) : rate(titleId, value)
@@ -250,7 +252,10 @@ function EpisodeRow({
   return (
     <View style={styles.episode}>
       <View style={styles.episodeBody}>
-        <Text numberOfLines={1} style={styles.episodeName}>
+        {/* The ink step is the third channel, beside the ring's fill and its tick. A line
+            through text is invisible to a screen reader and hard to see at a glance; the
+            three together are what make any one of them safe to miss. */}
+        <Text numberOfLines={1} style={[styles.episodeName, crossedOff(watched)]}>
           <Text style={styles.episodeNumber}>{episode.number}. </Text>
           {episode.name}
         </Text>
@@ -271,7 +276,7 @@ function EpisodeRow({
         accessibilityRole="link"
         // Every episode row carries a React and a Talk. Read in a list they are the
         // same two words repeated down the screen.
-        accessibilityLabel={`React along with episode ${episode.number}, ${episode.name}`}
+        accessibilityLabel={`React along with season ${episode.season} episode ${episode.number}, ${episode.name}`}
       >
         <Text style={styles.reactText}>React</Text>
       </Pressable>
@@ -280,27 +285,29 @@ function EpisodeRow({
         onPress={() => router.push(`/comments/${encodeURIComponent(episode.id)}`)}
         style={styles.react}
         accessibilityRole="link"
-        accessibilityLabel={`Comments on episode ${episode.number}, ${episode.name}`}
+        accessibilityLabel={`Comments on season ${episode.season} episode ${episode.number}, ${episode.name}`}
       >
         <Text style={styles.reactText}>Talk</Text>
       </Pressable>
 
-      <Pressable
-        onPress={toggle}
+      {/* The `checked` this used to carry sat on `accessibilityRole="button"`, which has
+          no way to announce it — §6.95's defect on the control it matters most on. A ring
+          is a checkbox. */}
+      <CrossOff
+        watched={watched}
         disabled={!aired && !watched}
-        style={[styles.mark, watched && styles.marked, !aired && !watched && styles.disabled]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !aired && !watched, checked: watched }}
-        accessibilityLabel={
+        onChange={toggle}
+        // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
+        // rule is that every name in a list of rows carries what tells it from its
+        // neighbours, and the episode number alone does not once a show has two seasons.
+        name={
           watched
-            ? `Unmark episode ${episode.number}, ${episode.name}`
-            : `Mark episode ${episode.number}, ${episode.name} watched`
+            ? `Unmark season ${episode.season} episode ${episode.number}, ${episode.name}`
+            : `Mark season ${episode.season} episode ${episode.number}, ${episode.name} watched`
         }
-      >
-        <Text style={[styles.markText, watched && styles.markedText]}>
-          {watched ? 'Watched' : 'Mark'}
-        </Text>
-      </Pressable>
+        onUndo={() => void unwatchLatest(episode.id)}
+        undoName={`Undo marking season ${episode.season} episode ${episode.number}, ${episode.name} watched`}
+      />
 
       {/* Same reason as the title's, and the same quote behind it: "a series of 8
           television episodes is really just a series of 8 films". A film's rating does
@@ -308,6 +315,7 @@ function EpisodeRow({
       {watched && (
         <View style={styles.episodeRating}>
           <StarRating
+            of={`season ${episode.season} episode ${episode.number}, ${episode.name}`}
             value={rating?.value}
             onChange={(value) =>
               value === undefined ? clearRating(episode.id) : rate(episode.id, value)
@@ -394,14 +402,5 @@ const styles = StyleSheet.create({
   },
   reactText: { color: theme.inkSecondary, fontSize: 12 },
 
-  mark: {
-    backgroundColor: theme.actionFill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-  },
-  marked: { backgroundColor: theme.groundWell },
-  markText: { color: theme.actionLabel, fontSize: 12, fontWeight: '700' },
-  markedText: { color: theme.inkSecondary, fontWeight: '400' },
   disabled: { borderColor: theme.strokeHairline },
 });

@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
+import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
+import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
 import { radius, tap, theme } from '../ui/theme';
 
@@ -25,6 +27,9 @@ import { radius, tap, theme } from '../ui/theme';
  * worse.
  */
 export function RemotePanel({ remote }: { remote: Remote }) {
+  // The repeat count comes from the fascia table now. It used to be typed at each call
+  // site, and the web typed a different one — the same key moved a different distance
+  // depending on which screen you pressed it from.
   const press = async (command: Command, times = 1) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     for (let i = 0; i < times; i++) await remote.send(command);
@@ -83,30 +88,37 @@ export function RemotePanel({ remote }: { remote: Remote }) {
           </Text>
         )}
 
+        {/* Off until there is something to talk to. Every key used to render pressable
+            with no device attached: pressing one did nothing and said nothing, which is
+            the state a control should never be in. */}
         <View style={styles.transport}>
-          <Key label="⏪ 15s" name="Back 15 seconds" onPress={() => press('back', 3)} wide />
-          <Key label="⏯" name="Play or pause" onPress={() => press('playpause')} primary />
-          <Key label="15s ⏩" name="Forward 15 seconds" onPress={() => press('forward', 3)} wide />
+          {TRANSPORT.map((spec) => (
+            <Key key={spec.command} spec={spec} disabled={!remote.device} onPress={press} />
+          ))}
         </View>
 
         <View style={styles.dpad}>
-          <View style={styles.dpadRow}>
-            <Key label="▲" name="Up" onPress={() => press('up')} />
-          </View>
-          <View style={styles.dpadRow}>
-            <Key label="◀" name="Left" onPress={() => press('left')} />
-            <Key label="OK" name="Select" onPress={() => press('select')} primary />
-            <Key label="▶" name="Right" onPress={() => press('right')} />
-          </View>
-          <View style={styles.dpadRow}>
-            <Key label="▼" name="Down" onPress={() => press('down')} />
-          </View>
+          {[0, 3, 6].map((start) => (
+            <View key={start} style={styles.dpadRow}>
+              {DPAD.slice(start, start + 3).map((spec, i) =>
+                spec ? (
+                  <Key key={spec.command} spec={spec} disabled={!remote.device} onPress={press} />
+                ) : (
+                  <View key={`gap-${start + i}`} style={styles.dpadGap} />
+                ),
+              )}
+            </View>
+          ))}
         </View>
 
         <View style={styles.transport}>
-          <Key label="Home" onPress={() => press('home')} wide />
-          <Key label="Vol −" name="Volume down" onPress={() => press('volumeDown')} wide />
-          <Key label="Vol +" name="Volume up" onPress={() => press('volumeUp')} wide />
+          {VOLUME.map((spec) => (
+            <Key key={spec.command} spec={spec} disabled={!remote.device} onPress={press} />
+          ))}
+        </View>
+
+        <View style={styles.transport}>
+          <Key spec={HOME} disabled={!remote.device} onPress={press} />
         </View>
 
         {/* What somebody standing here needs to know, and nothing else.
@@ -122,40 +134,6 @@ export function RemotePanel({ remote }: { remote: Remote }) {
           Chromecast and AirPlay are not supported.
         </Text>
     </>
-  );
-}
-
-function Key({
-  label,
-  name,
-  onPress,
-  primary,
-  wide,
-}: {
-  /** What the key shows, which for most of these is a single glyph. */
-  label: string;
-  /** What the key is, for anything that cannot see a glyph. Defaults to the label. */
-  name?: string;
-  onPress: () => void;
-  primary?: boolean;
-  wide?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      // "▲" read aloud is "up-pointing triangle", and "OK" is not obviously a button
-      // that selects. The web remote has named these since it shipped.
-      accessibilityLabel={name ?? label}
-      style={({ pressed }) => [
-        styles.key,
-        wide && styles.keyWide,
-        primary && styles.keyPrimary,
-        pressed && styles.keyPressed,
-      ]}
-    >
-      <Text style={[styles.keyText, primary && styles.keyTextPrimary]}>{label}</Text>
-    </Pressable>
   );
 }
 
@@ -184,20 +162,7 @@ const styles = StyleSheet.create({
   transport: { flexDirection: 'row', gap: 8 },
   dpad: { alignItems: 'center', gap: 8 },
   dpadRow: { flexDirection: 'row', gap: 8 },
-
-  key: {
-    minWidth: 72,
-    minHeight: 60,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  keyWide: { flex: 1 },
-  keyPrimary: { backgroundColor: theme.actionFill },
-  keyPressed: { transform: [{ scale: 0.95 }] },
-  keyText: { color: theme.ink, fontSize: 16 },
-  keyTextPrimary: { color: theme.actionLabel, fontWeight: '700' },
+  dpadGap: { minWidth: 72 },
 
   footnote: { color: theme.inkSecondary, fontSize: 11, lineHeight: 16, marginTop: 8 },
 });

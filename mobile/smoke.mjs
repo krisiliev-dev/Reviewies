@@ -184,7 +184,22 @@ async function audit(screen, atLeast) {
         small.push(`${name || el.tagName} ${Math.round(box.width)}x${Math.round(box.height)}`);
       }
     }
-    return { named: named.length, nameless, small };
+    /*
+     * Two controls a screen reader cannot tell apart. The web's copy of this found the
+     * title page announcing "React along with episode 5, Episode 5" twice, once per
+     * season, and the phone had exactly the same names.
+     *
+     * Named for what it measures rather than the rule it is reaching for. "No two controls
+     * share a name" is not the rule — five "React" links down a season share one and are
+     * fine, because each is reached by reading the row it sits in. A *pair* is the shape a
+     * collision takes.
+     */
+    const byName = new Map();
+    for (const name of named) byName.set(name, (byName.get(name) ?? 0) + 1);
+    const collisions = [...byName.entries()]
+      .filter(([, count]) => count === 2)
+      .map(([name]) => name);
+    return { named: named.length, nameless, small, collisions };
   });
 
   check(
@@ -198,6 +213,11 @@ async function audit(screen, atLeast) {
     `${screen}: and the screen reports its controls`,
     found.named >= atLeast,
     `${found.named} found, expected at least ${atLeast}`,
+  );
+  check(
+    `${screen}: no name is shared by exactly two controls`,
+    found.collisions.length === 0,
+    found.collisions.join(' | '),
   );
   check(
     `${screen}: every control is big enough to hit`,
@@ -324,7 +344,12 @@ try {
   await page.screenshot({ path: OUT + '3-upnext.png' });
 
   // --- Mark watched ----------------------------------------------------------
-  await page.getByText('Watched', { exact: true }).first().click();
+  // By name rather than by the word printed on it: the pill said "Watched", the ring says
+  // nothing at all, and the name is the part that was always meant to carry it.
+  await page
+    .getByRole('checkbox', { name: /^Mark The Long Dark S1E1 watched$/ })
+    .first()
+    .click();
   await page.waitForSelector('text=/S1E2/', { timeout: 15000 });
   const after = await text();
   const now = Number(after.match(/(\d+) more episodes/)?.[1]);
@@ -508,7 +533,31 @@ try {
   await page.getByText('Control a TV on your Wi-Fi, directly').click();
   await page.waitForTimeout(1500);
   const remote = await text();
-  check('the remote opens with its buttons', /Scan Wi-Fi/.test(remote) && /Home/.test(remote), remote.slice(0, 110));
+  // By name rather than by the legend printed on the key: the legends are mono marks now
+  // ('HOME', 'VOL +', '−15'), and the name is the part that was always meant to carry it.
+  check(
+    'the remote opens with its buttons',
+    /Scan Wi-Fi/.test(remote) && (await page.getByLabel('Home').count()) > 0,
+    remote.slice(0, 110),
+  );
+
+  /*
+   * And every one of them is off until there is something to talk to.
+   *
+   * Every key used to render pressable with no device attached, so pressing one did
+   * nothing and said nothing about why. The web faded the lot behind a `fieldset` at 40%
+   * opacity, which says "broken" rather than "waiting". This is the state the suite lands
+   * in every run — no television on this network — so it is the state worth asserting.
+   */
+  check(
+    'and every key is off until a device is found',
+    await page.evaluate(() =>
+      ['Up', 'Select', 'Play or pause', 'Home', 'Volume up'].every((name) => {
+        const el = document.querySelector(`[aria-label="${name}"]`);
+        return el instanceof HTMLButtonElement && el.disabled;
+      }),
+    ),
+  );
   check(
     'it says plainly that nothing is paired yet',
     /No device yet/.test(remote),

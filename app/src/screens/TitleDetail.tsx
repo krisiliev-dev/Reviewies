@@ -13,6 +13,7 @@ import {
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
+import { CrossOff, crossedOffText } from '../ui/CrossOff';
 import { StarRating } from '../ui/StarRating';
 import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
@@ -125,6 +126,7 @@ export function TitleDetail() {
           {COPY.title.yourRating}
         </span>
         <StarRating
+          of={title?.name ?? 'this title'}
           value={rating?.value}
           onChange={(value) =>
             value === undefined ? clearRating(titleId) : rate(titleId, value)
@@ -221,7 +223,10 @@ function EpisodeRow({
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-plate bg-ground-raised px-3 py-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm">
+        {/* The ink step is the third channel, beside the ring's fill and its tick. A line
+            through text is invisible to a screen reader and hard to see at a glance; the
+            three together are what make any one of them safe to miss. */}
+        <p className={`truncate text-sm ${crossedOffText(watched)}`}>
           <span className="text-ink-secondary">{episode.number}.</span> {episode.name}
         </p>
         <p className="text-xs text-ink-secondary">
@@ -238,7 +243,7 @@ function EpisodeRow({
           Talk, Mark" forty times over with nothing to tell them apart. */}
       <Link
         to={`/watching/${encodeURIComponent(episode.id)}`}
-        aria-label={`React along with episode ${episode.number}, ${episode.name}`}
+        aria-label={`React along with season ${episode.season} episode ${episode.number}, ${episode.name}`}
         className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
       >
         React
@@ -246,31 +251,34 @@ function EpisodeRow({
 
       <Link
         to={`/comments/${encodeURIComponent(episode.id)}`}
-        aria-label={`Comments on episode ${episode.number}, ${episode.name}`}
+        aria-label={`Comments on season ${episode.season} episode ${episode.number}, ${episode.name}`}
         className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
       >
         Talk
       </Link>
 
-      <button
-        onClick={() =>
-          watched
-            ? unwatchLatest(episode.id)
-            : markWatched({ targetId: episode.id, seriesId, runtimeMin: episode.runtimeMin })
-        }
+      {/* Was a pill reading "Mark" or "Watched", announcing `aria-pressed` and fading to
+          30% when unaired — three separate things the component settles. Unaired is now a
+          hairline ring rather than a fade, which reads as "not yet" instead of as broken. */}
+      <CrossOff
+        watched={watched}
         disabled={!aired && !watched}
-        aria-pressed={watched}
-        aria-label={
+        // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
+        // rule is that every name in a list of rows carries what tells it from its
+        // neighbours, and the episode number alone does not once a show has two seasons.
+        name={
           watched
-            ? `Unmark episode ${episode.number}, ${episode.name}`
-            : `Mark episode ${episode.number}, ${episode.name} watched`
+            ? `Unmark season ${episode.season} episode ${episode.number}, ${episode.name}`
+            : `Mark season ${episode.season} episode ${episode.number}, ${episode.name} watched`
         }
-        className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-30 ${
-          watched ? 'border border-stroke-signal text-ink-secondary' : 'bg-action-fill text-action-label'
-        }`}
-      >
-        {watched ? 'Watched' : 'Mark'}
-      </button>
+        onChange={(next) =>
+          next
+            ? markWatched({ targetId: episode.id, seriesId, runtimeMin: episode.runtimeMin })
+            : unwatchLatest(episode.id)
+        }
+        onUndo={() => unwatchLatest(episode.id)}
+        undoName={`Undo marking season ${episode.season} episode ${episode.number}, ${episode.name} watched`}
+      />
 
       {/* A line of its own, below the row rather than squeezed into the column beside
           three buttons — same reason as the title's. "A series of 8 television episodes
@@ -279,6 +287,7 @@ function EpisodeRow({
       {watched && (
         <div className="w-full">
           <StarRating
+            of={`season ${episode.season} episode ${episode.number}, ${episode.name}`}
             value={rating?.value}
             onChange={(value) =>
               value === undefined ? clearRating(episode.id) : rate(episode.id, value)

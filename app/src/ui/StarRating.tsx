@@ -18,10 +18,20 @@ import { useState } from 'react';
 export function StarRating({
   value,
   onChange,
+  of,
   size = 'md',
 }: {
   value?: number;
   onChange: (value: number | undefined) => void;
+  /**
+   * What is being rated, for the ten star names.
+   *
+   * Required, because a title page carries two of these — the show's rating and the
+   * rating on whichever episode is watched — and both announced "4 stars" with nothing
+   * to say which four stars. Doc 6 §5: every name in a list carries what tells it from
+   * its neighbours. Found by the smoke's name-collision check the day it was written.
+   */
+  of: string;
   size?: 'sm' | 'md';
 }) {
   const [hover, setHover] = useState<number>();
@@ -41,13 +51,13 @@ export function StarRating({
         >
           {/* Two overlapping hit areas per star: left half sets x.5, right sets x. */}
           <button
-            aria-label={`${star - 0.5} stars`}
+            aria-label={`Rate ${of} ${star - 0.5} stars`}
             onMouseEnter={() => setHover(star - 0.5)}
             onClick={() => onChange(value === star - 0.5 ? undefined : star - 0.5)}
             className="absolute inset-y-0 left-0 z-10 w-1/2"
           />
           <button
-            aria-label={`${star} stars`}
+            aria-label={`Rate ${of} ${star} stars`}
             onMouseEnter={() => setHover(star)}
             onClick={() => onChange(value === star ? undefined : star)}
             className="absolute inset-y-0 right-0 z-10 w-1/2"

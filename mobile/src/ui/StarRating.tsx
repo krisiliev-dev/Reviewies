@@ -23,10 +23,20 @@ const MIN_HALF = 24;
 export function StarRating({
   value,
   onChange,
+  of,
   size = 28,
 }: {
   value?: number;
   onChange: (value: number | undefined) => void;
+  /**
+   * What is being rated, for the ten star names.
+   *
+   * Required, because a title page carries two of these — the show's rating and the
+   * rating on whichever episode is watched — and both announced "4 stars" with nothing
+   * to say which four stars. Doc 6 §5: every name in a list carries what tells it from
+   * its neighbours. Found by the smoke's name-collision check the day it was written.
+   */
+  of: string;
   size?: number;
 }) {
   const set = (next: number) => onChange(next === value ? undefined : next);
@@ -48,13 +58,13 @@ export function StarRating({
               style={styles.half}
               onPress={() => set(star - 0.5)}
               accessibilityRole="button"
-              accessibilityLabel={`${star - 0.5} stars`}
+              accessibilityLabel={`Rate ${of} ${star - 0.5} stars`}
             />
             <Pressable
               style={[styles.half, styles.right]}
               onPress={() => set(star)}
               accessibilityRole="button"
-              accessibilityLabel={`${star} stars`}
+              accessibilityLabel={`Rate ${of} ${star} stars`}
             />
           </View>
         );

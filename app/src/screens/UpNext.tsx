@@ -19,6 +19,7 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
+import { CrossOff } from '../ui/CrossOff';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -40,7 +41,6 @@ export function UpNext() {
    * vanish mid-confirmation, leaving no sign that anything happened.
    */
   const [catchingUp, setCatchingUp] = useState<{ seriesId: string; seriesName: string }>();
-  const [marked, setMarked] = useState<{ targetId: string; label: string }>();
   const [imported, setImported] = useState<ImportReport>();
   // Not an episode count: an import now writes the episodes it knows were watched, so
   // "no episodes" stopped meaning "nothing matched" the moment that landed.
@@ -170,28 +170,14 @@ export function UpNext() {
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Up Next</h1>
 
-      {/* §6.64: two tabs racing at the same button showed the row changing under the
-          click — the other tab's write landed between the render and the press. A live
-          list is live, and cannot be made otherwise; what was missing was the way back
-          from a mark nobody meant. Also the answer to the ordinary mis-tap. */}
-      {marked && (
-        <div className="mb-3 flex items-center gap-3 px-1" role="status">
-          <span className="text-sm text-ink-secondary">{COPY.upNext.justMarked(marked.label)}</span>
-          <button
-            onClick={async () => {
-              await unwatchLatest(marked.targetId);
-              setMarked(undefined);
-            }}
-            className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm"
-          >
-            {COPY.upNext.undo}
-          </button>
-        </div>
-      )}
+      {/* §6.64's undo — two tabs racing at the same button showed the row changing under
+          the click, and the mis-tap needs the same way back — used to be a banner here,
+          two hundred points from the tap that caused it and above a list that had already
+          reflowed. It sits beside the ring now, within reach of the thumb that made the mark. */}
 
       <ul className="flex flex-col gap-2">
         {entries.map((entry) => (
-          <UpNextRow key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} onMarked={setMarked} />
+          <UpNextRow key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
         ))}
       </ul>
 
@@ -209,25 +195,37 @@ export function UpNext() {
 function UpNextRow({
   entry,
   onCatchUp,
-  onMarked,
 }: {
   entry: UpNextEntry;
   onCatchUp: (series: { seriesId: string; seriesName: string }) => void;
-  onMarked: (marked: { targetId: string; label: string }) => void;
 }) {
   const { episode } = entry;
   const navigate = useNavigate();
 
-  async function onWatched() {
+  /**
+   * Which episode this row's ring was last filled for, so that the fill is a confirmation
+   * of something rather than a decoration.
+   *
+   * The row is keyed by series and its `episode` becomes the *next* one the moment the
+   * live query re-runs, so a plain boolean would carry the mark across onto an episode
+   * nobody has watched. Holding the id instead makes it self-clearing: it stops matching
+   * the second the list moves on. It is also what undo has to name — `unwatchLatest` on
+   * the episode now in the row would take back the wrong one.
+   */
+  const [markedId, setMarkedId] = useState<string>();
+  const justMarked = markedId === episode.id;
+
+  function onWatched() {
     // Optimistic by construction: the write goes to IndexedDB and useLiveQuery
-    // re-renders. Nothing waits on a network round-trip.
-    await markWatched({
+    // re-renders. Nothing waits on a network round-trip — and nothing here awaits it,
+    // because the ring has no state in which it is waiting.
+    void markWatched({
       targetId: episode.id,
       seriesId: entry.seriesId,
       runtimeMin: episode.runtimeMin,
     });
+    setMarkedId(episode.id);
     navigator.vibrate?.(10);
-    onMarked({ targetId: episode.id, label: `S${episode.season}E${episode.number}` });
 
     // How TV Time worked, and named as a failing in two of its successors. Only when
     // there is an account behind it — otherwise there is no conversation to open and
@@ -236,6 +234,12 @@ function UpNextRow({
     if (openCommentsAfterWatch() && syncConfigured()) {
       navigate(`/comments/${encodeURIComponent(episode.id)}`);
     }
+  }
+
+  function undoMark() {
+    // The id, not `episode.id`: by now the row is showing the next episode.
+    if (markedId) void unwatchLatest(markedId);
+    setMarkedId(undefined);
   }
 
   return (
@@ -280,15 +284,26 @@ function UpNextRow({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col items-stretch gap-1.5">
-        <button
-          onClick={onWatched}
-          // Large target: this gets tapped in the dark, one-handed.
-          className="rounded-pill bg-action-fill px-4 py-3 text-sm font-semibold text-action-label active:scale-95"
-          aria-label={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
-        >
-          Watched
-        </button>
+      {/* Right-aligned, not stretched. `items-stretch` put the 44pt ring at the *left*
+          edge of the action column with a full-width pill under it, so the one control
+          that is meant to be in the same place on every row of every list was floating
+          in the middle of the row. It is at the trailing edge now and the link is its
+          own width. */}
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        {/* Was a filled "Watched" pill whose undo appeared as a banner at the top of the
+            screen. The ring is the same tap in the dark, one-handed, and the way back is
+            beside it rather than above a list that has already reflowed. */}
+        <CrossOff
+          watched={justMarked}
+          name={
+            justMarked
+              ? `Unmark ${entry.seriesName} S${episode.season}E${episode.number}`
+              : `Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`
+          }
+          onChange={(next) => (next ? onWatched() : undoMark())}
+          onUndo={undoMark}
+          undoName={`Undo marking ${entry.seriesName} S${episode.season}E${episode.number} watched`}
+        />
         <Link
           to={`/watching/${encodeURIComponent(episode.id)}`}
           aria-label={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}

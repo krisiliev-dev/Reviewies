@@ -75,17 +75,17 @@ export const COPY = {
   },
 
   upNext: {
-    /**
-     * What was just marked, and the way back.
+    /*
+     * `justMarked` and `undo` used to live here, for the reason §6.64 found by racing two
+     * tabs at the same Mark button: the other tab's write arrived between the render and
+     * the press, so the tap landed on the next episode. Nothing can prevent that — a live
+     * list is live — but a one-tap write with no way back is the part that made it
+     * expensive, and marking is the action this product exists for.
      *
-     * §6.64 raced two tabs at the same Mark button and watched the row change under the
-     * click: the other tab's write arrived between the render and the press, so the tap
-     * landed on the next episode. Nothing can prevent that — a live list is live — but a
-     * one-tap write with no way back is the part that made it expensive. Marking is the
-     * action this product exists for and the one most likely to be made by accident.
+     * The way back is still there and is now closer: `ui/crossOff.ts` puts it in the
+     * ring's own slot for six seconds rather than in a banner at the top of a list that
+     * has already reflowed. The words moved with it, so there is nothing left to own here.
      */
-    justMarked: (what: string) => `Marked ${what}`,
-    undo: 'Undo',
 
     /**
      * Still working.

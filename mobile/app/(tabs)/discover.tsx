@@ -100,20 +100,19 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
 
   return (
     <View style={styles.row}>
+      {/* One target, not two. The poster and the title were separate `link`s to the same
+          route with the same name, so the card announced "Open Quiet Harbour" twice and a
+          screen reader had to try both to learn they were the same place. Doc 6 §5's rule
+          is that a row exposes at most one navigation target; the web's copy of this card
+          has always had one. Wrapping both makes the target bigger, too. */}
       <Pressable
         onPress={() => router.push(`/title/${encodeURIComponent(item.id)}`)}
         accessibilityRole="link"
         accessibilityLabel={`Open ${item.name}`}
+        style={styles.open}
       >
         <Poster url={item.posterUrl} name={item.name} />
-      </Pressable>
-
-      <View style={styles.rowBody}>
-        <Pressable
-          onPress={() => router.push(`/title/${encodeURIComponent(item.id)}`)}
-          accessibilityRole="link"
-          accessibilityLabel={`Open ${item.name}`}
-        >
+        <View style={styles.opened}>
           <Text numberOfLines={1} style={styles.title}>
             {item.name}
           </Text>
@@ -121,12 +120,16 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             {item.kind === 'show' ? 'Series' : 'Film'}
             {item.year ? ` · ${item.year}` : ''}
           </Text>
-        </Pressable>
-        {/* Saying why is what separates a recommendation from an advert. */}
-        <Text numberOfLines={2} style={styles.because}>
-          {COPY.discover.because(item.because)}
-        </Text>
+          {/* Saying why is what separates a recommendation from an advert. Inside the
+              link because it is about the show; the announced name comes from
+              `accessibilityLabel`, so this does not lengthen it. */}
+          <Text numberOfLines={2} style={styles.because}>
+            {COPY.discover.because(item.because)}
+          </Text>
+        </View>
+      </Pressable>
 
+      <View style={styles.rowBody}>
         {/* Doc 10, second evening: a suggestion here was a link and nothing else, so
             the screen whose whole job is getting something into your library made you
             open the show to do it. The web has offered both since Discover shipped. */}
@@ -163,14 +166,18 @@ const styles = StyleSheet.create({
   heading: { color: theme.ink, fontSize: 30, fontWeight: '700' },
   blurb: { color: theme.inkSecondary, fontSize: 14, marginBottom: 4 },
   error: { color: theme.trouble, fontSize: 14 },
+  // A column now: the one link holds the poster and everything about the show, and the
+  // two actions sit under it. It was a row of poster-plus-body, with the poster its own
+  // link to the same place under the same name.
   row: {
-    flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
     padding: 12,
   },
-  rowBody: { flex: 1, minWidth: 0, gap: 4 },
+  open: { flexDirection: 'row', gap: 12 },
+  opened: { flex: 1, minWidth: 0, gap: 4 },
+  rowBody: { gap: 4 },
   title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
   year: { color: theme.inkSecondary, fontSize: 12 },
   because: { color: theme.inkSecondary, fontSize: 12 },

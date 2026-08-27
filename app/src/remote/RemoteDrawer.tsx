@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
 import { useDialog } from '../ui/useDialog';
+import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
+import { Key } from '../ui/Key';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -11,36 +13,12 @@ import { useDialog } from '../ui/useDialog';
  * A tab on the edge, and otherwise invisible.
  */
 
-interface ButtonSpec {
-  command: RemoteCommand;
-  label: string;
-  glyph: string;
-  wide?: boolean;
-}
-
-const TRANSPORT: ButtonSpec[] = [
-  { command: 'back', label: 'Back 15 seconds', glyph: '↺' },
-  { command: 'playpause', label: 'Play or pause', glyph: '⏯', wide: true },
-  { command: 'forward', label: 'Forward 15 seconds', glyph: '↻' },
-];
-
-const DPAD: Array<ButtonSpec | null> = [
-  null,
-  { command: 'up', label: 'Up', glyph: '▲' },
-  null,
-  { command: 'left', label: 'Left', glyph: '◀' },
-  { command: 'select', label: 'Select', glyph: '●' },
-  { command: 'right', label: 'Right', glyph: '▶' },
-  null,
-  { command: 'down', label: 'Down', glyph: '▼' },
-  null,
-];
-
-const VOLUME: ButtonSpec[] = [
-  { command: 'volumeDown', label: 'Volume down', glyph: '−' },
-  { command: 'mute', label: 'Mute', glyph: '🔇' },
-  { command: 'volumeUp', label: 'Volume up', glyph: '+' },
-];
+/*
+ * The fascia used to be three arrays right here, and the phone had three of its own. They
+ * disagreed: Back-15 was `↺` on the web and `⏪ 15s` on the phone, Select was `●` here and
+ * `OK` there, and one press of skip moved fifteen seconds on the phone and whatever a
+ * single `Fwd` does here. `core/src/ui/key.ts` is the table now.
+ */
 
 function formatTime(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds));
@@ -63,8 +41,11 @@ export function RemoteDrawer() {
   // no control.
   if (!bridgeConfigured()) return null;
 
-  const press = (command: RemoteCommand) => {
-    bridge.send(command);
+  // The repeat count comes from the fascia table. Skip sent one press here and three on
+  // the phone, so the same key moved a different distance depending on which screen you
+  // pressed it from — nobody decided that either.
+  const press = (command: RemoteCommand, repeat = 1) => {
+    for (let i = 0; i < repeat; i++) bridge.send(command);
     navigator.vibrate?.(8);
   };
 
@@ -167,52 +148,38 @@ export function RemoteDrawer() {
           </div>
         )}
 
-        <fieldset disabled={!bridge.selected} className="flex flex-col gap-4 disabled:opacity-40">
-          <div className="grid grid-cols-4 gap-2">
-            {TRANSPORT.map((b) => (
-              <Key key={b.command} spec={b} onPress={press} />
+        {/* Each key carries its own disabled state rather than a `fieldset` at 40% opacity
+            over the lot. The fade was the one `appearance.test.ts` bans, and it was doing
+            the work of telling somebody there is no television yet. */}
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            {TRANSPORT.map((spec) => (
+              <Key key={spec.command} spec={spec} disabled={!bridge.selected} onPress={press} />
             ))}
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            {DPAD.map((b, i) =>
-              b ? <Key key={b.command} spec={b} onPress={press} /> : <div key={`gap-${i}`} />,
+            {DPAD.map((spec, i) =>
+              spec ? (
+                <Key key={spec.command} spec={spec} disabled={!bridge.selected} onPress={press} />
+              ) : (
+                <div key={`gap-${i}`} />
+              ),
             )}
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            {VOLUME.map((b) => (
-              <Key key={b.command} spec={b} onPress={press} />
+            {VOLUME.map((spec) => (
+              <Key key={spec.command} spec={spec} disabled={!bridge.selected} onPress={press} />
             ))}
           </div>
 
-          <button
-            onClick={() => press('home')}
-            className="rounded-pill border border-stroke-signal py-3 text-sm text-ink-secondary"
-          >
-            Home
-          </button>
-        </fieldset>
+          <Key spec={HOME} disabled={!bridge.selected} onPress={press} />
+        </div>
 
         {bridge.error && <p className="text-xs text-trouble">{bridge.error}</p>}
       </aside>
     </>
-  );
-}
-
-function Key({ spec, onPress }: { spec: ButtonSpec; onPress: (c: RemoteCommand) => void }) {
-  return (
-    <button
-      onClick={() => onPress(spec.command)}
-      aria-label={spec.label}
-      // Exactly one aspect utility: emitting both `aspect-square` and `aspect-auto`
-      // leaves the winner to stylesheet order rather than intent.
-      className={`flex items-center justify-center rounded-pill bg-ground-raised text-xl active:scale-90 ${
-        spec.wide ? 'col-span-2' : 'aspect-square'
-      }`}
-    >
-      <span aria-hidden="true">{spec.glyph}</span>
-    </button>
   );
 }
 

@@ -6452,6 +6452,117 @@ it would be *wrong* rather than merely out of date.
 carries the undo window, and `title/[id].tsx` currently puts `aria-checked` on a `button`
 role — the same defect this section is about, on the control where it matters most.
 
+### 6.96 The cross-off and the fascia, and two components that hid the thing they were for
+
+`CrossOff` is the most-repeated action in the product and it was three controls. Up Next
+had a filled *Watched* pill whose undo appeared as a banner at the top of the screen, two
+hundred points from the tap that caused it and above a list that had already reflowed. The
+title page had a *Mark* / *Watched* pill announcing `checked` through
+`accessibilityRole="button"` — §6.95's defect, on the control where it matters most — and
+fading to 30% when unaired. The web had its own pair, announcing `aria-pressed`, which says
+"a toggle button" rather than "a thing that is or is not done". An open circle you fill is
+exactly what `aria-checked` was invented for, and there is now one of them.
+
+**It has no loading state, on purpose.** `markWatched` writes locally and the query re-runs;
+`index.tsx` has said "optimistic by construction — nothing waits on a network round-trip" in
+a comment since it shipped, and the phone's row nonetheless carried a `busy` flag that
+disabled the button for the length of a local SQLite write. The guard asserts the absence:
+no `ActivityIndicator`, no `busy`, no `await` in either renderer.
+
+**The first version of the undo was wrong, and writing the guard is what showed it.** The
+chip took the ring's slot by *replacing* it, which reads well in a specification and costs
+two things in practice. The filled ring is the confirmation somebody just earned, and
+hiding it for six seconds to show the way out is backwards; and on the web, unmounting the
+button that was just activated drops focus to the body, so a keyboard user is returned to
+the top of the page as a reward for marking an episode. It is a sibling of the ring now,
+and the clause that says so — *keeps the ring on screen while the undo is offered* — is the
+one the plant had to be written against, not the one the design doc suggested.
+
+**Three channels, and only one of them was owned.** The ring's fill, the tick, and the row's
+ink step each say "watched" alone, because a line through text is invisible to a screen
+reader. Exporting `crossedOffText()` from the component was half of it: a row that spells
+out its own `line-through` is a row free to pick a different colour, so the guard also
+checks that nothing outside the component draws one.
+
+`Key` is the same story with a different ending. Three surfaces render the remote fascia and
+each had its own table: Back-15 was `⏪ 15s` on the phone and `↺` on the web, Select was `OK`
+and `●`, one press of skip moved fifteen seconds on the phone and whatever a single `Fwd`
+does on the web, and the web had a Mute key the phone did not. Nobody decided any of that,
+and nothing could have noticed it — the two files never met. The legends are mono marks now,
+with `U+FE0E` where a triangle is still right, because a bare `▶` is emoji-presentation by
+default on several platforms and that is how a flat vector triangle ended up beside a
+rounded orange one in the same row.
+
+**And every key was live with nothing attached.** The phone rendered eleven pressable keys
+with no television found: pressing one did nothing and said nothing about why. The web
+wrapped its twelve in `<fieldset disabled className="disabled:opacity-40">`, which is the
+fade `appearance.test.ts` bans — a faded fill is a dark block with dark lettering, and reads
+as broken rather than as waiting. Disabled is a hairline rule and a step to tertiary ink, on
+both.
+
+**A test-only export, caught in a minute.** `key.ts` shipped a `FASCIA` constant listing
+every key, and `coreWiring.test.ts` failed on the next run: nothing in the product reached
+it, only the guard. The same judgement removed `STRUCK.draw` from the cross-off contract —
+`duration.crossOff` was in the table and neither renderer drew a travelling stroke, so it was
+a number that looked decided and was not. Both are the §6.59 shape one layer down: not an
+excuse outliving its condition, but a *decision* recorded without anything acting on it.
+
+**And the same rule, applied to itself, found seven more — and an asymmetry they were
+hiding.** Each web component ended with a line like `export const BUTTON_SIZE = SIZE`,
+commented *"so a screen never has to reach past the component for its own metrics"*. No
+screen ever did: nothing in the repository imported any of the seven. Deleting them turned
+`coreWiring.test.ts` red in a different place, and what it reported is true and worth
+saying: the phone reads these tables and the web does not. React Native puts the numbers
+and colour names straight into a `StyleSheet`; the DOM writes Tailwind class strings,
+because Tailwind's scanner reads *source text* and a class assembled from a token name at
+runtime is never compiled. The re-exports had been making the scan count a read that was
+not happening, so the honest divergence is now written down in the exemption map with the
+component guards named as what holds the web's written-out classes to the table.
+
+**A suite that poisoned its own next run.** Two runs this sprint failed with `EADDRINUSE`
+before testing anything, because `(npx vite preview & sleep 6) && node smoke.mjs` starts a
+server the shell never owns: when the suite passes, `npm` exits and takes it down; when the
+suite *fails*, the preview keeps the port and the next run stops in front of it. So the run
+after a red run was red for a different reason, and the first thing anybody did was kill a
+process by hand. `scripts/served.mjs` owns the server for the length of the suite on both
+workspaces, waits for the port to answer rather than sleeping six seconds at it, and takes
+it down in every exit path — proved by running it against a suite that exits non-zero.
+
+**A locator that could not be written found a defect the locator was not looking for.**
+Asking the smoke for "the ring on episode 5" matched two of them: season 1 and season 2 each
+have an *episode 5, Episode 5*, so both rings answered to the same sentence. Doc 6 §5 already
+states the rule — *"every name includes the title, because a screen of rows is the same two
+words repeated down the page"* — and the episode number alone stops satisfying it at two
+seasons. The names carry the season on both platforms now, and `audit()` grew a clause that
+looks for the shape rather than the instance: **a name shared by exactly two controls**. It
+found three more classes the moment it ran, on both platforms and none of them in the
+cross-off. The React and Talk links on every episode row had the same collision, sixteen
+names of it. The phone's Discover card gave the poster and the title *separate* `link`s to
+the same route under the same name, where the web's card has always had one — Doc 6 §5 again:
+a row exposes at most one navigation target. And a title page showing a watched episode
+carries two star ratings, the show's and the episode's, both announcing "4 stars" with
+nothing to say which four stars; `StarRating` takes a required `of` now, so it is *"Rate
+season 2 episode 5, Whiteout 4 stars"*.
+
+The clause is named for what it measures rather than the rule it is reaching for, because
+"no two controls share a name" is *not* the rule: five React links down a season share one
+and are fine, since each is reached by reading the row it sits in. A pair is the signal.
+That clause is on both platforms; `legible()`, still, is only on the web.
+
+Twelve plants, all caught on the clause that names them: a spinner in the ring, `checked` on
+a button role, an undo window typed rather than taken from the table, `aria-pressed` on the
+web ring, the undo replacing the ring again, a row spelling out its own strike, a colour
+emoji back in a legend, the fascia faded again with an opacity, a key live with no device, a
+surface keeping a table of its own, a renderer typing its own repeat count, and a renderer
+typing its own key height.
+
+App unit tests 444 → 459. Smoke web 242 → 261, phone 166 → 185.
+
+**`Row` did not land, so neither did the call-site guard.** It is nine routes and ten
+implementations across two platforms — the estimate that it was "simpler" than `CrossOff`
+was wrong, and it is a sprint of its own. Four `Pressable`s still carry their own box: More's
+links and MatchImports' candidates, and two dismiss surfaces that are not controls at all.
+
 
 ## 7. What is still not known
 
@@ -6741,13 +6852,14 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **Two of sixteen components exist, and the call-site guard needs three more.** `Button`
-  (§6.93, §6.94) and `Choice` (§6.95) are in. Seven `Pressable`s still carry their own box
-  and each is a `Row`, a `Key`, a `CrossOff` or a dismiss surface, so the guard would
-  report seven non-violations. Until it lands a screen can still write its own fill and
-  padding and nothing will say so. `CrossOff` is the one that matters most — the app's
-  most-repeated action, and the control that still puts `aria-checked` on a `button` role,
-  which is exactly the defect §6.95 was about. The poster is the one holding `ratio` in
+- **Four of sixteen components exist, and the call-site guard needs one more.** `Button`
+  (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are in. What still carries
+  its own box is `Row` — More's links and MatchImports' candidates — plus two dismiss
+  surfaces that are not controls at all and have to be excluded by shape rather than by an
+  allowlist. So the guard would still report non-violations, and until it lands a screen can
+  write its own fill and padding with nothing to say so. `Row` is nine routes and ten
+  implementations across two platforms; the estimate that it was simpler than `CrossOff` was
+  wrong, and it is a sprint of its own. The poster is the one holding `ratio` in
   `coreWiring`'s exemption list.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
