@@ -1,0 +1,103 @@
+/**
+ * The listing row: full bleed, ruled, one target and one action.
+ *
+ * Nine routes carry ten of these and the web carries its own copies, all built the same
+ * way and none of them agreeing: a rounded fill in `ground.raised` with a gutter round it,
+ * a poster, a title, a meta line, and however many controls the screen felt like. The
+ * direction's objection is that **every card in this build is a rounded fill doing a
+ * rule's job** — thirty-nine `backgroundColor` declarations that exist to separate one row
+ * from the next, which is what a one-point rule is for.
+ *
+ * **The accessibility contract is the load-bearing part, and it is not a style rule.**
+ * A row is not one control. It exposes *at most one navigation target and one action*, and
+ * every name carries what tells that row from its neighbours — because a screen of rows is
+ * the same two words repeated down the page, and a screen reader reads the control, not
+ * what is above it. The codebase learned this three separate times in comments before
+ * anything enforced it, and §6.96's name-collision clause then found four live violations
+ * in a single run. `calendar.tsx` is the one the design doc named and it is still wrong
+ * today: the whole entry is a single `Pressable` labelled `Open {name}`, so the episode
+ * code and the episode name are announced twice or not at all.
+ *
+ * So `open.name` is a required string, and a row with no `open` is not pressable at all —
+ * a card that navigates without saying where is worse than a card that does not navigate.
+ */
+import { border, size, space } from '../tokens.ts';
+
+/**
+ * `listing` is the full-bleed row; `index` is the More screen's contents line.
+ *
+ * Two, not five: the shapes that differ are the ones with a poster and the ones without,
+ * and `lead` already says which of those a row is.
+ */
+export type RowDensity = 'listing' | 'index';
+
+/**
+ * The rule, and the two heights.
+ *
+ * 66 with a poster because that is the poster (64 tall at the row size) plus the hairline;
+ * `size.target` without one, because a row you can press is a control and 44 is the floor.
+ * The rule is on the *bottom*, so a list ends on one and a screen does not need to know
+ * whether a row is the last.
+ */
+export const ROW = {
+  rule: border.hairline,
+  colour: 'strokeHairline',
+  minHeight: { listing: 66, index: size.target },
+  padY: space.s8,
+  gap: space.s12,
+  /** The poster at row size. Everything that carries one carries the same one. */
+  lead: { width: 44, height: 64 },
+} as const;
+
+/**
+ * The ink, in one place, so the twenty rows stop each picking their own.
+ *
+ * `struck` is the *result* of a cross-off, not the control: the title page shows struck
+ * rows for episodes marked on another device, with no animation and no undo window.
+ * `CrossOff` owns the control and exports the ink step; a row that spelled out its own
+ * would be free to pick a different colour, which `crossOff.test.ts` already forbids.
+ */
+export const ROW_INK = {
+  title: 'ink',
+  meta: 'inkSecondary',
+  tag: 'inkSecondary',
+  /** Unaired, unavailable, not yet. Never a fade — see `Button` and `Key`. */
+  disabled: 'inkTertiary',
+} as const;
+
+/**
+ * That the row goes somewhere, and what to call it.
+ *
+ * The *name* is the shared rule and it is required: a navigation target with no name is
+ * the `calendar.tsx` defect, and a name without what distinguishes the row is the §6.96
+ * collision — "Open Andor" twice on one screen, once for the poster and once for the
+ * words.
+ *
+ * *How* it navigates is not shared, and pretending otherwise put a no-op `run` in the
+ * first web call site to satisfy a field the renderer never called. React Native pushes a
+ * route; the DOM wants a real `<a href>` so that middle-click, copy-link and
+ * open-in-new-tab keep working — a router push behind an `onClick` silently takes all
+ * three away. So each renderer extends this with its own, and the type makes leaving it
+ * out a compile error rather than a dead row.
+ */
+export interface RowOpen {
+  name: string;
+}
+
+export interface RowContract {
+  title: string;
+  /** `S02·E07`, or a year. Set through `Data` once that exists. */
+  code?: string;
+  /** The episode name, or `Series · 2021`. */
+  meta?: string;
+  /** `AIRS FRI`, `SEASON FINALE`. A word about the row, not a control. */
+  tag?: string;
+  /** The watchlist's "why you saved it". */
+  note?: string;
+  /** At most one. Omit and the row is text, not a control. */
+  open?: RowOpen;
+  struck?: boolean;
+  /** Unaired. Tertiary ink and a tag, never an opacity. */
+  disabled?: boolean;
+  density?: RowDensity;
+}

@@ -154,6 +154,7 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/crossOff#RING': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/crossOff#STRUCK': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/key#KEY_DISABLED': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/row#ROW_INK': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',
   'mobile only: fingerprint/continuous#shouldCorrect': 'Part of the same continuous session.',
 };

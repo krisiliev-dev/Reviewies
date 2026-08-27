@@ -6563,6 +6563,104 @@ implementations across two platforms — the estimate that it was "simpler" than
 was wrong, and it is a sprint of its own. Four `Pressable`s still carry their own box: More's
 links and MatchImports' candidates, and two dismiss surfaces that are not controls at all.
 
+### 6.97 Row, and four differences that sat in the files the guards compare most closely
+
+`Row` is the component the whole layer was for. The direction's objection is that **every
+card in this build is a rounded fill doing a rule's job** — thirty-nine `backgroundColor`
+declarations whose only purpose is separating one row from the next, which is what a
+one-point rule is for. Full bleed, `radius.none`, a hairline on the bottom, and the ink in
+one table instead of twenty.
+
+**The load-bearing part is not a style rule.** A row exposes at most one navigation target
+and one action, and every name carries what tells that row from its neighbours. `open.name`
+is a required string in the contract, and a row with no `open` is not pressable at all: a
+card that navigates without saying where is worse than one that does not navigate.
+`calendar.tsx` was the row the design doc named — the whole entry a single `Pressable`
+labelled `Open {name}`, so on the one screen where every row is a different *episode*, the
+code and the name were announced twice or not at all. It says
+`Open Andor, S02E07, Narkina 5` now, on both platforms.
+
+**"One action" is a naming rule, not a counting one.** Three screens genuinely offer three
+— Search's Track / Watchlist / Seen it, Discover's Track / Save, the watchlist's note and
+Remove — each added deliberately, each already naming its own row. Collapsing them would
+take back function the product went and added. What the rule forbids is a control you
+cannot tell from the one on the row above, and §6.96's collision clause is what measures
+that. So the component has one target, one `trailing`, and an `under` slot for a group,
+with the rule on the block so the group shares the row's ruled band.
+
+**The contract stopped at the boundary where the platforms actually differ.** The first
+web call site had `open: { name, run: () => {} }` — a no-op satisfying a field the renderer
+never called, because `to` carried the navigation. That is a shared contract pretending to
+share something it cannot: React Native pushes a route, and the DOM wants a real `<a href>`
+so middle-click, copy-link and open-in-new-tab keep working. `RowOpen` is `{ name }` now,
+and each renderer extends it with its own — so leaving out the destination is a compile
+error rather than a dead row.
+
+**A check whose window was defined by the token it was hunting for.** The clause that says
+*keeps the target one control* sliced the source from `{open ?` to the first `{trailing}`
+and looked for a nested control inside. The plant that moved `{trailing}` inside the link
+therefore became the slice's own end marker: the window collapsed to nothing and the check
+passed on exactly the defect it was written for. It reads the target elements themselves
+now — walking the JSX with brace depth, because `[^>]*>` stops inside
+`style={({ pressed }) => …}` — and asserts that what a target renders is exactly `{inside}`.
+Re-planted on both platforms, caught on both.
+
+**And a backup scheme with the §6.90 defect in it.** The plant harness saved each file to
+`scratchpad/r_$(basename)` — and `mobile/src/ui/Row.tsx` and `app/src/ui/Row.tsx` share a
+basename, so the second save overwrote the first backup and the restore wrote the web
+renderer over the phone one. The same shape as the find-and-replace whose output was its
+own input: a key that is not unique over its inputs. Keyed by the full path now, and the
+phone renderer was rewritten from the conversation rather than from the clobbered backup.
+
+**Four differences in the two files these guards compare most closely.** `offers.test.ts`
+knew `to=` on a prop and `href=` on a prop, and `Row` puts its destination inside an object
+— `open={{ name, to: '/title/…' }}`. A fourth spelling, and it reported the two migrated
+screens as phone-only offers, correctly; the comment already in that file describes the
+same thing happening when `Button` landed. Teaching it `to:` alone then produced five
+*web-only* offers that were not: both More screens keep their second tier as a table of
+destinations, the web's rows saying `to:` where the phone's say `href:`, so the asymmetry
+reported was the scanner's own. With both spellings on both sides, four real differences
+appear that this check has never been able to see:
+
+- **The same screen at two addresses.** The web's More points at `/settings`, the phone's
+  at `/data`, and both rows are labelled *Your data*.
+- **`/account`, phone-only.** The web renders `AccountPanel` inside Settings rather than
+  giving it a route.
+- **`/remote`, phone-only.** The web's remote is a drawer on every screen, which is what
+  the original brief asked for.
+
+None is a missing control, so each is a sentence in `EXEMPT` rather than a change — a
+rename is a broken bookmark and a broken smoke locator for a URL nobody reads aloud. What
+is worth saying is how long they sat there: a table of destinations was a place this check
+could not look, in the two files it exists to compare.
+
+**And the design capture has been photographing an empty app for three sprints.** The brief
+says "recapture `design/screens/` and look" every sprint, and every sprint the shots came
+back with Up Next reading *"Matching… 3 of 12, 0 matched so far"* and the lists empty. The
+harness seeds twelve real shows — Dark, Andor, Chernobyl — into a build with no TMDB token,
+whose fixture provider knows four invented titles and nothing else. So the import landed,
+matching ran, nothing matched, and the design review reviewed the empty state: the exact
+failure that file's own header warns about ("stale screenshots are how a review ends up
+describing a version nobody is using"), arriving by a different door. It seeds the
+provider's own titles now, at the season lengths the provider declares.
+
+The first attempt at the fix was wrong in a way worth keeping: it waited for *"Matching…"*
+to disappear, and passed on its first sample — while the app was still booting and the body
+was empty. Not showing the working state is not the same as having finished the work, which
+is §6.56's rule about empty states one layer down. It waits for a row to actually exist now,
+and says loudly which screenshots are worthless if none ever does. `15-title` had never been
+captured at all before this; it is the first photograph of a full title page in the record.
+
+Six plants, each caught on the clause that names it: the row back to a rounded fill, a
+target with no name, a second control inside the target (on each platform), a screen
+building its own row again, and a disabled row fading instead of stepping.
+
+**Two of ten call sites migrated: calendar and watchlist, on both platforms.** The estimate
+that `Row` was "simpler than `CrossOff`" was wrong twice over — it is nine routes and ten
+implementations, and the two that landed each turned up work of their own. Up Next, the
+title page, Search, Discover, Lists, People, MatchImports and More remain, and so does the
+call-site guard, which cannot land while eight screens still carry their own box.
+
 
 ## 7. What is still not known
 
@@ -6852,15 +6950,21 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **Four of sixteen components exist, and the call-site guard needs one more.** `Button`
-  (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are in. What still carries
-  its own box is `Row` — More's links and MatchImports' candidates — plus two dismiss
-  surfaces that are not controls at all and have to be excluded by shape rather than by an
-  allowlist. So the guard would still report non-violations, and until it lands a screen can
-  write its own fill and padding with nothing to say so. `Row` is nine routes and ten
-  implementations across two platforms; the estimate that it was simpler than `CrossOff` was
-  wrong, and it is a sprint of its own. The poster is the one holding `ratio` in
-  `coreWiring`'s exemption list.
+- **Five of sixteen components exist, and `Row` is two call sites into ten.** `Button`
+  (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row` (§6.97) is
+  built and guarded, with calendar and watchlist migrated on both platforms. Up Next, the
+  title page, Search, Discover, Lists, People, MatchImports and More still build their own,
+  so eight screens can still write their own fill and padding with nothing to say so, and
+  the call-site guard cannot land until they stop. Two dismiss surfaces (RemoteDrawer's
+  scrim, CatchUp's backdrop) are not controls and have to be excluded by shape rather than
+  by an allowlist when it does. The poster is the one holding `ratio` in `coreWiring`'s
+  exemption list.
+- **The calendar's rows have still never been looked at.** §6.97 fixed the design capture so
+  the screenshots have a library in them, and the calendar is the one screen the fix does not
+  reach: the fixture episodes aired in 2024 and the clock says 2026, so *Next two months* is
+  correctly empty and the row this sprint rebuilt is not in any photograph. Its shape is
+  checked by the guard and its names by the smoke; how it looks is not. Future-dated fixture
+  episodes would close it.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

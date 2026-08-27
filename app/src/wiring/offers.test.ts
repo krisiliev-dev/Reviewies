@@ -47,6 +47,21 @@ const EXEMPT: Record<string, string> = {
     'the phone reaches People from the More tab, which is where its whole second tier lives; the web has no More tab so Settings carries the link',
   '/calendar web-only setPreference()':
     'the phone reaches the same core setter through syncPreference in mobile/src/notifications, which writes the preference and then tells the backend which device to notify — one hop further out than this reads, not a missing control',
+
+  /*
+   * The four below were invisible until §6.97 taught this scanner `to:` and `href:` inside
+   * an object literal. Both More screens keep their second tier as a table of destinations,
+   * and a table is where this check could not look — so four real differences sat in the
+   * two files it compares most closely, for as long as the check has existed. None of them
+   * is a missing control, and each is worth the sentence.
+   */
+  '/more web-only →/settings':
+    'the same screen as the phone\u2019s /data, at the address each platform shipped it on: both More rows are labelled "Your data", and the web has answered /settings since before the phone existed. A rename is a broken bookmark and a broken smoke locator on one side or the other, for a URL nobody reads aloud.',
+  '/more phone-only →/data': 'The other half of `/more web-only →/settings`.',
+  '/more phone-only →/account':
+    'the web has no /account route because it does not need one: AccountPanel renders inside Settings, which is the same page as the phone\u2019s /data. The phone splits them because its Account screen also carries the push registration, which a browser reaches through the calendar instead.',
+  '/more phone-only →/remote':
+    'the web\u2019s remote is a drawer available on every screen rather than a destination, which is what the original brief asked for — "hidden in a drawer to the side". The phone has both, because reaching for the remote mid-episode used to mean leaving Watching Mode.',
 };
 
 /** One copy, in the core, since §6.72. */
@@ -69,14 +84,34 @@ export function routesOffered(source: string, platform: 'web' | 'phone'): Set<st
    * `expo-router` `<Link>`. This guard reported the first migrated call site as a web-only
    * offer, correctly: a third way to express a destination had appeared and nothing here
    * knew the word. Teaching it makes the check wider rather than narrower.
+   *
+   * And then it happened again, for the same reason. `Row` takes its destination inside an
+   * object — `open={{ name, to: '/title/…' }}` — because the *name* of a target is a shared
+   * rule and *how* it navigates is not, so the two renderers extend `RowOpen` differently.
+   * That is `to:` in a literal rather than `to=` on a prop: a fourth spelling, and this
+   * reported the first two migrated screens as phone-only offers, correctly. Widened again,
+   * and worth noticing that the paragraph above had already described the shape.
+   *
+   * Widening one side alone then made this report five *web-only* offers that were not:
+   * both More screens keep a table of destinations, and the web's rows say `to:` where the
+   * phone's say `href:`. The scanner knew `href=` on a prop and not `href:` in a literal,
+   * so the asymmetry it reported was its own. Every spelling either platform uses, on both
+   * lists — a scanner that reads one side more closely than the other invents differences.
    */
   const patterns =
     platform === 'web'
-      ? [/\bto=["'`]([^"'`]+)["'`]/g, /\bto=\{`([^`]+)`\}/g, /navigate\(\s*[`'"]([^`'"]+)[`'"]/g]
+      ? [
+          /\bto=["'`]([^"'`]+)["'`]/g,
+          /\bto=\{`([^`]+)`\}/g,
+          /\bto:\s*[`'"]([^`'"]+)[`'"]/g,
+          /navigate\(\s*[`'"]([^`'"]+)[`'"]/g,
+        ]
       : [
           /\bhref=["'`]([^"'`]+)["'`]/g,
           /\bhref=\{`([^`]+)`\}/g,
+          /\bhref:\s*[`'"]([^`'"]+)[`'"]/g,
           /\bto=["'`]([^"'`]+)["'`]/g,
+          /\bto:\s*[`'"]([^`'"]+)[`'"]/g,
           /router\.(?:push|replace|navigate)\(\s*[`'"]([^`'"]+)[`'"]/g,
         ];
   const found = new Set<string>();

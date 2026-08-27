@@ -37,7 +37,7 @@ Two things the component layer cannot fix alone, stated up front:
 | 2 | `Section` | 8 today, all after | Shared |
 | 3 | `Masthead` | 16 | **Phone-only expression**, shared contract |
 | 4 | `Poster` | 6 (7 call sites) | Shared |
-| 5 | `Row` | 9 (10 implementations) | Shared |
+| 5 | `Row` | 9 (10 implementations) | Shared — **built, 2 of 10 migrated** |
 | 6 | `Data` | every screen with a number | Shared |
 | 7 | `Note` | 21 + 12 spinners | Shared |
 | 8 | `Field` | 9 (11 inputs) | Shared |
@@ -200,6 +200,8 @@ Full bleed, no card fill, no radius, 1pt bottom rule, ≥66pt with a poster and 
 **Accessibility contract — the load-bearing part.** A row is not one control. It exposes **at most one navigation target and one action**, and every name includes the title, because a screen of rows is the same two words repeated down the page. The codebase has learned this three separate times in comments (`search.tsx:201`, `title/[id].tsx:272`, `people.tsx:285`) and `calendar.tsx:169` still gets it wrong — the whole entry is a single Pressable labelled `Open {name}`, so the episode code and name are announced twice or not at all. Encoding it: `open.name` and every `trailing` name are required strings.
 
 **Replaces:** `index.tsx` `Row`, `search.tsx` `ResultRow`, `discover.tsx` `Row`, `watchlist.tsx` `Row`, `calendar.tsx` entry, `title/[id].tsx` `EpisodeRow`, `MatchImports` candidate, `lists.tsx` item, `more.tsx` link (as `density="index"`), `people.tsx` person.
+
+**Built, with two departures and two of ten migrated (§6.97).** `RowOpen` is `{ name }` only: the *name* of a target is the shared rule, and *how* it navigates is not — React Native pushes a route, the DOM wants a real `<a href>` so middle-click and copy-link keep working, so each renderer extends it with its own. And "at most one action" reads as a *naming* rule rather than a counting one, because three screens genuinely offer three and each already names its row; the component has one target, one `trailing`, and an `under` slot for a group, with the rule on the block so the group shares the row's ruled band. Calendar and watchlist are migrated on both platforms — calendar being the row this section named as still getting the naming wrong. The other eight are sprint 13.
 
 ---
 

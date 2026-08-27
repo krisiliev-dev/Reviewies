@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
+import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
 
 /**
@@ -82,21 +82,23 @@ function Row({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
-      <Link
-        to={`/title/${encodeURIComponent(titleId)}`}
-        aria-label={`Open ${name}`}
-        className="shrink-0"
-      >
-        <Poster url={posterUrl} name={name} className="h-24 w-16 rounded-plate" />
-      </Link>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{name}</p>
-        {year && <p className="text-xs text-ink-secondary">{year}</p>}
-
-        {editing ? (
-          <div className="mt-2 flex gap-1.5">
+    <BaseRow
+      title={name}
+      meta={year ? String(year) : undefined}
+      open={{ name: `Open ${name}`, to: `/title/${encodeURIComponent(titleId)}` }}
+      lead={<Poster url={posterUrl} name={name} className="h-16 w-11 shrink-0 rounded-plate" />}
+      trailing={
+        <button
+          onClick={() => removeFromWatchlist(titleId)}
+          className="shrink-0 px-2 py-1 text-xs text-ink-secondary"
+          aria-label={`Remove ${name} from watchlist`}
+        >
+          Remove
+        </button>
+      }
+      under={
+        editing ? (
+          <div className="flex gap-1.5">
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -117,22 +119,14 @@ function Row({
             onClick={() => setEditing(true)}
             // Every row says "Add a note…". Which row is a visual fact only.
             aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
-            className="tap mt-1.5 text-left text-sm text-ink-secondary italic"
+            className="tap text-left text-sm text-ink-secondary italic"
           >
             {/* "The amount of things I have in my wishlist that i have ZERO memory for
                 why they're there" — r/Letterboxd. */}
             {note || 'Add a note…'}
           </button>
-        )}
-      </div>
-
-      <button
-        onClick={() => removeFromWatchlist(titleId)}
-        className="shrink-0 px-2 py-1 text-xs text-ink-secondary"
-        aria-label={`Remove ${name} from watchlist`}
-      >
-        Remove
-      </button>
-    </li>
+        )
+      }
+    />
   );
 }

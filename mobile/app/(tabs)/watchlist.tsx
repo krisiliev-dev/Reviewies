@@ -6,6 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../../src/ui/Poster';
+import { Row as BaseRow } from '../../src/ui/Row';
+import { ROW } from '@reviewies/core/ui/row';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
@@ -79,19 +81,21 @@ function Row({
   }
 
   return (
-    <View style={styles.row}>
-      <Pressable
-        onPress={() => router.push(`/title/${encodeURIComponent(titleId)}`)}
-        accessibilityRole="button"
-        accessibilityLabel={`Open ${name}`}
-      >
-        <Poster url={posterUrl} name={name} />
-      </Pressable>
-      <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={styles.title}>
-          {name}
-        </Text>
-        {year ? <Text style={styles.year}>{year}</Text> : null}
+    <BaseRow
+      title={name}
+      meta={year ? String(year) : undefined}
+      lead={
+        <Poster url={posterUrl} name={name} width={ROW.lead.width} height={ROW.lead.height} />
+      }
+      open={{
+        // Was `Open ${name}` on a `button` role wrapping only the poster, so the words
+        // beside it were not a target at all and the role said "does something" rather
+        // than "goes somewhere".
+        name: `Open ${name}`,
+        run: () => router.push(`/title/${encodeURIComponent(titleId)}`),
+      }}
+      under={
+        <View style={styles.rowBody}>
 
         {editing ? (
           <View style={styles.editor}>
@@ -145,8 +149,9 @@ function Row({
         >
           <Text style={styles.remove}>Remove</Text>
         </Pressable>
-      </View>
-    </View>
+        </View>
+      }
+    />
   );
 }
 
@@ -165,16 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   ctaText: { color: theme.actionLabel, fontWeight: '600', fontSize: 16 },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
-  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  year: { color: theme.inkSecondary, fontSize: 12 },
   note: { color: theme.ink, fontSize: 13, fontStyle: 'italic' },
   addNote: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
   editor: { gap: 6 },

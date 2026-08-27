@@ -23,6 +23,8 @@ import {
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Button } from '../src/ui/Button';
+import { Row } from '../src/ui/Row';
+import { ROW } from '@reviewies/core/ui/row';
 import { Choice } from '../src/ui/Choice';
 
 /**
@@ -154,33 +156,35 @@ export default function CalendarScreen() {
                 was. §6.66. */}
             <Text style={styles.dayHeading}>{formatDay(day)}</Text>
             {list.map((entry) => (
-              <Pressable
-                key={entry.episode.id}
-                onPress={() =>
-                  router.push(`/title/${encodeURIComponent(entry.seriesId)}`)
-                }
-                style={styles.entry}
-                accessibilityRole="link"
-                accessibilityLabel={`Open ${entry.seriesName}`}
-              >
-                {/* Artwork, as the web's copy of this row has had since Calendar
-                    shipped. A list of upcoming episodes with no posters is a list of
-                    sentences; recognising a show by its artwork is most of what these
-                    screens are for. §6.63. */}
-                <Poster url={entry.posterUrl} name={entry.seriesName} width={44} height={64} />
+              /* Doc 6 §5 named this row as the one that still got the naming wrong: the
+                 whole entry was a single `Pressable` labelled `Open {name}`, so the
+                 episode code and the episode name were announced twice or not at all —
+                 and on a screen where every row is a different episode of a show you may
+                 already be watching, the code is the part that tells them apart.
 
-                <View style={styles.entryBody}>
-                  <Text numberOfLines={1} style={styles.entryName}>
-                    {entry.seriesName}
-                  </Text>
-                  <Text numberOfLines={1} style={styles.entryMeta}>
-                    S{entry.episode.season}E{entry.episode.number} · {entry.episode.name}
-                  </Text>
-                </View>
-                {KIND_LABEL[entry.kind] ? (
-                  <Text style={styles.kind}>{KIND_LABEL[entry.kind]}</Text>
-                ) : null}
-              </Pressable>
+                 Artwork stays, as the web's copy has had since Calendar shipped: a list
+                 of upcoming episodes with no posters is a list of sentences, and
+                 recognising a show by its artwork is most of what these screens are
+                 for. §6.63. */
+              <Row
+                key={entry.episode.id}
+                title={entry.seriesName}
+                code={`S${entry.episode.season}E${entry.episode.number}`}
+                meta={entry.episode.name}
+                tag={KIND_LABEL[entry.kind]}
+                lead={
+                  <Poster
+                    url={entry.posterUrl}
+                    name={entry.seriesName}
+                    width={ROW.lead.width}
+                    height={ROW.lead.height}
+                  />
+                }
+                open={{
+                  name: `Open ${entry.seriesName}, S${entry.episode.season}E${entry.episode.number}, ${entry.episode.name}`,
+                  run: () => router.push(`/title/${encodeURIComponent(entry.seriesId)}`),
+                }}
+              />
             ))}
           </View>
         ))}
@@ -217,16 +221,4 @@ const styles = StyleSheet.create({
 
   day: { gap: 6, marginTop: 8 },
   dayHeading: { color: theme.inkSecondary, fontSize: 12 },
-  entry: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
-  entryBody: { flex: 1, minWidth: 0 },
-  entryName: { color: theme.ink, fontSize: 14, fontWeight: '600' },
-  entryMeta: { color: theme.inkSecondary, fontSize: 12 },
-  kind: { color: theme.inkSecondary, fontSize: 11 },
 });

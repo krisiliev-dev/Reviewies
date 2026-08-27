@@ -19,6 +19,7 @@ import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey 
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../ui/Choice';
+import { Row as BaseRow } from '../ui/Row';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -148,30 +149,35 @@ export function Calendar() {
   );
 }
 
+/**
+ * One row, one target, one name that says which episode.
+ *
+ * The poster was its own link and the words were not a link at all, both under
+ * `Open {name}` — so the episode code and name were announced twice or not at all, on the
+ * one screen where every row is a different episode of a show you may already be watching.
+ * Doc 6 §5 named this row specifically; §6.96's collision clause is what stopped it being
+ * possible to write the next one the same way.
+ */
 function Row({ entry }: { entry: UpcomingEntry }) {
-  const label = KIND_LABEL[entry.kind];
-
+  const code = `S${entry.episode.season}E${entry.episode.number}`;
   return (
-    <li className="flex items-center gap-3 rounded-plate bg-ground-raised p-3">
-      <Link
-        to={`/title/${encodeURIComponent(entry.seriesId)}`}
-        aria-label={`Open ${entry.seriesName}`}
-        className="shrink-0"
-      >
-        <Poster url={entry.posterUrl} name={entry.seriesName} className="h-16 w-11 rounded-plate" />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{entry.seriesName}</p>
-        <p className="truncate text-xs text-ink-secondary">
-          S{entry.episode.season}E{entry.episode.number} · {entry.episode.name}
-        </p>
-      </div>
-      {label && (
-        <span className="shrink-0 rounded-plate bg-ground-well px-2 py-1 text-[0.625rem] font-semibold text-ink-secondary">
-          {label}
-        </span>
-      )}
-    </li>
+    <BaseRow
+      title={entry.seriesName}
+      code={code}
+      meta={entry.episode.name}
+      tag={KIND_LABEL[entry.kind]}
+      open={{
+        name: `Open ${entry.seriesName}, ${code}, ${entry.episode.name}`,
+        to: `/title/${encodeURIComponent(entry.seriesId)}`,
+      }}
+      lead={
+        <Poster
+          url={entry.posterUrl}
+          name={entry.seriesName}
+          className="h-16 w-11 shrink-0 rounded-plate"
+        />
+      }
+    />
   );
 }
 
