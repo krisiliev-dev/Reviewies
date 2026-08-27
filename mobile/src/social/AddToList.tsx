@@ -4,6 +4,7 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
 import { radius, theme } from '../ui/theme';
+import { Button } from '../ui/Button';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -88,16 +89,14 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               onSubmitEditing={createAndAdd}
               accessibilityLabel="Name for a new list"
             />
-            <Pressable
+            <Button
               onPress={createAndAdd}
               disabled={!newName.trim()}
-              style={[styles.add, !newName.trim() && styles.disabled]}
-              accessibilityRole="button"
-              accessibilityLabel="Make this list and add the title to it"
-              accessibilityState={{ disabled: !newName.trim() }}
-            >
-              <Text style={styles.addText}>Add</Text>
-            </Pressable>
+              tone="primary"
+              size="inline"
+              label="Add"
+              name="Make this list and add the title to it"
+            />
           </View>
         </View>
       )}
@@ -135,13 +134,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  add: {
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderRadius: radius.pill,
-    backgroundColor: theme.actionFill,
-  },
-  addText: { color: theme.actionLabel, fontSize: 14, fontWeight: '600' },
-  disabled: { opacity: 0.4 },
   note: { color: theme.inkSecondary, fontSize: 12 },
 });

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { border, radius, theme } from './theme';
+import { Button } from './Button';
 
 /**
  * Bring a history in from somewhere else.
@@ -104,21 +105,18 @@ export function ImportFiles({
 
   return (
     <>
-      <Pressable
-        style={[styles.button, primary ? styles.buttonPrimary : null]}
+      {/* The comment this replaces said "mid-import the label is a spinner and there is
+          no text to fall back on" — the second of two places that worked around the same
+          decision. `busy` keeps the label and rules under it. */}
+      <Button
         onPress={pickAndImport}
+        busy={busy}
         disabled={busy}
-        accessibilityRole="button"
-        // Mid-import the label is a spinner and there is no text to fall back on.
-        accessibilityLabel={label}
-        accessibilityState={{ disabled: busy, busy }}
-      >
-        {busy ? (
-          <ActivityIndicator color={theme.workingFill} />
-        ) : (
-          <Text style={[styles.buttonText, primary ? styles.buttonPrimaryText : null]}>{label}</Text>
-        )}
-      </Pressable>
+        tone={primary ? 'primary' : 'secondary'}
+        size="page"
+        label={label}
+        name={label}
+      />
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -141,22 +139,18 @@ export function ImportFiles({
 
           {/* The second step, offered where the first one landed. */}
           {report.account && !restored && (
-            <Pressable
-              style={styles.restore}
-              disabled={restoring}
-              accessibilityRole="button"
-              accessibilityLabel="Restore lists and follows"
-              accessibilityState={{ disabled: restoring }}
+            <Button
               onPress={async () => {
                 setRestoring(true);
                 setRestored(await restoreAccount(report.account!));
                 setRestoring(false);
               }}
-            >
-              <Text style={styles.restoreText}>
-                {restoring ? 'Restoring…' : 'Restore lists and follows'}
-              </Text>
-            </Pressable>
+              busy={restoring}
+              disabled={restoring}
+              tone="secondary"
+              label={restoring ? 'Restoring…' : 'Restore lists and follows'}
+              name="Restore lists and follows"
+            />
           )}
           {restored && (
             <View accessibilityLiveRegion="polite">

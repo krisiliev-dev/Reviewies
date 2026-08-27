@@ -30,6 +30,7 @@ import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
 } from '@reviewies/core/watching/reactions';
+import { Button } from '../../src/ui/Button';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -184,13 +185,13 @@ export default function WatchingScreen() {
             <Text style={styles.startBlurb}>
               Tap the moment you press play. You can nudge the timing at any point.
             </Text>
-            <Pressable
-              style={styles.start}
+            <Button
               onPress={() => clock.start()}
-              accessibilityRole="button"
-            >
-              <Text style={styles.startText}>Start watching</Text>
-            </Pressable>
+              tone="primary"
+              size="page"
+              label="Start watching"
+              name="Start watching"
+            />
           </View>
         ) : (
           <View style={styles.controls}>
@@ -353,13 +354,6 @@ const styles = StyleSheet.create({
 
   startBlock: { padding: 16, gap: 12 },
   startBlurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
-  start: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  startText: { color: theme.actionLabel, fontWeight: '700', fontSize: 17 },
 
   // Wraps. Five controls and a density picker fit a phone once and not at twice the
   // text size, where the row measured 690px in a 390px viewport and pushed all three

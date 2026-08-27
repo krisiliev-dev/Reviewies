@@ -12,10 +12,11 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
-import { border, radius, theme } from '../src/ui/theme';
+import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
+import { Button } from '../src/ui/Button';
 
 /**
  * Getting your history in, and getting it back out.
@@ -53,8 +54,7 @@ export default function DataScreen() {
 
         <Section heading="Export">
           <Text style={styles.blurb}>{COPY.settings.exportBlurb}</Text>
-          <Pressable
-            style={styles.primary}
+          <Button
             onPress={async () => {
               const bundle = await exportAll();
               // Written either way; a person with an account would otherwise get a file
@@ -66,25 +66,24 @@ export default function DataScreen() {
                 'application/json',
               );
             }}
-            accessibilityRole="button"
-          >
-            <Text style={styles.primaryText}>Export everything (JSON)</Text>
-          </Pressable>
+            tone="primary"
+            label="Export everything (JSON)"
+            name="Export everything (JSON)"
+          />
           {exportNote && (
             <Text style={styles.blurb} accessibilityLiveRegion="polite">
               Saved, but your lists, follows and comments could not be read: {exportNote}. The
               rest of the file is complete.
             </Text>
           )}
-          <Pressable
-            style={styles.secondary}
+          <Button
             onPress={async () =>
               downloadFile(`reviewies-watches-${today}.csv`, await exportWatchesCsv(), 'text/csv')
             }
-            accessibilityRole="button"
-          >
-            <Text style={styles.secondaryText}>Export watch history (CSV)</Text>
-          </Pressable>
+            tone="secondary"
+            label="Export watch history (CSV)"
+            name="Export watch history (CSV)"
+          />
         </Section>
 
         <Section heading="Import">
@@ -140,14 +139,12 @@ export default function DataScreen() {
             automatically. Clearing them never touches your own history, and shows carried
             over from an import keep their names.
           </Text>
-          <Pressable
-            style={styles.secondary}
-            accessibilityRole="button"
-            accessibilityLabel="Clear cached metadata"
+          <Button
             onPress={() => void clearMetadataCache().then(setCleared)}
-          >
-            <Text style={styles.secondaryText}>Clear cached metadata</Text>
-          </Pressable>
+            tone="secondary"
+            label="Clear cached metadata"
+            name="Clear cached metadata"
+          />
           {cleared !== undefined && (
             <Text style={styles.blurb} accessibilityLiveRegion="polite">
               {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
@@ -192,19 +189,5 @@ const styles = StyleSheet.create({
   },
   blurb: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
   clockWarning: { color: theme.trouble, fontSize: 13, lineHeight: 19, marginBottom: 4 },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
-  secondary: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  secondaryText: { color: theme.ink, fontSize: 15 },
 
 });

@@ -403,5 +403,5 @@ const styles = StyleSheet.create({
   marked: { backgroundColor: theme.groundWell },
   markText: { color: theme.actionLabel, fontSize: 12, fontWeight: '700' },
   markedText: { color: theme.inkSecondary, fontWeight: '400' },
-  disabled: { opacity: 0.3 },
+  disabled: { borderColor: theme.strokeHairline },
 });

@@ -25,6 +25,7 @@ import {
 import { pickCommentImage } from '../../src/comments/pickImage';
 import { border, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from '../../src/ui/Button';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -177,30 +178,24 @@ export default function CommentsScreen() {
               </View>
             )}
 
-            <Pressable
-              style={styles.secondary}
+            <Button
               onPress={attach}
+              busy={uploading}
               disabled={uploading}
-              accessibilityRole="button"
-              accessibilityLabel={image ? 'Replace the attached screenshot' : COPY.comments.attach}
-              accessibilityState={{ disabled: uploading }}
-            >
-              <Text style={styles.secondaryText}>
-                {uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
-              </Text>
-            </Pressable>
+              tone="secondary"
+              label={uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
+              name={image ? 'Replace the attached screenshot' : COPY.comments.attach}
+            />
 
-            <Pressable
-              style={[styles.primary, (!draft.trim() && !image) || uploading ? styles.disabled : null]}
+            {/* An image on its own is a post: core turns an empty body into 📷, the
+                same as the web. */}
+            <Button
               onPress={submit}
               disabled={(!draft.trim() && !image) || uploading}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: (!draft.trim() && !image) || uploading }}
-            >
-              {/* An image on its own is a post: core turns an empty body into 📷, the
-                  same as the web. */}
-              <Text style={styles.primaryText}>Post</Text>
-            </Pressable>
+              tone="primary"
+              label="Post"
+              name="Post"
+            />
             {error && <Text style={styles.error}>{error}</Text>}
 
             {loading && <ActivityIndicator color={theme.workingFill} />}
@@ -297,23 +292,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  primary: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
-  secondary: {
-    alignSelf: 'flex-start',
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  secondaryText: { color: theme.ink, fontSize: 14 },
-  disabled: { opacity: 0.4 },
   error: { color: theme.trouble, fontSize: 13 },
 
   comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },

@@ -21,6 +21,7 @@ import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/p
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { border, radius, theme } from '../../src/ui/theme';
+import { Button } from '../../src/ui/Button';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -201,42 +202,30 @@ function ResultRow({ result }: { result: SearchResult }) {
           {/* Labelled with the title, because "Watchlist" on its own is what the tab
               bar also says — ambiguous to a screen reader working down the page, and
               ambiguous to anything else trying to name one particular control. */}
-          <Pressable
+          <Button
             onPress={track}
             disabled={added === 'library'}
-            accessibilityRole="button"
-            accessibilityLabel={`Track ${result.name}`}
-            style={[styles.primary, added === 'library' && styles.disabled]}
-          >
-            <Text style={styles.primaryText}>
-              {added === 'library' ? 'Tracking' : 'Track'}
-            </Text>
-          </Pressable>
-          <Pressable
+            tone="primary"
+            label={added === 'library' ? 'Tracking' : 'Track'}
+            name={`Track ${result.name}`}
+          />
+          <Button
             onPress={watchlist}
             disabled={added === 'watchlist'}
-            accessibilityRole="button"
-            accessibilityLabel={`Add ${result.name} to watchlist`}
-            style={[styles.secondary, added === 'watchlist' && styles.disabled]}
-          >
-            <Text style={styles.secondaryText}>
-              {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            </Text>
-          </Pressable>
+            tone="secondary"
+            label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+            name={`Add ${result.name} to watchlist`}
+          />
           {/* Films only: "watched" is not a thing you can say about a whole series in
               one tap without lying about which episodes. */}
           {result.kind === 'film' && (
-            <Pressable
+            <Button
               onPress={log}
               disabled={added === 'logged'}
-              accessibilityRole="button"
-              accessibilityLabel={`Log that you have seen ${result.name}`}
-              style={[styles.secondary, added === 'logged' && styles.disabled]}
-            >
-              <Text style={styles.secondaryText}>
-                {added === 'logged' ? 'Logged' : 'Seen it'}
-              </Text>
-            </Pressable>
+              tone="secondary"
+              label={added === 'logged' ? 'Logged' : 'Seen it'}
+              name={`Log that you have seen ${result.name}`}
+            />
           )}
         </View>
 
@@ -285,19 +274,4 @@ const styles = StyleSheet.create({
   subtitle: { color: theme.inkSecondary, fontSize: 12 },
 
   actions: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  primary: {
-    backgroundColor: theme.actionFill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '600', fontSize: 14 },
-  secondary: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-  },
-  secondaryText: { color: theme.inkSecondary, fontSize: 14 },
-  disabled: { opacity: 0.5 },
 });

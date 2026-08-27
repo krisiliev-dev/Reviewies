@@ -34,6 +34,8 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
 
 /** Differences that belong, one line each. */
 const EXEMPT: Record<string, string> = {
+  '/comments':
+    'both platforms post through Button; the attach control cannot be one on the web, where choosing a file means a <label> wrapping a hidden <input type="file"> and a Button would have nothing to wrap. The phone opens a document picker from an onPress, so it is a Button there — §6.94 migrated both and this is what is left over',
   '/': 'the phone renders MatchImports in two states (first run and the caught-up screen) and the web in one; both offer it, and the phone’s second copy is the one §6.49 added where the gap was felt',
   '/watching':
     'the web splits its clock into StartPanel, DriftHint and SyncBar; the phone renders the same controls inline through one Control component, and adds RemoteDrawer because on a phone the remote is a screen rather than an overlay',

@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.groundRaised,
   },
   buttonOn: { backgroundColor: theme.actionFill },
-  buttonOff: { opacity: 0.4 },
+  buttonOff: { borderColor: theme.strokeHairline },
   buttonText: { color: theme.ink, fontSize: 13 },
   buttonTextOn: { color: theme.actionLabel, fontWeight: '600' },
   quiet: {

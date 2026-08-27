@@ -23,6 +23,7 @@ import {
 import { db } from '@reviewies/core/data/db';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from '../src/ui/Button';
 
 /**
  * Lists, mixing film and television freely.
@@ -113,16 +114,13 @@ export default function ListsScreen() {
             maxLength={120}
             style={styles.input}
           />
-          <Pressable
+          <Button
             onPress={create}
             disabled={!name.trim() || busy}
-            style={[styles.primary, (!name.trim() || busy) && styles.disabled]}
-            accessibilityRole="button"
-            accessibilityLabel="Create this list"
-            accessibilityState={{ disabled: !name.trim() || busy }}
-          >
-            <Text style={styles.primaryText}>Add</Text>
-          </Pressable>
+            tone="primary"
+            label="Add"
+            name="Create this list"
+          />
         </View>
 
         {createFailed && (
@@ -314,14 +312,6 @@ const styles = StyleSheet.create({
     color: theme.ink,
     fontSize: 15,
   },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
-  disabled: { opacity: 0.4 },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },

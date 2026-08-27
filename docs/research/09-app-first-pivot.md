@@ -6327,6 +6327,74 @@ in the way the radius migration was mechanical: each is a judgement about which 
 the judgements are the work.
 
 
+### 6.94 The migration, and what the old guards noticed about it
+
+§6.93 shipped `Button` and five call sites. This is the rest of the phone — thirteen files,
+twenty-two sites — plus the web screens that had to follow, and it closes two defects that
+had been in the build for a long time.
+
+**The phone had eight `opacity` fades on disabled actions.** `appearance.test.ts` has
+refused `disabled:opacity` on a filled action on the web since it was written, with the
+reason recorded beside it: *"a maroon block with dark red lettering: it read as broken
+rather than as waiting."* The phone had never had that guard. `disabled` on the component
+drops the fill for an outline and steps the label to the tertiary ink, which holds 4.87:1.
+
+Three more fades were on controls that are not buttons — a follow chip, the cross-off mark,
+a listen toggle — and they went the same way, because the rule is about the state and not
+about the component. `app/src/ui/disabledState.test.ts` holds it now, with the argument
+§6.90 already made for Watching Mode's dim: **an opacity is invisible to a contrast check
+for ever; a named colour is not.** One exemption, `ReactionStream`, where a fractional
+opacity is a reaction fading as it drifts — motion, not a state — and the stale check fails
+if it ever stops fading.
+
+**Two places worked around the same decision, and both are gone.** `account.tsx` carried
+the comment *"while busy the label is a spinner, which has no text to read"* beside an
+`accessibilityLabel` that existed to compensate; `ImportFiles.tsx` carried
+*"mid-import the label is a spinner and there is no text to fall back on"*. Both were
+workarounds written next to the thing causing them. `busy` keeps the label and rules under
+it, so there is nothing to work around and no second copy of the words.
+
+---
+
+**Three old guards had something to say, and each was right.**
+
+*`shape.test.ts`: `/search`, `/comments`, `/discover` no longer render the same things in
+the same order.* Of course they did not — I had migrated the phone and left the web. The
+guard exists to notice exactly that, and the answer was to migrate the web's Search and
+Discover too rather than to explain the difference away.
+
+*`/comments` still differs, and legitimately.* The web's attach control is a `<label>`
+wrapping a hidden `<input type="file">`; a `Button` would have nothing to wrap. The phone
+opens a document picker from an `onPress`, so it is a `Button` there. That is a platform
+divergence of the kind `components.md` already catalogues, it goes in the exemption map
+with its reason, and the stale check removes it if the two ever converge.
+
+*A `type="submit"` inside a `<form>` is not a `type="button"`.* The web's Post button
+submits its form; `Button` rendered `type="button"`, which would have silently stopped it.
+Caught by reading rather than by a check — `submit` is a web-only prop now, and the
+divergence table in `components.md` is where that kind of thing already lives.
+
+**And one mistake of my own, from a tool I wrote three files earlier.** The helper that
+inserts the `Button` import finds the last line beginning with `import ` — which, in
+`watching/[targetId].tsx`, was the opening line of a *multi-line* import. It inserted the
+new import inside the old one and produced a file that could not parse. TypeScript caught
+it immediately, which is the only reason this is a footnote rather than a section: a
+find-and-replace that is right thirteen times and wrong the fourteenth is the shape §6.90
+and §6.93 both ran into, and I built a third one without thinking about it.
+
+**What did not land, and why the call-site guard still cannot.** Ten `Pressable`s on the
+phone still carry their own box, and every one is a *different component*: `Row` (More's
+links, MatchImports' candidates), `Choice` (Stats' period chips, Data's toggle), `Key`
+(Watching Mode's transport), `CrossOff` (the 44pt mark), and two dismiss surfaces. The
+guard "no bare `Pressable` outside `Button`" would report all ten, and the only way to land
+it today is an allowlist of things that are not violations — which is worse than the
+allowlist §6.59 warns about, because it would be *wrong* rather than merely stale. It lands
+when `Row`, `Choice`, `Key` and `CrossOff` do.
+
+App unit tests 435 → 438. Web smoke 242, phone 166, both unchanged, which for a migration
+of this size is the point.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6615,13 +6683,13 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **`Button` exists and forty of its forty-five call sites do not use it.** §6.93 shipped
-  the component, its contract and its guard, and migrated five sites — enough that both
-  renderers have actually executed. The call-site guard cannot land until the rest do,
-  which means that until then a screen can still write its own padding and its own fill
-  and nothing will say so. Fifteen of the sixteen components in
-  `docs/design/components.md` have not been started at all: `Section`, `Poster`, `Row`,
-  `Note`, `Field`, `CrossOff` and the rest. The poster is the one holding `ratio` in
+- **`Button` is migrated and its call-site guard still cannot land.** §6.94 moved every
+  button on the phone and the web screens that had to follow. What is left holding its own
+  box is ten `Pressable`s that are each a *different* component — `Row`, `Choice`, `Key`,
+  `CrossOff` and two dismiss surfaces — so "no bare `Pressable` outside `Button`" would
+  report ten things that are not violations. Until those four components exist, a screen
+  can still write its own fill and padding and nothing will say so. Fifteen of the sixteen
+  in `docs/design/components.md` are unstarted; the poster is the one holding `ratio` in
   `coreWiring`'s exemption list.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is

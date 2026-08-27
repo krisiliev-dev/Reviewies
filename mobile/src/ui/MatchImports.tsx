@@ -8,6 +8,7 @@ import {
 } from '@reviewies/core/data/reconcile';
 import { Poster } from './Poster';
 import { radius, tap, theme } from './theme';
+import { Button } from './Button';
 
 /**
  * Finishing a migration.
@@ -95,9 +96,12 @@ export function MatchImports({
   return (
     <View style={styles.block}>
       {!running && asks.length === 0 && (
-        <Pressable style={styles.primary} onPress={start} accessibilityRole="button">
-          <Text style={styles.primaryText}>Match imported shows</Text>
-        </Pressable>
+        <Button
+          onPress={start}
+          tone="primary"
+          label="Match imported shows"
+          name="Match imported shows"
+        />
       )}
 
       {running && (
@@ -165,13 +169,6 @@ export function MatchImports({
 
 const styles = StyleSheet.create({
   block: { gap: 12 },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryText: { color: theme.actionLabel, fontSize: 15, fontWeight: '700' },
   status: { color: theme.inkSecondary, fontSize: 13, lineHeight: 18 },
   error: { color: theme.trouble, fontSize: 13 },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 8 },

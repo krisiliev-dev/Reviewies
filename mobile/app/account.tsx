@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import {
@@ -21,7 +13,8 @@ import {
 } from '@reviewies/core/sync/auth';
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
-import { border, radius, theme } from '../src/ui/theme';
+import { radius, theme } from '../src/ui/theme';
+import { Button } from '../src/ui/Button';
 
 /**
  * Signing in, framed as optional throughout.
@@ -113,23 +106,16 @@ export default function AccountScreen() {
                 <Text style={styles.rejectedText} accessibilityLiveRegion="polite">
                   {COPY.sync.rejected(status.rejected)}
                 </Text>
-                <Pressable
-                  style={styles.secondary}
+                <Button
                   onPress={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.secondaryText}>{COPY.sync.retryRejected}</Text>
-                </Pressable>
+                  tone="secondary"
+                  label={COPY.sync.retryRejected}
+                  name={COPY.sync.retryRejected}
+                />
                 {retryNote ? <Text style={styles.blurb}>{retryNote}</Text> : null}
               </View>
             )}
-            <Pressable
-              style={styles.secondary}
-              onPress={() => void signOut()}
-              accessibilityRole="button"
-            >
-              <Text style={styles.secondaryText}>Sign out</Text>
-            </Pressable>
+            <Button onPress={() => void signOut()} tone="secondary" label="Sign out" name="Sign out" />
           </View>
         ) : (
           <View style={styles.card}>
@@ -158,23 +144,19 @@ export default function AccountScreen() {
               style={styles.input}
             />
 
-            <Pressable
-              style={styles.primary}
+            {/* The comment this replaces read "while busy the label is a spinner, which
+                has no text to read" — a workaround written beside the decision that
+                caused it. `busy` on the component keeps the label and rules under it, so
+                there is nothing to work around and no second place to keep the words. */}
+            <Button
               onPress={submit}
+              busy={busy}
               disabled={busy}
-              accessibilityRole="button"
-              // While busy the label is a spinner, which has no text to read.
-              accessibilityLabel={mode === 'in' ? 'Sign in' : 'Create account'}
-              accessibilityState={{ disabled: busy, busy }}
-            >
-              {busy ? (
-                <ActivityIndicator color={theme.actionLabel} />
-              ) : (
-                <Text style={styles.primaryText}>
-                  {mode === 'in' ? 'Sign in' : 'Create account'}
-                </Text>
-              )}
-            </Pressable>
+              tone="primary"
+              size="page"
+              label={mode === 'in' ? 'Sign in' : 'Create account'}
+              name={mode === 'in' ? 'Sign in' : 'Create account'}
+            />
 
             <Pressable
               onPress={() => setMode(mode === 'in' ? 'up' : 'in')}
@@ -211,20 +193,6 @@ const styles = StyleSheet.create({
     color: theme.ink,
     fontSize: 15,
   },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
-  secondary: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: { color: theme.ink, fontSize: 15 },
   toggle: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
   error: { color: theme.trouble, fontSize: 13 },
 });

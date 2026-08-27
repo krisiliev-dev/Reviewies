@@ -9,7 +9,8 @@ import { COPY } from '@reviewies/core/copy';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
-import { border, radius, theme } from '../../src/ui/theme';
+import { radius, theme } from '../../src/ui/theme';
+import { Button } from '../../src/ui/Button';
 
 /**
  * Suggestions that exclude what you have already seen.
@@ -130,28 +131,25 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             the screen whose whole job is getting something into your library made you
             open the show to do it. The web has offered both since Discover shipped. */}
         <View style={styles.actions}>
-          <Pressable
+          {/* `disabled` on the component drops the fill for an outline and steps the
+              label to the tertiary ink. It does NOT fade: `styles.disabled` here was
+              `opacity: 0.5`, which is the exact thing `appearance.test.ts` has banned on
+              the web since it "gave a maroon block with dark red lettering — it read as
+              broken rather than as waiting". The phone had eight of these and no guard. */}
+          <Button
             onPress={track}
             disabled={added === 'library'}
-            accessibilityRole="button"
-            accessibilityLabel={`Track ${item.name}`}
-            style={[styles.primary, added === 'library' && styles.disabled]}
-          >
-            <Text style={styles.primaryText}>
-              {added === 'library' ? 'Tracking' : 'Track'}
-            </Text>
-          </Pressable>
-          <Pressable
+            tone="primary"
+            label={added === 'library' ? 'Tracking' : 'Track'}
+            name={`Track ${item.name}`}
+          />
+          <Button
             onPress={save}
             disabled={added === 'watchlist'}
-            accessibilityRole="button"
-            accessibilityLabel={`Add ${item.name} to your watchlist`}
-            style={[styles.secondary, added === 'watchlist' && styles.disabled]}
-          >
-            <Text style={styles.secondaryText}>
-              {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            </Text>
-          </Pressable>
+            tone="secondary"
+            label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+            name={`Add ${item.name} to your watchlist`}
+          />
         </View>
       </View>
     </View>
@@ -160,25 +158,6 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 24,
-    justifyContent: 'center',
-  },
-  primaryText: { color: theme.actionLabel, fontSize: 13, fontWeight: '600' },
-  secondary: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    minHeight: 24,
-    justifyContent: 'center',
-  },
-  secondaryText: { color: theme.inkSecondary, fontSize: 13 },
-  disabled: { opacity: 0.5 },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
   heading: { color: theme.ink, fontSize: 30, fontWeight: '700' },

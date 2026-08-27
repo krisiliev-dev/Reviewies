@@ -15,6 +15,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from '../ui/Button';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -165,13 +166,13 @@ export function EpisodeComments() {
             )}
 
             <div className="flex items-center gap-2">
-              <button
-                type="submit"
+              <Button
+                submit
                 disabled={(!draft.trim() && !image) || uploading}
-                className="rounded-pill bg-action-fill px-4 py-2 font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-              >
-                Post
-              </button>
+                tone="primary"
+                label="Post"
+                name="Post"
+              />
 
               {/* Screenshots were core to TV Time's comment culture and are named
                   most often as the thing successors dropped. */}

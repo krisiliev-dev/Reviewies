@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { getSession, onAuthChange, syncConfigured } from '@reviewies/core/sync/auth';
@@ -26,6 +18,7 @@ import {
 } from '@reviewies/core/social/people';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
+import { Button } from '../src/ui/Button';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -137,22 +130,14 @@ export default function PeopleScreen() {
                 style={styles.input}
               />
               <View style={styles.row}>
-                <Pressable
-                  onPress={saveHandle}
-                  style={styles.primary}
-                  accessibilityRole="button"
-                  accessibilityLabel="Save your handle"
-                >
-                  <Text style={styles.primaryText}>Save</Text>
-                </Pressable>
-                <Pressable
+                <Button onPress={saveHandle} tone="primary" label="Save" name="Save your handle" />
+                <Button
                   onPress={() => setHandle(undefined)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Cancel changing your handle"
-                >
-                  <Text style={styles.link}>Cancel</Text>
-                </Pressable>
+                  tone="quiet"
+                  size="inline"
+                  label="Cancel"
+                  name="Cancel changing your handle"
+                />
               </View>
             </>
           )}
@@ -412,13 +397,6 @@ const styles = StyleSheet.create({
     color: theme.ink,
     fontSize: 15,
   },
-  primary: {
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  primaryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 14 },
 
   person: {
     flexDirection: 'row',
@@ -436,5 +414,5 @@ const styles = StyleSheet.create({
   smallOnText: { color: theme.actionLabel, fontSize: 12, fontWeight: '600' },
   smallMuted: { backgroundColor: theme.groundWell },
   smallMutedText: { color: theme.inkSecondary, fontSize: 12 },
-  disabled: { opacity: 0.4 },
+  disabled: { backgroundColor: theme.groundWell, borderColor: theme.strokeHairline },
 });

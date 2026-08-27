@@ -6,6 +6,7 @@ import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } fro
 import { SEARCH_TIMEOUT_MS } from '@reviewies/core/metadata/provider';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
+import { Button } from '../ui/Button';
 
 export function Search() {
   const [query, setQuery] = useState('');
@@ -208,33 +209,30 @@ function ResultRow({ result }: { result: SearchResult }) {
           </div>
         ) : (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              onClick={track}
+            <Button
+              onPress={track}
               disabled={added === 'library'}
-              aria-label={`Track ${result.name}`}
-              className="rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-            >
-              {added === 'library' ? 'Tracking' : 'Track'}
-            </button>
-            <button
-              onClick={() => setNoting(true)}
+              tone="primary"
+              label={added === 'library' ? 'Tracking' : 'Track'}
+              name={`Track ${result.name}`}
+            />
+            <Button
+              onPress={() => setNoting(true)}
               disabled={added === 'watchlist'}
-              aria-label={`Add ${result.name} to your watchlist`}
-              className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
-            >
-              {added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            </button>
+              tone="secondary"
+              label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+              name={`Add ${result.name} to your watchlist`}
+            />
             {/* Films only: "watched" is not a thing you can say about a whole series
                 in one tap without lying about which episodes. */}
             {result.kind === 'film' && (
-              <button
-                onClick={log}
+              <Button
+                onPress={log}
                 disabled={added === 'logged'}
-                aria-label={`Log that you have seen ${result.name}`}
-                className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
-              >
-                {added === 'logged' ? 'Logged' : 'Seen it'}
-              </button>
+                tone="secondary"
+                label={added === 'logged' ? 'Logged' : 'Seen it'}
+                name={`Log that you have seen ${result.name}`}
+              />
             )}
           </div>
         )}

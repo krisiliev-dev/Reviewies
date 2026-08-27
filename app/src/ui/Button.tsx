@@ -11,6 +11,15 @@ import { BUSY, SIZE, TONE, type ButtonContract } from '@reviewies/core/ui/button
  */
 interface Props extends ButtonContract {
   onPress?: () => void;
+  /**
+   * Submits the form it is inside. Web-only, because React Native has no forms.
+   *
+   * `components.md` already lists this kind of thing — focus versus press, `inert`,
+   * `aria-checked` versus `accessibilityState` — as documented divergence rather than
+   * shared code. A `type="button"` inside a `<form>` silently stops submitting it, which
+   * is the sort of change a migration makes without anything noticing.
+   */
+  submit?: boolean;
   to?: string;
   className?: string;
   children?: ReactNode;
@@ -48,6 +57,7 @@ export function Button({
   busy,
   selected,
   onPress,
+  submit,
   to,
   className = '',
   children,
@@ -91,7 +101,7 @@ export function Button({
   }
   return (
     <button
-      type="button"
+      type={submit ? 'submit' : 'button'}
       onClick={onPress}
       aria-label={name}
       aria-busy={busy || undefined}

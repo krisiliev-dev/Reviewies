@@ -29,6 +29,7 @@ import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
+import { Button } from '../../src/ui/Button';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -145,11 +146,13 @@ export default function UpNextScreen() {
                 muted one — the opposite of what this screen is for. The web had the
                 same inversion, and neither was visible to any check: both controls were
                 named, reachable and big enough. */}
-            <Link href="/search" asChild>
-              <Pressable style={styles.ctaQuiet} accessibilityRole="link">
-                <Text style={styles.ctaQuietText}>Find something to watch</Text>
-              </Pressable>
-            </Link>
+            <Button
+              to="/search"
+              tone="secondary"
+              size="page"
+              label="Find something to watch"
+              name="Find something to watch"
+            />
           </View>
         ) : entries.length === 0 ? (
           <View style={styles.empty}>
@@ -170,11 +173,13 @@ export default function UpNextScreen() {
             {/* Offered where the gap is felt, not filed under a settings screen — but
                 never over an import still in flight. */}
             {unmatched && !importing ? <MatchImports /> : null}
-            <Link href="/search" asChild>
-              <Pressable style={styles.cta} accessibilityRole="link">
-                <Text style={styles.ctaText}>Find something to watch</Text>
-              </Pressable>
-            </Link>
+            <Button
+              to="/search"
+              tone="primary"
+              size="page"
+              label="Find something to watch"
+              name="Find something to watch"
+            />
           </View>
         ) : (
           entries.map((entry) => (
@@ -332,26 +337,10 @@ const styles = StyleSheet.create({
   firstHeading: { color: theme.ink, fontSize: 20, fontWeight: '700' },
   later: { color: theme.inkSecondary, fontSize: 14, textDecorationLine: 'underline' },
   emptyText: { color: theme.inkSecondary, fontSize: 16 },
-  cta: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.actionFill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-  },
-  ctaText: { color: theme.actionLabel, fontWeight: '600', fontSize: 16 },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
   // `<Link asChild>`, which clones its child and merges props — and an array style
   // through that path reached the DOM as an index-keyed object, which React refuses to
   // set. The export booted to a blank page; the smoke suite caught it.
-  ctaQuiet: {
-    alignSelf: 'flex-start',
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-  },
-  ctaQuietText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
 
   row: {
     flexDirection: 'row',

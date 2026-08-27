@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
-import { border, radius, theme } from '../src/ui/theme';
+import { theme } from '../src/ui/theme';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
 import type { ErrorBoundaryProps } from 'expo-router';
+import { Button } from '../src/ui/Button';
 
 /**
  * Keep one broken screen from taking the app with it.
@@ -42,16 +43,20 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         Something on it went wrong. Everything you have tracked is still here — it lives
         on this device and nothing was lost.
       </Text>
-      <Pressable style={styles.retry} accessibilityRole="button" onPress={() => void retry()}>
-        <Text style={styles.retryText}>Try again</Text>
-      </Pressable>
-      <Pressable
-        style={styles.retryQuiet}
-        accessibilityRole="button"
+      <Button
+        onPress={() => void retry()}
+        tone="primary"
+        size="page"
+        label="Try again"
+        name="Try again"
+      />
+      <Button
         onPress={() => router.replace('/')}
-      >
-        <Text style={styles.retryQuietText}>Go to Up Next</Text>
-      </Pressable>
+        tone="secondary"
+        size="page"
+        label="Go to Up Next"
+        name="Go to Up Next"
+      />
     </View>
   );
 }
@@ -144,22 +149,6 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  retry: {
-    marginTop: 16,
-    backgroundColor: theme.actionFill,
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  retryText: { color: theme.actionLabel, fontWeight: '700', fontSize: 15 },
-  retryQuiet: {
-    marginTop: 12,
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  retryQuietText: { color: theme.ink, fontWeight: '600', fontSize: 15 },
   centre: {
     flex: 1,
     alignItems: 'center',

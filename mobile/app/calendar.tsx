@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link, Stack, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import {
   getPreference,
   getUpcoming,
@@ -12,7 +12,7 @@ import {
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { Poster } from '../src/ui/Poster';
-import { border, radius, theme } from '../src/ui/theme';
+import { radius, theme } from '../src/ui/theme';
 import {
   pushSupported,
   registerForPush,
@@ -22,6 +22,7 @@ import {
 } from '../src/notifications';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
+import { Button } from '../src/ui/Button';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -151,11 +152,13 @@ export default function CalendarScreen() {
             {/* Doc 10 §8 said this of the web's copy: a screen whose job is "what is on"
                 should not answer "nothing" and stop, with Discover one tap away. The web
                 got the button; the phone, whose sentence the web borrowed, did not. */}
-            <Link href="/discover" asChild>
-              <Pressable style={styles.cta} accessibilityRole="link">
-                <Text style={styles.ctaText}>{COPY.calendar.findSomething}</Text>
-              </Pressable>
-            </Link>
+            <Button
+              to="/discover"
+              tone="primary"
+              size="page"
+              label={COPY.calendar.findSomething}
+              name={COPY.calendar.findSomething}
+            />
           </View>
         )}
 
@@ -224,14 +227,6 @@ const styles = StyleSheet.create({
   },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-  cta: {
-    alignSelf: 'flex-start',
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-  },
-  ctaText: { color: theme.ink, fontWeight: '600', fontSize: 15 },
   blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
 
   options: { gap: 8 },

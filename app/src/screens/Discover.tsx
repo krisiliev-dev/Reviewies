@@ -6,6 +6,7 @@ import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import { Poster } from '../ui/Poster';
+import { Button } from '../ui/Button';
 
 /**
  * Discovery.
@@ -111,22 +112,20 @@ function SuggestionRow({
 
         {/* Wraps, for the same reason the Up Next row does. */}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <button
-            onClick={track}
+          <Button
+            onPress={track}
             disabled={busy}
-            aria-label={`Track ${suggestion.name}`}
-            className="rounded-pill bg-action-fill px-3 py-1.5 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-          >
-            Track
-          </button>
-          <button
-            onClick={save}
+            tone="primary"
+            label="Track"
+            name={`Track ${suggestion.name}`}
+          />
+          <Button
+            onPress={save}
             disabled={busy}
-            aria-label={`Add ${suggestion.name} to your watchlist`}
-            className="rounded-pill border border-stroke-signal px-3 py-1.5 text-sm text-ink-secondary disabled:opacity-50"
-          >
-            Watchlist
-          </button>
+            tone="secondary"
+            label="Watchlist"
+            name={`Add ${suggestion.name} to your watchlist`}
+          />
         </div>
       </div>
     </li>

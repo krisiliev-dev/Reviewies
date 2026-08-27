@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Link, Stack, usePathname } from 'expo-router';
-import { radius, theme } from '../src/ui/theme';
+import { Stack, usePathname } from 'expo-router';
+import { theme } from '../src/ui/theme';
+import { Button } from '../src/ui/Button';
 
 /**
  * The screen for an address that is not a screen.
@@ -25,15 +26,18 @@ export default function NotFoundScreen() {
         <Text style={styles.path}>{pathname}</Text> is not a screen in this app. It may be
         an old link, or a typo.
       </Text>
-      {/* One flat object each, not `[styles.cta, tap]`. §6.34: an array style handed to
-          expo-router's Link reaches the DOM as an index-keyed object under
-          react-native-web and throws on the first render, which is a blank page. */}
-      <Link href="/" style={styles.cta}>
-        Go to Up Next
-      </Link>
-      <Link href="/more" style={styles.ctaQuiet}>
-        See everything else
-      </Link>
+      {/* §6.34's scar — an array style through `expo-router`'s Link reaches the DOM as an
+          index-keyed object and throws on first render, a blank page — is why these were
+          written as one flat object each. `Button` takes the destination itself, so there
+          is no Link to hand a style to. */}
+      <Button to="/" tone="primary" size="page" label="Go to Up Next" name="Go to Up Next" />
+      <Button
+        to="/more"
+        tone="secondary"
+        size="page"
+        label="See everything else"
+        name="See everything else"
+      />
     </View>
   );
 }
@@ -43,22 +47,4 @@ const styles = StyleSheet.create({
   title: { color: theme.ink, fontSize: 22, fontWeight: '600', marginTop: 8 },
   body: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
   path: { color: theme.ink },
-  cta: {
-    backgroundColor: theme.actionFill,
-    color: theme.actionLabel,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    textAlign: 'center',
-    fontWeight: '600',
-    marginTop: 8,
-    minHeight: 24,
-  },
-  ctaQuiet: {
-    backgroundColor: theme.groundRaised,
-    color: theme.ink,
-    borderRadius: radius.pill,
-    paddingVertical: 16,
-    textAlign: 'center',
-    minHeight: 24,
-  },
 });
