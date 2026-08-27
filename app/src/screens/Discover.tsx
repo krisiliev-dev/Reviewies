@@ -90,13 +90,13 @@ function SuggestionRow({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-2xl bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-plate bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(suggestion.id)}`}
         aria-label={`Open ${suggestion.name}`}
         className="shrink-0"
       >
-        <Poster url={suggestion.posterUrl} name={suggestion.name} className="h-24 w-16 rounded-lg" />
+        <Poster url={suggestion.posterUrl} name={suggestion.name} className="h-24 w-16 rounded-plate" />
       </Link>
 
       <div className="min-w-0 flex-1">
@@ -115,7 +115,7 @@ function SuggestionRow({
             onClick={track}
             disabled={busy}
             aria-label={`Track ${suggestion.name}`}
-            className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+            className="rounded-pill bg-accent px-3 py-1.5 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
           >
             Track
           </button>
@@ -123,7 +123,7 @@ function SuggestionRow({
             onClick={save}
             disabled={busy}
             aria-label={`Add ${suggestion.name} to your watchlist`}
-            className="rounded-lg bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
+            className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm text-muted disabled:opacity-50"
           >
             Watchlist
           </button>

@@ -104,7 +104,7 @@ export function EpisodeComments() {
         </p>
       ) : !watched ? (
         // The gate is enforced by the database; this only explains it.
-        <div className="mt-6 rounded-2xl bg-surface p-4">
+        <div className="mt-6 rounded-plate bg-surface p-4">
           <p className="font-medium">Hidden until you watch it</p>
           <p className="mt-1 text-sm text-muted">
             Comments on this episode stay sealed until you have seen it. Nothing here can
@@ -125,7 +125,7 @@ export function EpisodeComments() {
                 role="radio"
                 aria-checked={effort === level.minLength}
                 aria-label={`Show ${level.label.toLowerCase()} comments`}
-                className={`rounded-full px-3 py-1.5 text-xs ${
+                className={`rounded-plate px-3 py-1.5 text-xs ${
                   effort === level.minLength ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
                 }`}
               >
@@ -147,12 +147,12 @@ export function EpisodeComments() {
               }}
               placeholder="What did you think?"
               rows={3}
-              className="w-full resize-y rounded-xl bg-surface px-3 py-3 text-base outline-none placeholder:text-muted"
+              className="w-full resize-y rounded-none bg-surface px-3 py-3 text-base outline-none placeholder:text-muted"
             />
 
             {image && (
               <div className="flex items-center gap-2">
-                <img src={image} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                <img src={image} alt="" className="h-16 w-16 rounded-plate object-cover" />
                 <button
                   type="button"
                   onClick={() => setImage(undefined)}
@@ -168,14 +168,14 @@ export function EpisodeComments() {
               <button
                 type="submit"
                 disabled={(!draft.trim() && !image) || uploading}
-                className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+                className="rounded-pill bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
               >
                 Post
               </button>
 
               {/* Screenshots were core to TV Time's comment culture and are named
                   most often as the thing successors dropped. */}
-              <label className="cursor-pointer rounded-xl bg-surface-2 px-4 py-2 text-sm text-muted">
+              <label className="cursor-pointer rounded-pill bg-surface-2 px-4 py-2 text-sm text-muted">
                 {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
                 <input
                   type="file"
@@ -206,7 +206,7 @@ export function EpisodeComments() {
 
           <ul className="mt-4 flex flex-col gap-2">
             {visible.map((c) => (
-              <li key={c.id} className="rounded-2xl bg-surface p-3">
+              <li key={c.id} className="rounded-plate bg-surface p-3">
                 <p className="flex items-center gap-2 text-xs text-muted">
                   <span className="min-w-0 flex-1">
                     {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}
@@ -226,7 +226,7 @@ export function EpisodeComments() {
                         }
                         await load();
                       }}
-                      className="min-h-[24px] shrink-0 rounded-lg px-2 text-muted underline"
+                      className="min-h-[24px] shrink-0 rounded-pill px-2 text-muted underline"
                       aria-label="Delete your comment"
                     >
                       Delete
@@ -239,7 +239,7 @@ export function EpisodeComments() {
                     src={c.imageUrl}
                     alt=""
                     loading="lazy"
-                    className="mt-2 max-h-72 rounded-lg object-contain"
+                    className="mt-2 max-h-72 rounded-plate object-contain"
                   />
                 )}
               </li>

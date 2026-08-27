@@ -140,7 +140,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
   }
 
   return (
-    <section className="rounded-2xl bg-surface p-4">
+    <section className="rounded-plate bg-surface p-4">
       <h2 className="mb-1 font-semibold">You</h2>
 
       {!editing ? (
@@ -166,7 +166,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             placeholder="Handle"
-            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
             autoFocus
           />
           <input
@@ -174,13 +174,13 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Display name (optional)"
             maxLength={60}
-            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
           <div className="flex gap-2">
             <button
               onClick={save}
               aria-label="Save how you appear"
-              className="rounded-xl bg-accent px-4 py-2 font-medium text-ink"
+              className="rounded-pill bg-accent px-4 py-2 font-medium text-ink"
             >
               Save
             </button>
@@ -190,7 +190,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
                 setDisplayName(undefined);
                 setNote(undefined);
               }}
-              className="rounded-xl bg-surface-2 px-4 py-2"
+              className="rounded-pill bg-surface-2 px-4 py-2"
             >
               Cancel
             </button>
@@ -249,7 +249,7 @@ function FindPeople({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Handle or name"
-        className="w-full rounded-xl bg-surface px-4 py-3 outline-none placeholder:text-muted"
+        className="w-full rounded-none bg-surface px-4 py-3 outline-none placeholder:text-muted"
       />
 
       {/* "Nobody by that name" was said for both no match and no answer, and somebody
@@ -274,7 +274,7 @@ function FindPeople({
           const already = following.some((f) => f.id === p.id);
           const isBlocked = blocked.some((b) => b.id === p.id);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-3">
+            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-surface px-3 py-3">
               <PersonName person={p} />
               <button
                 onClick={async () => {
@@ -288,7 +288,7 @@ function FindPeople({
                 }}
                 disabled={isBlocked}
                 aria-label={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40 ${
+                className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-40 ${
                   already ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
                 }`}
               >
@@ -305,7 +305,7 @@ function FindPeople({
                   onChanged();
                 }}
                 aria-label={`Block @${p.handle}`}
-                className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
+                className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted"
               >
                 Block
               </button>
@@ -353,7 +353,7 @@ function PersonList({
         {people.map((p) => {
           const act = action(p);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-3">
+            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-surface px-3 py-3">
               <PersonName person={p} />
               {act && (
                 <button
@@ -367,7 +367,7 @@ function PersonList({
                     onChanged();
                   }}
                   aria-label={`${act.label} @${p.handle}`}
-                  className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
+                  className="shrink-0 rounded-pill bg-surface-2 px-3 py-1.5 text-xs text-muted"
                 >
                   {act.label}
                 </button>

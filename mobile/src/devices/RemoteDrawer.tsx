@@ -130,8 +130,8 @@ const styles = StyleSheet.create({
     // no affordance, because at that ratio it is not there. `strokeSignal` is the token
     // for a mark that means something, at 4.51 in the worst case.
     backgroundColor: color.dark.strokeSignal,
-    borderTopLeftRadius: radius.md,
-    borderBottomLeftRadius: radius.md,
+    borderTopLeftRadius: radius.none,
+    borderBottomLeftRadius: radius.none,
     zIndex: z.drawerHandle,
   },
   tabGlyph: { color: color.dark.ground, fontSize: 18 },

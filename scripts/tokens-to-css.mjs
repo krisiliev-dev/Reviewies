@@ -21,7 +21,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, legacy, legacyRadius, space, size, radius,
+  color, label, legacy, space, size, radius,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -89,7 +89,6 @@ for (const [name, px] of Object.entries(space)) w(`  --spacing-${name}: ${px}px;
 for (const [name, px] of Object.entries(size)) w(`  --spacing-${name}: ${px}px;`);
 w('');
 for (const [name, px] of Object.entries(radius)) w(`  --radius-${name}: ${px}px;`);
-for (const [name, px] of Object.entries(legacyRadius)) w(`  --radius-legacy-${name}: ${px}px;`);
 w('');
 for (const [name, px] of Object.entries(border)) w(`  --border-width-${kebab(name)}: ${px}px;`);
 w('}');

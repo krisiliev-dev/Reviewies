@@ -59,7 +59,7 @@ export function CatchUp({
         aria-modal="true"
         aria-label={`Catch up on ${seriesName}`}
         tabIndex={-1}
-        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-3xl bg-surface p-4 outline-none"
+        className="safe-bottom max-h-[80%] w-full overflow-y-auto rounded-t-none bg-surface p-4 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-baseline justify-between gap-3">
@@ -145,7 +145,7 @@ function Grid({
             // A grid of bare numbers: "3" says nothing about season or episode.
             aria-label={`${label}: ${value}`}
             // Big enough to hit one-handed; this is a grid of small numbers.
-            className="min-w-11 rounded-xl bg-surface-2 px-3 py-3 text-sm font-medium tabular-nums"
+            className="min-w-11 rounded-pill bg-surface-2 px-3 py-3 text-sm font-medium tabular-nums"
           >
             {value}
           </button>

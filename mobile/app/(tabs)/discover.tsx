@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
   primary: {
     backgroundColor: theme.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   primaryText: { color: theme.ink, fontSize: 13, fontWeight: '600' },
   secondary: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     backgroundColor: theme.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 4 },

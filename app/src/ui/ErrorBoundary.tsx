@@ -56,7 +56,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
           </p>
           <a
             href="/"
-            className="self-start rounded-full bg-accent px-5 py-3 font-medium text-ink"
+            className="self-start rounded-pill bg-accent px-5 py-3 font-medium text-ink"
           >
             Go to Up Next
           </a>

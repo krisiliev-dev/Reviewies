@@ -266,7 +266,7 @@ export function WatchingMode() {
             key={e.emoji + e.label}
             onClick={() => react(e.emoji)}
             disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl bg-surface text-3xl active:scale-90 disabled:opacity-30"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-surface text-3xl active:scale-90 disabled:opacity-30"
             // The emoji is aria-hidden, so this is the whole name — "Funny" alone does
             // not say it is something you do.
             aria-label={`React with ${e.label.toLowerCase()}`}
@@ -282,7 +282,7 @@ export function WatchingMode() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search any emoji…"
-          className="w-full rounded-xl bg-surface px-4 py-3 text-base outline-none placeholder:text-muted"
+          className="w-full rounded-none bg-surface px-4 py-3 text-base outline-none placeholder:text-muted"
           aria-label="Search emoji"
         />
       </div>
@@ -295,7 +295,7 @@ function StartPanel({ onStart }: { onStart: () => void }) {
     <div className="px-4 pb-3">
       <button
         onClick={onStart}
-        className="w-full rounded-2xl bg-accent py-4 text-lg font-semibold text-ink active:scale-[0.98]"
+        className="w-full rounded-pill bg-accent py-4 text-lg font-semibold text-ink active:scale-[0.98]"
       >
         Start watching
       </button>
@@ -326,7 +326,7 @@ function SyncBar({
       <button
         onClick={clock.toggle}
         aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}
-        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
       >
         {clock.running ? 'Pause' : 'Resume'}
       </button>
@@ -336,14 +336,14 @@ function SyncBar({
       <button
         onClick={() => clock.nudge(-5000)}
         aria-label="Move the clock back 5 seconds"
-        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
       >
         −5s
       </button>
       <button
         onClick={() => clock.nudge(5000)}
         aria-label="Move the clock forward 5 seconds"
-        className="rounded-lg bg-surface-2 px-3 py-2 text-sm"
+        className="rounded-plate bg-surface-2 px-3 py-2 text-sm"
       >
         +5s
       </button>
@@ -353,7 +353,7 @@ function SyncBar({
         aria-label={
           streamPaused ? 'Let other people’s reactions move again' : 'Hold other people’s reactions still'
         }
-        className={`rounded-lg px-3 py-2 text-sm ${
+        className={`rounded-plate px-3 py-2 text-sm ${
           streamPaused ? 'bg-accent text-ink' : 'bg-surface-2'
         }`}
       >
@@ -374,7 +374,7 @@ function SyncBar({
               aria-checked={density === value}
               // "8", "24", "60" on their own are three numbers next to each other.
               aria-label={COPY.watching.densityChoice(value)}
-              className={`min-h-6 rounded-full px-3 py-1 ${
+              className={`min-h-6 rounded-plate px-3 py-1 ${
                 density === value ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
               }`}
             >
@@ -411,14 +411,14 @@ function DriftHint({
   const behind = driftMs < 0;
 
   return (
-    <div className="mx-3 mb-2 flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
+    <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate bg-surface-2 px-3 py-2 text-sm">
       <span className="flex-1 text-muted">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
       </span>
       <button
         onClick={onApply}
         aria-label={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
-        className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-ink"
+        className="rounded-pill bg-accent px-3 py-1.5 text-xs font-semibold text-ink"
       >
         Fix
       </button>

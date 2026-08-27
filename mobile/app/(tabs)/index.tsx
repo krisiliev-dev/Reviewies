@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   undoText: { color: theme.muted, fontSize: 14, flexShrink: 1 },
   undo: {
     backgroundColor: theme.surface2,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 24,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.accent,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 999,
+    borderRadius: radius.pill,
   },
   ctaText: { color: theme.ink, fontWeight: '600', fontSize: 16 },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.surface2,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 999,
+    borderRadius: radius.pill,
   },
   ctaQuietText: { color: theme.text, fontWeight: '600', fontSize: 16 },
 
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     backgroundColor: theme.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.plate,
     padding: 12,
   },
   rowBody: { flex: 1, minWidth: 0, gap: 2 },
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   watchAlong: {
     backgroundColor: theme.surface2,
     color: theme.muted,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 12,
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.accent,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
   },
   pressed: { transform: [{ scale: 0.96 }] },
   watchedText: { color: theme.ink, fontWeight: '700', fontSize: 14 },

@@ -19,23 +19,23 @@ export const theme = {
   accent: '#ff5c7a',
 } as const;
 
-export const radius = { sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
 /**
  * The token layer, re-exported so a screen can reach it without a second import path.
  *
- * The seven colours above and the four radii are the OLD system and are still what most
- * of this app is drawn from. They are not deleted yet on purpose: `docs/design/tokens.md`
- * costs the space migration at ~99 sites and the radius one at ~84, and the spec is
- * explicit that those guards land WITH their migration or not at all — a guard carrying
- * an allowlist of its own violations is the shape §6.59 caught being wrong for a year.
+ * The four legacy radii were here too and are gone: §6.89 migrated all 99 of their sites
+ * to `radius.none|plate|pill` in the same commit as the guard, so the export had nothing
+ * left reading it. That is what "a bridge with a visible end" looked like when the end
+ * arrived — the names were deleted rather than deprecated, because a legacy export that
+ * survives its last call site is the next thing somebody reaches for by habit.
  *
- * So this is a bridge with a visible end, not a permanent pair. New work reads `tokens`;
- * the old names go when the sprint that migrates them lands, and `palette.test.ts` still
- * holds the seven to their measured ratios until then.
+ * The seven colours above are the OLD system and are still what most of this app is
+ * drawn from; they go with the colour migration. New work reads `tokens`, and
+ * `palette.test.ts` holds the seven to their measured ratios until then.
  */
 export {
   color,
+  radius,
   label,
   space,
   size,

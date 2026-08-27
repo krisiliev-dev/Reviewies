@@ -880,11 +880,39 @@ try {
    *
    * The stream is the band at the top; before the clock is running it holds nothing.
    */
-  const driftingBeforeStart = await page.locator('.will-change-transform').count();
+  const drifting = () =>
+    page.locator('[aria-label="Reactions from other viewers"] span').count();
+  const driftingBeforeStart = await drifting();
   check(
     'reopening an episode does not replay your own reactions',
     driftingBeforeStart === 0,
     `${driftingBeforeStart} drifting before the clock was started`,
+  );
+
+  /**
+   * And the instrument works, which the check above cannot say on its own.
+   *
+   * It asserts a count of zero through a selector, so a selector that matches nothing
+   * passes it forever — §6.71's shape, a stuck queue looking exactly like an empty one.
+   * That was not hypothetical here: this read `.will-change-transform` until §6.89
+   * renamed a neighbouring class and the suite spent thirty seconds on a different
+   * selector that no longer existed. A class is a design decision; an aria-label is a
+   * promise to a screen reader, and only one of the two is meant to survive a redesign.
+   *
+   * So: start the clock, react, and require the same selector to find it. Zero here
+   * means the check above has stopped being able to see anything.
+   */
+  // The clock is already running here — this is a *resumed* session, which is the whole
+  // reason the check above is interesting — so Start is only pressed if it is offered.
+  const start = page.getByRole('button', { name: 'Start watching' });
+  if (await start.count()) await start.click();
+  await page.getByRole('button', { name: 'React with cliffhanger' }).click();
+  await page.waitForTimeout(600);
+  const driftingAfterReacting = await drifting();
+  check(
+    'and the check above can see a reaction when there is one',
+    driftingAfterReacting > 0,
+    `${driftingAfterReacting} drifting after one tap`,
   );
 
   // --- §6.69 What a long session leaves behind ---------------------------------------
@@ -1160,7 +1188,11 @@ try {
   await page.getByRole('button', { name: 'Catch up on The Long Dark' }).click();
   // Two-season fixture, so the season step comes first.
   await page.waitForSelector('text=/^Season$/', { timeout: 5000 });
-  const sheet = await page.locator('div.rounded-t-3xl').innerText();
+  // By role, not by class. This read `div.rounded-t-3xl` until §6.89 renamed the corner
+  // token and the suite spent thirty seconds waiting for a class that no longer existed —
+  // a selector naming a design decision, which breaks the moment the decision changes.
+  // The sheet is a dialog and says so; that is the stable name.
+  const sheet = await page.getByRole('dialog', { name: /Catch up on/ }).innerText();
   // The whole point of the control: numbers, and no episode names anywhere.
   check(
     'catch-up picker shows no episode names',

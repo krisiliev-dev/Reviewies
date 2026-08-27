@@ -87,7 +87,7 @@ export function Lists() {
           onChange={(e) => setName(e.target.value)}
           placeholder="New list name"
           maxLength={120}
-          className="min-w-0 flex-1 rounded-xl bg-surface px-3 py-3 outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 rounded-none bg-surface px-3 py-3 outline-none placeholder:text-muted"
         />
         <button
           type="submit"
@@ -96,7 +96,7 @@ export function Lists() {
           // dark red lettering — it read as broken rather than as waiting. Disabled
           // controls are exempt from the contrast rules, which is a reason they are
           // allowed to be quiet and not a reason to make them illegible.
-          className="rounded-xl bg-accent px-4 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-pill bg-accent px-4 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
         >
           Create
         </button>
@@ -160,7 +160,7 @@ function ListCard({
   }, [open, list.id]);
 
   return (
-    <li className="rounded-2xl bg-surface p-3">
+    <li className="rounded-plate bg-surface p-3">
       <button
         onClick={onToggle}
         aria-expanded={open}
@@ -216,7 +216,7 @@ function ListCard({
 
           <ul className="flex flex-col gap-1">
             {items?.map((item) => (
-              <li key={item.titleId} className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
+              <li key={item.titleId} className="flex items-center gap-2 rounded-plate bg-surface-2 px-3 py-2">
                 <Link
                   to={`/title/${encodeURIComponent(item.titleId)}`}
                   className="min-w-0 flex-1 truncate text-sm"

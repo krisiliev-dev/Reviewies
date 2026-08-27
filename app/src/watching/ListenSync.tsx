@@ -99,13 +99,13 @@ export function ListenSync({
   }
 
   return (
-    <div className="mx-3 mb-2 rounded-xl bg-surface-2 px-3 py-2">
+    <div className="mx-3 mb-2 rounded-plate bg-surface-2 px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={listen}
           disabled={!!busy}
           aria-busy={busy === 'listening'}
-          className="rounded-lg bg-surface px-3 py-1.5 text-xs disabled:opacity-50"
+          className="rounded-pill bg-surface px-3 py-1.5 text-xs disabled:opacity-50"
         >
           {busy === 'listening' ? 'Listening…' : 'Sync by listening'}
         </button>
@@ -120,7 +120,7 @@ export function ListenSync({
               ? 'Help map this episode — start the episode first'
               : 'Help map this episode'
           }
-          className="rounded-lg bg-surface px-3 py-1.5 text-xs text-muted disabled:opacity-40"
+          className="rounded-pill bg-surface px-3 py-1.5 text-xs text-muted disabled:opacity-40"
           title={positionMs < 1000 ? 'Start the episode first' : undefined}
         >
           {busy === 'contributing' ? 'Recording…' : 'Help map this episode'}

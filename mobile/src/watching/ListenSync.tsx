@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 8,
     padding: 12,
-    borderRadius: radius.md,
+    borderRadius: radius.plate,
     backgroundColor: theme.surface2,
     gap: 6,
   },
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     backgroundColor: theme.surface,
   },
   buttonOn: { backgroundColor: theme.accent },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   quiet: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.sm,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: theme.edge,
   },

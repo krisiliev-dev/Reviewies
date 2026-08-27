@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   block: {
     marginBottom: 16,
     padding: 12,
-    borderRadius: radius.lg,
+    borderRadius: radius.plate,
     backgroundColor: theme.surface,
     gap: 8,
   },
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.sm,
+    borderRadius: radius.plate,
     backgroundColor: theme.surface2,
   },
   chipOn: { backgroundColor: theme.accent },
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   service: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.sm,
+    borderRadius: radius.plate,
     backgroundColor: theme.surface2,
   },
   serviceText: { color: theme.text, fontSize: 14 },

@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
-import { theme } from '../src/ui/theme';
+import { radius, theme } from '../src/ui/theme';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   retry: {
     marginTop: 16,
     backgroundColor: theme.accent,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   retryQuiet: {
     marginTop: 12,
     backgroundColor: theme.surface2,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },

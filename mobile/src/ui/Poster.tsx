@@ -18,7 +18,7 @@ export function Poster({
   width?: number;
   height?: number;
 }) {
-  const style = { width, height, borderRadius: radius.md };
+  const style = { width, height, borderRadius: radius.plate };
 
   if (!url) {
     return (

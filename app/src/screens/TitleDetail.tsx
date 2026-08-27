@@ -79,7 +79,7 @@ export function TitleDetail() {
         <Poster
           url={libraryItem?.posterOverride ?? title?.posterUrl}
           name={title?.name ?? ''}
-          className="h-36 w-24 rounded-xl"
+          className="h-36 w-24 rounded-plate"
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">
@@ -92,7 +92,7 @@ export function TitleDetail() {
                 setLoading(true);
                 setAttempt((n) => n + 1);
               }}
-              className="mt-2 rounded-full bg-surface-2 px-4 py-2 text-sm"
+              className="mt-2 rounded-pill bg-surface-2 px-4 py-2 text-sm"
             >
               {COPY.title.tryAgain}
             </button>
@@ -149,7 +149,7 @@ export function TitleDetail() {
                 value={posterDraft}
                 onChange={(e) => setPosterDraft(e.target.value)}
                 placeholder="Image URL"
-                className="min-w-0 flex-1 rounded-lg bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+                className="min-w-0 flex-1 rounded-none bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
                 autoFocus
               />
               <button
@@ -158,7 +158,7 @@ export function TitleDetail() {
                   setPosterDraft(undefined);
                 }}
                 aria-label="Save this poster"
-                className="rounded-lg bg-accent px-3 text-sm font-medium text-ink"
+                className="rounded-pill bg-accent px-3 text-sm font-medium text-ink"
               >
                 Save
               </button>
@@ -219,7 +219,7 @@ function EpisodeRow({
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-xl bg-surface px-3 py-3">
+    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-surface px-3 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm">
           <span className="text-muted">{episode.number}.</span> {episode.name}
@@ -239,7 +239,7 @@ function EpisodeRow({
       <Link
         to={`/watching/${encodeURIComponent(episode.id)}`}
         aria-label={`React along with episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-plate bg-surface-2 px-3 py-1.5 text-xs text-muted"
       >
         React
       </Link>
@@ -247,7 +247,7 @@ function EpisodeRow({
       <Link
         to={`/comments/${encodeURIComponent(episode.id)}`}
         aria-label={`Comments on episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-plate bg-surface-2 px-3 py-1.5 text-xs text-muted"
       >
         Talk
       </Link>
@@ -265,7 +265,7 @@ function EpisodeRow({
             ? `Unmark episode ${episode.number}, ${episode.name}`
             : `Mark episode ${episode.number}, ${episode.name} watched`
         }
-        className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-30 ${
+        className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-30 ${
           watched ? 'bg-surface-2 text-muted' : 'bg-accent text-ink'
         }`}
       >

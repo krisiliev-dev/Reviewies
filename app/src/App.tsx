@@ -79,7 +79,7 @@ function Shell() {
       {!immersive && (
         <a
           href="#tabs"
-          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-lg focus-visible:bg-surface-2 focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-pill focus-visible:bg-surface-2 focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
         >
           Skip to navigation
         </a>

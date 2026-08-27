@@ -5913,6 +5913,95 @@ sprint would produce exactly the guard-with-an-allowlist this section is about.
 App unit tests 412 → 417. Phone smoke 166/166 unchanged, web 220/220 unchanged.
 
 
+### 6.89 Three corners, and a suite that broke because the app got it right
+
+`none 0 · plate 2 · pill 999`. Late Edition's argument for it is one sentence — *every card
+in the current build is a rounded fill doing a rule's job, and printed images have square
+corners* — and it costs 244 sites: 99 on the phone (81 `radius.sm|md|lg|xl`, 13 raw
+`999`s, 5 raw 2s and 3s) and 145 `rounded-*` on the web.
+
+Unlike space (§6.88) this is not a rounding rule. `12 → 2` is not a decision; *what this
+element is* is the decision, and it had to be made 244 times. The classification is in the
+migration scripts rather than in a comment somewhere, and every site was named explicitly
+so the script could assert that the set it changed was exactly the set that exists —
+neither an unclassified site nor a line number that had moved.
+
+**The screenshots changed the answer.** The first pass followed the direction literally:
+`0` for structure, which it lists as *full-bleed rows, fields, transport cells, bands*.
+Recapturing `design/screens/` showed what that actually produced — the More screen as a
+column of square blocks with 12pt gutters and `surface` fills between them. Square is
+right; the gutter and the fill are what make it look unfinished, and they belong to a
+sprint that has not happened.
+
+So the classification was wrong, not the direction. These rows are not full-bleed: they
+are inset cards with a fill and a margin, and an inset filled card is a **plate**. Forty-two
+sites moved from `none` to `plate` on that reading. What is left at `none` is what the word
+actually describes: fields, the bottom sheet's top edge, and the drawer handle welded to
+the screen edge. They become `none`-because-full-bleed when the layout sprint makes them
+full-bleed.
+
+At phone density 2px and 0px are nearly indistinguishable, so this was a semantic
+correction rather than a visual one — which is worth saying, because the visible change
+from the whole sprint is that everything went from 12–24pt rounding to square, and that
+part landed exactly as the direction described.
+
+**`theme.ts`'s four legacy radii are deleted, not deprecated.** So is `legacyRadius` in
+`core/src/tokens.ts`. The bridge comment written two sprints ago said "a bridge with a
+visible end"; this is what the end looked like. A legacy export that survives its last call
+site is the next thing somebody reaches for out of habit.
+
+**Four plants against the guard, all caught:** `borderRadius: 12` on the phone,
+`radius.lg` surviving anywhere, `rounded-lg` surviving on the web, and a fourth value
+added to the token table. The guard lives beside G10's shadow and blur clauses in
+`flat.test.ts`, because it is the same rule: depth is a ground step and a rule, and a
+rounded fill was the last thing pretending otherwise.
+
+---
+
+**Then the web smoke suite failed, and it was right to.**
+
+```
+FAIL  smoke run completed — locator.innerText: Timeout 30000ms exceeded.
+  - waiting for locator('div.rounded-t-3xl')
+```
+
+The catch-up sheet was located by its corner class. Renaming the token broke a suite that
+had nothing to do with the change — a test failing because the app got a design decision
+*right*. It is a dialog and says so in its `role` and `aria-label`; that is the stable
+name, and every other locator in the file already uses one.
+
+**The same file had the worse version of it, two hundred lines earlier.**
+
+```js
+const driftingBeforeStart = await page.locator('.will-change-transform').count();
+check('reopening an episode does not replay your own reactions', driftingBeforeStart === 0);
+```
+
+A count asserted to be **zero**, through a class selector, used exactly once. Rename that
+class and the check passes forever — §6.71's shape again, a stuck queue looking exactly
+like an empty one, except here it would silently retire the check §6.78 wrote and the
+replayed-reactions bug could come back to nothing at all. The loud failure was the lucky
+one; this is the one that would have cost something.
+
+Both are fixed, and the second is now *proved to work*: the clock is started, a reaction is
+tapped, and the same selector must find it. Planting a dead selector shows the asymmetry
+precisely — the zero-assertion still passes, the new check goes red.
+
+`app/src/ui/selectors.test.ts` holds the general rule: a browser suite must not find an
+element by a class the token layer owns. `rounded-`, `bg-`, `text-`, `p-`, `gap-`, `z-`
+are design decisions and are meant to change; roles, accessible names and `data-` hooks
+are promises. Planting `div.rounded-t-3xl` back fails it.
+
+**One thing typecheck would have caught and did not get the chance to.** `_layout.tsx` had
+only raw `borderRadius: 999` and so had never imported `radius`; the migration gave it
+`radius.pill` and nothing else. `npm run verify` runs the unit suites before `typecheck`,
+so it failed earlier for an unrelated reason and never reached it. `expo export` found it —
+`ReferenceError: radius is not defined` — which is the third time this project has learned
+that the phone's real compiler is the export rather than the test run.
+
+Web smoke 220 → 221. App unit tests 417 → 421.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6197,14 +6286,20 @@ and which single claim in this document could not be checked at all:
 - **The token layer is specified in full and built in part, and only the built part is
   guarded.** §6.85 landed colour, motion, z-order and elevation with guards proved by
   planting; §6.88 landed space the same way, with its 156 sites in the same commit as its
-  guard. Type and radius are still values in `core/src/tokens.ts` that no screen reads:
-  222 `fontSize` literals and ~84 radius uses are still there, and their guards cannot
-  land until the sites do. The app is still drawn from `theme.ts`'s four radii and its
-  original seven colours, so the system is real in the specification, real in the tests,
-  and only partly real on screen. The gap is visible — `coreWiring`'s exemption list is
-  exactly the list of what has not migrated, and each line deletes itself when its sprint
-  lands — but nobody should read "the design system is in" as "the app looks like the
-  design system".
+  guard, and §6.89 did the same for radius across 244. Type is the layer still specified
+  and not built: 222 `fontSize` literals, nine font faces nobody has shipped, and four
+  guards (G6, G7, G8, G12) that cannot land until the sites do. The app is still drawn
+  from `theme.ts`'s original seven colours, so colour is the other half-migration. The gap
+  is visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
+  and each line deletes itself when its sprint lands — but nobody should read "the design
+  system is in" as "the app looks like the design system".
+- **The app is half-redesigned, and the half that landed makes the other half more
+  visible.** Radius is square now and space is on the scale, but the fills and the gutters
+  those shapes sat inside have not been touched: the More screen is a column of square
+  `surface` blocks with 12pt gutters where the direction wants full-bleed rows separated
+  by a hairline. Nothing is wrong, and it does not yet look like anything. Judging the
+  direction from the current screenshots would be judging an intermediate state — the
+  fill-and-rule sprint is what makes the shapes mean something.
 - **Space is on the scale, and is not yet reading the scale.** The values migrated; the
   spellings did not. 348 phone literals and ~500 web utilities now land on the ten steps,
   checkably, but they are still numbers typed into a `StyleSheet` rather than references

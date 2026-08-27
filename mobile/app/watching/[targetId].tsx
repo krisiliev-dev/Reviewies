@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   startBlurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   start: {
     backgroundColor: theme.accent,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   },
   control: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.plate,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   densityRow: { flexDirection: 'row', gap: 4 },
   densityChip: {
     backgroundColor: theme.surface2,
-    borderRadius: 999,
+    borderRadius: radius.plate,
     // 24x24 is the floor WCAG 2.5.8 sets, and three numbers in a row is exactly the
     // shape that ends up under it.
     minWidth: 26,
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   drift: {
     marginHorizontal: 16,
     backgroundColor: theme.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.plate,
     padding: 12,
   },
   driftText: { color: theme.muted, fontSize: 12 },
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     width: '23%',
     aspectRatio: 1,
     backgroundColor: theme.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.plate,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   search: {
     margin: 12,
     backgroundColor: theme.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 16,
     color: theme.text,

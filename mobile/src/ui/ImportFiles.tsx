@@ -210,20 +210,20 @@ const styles = StyleSheet.create({
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   button: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
   buttonText: { color: theme.text, fontSize: 15, fontWeight: '600' },
   error: { color: theme.accent, fontSize: 13 },
-  report: { backgroundColor: theme.surface, borderRadius: radius.md, padding: 12, gap: 4 },
+  report: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 12, gap: 4 },
   reportHead: { color: theme.text, fontSize: 14 },
   reportLine: { color: theme.muted, fontSize: 12 },
   reportName: { color: theme.text },
   restore: {
     marginTop: 8,
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     // 44 rather than 24: this is a primary action in a report, not a link beside text.
     minHeight: 44,
     justifyContent: 'center',

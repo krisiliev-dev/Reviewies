@@ -30,7 +30,7 @@ export function Watchlist() {
         <p className="text-muted">{COPY.watchlist.empty}</p>
         <Link
           to="/search"
-          className="mt-5 inline-block rounded-full bg-accent px-5 py-3 font-medium text-ink"
+          className="mt-5 inline-block rounded-pill bg-accent px-5 py-3 font-medium text-ink"
         >
           Find something
         </Link>
@@ -79,13 +79,13 @@ function Row({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-2xl bg-surface p-3">
+    <li className="flex items-start gap-3 rounded-plate bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(titleId)}`}
         aria-label={`Open ${name}`}
         className="shrink-0"
       >
-        <Poster url={posterUrl} name={name} className="h-24 w-16 rounded-lg" />
+        <Poster url={posterUrl} name={name} className="h-24 w-16 rounded-plate" />
       </Link>
 
       <div className="min-w-0 flex-1">
@@ -98,13 +98,13 @@ function Row({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={COPY.watchlist.notePlaceholder}
-              className="min-w-0 flex-1 rounded-lg bg-surface-2 px-3 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-none bg-surface-2 px-3 py-1.5 text-sm outline-none placeholder:text-muted"
               autoFocus
             />
             <button
               onClick={save}
               aria-label={`Save note for ${name}`}
-              className="rounded-lg bg-accent px-3 text-sm font-medium text-ink"
+              className="rounded-pill bg-accent px-3 text-sm font-medium text-ink"
             >
               Save
             </button>

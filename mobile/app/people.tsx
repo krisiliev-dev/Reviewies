@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   error: { color: theme.accent, fontSize: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
+  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.text, fontSize: 16, fontWeight: '700' },
   section: { gap: 8 },
   sectionHeading: {
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: theme.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
@@ -425,13 +425,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: theme.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.plate,
     padding: 12,
   },
   personBody: { flex: 1, minWidth: 0 },
   personName: { color: theme.text, fontSize: 14 },
   personHandle: { color: theme.muted, fontSize: 11 },
-  small: { borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 },
+  small: { borderRadius: radius.plate, paddingHorizontal: 12, paddingVertical: 8 },
   smallOn: { backgroundColor: theme.accent },
   smallOnText: { color: theme.ink, fontSize: 12, fontWeight: '600' },
   smallMuted: { backgroundColor: theme.surface2 },

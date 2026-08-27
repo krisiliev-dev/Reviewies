@@ -46,7 +46,7 @@ export function Settings() {
           demand in the research. */}
       <Link
         to="/people"
-        className="flex items-center justify-between rounded-2xl bg-surface px-4 py-4"
+        className="flex items-center justify-between rounded-plate bg-surface px-4 py-4"
       >
         <span>
           <span className="font-semibold">People</span>
@@ -55,7 +55,7 @@ export function Settings() {
         <span aria-hidden className="text-muted">›</span>
       </Link>
 
-      <section className="rounded-2xl bg-surface p-4">
+      <section className="rounded-plate bg-surface p-4">
         <p className="text-sm text-muted">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
@@ -81,7 +81,7 @@ export function Settings() {
           corrects for it and needs no help; the calendar and "aired today" cannot be
           corrected from here, so the honest thing is to say where the trouble is. §6.67. */}
       {clockWarning() && (
-        <p role="status" className="rounded-2xl bg-surface px-4 py-3 text-sm text-accent">
+        <p role="status" className="rounded-plate bg-surface px-4 py-3 text-sm text-accent">
           {clockWarning()}
         </p>
       )}
@@ -102,7 +102,7 @@ export function Settings() {
               'application/json',
             );
           }}
-          className="rounded-xl bg-accent px-4 py-3 font-medium text-ink"
+          className="rounded-pill bg-accent px-4 py-3 font-medium text-ink"
         >
           Export everything (JSON)
         </button>
@@ -120,7 +120,7 @@ export function Settings() {
               'text/csv',
             )
           }
-          className="rounded-xl bg-surface-2 px-4 py-3"
+          className="rounded-pill bg-surface-2 px-4 py-3"
         >
           Export watch history (CSV)
         </button>
@@ -137,7 +137,7 @@ export function Settings() {
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
           Watching
         </h2>
-        <label className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-4">
+        <label className="flex items-center justify-between gap-3 rounded-plate bg-surface px-4 py-4">
           <span className="min-w-0">
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
@@ -167,7 +167,7 @@ export function Settings() {
         </p>
         <button
           onClick={() => void clearMetadataCache().then((n) => setCleared(n))}
-          className="rounded-xl bg-surface-2 px-4 py-3"
+          className="rounded-pill bg-surface-2 px-4 py-3"
         >
           Clear cached metadata
         </button>
@@ -196,7 +196,7 @@ export function Settings() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-surface-2 px-3 py-2">
+    <div className="rounded-plate bg-surface-2 px-3 py-2">
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
     </div>

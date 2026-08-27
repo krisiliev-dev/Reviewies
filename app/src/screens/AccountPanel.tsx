@@ -22,7 +22,7 @@ export function AccountPanel() {
 
   if (!configured) {
     return (
-      <section className="rounded-2xl bg-surface p-4">
+      <section className="rounded-plate bg-surface p-4">
         <h2 className="mb-1 font-semibold">Sync</h2>
         <p className="text-sm text-muted">
           Not configured. Reviewies works fully offline without it — set
@@ -51,7 +51,7 @@ export function AccountPanel() {
 
   if (!session) {
     return (
-      <section className="rounded-2xl bg-surface p-4">
+      <section className="rounded-plate bg-surface p-4">
         <h2 className="mb-1 font-semibold">Sync across devices</h2>
         <p className="mb-3 text-sm text-muted">
           Optional. Everything already works on this device — an account adds sync and
@@ -65,7 +65,7 @@ export function AccountPanel() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
           <input
             type="password"
@@ -74,9 +74,9 @@ export function AccountPanel() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (8+ characters)"
-            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
+            className="rounded-none bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
-          <button type="submit" className="rounded-xl bg-accent px-4 py-3 font-medium text-ink">
+          <button type="submit" className="rounded-pill bg-accent px-4 py-3 font-medium text-ink">
             {mode === 'in' ? 'Sign in' : 'Create account'}
           </button>
         </form>
@@ -95,7 +95,7 @@ export function AccountPanel() {
   }
 
   return (
-    <section className="rounded-2xl bg-surface p-4">
+    <section className="rounded-plate bg-surface p-4">
       <h2 className="mb-1 font-semibold">Sync</h2>
       <p className="text-sm text-muted">Signed in as {session.user.email}</p>
 
@@ -124,11 +124,11 @@ export function AccountPanel() {
           written and read by nothing until §6.71, so a queue stuck for a week looked
           exactly like one that was empty. */}
       {rejected > 0 && (
-        <div className="mt-3 rounded-xl bg-ink/40 p-3" role="status">
+        <div className="mt-3 rounded-plate bg-ink/40 p-3" role="status">
           <p className="text-sm text-accent">{COPY.sync.rejected(rejected)}</p>
           <button
             onClick={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
-            className="mt-2 rounded-lg bg-surface2 px-3 py-1.5 text-sm font-medium"
+            className="mt-2 rounded-pill bg-surface2 px-3 py-1.5 text-sm font-medium"
           >
             {COPY.sync.retryRejected}
           </button>
@@ -142,14 +142,14 @@ export function AccountPanel() {
           disabled={busy}
           aria-label="Sync now"
           aria-busy={busy}
-          className="rounded-xl bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-pill bg-accent px-4 py-2 font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
         >
           {busy ? 'Syncing…' : 'Sync now'}
         </button>
         <button
           onClick={() => void signOut()}
           aria-label="Sign out of your account"
-          className="rounded-xl bg-surface-2 px-4 py-2"
+          className="rounded-pill bg-surface-2 px-4 py-2"
         >
           Sign out
         </button>

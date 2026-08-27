@@ -55,7 +55,7 @@ export function Stats() {
             }}
             role="radio"
             aria-checked={!year && window === w.key}
-            className={`rounded-full px-4 py-1.5 text-sm ${
+            className={`rounded-plate px-4 py-1.5 text-sm ${
               !year && window === w.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}
           >
@@ -69,7 +69,7 @@ export function Stats() {
             role="radio"
             aria-checked={year === y}
             aria-label={`Your ${y}`}
-            className={`rounded-full px-4 py-1.5 text-sm ${
+            className={`rounded-plate px-4 py-1.5 text-sm ${
               year === y ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}
           >
@@ -92,7 +92,7 @@ export function Stats() {
                 setYear(undefined);
                 setWindow('all');
               }}
-              className="rounded-full bg-surface-2 px-4 py-2 text-sm"
+              className="rounded-pill bg-surface-2 px-4 py-2 text-sm"
             >
               {COPY.stats.showAllTime}
             </button>
@@ -119,7 +119,7 @@ function Summary({
   return (
     <div className="flex flex-col gap-5">
       {isYearReview && (
-        <div className="rounded-2xl bg-gradient-to-br from-accent/25 to-surface p-4">
+        <div className="rounded-plate bg-gradient-to-br from-accent/25 to-surface p-4">
           <p className="text-sm text-muted">Your {year}</p>
           <p className="mt-1 text-3xl font-semibold">{formatDuration(summary.minutes)}</p>
           <p className="mt-1 text-sm text-muted">
@@ -151,16 +151,16 @@ function Summary({
         </h2>
         <ul className="flex flex-col gap-1.5">
           {summary.topTitles.map((t) => (
-            <li key={t.titleId} className="rounded-xl bg-surface p-3">
+            <li key={t.titleId} className="rounded-plate bg-surface p-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate font-medium">{t.name}</span>
                 <span className="shrink-0 text-sm text-muted">{formatDuration(t.minutes)}</span>
               </div>
               {/* Bar length is time, not episode count — the whole point of
                   runtime weighting. */}
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-2">
                 <div
-                  className="h-full rounded-full bg-accent"
+                  className="h-full rounded-pill bg-accent"
                   style={{ width: `${Math.max(4, (t.minutes / maxMinutes) * 100)}%` }}
                 />
               </div>
@@ -177,7 +177,7 @@ function Summary({
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface px-3 py-3">
+    <div className="rounded-plate bg-surface px-3 py-3">
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="text-xl font-semibold tabular-nums">{value}</dd>
     </div>

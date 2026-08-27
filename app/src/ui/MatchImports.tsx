@@ -114,7 +114,7 @@ export function MatchImports({
       {!running && asks.length === 0 && (
         <button
           onClick={start}
-          className="rounded-xl bg-accent px-4 py-3 font-medium text-ink"
+          className="rounded-pill bg-accent px-4 py-3 font-medium text-ink"
         >
           Match imported shows
         </button>
@@ -137,7 +137,7 @@ export function MatchImports({
       {error && <p className="text-sm text-accent">{error}</p>}
 
       {asks.map((ask) => (
-        <div key={ask.localId} className="rounded-2xl bg-surface p-3">
+        <div key={ask.localId} className="rounded-plate bg-surface p-3">
           <p className="font-medium">{ask.name}</p>
           {/* Said plainly, because the honest reason to ask is not "we failed" — it is
               that more than one answer looked right, and picking one would be a guess
@@ -167,12 +167,12 @@ export function MatchImports({
                 <button
                   onClick={() => choose(ask, candidate.id)}
                   aria-label={`${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`}
-                  className="flex w-full items-center gap-3 rounded-xl bg-surface-2 p-2 text-left"
+                  className="flex w-full items-center gap-3 rounded-plate bg-surface-2 p-2 text-left"
                 >
                   <Poster
                     url={candidate.posterUrl}
                     name={candidate.name}
-                    className="h-14 w-10 shrink-0 rounded-md"
+                    className="h-14 w-10 shrink-0 rounded-plate"
                   />
                   <span className="min-w-0">
                     <span className="block truncate text-sm">{candidate.name}</span>
@@ -242,12 +242,12 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
           onChange={(e) => setQuery(e.target.value)}
           aria-label={`Search for the show ${ask.name} really is`}
           placeholder="Search by name"
-          className="min-w-0 flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 rounded-none bg-surface-2 px-3 py-2 text-sm outline-none placeholder:text-muted"
         />
         <button
           type="submit"
           disabled={busy || !query.trim()}
-          className="rounded-xl bg-accent px-3 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
+          className="rounded-pill bg-accent px-3 text-sm font-medium text-ink disabled:bg-surface-2 disabled:text-muted"
         >
           {busy ? 'Looking…' : 'Search'}
         </button>
@@ -272,12 +272,12 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
             <button
               onClick={() => onChosen(result.id)}
               aria-label={`${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`}
-              className="flex w-full items-center gap-3 rounded-xl bg-surface-2 p-2 text-left"
+              className="flex w-full items-center gap-3 rounded-plate bg-surface-2 p-2 text-left"
             >
               <Poster
                 url={result.posterUrl}
                 name={result.name}
-                className="h-14 w-10 shrink-0 rounded-md"
+                className="h-14 w-10 shrink-0 rounded-plate"
               />
               <span className="min-w-0">
                 <span className="block truncate text-sm">{result.name}</span>

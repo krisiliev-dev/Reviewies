@@ -115,10 +115,10 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12 },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
+  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardText: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   stats: { flexDirection: 'row', gap: 12 },
-  stat: { flex: 1, backgroundColor: theme.surface2, borderRadius: radius.md, padding: 12 },
+  stat: { flex: 1, backgroundColor: theme.surface2, borderRadius: radius.plate, padding: 12 },
   statLabel: { color: theme.muted, fontSize: 11 },
   statValue: { color: theme.text, fontSize: 20, fontWeight: '700' },
 
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.plate,
     paddingHorizontal: 16,
     paddingVertical: 16,
   },

@@ -262,7 +262,7 @@ export default function CommentsScreen() {
 
 const styles = StyleSheet.create({
   attached: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  attachedImage: { width: 72, height: 72, borderRadius: radius.lg, backgroundColor: theme.surface2 },
+  attachedImage: { width: 72, height: 72, borderRadius: radius.plate, backgroundColor: theme.surface2 },
   removeAttached: { minHeight: 24, minWidth: 44, justifyContent: 'center' },
   commentHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   commentWho: { flex: 1, minWidth: 0 },
@@ -273,13 +273,13 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 12, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
   episode: { color: theme.muted, fontSize: 14 },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 8 },
+  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 8 },
   cardHeading: { color: theme.text, fontSize: 16, fontWeight: '700' },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   chip: {
     backgroundColor: theme.surface2,
-    borderRadius: 999,
+    borderRadius: radius.plate,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
 
   input: {
     backgroundColor: theme.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.none,
     padding: 16,
     color: theme.text,
     fontSize: 15,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   primary: {
     alignSelf: 'flex-start',
     backgroundColor: theme.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   secondary: {
     alignSelf: 'flex-start',
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
@@ -316,8 +316,8 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   error: { color: theme.accent, fontSize: 13 },
 
-  comment: { backgroundColor: theme.surface, borderRadius: radius.lg, padding: 12, gap: 6 },
+  comment: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 12, gap: 6 },
   handle: { color: theme.muted, fontSize: 11 },
   body: { color: theme.text, fontSize: 14, lineHeight: 20 },
-  image: { width: '100%', height: 180, borderRadius: radius.md },
+  image: { width: '100%', height: 180, borderRadius: radius.plate },
 });

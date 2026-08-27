@@ -66,7 +66,7 @@ export function Calendar() {
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Upcoming</h1>
 
-      <section className="mb-6 rounded-2xl bg-surface p-4">
+      <section className="mb-6 rounded-plate bg-surface p-4">
         <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>
         <div role="radiogroup" aria-label="Tell me about" className="flex flex-wrap gap-1.5">
           {NOTIFY_OPTIONS.map((p) => (
@@ -75,7 +75,7 @@ export function Calendar() {
               onClick={() => choose(p.key)}
               role="radio"
               aria-checked={preference === p.key}
-              className={`rounded-full px-3 py-1.5 text-xs ${
+              className={`rounded-plate px-3 py-1.5 text-xs ${
                 preference === p.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
               }`}
             >
@@ -129,7 +129,7 @@ export function Calendar() {
           <p className="text-muted">{COPY.calendar.empty}</p>
           <Link
             to="/discover"
-            className="rounded-full bg-surface-2 px-4 py-2 text-sm"
+            className="rounded-pill bg-surface-2 px-4 py-2 text-sm"
           >
             {COPY.calendar.findSomething}
           </Link>
@@ -158,13 +158,13 @@ function Row({ entry }: { entry: UpcomingEntry }) {
   const label = KIND_LABEL[entry.kind];
 
   return (
-    <li className="flex items-center gap-3 rounded-xl bg-surface p-3">
+    <li className="flex items-center gap-3 rounded-plate bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}
         className="shrink-0"
       >
-        <Poster url={entry.posterUrl} name={entry.seriesName} className="h-16 w-11 rounded-md" />
+        <Poster url={entry.posterUrl} name={entry.seriesName} className="h-16 w-11 rounded-plate" />
       </Link>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{entry.seriesName}</p>
@@ -173,7 +173,7 @@ function Row({ entry }: { entry: UpcomingEntry }) {
         </p>
       </div>
       {label && (
-        <span className="shrink-0 rounded-full bg-accent/20 px-2 py-1 text-[0.625rem] font-semibold text-accent">
+        <span className="shrink-0 rounded-plate bg-accent/20 px-2 py-1 text-[0.625rem] font-semibold text-accent">
           {label}
         </span>
       )}

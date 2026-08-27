@@ -86,7 +86,7 @@ export function RemoteDrawer() {
            landed; the stacking order stays a custom property because Tailwind has no
            namespace for one. */
         style={{ zIndex: 'var(--z-drawer-handle)' }}
-        className={`fixed top-1/2 right-0 -translate-y-1/2 rounded-l-xl bg-stroke-signal py-4 pr-1 pl-1.5 text-ground transition-opacity ${
+        className={`fixed top-1/2 right-0 -translate-y-1/2 rounded-l-none bg-stroke-signal py-4 pr-1 pl-1.5 text-ground transition-opacity ${
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >
@@ -140,7 +140,7 @@ export function RemoteDrawer() {
             <select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
-              className="rounded-lg bg-surface px-3 py-2 text-base text-white outline-none"
+              className="rounded-none bg-surface px-3 py-2 text-base text-white outline-none"
             >
               <option value="">Choose…</option>
               {bridge.devices.map((device) => (
@@ -153,7 +153,7 @@ export function RemoteDrawer() {
         )}
 
         {bridge.playback && (
-          <div className="rounded-xl bg-surface p-3">
+          <div className="rounded-plate bg-surface p-3">
             {bridge.playback.title && (
               <p className="truncate text-sm font-medium">{bridge.playback.title}</p>
             )}
@@ -188,7 +188,7 @@ export function RemoteDrawer() {
 
           <button
             onClick={() => press('home')}
-            className="rounded-xl bg-surface-2 py-3 text-sm text-muted"
+            className="rounded-pill bg-surface-2 py-3 text-sm text-muted"
           >
             Home
           </button>
@@ -207,7 +207,7 @@ function Key({ spec, onPress }: { spec: ButtonSpec; onPress: (c: RemoteCommand) 
       aria-label={spec.label}
       // Exactly one aspect utility: emitting both `aspect-square` and `aspect-auto`
       // leaves the winner to stylesheet order rather than intent.
-      className={`flex items-center justify-center rounded-xl bg-surface text-xl active:scale-90 ${
+      className={`flex items-center justify-center rounded-pill bg-surface text-xl active:scale-90 ${
         spec.wide ? 'col-span-2' : 'aspect-square'
       }`}
     >
@@ -219,7 +219,7 @@ function Key({ spec, onPress }: { spec: ButtonSpec; onPress: (c: RemoteCommand) 
 function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
   if (bridge.status === 'connected' && bridge.devices.length === 0) {
     return (
-      <div className="rounded-xl bg-surface p-3 text-xs text-muted">
+      <div className="rounded-plate bg-surface p-3 text-xs text-muted">
         <p>Bridge connected, but no devices found.</p>
         <button onClick={bridge.refresh} className="mt-2 text-accent">
           Scan again
@@ -230,7 +230,7 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
 
   if (bridge.status !== 'connected') {
     return (
-      <p className="rounded-xl bg-surface p-3 text-xs text-muted">
+      <p className="rounded-pill bg-surface p-3 text-xs text-muted">
         {bridge.status === 'connecting'
           ? 'Connecting to your bridge…'
           : 'Bridge offline. It will reconnect on its own.'}

@@ -198,14 +198,14 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
+  card: { backgroundColor: theme.surface, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.text, fontSize: 17, fontWeight: '700' },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   rejected: { marginTop: 12, gap: 8 },
   rejectedText: { color: theme.accent, fontSize: 14, lineHeight: 20 },
   input: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
@@ -213,14 +213,14 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: theme.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
   secondary: {
     backgroundColor: theme.surface2,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: 12,
     alignItems: 'center',
   },

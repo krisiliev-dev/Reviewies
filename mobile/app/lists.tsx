@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     backgroundColor: theme.surface,
-    borderRadius: radius.md,
+    borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
@@ -316,14 +316,14 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: theme.accent,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     justifyContent: 'center',
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
   disabled: { opacity: 0.4 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, overflow: 'hidden' },
+  card: { backgroundColor: theme.surface, borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   cardBody: { flex: 1 },
   cardName: { color: theme.text, fontSize: 16, fontWeight: '600' },

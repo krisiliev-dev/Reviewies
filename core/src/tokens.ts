@@ -184,9 +184,6 @@ export const legacy = {
   accent: '#ff5c7a',
 } as const;
 
-/** The four radii the shipping build uses. Replaced by `radius` above, 84 sites at a time. */
-export const legacyRadius = { sm: 8, md: 12, lg: 16, xl: 24 } as const;
-
 export const color = { dark, light } as const;
 export const label = { dark: labelDark, light: labelLight } as const;
 

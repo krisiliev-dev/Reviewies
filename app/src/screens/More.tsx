@@ -40,7 +40,7 @@ export function More() {
     <div className="flex flex-col gap-3 p-4">
       <h1 className="text-2xl font-semibold">More</h1>
 
-      <section className="rounded-2xl bg-surface p-4">
+      <section className="rounded-plate bg-surface p-4">
         <p className="text-sm text-muted">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
@@ -65,7 +65,7 @@ export function More() {
             key={link.to}
             to={link.to}
             aria-label={`${link.label} — ${link.detail}`}
-            className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-4"
+            className="flex items-center justify-between gap-3 rounded-plate bg-surface px-4 py-4"
           >
             <span className="min-w-0">
               <span className="block">{link.label}</span>
@@ -83,7 +83,7 @@ export function More() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-surface-2 px-3 py-2">
+    <div className="rounded-plate bg-surface-2 px-3 py-2">
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="text-lg font-semibold tabular-nums">{value}</dd>
     </div>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
-import { elevation, color } from '@reviewies/core/tokens';
+import { elevation, color, radius } from '@reviewies/core/tokens';
 
 /**
  * Depth is three ground steps and a hairline. There are no elevation tokens, and that is
@@ -17,6 +17,14 @@ import { elevation, color } from '@reviewies/core/tokens';
  * with: a blurred surface makes contrast depend on whatever happens to be scrolling
  * behind it, so `contrast.test.ts` can no longer check it — and a rule that cannot be
  * checked is a rule this codebase does not have.
+ *
+ * Radius belongs to the same rule and arrived later, with its 244 sites (§6.89). Late
+ * Edition's argument is that every card in the old build was a rounded fill doing a
+ * rule's job, and printed images have square corners — so the answer is three values and
+ * a decision per site, not a scale. `none` for structure, `plate` for anything printed,
+ * `pill` for the action shape and for things that are literally capsules. There is no
+ * `sm`/`md`/`lg`/`xl` any more on either platform, which is what makes this checkable:
+ * a fourth value would have to be typed as a number, and a number is what this catches.
  */
 const ROOT = resolve(import.meta.dirname, '../../..');
 
@@ -34,6 +42,20 @@ const phone = ['mobile/app', 'mobile/src'].flatMap((t) => sources(resolve(ROOT, 
 const web = sources(resolve(ROOT, 'app/src'), /\.(tsx?|css)$/);
 
 const SHADOW = /\b(shadowColor|shadowOpacity|shadowRadius|shadowOffset|elevation)\s*:/;
+
+/** `borderRadius: 12`, `borderTopLeftRadius: 8` — a number where a token belongs. */
+const PHONE_RADIUS = /\bborder(?:Top|Bottom)?(?:Left|Right|Start|End)?Radius\s*:\s*[\d'"`]/g;
+
+/** The legacy four, by name, on either platform. */
+const LEGACY = /\bradius\.(sm|md|lg|xl)\b/g;
+
+/**
+ * Tailwind's own radius scale. `rounded-plate`, `rounded-none` and `rounded-pill` are
+ * generated from the token table; everything else in the namespace is Tailwind's default
+ * scale, which is the thing being replaced.
+ */
+const WEB_RADIUS =
+  /\brounded(?:-(?:t|b|l|r|tl|tr|bl|br|s|e))?-(?:sm|md|lg|xl|2xl|3xl|full)\b|\brounded(?![-a-z])/g;
 const BLUR = /\b(shadow-(?!none)[a-z0-9[]|drop-shadow|backdrop-blur|blur-(?!none)[a-z0-9[])/;
 
 describe('the flat rule', () => {
@@ -56,6 +78,57 @@ describe('the flat rule', () => {
       .filter((f) => SHADOW.test(stripComments(readFileSync(f, 'utf8'))))
       .map((f) => relative(ROOT, f));
     expect(offenders, 'depth is a ground step and a rule').toEqual([]);
+  });
+
+  it('describes radius as three values, not as a scale', () => {
+    expect(Object.keys(radius)).toEqual(['none', 'plate', 'pill']);
+    expect(radius.plate, 'a plate is a printed edge, not a rounded fill').toBeLessThan(4);
+  });
+
+  it('types no radius as a number on the phone', () => {
+    const off: string[] = [];
+    for (const path of phone) {
+      const source = stripComments(readFileSync(path, 'utf8'));
+      source.split('\n').forEach((line, index) => {
+        for (const match of line.matchAll(PHONE_RADIUS)) {
+          off.push(`${relative(ROOT, path)}:${index + 1}  ${match[0].trim()}`);
+        }
+      });
+    }
+    expect(off, 'radius.none | radius.plate | radius.pill').toEqual([]);
+  });
+
+  it('keeps no legacy radius name on either platform', () => {
+    // `theme.ts` exported sm/md/lg/xl until every one of its 99 phone sites moved. The
+    // export is deleted rather than deprecated: a legacy name that survives its last
+    // call site is the next thing somebody reaches for out of habit.
+    const off: string[] = [];
+    for (const path of [...phone, ...web]) {
+      const source = stripComments(readFileSync(path, 'utf8'));
+      source.split('\n').forEach((line, index) => {
+        for (const match of line.matchAll(LEGACY)) {
+          off.push(`${relative(ROOT, path)}:${index + 1}  radius.${match[1]}`);
+        }
+      });
+    }
+    expect(off).toEqual([]);
+  });
+
+  it('writes no radius utility off the three on the web', () => {
+    const off: string[] = [];
+    let seen = 0;
+    for (const path of web) {
+      const source = stripComments(readFileSync(path, 'utf8'));
+      source.split('\n').forEach((line, index) => {
+        for (const match of line.matchAll(WEB_RADIUS)) {
+          off.push(`${relative(ROOT, path)}:${index + 1}  ${match[0]}`);
+        }
+        seen += (line.match(/\brounded(?:-(?:t|b|l|r|tl|tr|bl|br|s|e))?-(?:none|plate|pill)\b/g) ?? []).length;
+      });
+    }
+    // A scan that matched nothing at all would report no offenders and look like success.
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(100);
+    expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 
   it('has no shadow or blur on the web', () => {

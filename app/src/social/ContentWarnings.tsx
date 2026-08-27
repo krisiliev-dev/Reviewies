@@ -60,14 +60,14 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
     <section className="mb-5">
       <button
         onClick={() => setOpen(!open)}
-        className="rounded-lg bg-surface px-3 py-1.5 text-xs text-muted"
+        className="rounded-plate bg-surface px-3 py-1.5 text-xs text-muted"
         aria-expanded={open}
       >
         {open ? 'Hide content warnings' : 'Content warnings'}
       </button>
 
       {open && (
-        <div className="mt-2 rounded-xl bg-surface p-3">
+        <div className="mt-2 rounded-plate bg-surface p-3">
           {summaries === undefined && <p className="text-xs text-muted">Loading…</p>}
 
           {/* Not the same sentence. A request that did not arrive is not an answer, and
@@ -91,7 +91,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
               {summaries.map((s) => (
                 <li key={s.warning} className="flex items-center gap-2">
                   <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    className={`h-1.5 w-1.5 shrink-0 rounded-pill ${
                       s.verdict === 'yes'
                         ? 'bg-accent'
                         : s.verdict === 'contested'
@@ -136,7 +136,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                       // "Yes button, No button, Yes button" says nothing about what is
                       // being voted on.
                       aria-label={`Yes, this has ${w.label.toLowerCase()}`}
-                      className={`shrink-0 rounded-lg px-3 py-1 text-xs ${
+                      className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
                         own === true ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
                       }`}
                     >
@@ -148,7 +148,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                       onClick={() => vote(w.id, false)}
                       aria-pressed={own === false}
                       aria-label={`No, this does not have ${w.label.toLowerCase()}`}
-                      className={`shrink-0 rounded-lg px-3 py-1 text-xs ${
+                      className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
                         own === false ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
                       }`}
                     >

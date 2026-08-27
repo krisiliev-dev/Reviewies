@@ -115,7 +115,7 @@ export function UpNext() {
         {unmatched && !importing ? <MatchImports /> : null}
         <Link
           to="/search"
-          className="mt-5 inline-block rounded-full bg-accent px-5 py-3 font-medium text-ink"
+          className="mt-5 inline-block rounded-pill bg-accent px-5 py-3 font-medium text-ink"
         >
           Find something to watch
         </Link>
@@ -153,7 +153,7 @@ export function UpNext() {
             said so: both were named, both were reachable, both were big enough. */}
         <Link
           to="/search"
-          className="self-start rounded-full bg-surface-2 px-5 py-3 font-medium text-text"
+          className="self-start rounded-pill bg-surface-2 px-5 py-3 font-medium text-text"
         >
           Find something to watch
         </Link>
@@ -177,7 +177,7 @@ export function UpNext() {
               await unwatchLatest(marked.targetId);
               setMarked(undefined);
             }}
-            className="rounded-full bg-surface-2 px-3 py-1.5 text-sm"
+            className="rounded-pill bg-surface-2 px-3 py-1.5 text-sm"
           >
             {COPY.upNext.undo}
           </button>
@@ -238,7 +238,7 @@ function UpNextRow({
     // wider than a phone, and with `flex-nowrap` the actions went past the right edge —
     // half a Watched button is as unusable as none. The smoke suite's 200% check only
     // noticed controls that were *entirely* gone, which these never were.
-    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface p-3">
+    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}
@@ -247,7 +247,7 @@ function UpNextRow({
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
-          className="h-24 w-16 rounded-lg"
+          className="h-24 w-16 rounded-plate"
         />
       </Link>
 
@@ -279,7 +279,7 @@ function UpNextRow({
         <button
           onClick={onWatched}
           // Large target: this gets tapped in the dark, one-handed.
-          className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink active:scale-95"
+          className="rounded-pill bg-accent px-4 py-3 text-sm font-semibold text-ink active:scale-95"
           aria-label={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
         >
           Watched
@@ -287,7 +287,7 @@ function UpNextRow({
         <Link
           to={`/watching/${encodeURIComponent(episode.id)}`}
           aria-label={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
-          className="rounded-xl bg-surface-2 px-4 py-2 text-center text-xs text-muted"
+          className="rounded-pill bg-surface-2 px-4 py-2 text-center text-xs text-muted"
         >
           Watch along
         </Link>

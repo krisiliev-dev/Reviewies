@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   cta: {
     backgroundColor: theme.accent,
     color: theme.ink,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     textAlign: 'center',
     fontWeight: '600',
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   ctaQuiet: {
     backgroundColor: theme.surface,
     color: theme.text,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     textAlign: 'center',
     minHeight: 24,

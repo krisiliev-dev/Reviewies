@@ -103,7 +103,7 @@ export function ImportFiles({
   return (
     <>
       <label
-        className={`cursor-pointer rounded-xl px-4 py-3 text-center ${
+        className={`cursor-pointer rounded-pill px-4 py-3 text-center ${
           primary ? 'bg-accent font-medium text-ink' : 'bg-surface-2'
         }`}
       >
@@ -121,7 +121,7 @@ export function ImportFiles({
 
       {error && <p className="px-1 text-sm text-accent">{error}</p>}
       {report && (
-        <div className="rounded-xl bg-surface p-3 text-sm">
+        <div className="rounded-plate bg-surface p-3 text-sm">
           <p>
             Imported {report.watches} watch{report.watches === 1 ? '' : 'es'}
             {report.watchlist > 0 && `, ${report.watchlist} watchlist items`}.
@@ -152,7 +152,7 @@ export function ImportFiles({
                 setRestoring(false);
               }}
               disabled={restoring}
-              className="mt-3 min-h-[44px] w-full rounded-xl bg-surface-2 px-4 py-3 disabled:opacity-50"
+              className="mt-3 min-h-[44px] w-full rounded-pill bg-surface-2 px-4 py-3 disabled:opacity-50"
             >
               {restoring ? 'Restoring…' : 'Restore lists and follows'}
             </button>

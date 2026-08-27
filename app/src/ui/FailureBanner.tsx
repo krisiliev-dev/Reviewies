@@ -69,7 +69,7 @@ export function FailureBanner() {
       {stale && (
         <button
           onClick={() => window.location.reload()}
-          className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-ink"
+          className="shrink-0 rounded-pill bg-accent px-3 py-1.5 text-sm font-medium text-ink"
         >
           {COPY.app.reload}
         </button>
@@ -77,7 +77,7 @@ export function FailureBanner() {
       <button
         onClick={() => setFailure(undefined)}
         aria-label="Dismiss this message"
-        className="min-h-[24px] shrink-0 rounded-lg px-2 text-sm text-muted underline"
+        className="min-h-[24px] shrink-0 rounded-pill px-2 text-sm text-muted underline"
       >
         Dismiss
       </button>
