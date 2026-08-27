@@ -5599,7 +5599,7 @@ the scripts that write them, because a postinstall that has quietly stopped runn
 exactly like one that ran.
 
 
-### 6.82 The token layer, and two defects it was the fix for
+### 6.85 The token layer, and two defects it was the fix for
 
 `docs/design/tokens.md` decides the whole system; this is the first slice of it built.
 `core/src/tokens.ts` sits beside `copy.ts` under the same no-imports rule — guards read it
@@ -5685,7 +5685,7 @@ union and an aggregate `tokens` object were both written and both deleted the sa
 nothing reached them, and an export in anticipation is the same debt as a function.
 
 
-### 6.83 One copy, not two that agree
+### 6.86 One copy, not two that agree
 
 `palette.test.ts` compared the web's palette against the phone's and found six of seven
 colours already drifted. That check was worth having and it was the wrong shape: both
@@ -5760,6 +5760,91 @@ Six plants, all caught: a hand-edited hex in the generated file, a changed token
 regeneration, a colour creeping back into `index.css`, the light override deleted from the
 generator, a bare `z-40` restored to a sheet, and the local-stacking exemption left behind
 after its file stopped stacking.
+
+### 6.87 Emitted is not rendered, and half a theme is worse than none
+
+§6.86 finished with the stylesheet proved byte for byte and a sentence in §7 admitting the
+gap: *"proved to be emitted, and not proved to render"*. Every browser check in the suite
+asserts text, roles and geometry, and every one runs in dark. A stylesheet Tailwind
+silently declined to process would have left all 213 of them green and the app unstyled.
+
+So this sprint's first job was to read the colour off the pixels. It took four checks and
+found a defect inside a minute.
+
+**The generator was flipping the theme from the operating system.** `@media
+(prefers-color-scheme: light)` was in the emitted file. Nothing asked for it — the token
+spec says to land both tables and consume dark only, because the premise of Watching Mode
+is a dark room with the television on — and I wrote it anyway, from the habit that a light
+block is what you do when you have a light table.
+
+What it produced was not light mode. The twenty-odd new tokens flipped and the seven
+legacy colours did not, because legacy colours have no light value and are not supposed
+to: they are the palette the screens are still drawn from until the migration lands. So a
+browser set to light rendered a light ground under dark-palette text. Half a theme, laid
+over the other half.
+
+The headless browser these suites run in reports `prefers-color-scheme: light`. That is
+how it was caught the moment a check read `--ground`: it came back `#f5f0e8` where the
+token says `#131114`. The text-and-geometry checks had nothing to say about it, because
+nothing about the page's *structure* was wrong.
+
+`tokens.generated.test.ts` asserted the media query was **present** — I had written that
+guard the day before, describing the defect approvingly. It now asserts the opposite, and
+the plant is putting the line back.
+
+**Tailwind v4 is JIT, so a token in `@theme` with no call site generates no utility.** The
+first version of the render probe used `bg-ground` and read back `rgba(0, 0, 0, 0)`. That
+looked exactly like a `@theme` block Tailwind had skipped, which is the failure the check
+exists for — and it was correct behaviour. Nothing in the web app writes `bg-ground` yet,
+so no such utility is built. The probe uses `bg-stroke-signal`, which the remote drawer's
+handle does write, and the distinction is worth stating: this check can only ever prove
+`@theme` works *for a class somebody already uses*. It is not a proof that every token in
+the block is reachable, and the honest version of that proof arrives with the migration.
+
+An earlier version of the same probe read the drawer's handle directly and got `""`,
+because `RemoteDrawer` returns null unless a bridge is configured. A probe element carrying
+the class is the honest instrument: it tests the compiled stylesheet rather than a screen,
+and the stylesheet is what was in doubt.
+
+**Three plants, and the second one exposed a fourth check that was not saying its name.**
+
+| plant | expected | what happened |
+| --- | --- | --- |
+| `@theme` points at `var(--absent-*)` | the two utility checks go red | 218/220, exactly those two — the custom-property and legacy checks stayed green, which is the right discrimination |
+| `--ground` in `:root` set to `#131115` | the custom-property check goes red | 218/220 — and *two* checks failed |
+| the smoke browser launched with `colorScheme: 'dark'` | the preference check reports it cannot see the defect | 219/220, exactly that one |
+
+The second plant is the finding. *"Nothing switches theme without being asked"* failed for
+the same reason *"the generated custom properties reach the document"* did — both were
+asserting the dark value. The check was not making the claim in its name. What it names is
+a **conditional**: the browser wanted light and did not get it. It asserts the preference
+now, so a headless browser that ever reports dark turns it red as untestable rather than
+green on nothing. That is §6.73 — a check easier to satisfy than its name suggests — found
+in code written this sprint, by a plant aimed somewhere else.
+
+**And a section number is a reference too.** Writing this section meant finding the next
+number, and 6.82 and 6.83 were each already used twice: once by the iPhone work, again by
+the design sprints a day later. §6.79 built a guard that resolves every `§N.N` to a
+heading, and it had nothing to say, because a reference to a number claimed twice resolves
+perfectly — to whichever heading the reader reaches first. This is the file's own lesson
+one level up: it was checking that the target exists, not that it is the only one.
+
+The first version of the new check pooled headings across all ten documents and reported
+nineteen collisions, which is what a check looks like when it measures the convention
+rather than the error: every document has its own §1, and doc 9 citing doc 1's §1.1 across
+that collision is the arrangement §6.79 was written for. Scoped to one document it reports
+four real ones — doc 10's second evening restarted its count at 1, so "doc 10 §2" resolved
+to two different findings on two different platforms. The design sprints are renumbered to
+§6.85 and §6.86, doc 10's phone evening continues to §9–§12, and the guard reads the
+headings now.
+
+Web smoke is 213 → 220. App unit tests 410 → 411.
+
+**What did not land.** The space and radius migration — roughly 99 spacing sites and 84
+radius uses — is not in this sprint. The brief says G9 and the radius half of G10 land
+*with* their call sites and never with an allowlist, and there was not room to do both
+halves honestly in one pass. `coreWiring`'s exemption list still names them, which is the
+gap being visible rather than hidden: each line deletes itself when its sprint lands.
 
 
 ## 7. What is still not known
@@ -6044,7 +6129,7 @@ and which single claim in this document could not be checked at all:
   which is necessary and not sufficient, and iOS suspends a recording session for
   reasons no plist declares.
 - **The token layer is specified in full and built in part, and only the built part is
-  guarded.** §6.82 landed colour, motion, z-order and elevation with guards proved by
+  guarded.** §6.85 landed colour, motion, z-order and elevation with guards proved by
   planting. The type, space and radius layers are values in `core/src/tokens.ts` that no
   screen reads: 222 `fontSize` literals, ~99 off-scale spacing values and ~84 radius uses
   are still there, and their guards cannot land until the sites do. Until then the app is
@@ -6053,11 +6138,15 @@ and which single claim in this document could not be checked at all:
   visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
   and each line deletes itself when its sprint lands — but nobody should read "the design
   system is in" as "the app looks like the design system".
-- **Nothing has looked at the web with the generated stylesheet in place.** §6.83 replaced
-  `index.css`'s palette with an import and the browser suites stayed green at 213 — but
-  those assert text, roles and geometry, and every one of them runs in dark. The light
-  override, the `@theme` indirection and the Tailwind utilities the generator now emits
-  are proved to be *emitted*, byte for byte, and not proved to *render*: no check sets
-  `data-theme="light"`, no check reads a computed colour off an element, and the contrast
-  guard measures the token table rather than the pixels. A generated stylesheet that
-  Tailwind silently declined to process would look exactly like this.
+- **The stylesheet is proved to render for the classes somebody already writes, and no
+  further.** §6.87 closed the worst of this: four checks now read computed colour off the
+  pixels, set `data-theme="light"` and confirm it takes, and they caught a real defect
+  immediately. But Tailwind v4 is JIT — a token in `@theme` with no call site generates no
+  utility — so the probe can only test a class the source already contains. Roughly
+  twenty of the new colour tokens, and every space and radius token, are emitted into a
+  `@theme` block that nothing reads, and nothing can prove they compile until a screen
+  writes them. That proof arrives with the migration, not before. The contrast guard
+  likewise still measures the token table rather than the rendered pixels, and there is
+  no check that the *legacy* palette and the new one agree about anything, because they
+  are not meant to — which means the half-migrated app has no guard against looking
+  half-migrated.

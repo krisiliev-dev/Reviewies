@@ -171,6 +171,11 @@ Same session, against the react-native-web export. One thing could not be done: 
 phone's import goes through the system document picker, which the export cannot drive, so
 this started from search rather than from an import.
 
+The findings below continue the first evening's count rather than restarting it. They
+began at 1 again, and §6.87 found that four sections of this document answered to numbers
+another four already held — so "doc 10 §2" resolved, and resolved to two different
+things. A guard reads these headings now.
+
 ## What had already reached it
 
 Worth checking rather than assuming, since two of the six fixes above live in code the
@@ -184,7 +189,7 @@ phone does not share.
   rather than between ticks, so a reaction stamped at now appears at once. Tapping 👍 put
   it on screen beside the timecode.
 
-## 1. Watching Mode was not reachable from Up Next
+## 9. Watching Mode was not reachable from Up Next
 
 **Fixed.** The differentiator of the product, on the platform the product is now for, had
 no entry point on the screen you land on. The web has offered *Watch along* in the Up Next
@@ -196,7 +201,7 @@ Nothing said so, because the parity audit of §6.10 compared screens and the wir
 §6.27 compared exports — and both platforms have the screen and both call the same code.
 What differed was the offer.
 
-## 2. The remote drawer explained itself instead of working
+## 10. The remote drawer explained itself instead of working
 
 **Fixed.** Opening the remote mid-episode showed the keys and then a paragraph:
 
@@ -209,7 +214,7 @@ All true, all reasoning about the implementation, in a drawer somebody opened to
 pause. It now says what works and what does not, in two lines, and the reasons stay in
 doc 6 §2 and doc 9 §1.2 where somebody looking for them will find them.
 
-## 3. The same states say different things on each platform
+## 11. The same states say different things on each platform
 
 Measured across four:
 
@@ -234,7 +239,7 @@ The other two are noted rather than churned. A repository where the same state h
 sentences will keep growing them, and the fix for that is a decision about who owns the
 words, not four more edits.
 
-## 4. Still open, from the phone
+## 12. Still open, from the phone
 
 - The import cannot be exercised at all from here, so the phone's migration path — the
   thing the product exists for — has never been driven end to end on the platform it is

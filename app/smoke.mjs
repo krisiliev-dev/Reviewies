@@ -319,6 +319,141 @@ try {
     'the first screen offers the migration, not a search box',
     (await page.getByText('Import from TV Time').count()) > 0,
   );
+
+  /**
+   * The stylesheet is generated. This is the only thing that proves it is *applied*.
+   *
+   * `tokens.generated.test.ts` regenerates the file and byte-compares, which proves what
+   * was written. Every other check in this suite asserts text, roles and geometry, and
+   * every one of them runs in dark. A stylesheet Tailwind silently declined to process —
+   * a mis-ordered `@import`, a `@theme` block it did not pick up, a custom property that
+   * resolves to nothing — would leave all of them green and the app unstyled.
+   *
+   * So: read the colour off the pixels and compare it to the token.
+   */
+  const resolved = await page.evaluate(() => {
+    const seen = (el, prop) => (el ? getComputedStyle(el).getPropertyValue(prop).trim() : '');
+    const root = getComputedStyle(document.documentElement);
+    return {
+      ground: root.getPropertyValue('--ground').trim(),
+      body: seen(document.body, 'background-color'),
+      heading: seen(document.querySelector('h1'), 'color'),
+      // What the browser would *like*, which is the whole point of the check below.
+      prefersLight: matchMedia('(prefers-color-scheme: light)').matches,
+    };
+  });
+
+  /**
+   * Did Tailwind actually process the generated `@theme` block?
+   *
+   * That is the failure this whole check exists for, and it needs its own probe: after
+   * §6.86 the only place in the web app reading a new-token utility is the remote
+   * drawer's handle, and that returns null unless a bridge is configured — so the first
+   * version of this check read an empty string off an element that was never rendered
+   * and reported it as a failure of the stylesheet.
+   *
+   * A probe element carrying the class is the honest way to ask. It tests the compiled
+   * stylesheet rather than any screen, which is what is in doubt: if `@theme` were
+   * skipped, `bg-stroke-signal` would generate nothing and this comes back transparent.
+   */
+  const utility = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'bg-stroke-signal';
+    probe.style.position = 'fixed';
+    probe.style.left = '-9999px';
+    document.body.append(probe);
+    const painted = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return painted;
+  });
+
+  check(
+    'the generated custom properties reach the document',
+    resolved.ground.toLowerCase() === '#131114',
+    `--ground resolved to "${resolved.ground}"`,
+  );
+  check(
+    'the body is painted in the ground token, not a browser default',
+    resolved.body === 'rgb(11, 11, 15)',
+    resolved.body,
+  );
+  check(
+    'Tailwind generated a utility from the @theme block',
+    // #8A8079 — stroke.signal, the stroke that means something.
+    utility === 'rgb(138, 128, 121)',
+    `bg-stroke-signal painted "${utility}"`,
+  );
+
+  /**
+   * And the light block, which nothing in the product can reach.
+   *
+   * There is no theme switch: `data-theme` is set here and nowhere else in the app. That
+   * is worth stating rather than implying — this proves the override *works*, not that
+   * light mode is a feature somebody can use. The generator emits two themes because a
+   * token that exists in one and not the other is how a screen ends up unstyled in
+   * exactly one of them, and this is what stops the unused half rotting unnoticed.
+   */
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+  await page.waitForTimeout(120);
+  const light = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    // `bg-stroke-signal`, because Tailwind v4 is JIT: a token in `@theme` with no call
+    // site anywhere in the source generates no utility at all. `bg-ground` is in the
+    // theme block and painted transparent here, which is correct behaviour and was
+    // briefly mistaken for a broken stylesheet. This class is the one the drawer uses,
+    // so it exists.
+    probe.className = 'bg-stroke-signal';
+    document.body.append(probe);
+    const painted = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return {
+      ground: getComputedStyle(document.documentElement).getPropertyValue('--ground').trim(),
+      probe: painted,
+      heading: getComputedStyle(document.querySelector('h1')).color,
+    };
+  });
+  await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
+
+  check(
+    'the light override is live, not merely emitted',
+    light.ground.toLowerCase() === '#f5f0e8',
+    `--ground under data-theme=light resolved to "${light.ground}"`,
+  );
+  check(
+    'and nothing switches theme without being asked',
+    // The app is dark by decision, not by preference. The first version of the generator
+    // honoured prefers-color-scheme, which flipped the new tokens and left the legacy
+    // seven dark, because they have no light value. Half a theme on top of another, and
+    // every other check stayed green.
+    //
+    // The preference is asserted, not assumed. Planting a wrong dark value showed this
+    // check going red for the same reason the one above it did — which means it was
+    // re-asserting the dark value rather than the claim in its name. It only says
+    // anything if the browser wanted light and did not get it, so if headless ever
+    // reports dark this goes red as untestable rather than passing on nothing.
+    resolved.prefersLight && resolved.ground.toLowerCase() === '#131114',
+    resolved.prefersLight
+      ? `--ground with no data-theme resolved to "${resolved.ground}"`
+      : 'this browser does not prefer light, so the check cannot see the defect it names',
+  );
+  check(
+    'and a utility built on it repaints',
+    // Through a probe, not through a screen, and the difference is the finding. Every
+    // rendered element still reads a LEGACY token — `text-text`, `bg-ink` — and those
+    // have no light value by design, so the heading is the same colour in both themes.
+    // Asserting on the heading is what the first version of this check did, and it was
+    // measuring the un-migrated half of the app rather than the stylesheet.
+    // stroke.signal is #8A8079 in dark and #6E6456 in light.
+    light.probe === 'rgb(110, 100, 86)',
+    `bg-stroke-signal under light painted "${light.probe}"`,
+  );
+  check(
+    'and no screen reads a new token yet, which is the state this is in',
+    // Stated as a check rather than left to a document: when this goes red, some screen
+    // has started reading the new palette and this line should be deleted with a cheer.
+    light.heading === resolved.heading,
+    `h1 is ${resolved.heading} in both themes — still on the legacy palette`,
+  );
   // Three different things arrive under the name "my TV Time data", and someone holding
   // one of them has to see their own case named before they will believe it works.
   const firstRun = (await page.locator('body').innerText()).replace(/\s+/g, ' ');

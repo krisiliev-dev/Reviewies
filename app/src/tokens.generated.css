@@ -50,6 +50,16 @@
 /*
  * Light is an override rather than a second set, because a token that exists in one
  * theme and not the other is how a screen ends up unstyled in exactly one of them.
+ *
+ * It applies ONLY under an explicit data-theme, never from prefers-color-scheme.
+ * This app is dark by decision rather than by preference — the premise of Watching
+ * Mode is a dark room with the television on — and the token spec says to land both
+ * tables and consume dark only.
+ *
+ * The first version of this file honoured prefers-color-scheme, and the check that
+ * reads colour off the pixels caught it within a minute: in a browser set to light,
+ * the new tokens flipped and the legacy seven did not, because they have no light
+ * value. Not a light theme — half of one, on top of the other.
  */
 :root[data-theme='light'] {
   --ground: #F5F0E8;
@@ -82,41 +92,6 @@
   --label-5: #3A568C;
   --label-6: #9C5A26;
   --label-7: #5A6470;
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    --ground: #F5F0E8;
-    --ground-raised: #FFFDF8;
-    --ground-well: #E9E2D6;
-    --ink: #191419;
-    --ink-secondary: #5C5349;
-    --ink-tertiary: #6E6456;
-    --stroke-hairline: #D6CCBC;
-    --stroke-emphasis: #A99C88;
-    --stroke-signal: #6E6456;
-    --action-fill: #191419;
-    --action-label: #F5F0E8;
-    --working-fill: #F0A93B;
-    --working-on-fill: #191419;
-    --working-mark: #8A5A08;
-    --trouble: #B3272B;
-    --trouble-on: #F5F0E8;
-    --mark-cross-off: #2F3F86;
-    --dim-ink: #BAB6B1;
-    --dim-ink-secondary: #89827B;
-    --dim-working: #B78230;
-    --focus-ring: #191419;
-    --focus-inset: #F5F0E8;
-    --label-0: #9A6E10;
-    --label-1: #26707A;
-    --label-2: #37693C;
-    --label-3: #8E3F70;
-    --label-4: #A93B37;
-    --label-5: #3A568C;
-    --label-6: #9C5A26;
-    --label-7: #5A6470;
-  }
 }
 
 @theme {

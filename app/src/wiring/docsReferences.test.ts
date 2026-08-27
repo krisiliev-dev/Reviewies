@@ -48,8 +48,26 @@ const TEXT = new Map(
  * sections, and those are the references most worth keeping honest.
  */
 const SECTIONS = new Set<string>();
-for (const text of TEXT.values()) {
-  for (const match of text.matchAll(HEADING)) SECTIONS.add(match[1]);
+/**
+ * Where each number was seen, per document, so a number claimed twice inside one can be
+ * reported by location.
+ *
+ * Per document rather than pooled, because pooled is not a defect: every one of these
+ * files has its own §1, and doc 9 citing doc 1's §1.1 across that collision is the
+ * arrangement the resolution check above was written for. Inside a single document a
+ * repeat is unambiguously a mistake. Pooling was the first version of this check, and
+ * it reported nineteen — which is what a check looks like when it is measuring the
+ * convention rather than the error.
+ */
+const HEADINGS = new Map<string, Map<string, number[]>>();
+for (const [name, text] of TEXT) {
+  const inDoc = new Map<string, number[]>();
+  for (const match of text.matchAll(HEADING)) {
+    SECTIONS.add(match[1]);
+    const line = text.slice(0, match.index).split('\n').length;
+    inDoc.set(match[1], [...(inDoc.get(match[1]) ?? []), line]);
+  }
+  HEADINGS.set(name, inDoc);
 }
 
 describe('cross-references in the research documents', () => {
@@ -59,6 +77,30 @@ describe('cross-references in the research documents', () => {
     expect(SECTIONS).toContain('6.79');
     expect(SECTIONS).toContain('7');
     expect(SECTIONS.size).toBeGreaterThan(100);
+  });
+
+  it('gives every section a number of its own', () => {
+    /*
+     * The check above resolves a reference to *a* heading. It cannot tell that two
+     * headings answer to the same number, and the moment two do, every reference to
+     * either is ambiguous while still resolving — the exact shape this file was written
+     * about, one level up. §6.87 found 6.82 and 6.83 each used twice: once by the
+     * iPhone work and again by the design sprints a day later, because a section is
+     * numbered by hand from the last one visible on screen.
+     *
+     * A duplicate is worse than a dangling reference. A dangling one announces itself
+     * to a reader; a duplicated one quietly sends half the readers to the wrong place.
+     */
+    const twice: string[] = [];
+    let headings = 0;
+    for (const [name, inDoc] of HEADINGS) {
+      for (const [number, lines] of inDoc) {
+        headings++;
+        if (lines.length > 1) twice.push(`docs/research/${name}  §${number} at ${lines.join(', ')}`);
+      }
+    }
+    expect(headings, 'nothing parsed as a heading').toBeGreaterThan(100);
+    expect(twice).toEqual([]);
   });
 
   it('points every § at a section that exists', () => {

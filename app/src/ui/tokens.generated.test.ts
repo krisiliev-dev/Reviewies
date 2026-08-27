@@ -42,8 +42,21 @@ describe('the generated stylesheet', () => {
     // that here stops somebody "simplifying" the indirection away and taking light
     // mode with it.
     expect(css).toContain(":root[data-theme='light']");
-    expect(css).toContain('prefers-color-scheme: light');
     expect(css).toMatch(/--color-ground:\s*var\(--ground\)/);
+  });
+
+  it('reaches light only when asked, never from the operating system', () => {
+    // This line used to assert the opposite. The first generator honoured
+    // prefers-color-scheme, and the check written to prove the stylesheet *renders*
+    // caught what the check on its text could not: in a browser set to light, the
+    // twenty-odd new tokens flipped and the legacy seven stayed dark, because they have
+    // no light value. Not a light theme — half of one, laid over the other.
+    //
+    // The app is dark by decision. Watching Mode's premise is a dark room with the
+    // television on, and the token spec says to land both tables and consume dark only.
+    // So the media query is the defect now, and this is the guard against it returning.
+    expect(css).not.toContain('prefers-color-scheme: light');
+    expect(css).not.toContain('prefers-color-scheme: dark');
   });
 
   it('answers Reduce Motion with a parallel set, not a call-site query', () => {
