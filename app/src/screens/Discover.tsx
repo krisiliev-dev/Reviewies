@@ -90,7 +90,7 @@ function SuggestionRow({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-2xl bg-surface p-2.5">
+    <li className="flex items-start gap-3 rounded-2xl bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(suggestion.id)}`}
         aria-label={`Open ${suggestion.name}`}

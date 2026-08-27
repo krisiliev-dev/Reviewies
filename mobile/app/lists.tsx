@@ -300,7 +300,7 @@ function ListCard({
 
 const styles = StyleSheet.create({
   listsFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
-  content: { padding: 16, gap: 10, backgroundColor: theme.ink, flexGrow: 1 },
+  content: { padding: 16, gap: 12, backgroundColor: theme.ink, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
 
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.surface,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
     fontSize: 15,
@@ -317,19 +317,19 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.md,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     justifyContent: 'center',
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
   disabled: { opacity: 0.4 },
 
   card: { backgroundColor: theme.surface, borderRadius: radius.xl, overflow: 'hidden' },
-  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   cardBody: { flex: 1 },
   cardName: { color: theme.text, fontSize: 16, fontWeight: '600' },
   cardMeta: { color: theme.muted, fontSize: 12 },
   chevron: { color: theme.muted, fontSize: 20 },
-  cardItems: { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
+  cardItems: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
   mix: { color: theme.muted, fontSize: 11 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   // minHeight, not padding: the row is inside a scroll view where a taller target is

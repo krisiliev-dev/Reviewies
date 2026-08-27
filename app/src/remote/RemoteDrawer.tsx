@@ -140,7 +140,7 @@ export function RemoteDrawer() {
             <select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
-              className="rounded-lg bg-surface px-2.5 py-2 text-base text-white outline-none"
+              className="rounded-lg bg-surface px-3 py-2 text-base text-white outline-none"
             >
               <option value="">Choose…</option>
               {bridge.devices.map((device) => (
@@ -188,7 +188,7 @@ export function RemoteDrawer() {
 
           <button
             onClick={() => press('home')}
-            className="rounded-xl bg-surface-2 py-2.5 text-sm text-muted"
+            className="rounded-xl bg-surface-2 py-3 text-sm text-muted"
           >
             Home
           </button>

@@ -173,7 +173,7 @@ function ResultRow({ result }: { result: SearchResult }) {
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-2xl bg-surface p-2.5">
+    <li className="flex items-start gap-3 rounded-2xl bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(result.id)}`}
         aria-label={`Open ${result.name}`}
@@ -195,7 +195,7 @@ function ResultRow({ result }: { result: SearchResult }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Why? e.g. Ana recommended"
-              className="min-w-0 flex-1 rounded-lg bg-surface-2 px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-lg bg-surface-2 px-3 py-1.5 text-sm outline-none placeholder:text-muted"
               autoFocus
             />
             <button

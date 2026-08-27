@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   block: {
     marginHorizontal: 12,
     marginBottom: 8,
-    padding: 10,
+    padding: 12,
     borderRadius: radius.md,
     backgroundColor: theme.surface2,
     gap: 6,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   buttonText: { color: theme.text, fontSize: 13 },
   buttonTextOn: { color: theme.ink, fontWeight: '600' },
   quiet: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.sm,
     borderWidth: 1,

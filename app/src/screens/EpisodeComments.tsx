@@ -147,7 +147,7 @@ export function EpisodeComments() {
               }}
               placeholder="What did you think?"
               rows={3}
-              className="w-full resize-y rounded-xl bg-surface px-3 py-2.5 text-base outline-none placeholder:text-muted"
+              className="w-full resize-y rounded-xl bg-surface px-3 py-3 text-base outline-none placeholder:text-muted"
             />
 
             {image && (

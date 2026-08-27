@@ -201,12 +201,12 @@ const styles = StyleSheet.create({
   card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
   cardHeading: { color: theme.text, fontSize: 17, fontWeight: '700' },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  rejected: { marginTop: 10, gap: 8 },
+  rejected: { marginTop: 12, gap: 8 },
   rejectedText: { color: theme.accent, fontSize: 14, lineHeight: 20 },
   input: {
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
     fontSize: 15,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.md,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },

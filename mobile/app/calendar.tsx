@@ -202,11 +202,11 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  delivery: { marginTop: 10, gap: 8 },
+  delivery: { marginTop: 12, gap: 8 },
   enable: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: radius.md,
     backgroundColor: theme.surface,
   },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   enableText: { color: theme.text, fontSize: 14 },
   enableTextOn: { color: theme.ink, fontWeight: '600' },
   deliveryNote: { color: theme.muted, fontSize: 13, lineHeight: 19 },
-  content: { padding: 16, gap: 8, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
+  content: { padding: 16, gap: 8, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
   sectionHeading: {
     color: theme.muted,
     fontSize: 12,
@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  spaced: { marginTop: 18 },
-  emptyBlock: { gap: 14, alignItems: 'flex-start' },
+  spaced: { marginTop: 20 },
+  emptyBlock: { gap: 16, alignItems: 'flex-start' },
   cta: {
     alignSelf: 'flex-start',
     backgroundColor: theme.surface2,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
-    padding: 14,
+    padding: 16,
   },
   optionOn: { borderWidth: 1, borderColor: theme.accent },
   optionBody: { flex: 1 },

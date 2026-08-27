@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   region: { color: theme.muted, fontSize: 12, textDecorationLine: 'underline' },
   regions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.sm,
     backgroundColor: theme.surface2,
@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
   rowLabel: { color: theme.muted, fontSize: 12 },
   service: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: radius.sm,
     backgroundColor: theme.surface2,
   },

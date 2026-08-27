@@ -51,13 +51,13 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         // follows now: filled accent for the one action a row exists for, a ghost pill
         // for the others, and underlined text only for a rare aside that opens something
         // else ("Use a different poster", "Caught up further?").
-        className="tap rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
+        className="tap rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
       >
         {open ? 'Cancel' : 'Add to list'}
       </button>
 
       {open && (
-        <div className="mt-2 rounded-xl bg-surface-2 p-2.5">
+        <div className="mt-2 rounded-xl bg-surface-2 p-3">
           {lists === undefined && <p className="text-xs text-muted">Loading…</p>}
           {lists?.length === 0 && (
             <p className="mb-2 text-xs text-muted">No lists yet — make one below.</p>
@@ -69,7 +69,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
                 <button
                   onClick={() => add(list.id, list.name)}
                   aria-label={`Add to ${list.name}`}
-                  className="w-full truncate rounded-lg bg-surface px-2.5 py-1.5 text-left text-sm"
+                  className="w-full truncate rounded-lg bg-surface px-3 py-1.5 text-left text-sm"
                 >
                   {list.name}
                 </button>
@@ -83,7 +83,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               onChange={(e) => setNewName(e.target.value)}
               placeholder="New list…"
               maxLength={120}
-              className="min-w-0 flex-1 rounded-lg bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 rounded-lg bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
             />
             <button
               type="submit"

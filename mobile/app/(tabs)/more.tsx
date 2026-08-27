@@ -112,13 +112,13 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ink },
-  content: { padding: 16, gap: 10 },
+  content: { padding: 16, gap: 12 },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
 
   card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
   cardText: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  stats: { flexDirection: 'row', gap: 10 },
-  stat: { flex: 1, backgroundColor: theme.surface2, borderRadius: radius.md, padding: 10 },
+  stats: { flexDirection: 'row', gap: 12 },
+  stat: { flex: 1, backgroundColor: theme.surface2, borderRadius: radius.md, padding: 12 },
   statLabel: { color: theme.muted, fontSize: 11 },
   statValue: { color: theme.text, fontSize: 20, fontWeight: '700' },
 
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.surface,
     borderRadius: radius.xl,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   linkBody: { flex: 1 },
   linkLabel: { color: theme.text, fontSize: 16, fontWeight: '600' },

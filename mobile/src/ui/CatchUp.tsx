@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   done: { color: theme.muted, fontSize: 15 },
   result: { color: theme.text, fontSize: 15, paddingVertical: 16 },
   muted: { color: theme.muted, fontSize: 14, lineHeight: 20 },
-  body: { gap: 14, paddingBottom: 8 },
+  body: { gap: 16, paddingBottom: 8 },
   grid: { gap: 8 },
   gridLabel: {
     color: theme.muted,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     minWidth: 46,
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderRadius: radius.md,
     backgroundColor: theme.surface2,
   },

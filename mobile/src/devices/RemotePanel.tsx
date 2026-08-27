@@ -160,7 +160,7 @@ function Key({
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 18, backgroundColor: theme.ink, flexGrow: 1 },
+  content: { padding: 16, gap: 20, backgroundColor: theme.ink, flexGrow: 1 },
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionHeading: {

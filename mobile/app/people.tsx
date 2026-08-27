@@ -386,7 +386,7 @@ function PersonName({ person }: { person: Person }) {
 
 const styles = StyleSheet.create({
   searchFailed: { color: theme.accent, fontSize: 14, lineHeight: 20 },
-  content: { padding: 16, gap: 18, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
+  content: { padding: 16, gap: 20, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ink },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   failed: { color: theme.accent, fontSize: 13, lineHeight: 19 },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   error: { color: theme.accent, fontSize: 13 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
-  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 10 },
+  card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 12 },
   cardHeading: { color: theme.text, fontSize: 16, fontWeight: '700' },
   section: { gap: 8 },
   sectionHeading: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.text,
     fontSize: 15,
@@ -415,8 +415,8 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.md,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
 
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   personBody: { flex: 1, minWidth: 0 },
   personName: { color: theme.text, fontSize: 14 },
   personHandle: { color: theme.muted, fontSize: 11 },
-  small: { borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7 },
+  small: { borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 8 },
   smallOn: { backgroundColor: theme.accent },
   smallOnText: { color: theme.ink, fontSize: 12, fontWeight: '600' },
   smallMuted: { backgroundColor: theme.surface2 },

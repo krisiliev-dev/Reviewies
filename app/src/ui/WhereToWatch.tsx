@@ -49,7 +49,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
     (providers && !providers.flatrate.length && !providers.rent.length && !providers.buy.length);
 
   return (
-    <section className="mb-5 rounded-2xl bg-surface p-3.5">
+    <section className="mb-5 rounded-2xl bg-surface p-4">
       {/* Wraps, and the country is allowed to shrink. `shrink-0` beside a heading that
           takes three lines at twice the text size pushed "United Kingdom" out through
           the side of its own card — visible in a screenshot and invisible to the
@@ -76,7 +76,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               aria-checked={r.code === region}
               // Two-letter country codes read aloud as words: "de", "gb".
               aria-label={`Show availability in ${r.name}`}
-              className={`rounded-lg px-2.5 py-1.5 text-xs ${
+              className={`rounded-lg px-3 py-1.5 text-xs ${
                 r.code === region ? 'bg-accent font-medium text-ink' : 'bg-surface-2 text-muted'
               }`}
             >
@@ -132,7 +132,7 @@ function Row({ label, names }: { label: string; names: string[] }) {
     <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
       <span className="text-xs text-muted">{label}</span>
       {names.map((name) => (
-        <span key={name} className="rounded-lg bg-surface-2 px-2.5 py-1 text-sm">
+        <span key={name} className="rounded-lg bg-surface-2 px-3 py-1 text-sm">
           {name}
         </span>
       ))}

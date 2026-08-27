@@ -164,11 +164,11 @@ export function MatchImports({
 }
 
 const styles = StyleSheet.create({
-  block: { gap: 10 },
+  block: { gap: 12 },
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.lg,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   primaryText: { color: theme.ink, fontSize: 15, fontWeight: '700' },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   candidate: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
     padding: 8,

@@ -167,7 +167,7 @@ export function MatchImports({
                 <button
                   onClick={() => choose(ask, candidate.id)}
                   aria-label={`${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`}
-                  className="flex w-full items-center gap-2.5 rounded-xl bg-surface-2 p-2 text-left"
+                  className="flex w-full items-center gap-3 rounded-xl bg-surface-2 p-2 text-left"
                 >
                   <Poster
                     url={candidate.posterUrl}
@@ -272,7 +272,7 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
             <button
               onClick={() => onChosen(result.id)}
               aria-label={`${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`}
-              className="flex w-full items-center gap-2.5 rounded-xl bg-surface-2 p-2 text-left"
+              className="flex w-full items-center gap-3 rounded-xl bg-surface-2 p-2 text-left"
             >
               <Poster
                 url={result.posterUrl}

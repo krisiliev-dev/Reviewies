@@ -115,7 +115,7 @@ export function UpNext() {
         {unmatched && !importing ? <MatchImports /> : null}
         <Link
           to="/search"
-          className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-ink"
+          className="mt-5 inline-block rounded-full bg-accent px-5 py-3 font-medium text-ink"
         >
           Find something to watch
         </Link>
@@ -153,7 +153,7 @@ export function UpNext() {
             said so: both were named, both were reachable, both were big enough. */}
         <Link
           to="/search"
-          className="self-start rounded-full bg-surface-2 px-5 py-2.5 font-medium text-text"
+          className="self-start rounded-full bg-surface-2 px-5 py-3 font-medium text-text"
         >
           Find something to watch
         </Link>
@@ -238,7 +238,7 @@ function UpNextRow({
     // wider than a phone, and with `flex-nowrap` the actions went past the right edge —
     // half a Watched button is as unusable as none. The smoke suite's 200% check only
     // noticed controls that were *entirely* gone, which these never were.
-    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface p-2.5">
+    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}
@@ -279,7 +279,7 @@ function UpNextRow({
         <button
           onClick={onWatched}
           // Large target: this gets tapped in the dark, one-handed.
-          className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink active:scale-95"
+          className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink active:scale-95"
           aria-label={`Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`}
         >
           Watched

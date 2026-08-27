@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   // in a 390 viewport and could be scrolled sideways to reveal a drawer that is supposed
   // to be shut. True at any text size; the 200% check is simply what looked.
   screen: { flex: 1, backgroundColor: theme.ink, overflow: 'hidden' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   headerMiddle: { flex: 1, alignItems: 'center' },
   close: { color: theme.muted, fontSize: 15 },
   series: { color: theme.text, fontSize: 15, fontWeight: '600' },
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   control: {
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
   controlOn: { backgroundColor: theme.accent },
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   controlTextOn: { color: theme.ink, fontWeight: '600' },
   // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
   // line and is what carried it past the edge once the row wrapped.
-  densityBlock: { alignItems: 'flex-end', gap: 3 },
+  densityBlock: { alignItems: 'flex-end', gap: 4 },
   densityLabel: { color: theme.muted, fontSize: 10 },
   densityRow: { flexDirection: 'row', gap: 4 },
   densityChip: {
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     minHeight: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 9,
+    paddingHorizontal: 8,
   },
   densityChipOn: { backgroundColor: theme.accent },
   densityText: { color: theme.muted, fontSize: 11 },
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     backgroundColor: theme.surface,
     borderRadius: radius.md,
-    padding: 10,
+    padding: 12,
   },
   driftText: { color: theme.muted, fontSize: 12 },
 
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     color: theme.text,
     fontSize: 15,
   },

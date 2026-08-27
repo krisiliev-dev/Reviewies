@@ -201,12 +201,12 @@ function Figure({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 14, backgroundColor: theme.ink, flexGrow: 1 },
+  content: { padding: 16, gap: 16, backgroundColor: theme.ink, flexGrow: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     backgroundColor: theme.surface2,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderRadius: 999,
   },
   chipOn: { backgroundColor: theme.accent },
@@ -214,13 +214,13 @@ const styles = StyleSheet.create({
   chipTextOn: { color: theme.ink, fontWeight: '600' },
   loading: { marginTop: 32 },
 
-  figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   figure: {
     flexGrow: 1,
     minWidth: '45%',
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
-    padding: 14,
+    padding: 16,
   },
   figureLabel: { color: theme.muted, fontSize: 12 },
   figureValue: { color: theme.text, fontSize: 22, fontWeight: '700' },
@@ -228,13 +228,13 @@ const styles = StyleSheet.create({
   allTime: {
     backgroundColor: theme.surface2,
     borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   allTimeText: { color: theme.text, fontSize: 14, fontWeight: '600' },
   note: { color: theme.muted, fontSize: 13 },
 
-  section: { gap: 10, marginTop: 6 },
+  section: { gap: 12, marginTop: 6 },
   sectionHeading: {
     color: theme.muted,
     fontSize: 12,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   // running the full width of the screen under it, which reads as a progress bar rather
   // than as a chart. §6.62.
   tallyCard: {
-    gap: 5,
+    gap: 6,
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
     padding: 12,

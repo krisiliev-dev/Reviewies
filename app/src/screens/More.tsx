@@ -65,7 +65,7 @@ export function More() {
             key={link.to}
             to={link.to}
             aria-label={`${link.label} — ${link.detail}`}
-            className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3.5"
+            className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-4"
           >
             <span className="min-w-0">
               <span className="block">{link.label}</span>

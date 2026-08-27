@@ -46,7 +46,7 @@ export function Settings() {
           demand in the research. */}
       <Link
         to="/people"
-        className="flex items-center justify-between rounded-2xl bg-surface px-4 py-3.5"
+        className="flex items-center justify-between rounded-2xl bg-surface px-4 py-4"
       >
         <span>
           <span className="font-semibold">People</span>
@@ -137,7 +137,7 @@ export function Settings() {
         <h2 className="px-1 text-sm font-semibold tracking-wide text-muted uppercase">
           Watching
         </h2>
-        <label className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3.5">
+        <label className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-4">
           <span className="min-w-0">
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to

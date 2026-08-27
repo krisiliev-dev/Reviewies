@@ -155,10 +155,10 @@ function Row({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ink },
-  content: { padding: 16, gap: 10 },
+  content: { padding: 16, gap: 12 },
   heading: { color: theme.text, fontSize: 30, fontWeight: '700', marginBottom: 8 },
   empty: { color: theme.muted, fontSize: 15, lineHeight: 22 },
-  emptyBlock: { gap: 14, alignItems: 'flex-start' },
+  emptyBlock: { gap: 16, alignItems: 'flex-start' },
   // The same shape as Up Next's, which is the other empty state somebody meets first.
   cta: {
     alignSelf: 'flex-start',
@@ -173,9 +173,9 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: theme.surface,
     borderRadius: radius.xl,
-    padding: 10,
+    padding: 12,
   },
-  rowBody: { flex: 1, minWidth: 0, gap: 3 },
+  rowBody: { flex: 1, minWidth: 0, gap: 4 },
   title: { color: theme.text, fontSize: 16, fontWeight: '600' },
   year: { color: theme.muted, fontSize: 12 },
   note: { color: theme.text, fontSize: 13, fontStyle: 'italic' },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     backgroundColor: theme.surface2,
     borderRadius: radius.sm,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     minHeight: 44,
   },

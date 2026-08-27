@@ -55,7 +55,7 @@ export function Stats() {
             }}
             role="radio"
             aria-checked={!year && window === w.key}
-            className={`rounded-full px-3.5 py-1.5 text-sm ${
+            className={`rounded-full px-4 py-1.5 text-sm ${
               !year && window === w.key ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}
           >
@@ -69,7 +69,7 @@ export function Stats() {
             role="radio"
             aria-checked={year === y}
             aria-label={`Your ${y}`}
-            className={`rounded-full px-3.5 py-1.5 text-sm ${
+            className={`rounded-full px-4 py-1.5 text-sm ${
               year === y ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
             }`}
           >
@@ -177,7 +177,7 @@ function Summary({
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface px-3 py-2.5">
+    <div className="rounded-xl bg-surface px-3 py-3">
       <dt className="text-xs text-muted">{label}</dt>
       <dd className="text-xl font-semibold tabular-nums">{value}</dd>
     </div>

@@ -5847,6 +5847,72 @@ halves honestly in one pass. `coreWiring`'s exemption list still names them, whi
 gap being visible rather than hidden: each line deletes itself when its sprint lands.
 
 
+### 6.88 A hundred and fifty-six numbers nobody chose
+
+The space scale is ten steps on a 2pt base. The build had twenty distinct spacing values
+across 324 sites, and the four commonest offenders — 10 (47 uses), 14 (36), 18 (7), 40 (6)
+— carried no distinction at all. `paddingVertical: 7` and `paddingVertical: 8` are not a
+decision anybody made twice.
+
+**The guard could not land before the sites, and that is the whole design of this sprint.**
+The obvious way to guard 156 existing violations is a shrinking exception list, and §6.59
+is this codebase's own entry about where that ends: a written excuse for a swallowed
+failure that outlived the failure by a year, because nobody read it back. So the migration
+and `app/src/ui/space.test.ts` are the same commit, or neither is.
+
+**The mapping.** Nearest scale member, ties up: 3→4, 5→6, 7→8, 10→12, 11→12, 14→16,
+18→20, 40→48, 52→48. One exception, 9→8: it appeared once as a control's vertical padding
+beside a 12 horizontal, and rounding up would have made the control taller than wide.
+
+Ties going *up* rather than down was the one real decision, and it was made for touch
+targets. Every one of the 47 `10`s and 36 `14`s is a padding or a gap, and shrinking them
+would have moved controls toward the 44pt floor rather than away from it. The phone's
+smoke suite measures that floor and its 200% text behaviour, and stayed at 166/166 — which
+is the check that would have caught the other choice.
+
+| | sites | what changed |
+| --- | --- | --- |
+| phone | 108 | numeric literals on `padding*`/`margin*`/`gap*` keys, 26 files |
+| web | 48 | `p-2.5`→`p-3` (10px→12px, 42 uses) and `p-3.5`→`p-4` (14px→16px, 6) |
+
+**Three things the guard has to say that the spec did not.**
+
+*A far-negative inset is not spacing.* `ReactionStream` parks an overlay at `left: -10000`
+so it keeps its accessibility tree while invisible — the idiom §6.86's predecessor found
+the phone getting wrong. The rule is bounded at -1000 rather than "any negative", so
+`marginTop: -3`, which really is somebody nudging by eye, still fails.
+
+*44 and 24 are floors, not rhythm.* `size.target` and `size.tap` are exempt by name.
+A 44 that happened to be 48 would be a different thing.
+
+*An arbitrary value is allowed only where a scale cannot reach.* The web has exactly one,
+`pb-[calc(var(--tabbar,5rem)+1rem)]` — the tab bar's own height plus a gap, where the
+height is a component dimension measured at runtime. The rule is about shape rather than
+about that site: it must be a `calc()` over a custom property, and every length left after
+the `var()` is removed must be on the scale. `pb-[10px]` still fails.
+
+**Four plants, all caught.** `padding: 10` in `more.tsx` — the spec's own plant, chosen
+because it was literally the state of the build that morning. `px-2.5` on an Up Next chip.
+`pb-[10px]` beside it, which failed the arbitrary-value clause separately. And the fourth
+in the other direction: the same two violations written into a JSX comment, which the
+guard correctly ignored — §6.72's lesson, inherited rather than rediscovered, because
+`stripComments` is one copy now.
+
+**What did not change.** The literals are still literals. G9 as specified requires the
+*value* to be a scale member, not the *spelling* to be `space.s12`, and converting 348
+sites to token references would be churn producing identical output. The distinction
+matters and is worth naming: the phone's rhythm is now checkably on the scale, and it is
+not yet reading the scale. That second step belongs with the components sprint, where a
+`ScreenTitle` and a `Button` own their own padding and the screens stop specifying it.
+
+Radius did not land. It is ~84 sites and, unlike space, not a rounding rule: the direction
+assigns `0` to structure, `2` to anything printed and `999` to the two round things that
+remain, which is a judgement per site rather than a mapping. Doing it badly to finish a
+sprint would produce exactly the guard-with-an-allowlist this section is about.
+
+App unit tests 412 → 417. Phone smoke 166/166 unchanged, web 220/220 unchanged.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -6130,14 +6196,22 @@ and which single claim in this document could not be checked at all:
   reasons no plist declares.
 - **The token layer is specified in full and built in part, and only the built part is
   guarded.** §6.85 landed colour, motion, z-order and elevation with guards proved by
-  planting. The type, space and radius layers are values in `core/src/tokens.ts` that no
-  screen reads: 222 `fontSize` literals, ~99 off-scale spacing values and ~84 radius uses
-  are still there, and their guards cannot land until the sites do. Until then the app is
-  drawn from `theme.ts`'s original seven colours and four radii, so the system is real in
-  the specification, real in the tests, and mostly not yet real on screen. The gap is
-  visible — `coreWiring`'s exemption list is exactly the list of what has not migrated,
-  and each line deletes itself when its sprint lands — but nobody should read "the design
-  system is in" as "the app looks like the design system".
+  planting; §6.88 landed space the same way, with its 156 sites in the same commit as its
+  guard. Type and radius are still values in `core/src/tokens.ts` that no screen reads:
+  222 `fontSize` literals and ~84 radius uses are still there, and their guards cannot
+  land until the sites do. The app is still drawn from `theme.ts`'s four radii and its
+  original seven colours, so the system is real in the specification, real in the tests,
+  and only partly real on screen. The gap is visible — `coreWiring`'s exemption list is
+  exactly the list of what has not migrated, and each line deletes itself when its sprint
+  lands — but nobody should read "the design system is in" as "the app looks like the
+  design system".
+- **Space is on the scale, and is not yet reading the scale.** The values migrated; the
+  spellings did not. 348 phone literals and ~500 web utilities now land on the ten steps,
+  checkably, but they are still numbers typed into a `StyleSheet` rather than references
+  to `space`. The difference is invisible today and matters the moment a step changes:
+  editing `space.s12` would move nothing. Closing it belongs with the components sprint,
+  where a `ScreenTitle` and a `Button` own their padding and the screens stop specifying
+  it at all.
 - **The stylesheet is proved to render for the classes somebody already writes, and no
   further.** §6.87 closed the worst of this: four checks now read computed colour off the
   pixels, set `data-theme="light"` and confirm it takes, and they caught a real defect

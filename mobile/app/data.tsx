@@ -169,15 +169,15 @@ function Section({ heading, children }: { heading: string; children: React.React
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 24, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
-  section: { gap: 10 },
+  content: { padding: 16, gap: 24, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
+  section: { gap: 12 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
   toggleText: { flex: 1, minWidth: 0, gap: 2 },
@@ -195,14 +195,14 @@ const styles = StyleSheet.create({
   primary: {
     backgroundColor: theme.accent,
     borderRadius: radius.lg,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
   secondary: {
     backgroundColor: theme.surface2,
     borderRadius: radius.lg,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   secondaryText: { color: theme.text, fontSize: 15 },

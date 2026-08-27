@@ -166,7 +166,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
             placeholder="Handle"
-            className="rounded-xl bg-surface-2 px-3 py-2.5 outline-none placeholder:text-muted"
+            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
             autoFocus
           />
           <input
@@ -174,7 +174,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Display name (optional)"
             maxLength={60}
-            className="rounded-xl bg-surface-2 px-3 py-2.5 outline-none placeholder:text-muted"
+            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
           <div className="flex gap-2">
             <button
@@ -274,7 +274,7 @@ function FindPeople({
           const already = following.some((f) => f.id === p.id);
           const isBlocked = blocked.some((b) => b.id === p.id);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2.5">
+            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-3">
               <PersonName person={p} />
               <button
                 onClick={async () => {
@@ -353,7 +353,7 @@ function PersonList({
         {people.map((p) => {
           const act = action(p);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2.5">
+            <li key={p.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-3">
               <PersonName person={p} />
               {act && (
                 <button

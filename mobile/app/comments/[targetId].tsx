@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   // size, so it must not be expressed in anything that scales with text.
   deleteComment: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
   deleteCommentText: { color: theme.muted, fontSize: 13, textDecorationLine: 'underline' },
-  content: { padding: 16, gap: 10, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 40 },
+  content: { padding: 16, gap: 12, backgroundColor: theme.ink, flexGrow: 1, paddingBottom: 48 },
   episode: { color: theme.muted, fontSize: 14 },
   blurb: { color: theme.muted, fontSize: 14, lineHeight: 20 },
   card: { backgroundColor: theme.surface, borderRadius: radius.xl, padding: 16, gap: 8 },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: theme.surface,
     borderRadius: radius.lg,
-    padding: 14,
+    padding: 16,
     color: theme.text,
     fontSize: 15,
     minHeight: 80,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.accent,
     borderRadius: radius.md,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   primaryText: { color: theme.ink, fontWeight: '700', fontSize: 14 },
   secondary: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.surface2,
     borderRadius: radius.md,
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   secondaryText: { color: theme.text, fontSize: 14 },
   disabled: { opacity: 0.4 },

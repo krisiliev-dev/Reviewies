@@ -161,7 +161,6 @@ const NOT_ON_DISK: Record<string, string> = {
   // were here this morning and are gone because the files landed — the stale check
   // below took them out rather than anybody remembering to.
   'app/src/ui/fontBundle.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'app/src/ui/space.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/typeScale.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/watchingDim.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'mobile/src/ui/fonts.ts': 'docs/design/tokens.md specifies it — not yet built',

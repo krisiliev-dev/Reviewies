@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   retryText: { color: theme.ink, fontWeight: '700', fontSize: 15 },
   retryQuiet: {
-    marginTop: 10,
+    marginTop: 12,
     backgroundColor: theme.surface2,
     borderRadius: 999,
     paddingHorizontal: 20,

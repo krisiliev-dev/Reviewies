@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: theme.surface2,
     borderRadius: radius.lg,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   buttonText: { color: theme.text, fontSize: 15, fontWeight: '600' },

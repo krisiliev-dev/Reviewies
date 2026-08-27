@@ -158,7 +158,7 @@ function Row({ entry }: { entry: UpcomingEntry }) {
   const label = KIND_LABEL[entry.kind];
 
   return (
-    <li className="flex items-center gap-3 rounded-xl bg-surface p-2.5">
+    <li className="flex items-center gap-3 rounded-xl bg-surface p-3">
       <Link
         to={`/title/${encodeURIComponent(entry.seriesId)}`}
         aria-label={`Open ${entry.seriesName}`}

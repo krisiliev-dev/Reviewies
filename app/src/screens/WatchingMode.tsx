@@ -374,7 +374,7 @@ function SyncBar({
               aria-checked={density === value}
               // "8", "24", "60" on their own are three numbers next to each other.
               aria-label={COPY.watching.densityChoice(value)}
-              className={`min-h-6 rounded-full px-2.5 py-1 ${
+              className={`min-h-6 rounded-full px-3 py-1 ${
                 density === value ? 'bg-accent text-ink' : 'bg-surface-2 text-muted'
               }`}
             >

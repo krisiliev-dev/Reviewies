@@ -65,7 +65,7 @@ export function AccountPanel() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="rounded-xl bg-surface-2 px-3 py-2.5 outline-none placeholder:text-muted"
+            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
           <input
             type="password"
@@ -74,9 +74,9 @@ export function AccountPanel() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password (8+ characters)"
-            className="rounded-xl bg-surface-2 px-3 py-2.5 outline-none placeholder:text-muted"
+            className="rounded-xl bg-surface-2 px-3 py-3 outline-none placeholder:text-muted"
           />
-          <button type="submit" className="rounded-xl bg-accent px-4 py-2.5 font-medium text-ink">
+          <button type="submit" className="rounded-xl bg-accent px-4 py-3 font-medium text-ink">
             {mode === 'in' ? 'Sign in' : 'Create account'}
           </button>
         </form>

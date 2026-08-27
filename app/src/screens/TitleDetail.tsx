@@ -149,7 +149,7 @@ export function TitleDetail() {
                 value={posterDraft}
                 onChange={(e) => setPosterDraft(e.target.value)}
                 placeholder="Image URL"
-                className="min-w-0 flex-1 rounded-lg bg-surface px-2.5 py-1.5 text-sm outline-none placeholder:text-muted"
+                className="min-w-0 flex-1 rounded-lg bg-surface px-3 py-1.5 text-sm outline-none placeholder:text-muted"
                 autoFocus
               />
               <button
@@ -219,7 +219,7 @@ function EpisodeRow({
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
 
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-xl bg-surface px-3 py-2.5">
+    <li className="flex flex-wrap items-center gap-3 rounded-xl bg-surface px-3 py-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm">
           <span className="text-muted">{episode.number}.</span> {episode.name}
@@ -239,7 +239,7 @@ function EpisodeRow({
       <Link
         to={`/watching/${encodeURIComponent(episode.id)}`}
         aria-label={`React along with episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
       >
         React
       </Link>
@@ -247,7 +247,7 @@ function EpisodeRow({
       <Link
         to={`/comments/${encodeURIComponent(episode.id)}`}
         aria-label={`Comments on episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
+        className="shrink-0 rounded-lg bg-surface-2 px-3 py-1.5 text-xs text-muted"
       >
         Talk
       </Link>

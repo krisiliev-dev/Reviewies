@@ -87,7 +87,7 @@ export function Lists() {
           onChange={(e) => setName(e.target.value)}
           placeholder="New list name"
           maxLength={120}
-          className="min-w-0 flex-1 rounded-xl bg-surface px-3 py-2.5 outline-none placeholder:text-muted"
+          className="min-w-0 flex-1 rounded-xl bg-surface px-3 py-3 outline-none placeholder:text-muted"
         />
         <button
           type="submit"
@@ -216,7 +216,7 @@ function ListCard({
 
           <ul className="flex flex-col gap-1">
             {items?.map((item) => (
-              <li key={item.titleId} className="flex items-center gap-2 rounded-lg bg-surface-2 px-2.5 py-2">
+              <li key={item.titleId} className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
                 <Link
                   to={`/title/${encodeURIComponent(item.titleId)}`}
                   className="min-w-0 flex-1 truncate text-sm"
