@@ -108,6 +108,27 @@ export const COPY = {
      * non-sequitur to.
      */
     empty: 'Nothing new to suggest yet. Track a few things and come back.',
+    /**
+     * Why this is being suggested — the line that separates a recommendation from an
+     * advert, and the one thing on the card a person actually reads.
+     *
+     * Two titles at most, and shared, because §6.79 found the two platforms truncating
+     * it differently: the web wrote `because.slice(0, 2).join(' and ')` and the phone
+     * wrote `because.join(' and ')`, so a library of a dozen shows produced *"Because you
+     * watched Halt and Catch Fire and The Leftovers and Frieren and The Bear and
+     * Shogun"* — five titles, four "and"s, running off the card.
+     *
+     * Neither §6.51's one-owner rule nor §6.52's shared-number rule caught it, because
+     * the sentence was inline JSX on both sides and the number was a `.slice` at one call
+     * site and missing at the other. Both are here now, which is what makes them one
+     * decision instead of two.
+     *
+     * Two rather than three because the card is a phone-width row and the third title
+     * pushes it to a second line for no added meaning: the point is that this comes from
+     * something you liked, not an audit of which things.
+     */
+    because: (titles: string[]) =>
+      `Because you watched ${titles.slice(0, 2).join(' and ')}`,
   },
 
   lists: {

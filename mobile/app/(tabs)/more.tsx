@@ -42,7 +42,7 @@ export default function MoreScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>More</Text>
+        <Text accessibilityRole="header" style={styles.heading}>More</Text>
 
         <View style={styles.card}>
           <Text style={styles.cardText}>

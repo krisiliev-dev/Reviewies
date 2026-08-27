@@ -1438,7 +1438,7 @@ pixels; no tab icon that is a character; no filled button disabled by fading. Wh
 guarded is everything else in this section, and that is worth being plain about: three of
 these four were found by looking, and nothing here means the next one will not be.
 
- ### 6.31 The same again, with something on the screen
+### 6.31 The same again, with something on the screen
 
 §6.30 looked at the app and found four things. It looked almost entirely at *empty*
 screens, which is the easy half: nothing wraps, nothing overflows, no grid has to decide
@@ -2528,7 +2528,7 @@ sentence and the phone had never been given it.
 platforms, with the reasoning for the wording beside it. `COPY.people.signInToFollow` is
 a function rather than a string, because that sentence's destination genuinely has two
 names — the Data tab on the web, the Account screen on the phone — and only the noun
-should differ. The notification options moved into `core/calendar/upcoming.ts` beside the
+should differ. The notification options moved into `core/src/calendar/upcoming.ts` beside the
 type they describe, because both screens had their own copy of the list and all three
 hints had drifted.
 
@@ -4042,7 +4042,7 @@ the part that matters — but no row has ever been set aside by the deployed bac
 
 Three times this project had caught a guard reading prose as code — §6.41's skip list,
 §6.63's JSX detection, §6.71's permanent-code set. The third was luck: it happened to be
-the plant I chose. §107 planted a violation against every guard and that was the right
+the plant I chose. §6.60 planted a violation against every guard and that was the right
 idea, but **every plant was code**. Nobody had ever planted a comment.
 
 Twenty guards read source. Each has two ways to be wrong and neither had been asked:
@@ -4708,7 +4708,7 @@ be inverted unnoticed.
 Eight of the nineteen die now. The other eleven are past the permission prompt and need a
 device, which is what the excuse should have said. It says that now.
 
-This is §6.106's rule again — *an excuse outlives the thing it excuses* — and the first
+This is §6.59's rule again — *an excuse outlives the thing it excuses* — and the first
 time mutation testing rather than a re-read is what caught one.
 
 #### A function that could only ever be seen returning false
@@ -4775,7 +4775,7 @@ know which two was to run it.
 ### 6.78 Use it for an evening again, and check the smoke is watching the right things
 
 Five sprints — §6.73 to §6.77 — went into whether the tests were worth anything. Nobody
-had opened the app since §6.96. Everything built since then was proved by suites and
+had opened the app since §6.49. Everything built since then was proved by suites and
 looked at by nobody, and §7's newest line said exactly what that meant: no screen has been
 mutated, so "the screens are covered" rests entirely on the smoke suites asserting the
 right things.
@@ -4797,7 +4797,7 @@ There is no Data tab. §6.79 cut the web's eight tabs down to five and moved eve
 else behind More, where the row is called **Your data**. The phone has an **Account**
 screen and was told to say "Account screen".
 
-This survived §6.98, which gave the words one owner, because the sentence *is* owned:
+This survived §6.51, which gave the words one owner, because the sentence *is* owned:
 `COPY.lists.signInToMake` is parameterised precisely because the destination has two
 names, and the noun is an argument at the call site. The guard checks the sentence. The
 argument is not the sentence.
@@ -4882,6 +4882,182 @@ not "the tests are bad" — it is narrower than that:
 
 Each time the check named the thing next to the thing that mattered. That is what an
 evening finds and a suite does not, and it is the argument for having both.
+
+---
+
+### 6.79 Spend the evening on the phone, which the last sprint did not
+
+§6.78's brief said both platforms and only the web got done. The phone is what this
+product pivoted to be, its last evening was §6.49, and two of §6.78's three fixes were in
+shared code the phone renders its own way. So: the same evening, on the phone.
+
+#### Getting a library in, which is not the web's way
+
+There is no `indexedDB.open` to seed here — the phone stores through `expo-sqlite` — and
+poking the store directly would skip the path a person actually takes. So the library
+arrived the way a real one does: a TV Time rescue CSV, 266 rows over twelve shows,
+dropped into the app's own import. `expo-document-picker` on web is a hidden file input,
+which Playwright answers with `page.on('filechooser')`.
+
+Worth recording because it cost twenty minutes: the first run waited six seconds after
+handing over the file, navigated, and found an empty app. The import had not finished. It
+takes about eight seconds for 266 rows, and a navigation part-way through leaves nothing.
+
+That is a real thing to have seen, even though it turned out to be my impatience rather
+than a defect: **at five seconds in, Up Next said "12 shows came from an import and have
+no episode lists until they are matched", and offered to fix it.** A finished-sounding
+sentence and a repair action, describing a state that was still being written. §6.57 drew
+the line between "nothing" and "I could not look"; there is a third thing here, "still
+working", and the screen does not know about it. Recorded in §7 rather than fixed: the
+honest fix is a cross-screen signal that an import is running, which is a bigger change
+than an evening.
+
+#### The reason line, joined two different ways
+
+Discover, on the phone, with a dozen shows in the library:
+
+> Because you watched Halt and Catch Fire and The Leftovers and Frieren and The Bear and
+> Shogun
+
+Five titles, four "and"s, off the edge of the card. The web says "Because you watched
+Shogun and The Leftovers", because the two call sites are:
+
+```jsx
+{suggestion.because.slice(0, 2).join(' and ')}   // app
+{item.because.join(' and ')}                     // mobile
+```
+
+§6.51 gave the words one owner and §6.52 gave the shared numbers one owner, and neither
+covers this, because the sentence was inline JSX on both sides and the cap was a `.slice`
+at one call site and *missing* at the other. There was nothing for either guard to compare.
+`COPY.discover.because` owns both now — the sentence and the two — and the phone's smoke
+counts the "and"s.
+
+#### The phone's screen titles were not headings, so the check asked the tab bar instead
+
+The phone's tab checks read:
+
+```js
+check(`the ${tab} tab opens`, (await text()).includes(tab));
+```
+
+The tab bar prints all five names on every screen, so this passed wherever the app
+happened to be. It is §6.74's bug exactly, in the file where the lesson is already written
+down — twenty lines further on, an offline loop carries the comment *"Matched on what the
+screen itself says, not on its own name: 'Watchlist' is written on the tab bar, so a tap
+that navigated nowhere would pass that."* Somebody learned it in §6.56 and the check
+above it kept doing the thing.
+
+Fixing it needed the product fixed first. The web's screen titles are `<h1>`; the phone's
+were plain `<Text>` with no heading role — so there was nothing to ask for, and **a screen
+reader on the phone could not jump between screens the way it can on the web.** All five
+carry `accessibilityRole="header"` now, and the check asks for the heading by name.
+
+#### And then it failed, which is how the third thing turned up
+
+With the check asking for a heading, `the Watchlist tab opens` went red. Not because the
+screen was broken — opening `/watchlist` directly renders it perfectly — but because the
+tap never went there. The loop clicked with:
+
+```js
+await page.getByText(tab, { exact: true }).first().click();
+```
+
+On the Discover tab, the first thing on screen reading exactly "Watchlist" is a
+**suggestion card's button**, whose job is to add that title to your watchlist. So for as
+long as this check has existed it has tapped a card, added something to the watchlist,
+stayed on Discover, and then confirmed success by finding the word "Watchlist" written in
+the tab bar. Three wrong things agreeing, and the screen it is named after had never once
+been opened by it.
+
+The product is not at fault: §6.18 already gave that button the accessible name *"Add The
+Long Dark to your watchlist"*, and only its visible text is the bare word. `getByText`
+does not read accessible names. The loop asks for `getByRole('tab', …)` now, which is what
+the tab bar actually is.
+
+#### A reference that names the task, not the section
+
+Checking §6.79's own cross-references turned one up that looked wrong: *"its last evening
+was section 6.96"* — and this document stops at §6.79. There is no 6.96; there is a **task**
+#96. Every section here is written to close a numbered task, so the number in mind while
+writing §6.79 is 126, not 79, and the two schemes have been sliding past each other for
+fifty sections.
+
+A checker over all eleven documents — every `§N.N` against every heading — found ten. Six
+were real, every one of them a task number wearing a section's sigil: 96 twice where §6.49
+was meant, 98 for §6.51, 99 for §6.52, 104 for §6.57, 106 for §6.59, and a bare 107 for
+§6.60. Each points at nothing today, and at something real and unrelated the moment the
+numbering catches up — which is the worse failure. A section 6.98 will exist one day, and
+it will not be about owning the words.
+
+The other four were the checker's fault, and are worth as much. All four cited §6.31,
+which the checker called missing. It is not: it is at line 1441, indented by one space.
+CommonMark allows a heading three spaces of indentation and renders it correctly, so the
+document was right and `^#{2,6}` was wrong. **A guard whose first run reports four
+failures in a file nobody has touched deserves the same suspicion as one that reports
+none** — the plant-it-to-prove-it rule of §6.60 read backwards.
+
+`app/src/wiring/docsReferences.test.ts` holds it now. The indentation allowance is
+load-bearing and proven so: with §6.31 re-indented the guard stays green, and tightening
+the regex to `^#` turns those same four references red again.
+
+Then the same question in the other direction — a document that names a *file*. Sixty-one
+cited paths across the eleven documents and `docs/deploying.md`; two do not exist. Both
+lost their `src/` when §6.35 pulled the platform-agnostic half into `core/`, and one of
+them matters more than any dangling §:
+
+> The provider interface in `app/src/metadata/provider.ts` already isolates every call
+> behind one class, so this is a change to `TmdbProvider`'s base URL, not a rewrite.
+
+That is `docs/deploying.md` — an instruction rather than a record — telling somebody
+worried about a leaked TMDB token to go and edit a path that has not existed since the
+pivot. The guard checks cited paths too now.
+
+And then the place it matters most, which was the last one looked at: **comments in the
+source**. Nineteen guards open with a paragraph naming the section that made them
+necessary, and those paragraphs get read far more often than the document does. Four more
+there: `core/src/copy.ts` credited tasks 98 and 99 for rules that live in §6.51 and §6.52
+— written last sprint, by the same hand, in the same week as the six in the document —
+and two blocks of `app/smoke.mjs` were headed with task numbers while their own bodies,
+ten lines down, cited §6.70 and §6.69 correctly. The heading and the explanation of the
+same block of checks disagreed, and the explanation was right.
+
+#### A quotation is not a citation
+
+Turning the guard on the source and on this very section broke it, which was the useful
+part. Every new failure was a *quotation*: a paragraph reporting that a section number
+was written where another was meant cites the wrong one, as far as a regex is concerned,
+and the blockquote of deploying.md's old sentence names a file that is deliberately not
+there. The first draft of the two paragraphs above failed the guard eleven times over,
+and the guard was right every time.
+
+Two different answers, and the difference is the point:
+
+- The wrong numbers are now written **without a §**. The sigil makes a citation, and a
+  number being *reported* is not one. That is not a workaround for the checker — the
+  prose was sloppy, and saying "task 96 where §6.49 was meant" is clearer than pairing
+  two sigils and leaving the reader to work out which one is real.
+- The quoted *path* keeps its exemption, with the reason written next to it. A faithful
+  quotation of a wrong path is the one honest way to name a file that is not on disk, and
+  the stale-exemption test means it cannot outlive its purpose.
+
+Nine plants across the three halves, each the violation the guard claims to catch: a task
+number in a document, in a comment; a moved file; an exemption for a path that exists; and
+for each half, pointing it at nothing to prove the anti-vacuity claims are not decoration.
+
+#### What held up
+
+The rest of the phone is in good shape, and two things are worth naming because they were
+fixed blind last sprint and this was the first time anybody saw them rendered here:
+
+- Stats reads **"Busiest day was Thu, Apr 16 with 4 episodes."** — §6.78's fix, which the
+  phone previously printed as `2026-04-16`.
+- Lists and People say **"Sign in under Account"**, which is what the phone's More screen
+  calls that row.
+
+Up Next, Watchlist, Calendar, Account, Remote and Your data all read well on a real
+library. The import summary — *"Imported 204 watches. They are in your library under the
+names your export carried."* — is the sentence somebody arriving from TV Time needs.
 
 ---
 
@@ -4996,8 +5172,16 @@ and which single claim in this document could not be checked at all:
   real assertion from an unfailable one means knowing what the code could have done
   instead, which is what mutation testing is for and what nothing here does. The honest
   version of this claim is: no test is silent, and some may still be toothless.
+- **A long import has no "still working" state anywhere but the screen doing it.** §6.79
+  watched a 266-row rescue CSV land on the phone, and five seconds in — with the writing
+  still going — Up Next said "12 shows came from an import and have no episode lists until
+  they are matched" and offered to repair it. A finished-sounding sentence and a repair
+  action, for a state that was still being written. §6.57 separated "nothing" from "I
+  could not look"; this is the third case, "still working", and no screen but the importer
+  knows about it. The honest fix is a signal the other screens can read, which is more
+  than an evening.
 - **Three green screens were wrong, and an evening found all three.** §6.78 opened the app
-  on a realistic library for the first time since §6.96 and found a sentence pointing at a
+  on a realistic library for the first time since §6.49 and found a sentence pointing at a
   tab deleted in §6.79, a date written three ways including the wrong day west of
   Greenwich, and every one of your own past reactions replayed on reopening an episode.
   Each had a check next to it that passed. The suites are worth what they cost and they
@@ -5128,3 +5312,11 @@ and which single claim in this document could not be checked at all:
   here. And the success paths of `deploy-web.mjs`, `apply-migrations.mjs` and
   `deploy-functions.mjs` have never run in this container — only their refusals, which are
   clear and exit non-zero.
+- **Nothing checks that a claim in the record is still *true*, only that its references
+  resolve.** §6.79 gave the documents a guard for dangling sections, dead file paths and
+  stale references in source comments, and that catches drift in the *scaffolding* of a
+  claim. It says nothing about the claim itself: a paragraph asserting that some screen
+  behaves a certain way will pass forever after the screen stops doing it. §6.37 read the
+  record back by hand and found one excuse that had been wrong for a year, and by hand is
+  still the only way anybody has ever checked. The guard makes it *easier* to trust the
+  document than it should be, which is a new hazard rather than an old one closed.

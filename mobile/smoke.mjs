@@ -373,10 +373,52 @@ try {
   // --- Tabs ------------------------------------------------------------------
   // Five, and no more: the web app's eight is already too many for a phone, and
   // simplicity was the loudest single finding in the research.
+  /**
+   * The heading, not the word in the tab bar.
+   *
+   * This asked whether the screen's name appeared anywhere on it — and the tab bar
+   * prints all five names on every screen, so the check was satisfied wherever the app
+   * happened to be. §6.74 found and fixed the web's version of exactly this; the phone's
+   * was never looked at.
+   *
+   * Fixing it needed a product change first: the phone's screen titles were plain text
+   * with no heading role, so there was nothing to ask for — which is also why a screen
+   * reader here could not jump between them the way it can on the web. They are headings
+   * now, and this asks for one by name. §6.79.
+   */
   for (const tab of ['Discover', 'Watchlist', 'More']) {
-    await page.getByText(tab, { exact: true }).first().click();
+    // The tab, by its role, and not the first thing on screen that says the word.
+    // `getByText('Watchlist')` on the Discover tab hits a suggestion card's "Watchlist"
+    // button — which adds a title to your watchlist and navigates nowhere — and the old
+    // check then confirmed success by finding "Watchlist" written in the tab bar. So it
+    // passed for three reasons at once, none of them the right one, and it had never
+    // once opened the screen it is named after. §6.79.
+    await page.getByRole('tab', { name: new RegExp(tab) }).first().click();
     await page.waitForTimeout(1200);
-    check(`the ${tab} tab opens`, (await text()).includes(tab));
+    const arrived = await page
+      .getByRole('heading', { name: tab, exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false);
+    check(`the ${tab} tab opens`, arrived);
+
+    /**
+     * And on Discover, how many titles the reason names.
+     *
+     * The web wrote `because.slice(0, 2)` and the phone wrote `because.join(' and ')`,
+     * so a library of a dozen shows produced "Because you watched Halt and Catch Fire
+     * and The Leftovers and Frieren and The Bear and Shogun" — five titles, four "and"s,
+     * off the edge of the card. One "and" at most, now that the sentence is shared.
+     */
+    if (tab === 'Discover') {
+      const reasons = (await text()).match(/Because you watched [^\n]+/g) ?? [];
+      const overlong = reasons.filter((line) => (line.match(/ and /g) ?? []).length > 1);
+      check(
+        'a suggestion names at most two things you watched',
+        reasons.length > 0 && overlong.length === 0,
+        overlong[0] ?? reasons[0] ?? '(no suggestions on this library)',
+      );
+    }
     // Six is the tab bar alone, so anything at or below that means the screen's own
     // controls did not declare themselves.
     await audit(`the ${tab} tab`, 7);

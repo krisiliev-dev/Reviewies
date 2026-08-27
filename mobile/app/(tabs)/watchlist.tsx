@@ -27,7 +27,7 @@ export default function WatchlistScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Watchlist</Text>
+        <Text accessibilityRole="header" style={styles.heading}>Watchlist</Text>
 
         {items?.length === 0 && (
           <View style={styles.emptyBlock}>

@@ -43,7 +43,7 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Discover</Text>
+        <Text accessibilityRole="header" style={styles.heading}>Discover</Text>
         <Text style={styles.blurb}>{COPY.discover.blurb}</Text>
 
         {items === undefined && !error && <ActivityIndicator color={theme.accent} />}
@@ -123,7 +123,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
         </Pressable>
         {/* Saying why is what separates a recommendation from an advert. */}
         <Text numberOfLines={2} style={styles.because}>
-          Because you watched {item.because.join(' and ')}
+          {COPY.discover.because(item.because)}
         </Text>
 
         {/* Doc 10, second evening: a suggestion here was a link and nothing else, so

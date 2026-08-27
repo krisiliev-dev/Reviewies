@@ -80,7 +80,7 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>Search</Text>
+        <Text accessibilityRole="header" style={styles.heading}>Search</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}

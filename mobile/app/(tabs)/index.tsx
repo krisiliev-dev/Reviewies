@@ -66,7 +66,7 @@ export default function UpNextScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Up Next</Text>
+        <Text accessibilityRole="header" style={styles.heading}>Up Next</Text>
 
         {/* The web's copy of this, for the reason §6.64 found by racing two tabs: the
             row can change under the press, and a one-tap write with no way back is what

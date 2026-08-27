@@ -144,7 +144,7 @@ help — the token is in the bundle either way.
 
 If that matters later, the fix is a small proxy: a serverless function holds the token
 and forwards search and detail requests, so it never reaches a browser. The provider
-interface in `app/src/metadata/provider.ts` already isolates every call behind one
+interface in `core/src/metadata/provider.ts` already isolates every call behind one
 class, so this is a change to `TmdbProvider`'s base URL, not a rewrite.
 
 ## Installing it on an iPhone

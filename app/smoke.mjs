@@ -659,7 +659,7 @@ try {
   await scaled('Watching Mode');
   await page.screenshot({ path: OUT + '05-watching-live.png' });
 
-  // --- §25 Every screen, three times -----------------------------------------------
+  // --- §6.70 Every screen, three times -----------------------------------------------
   //
   // §6.69 found two bugs in Watching Mode that a single visit could not see, and §6.70
   // asked whether that was a coincidence. Every check in this suite visits each screen
@@ -752,7 +752,7 @@ try {
     `${driftingBeforeStart} drifting before the clock was started`,
   );
 
-  // --- §24 What a long session leaves behind ---------------------------------------
+  // --- §6.69 What a long session leaves behind ---------------------------------------
   //
   // Nothing in this repository had ever run for longer than a few seconds, or done
   // anything more than once. Watching Mode is a screen somebody leaves open for

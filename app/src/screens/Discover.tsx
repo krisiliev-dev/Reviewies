@@ -106,7 +106,7 @@ function SuggestionRow({
           {suggestion.year ? ` · ${suggestion.year}` : ''}
         </p>
         <p className="mt-1 truncate text-xs text-muted">
-          Because you watched {suggestion.because.slice(0, 2).join(' and ')}
+          {COPY.discover.because(suggestion.because)}
         </p>
 
         {/* Wraps, for the same reason the Up Next row does. */}
