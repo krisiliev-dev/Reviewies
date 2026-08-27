@@ -6661,6 +6661,56 @@ implementations, and the two that landed each turned up work of their own. Up Ne
 title page, Search, Discover, Lists, People, MatchImports and More remain, and so does the
 call-site guard, which cannot land while eight screens still carry their own box.
 
+### 6.98 Three explanations for one empty screen, two of them wrong, and a harness that now says so
+
+This sprint was meant to be the other eight `Row` call sites. It spent itself instead on the
+one screenshot §6.97 could not produce — the calendar, still reading *"Nothing airing in the
+next two months"* — and the value in it is not the fix, which is partial, but the record of
+how many confident explanations a single empty screen can absorb before anybody measures
+anything.
+
+**The first explanation was wrong.** §6.97 wrote that the fixture episodes "aired in 2024 and
+the clock says 2026". They do not: `FixtureProvider.getEpisodes` generates weekly air dates
+counting *back from today*, so the ninety-six-episode fixture's later episodes are genuinely
+in the future. That sentence was written from the shape of the problem rather than from the
+code, and it went into the record as fact.
+
+**The second explanation was wrong too, and it was mine twice over.** The obvious next
+candidate was the capture harness waiting for the first imported show rather than the slowest
+— the same shape as the bug §6.97 had just fixed one level up. So the wait became "keep going
+until the library stops growing", measured by Up Next's rendered text going quiet. Still
+empty. The proxy was blind to exactly the thing it was waiting for: Up Next *cannot* show the
+long fixture, because that show's next unwatched episode has not aired, so its text stops
+changing long before the caching does. A proxy that cannot see the slow case is not a proxy.
+
+**Then a probe, and the third answer is that the data is fine.** Reading the web build's
+IndexedDB directly after an import: all three shows match, all three get `tmdb:` titles
+alongside their `local:tv:tvtime-*` placeholders, all three library rows say `watching`, and
+the episode caches fill to 18, 12 and 96. Nothing is dropped. The TV Time rescue path — the
+thing this product exists for — is doing its job, which is worth knowing for its own sake
+after two sprints of quietly assuming otherwise.
+
+**And a fourth probe that proved nothing, which is also the record.** To test whether the
+calendar renders empty on a cold load, a fresh browser was opened at `/calendar` and sampled
+for twelve seconds. It read "Nothing airing" throughout — and a fresh browser has no library,
+so of course it did. An experiment whose control condition is the failure it is testing for
+says nothing at all.
+
+**What is actually established, and what is not.** Waiting on `/calendar` itself, the screen
+fills: the harness's own condition — a Hollow Crown Saga row present and "Nothing airing"
+absent — becomes true. Ten route navigations later, the photograph of that same screen in the
+same browser is empty. Why has not been established, and this section is not going to guess a
+fourth time.
+
+**So the harness stops handing over the emptiness silently.** It now declares what each screen
+must be showing for its photograph to be worth looking at — Up Next a show, the calendar a
+dated row — and fails loudly, by name, when a shot does not. It fails today, on the calendar,
+which is the point: *a shot of the thing not being there is not a shot of the thing*, and
+three sprints of design review went past on exactly that confusion. The screenshots that are
+good are now provably good, and the one that is not says so.
+
+No `Row` call sites migrated. Eight remain, and the call-site guard with them.
+
 
 ## 7. What is still not known
 
@@ -6959,12 +7009,20 @@ and which single claim in this document could not be checked at all:
   scrim, CatchUp's backdrop) are not controls and have to be excluded by shape rather than
   by an allowlist when it does. The poster is the one holding `ratio` in `coreWiring`'s
   exemption list.
-- **The calendar's rows have still never been looked at.** §6.97 fixed the design capture so
-  the screenshots have a library in them, and the calendar is the one screen the fix does not
-  reach: the fixture episodes aired in 2024 and the clock says 2026, so *Next two months* is
-  correctly empty and the row this sprint rebuilt is not in any photograph. Its shape is
-  checked by the guard and its names by the smoke; how it looks is not. Future-dated fixture
-  episodes would close it.
+- **The calendar's rows have still never been looked at, and §6.97's reason for it was
+  wrong.** It said the fixture episodes "aired in 2024". They do not:
+  `FixtureProvider.getEpisodes` generates weekly air dates counting *back from today*, so the
+  96-episode fixture's later episodes are genuinely in the future and the calendar should have
+  rows. Waiting longer does not fix it either — the capture now waits for the library to stop
+  growing rather than for the first row to appear, and the screen is still empty.
+
+  §6.98 measured the rest. The import is fine: all three shows match, all three fill their
+  episode caches, every library row says `watching`. Waiting on the calendar, the screen fills.
+  The photograph taken ten navigations later, in the same browser, is empty — and *why* is
+  still open. Three explanations were written down before anything was measured and two of
+  them were wrong, so there is no fourth guess here. What has changed is that the harness now
+  refuses to hand the screenshot over quietly: it fails by name when a screen it photographs
+  is not showing what makes it worth photographing, and it fails today, on this.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

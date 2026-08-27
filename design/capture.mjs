@@ -102,10 +102,36 @@ await page.goto('http://localhost:4200/');
  * working state" is not "finished working": the same shape as §6.56's rule that an empty
  * state is a claim about somebody's own data. So this waits for a row to actually exist.
  */
+/*
+ * The slowest show, not the first — and Up Next cannot see the slowest show.
+ *
+ * Waiting for *a* row let the calendar be photographed before the ninety-six-episode
+ * fixture had finished caching, so it said "nothing airing" and the row §6.97 rebuilt was
+ * in no photograph. Two explanations were written down before the store was actually
+ * inspected, and both were wrong: the fixture's air dates are generated relative to today
+ * rather than fixed in the past, and the shows do all match — a probe against the web
+ * build's IndexedDB shows all three with `tmdb:` titles and full episode caches of 18, 12
+ * and 96, every library row `watching`.
+ *
+ * What was wrong was the settle test. Watching Up Next's text stop changing looks like
+ * "the writes have stopped", and Up Next is the one screen that *cannot* see the long
+ * fixture: its next unwatched episode has not aired, so it never appears there however
+ * much of it is cached. A proxy that is blind to the thing it is waiting for is not a
+ * proxy. So this waits on the calendar, which is the screen that depends on the slowest
+ * data — and if the wait is ever wrong again, the screen it is waiting for is the screen
+ * that shows it.
+ */
+await page.goto('http://localhost:4200/calendar');
 let filled = false;
-for (let i = 0; i < 120; i++) {
+let steady = 0;
+let last = -1;
+for (let i = 0; i < 180; i++) {
   const body = await page.locator('body').innerText();
-  if (/The Long Dark|Kitchen Nightshift|Hollow Crown Saga/.test(body)) {
+  // A dated row on the calendar: the last thing to arrive, so everything else is in.
+  const seen = /Hollow Crown Saga/.test(body) && !/Nothing airing/.test(body);
+  steady = seen && body.length === last ? steady + 1 : 0;
+  last = body.length;
+  if (seen && steady >= 3) {
     filled = true;
     break;
   }
@@ -113,8 +139,9 @@ for (let i = 0; i < 120; i++) {
 }
 if (!filled) {
   console.error(
-    'No imported show ever appeared, so every screenshot below is of an empty app. ' +
-      'Check that the CSV names match what the metadata provider in this build knows.',
+    'The calendar never filled, so the screenshots below may be of a half-imported app. ' +
+      'Check that the CSV names match what the metadata provider in this build knows, and ' +
+      'that the seeded shows have episodes left to air.',
   );
   process.exitCode = 1;
 }
@@ -133,9 +160,34 @@ const routes = [
   ['13-data', '/data'],
   ['14-remote', '/remote'],
 ];
+/**
+ * What a screen must be showing for its photograph to be worth looking at.
+ *
+ * Three sprints of design review looked at an empty app, and the run that finally seeded a
+ * matching library still handed back a calendar reading "Nothing airing" — after the wait
+ * above had already watched that same screen fill. Whatever the cause, the durable fix is
+ * that the harness stops handing over a screenshot of an empty state as though it were a
+ * screenshot of the screen: a shot of the thing not being there is not a shot of the thing.
+ */
+const MUST_SHOW = {
+  '03-upnext': /The Long Dark/,
+  '06-watchlist': /Nothing saved yet|Add a note/,
+  '09-calendar': /Hollow Crown Saga/,
+};
+
+const hollow = [];
 for (const [name, path] of routes) {
   await page.goto(`http://localhost:4200${path}`);
   await shot(name);
+  const want = MUST_SHOW[name];
+  if (want) {
+    const body = await page.locator('body').innerText();
+    if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
+  }
+}
+if (hollow.length) {
+  console.error(`Screenshots of an empty screen, which is not a screenshot of the screen:\n  ${hollow.join('\n  ')}`);
+  process.exitCode = 1;
 }
 
 // A title page and Watching Mode need a real target.
