@@ -19,13 +19,30 @@ since it requires every cited path to exist. The rule that follows from that —
 caught this sentence too on its first draft — is that a path being *reported* as wrong
 must not be written as though it were a citation.
 
-## An honest note on how much material this rests on
+## SUPERSEDED — this document's conclusion is not supported
 
-Three visual directions were commissioned. One arrived complete, one arrived as a
-truncated paragraph, and one arrived empty — the judges could only score two. The
-director said so rather than presenting a three-way synthesis that did not happen. The
-chosen direction is therefore a graft of one-and-a-half briefs. It is strong, and it is
-less triangulated than the process was designed to produce.
+**Do not act on the choice below until the re-judging lands.** The section that follows
+records what the first round concluded, and it was reached against evidence that never
+arrived.
+
+The first round said one direction arrived complete, one truncated and one empty. That
+was wrong, and the fault was in the harness rather than in the work. All three arrived
+complete: Late Edition at 24,219 characters, Bias Light at 27,579, TEST CARD at 24,219.
+The workflow then passed them to the judges and to the synthesis as
+`JSON.stringify(live).slice(0, 24000)` — and the first direction alone is longer than
+that slice. **The judges and the director saw one direction and 0% of the other two.**
+
+So the director's note was an accurate report of what it received and a false report of
+what existed, and the "Late Edition wins on 9 originality, 8 craft" verdict was a
+comparison that never happened.
+
+It was only detectable because the director said plainly that material was missing rather
+than writing around the gap. A confabulated three-way synthesis would have read better and
+been unfalsifiable.
+
+The three directions are now at `design/directions/*.md` — read from disk by the
+re-judging rather than embedded in a prompt, which removes the class of failure entirely
+rather than raising the limit.
 
 ## The verdict
 
