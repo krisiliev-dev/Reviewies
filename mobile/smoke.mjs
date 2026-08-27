@@ -847,6 +847,82 @@ try {
     await page.context().setOffline(false);
   }
 
+  /**
+   * The import, end to end, on the platform that could not be driven.
+   *
+   * `app/src/ui/migrationParity.test.ts` used to say the phone's end of this was
+   * unreachable, because importing goes through the system document picker. It is
+   * reachable: `expo-document-picker` on web is a hidden file input, and Playwright
+   * answers it with `page.on('filechooser')`. §6.79 found that out; §6.80 needed it.
+   *
+   * A fresh context so nothing above is disturbed, and so this starts from an empty
+   * library the way somebody arriving from TV Time does.
+   */
+  const migrant = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const fresh = await migrant.newPage();
+  try {
+    // 264 rows over 12 shows, which takes the phone's store about five seconds — long
+    // enough that the window this checks is real rather than theoretical.
+    const rows = ['show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id'];
+    const shows = ['Dark', 'Andor', 'Chernobyl', 'Severance', 'Shogun', 'The Bear',
+                   'Frieren', 'Mr. Robot', 'The Leftovers', 'Vinland Saga', 'Halt', 'Fringe'];
+    shows.forEach((name, i) => {
+      for (let season = 1; season <= 2; season++) {
+        for (let n = 1; n <= 11; n++) {
+          rows.push(`${name},${season},${n},Episode ${n},True,2024-03-0${(n % 9) + 1} 20:00:00,1,2024-03-0${(n % 9) + 1},${100 + i},${1000 + i * 100 + season * 20 + n}`);
+        }
+      }
+    });
+    const csv = rows.slice(0, 265).join('\n');
+
+    await fresh.goto(BASE);
+    await fresh.waitForTimeout(2500);
+    fresh.on('filechooser', (chooser) => {
+      chooser
+        .setFiles({ name: 'episodes.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+        .catch(() => {});
+    });
+    await fresh.getByRole('button', { name: /Import from TV Time/i }).click();
+
+    // Sample the whole run rather than one moment: the bug §6.80 fixed was a five-second
+    // window, and a single well-timed look is how it survived two evenings.
+    const midFlight = [];
+    let landed = false;
+    for (let i = 0; i < 25 && !landed; i++) {
+      await fresh.waitForTimeout(400);
+      const body = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
+      if (/Your history is in/.test(body)) landed = true;
+      else if (/Still reading|came from an import|Bringing in/.test(body)) midFlight.push(body);
+    }
+
+    check('the phone can import a TV Time export at all', landed);
+    check(
+      'the import is visibly under way rather than silent',
+      midFlight.length > 0,
+      `${midFlight.length} samples`,
+    );
+
+    /**
+     * The three things §6.80 found, each asserted over every sample rather than one.
+     * A settled sentence, a growing count, or a repair button — any of them appearing
+     * once during the run is the bug.
+     */
+    const settled = midFlight.find((b) => /came from an import|Bringing in \d+ show/.test(b));
+    check('never describes a settled library mid-import', !settled, (settled ?? '').slice(0, 120));
+
+    const offered = midFlight.find((b) => /Match imported shows/.test(b));
+    check(
+      'never offers to match a library still being written',
+      !offered,
+      (offered ?? '').slice(0, 120),
+    );
+
+    const said = midFlight.every((b) => /Still reading your TV Time export/.test(b));
+    check('says it is still reading, and names what', said, midFlight[0]?.slice(0, 120) ?? '');
+  } finally {
+    await migrant.close();
+  }
+
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } catch (err) {
   check('smoke run completed', false, err.message);

@@ -2,6 +2,7 @@ import { unzipSync } from 'fflate';
 import { importBundle, importWatchHistoryCsv, parseCsv, type ImportReport } from './transfer.ts';
 import { detectRescueFile, importRescueCsv, stripBom } from './tvtimeRescue.ts';
 import { importDioCache } from './diocache.ts';
+import { whileImporting } from './importing.ts';
 
 /**
  * Import a whole archive: a TV Time GDPR zip, or a folder of recovered files.
@@ -121,7 +122,7 @@ export function pairWal(names: string[]): Map<string, string> {
   return pairs;
 }
 
-export async function importArchive(zip: Uint8Array): Promise<ArchiveReport> {
+async function importArchiveNow(zip: Uint8Array): Promise<ArchiveReport> {
   const report = empty();
 
   let entries: Record<string, Uint8Array>;
@@ -163,4 +164,9 @@ export async function importArchive(zip: Uint8Array): Promise<ArchiveReport> {
   }
 
   return report;
+}
+
+/** Announced while it runs. §6.80. Nested announcements are fine — see `importing.ts`. */
+export function importArchive(zip: Uint8Array): Promise<ArchiveReport> {
+  return whileImporting('your TV Time archive', () => importArchiveNow(zip));
 }

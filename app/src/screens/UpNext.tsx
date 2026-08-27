@@ -16,6 +16,7 @@ import { MatchImports } from '../ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
 
 /**
@@ -43,6 +44,8 @@ export function UpNext() {
   // Not an episode count: an import now writes the episodes it knows were watched, so
   // "no episodes" stopped meaning "nothing matched" the moment that landed.
   const unmatched = useLiveQuery(() => unmatchedImportCount(), [], undefined);
+  // Still working is a third thing, distinct from empty and from unreadable. §6.80.
+  const importing = useImporting();
 
   if (entries === undefined) {
     return <p className="p-6 text-muted">Loading…</p>;
@@ -93,16 +96,23 @@ export function UpNext() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-2xl font-semibold">Up Next</h1>
-        {/* "Nothing here yet … until they are matched" plus a button was what somebody
-            saw after importing years of history: an empty screen and a chore. Matching
-            runs itself now, so what this says is what is happening. Doc 10 §4. */}
+        {/* Three states, not two. "Nothing here yet … until they are matched" plus a
+            button was what somebody saw after importing years of history: an empty
+            screen and a chore, so matching runs itself now and the sentence says what
+            is happening (doc 10 §4). §6.80 found the third: while the import is still
+            running, both of those are claims about a library that is still being
+            written, and the count in them keeps changing. */}
         <p className="text-muted">
-          {unmatched
-            ? `Bringing in ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} from your import. Episodes appear as each one is found.`
-            : 'All caught up — nothing has aired that you have not seen.'}
+          {importing
+            ? COPY.upNext.stillImporting(importing)
+            : unmatched
+              ? COPY.upNext.matchingImport(unmatched)
+              : COPY.upNext.allCaughtUp}
         </p>
-        {/* Run where the gap is felt, not filed under a settings screen. */}
-        {unmatched ? <MatchImports /> : null}
+        {/* Run where the gap is felt, not filed under a settings screen — but never
+            over a library still being written. Matching what has landed so far leaves
+            the rest of the import behind it, unmatched and unoffered. */}
+        {unmatched && !importing ? <MatchImports /> : null}
         <Link
           to="/search"
           className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 font-medium text-ink"

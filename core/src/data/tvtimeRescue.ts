@@ -1,4 +1,5 @@
 import { db } from './db.ts';
+import { whileImporting } from './importing.ts';
 import { enqueueAll } from '../sync/engine.ts';
 import { makeId } from '../domain/types.ts';
 import { parseCsv } from './transfer.ts';
@@ -128,7 +129,7 @@ export const tvtimeMovieId = (title: string): InternalId =>
  * ID is derived instead — the history is preserved with a stable key that a later
  * reconciliation pass can map onto real provider IDs.
  */
-export async function importRescueCsv(rawText: string): Promise<RescueReport> {
+async function importRescueCsvNow(rawText: string): Promise<RescueReport> {
   const rows = parseCsv(stripBom(rawText));
   if (rows.length < 2) {
     const report = empty('unknown');
@@ -407,4 +408,12 @@ export async function importRescueCsv(rawText: string): Promise<RescueReport> {
   }
 
   return report;
+}
+
+/**
+ * Announced while it runs, so a screen mid-import does not present a settled empty
+ * library with a repair button over it. §6.80.
+ */
+export function importRescueCsv(rawText: string): Promise<RescueReport> {
+  return whileImporting('your TV Time export', () => importRescueCsvNow(rawText));
 }

@@ -28,6 +28,7 @@ import type { ImportReport } from '@reviewies/core/data/transfer';
 import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
+import { useImporting } from '../../src/useImporting';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -54,6 +55,8 @@ export default function UpNextScreen() {
   // Not an episode count: an import now writes the episodes it knows were watched, so
   // "no episodes" stopped meaning "nothing matched" the moment that landed.
   const unmatched = useLive(() => unmatchedImportCount(), []);
+  // Still working is a third thing, distinct from empty and from unreadable. §6.80.
+  const importing = useImporting();
 
   if (entries === undefined) {
     return (
@@ -104,7 +107,10 @@ export default function UpNextScreen() {
               to the real shows fills in the artwork, the air dates and everything you
               have not watched yet.
             </Text>
-            <MatchImports />
+            {/* Not auto-started here: this panel has just explained what matching is
+                for, and starting it underneath that explanation would talk over
+                itself. Up Next runs it without asking once this is dismissed. */}
+            <MatchImports autoStart={false} />
             <Pressable
               onPress={() => setImported(undefined)}
               style={tap}
@@ -147,13 +153,23 @@ export default function UpNextScreen() {
           </View>
         ) : entries.length === 0 ? (
           <View style={styles.empty}>
+            {/* Three states, not two. This screen used to say "Nothing here yet. N shows
+                came from an import and have no episode lists until they are matched" —
+                the web's pre-doc-10 §4 sentence, which reads as a chore and which the
+                web stopped saying a long time ago. §6.80 found it still here, and found
+                the third state underneath it: for five and a half seconds of a 266-row
+                import, N was a count still growing and the button below matched a
+                library that was still being written. */}
             <Text style={styles.emptyText}>
-              {unmatched
-                ? `Nothing here yet. ${unmatched} ${unmatched === 1 ? 'show' : 'shows'} came from an import and have no episode lists until they are matched.`
-                : 'All caught up — nothing has aired that you have not seen.'}
+              {importing
+                ? COPY.upNext.stillImporting(importing)
+                : unmatched
+                  ? COPY.upNext.matchingImport(unmatched)
+                  : COPY.upNext.allCaughtUp}
             </Text>
-            {/* Offered where the gap is felt, not filed under a settings screen. */}
-            {unmatched ? <MatchImports /> : null}
+            {/* Offered where the gap is felt, not filed under a settings screen — but
+                never over an import still in flight. */}
+            {unmatched && !importing ? <MatchImports /> : null}
             <Link href="/search" asChild>
               <Pressable style={styles.cta} accessibilityRole="link">
                 <Text style={styles.ctaText}>Find something to watch</Text>

@@ -1,4 +1,5 @@
 import { db } from './db.ts';
+import { whileImporting } from './importing.ts';
 import { enqueueAll } from '../sync/engine.ts';
 import { makeId } from '../domain/types.ts';
 import { fetchAccountExport, type AccountExport } from '../social/exportAccount.ts';
@@ -177,7 +178,7 @@ export interface ImportReport {
 }
 
 /** Restore a Reviewies export. Additive — existing data is preserved. */
-export async function importBundle(bundle: ExportBundle): Promise<ImportReport> {
+async function importBundleNow(bundle: ExportBundle): Promise<ImportReport> {
   if (bundle.format !== 'reviewies-export') {
     throw new Error('Not a Reviewies export file');
   }
@@ -251,7 +252,7 @@ export async function importBundle(bundle: ExportBundle): Promise<ImportReport> 
  * shutdown. Sniffing degrades gracefully — an unrecognised column is reported rather
  * than silently dropped.
  */
-export async function importWatchHistoryCsv(text: string): Promise<ImportReport> {
+async function importWatchHistoryCsvNow(text: string): Promise<ImportReport> {
   const rows = parseCsv(text);
   const report: ImportReport = { watches: 0, watchlist: 0, skipped: 0, warnings: [] };
   if (rows.length < 2) {
@@ -398,4 +399,14 @@ export async function addWatchlistFromTitles(
   await db.watchlist.bulkPut(rows);
   await enqueueAll('watchlist', rows as unknown as Array<Record<string, unknown>>);
   return titles.length;
+}
+
+/** Announced while it runs. §6.80. */
+export function importBundle(bundle: ExportBundle): Promise<ImportReport> {
+  return whileImporting('your Reviewies export', () => importBundleNow(bundle));
+}
+
+/** Announced while it runs. §6.80. */
+export function importWatchHistoryCsv(text: string): Promise<ImportReport> {
+  return whileImporting('your watch history', () => importWatchHistoryCsvNow(text));
 }

@@ -86,6 +86,36 @@ export const COPY = {
      */
     justMarked: (what: string) => `Marked ${what}`,
     undo: 'Undo',
+
+    /**
+     * Still working.
+     *
+     * §6.79 navigated part-way through a 266-row import on the phone and met a settled
+     * screen: "Nothing here yet. 7 shows came from an import and have no episode lists
+     * until they are matched", with a **Match imported shows** button under it. Seven
+     * was a count still growing, "nothing here yet" was a claim about a finished
+     * library, and the button was a repair offered over a half-written one.
+     *
+     * The three states a screen can be in are "nothing", "I could not look" (§6.57) and
+     * this. Named here rather than at two call sites, because the last sentence that
+     * lived in two places diverged within a sprint (§6.51).
+     */
+    stillImporting: (source: string) => `Still reading ${source}. Your shows appear as they land.`,
+
+    /**
+     * What Up Next says once an import has landed and matching is under way.
+     *
+     * The count is real by then, and the sentence promises only what matching actually
+     * does. The phone used to say "…have no episode lists until they are matched" —
+     * true, but it reads as a chore rather than as something already happening, which
+     * is what doc 10 §4 objected to.
+     */
+    matchingImport: (shows: number) =>
+      `Bringing in ${shows} ${shows === 1 ? 'show' : 'shows'} from your import. ` +
+      `Episodes appear as each one is found.`,
+
+    /** Nothing to watch, and nothing pending — the genuinely settled empty state. */
+    allCaughtUp: 'All caught up — nothing has aired that you have not seen.',
   },
 
   watchlist: {

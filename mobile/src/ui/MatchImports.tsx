@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   acceptMatch,
@@ -21,11 +21,35 @@ import { radius, tap, theme } from './theme';
  * is no way for them to notice. So the run takes only what it is sure of, and the rest
  * become questions shown with posters and years rather than a yes/no on a name.
  */
-export function MatchImports({ onDone }: { onDone?: () => void }) {
+/**
+ * Once per session, not once per visit.
+ *
+ * Up Next mounts this whenever anything is unmatched, which includes every return to
+ * the tab. Matching asks the provider once per show, so re-running it per visit would
+ * be a burst of requests answering a question already answered. Module scope because
+ * remounting is exactly what has to stop mattering.
+ */
+let startedThisSession = false;
+
+/** Only for tests, which need each case to look like a fresh launch. */
+export function resetAutoMatch(): void {
+  startedThisSession = false;
+}
+
+export function MatchImports({
+  onDone,
+  /** Off for the panel shown right after an import, which explains itself first. */
+  autoStart = true,
+}: {
+  onDone?: () => void;
+  autoStart?: boolean;
+}) {
   const [progress, setProgress] = useState<RunProgress>();
   const [running, setRunning] = useState(false);
   const [asks, setAsks] = useState<Proposal[]>([]);
   const [error, setError] = useState<string>();
+
+  const startRef = useRef<() => Promise<void>>(undefined);
 
   async function start() {
     setRunning(true);
@@ -48,6 +72,19 @@ export function MatchImports({ onDone }: { onDone?: () => void }) {
       onDone?.();
     }
   }
+
+  startRef.current = start;
+
+  /**
+   * It starts itself, since doc 10 §4 — which the web has done since then and the
+   * phone never did. §6.80 gave both platforms the same sentence, and "Episodes appear
+   * as each one is found" is only true where matching actually runs itself.
+   */
+  useEffect(() => {
+    if (!autoStart || startedThisSession) return;
+    startedThisSession = true;
+    void startRef.current?.();
+  }, [autoStart]);
 
   async function choose(proposal: Proposal, providerId: string) {
     await acceptMatch(proposal.localId, providerId);

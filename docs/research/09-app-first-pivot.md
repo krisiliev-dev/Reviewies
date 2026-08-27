@@ -5061,6 +5061,103 @@ names your export carried."* — is the sentence somebody arriving from TV Time 
 
 ---
 
+### 6.80 Still working, which is neither empty nor broken
+
+§6.79 handed the phone a 266-row rescue CSV, navigated away at five seconds, and found
+a screen that looked finished. It was recorded there as impatience rather than a defect
+and left for this sprint. Driving it again with a stopwatch, it is a defect, and a
+worse one than the note suggested.
+
+#### What it actually does
+
+The same CSV, sampled every 600ms on the phone build:
+
+```
+   606ms  Nothing here yet. 7 shows came from an import and have no episode lists
+          until they are matched.                        [Match imported shows]
+  1212ms  Nothing here yet. 12 shows came from an import and have no episode lists
+          until they are matched.                        [Match imported shows]
+  …
+  5459ms  (the same)
+  6064ms  Your history is in. Imported 264 watches.
+```
+
+Three things wrong at once, and only the first is wording:
+
+- **"Nothing here yet"** is a claim about a settled, empty library.
+- **Seven** was never true of anything. It is a count of rows that had landed so far,
+  and it grew to twelve while somebody was reading it.
+- **Match imported shows** is a repair offered over a library still being written.
+  Tapping it at 606ms matches seven shows; the other five arrive afterwards, unmatched,
+  and the offer is gone because matching has already run.
+
+The third is the one that costs something. The other two are a screen misdescribing
+itself; that one produces a half-matched library out of a correct-looking tap.
+
+#### Where the five seconds went, and why the web never showed this
+
+The same file on the web finishes in **under 424ms**, atomically — the count never
+appears mid-flight, because Dexie's transaction is not visible to a reader until it
+commits. The phone's store shows every intermediate state. So the bug lives at the
+intersection of a slower store and a weaker isolation guarantee, and the platform this
+product pivoted to be is the one that has both. §7 gains a line: nothing anywhere
+compares what the two stores promise a *reader* during a write.
+
+#### The third state
+
+§6.57 separated "nothing" from "I could not look". This is the third: **still working**,
+and no screen knew it existed. `core/src/data/importing.ts` holds it now — every import
+entry point runs inside `whileImporting`, so the five of them (`importRescueCsv`,
+`importArchive`, `importDioCache`, `importBundle`, `importWatchHistoryCsv`) announce
+themselves without any call site remembering to.
+
+Two decisions in it are worth the words:
+
+**In memory, not in the database.** A persisted flag outlives the thing it describes.
+An import only runs in the page that started it, so a closed tab means the import is
+dead — but a row saying `importing: true` would survive and every screen would wait
+for a run that no longer exists. That is §6.71's stuck queue with the sign flipped:
+there, a queue that could not drain looked like an empty one; here, a dead import would
+look like a live one for ever. In memory, a reload is the truth.
+
+**A `finally`, not a success path.** An import that throws is over. A screen left
+saying "still working" after a failure is worse than one that never said it, because
+the person is now waiting for something that is not coming. There is a test for the
+throwing case and it is the one that matters.
+
+#### What the guards said about it
+
+Three failed, and all three were right.
+
+`coreWiring` refused two exports nothing reached. `resetImports` is a genuine test seam
+and joined the four already declared as such. `activeImports` was the interesting one:
+the hook was returning a boolean, so nothing ever needed the list — and the sentence
+was passing a hardcoded `'your export'` while the run knew its own name. Naming the
+real source made the export earn itself. Then `importInProgress` became the unused one,
+and rather than exempt it, it is gone: every caller wants to *name* what is being read,
+so the boolean was a second answer to a question with one.
+
+`migrationParity` failed on `expect(source).toContain('All caught up')` — a screen
+searched for a literal that had just moved into `COPY`, which is where §6.51 says it
+belongs. The check was named "does not promise a caught-up library it has not matched"
+and was really asserting where a string lived. It asks two things now: that the screen
+reaches the sentence only through `unmatched`, and that `COPY.upNext.allCaughtUp` still
+says what the check is named after.
+
+#### The phone was two sprints behind on this screen
+
+Fixing the sentence exposed that the phone had never had doc 10 §4 at all. The web has
+said "Bringing in N shows from your import. Episodes appear as each one is found" since
+then, and runs matching itself; the phone still said "…have no episode lists until they
+are matched" and waited for a tap. §6.51 gave the words one owner and this pair was
+never brought under it, because the divergence was a whole branch rather than a string.
+
+Both now use `COPY.upNext.matchingImport`. That sentence promises episodes appear as
+each one is found, which is only true where matching starts itself — so the phone's
+`MatchImports` gained the web's `autoStart`, including the deliberate `autoStart={false}`
+on the panel straight after an import, which explains what matching is before doing it.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -5320,3 +5417,12 @@ and which single claim in this document could not be checked at all:
   record back by hand and found one excuse that had been wrong for a year, and by hand is
   still the only way anybody has ever checked. The guard makes it *easier* to trust the
   document than it should be, which is a new hazard rather than an old one closed.
+- **Nothing compares what the two stores promise a reader during a write.** §6.80 found
+  that the same 266-row import is atomic and sub-second on the web and visible in pieces
+  for five and a half seconds on the phone: Dexie hides a transaction until it commits,
+  and the phone's SQLite adapter lets a live query see it part-written. The screens no
+  longer describe a half-written library, so the user-visible bug is closed — but the
+  underlying difference is untested in both directions. Nothing asserts that a reader
+  mid-transaction sees either all of a write or none of it, and nothing measured which
+  other screens read a table an import is in the middle of filling. It was found by
+  watching a number change on a screen, which is not a method that scales.

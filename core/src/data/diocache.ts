@@ -1,5 +1,6 @@
 import { getSqlJsLoader, type SqlJsLoader } from './sqlWasm.ts';
 import { db } from './db.ts';
+import { whileImporting } from './importing.ts';
 import { enqueueAll } from '../sync/engine.ts';
 import { applyWal } from './sqliteWal.ts';
 import { parseDioCache, type DioLibrary } from './diocacheParse.ts';
@@ -283,7 +284,7 @@ export async function importDioLibrary(library: DioLibrary): Promise<DioImportRe
  * — that silent partial recovery is the exact failure doc 8 identified in the tool
  * everyone is being pointed at.
  */
-export async function importDioCache(
+async function importDioCacheNow(
   dbBytes: Uint8Array,
   walBytes?: Uint8Array,
 ): Promise<DioImportReport> {
@@ -335,4 +336,12 @@ export async function importDioCache(
   );
 
   return report;
+}
+
+/** Announced while it runs. §6.80. */
+export function importDioCache(
+  dbBytes: Uint8Array,
+  walBytes?: Uint8Array,
+): Promise<DioImportReport> {
+  return whileImporting('your phone backup', () => importDioCacheNow(dbBytes, walBytes));
 }
