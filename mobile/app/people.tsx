@@ -16,8 +16,8 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
-import { leadingOf, radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track, leading } from '@reviewies/core/tokens';
+import { leadingOf, radius, theme } from '../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';

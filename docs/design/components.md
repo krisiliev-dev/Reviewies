@@ -133,7 +133,13 @@ interface MastheadProps {
 
 30/32 Archivo Expanded 700 caps at +0.02em, wrapping to three lines at 200% with no fixed height.
 
-**This requires `headerShown: false` on the Stack in `/home/user/Reviewies/mobile/app/_layout.tsx:129`, and that is a real cost.** `headerTitleStyle` will take a `fontFamily`, but the header height, the back-chevron, and large-title behaviour belong to UIKit and will not honour a three-line wrap at 200%. So the app draws its own. What is lost: the native back *label*. What is kept: the swipe-back gesture, which is `react-native-screens` and survives `headerShown: false`. What is gained: the nine pushed screens get `accessibilityRole="header"` for the first time — on the web export today their titles are not headers at all.
+**This requires `headerShown: false` on the Stack in `mobile/app/_layout.tsx`, and that is a real cost.** `headerTitleStyle` will take a `fontFamily`, but the header height, the back-chevron, and large-title behaviour belong to UIKit and will not honour a three-line wrap at 200%. So the app draws its own. What is lost: the native back *label*. What is kept: the swipe-back gesture, which is `react-native-screens` and survives `headerShown: false`.
+
+> **Correction (§6.120).** This paragraph used to end: *"What is gained: the nine pushed screens get `accessibilityRole="header"` for the first time — on the web export today their titles are not headers at all."* **That was false**, and it was copied from here into `core/src/ui/masthead.ts` and into a `masthead.test.ts` clause before anybody checked it. expo-router's bundled `HeaderTitle` renders `role="heading" aria-level="1"`; reading the export gives `<h1 role="heading" aria-level="1">Stats</h1>` on `/stats`. The titles have always been headings.
+>
+> Reading the document to settle that turned up the defect this specification could not see: every *other* heading on the phone was an `<h1>` as well, because react-native-web reads `props.accessibilityLevel || props['aria-level']` and falls back to `h1` when neither is given. `/data` rendered six top-level headings. `depth` now lives in `core/src/ui/section.ts`, both platforms read it, and `mobile/smoke.mjs` reads the rendered outline.
+>
+> So the argument for replacing the native header is **visual, not assistive**: a pushed title is in the system face at the system size while every tab root is in Archivo Narrow on our scale. That is real, it is visible in `design/screens/08-stats.png`, and it belongs with the layout work in #160 — not with a component extraction sold on a role the screens already had.
 
 **States:** one, plus `back` present/absent. **A11y:** title is `accessibilityRole="header"`; `back` is a 44×44 `Button as="button"` with a required name (never bare "Back" — `watching/[targetId].tsx:155` already learned this and named its close control "Leave Watching Mode" because two things on that screen said "Close").
 

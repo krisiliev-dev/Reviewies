@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getUpNext,
@@ -25,7 +25,7 @@ import { CatchUp } from '../../src/ui/CatchUp';
 import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
-import { border, radius, tap, theme } from '../../src/ui/theme';
+import { tap, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';

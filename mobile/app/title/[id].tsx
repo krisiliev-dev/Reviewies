@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
 import {
   clearRating,
@@ -19,8 +19,8 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { border, leadingOf, radius, tap, theme, tracking } from '../../src/ui/theme';
-import { text, type, track, leading } from '@reviewies/core/tokens';
+import { border, leadingOf, radius, tap, theme } from '../../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
@@ -233,7 +233,6 @@ function EpisodeRow({
   watched: boolean;
   rewatches: number;
 }) {
-  const router = useRouter();
   const aired = hasAired(episode);
   const rating = useLive(() => db.ratings.get(episode.id), [episode.id]);
 

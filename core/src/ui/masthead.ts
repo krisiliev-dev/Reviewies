@@ -14,17 +14,33 @@
  * The type was uniform because a guard made it so; the space was not because no guard could
  * see it. That is the argument for the component rather than a sixth clause.
  *
- * ## What this deliberately does not do
+ * ## The phone's pushed screens keep UIKit's header, and the reason is not the one written
  *
- * `docs/design/components.md` §3 specifies a `Masthead` that also replaces the phone's nine
- * pushed-screen headers — `headerShown: false` on the Stack, a drawn back chevron, and
- * `accessibilityRole="header"` on nine titles that are not headers today. That is worth
- * doing and it is a **navigation** change across ten files, not a component extraction: it
- * trades UIKit's back-label and large-title behaviour for a three-line wrap at 200%.
- * It belongs with the layout work in #160, and doing half of it here would leave the app
- * with two kinds of header and no guard able to say which a screen has.
+ * `docs/design/components.md` §3 asked for this component to replace the phone's ten
+ * pushed-screen headers, and gave as the payoff: *"the nine pushed screens get
+ * `accessibilityRole="header"` for the first time — on the web export today their titles
+ * are not headers at all."* That sentence is **false**, and it was repeated into this
+ * file's own header and into a `masthead.test.ts` clause before anybody checked it.
+ *
+ * expo-router's bundled `HeaderTitle` renders `role="heading" aria-level="1"`. Opening the
+ * export and reading the document confirms it: `/stats` gives
+ * `<h1 role="heading" aria-level="1">Stats</h1>`. The titles have been headings all along.
+ *
+ * What the same reading found instead is the defect below — every *other* heading on the
+ * phone is an `<h1>` too. That was worth the sprint; replacing a working native header to
+ * gain a role it already has was not. What remains as an argument for the replacement is
+ * visual: a pushed title is in the system face at the system size while every tab root is
+ * in Archivo Narrow on our scale, which is real and belongs with the layout work in #160.
  */
 import { space, text } from '../tokens.ts';
+import type { HeadingDepth } from './section.ts';
+
+/**
+ * `depth` is the heading level, and it is here for the reason given in `section.ts`: it
+ * is the property a screen reader navigates by, and it was the one decision this
+ * component did not own. `page` is also depth 1 — a screen has one name whether it is a
+ * tab root or pushed — and `sub` is 2 because it introduces a block inside that screen.
+ */
 
 export type MastheadLevel = 'masthead' | 'page' | 'sub';
 
@@ -38,9 +54,9 @@ export type MastheadLevel = 'masthead' | 'page' | 'sub';
  * is written as `0` rather than dressed up as a token.
  */
 export const MASTHEAD = {
-  masthead: { size: text.s30, face: 'display', weight: 'bold', gapBelow: space.s16 },
-  page: { size: text.s24, face: 'title', weight: 'semibold', gapBelow: space.s12 },
-  sub: { size: text.s20, face: 'title', weight: 'semibold', gapBelow: 0 },
+  masthead: { size: text.s30, face: 'display', weight: 'bold', gapBelow: space.s16, depth: 1 },
+  page: { size: text.s24, face: 'title', weight: 'semibold', gapBelow: space.s12, depth: 1 },
+  sub: { size: text.s20, face: 'title', weight: 'semibold', gapBelow: 0, depth: 2 },
 } as const satisfies Record<
   MastheadLevel,
   {
@@ -48,5 +64,6 @@ export const MASTHEAD = {
     face: 'display' | 'title';
     weight: 'bold' | 'semibold';
     gapBelow: number;
+    depth: HeadingDepth;
   }
 >;

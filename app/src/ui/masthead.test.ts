@@ -120,32 +120,46 @@ describe('a screen title', () => {
     expect(atCallSites).toEqual([]);
   });
 
-  it('does not yet cover the phone\'s pushed screens, and says so', () => {
+  it('states a heading level, because the role alone renders as h1', () => {
     /*
-     * `docs/design/components.md` §3 specifies a `Masthead` that also replaces the nine
-     * `<Stack.Screen options={{ title }} />` headers — `headerShown: false`, a drawn back
-     * chevron, and `accessibilityRole="header"` on nine titles that are not headers today.
+     * The finding this clause replaces the last one with.
      *
-     * That is worth doing and it is a *navigation* change across ten files, not a component
-     * extraction: it trades UIKit's back-label and large-title behaviour for a three-line
-     * wrap at 200%. It belongs with #160. This clause exists so the gap is recorded as a
-     * decision rather than discovered later as an omission — and it fails, correctly, on the
-     * day somebody does the work and forgets to delete it.
+     * There used to be a clause here recording that the phone's pushed screens do not use
+     * this component and pinning `<Stack.Screen options={{ title` at fourteen, on the
+     * strength of a sentence in `docs/design/components.md` §3: *"the nine pushed screens
+     * get `accessibilityRole="header"` for the first time — on the web export today their
+     * titles are not headers at all."*
+     *
+     * That sentence is false. expo-router's `HeaderTitle` renders
+     * `role="heading" aria-level="1"`, and reading the export confirms it: `/stats` is
+     * `<h1 role="heading" aria-level="1">Stats</h1>`. The clause asserted the premise
+     * rather than the fact, so it passed for a week while being wrong — and I wrote it.
+     *
+     * Reading the document for that answer produced the real one. Every *other* heading
+     * on the phone was an `<h1>`: react-native-web falls back to `h1` when neither
+     * `accessibilityLevel` nor `aria-level` is given, and neither renderer gave one.
+     * `/data` had six. So the depth now lives in the table, both platforms read it, and
+     * `mobile/smoke.mjs` reads the rendered outline — because that is the only place the
+     * defect was ever visible.
      */
-    /*
-     * Occurrences, not files. Counting files cannot see one screen lose its title while
-     * another in the same file keeps it — `lists.tsx` has two — and the plant walked straight
-     * through the first version because of exactly that.
-     */
-    const stackTitles = filesUnder('mobile/app').flatMap((f) =>
-      [...read(f).matchAll(/<Stack\.Screen options=\{\{ title/g)],
-    );
-    /*
-     * Exactly ten, not "more than five". A floor with slack in it tolerates four of these
-     * quietly disappearing, which is the accident this clause exists to notice — and the
-     * plant walked straight through the first version. §6.107's rule: no margin.
-     */
-    expect(stackTitles.length, 'the pushed screens moved; update this clause and #160')
-      .toBe(14);
+    expect(MASTHEAD.masthead.depth).toBe(1);
+    expect(MASTHEAD.page.depth).toBe(1);
+    expect(MASTHEAD.sub.depth).toBe(2);
+
+    // The web takes its tag from the table rather than restating the rule in JSX, which
+    // is how the two platforms came to disagree in the first place.
+    const web = read('app/src/ui/Masthead.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '');
+    expect(web, 'the web went back to naming its own heading tag')
+      .not.toMatch(/'h[1-6]'/);
+    expect(web).toContain('MASTHEAD[level].depth');
+
+    // And the phone passes it, which is the half that was missing entirely.
+    const phone = read('mobile/src/ui/Masthead.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '');
+    expect(phone, 'the phone states a role with no level, which renders as h1')
+      .toContain('aria-level={MASTHEAD[level].depth}');
   });
 });

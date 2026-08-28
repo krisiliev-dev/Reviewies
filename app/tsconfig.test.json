@@ -1,9 +1,29 @@
 {
+  // Tests, the source-level guards under `src/wiring`, and the helpers under `src/test`.
+  //
+  // This file existed and nothing ran it. `tsconfig.app.json` excludes all three
+  // directories with the comment "typechecked separately via tsconfig.test.json", and
+  // `tsconfig.json` referenced only the app and node projects — so eighty-seven files
+  // were excluded from the build by a comment naming a mechanism that did not run.
+  // §6.41's rule again: an excuse outlives the thing it excuses.
+  //
+  // A plant settled it: `const PLANTED: number = 'not a number';` appended to
+  // `app/src/ui/masthead.test.ts` and `npm run build` exited 0. Vitest transpiles
+  // without checking types and oxlint is not a typechecker, so nothing else was looking
+  // either.
+  //
+  // It is run as a plain `--noEmit` pass rather than a project reference: the tests
+  // import app source directly, and a reference would require the app project to become
+  // composite and emit declarations for a check that needs neither. `app`'s `typecheck`
+  // script runs it, which is what `npm run verify` already calls in every workspace.
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
     "types": ["vite/client", "node", "vitest/globals"],
-    "noUnusedLocals": false
+    // `tokens.generated.test.ts` regenerates the stylesheet by importing the generator
+    // itself — `scripts/tokens-to-css.mjs`, which is JavaScript because it also runs as a
+    // plain Node script. Nothing in `src` imports JS, so this stays scoped to the tests.
+    "allowJs": true
   },
   "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test", "src/wiring"],
   "exclude": []

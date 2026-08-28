@@ -7,11 +7,11 @@ import {
   type RunProgress,
 } from '@reviewies/core/data/reconcile';
 import { Poster } from './Poster';
-import { leadingOf, radius, tap, theme } from './theme';
+import { radius, tap, theme } from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 
-import { text, type, leading } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { Note } from './Note';
 
 /**

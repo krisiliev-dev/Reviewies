@@ -5,6 +5,18 @@
     // `@reviewies/core` spells its relative imports with the `.ts` extension, so that a
     // plain Node process can follow them — Metro, Vite and Vitest resolve either form.
     // See doc 9 §6.44.
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    // Neither of these was set, and `expo/tsconfig.base` does not set them either, so
+    // this workspace's build had never once complained about code it was not running.
+    // Eight files were carrying dead type-token imports — `tracking`, `track`, `leading`,
+    // `leadingOf`, `text`, `type` — left behind by the type migrations of §6.112 through
+    // §6.118, plus an unused `router` in `title/[id].tsx`. `core` has had both flags
+    // since it was extracted; `app` has had them since it was scaffolded. The phone was
+    // the workspace this project pivoted to be, and it was the one nobody was checking.
+    //
+    // oxlint did report every one of them, as warnings, in a run that prints thirty of
+    // them and exits 0. A warning nobody reads is not a check.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }

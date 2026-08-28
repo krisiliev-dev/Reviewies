@@ -26,9 +26,18 @@ export function Section({
    * `<h2>`; React Native has no such thing, so before this it was a prop somebody had to
    * remember — one of the nine sites had it and eight did not, which means eight section
    * labels were announced as ordinary text by a screen reader.
+   *
+   * And the *level*, which the role does not carry. Without it react-native-web falls back
+   * to `<h1>`, so every one of these was a top-level heading on the export: `/data` had six
+   * `<h1>`s and no structure at all. The number comes from the table, so the two platforms
+   * cannot disagree about how deep a section is.
    */
   const label = (
-    <Text accessibilityRole="header" style={level === 'group' ? styles.group : styles.section}>
+    <Text
+      accessibilityRole="header"
+      aria-level={SECTION[level].depth}
+      style={level === 'group' ? styles.group : styles.section}
+    >
       {children}
     </Text>
   );

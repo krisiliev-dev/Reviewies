@@ -3,9 +3,9 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { border, leadingOf, radius, tap, theme, tracking } from './theme';
+import { border, leadingOf, radius, tap, theme } from './theme';
 import { COPY } from '@reviewies/core/copy';
-import { text, type, track, leading } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from './Section';
 import { Note } from './Note';
 

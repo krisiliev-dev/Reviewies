@@ -8,7 +8,7 @@ import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo
 import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 
-import { leadingOf, radius, tap, theme } from '../../src/ui/theme';
+import { tap, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';

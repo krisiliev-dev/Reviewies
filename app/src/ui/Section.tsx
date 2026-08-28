@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SECTION, type SectionLevel } from '@reviewies/core/ui/section';
+import { SECTION, type HeadingDepth, type SectionLevel } from '@reviewies/core/ui/section';
 
 /**
  * The Tailwind renderer of `core/src/ui/section.ts`. The decisions are there.
@@ -24,20 +24,25 @@ export function Section({
   children,
   level = 'section',
   className = '',
-  as: Tag = 'h2',
+  as,
 }: {
   children: ReactNode;
   level?: SectionLevel;
   /** Margins and padding only — the type belongs to the table. */
   className?: string;
   /**
-   * `h2` unless the screen already has one at this depth. `WhereToWatch` sits inside a
-   * card with its own heading and `TitleDetail`'s rating label is a field label, not a
-   * section — both were `span` and `p` before this component and stay that way, because a
-   * heading element that is not a heading is worse than an unstyled one.
+   * Only for the two places this is **not** a heading. `WhereToWatch` sits inside a card
+   * with its own heading and `TitleDetail`'s rating label is a field label, not a section
+   * — both were `span` and `p` before this component and stay that way, because a heading
+   * element that is not a heading is worse than an unstyled one.
+   *
+   * It used to accept `'h2' | 'h3'` as well, and defaulted to `h2` for both levels — so a
+   * dateline was a sibling of the section containing it rather than a child. The depth is
+   * the table's now, and this escape hatch can only leave the outline, never re-rank it.
    */
-  as?: 'h2' | 'h3' | 'p' | 'span';
+  as?: 'p' | 'span';
 }) {
+  const Tag = as ?? (`h${SECTION[level].depth}` as `h${HeadingDepth}`);
   const type = level === 'group' ? GROUP_CLASS : SECTION_CLASS;
   if (!SECTION[level].rule) {
     return <Tag className={`${type} ${GAP_CLASS[level]} ${className}`}>{children}</Tag>;

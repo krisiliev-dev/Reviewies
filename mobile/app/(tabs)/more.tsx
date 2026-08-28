@@ -9,7 +9,7 @@ import {
   TMDB_ATTRIBUTION,
 } from '@reviewies/core/metadata/provider';
 import { usingFixtures } from '@reviewies/core/metadata/index';
-import { leadingOf, radius, theme } from '../../src/ui/theme';
+import { radius, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Row as BaseRow } from '../../src/ui/Row';

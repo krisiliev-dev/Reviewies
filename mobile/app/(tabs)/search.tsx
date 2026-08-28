@@ -19,7 +19,6 @@ import { Row as BaseRow } from '../../src/ui/Row';
 
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
 import { COPY } from '@reviewies/core/copy';
-import { useLive } from '../../src/useLive';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
 import { Masthead } from '../../src/ui/Masthead';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
   getPreference,
@@ -13,8 +13,7 @@ import {
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
-import { radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { theme } from '../src/ui/theme';
 import {
   pushSupported,
   registerForPush,

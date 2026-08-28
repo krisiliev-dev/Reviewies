@@ -186,4 +186,43 @@ describe('the section label', () => {
     expect(read('app/src/ui/Section.tsx'), 'the component stopped owning the gap')
       .toContain('mb-s8');
   });
+
+  it('is a heading at a depth the table decides, on both platforms', () => {
+    /*
+     * The one decision this component did not own, and the two platforms disagreed about
+     * it in different directions. The web defaulted **both** levels to `h2`, so a dateline
+     * was a sibling of the section it sits inside; the phone set the role and no level, and
+     * react-native-web reads `props.accessibilityLevel || props['aria-level']` and falls
+     * back to `<h1>` — so `/data` rendered six top-level headings and no structure at all.
+     *
+     * Neither source looked wrong. One says `h2`, the other says `header`, and that is the
+     * whole difficulty: a source-level clause reading either file finds exactly what it
+     * should find. `mobile/smoke.mjs` reads the rendered outline, which is where it was
+     * visible; this clause holds the number the two renderers both read.
+     */
+    expect(SECTION.section.depth).toBe(2);
+    expect(SECTION.group.depth).toBe(3);
+    // A dateline is inside its section, so it is deeper by exactly one. Two numbers that
+    // happen to differ would satisfy the pair above; the relation is the decision.
+    expect(SECTION.group.depth).toBe(SECTION.section.depth + 1);
+
+    const web = read('app/src/ui/Section.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '');
+    expect(web).toContain('SECTION[level].depth');
+    /*
+     * And the escape hatch cannot re-rank a heading any more. It used to accept
+     * `'h2' | 'h3'` alongside `'p' | 'span'`, which made the depth a per-site opinion in
+     * the two places somebody had already needed one; both of those sites want *no*
+     * heading, which is a different thing and the only thing left.
+     */
+    expect(web, 'the as= escape hatch can pick a heading level again')
+      .toMatch(/as\?: 'p' \| 'span';/);
+
+    const phone = read('mobile/src/ui/Section.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/[^\n]*/g, '');
+    expect(phone, 'the phone states a role with no level, which renders as h1')
+      .toContain('aria-level={SECTION[level].depth}');
+  });
 });

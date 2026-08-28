@@ -12,8 +12,8 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
-import { leadingOf, radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track, leading } from '@reviewies/core/tokens';
+import { leadingOf, radius, theme } from '../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';

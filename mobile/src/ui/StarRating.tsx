@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from './theme';
-import { text, type } from '@reviewies/core/tokens';
 import { Data } from './Data';
 
 /**

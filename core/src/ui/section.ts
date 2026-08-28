@@ -54,6 +54,7 @@ export const SECTION = {
     ink: 'inkSecondary',
     rule: false,
     gapBelow: space.s8,
+    depth: 2,
   },
   /** A dateline inside a section: same size, three channels apart. */
   group: {
@@ -63,6 +64,7 @@ export const SECTION = {
     ink: 'ink',
     rule: true,
     gapBelow: space.s6,
+    depth: 3,
   },
 } as const satisfies Record<
   SectionLevel,
@@ -73,8 +75,28 @@ export const SECTION = {
     ink: 'ink' | 'inkSecondary';
     rule: boolean;
     gapBelow: number;
+    depth: HeadingDepth;
   }
 >;
+
+/**
+ * How deep in the document a section sits, which is the property a screen reader
+ * navigates by and the one this component did not own.
+ *
+ * Every other decision here had a single owner and this one had two wrong ones. The web
+ * defaulted **both** levels to `h2`, so a dateline was a sibling of the section it sits
+ * inside rather than a child of it. The phone was worse and quieter: it set
+ * `accessibilityRole="header"` and nothing else, and react-native-web reads
+ * `props.accessibilityLevel || props['aria-level']` and falls back to **`h1`** — so on
+ * the phone's export every section label, every dateline and every screen title were all
+ * `<h1>`. `/data` rendered six of them.
+ *
+ * Both platforms' source looked right, which is why no source-level guard had ever
+ * objected: one says `h2`, the other says `header`, and only the rendered document shows
+ * they are not the same claim. §6.87's rule — emitted is not rendered — reached by
+ * opening the export and reading the outline.
+ */
+export type HeadingDepth = 1 | 2 | 3;
 
 /** The face and weight are the same at both levels — the file is one file. */
 export const SECTION_FACE = 'title';

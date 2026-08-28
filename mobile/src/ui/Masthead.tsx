@@ -14,6 +14,12 @@ import { theme } from './theme';
  * `accessibilityRole="header"` lives here rather than at the call sites, for the reason
  * `Section` does: on this platform it is a prop somebody has to remember, and somebody
  * eventually does not.
+ *
+ * `aria-level` is here for a sharper reason. The role alone is not enough: react-native-web
+ * reads `props.accessibilityLevel || props['aria-level']` and, finding neither, emits
+ * **`<h1>`**. So every masthead, sub-heading, section label and dateline on the phone was
+ * an `<h1>` — `/data` rendered six — and the source looked correct the whole time, because
+ * `accessibilityRole="header"` is exactly what it should say. Only the document showed it.
  */
 export function Masthead({
   children,
@@ -23,7 +29,7 @@ export function Masthead({
   level?: MastheadLevel;
 }) {
   return (
-    <Text accessibilityRole="header" style={styles[level]}>
+    <Text accessibilityRole="header" aria-level={MASTHEAD[level].depth} style={styles[level]}>
       {children}
     </Text>
   );

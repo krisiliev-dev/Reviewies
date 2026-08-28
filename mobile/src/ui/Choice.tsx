@@ -5,8 +5,8 @@ import {
   announce,
   type ChoiceContract,
 } from '@reviewies/core/ui/choice';
-import { border, leadingOf, radius, theme } from './theme';
-import { type, leading } from '@reviewies/core/tokens';
+import { border, radius, theme } from './theme';
+import { type } from '@reviewies/core/tokens';
 import { Note } from './Note';
 
 /**

@@ -9,8 +9,8 @@ import {
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
-import { border, radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { border, radius, theme } from '../src/ui/theme';
+import { text, type } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';

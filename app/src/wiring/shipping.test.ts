@@ -86,10 +86,15 @@ describe('what a phone would install', () => {
      * tint on every native ripple. Four colours a person sees before a single React
      * component has rendered, and three of them were scaffold defaults.
      */
+    /*
+     * No `.filter((v): v is string => ...)` here. There was one, and it is the reason this
+     * file's first typecheck failed: every value in both tables is a hex string literal, so
+     * the predicate *widened* `'#131114' | ...` to `string` rather than narrowing anything,
+     * which TS rejects outright. It had guarded against nothing since it was written, and
+     * nothing said so because no test file in this workspace had ever been typechecked.
+     */
     const known = new Set(
-      [...Object.values(color.dark), ...Object.values(color.light)]
-        .filter((v): v is string => typeof v === 'string')
-        .map((v) => v.toUpperCase()),
+      [...Object.values(color.dark), ...Object.values(color.light)].map((v) => v.toUpperCase()),
     );
     const found = hexes(expo);
     expect(found.length, 'the manifest names no colours at all').toBeGreaterThan(3);

@@ -9,7 +9,7 @@ import { COPY } from '@reviewies/core/copy';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
-import { radius, theme } from '../../src/ui/theme';
+import { theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';

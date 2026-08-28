@@ -8358,6 +8358,80 @@ the same file keeps it. `lists.tsx` has two. Occurrences, pinned at fourteen, no
 §6.107 rule, arrived at again from the other end.
 
 
+### 6.120 A comment naming a mechanism nobody runs, and a premise nobody checked
+
+Two defects of the same shape, an hour apart. Both are a sentence that reads like a decision
+and is not one.
+
+**Eighty-seven files typechecked by nothing.** `app/tsconfig.app.json` excludes `src/wiring`,
+`src/test` and every `*.test.ts`, with the comment *"typechecked separately via
+tsconfig.test.json"*. That file existed. It set `noUnusedLocals: false`. And it was referenced
+by nothing: `app/tsconfig.json` listed the app and node projects and not the test one, and
+`app` had no `typecheck` script for `npm run verify` to find. So the exclusion was real and
+the alternative was fictional, and the comment is the only reason nobody looked — an exclusion
+with a stated destination reads as routing, not as a hole.
+
+The plant settles it in one line: `const PLANTED: number = 'not a number';` appended to
+`app/src/ui/masthead.test.ts`, and `npm run build` exits **0**. Vitest transpiles without
+checking types and oxlint is not a typechecker, so nothing else was looking either. This is
+§6.41's rule — an excuse outlives the thing it excuses — in the one place nobody thinks to
+apply it, because `tsconfig.json` does not look like prose.
+
+Wiring it up found two real errors in those files. One is a type predicate in
+`shipping.test.ts` that could never have compiled: `.filter((v): v is string => ...)` over a
+table whose values are all hex string *literals*, so the predicate widened rather than
+narrowed. It had guarded nothing since it was written. The other was a `.mjs` import with no
+declarations. `mobile` had never had `noUnusedLocals` at all — `expo/tsconfig.base` does not
+set it — and turning it on produced **36** errors across 19 files, against the 16 warnings
+oxlint had been printing into a run that exits 0. A warning nobody reads is not a check. Two
+of those were more than dead tokens: `calendar.tsx` still imported `Pressable` and
+`(tabs)/index.tsx` still imported `Link` next to comments explaining why each had been
+abandoned — the explanation outlived the code it explained, which is the same defect one more
+time.
+
+The guard is `typechecked.test.ts`, and its shape matters. A version that walked
+`tsconfig*.json` and checked each would have **passed** on this bug, because `tsconfig.test.json`
+was a perfectly good config and the defect was that nothing invoked it. So it starts from the
+scripts, follows `tsc` to the config it loads, and asks `tsc --showConfig` for the resolved
+file list — which takes 0.4s and no checking. Four plants: the missing script, the flag turned
+off again, a source directory nothing covers, and a directory excluded from the only config
+that reached it. Its own first version was wrong in a way worth recording: `/\b-[pb]\s+/` never
+matches ` -p`, because a word boundary needs a word character and neither a space nor a hyphen
+is one. It failed loudly rather than quietly, which is the good kind of wrong, and it was still
+wrong. `relay` turned out to be missing `noUnusedParameters`, found by the guard rather than by
+me.
+
+**And the premise the sprint was briefed on was false.** `docs/design/components.md` §3 said
+the phone's pushed screens would gain `accessibilityRole="header"` *"for the first time — on
+the web export today their titles are not headers at all"*. I copied that sentence into
+`core/src/ui/masthead.ts` and into a `masthead.test.ts` clause last sprint without checking it.
+expo-router's bundled `HeaderTitle` renders `role="heading" aria-level="1"`. Opening the export
+and reading the document gives `<h1 role="heading" aria-level="1">Stats</h1>`. The titles have
+been headings the whole time, and a clause I wrote asserted the opposite and passed, because it
+asserted the premise instead of the fact.
+
+Reading the document to settle that found the real defect, which no source-level guard could
+have. **Every other heading on the phone was an `<h1>`.** react-native-web reads
+`props.accessibilityLevel || props['aria-level']` and falls back to `h1` when neither is given,
+and neither renderer gave one — so `/data` rendered six top-level headings and no structure at
+all. The web was wrong in the other direction and more quietly: `Section` defaulted **both**
+levels to `h2`, so a dateline was a sibling of the section containing it rather than a child.
+
+Neither source looks wrong. One says `h2`; the other says `accessibilityRole="header"`, which
+is exactly what it should say. That is the whole difficulty, and the reason §6.87's rule keeps
+earning its place: emitted is not rendered, and a component that owns size, tracking, caps,
+ink, rule and gap did not own the one property a screen reader navigates by. `depth` is in
+`core/src/ui/section.ts` now; both renderers read it; the escape hatch on the web narrowed from
+`'h2' | 'h3' | 'p' | 'span'` to `'p' | 'span'`, because its two call sites want *no* heading and
+that is a different request from a different rank. `mobile/smoke.mjs` reads the rendered outline
+on three routes, and the plant — deleting the phone's `aria-level` — puts `/data` back to five
+`<h1>`s and fails four clauses.
+
+One of those new clauses shipped broken and was caught before it ran: it read `previous` in a
+`find` predicate and advanced it in a separate loop afterwards, so `previous` was 0 for every
+comparison and the level-skip check could not fail. A check that is collected, runs, and proves
+nothing — #121's subject — written into the file whose subject is that class of defect.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import type { MastheadLevel } from '@reviewies/core/ui/masthead';
+import { MASTHEAD, type MastheadLevel } from '@reviewies/core/ui/masthead';
+import type { HeadingDepth } from '@reviewies/core/ui/section';
 
 /**
  * The Tailwind renderer of `core/src/ui/masthead.ts`. The decisions are there.
@@ -28,6 +29,12 @@ export function Masthead({
   /** Padding and layout only — the type and the gap belong to the table. */
   className?: string;
 }) {
-  const Tag = level === 'sub' ? 'h2' : 'h1';
+  /*
+   * From the table, not from the level. `level === 'sub' ? 'h2' : 'h1'` said the same
+   * thing and said it here, which is how the phone came to disagree: its renderer had no
+   * equivalent line and react-native-web defaulted every heading to `<h1>`. One number,
+   * read twice, cannot drift.
+   */
+  const Tag = `h${MASTHEAD[level].depth}` as `h${HeadingDepth}`;
   return <Tag className={`${LEVEL_CLASS[level]} ${className}`}>{children}</Tag>;
 }

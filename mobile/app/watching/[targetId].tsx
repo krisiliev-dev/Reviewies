@@ -15,7 +15,7 @@ import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../../src/ui/ReactionStream';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
-import { border, radius, tap, theme } from '../../src/ui/theme';
+import { radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import {

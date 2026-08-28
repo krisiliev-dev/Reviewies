@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "smoke": "node ../scripts/portFree.mjs 4173 && VITE_TMDB_TOKEN= npm run build && node ../scripts/served.mjs 4173 \"npx vite preview --port 4173 --strictPort\" node smoke.mjs",
-    "smoke:failures": "npm run build && node ../scripts/served.mjs 4173 \"npx vite preview --port 4173 --strictPort\" node failures.mjs"
+    "smoke:failures": "npm run build && node ../scripts/served.mjs 4173 \"npx vite preview --port 4173 --strictPort\" node failures.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@reviewies/core": "*",

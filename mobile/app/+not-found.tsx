@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Stack, usePathname } from 'expo-router';
-import { leadingOf, theme } from '../src/ui/theme';
+import { theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
-import { text, type, leading } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { Note } from '../src/ui/Note';
 
 /**

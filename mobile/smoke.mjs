@@ -1051,6 +1051,72 @@ try {
     await migrant.close();
   }
 
+  /*
+   * The heading outline, read out of the rendered document.
+   *
+   * This clause exists because no source-level guard could have found what it found.
+   * `Section` said `accessibilityRole="header"` and `Masthead` said the same — exactly
+   * what they should say — while react-native-web reads
+   * `props.accessibilityLevel || props['aria-level']` and, finding neither, emits
+   * **`<h1>`**. So every section label, dateline and screen title on the phone was a
+   * top-level heading: `/data` rendered six `<h1>`s and no structure at all, and the web
+   * beside it rendered `h1` then `h2` from source that looks no more correct.
+   *
+   * §6.87's rule, reached the hard way: emitted is not rendered. The fix put `depth` in
+   * `core/src/ui/section.ts` so one number feeds both platforms, and this reads the
+   * document to check the number arrived — because the next thing to break it is a
+   * renderer that stops passing a prop, which source that mentions the prop cannot see.
+   */
+  for (const [path, expectedTop] of [
+    ['', 'Up Next'],
+    ['data', 'Your data'],
+    ['calendar', 'Upcoming'],
+  ]) {
+    await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1500);
+    const outline = await page.evaluate(() =>
+      [...document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]')].map((el) => ({
+        level: Number(el.getAttribute('aria-level') ?? el.tagName.slice(1)),
+        text: (el.textContent || '').trim().slice(0, 40),
+      })),
+    );
+    const where = `/${path}`;
+    check(
+      `${where} has an outline to check at all`,
+      outline.length > 0,
+      JSON.stringify(outline).slice(0, 120),
+    );
+    const tops = outline.filter((h) => h.level === 1);
+    check(
+      `${where} has exactly one top-level heading`,
+      tops.length === 1 && tops[0].text.startsWith(expectedTop),
+      JSON.stringify(tops).slice(0, 160),
+    );
+    /*
+     * And nothing below it is also level 1. Counting `<h1>`s would pass on a screen that
+     * had one heading and nothing else, which is why the clause above requires the name
+     * *and* this one requires the descent — a flat outline and a correct one differ only
+     * in the screens that have more than one heading.
+     */
+    const flat = outline.length > 1 && outline.every((h) => h.level === 1);
+    check(`${where} does not announce every heading as the page title`, !flat,
+      JSON.stringify(outline).slice(0, 160));
+    /*
+     * The predicate advances `previous` itself. The first version read it in the
+     * predicate and advanced it in a separate loop afterwards, so `previous` was 0 for
+     * every comparison and the clause could not fail — a check that is collected, runs,
+     * and proves nothing (#121), written into a file whose subject is that exact class
+     * of defect.
+     */
+    let previous = 0;
+    const skipped = outline.find((h) => {
+      const jumped = previous > 0 && h.level > previous + 1;
+      previous = h.level;
+      return jumped;
+    });
+    check(`${where} never skips a heading level`, !skipped, JSON.stringify(skipped ?? {}));
+  }
+
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } catch (err) {
   check('smoke run completed', false, err.message);

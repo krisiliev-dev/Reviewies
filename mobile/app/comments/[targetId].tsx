@@ -14,7 +14,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
-import { border, leadingOf, radius, theme } from '../../src/ui/theme';
+import { leadingOf, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';

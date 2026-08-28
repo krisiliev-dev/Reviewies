@@ -37,7 +37,6 @@ const RENDERERS = {
   phone: read(resolve(ROOT, 'mobile/src/ui/CrossOff.tsx')),
   web: read(resolve(ROOT, 'app/src/ui/CrossOff.tsx')),
 };
-const RENDERER = RENDERERS.phone;
 const BOTH = Object.entries(RENDERERS);
 
 describe('the cross-off', () => {
