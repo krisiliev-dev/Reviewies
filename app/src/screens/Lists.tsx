@@ -41,7 +41,7 @@ export function Lists() {
   if (!syncConfigured()) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-display font-semibold">Lists</h1>
+        <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
         <p className="text-ink-secondary">{COPY.lists.needsAccount}</p>
       </div>
     );
@@ -57,7 +57,7 @@ export function Lists() {
   if (!session) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-display font-semibold">Lists</h1>
+        <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
         <p className="text-ink-secondary">{COPY.lists.signInToMake('Your data')}</p>
       </div>
     );
@@ -80,8 +80,8 @@ export function Lists() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 px-1 text-s24 font-display font-semibold">Lists</h1>
-      <p className="mb-4 px-1 text-sm text-ink-secondary">Films and series together, in one list.</p>
+      <h1 className="mb-1 px-1 text-s24 font-title font-semibold">Lists</h1>
+      <p className="mb-4 px-1 text-s14 text-ink-secondary">Films and series together, in one list.</p>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">
         <input
@@ -175,8 +175,8 @@ function ListCard({
         className="flex w-full items-start justify-between gap-3 text-left"
       >
         <span className="min-w-0">
-          <span className="block truncate font-medium">{list.name}</span>
-          <span className="text-xs text-ink-secondary">
+          <span className="block truncate text-s16 font-title font-semibold">{list.name}</span>
+          <span className="text-s12 text-ink-secondary">
             {items ? describeMix(items) : `${list.itemCount} items`}
             {list.isPublic ? ' · public' : ' · private'}
             {!list.mine && ' · shared with you'}
@@ -201,24 +201,24 @@ function ListCard({
                 onChanged();
               }}
               aria-label={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
-              className="mb-2 text-xs text-trouble"
+              className="mb-2 text-s12 text-trouble"
             >
               {list.isPublic ? 'Make private' : 'Publish'}
             </button>
           )}
 
           {changeFailed && (
-            <p className="mb-2 text-sm text-trouble" role="status">
+            <p className="mb-2 text-s14 text-trouble" role="status">
               {COPY.lists.changeFailed}
             </p>
           )}
           {itemsFailed && (
-            <p className="text-sm text-trouble" role="status">
+            <p className="text-s14 text-trouble" role="status">
               {COPY.lists.itemsFailed}
             </p>
           )}
           {!itemsFailed && items?.length === 0 && (
-            <p className="text-sm text-ink-secondary">{COPY.lists.listEmpty}</p>
+            <p className="text-s14 text-ink-secondary">{COPY.lists.listEmpty}</p>
           )}
 
           <ul className="flex flex-col">

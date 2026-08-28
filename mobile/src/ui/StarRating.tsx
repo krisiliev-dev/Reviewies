@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from './theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Half-star ratings.
@@ -81,5 +82,5 @@ const styles = StyleSheet.create({
   on: { color: theme.workingMark },
   half: { position: 'absolute', top: 0, bottom: 0, left: 0, width: MIN_HALF },
   right: { left: undefined, right: 0 },
-  value: { color: theme.inkSecondary, fontSize: 12, marginLeft: 6 },
+  value: { color: theme.inkSecondary, fontSize: text.s12, marginLeft: 6, fontFamily: type.family.data.name },
 });

@@ -284,7 +284,7 @@ export function ReactionStream({
         and gets out of the way the moment anything arrives.
       */}
       {flying.length === 0 && (
-        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-xs text-ink-secondary/70">
+        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-s12 text-ink-secondary/70">
           {COPY.watching.streamResting}
         </p>
       )}
@@ -292,7 +292,7 @@ export function ReactionStream({
         <span
           key={f.key}
           aria-hidden="true"
-          className="absolute text-3xl will-change-transform"
+          className="absolute text-s30 will-change-transform"
           style={{
             top: `${f.lane * 26 + 4}px`,
             opacity: f.mine ? 1 : 0.85,

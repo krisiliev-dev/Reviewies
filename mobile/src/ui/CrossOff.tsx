@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RING, STRUCK, UNDO_MS, type CrossOffContract } from '@reviewies/core/ui/crossOff';
 import { radius, space, theme } from './theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * The React Native renderer of `core/src/ui/crossOff.ts`. The decisions are there.
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tick: { color: theme[RING.tick], fontSize: 18, fontWeight: '700' },
+  tick: { color: theme[RING.tick], fontSize: text.s20, fontFamily: type.family.title.name },
   undo: {
     height: RING.size,
     paddingHorizontal: space.s12,
@@ -128,5 +129,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  undoText: { color: theme.ink, fontSize: 12, fontWeight: '600' },
+  undoText: { color: theme.ink, fontSize: text.s12, fontFamily: type.family.title.name },
 });

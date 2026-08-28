@@ -88,27 +88,27 @@ export function EpisodeComments() {
       <button
         onClick={() => navigate(-1)}
         aria-label="Back to the title"
-        className="tap mb-3 text-sm text-ink-secondary"
+        className="tap mb-3 text-s14 text-ink-secondary"
       >
         Back
       </button>
 
-      <h1 className="text-s20 font-display font-semibold">{series?.name ?? 'Comments'}</h1>
+      <h1 className="text-s20 font-title font-semibold">{series?.name ?? 'Comments'}</h1>
       {episode && (
-        <p className="text-sm text-ink-secondary">
+        <p className="text-s14 text-ink-secondary">
           S{episode.season}E{episode.number} · {episode.name}
         </p>
       )}
 
       {!syncConfigured() ? (
-        <p className="mt-6 text-sm text-ink-secondary">
+        <p className="mt-6 text-s14 text-ink-secondary">
           Comments need an account. Sync is not configured on this build.
         </p>
       ) : !watched ? (
         // The gate is enforced by the database; this only explains it.
         <div className="mt-6 rounded-plate bg-ground-raised p-4">
-          <p className="font-medium">Hidden until you watch it</p>
-          <p className="mt-1 text-sm text-ink-secondary">
+          <p className="text-s14 font-title font-semibold">Hidden until you watch it</p>
+          <p className="mt-1 text-s14 text-ink-secondary">
             Comments on this episode stay sealed until you have seen it. Nothing here can
             spoil you, because the server will not send them.
           </p>
@@ -128,7 +128,7 @@ export function EpisodeComments() {
               value={effort}
               onChange={(next) => setEffort(Number(next))}
             />
-            {hidden > 0 && <span className="text-xs text-ink-secondary">{hidden} hidden</span>}
+            {hidden > 0 && <span className="text-s12 text-ink-secondary">{hidden} hidden</span>}
           </div>
 
           <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
@@ -143,7 +143,7 @@ export function EpisodeComments() {
               }}
               placeholder="What did you think?"
               rows={3}
-              className="w-full resize-y rounded-none bg-ground-raised px-3 py-3 text-base outline-none placeholder:text-ink-secondary"
+              className="w-full resize-y rounded-none bg-ground-raised px-3 py-3 text-s16 outline-none placeholder:text-ink-secondary"
             />
 
             {image && (
@@ -153,7 +153,7 @@ export function EpisodeComments() {
                   type="button"
                   onClick={() => setImage(undefined)}
                   aria-label="Remove the attached screenshot"
-                  className="tap text-xs text-ink-secondary underline"
+                  className="tap text-s12 text-ink-secondary underline"
                 >
                   Remove
                 </button>
@@ -171,7 +171,7 @@ export function EpisodeComments() {
 
               {/* Screenshots were core to TV Time's comment culture and are named
                   most often as the thing successors dropped. */}
-              <label className="cursor-pointer rounded-pill border border-stroke-signal px-4 py-2 text-sm text-ink-secondary">
+              <label className="cursor-pointer rounded-pill border border-stroke-signal px-4 py-2 text-s14 text-ink-secondary">
                 {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
                 <input
                   type="file"
@@ -185,13 +185,13 @@ export function EpisodeComments() {
                 />
               </label>
             </div>
-            {error && <p className="text-sm text-trouble">{error}</p>}
+            {error && <p className="text-s14 text-trouble">{error}</p>}
           </form>
 
-          {loading && <p className="mt-4 text-sm text-ink-secondary">Loading…</p>}
+          {loading && <p className="mt-4 text-s14 text-ink-secondary">Loading…</p>}
 
           {!loading && visible.length === 0 && (
-            <p className="mt-6 text-sm text-ink-secondary">
+            <p className="mt-6 text-s14 text-ink-secondary">
               {comments.length > 0
                 ? 'Everything is filtered out at this level.'
                 : gated
@@ -203,7 +203,7 @@ export function EpisodeComments() {
           <ul className="mt-4 flex flex-col gap-2">
             {visible.map((c) => (
               <li key={c.id} className="rounded-plate bg-ground-raised p-3">
-                <p className="flex items-center gap-2 text-xs text-ink-secondary">
+                <p className="flex items-center gap-2 text-s12 text-ink-secondary">
                   <span className="min-w-0 flex-1">
                     {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}
                     {c.mine && ' · you'}
@@ -229,7 +229,7 @@ export function EpisodeComments() {
                     </button>
                   )}
                 </p>
-                <p className="mt-1 text-sm whitespace-pre-wrap">{c.body}</p>
+                <p className="mt-1 text-s14 whitespace-pre-wrap">{c.body}</p>
                 {c.imageUrl && (
                   <img
                     src={c.imageUrl}

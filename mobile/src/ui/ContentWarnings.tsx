@@ -12,6 +12,7 @@ import {
   type WarningSummary,
 } from '@reviewies/core/social/contentWarnings';
 import { border, radius, theme } from './theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Content warnings, voted on by whoever has seen it.
@@ -167,7 +168,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 }
 
 const styles = StyleSheet.create({
-  warningFailed: { color: theme.trouble, fontSize: 13, lineHeight: 19 },
+  warningFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
   wrap: { gap: 8 },
   toggle: {
     alignSelf: 'flex-start',
@@ -176,15 +177,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  toggleText: { color: theme.inkSecondary, fontSize: 12 },
+  toggleText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
   panel: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 6, height: 6, borderRadius: radius.pill, backgroundColor: theme.strokeSignal },
   dotYes: { backgroundColor: theme.workingMark },
   dotContested: { backgroundColor: theme.inkTertiary },
-  label: { color: theme.ink, fontSize: 13, flex: 1 },
+  label: { color: theme.ink, fontSize: text.s14, flex: 1, fontFamily: type.family.body.name },
   labelMuted: { color: theme.inkSecondary },
-  votes: { color: theme.inkSecondary, fontSize: 11 },
+  votes: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
   vote: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
@@ -192,9 +193,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   voteOn: { backgroundColor: theme.actionFill },
-  voteText: { color: theme.inkSecondary, fontSize: 12 },
-  voteTextOn: { color: theme.actionLabel, fontWeight: '600' },
-  link: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
-  blurb: { color: theme.inkSecondary, fontSize: 11, lineHeight: 16 },
-  error: { color: theme.trouble, fontSize: 12 },
+  voteText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
+  voteTextOn: { color: theme.actionLabel },
+  link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
+  blurb: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 16, fontFamily: type.family.body.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 });

@@ -43,6 +43,7 @@ export {
   space,
   size,
   ratio,
+  track,
   border,
   elevation,
   duration,
@@ -65,3 +66,18 @@ export {
  * on top of it.
  */
 export const tap = { minHeight: 24, justifyContent: 'center' } as const;
+
+/**
+ * Tracking, in points, from tracking in em.
+ *
+ * The one RN-specific derivation the token layer cannot do for itself. `letterSpacing` on
+ * React Native is points, so a stored `1` holds still while the glyphs double at 200%
+ * Dynamic Type and the tracked caps close into a block; stored in em and multiplied here,
+ * it grows with them. CSS takes em directly, so the web never calls this.
+ *
+ * Always `tracking(text.sNN, track.tNN)` at the site, never a number: the pair is what
+ * makes it derivable, and a lone product is a literal again.
+ */
+export function tracking(size: number, em: number): number {
+  return size * em;
+}

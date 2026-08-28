@@ -9,7 +9,7 @@ import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
 import { radius, tap, theme } from '../../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
 
@@ -161,8 +161,8 @@ function Row({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name, marginBottom: 8 },
-  empty: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
+  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
+  empty: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 22, fontFamily: type.family.body.name },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   /*
    * `cta`/`ctaText` were here — a filled pill "the same shape as Up Next's", said a
@@ -172,16 +172,17 @@ const styles = StyleSheet.create({
    * them and turned up in the sprint that swept the accent fill.
    */
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
-  note: { color: theme.ink, fontSize: 13, fontStyle: 'italic' },
-  addNote: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  note: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.proseItalic.name },
+  addNote: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   editor: { gap: 6 },
   input: {
     color: theme.ink,
-    fontSize: 14,
+    fontSize: text.s14,
     backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
     minHeight: 44,
+    fontFamily: type.family.body.name,
   },
 });

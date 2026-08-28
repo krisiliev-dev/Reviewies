@@ -32,6 +32,7 @@ import {
 } from '@reviewies/core/watching/reactions';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -328,13 +329,13 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
   headerMiddle: { flex: 1, alignItems: 'center' },
-  close: { color: theme.inkSecondary, fontSize: 15 },
-  series: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  episode: { color: theme.inkSecondary, fontSize: 12 },
-  clock: { color: theme.ink, fontSize: 15, fontVariant: ['tabular-nums'] },
+  close: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
+  series: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  episode: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  clock: { color: theme.ink, fontSize: text.s14, fontVariant: ['tabular-nums'], fontFamily: type.family.data.name },
 
   startBlock: { padding: 16, gap: 12 },
-  startBlurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  startBlurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
   // Wraps. Five controls and a density picker fit a phone once and not at twice the
   // text size, where the row measured 690px in a 390px viewport and pushed all three
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
   // line and is what carried it past the edge once the row wrapped.
   densityBlock: { alignItems: 'flex-end', gap: 4 },
-  densityLabel: { color: theme.inkSecondary, fontSize: 10 },
+  densityLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 
   drift: {
     marginHorizontal: 16,
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     padding: 12,
   },
-  driftText: { color: theme.inkSecondary, fontSize: 12 },
+  driftText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
 
   pad: { padding: 12 },
   padGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -372,9 +373,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   padPressed: { backgroundColor: theme.groundWell, transform: [{ scale: 0.94 }] },
-  padEmoji: { fontSize: 30 },
-  padLabel: { color: theme.inkSecondary, fontSize: 9, textAlign: 'center' },
-  noMatch: { color: theme.inkSecondary, fontSize: 13, padding: 8 },
+  padEmoji: { fontSize: text.s30 },
+  padLabel: { color: theme.inkSecondary, fontSize: text.s12, textAlign: 'center', fontFamily: type.family.title.name },
+  noMatch: { color: theme.inkSecondary, fontSize: text.s14, padding: 8, fontFamily: type.family.body.name },
 
   search: {
     margin: 12,
@@ -383,6 +384,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     color: theme.ink,
-    fontSize: 15,
+    fontSize: text.s14,
+    fontFamily: type.family.body.name,
   },
 });

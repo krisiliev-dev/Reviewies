@@ -27,6 +27,7 @@ import { border, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -254,29 +255,30 @@ const styles = StyleSheet.create({
   // 24px is the WCAG 2.5.8 minimum, and it is a CSS pixel count rather than a font
   // size, so it must not be expressed in anything that scales with text.
   deleteComment: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
-  deleteCommentText: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  deleteCommentText: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
-  episode: { color: theme.inkSecondary, fontSize: 14 },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  episode: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 8 },
-  cardHeading: { color: theme.ink, fontSize: 16, fontWeight: '700' },
+  cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  hidden: { color: theme.inkSecondary, fontSize: 11 },
+  hidden: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
 
   input: {
     backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     padding: 16,
     color: theme.ink,
-    fontSize: 15,
+    fontSize: text.s14,
     minHeight: 80,
     textAlignVertical: 'top',
+    fontFamily: type.family.body.name,
   },
-  error: { color: theme.trouble, fontSize: 13 },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
   comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },
-  handle: { color: theme.inkSecondary, fontSize: 11 },
-  body: { color: theme.ink, fontSize: 14, lineHeight: 20 },
+  handle: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
+  body: { color: theme.ink, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.prose.name },
   image: { width: '100%', height: 180, borderRadius: radius.plate },
 });

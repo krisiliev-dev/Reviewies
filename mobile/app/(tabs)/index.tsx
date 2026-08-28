@@ -26,7 +26,7 @@ import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { border, radius, tap, theme } from '../../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
@@ -343,15 +343,15 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name, marginBottom: 8 },
+  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
   // s20/semibold, the same step and weight as the web's `<h2>` under the screen title.
   // It was 700, which put two bolds one under the other — the title and the sentence
   // beneath it competing rather than ranking.
-  firstHeading: { color: theme.ink, fontSize: text.s20, fontWeight: weight.semibold, fontFamily: type.family.display.name },
-  later: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline' },
-  emptyText: { color: theme.inkSecondary, fontSize: text.s16 },
+  firstHeading: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
+  later: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.body.name },
+  emptyText: { color: theme.inkSecondary, fontSize: text.s16, fontFamily: type.family.body.name },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
   // `<Link asChild>`, which clones its child and merges props — and an array style
   // through that path reached the DOM as an index-keyed object, which React refuses to

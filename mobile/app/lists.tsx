@@ -25,6 +25,7 @@ import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Lists, mixing film and television freely.
@@ -300,10 +301,10 @@ function ListCard({
 }
 
 const styles = StyleSheet.create({
-  listsFailed: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
+  listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
   newRow: { flexDirection: 'row', gap: 8 },
   input: {
@@ -313,16 +314,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.ink,
-    fontSize: 15,
+    fontSize: text.s14,
+    fontFamily: type.family.body.name,
   },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   cardBody: { flex: 1 },
-  cardName: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  cardMeta: { color: theme.inkSecondary, fontSize: 12 },
-  chevron: { color: theme.inkSecondary, fontSize: 20 },
+  cardName: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
+  cardMeta: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
+  chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
   cardItems: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
-  mix: { color: theme.inkSecondary, fontSize: 11 },
-  remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  mix: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
+  remove: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

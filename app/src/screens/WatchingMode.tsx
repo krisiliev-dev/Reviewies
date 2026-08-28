@@ -193,21 +193,21 @@ export function WatchingMode() {
         {/* Two things on this screen say "Close": this and the remote drawer. */}
         <button
           onClick={() => navigate(-1)}
-          className="tap text-sm text-ink-secondary"
+          className="tap text-s14 text-ink-secondary"
           aria-label="Leave Watching Mode"
         >
           Close
         </button>
         <div className="min-w-0 flex-1 text-center">
           {/* Two lines before it gives up, rather than one character. */}
-          <p className="line-clamp-2 text-sm font-medium">{series?.name ?? 'Watching'}</p>
+          <p className="line-clamp-2 text-s14 font-title font-semibold">{series?.name ?? 'Watching'}</p>
           {episode && (
-            <p className="line-clamp-2 text-xs text-ink-secondary">
+            <p className="line-clamp-2 text-s12 text-ink-secondary">
               S{episode.season}E{episode.number} · {episode.name}
             </p>
           )}
         </div>
-        <span className="min-w-12 text-right font-mono text-sm tabular-nums text-ink-secondary">
+        <span className="min-w-12 text-right font-data font-medium text-s14 tabular-nums text-ink-secondary">
           {formatTimecode(clock.positionMs)}
         </span>
       </header>
@@ -225,7 +225,7 @@ export function WatchingMode() {
       ) : (
         <>
           {autoSynced && (
-            <p className="px-4 pb-1 text-xs text-ink-secondary">
+            <p className="px-4 pb-1 text-s12 text-ink-secondary">
               Synced automatically from your browser.
             </p>
           )}
@@ -268,13 +268,13 @@ export function WatchingMode() {
             key={e.emoji + e.label}
             onClick={() => react(e.emoji)}
             disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-ground-raised text-3xl active:scale-90 disabled:opacity-30"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-ground-raised text-s30 active:scale-90 disabled:opacity-30"
             // The emoji is aria-hidden, so this is the whole name — "Funny" alone does
             // not say it is something you do.
             aria-label={`React with ${e.label.toLowerCase()}`}
           >
             <span aria-hidden="true">{e.emoji}</span>
-            <span className="text-[0.5625rem] leading-none text-ink-secondary">{e.label}</span>
+            <span className="text-s12 leading-none text-ink-secondary">{e.label}</span>
           </button>
         ))}
       </div>
@@ -284,7 +284,7 @@ export function WatchingMode() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search any emoji…"
-          className="w-full rounded-none bg-ground-raised px-4 py-3 text-base outline-none placeholder:text-ink-secondary"
+          className="w-full rounded-none bg-ground-raised px-4 py-3 text-s16 outline-none placeholder:text-ink-secondary"
           aria-label="Search emoji"
         />
       </div>
@@ -306,7 +306,7 @@ function StartPanel({ onStart }: { onStart: () => void }) {
         onPress={onStart}
         className="w-full"
       />
-      <p className="mt-2 text-center text-xs text-ink-secondary">
+      <p className="mt-2 text-center text-s12 text-ink-secondary">
         Tap the moment you press play. You can nudge the timing at any point.
       </p>
     </div>
@@ -333,7 +333,7 @@ function SyncBar({
       <button
         onClick={clock.toggle}
         aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}
-        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
       >
         {clock.running ? 'Pause' : 'Resume'}
       </button>
@@ -343,14 +343,14 @@ function SyncBar({
       <button
         onClick={() => clock.nudge(-5000)}
         aria-label={COPY.controls.seek(-5)}
-        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
       >
         −5s
       </button>
       <button
         onClick={() => clock.nudge(5000)}
         aria-label={COPY.controls.seek(5)}
-        className="rounded-plate bg-ground-well px-3 py-2 text-sm"
+        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
       >
         +5s
       </button>
@@ -369,7 +369,7 @@ function SyncBar({
           proportion is not a promise anybody can act on — a quarter of a quiet episode
           is nothing — and the two platforms meant different things by the same word
           until §6.55. */}
-      <div className="ml-auto flex items-center gap-1.5 text-xs text-ink-secondary">
+      <div className="ml-auto flex items-center gap-1.5 text-s12 text-ink-secondary">
         {COPY.watching.densityLabel}
         {/* `min-h-6` was 24px — WCAG 2.5.8's floor rather than the house standard of 44,
             on the flagship screen. The phone's version of this control was worse still at
@@ -413,7 +413,7 @@ function DriftHint({
   const behind = driftMs < 0;
 
   return (
-    <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate border border-stroke-signal px-3 py-2 text-sm">
+    <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate border border-stroke-signal px-3 py-2 text-s14">
       <span className="flex-1 text-ink-secondary">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
       </span>

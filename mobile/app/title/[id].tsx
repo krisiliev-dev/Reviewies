@@ -27,8 +27,8 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { border, radius, tap, theme } from '../../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { border, radius, tap, theme, tracking } from '../../src/ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
@@ -326,19 +326,20 @@ function EpisodeRow({
 
 const styles = StyleSheet.create({
   posterEdit: { marginBottom: 12 },
-  posterToggle: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  posterToggle: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   posterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   posterInput: {
     flex: 1,
     minWidth: 0,
     color: theme.ink,
-    fontSize: 14,
+    fontSize: text.s14,
     backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    fontFamily: type.family.body.name,
   },
-  posterCancel: { color: theme.inkSecondary, fontSize: 14 },
+  posterCancel: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
   content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
@@ -350,20 +351,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  retryText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
-  title: { color: theme.ink, fontSize: 20, fontWeight: '700' },
-  year: { color: theme.inkSecondary, fontSize: 14 },
-  overview: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  title: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
+  year: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
+  overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: 20, fontFamily: type.family.prose.name },
   ratingBlock: { gap: 6 },
-  ratingLabel: { color: theme.inkSecondary, fontSize: 11, letterSpacing: 0.6 },
+  ratingLabel: { color: theme.inkSecondary, fontSize: text.s12, letterSpacing: tracking(text.s12, track.t83), fontFamily: type.family.title.name },
   loading: { marginTop: 24 },
 
   season: { gap: 6 },
   seasonHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     fontFamily: type.family.title.name,
     textTransform: 'uppercase',
     marginTop: 8,

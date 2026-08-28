@@ -119,7 +119,7 @@ function Row({
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={COPY.watchlist.notePlaceholder}
-              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
+              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
               autoFocus
             />
             <Button tone="primary" label="Save" name={`Save note for ${name}`} onPress={save} />
@@ -129,7 +129,7 @@ function Row({
             onClick={() => setEditing(true)}
             // Every row says "Add a note…". Which row is a visual fact only.
             aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
-            className="tap text-left text-sm text-ink-secondary italic"
+            className="tap text-left text-s14 font-prose font-regular text-ink-secondary italic"
           >
             {/* "The amount of things I have in my wishlist that i have ZERO memory for
                 why they're there" — r/Letterboxd. */}

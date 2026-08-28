@@ -21,7 +21,7 @@ import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/p
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { border, radius, theme } from '../../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
@@ -316,26 +316,28 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name },
+  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name },
   input: {
     backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 16,
     color: theme.ink,
-    fontSize: 16,
+    fontSize: text.s16,
+    fontFamily: type.family.body.name,
   },
   // The watchlist screen's note field, because it is the same field.
   editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
   noteInput: {
     flex: 1,
     color: theme.ink,
-    fontSize: 14,
+    fontSize: text.s14,
     backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
     minHeight: 44,
+    fontFamily: type.family.body.name,
   },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },
@@ -345,8 +347,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  retryText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
-  error: { color: theme.trouble, fontSize: 14 },
+  retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
 
   under: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },

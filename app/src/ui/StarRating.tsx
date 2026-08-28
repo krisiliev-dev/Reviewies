@@ -36,7 +36,7 @@ export function StarRating({
 }) {
   const [hover, setHover] = useState<number>();
   const shown = hover ?? value ?? 0;
-  const text = size === 'sm' ? 'text-base' : 'text-2xl';
+  const text = size === 'sm' ? 'text-s16' : 'text-s24';
 
   return (
     <div className="flex items-center gap-0.5" onMouseLeave={() => setHover(undefined)}>
@@ -78,7 +78,7 @@ export function StarRating({
         </span>
       ))}
       {value !== undefined && (
-        <span className="ml-1.5 text-xs text-ink-secondary tabular-nums">{value.toFixed(1)}</span>
+        <span className="ml-1.5 text-s12 text-ink-secondary tabular-nums">{value.toFixed(1)}</span>
       )}
     </div>
   );

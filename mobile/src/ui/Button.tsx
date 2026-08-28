@@ -4,12 +4,14 @@ import type { ReactNode } from 'react';
 import {
   BOX_RADIUS,
   BUSY,
+  LABEL_FACE,
   PRESSED,
   SELECTED,
   SIZE,
   TONE,
   type ButtonContract,
 } from '@reviewies/core/ui/button';
+import { type } from '@reviewies/core/tokens';
 import { border, radius, theme } from './theme';
 
 /**
@@ -92,8 +94,6 @@ export function Button({
           // fifteen points where the web printed twelve, so a quiet control under a row
           // came out louder than the row's own words.
           { fontSize: metrics.label, color: theme[on ? SELECTED.label.on : label_] },
-          // The second channel: the label steps up as well as the box gaining its rule.
-          on ? styles.on : null,
           shape.underline ? styles.underlined : null,
         ]}
       >
@@ -119,7 +119,6 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  label: { fontWeight: '600' },
-  on: { fontWeight: '700' },
+  label: { fontFamily: type.family[LABEL_FACE].name },
   underlined: { textDecorationLine: 'underline' },
 });

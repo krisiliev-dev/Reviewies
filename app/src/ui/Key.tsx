@@ -15,9 +15,9 @@ import { KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
  * would put that number in one more place, and the point of `KEY_HEIGHT` is that the two
  * platforms cannot drift on it.
  */
-const KEY = 'flex items-center justify-center rounded-plate px-2 font-medium';
+const KEY = 'flex items-center justify-center rounded-plate px-2 font-title font-semibold';
 const READY = 'bg-ground-raised text-ink active:bg-ground-well';
-const CENTRE = 'bg-action-fill text-action-label font-bold active:bg-ground-well';
+const CENTRE = 'bg-action-fill text-action-label active:bg-ground-well';
 const OFF = 'border-hairline border-stroke-hairline text-ink-tertiary';
 
 export function Key({ spec, disabled, onPress }: KeyContract) {

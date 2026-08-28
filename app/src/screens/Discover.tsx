@@ -36,9 +36,9 @@ export function Discover() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-s30 font-display font-bold">Discover</h1>
-      <p className="mb-4 px-1 text-sm text-ink-secondary">{COPY.discover.blurb}</p>
+      <p className="mb-4 px-1 text-s14 text-ink-secondary">{COPY.discover.blurb}</p>
 
-      {error && <p className="px-1 text-sm text-trouble">{error}</p>}
+      {error && <p className="px-1 text-s14 text-trouble">{error}</p>}
       {suggestions === undefined && <p className="px-1 text-ink-secondary">Finding something…</p>}
       {suggestions?.length === 0 && !error && (
         <p className="px-1 text-ink-secondary">{COPY.discover.empty}</p>

@@ -9,8 +9,8 @@ import {
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
-import { border, radius, theme } from '../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { border, radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 import { splitFigure } from '@reviewies/core/ui/data';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
@@ -233,14 +233,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     padding: 16,
   },
-  figureLabel: { color: theme.inkSecondary, fontSize: text.s12 },
+  figureLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   // 22/700 here against the web's 20/600 for the same tile. 22 is not a step and the
   // pair had never been compared; s20/semibold, which is what the web already drew.
   // Mono, tabular: predictable column widths are what stop a figure reflowing at 200%.
   figureValue: {
     color: theme.ink,
     fontSize: text.s20,
-    fontWeight: weight.semibold,
     fontFamily: type.family.data.name,
   },
   /* Mono is for the numeral run. A word set in it is a typewriter, not a tabular figure. */
@@ -252,17 +251,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  allTimeText: { color: theme.ink, fontSize: text.s14, fontWeight: weight.semibold },
+  allTimeText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   // 13 against the web's 14. 13 is one of the two the scale killed.
-  note: { color: theme.inkSecondary, fontSize: text.s14 },
+  note: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 
   section: { gap: 12, marginTop: 6 },
   sectionHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     textTransform: 'uppercase',
+    fontFamily: type.family.title.name,
   },
   // A card, like the web's. It was bare text on the page background with a hairline
   // running the full width of the screen under it, which reads as a progress bar rather
@@ -274,11 +273,11 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   // 11 against the web's 12, for the same line under the same bar.
-  tallyCount: { color: theme.inkSecondary, fontSize: text.s12 },
+  tallyCount: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
   tallyHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  tallyName: { color: theme.ink, fontSize: text.s14, fontWeight: weight.medium, flex: 1 },
+  tallyName: { color: theme.ink, fontSize: text.s14, flex: 1, fontFamily: type.family.body.name },
   // 12 against the web's 14, beside a name that is the same size on both.
-  tallyTime: { color: theme.inkSecondary, fontSize: text.s14 },
+  tallyTime: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
   barTrack: { height: 6, backgroundColor: theme.groundWell, borderRadius: radius.pill, overflow: 'hidden' },
   barFill: { height: 6, backgroundColor: theme.workingFill, borderRadius: radius.pill },
 });

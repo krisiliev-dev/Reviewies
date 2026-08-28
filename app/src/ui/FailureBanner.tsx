@@ -57,7 +57,7 @@ export function FailureBanner() {
       style={{ zIndex: 'var(--z-banner)' }}
       className="safe-top fixed inset-x-0 top-0 flex items-start gap-3 border-b border-stroke-hairline bg-ground-raised px-4 py-3"
     >
-      <p className="min-w-0 flex-1 text-sm">
+      <p className="min-w-0 flex-1 text-s14">
         {stale ? (
           COPY.app.updated
         ) : (

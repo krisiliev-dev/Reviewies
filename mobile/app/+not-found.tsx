@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Stack, usePathname } from 'expo-router';
 import { theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * The screen for an address that is not a screen.
@@ -44,7 +45,7 @@ export default function NotFoundScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground, padding: 20, gap: 12 },
-  title: { color: theme.ink, fontSize: 22, fontWeight: '600', marginTop: 8 },
-  body: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
+  title: { color: theme.ink, fontSize: text.s20, marginTop: 8, fontFamily: type.family.title.name },
+  body: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 22, fontFamily: type.family.body.name },
   path: { color: theme.ink },
 });

@@ -130,7 +130,6 @@
   --spacing-target: 44px;
   --spacing-tap: 24px;
 
-  --text-s11: 11px;
   --text-s12: 12px;
   --text-s14: 14px;
   --text-s16: 16px;
@@ -141,6 +140,9 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --tracking-t0: 0em;
+  --tracking-t20: 0.02em;
+  --tracking-t83: 0.083em;
 
   --radius-none: 0px;
   --radius-plate: 2px;

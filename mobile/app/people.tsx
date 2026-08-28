@@ -16,8 +16,8 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
-import { radius, theme } from '../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
@@ -381,23 +381,22 @@ function PersonList({
  */
 
 const styles = StyleSheet.create({
-  searchFailed: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
+  searchFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
-  failed: { color: theme.trouble, fontSize: 13, lineHeight: 19 },
-  link: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
-  error: { color: theme.trouble, fontSize: 13 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
+  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  link: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.ink, fontSize: 16, fontWeight: '700' },
+  cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   section: { gap: 8 },
   sectionHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
@@ -407,7 +406,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.ink,
-    fontSize: 15,
+    fontSize: text.s14,
+    fontFamily: type.family.body.name,
   },
 
 });

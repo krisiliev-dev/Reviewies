@@ -38,7 +38,7 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="px-1 text-s24 font-display font-semibold">Your data</h1>
+      <h1 className="px-1 text-s24 font-title font-semibold">Your data</h1>
 
       <AccountPanel />
 
@@ -50,19 +50,19 @@ export function Settings() {
         className="flex items-center justify-between rounded-plate bg-ground-raised px-4 py-4"
       >
         <span>
-          <span className="font-semibold">People</span>
-          <span className="block text-sm text-ink-secondary">Your handle, following, blocking</span>
+          <span className="text-s16 font-title font-semibold">People</span>
+          <span className="block text-s14 text-ink-secondary">Your handle, following, blocking</span>
         </span>
         <span aria-hidden className="text-ink-secondary">›</span>
       </Link>
 
       <section className="rounded-plate bg-ground-raised p-4">
-        <p className="text-sm text-ink-secondary">
+        <p className="text-s14 text-ink-secondary">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
         </p>
         {counts && (
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <dl className="mt-3 grid grid-cols-2 gap-2 text-s14">
             <Stat label="Watches" value={counts.watches} />
             <Stat label="Tracked" value={counts.library} />
             <Stat label="Watchlist" value={counts.watchlist} />
@@ -70,7 +70,7 @@ export function Settings() {
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-sm text-ink-secondary">
+          <p className="mt-3 text-s14 text-ink-secondary">
             {/* formatDuration rather than minutes/60: 90 minutes was rendering as
                 "1 hours watched", which is wrong twice over. */}
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
@@ -82,14 +82,14 @@ export function Settings() {
           corrects for it and needs no help; the calendar and "aired today" cannot be
           corrected from here, so the honest thing is to say where the trouble is. §6.67. */}
       {clockWarning() && (
-        <p role="status" className="rounded-plate bg-ground-raised px-4 py-3 text-sm text-trouble">
+        <p role="status" className="rounded-plate bg-ground-raised px-4 py-3 text-s14 text-trouble">
           {clockWarning()}
         </p>
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">Export</h2>
-        <p className="px-1 text-sm text-ink-secondary">{COPY.settings.exportBlurb}</p>
+        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Export</h2>
+        <p className="px-1 text-s14 text-ink-secondary">{COPY.settings.exportBlurb}</p>
         <Button
           size="page"
           tone="primary"
@@ -109,7 +109,7 @@ export function Settings() {
           }}
         />
         {exportNote && (
-          <p className="px-1 text-sm text-ink-secondary" role="status">
+          <p className="px-1 text-s14 text-ink-secondary" role="status">
             Saved, but your lists, follows and comments could not be read: {exportNote}. The
             rest of the file is complete.
           </p>
@@ -129,14 +129,14 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">Import</h2>
+        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Import</h2>
         <ImportFormats />
         <ImportFiles />
 
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
           Watching
         </h2>
         <label className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4">
@@ -144,7 +144,7 @@ export function Settings() {
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
-            <span className="block text-sm text-ink-secondary">How TV Time worked. Needs an account.</span>
+            <span className="block text-s14 text-ink-secondary">How TV Time worked. Needs an account.</span>
           </span>
           <input
             type="checkbox"
@@ -159,10 +159,10 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
           Metadata cache
         </h2>
-        <p className="px-1 text-sm text-ink-secondary">
+        <p className="px-1 text-s14 text-ink-secondary">
           Artwork and episode listings are cached from the metadata provider and expire
           automatically. Clearing them never touches your own history, and shows carried
           over from an import keep their names.
@@ -174,13 +174,13 @@ export function Settings() {
           Clear cached metadata
         </button>
         {cleared !== undefined && (
-          <p className="px-1 text-sm text-ink-secondary" role="status">
+          <p className="px-1 text-s14 text-ink-secondary" role="status">
             {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
           </p>
         )}
       </section>
 
-      <footer className="px-1 pb-4 text-xs leading-relaxed text-ink-secondary">
+      <footer className="px-1 pb-4 text-s12 leading-relaxed text-ink-secondary">
         {usingFixtures() ? (
           <p className="mb-2">
             Running on sample data. Set <code>VITE_TMDB_TOKEN</code> to use real metadata.
@@ -199,8 +199,8 @@ export function Settings() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
-      <dt className="text-xs text-ink-secondary">{label}</dt>
-      <dd className="text-lg font-semibold tabular-nums">{value}</dd>
+      <dt className="text-s12 text-ink-secondary">{label}</dt>
+      <dd className="text-s20 font-data font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

@@ -24,8 +24,8 @@ export function AccountPanel() {
   if (!configured) {
     return (
       <section className="rounded-plate bg-ground-raised p-4">
-        <h2 className="mb-1 font-semibold">Sync</h2>
-        <p className="text-sm text-ink-secondary">
+        <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
+        <p className="text-s14 text-ink-secondary">
           Not configured. Reviewies works fully offline without it — set
           <code className="mx-1">VITE_SUPABASE_URL</code> and
           <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> to sync across devices.
@@ -53,8 +53,8 @@ export function AccountPanel() {
   if (!session) {
     return (
       <section className="rounded-plate bg-ground-raised p-4">
-        <h2 className="mb-1 font-semibold">Sync across devices</h2>
-        <p className="mb-3 text-sm text-ink-secondary">
+        <h2 className="mb-1 text-s16 font-title font-semibold">Sync across devices</h2>
+        <p className="mb-3 text-s14 text-ink-secondary">
           Optional. Everything already works on this device — an account adds sync and
           shared reactions.
         </p>
@@ -88,31 +88,31 @@ export function AccountPanel() {
 
         <button
           onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
-          className="tap mt-2 text-sm text-ink-secondary underline"
+          className="tap mt-2 text-s14 text-ink-secondary underline"
         >
           {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
         </button>
 
-        {error && <p className="mt-2 text-sm text-trouble">{error}</p>}
-        {notice && <p className="mt-2 text-sm text-ink-secondary">{notice}</p>}
+        {error && <p className="mt-2 text-s14 text-trouble">{error}</p>}
+        {notice && <p className="mt-2 text-s14 text-ink-secondary">{notice}</p>}
       </section>
     );
   }
 
   return (
     <section className="rounded-plate bg-ground-raised p-4">
-      <h2 className="mb-1 font-semibold">Sync</h2>
-      <p className="text-sm text-ink-secondary">Signed in as {session.user.email}</p>
+      <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
+      <p className="text-s14 text-ink-secondary">Signed in as {session.user.email}</p>
 
-      <dl className="mt-3 flex gap-4 text-sm">
+      <dl className="mt-3 flex gap-4 text-s14">
         <div>
-          <dt className="text-xs text-ink-secondary">Waiting to upload</dt>
-          <dd className="text-lg font-semibold tabular-nums">{pending}</dd>
+          <dt className="text-s12 text-ink-secondary">Waiting to upload</dt>
+          <dd className="text-s20 font-data font-medium tabular-nums">{pending}</dd>
         </div>
         {lastRunAt && (
           <div>
-            <dt className="text-xs text-ink-secondary">Last sync</dt>
-            <dd className="text-lg">{new Date(lastRunAt).toLocaleTimeString()}</dd>
+            <dt className="text-s12 text-ink-secondary">Last sync</dt>
+            <dd className="text-s20">{new Date(lastRunAt).toLocaleTimeString()}</dd>
           </div>
         )}
       </dl>
@@ -120,7 +120,7 @@ export function AccountPanel() {
       {lastResult?.error && (
         // Surfaced rather than hidden: a silent sync failure is how people lose
         // confidence in a tracker.
-        <p className="mt-2 text-sm text-trouble">Last sync failed: {lastResult.error}</p>
+        <p className="mt-2 text-s14 text-trouble">Last sync failed: {lastResult.error}</p>
       )}
 
       {/* Writes the server refused, which this device is still holding.
@@ -130,14 +130,14 @@ export function AccountPanel() {
           exactly like one that was empty. */}
       {rejected > 0 && (
         <div className="mt-3 rounded-plate bg-ground/40 p-3" role="status">
-          <p className="text-sm text-trouble">{COPY.sync.rejected(rejected)}</p>
+          <p className="text-s14 text-trouble">{COPY.sync.rejected(rejected)}</p>
           <button
             onClick={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
-            className="mt-2 rounded-pill border border-stroke-signal px-3 py-1.5 text-sm font-medium"
+            className="mt-2 rounded-pill border border-stroke-signal px-3 py-1.5 text-s14 font-title font-semibold"
           >
             {COPY.sync.retryRejected}
           </button>
-          {retryNote && <p className="mt-2 text-xs text-ink-secondary">{retryNote}</p>}
+          {retryNote && <p className="mt-2 text-s12 text-ink-secondary">{retryNote}</p>}
         </div>
       )}
 

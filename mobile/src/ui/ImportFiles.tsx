@@ -6,6 +6,7 @@ import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data
 import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { border, radius, theme } from './theme';
 import { Button } from './Button';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Bring a history in from somewhere else.
@@ -200,19 +201,19 @@ export function ImportFormats() {
 
 const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: theme.actionFill },
-  buttonPrimaryText: { color: theme.actionLabel, fontWeight: '700' },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  buttonPrimaryText: { color: theme.actionLabel },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   button: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
-  buttonText: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  error: { color: theme.trouble, fontSize: 13 },
+  buttonText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   report: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 4 },
-  reportHead: { color: theme.ink, fontSize: 14 },
-  reportLine: { color: theme.inkSecondary, fontSize: 12 },
+  reportHead: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  reportLine: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   reportName: { color: theme.ink },
   restore: {
     marginTop: 8,
@@ -224,5 +225,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
   },
-  restoreText: { color: theme.ink, fontSize: 14 },
+  restoreText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
 });

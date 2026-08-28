@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ROW, ROW_INK, type RowContract } from '@reviewies/core/ui/row';
-import { border, radius, space, theme } from './theme';
+import { border, radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
+import { text, type, track } from '@reviewies/core/tokens';
 
 /**
  * The React Native renderer of `core/src/ui/row.ts`. The decisions are there.
@@ -135,19 +136,19 @@ const styles = StyleSheet.create({
   // Motion has nothing to substitute for.
   pressed: { backgroundColor: theme.groundRaised },
   body: { flex: 1, minWidth: 0, gap: space.s2 },
-  title: { color: theme[ROW_INK.title], fontSize: 15, fontWeight: '600' },
-  meta: { color: theme[ROW_INK.meta], fontSize: 12 },
-  note: { color: theme[ROW_INK.meta], fontSize: 12, fontStyle: 'italic' },
+  title: { color: theme[ROW_INK.title], fontSize: text.s14, fontFamily: type.family.title.name },
+  meta: { color: theme[ROW_INK.meta], fontSize: text.s12, fontFamily: type.family.body.name },
+  note: { color: theme[ROW_INK.meta], fontSize: text.s12, fontFamily: type.family.proseItalic.name },
   off: { color: theme[ROW_INK.disabled] },
   tag: {
     color: theme[ROW_INK.tag],
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontSize: text.s12,
+    letterSpacing: tracking(text.s12, track.t83),
     borderWidth: border.hairline,
     borderColor: theme.strokeHairline,
     borderRadius: radius.plate,
     paddingHorizontal: space.s6,
     paddingVertical: space.s2,
+    fontFamily: type.family.title.name,
   },
 });

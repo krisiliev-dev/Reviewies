@@ -6,6 +6,7 @@ import { theme } from './theme';
 import { ANNOUNCE_EVERY_MS, summarise } from '@reviewies/core/watching/announce';
 import { REACTION_VISIBLE_MS } from '@reviewies/core/watching/reactions';
 import { COPY } from '@reviewies/core/copy';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Other people's reactions, arriving as you reach their moment.
@@ -205,7 +206,7 @@ function Floater({
 const styles = StyleSheet.create({
   stream: { height: LANES * 34, overflow: 'hidden' },
   floater: { position: 'absolute', right: 0 },
-  emoji: { fontSize: 26 },
+  emoji: { fontSize: text.s24 },
   resting: {
     position: 'absolute',
     left: 12,
@@ -213,8 +214,9 @@ const styles = StyleSheet.create({
     top: '38%',
     textAlign: 'center',
     color: theme.inkSecondary,
-    fontSize: 11,
+    fontSize: text.s12,
     opacity: 0.75,
+    fontFamily: type.family.body.name,
   },
   announcement: { position: 'absolute', left: -10000, width: 1, height: 1 },
 });

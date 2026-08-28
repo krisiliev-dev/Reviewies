@@ -3,8 +3,9 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { border, radius, tap, theme } from './theme';
+import { border, radius, tap, theme, tracking } from './theme';
 import { COPY } from '@reviewies/core/copy';
+import { text, type, track } from '@reviewies/core/tokens';
 
 /**
  * Where a title can be watched right now.
@@ -165,12 +166,12 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   heading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.6,
+    fontSize: text.s12,
+    letterSpacing: tracking(text.s12, track.t83),
     textTransform: 'uppercase',
+    fontFamily: type.family.title.name,
   },
-  region: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  region: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   regions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     paddingHorizontal: 12,
@@ -179,19 +180,19 @@ const styles = StyleSheet.create({
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
   },
   chipOn: { backgroundColor: theme.actionFill },
-  chipText: { color: theme.inkSecondary, fontSize: 12 },
-  chipTextOn: { color: theme.actionLabel, fontWeight: '600' },
-  failed: { color: theme.trouble, fontSize: 13, lineHeight: 19, marginTop: 6 },
-  muted: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  chipText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
+  chipTextOn: { color: theme.actionLabel },
+  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, marginTop: 6, fontFamily: type.family.body.name },
+  muted: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
-  rowLabel: { color: theme.inkSecondary, fontSize: 12 },
+  rowLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   service: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.plate,
     backgroundColor: theme.groundWell,
   },
-  serviceText: { color: theme.ink, fontSize: 14 },
-  link: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
-  attribution: { color: theme.inkSecondary, fontSize: 11 },
+  serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
+  link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
+  attribution: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 });

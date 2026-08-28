@@ -115,31 +115,31 @@ export function MatchImports({
       {!running && asks.length === 0 && (
         <button
           onClick={start}
-          className="rounded-pill bg-action-fill px-4 py-3 font-medium text-action-label"
+          className="rounded-pill bg-action-fill px-4 py-3 font-title font-semibold text-action-label"
         >
           Match imported shows
         </button>
       )}
 
       {running && (
-        <p className="text-sm text-ink-secondary" aria-live="polite">
+        <p className="text-s14 text-ink-secondary" aria-live="polite">
           Matching… {progress?.done ?? 0} of {(progress?.done ?? 0) + (progress?.left ?? 0)},{' '}
           {progress?.matched ?? 0} matched so far.
         </p>
       )}
 
       {!running && progress && (
-        <p className="text-sm text-ink-secondary">
+        <p className="text-s14 text-ink-secondary">
           Matched {progress.matched} of {progress.done}.
           {asks.length > 0 && ` ${asks.length} need a decision.`}
         </p>
       )}
 
-      {error && <p className="text-sm text-trouble">{error}</p>}
+      {error && <p className="text-s14 text-trouble">{error}</p>}
 
       {asks.map((ask) => (
         <div key={ask.localId} className="rounded-plate bg-ground-raised p-3">
-          <p className="font-medium">{ask.name}</p>
+          <p className="text-s16 font-title font-semibold">{ask.name}</p>
           {/* Said plainly, because the honest reason to ask is not "we failed" — it is
               that more than one answer looked right, and picking one would be a guess
               about somebody's history.
@@ -149,13 +149,13 @@ export function MatchImports({
               the opposite of the truth and then offers them nothing but giving up.
               Doc 10 §5. */}
           {ask.candidates.length > 0 ? (
-            <p className="mb-2 text-sm text-ink-secondary">
+            <p className="mb-2 text-s14 text-ink-secondary">
               More than one show could be this. Picking the wrong one would move your
               history onto it.
             </p>
           ) : (
             <>
-              <p className="mb-2 text-sm text-ink-secondary">
+              <p className="mb-2 text-s14 text-ink-secondary">
                 Nothing came back under that name — it may be listed differently, or be a
                 show the provider has never had. You know what it is; search for it.
               </p>
@@ -188,7 +188,7 @@ export function MatchImports({
           <button
             onClick={() => skip(ask)}
             aria-label={`Leave ${ask.name} unmatched`}
-            className="tap mt-2 text-xs text-ink-secondary underline"
+            className="tap mt-2 text-s12 text-ink-secondary underline"
           >
             {ask.candidates.length > 0 ? 'None of these' : 'Leave it for now'}
           </button>
@@ -243,25 +243,25 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
           onChange={(e) => setQuery(e.target.value)}
           aria-label={`Search for the show ${ask.name} really is`}
           placeholder="Search by name"
-          className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-2 text-sm outline-none placeholder:text-ink-secondary"
+          className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-2 text-s14 outline-none placeholder:text-ink-secondary"
         />
         <button
           type="submit"
           disabled={busy || !query.trim()}
-          className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
+          className="rounded-pill bg-action-fill px-3 text-s14 font-title font-semibold text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
         >
           {busy ? 'Looking…' : 'Search'}
         </button>
       </form>
 
       {failed && (
-        <p className="text-xs text-trouble" role="status">
+        <p className="text-s12 text-trouble" role="status">
           {failed}
         </p>
       )}
 
       {results?.length === 0 && !failed && (
-        <p className="text-xs text-ink-secondary">
+        <p className="text-s12 text-ink-secondary">
           Nothing under that name either. Leaving it unmatched keeps your watches — it
           just has no episode list.
         </p>

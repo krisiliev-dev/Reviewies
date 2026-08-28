@@ -50,7 +50,7 @@ export function Stats() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s24 font-display font-semibold">Stats</h1>
+      <h1 className="mb-4 px-1 text-s24 font-title font-semibold">Stats</h1>
 
       {/*
        * Two groups since §6.109, because they are two questions.
@@ -79,7 +79,7 @@ export function Stats() {
 
       {YEARS.length > 0 && (
         <div className="mb-5">
-          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
+          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
             Year in review
           </h2>
           {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
@@ -133,13 +133,19 @@ function Summary({
   year?: number;
 }) {
   const maxMinutes = summary.topTitles[0]?.minutes ?? 1;
+  const watched = splitFigure(formatDuration(summary.minutes));
 
   return (
     <div className="flex flex-col gap-5">
       {isYearReview && (
         <div className="rounded-plate bg-ground-raised p-4">
           <p className="text-s14 text-ink-secondary">Your {year}</p>
-          <p className="mt-1 text-s30 font-data font-semibold">{formatDuration(summary.minutes)}</p>
+          {/* Split, for the reason `Tile` records below: mono on the whole string sets the
+              unit in a typewriter face too, and `7  days` is what that looks like. */}
+          <p className="mt-1 text-s30">
+            <span className="font-data font-medium tabular-nums">{watched.figure}</span>
+            {watched.unit && <span> {watched.unit}</span>}
+          </p>
           <p className="mt-1 text-s14 text-ink-secondary">
             across {summary.episodes} episodes and {summary.distinctTitles}{' '}
             {summary.distinctTitles === 1 ? 'title' : 'titles'}
@@ -166,14 +172,14 @@ function Summary({
       <section>
         {/* s12, not s14: an uppercase eyebrow with letter-spacing reads a step larger than
             its number, and the phone has drawn this at 12 since it was written. */}
-        <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
           Most watched
         </h2>
         <ul className="flex flex-col gap-1.5">
           {summary.topTitles.map((t) => (
             <li key={t.titleId} className="rounded-plate bg-ground-raised p-3">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-s14 font-medium">{t.name}</span>
+                <span className="truncate text-s14">{t.name}</span>
                 <span className="shrink-0 text-s14 text-ink-secondary">{formatDuration(t.minutes)}</span>
               </div>
               {/* Bar length is time, not episode count — the whole point of
@@ -207,8 +213,8 @@ function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-plate bg-ground-raised px-3 py-3">
       <dt className="text-s12 text-ink-secondary">{label}</dt>
-      <dd className="text-s20 font-semibold">
-        <span className="font-data tabular-nums">{figure}</span>
+      <dd className="text-s20">
+        <span className="font-data font-medium tabular-nums">{figure}</span>
         {unit && <span> {unit}</span>}
       </dd>
     </div>

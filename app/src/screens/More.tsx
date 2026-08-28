@@ -41,19 +41,19 @@ export function More() {
       <h1 className="text-s30 font-display font-bold">More</h1>
 
       <section className="rounded-plate bg-ground-raised p-4">
-        <p className="text-sm text-ink-secondary">
+        <p className="text-s14 text-ink-secondary">
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
         </p>
         {counts && (
-          <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+          <dl className="mt-3 grid grid-cols-3 gap-2 text-s14">
             <Stat label="Watches" value={counts.watches} />
             <Stat label="Tracked" value={counts.library} />
             <Stat label="Watchlist" value={counts.watchlist} />
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-sm text-ink-secondary">
+          <p className="mt-3 text-s14 text-ink-secondary">
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
           </p>
         )}
@@ -88,8 +88,8 @@ export function More() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
-      <dt className="text-xs text-ink-secondary">{label}</dt>
-      <dd className="text-lg font-semibold tabular-nums">{value}</dd>
+      <dt className="text-s12 text-ink-secondary">{label}</dt>
+      <dd className="text-s20 font-data font-medium tabular-nums">{value}</dd>
     </div>
   );
 }

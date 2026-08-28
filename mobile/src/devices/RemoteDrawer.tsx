@@ -5,7 +5,7 @@ import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
 import { radius, tap, theme } from '../ui/theme';
 import { useReducedMotion } from '../ui/useReducedMotion';
-import { color, duration, reduced as reducedMotion, z } from '@reviewies/core/tokens';
+import { color, duration, reduced as reducedMotion, z, text, type } from '@reviewies/core/tokens';
 
 /**
  * The remote, hidden in a drawer to the side — which is what the brief asked for.
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.none,
     zIndex: z.drawerHandle,
   },
-  tabGlyph: { color: color.dark.ground, fontSize: 18 },
+  tabGlyph: { color: color.dark.ground, fontSize: text.s20, fontFamily: type.family.body.name },
   scrim: {
     position: 'absolute',
     top: 0,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingBottom: 12,
   },
-  title: { color: theme.ink, fontSize: 17, fontWeight: '600' },
-  close: { color: theme.inkSecondary, fontSize: 15 },
+  title: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
+  close: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
   body: { padding: 16, paddingBottom: 48, gap: 16 },
 });

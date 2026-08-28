@@ -15,6 +15,7 @@ import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/s
 import { COPY } from '@reviewies/core/copy';
 import { radius, theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Signing in, framed as optional throughout.
@@ -181,18 +182,19 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.ink, fontSize: 17, fontWeight: '700' },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   rejected: { marginTop: 12, gap: 8 },
-  rejectedText: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
+  rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   input: {
     backgroundColor: theme.groundWell,
     borderRadius: radius.none,
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: theme.ink,
-    fontSize: 15,
+    fontSize: text.s14,
+    fontFamily: type.family.body.name,
   },
-  toggle: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
-  error: { color: theme.trouble, fontSize: 13 },
+  toggle: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.body.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 });

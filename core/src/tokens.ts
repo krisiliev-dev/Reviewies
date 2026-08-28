@@ -202,8 +202,15 @@ export const space = {
  * Magnitudes, not uses, for the reason in the header: `text.s14`, never `text.body`.
  */
 export const text = {
-  s11: 11, s12: 12, s14: 14, s16: 16, s20: 20, s24: 24, s30: 30,
+  s12: 12, s14: 14, s16: 16, s20: 20, s24: 24, s30: 30,
 } as const;
+
+/*
+ * Six, not the seven this started as. `s11` went when the last site that could have wanted
+ * it — the tab bar's own label, at 10 — folded to `s12` instead: 11 had no call site, and
+ * Tailwind v4 is JIT, so a step nothing names is a utility that does not exist in the
+ * stylesheet. A scale is what the interface is drawn from, not a range somebody might need.
+ */
 
 /**
  * Six families, and the eight files behind them.
@@ -229,21 +236,38 @@ export const text = {
  * A weight is a file. React Native will not synthesise one for a named family, and once
  * `fontFamily` is set `fontWeight` is ignored on Android and faux-synthesised on iOS — so
  * Narrow 600 and Narrow 700 are two families here, not one family and two weights.
+ *
+ * ## The weight belongs to the face, which is why it is written here
+ *
+ * Each entry carries the weight of its own file, and that has consequences on both sides.
+ *
+ * **The phone must not say it.** A `fontWeight` beside a `fontFamily` is ignored on Android
+ * and, on iOS, asks the system to synthesise a weight on top of a file that already has one
+ * — a smeared heading that no simulator screenshot on a Mac would show as wrong. Sixteen
+ * sprints of migrated styles carried the pair; they do not any more, and `faces.test.ts`
+ * fails on the next one.
+ *
+ * **The web must say it, and must say this one.** A browser has no such excuse but it does
+ * have inheritance: `font-title` on a bare `<h2>` inherits the user-agent's 700 and picks
+ * `ArchivoNarrow-Bold` out of the same stack, which is the wrong file with nothing to show
+ * for it. So a face class is only ever written with the weight named here, and `font-body
+ * font-semibold` — a 600 Archivo that is not in the bundle, drawn as a browser's fake bold
+ * — is a build failure rather than something to notice in a screenshot.
  */
 export const type = {
   family: {
     /** Mastheads. Archivo Narrow 700, tracked out — the direction's refusal 2. */
-    display: { name: 'ArchivoNarrow-Bold', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
+    display: { name: 'ArchivoNarrow-Bold', weight: '700', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
     /** Section heads and metadata, the tracked caps this design is made of. */
-    title: { name: 'ArchivoNarrow-SemiBold', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
-    body: { name: 'Archivo-Regular', stack: 'Archivo, ui-sans-serif, system-ui' },
+    title: { name: 'ArchivoNarrow-SemiBold', weight: '600', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
+    body: { name: 'Archivo-Regular', weight: '400', stack: 'Archivo, ui-sans-serif, system-ui' },
     /** Every number, tabular: predictable column widths are what stop S02E07 wrapping. */
-    data: { name: 'IBMPlexMono-Medium', stack: "'IBM Plex Mono', SFMono-Regular, ui-monospace" },
-    prose: { name: 'Newsreader-Regular', stack: "Newsreader, 'New York', ui-serif" },
+    data: { name: 'IBMPlexMono-Medium', weight: '500', stack: "'IBM Plex Mono', SFMono-Regular, ui-monospace" },
+    prose: { name: 'Newsreader-Regular', weight: '400', stack: "Newsreader, 'New York', ui-serif" },
     /** Its own family rather than `fontStyle: 'italic'`, for the same reason as the weights. */
-    proseItalic: { name: 'Newsreader-Italic', stack: "Newsreader, 'New York', ui-serif" },
+    proseItalic: { name: 'Newsreader-Italic', weight: '400', stack: "Newsreader, 'New York', ui-serif" },
     /** Not bundled — see above. The stack names real system faces, not a generic. */
-    jp: { name: null, stack: "'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif" },
+    jp: { name: null, weight: '400', stack: "'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif" },
   },
 } as const;
 
@@ -257,6 +281,25 @@ export const type = {
 export const weight = {
   regular: '400', medium: '500', semibold: '600', bold: '700',
 } as const;
+
+/**
+ * Tracking, in thousandths of an em.
+ *
+ * The fourth fact about a type site, and the last one nothing owned. The phone writes
+ * `letterSpacing: 1` at size 12 in six files — 0.083em, byte-identical, which is where
+ * `t83` comes from. The web writes `tracking-wide` at the same eyebrows: Tailwind's own
+ * 0.025em, a third of it. Two platforms, one role, three times apart, and no test could
+ * see it because neither number had a name.
+ *
+ * Em, never points, and this is the whole reason the token exists rather than a constant.
+ * React Native's `letterSpacing` is points: stored as 1, tracking stays fixed while the
+ * glyphs double at 200% Dynamic Type and the caps close into a block. So the phone
+ * derives `size x track` at the call site — `tracking(text.s12, track.t83)` — and the web
+ * emits em directly, which is what CSS already wanted.
+ *
+ * Magnitudes, not uses, like everything else here: `t83`, not `t.eyebrow`.
+ */
+export const track = { t0: 0, t20: 0.02, t83: 0.083 } as const;
 
 /** Floors, not rhythm, which is why they sit outside the scale. */
 export const size = { target: 44, tap: 24 } as const;

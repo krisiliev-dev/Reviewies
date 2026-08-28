@@ -85,7 +85,7 @@ export function TitleDetail() {
           className="h-36 w-24 rounded-plate"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-s20 font-display font-semibold">
+          <h1 className="text-s20 font-title font-semibold">
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
           </h1>
           {!title && (failed || !loading) && (
@@ -95,14 +95,14 @@ export function TitleDetail() {
                 setLoading(true);
                 setAttempt((n) => n + 1);
               }}
-              className="mt-2 rounded-pill border border-stroke-signal px-4 py-2 text-sm"
+              className="mt-2 rounded-pill border border-stroke-signal px-4 py-2 text-s14"
             >
               {COPY.title.tryAgain}
             </button>
           )}
-          {title?.year && <p className="text-sm text-ink-secondary">{title.year}</p>}
+          {title?.year && <p className="text-s14 text-ink-secondary">{title.year}</p>}
           {title?.overview && (
-            <p className="mt-2 line-clamp-3 text-sm text-ink-secondary">{title.overview}</p>
+            <p className="mt-2 line-clamp-3 text-s14 text-ink-secondary">{title.overview}</p>
           )}
 
           {title && <AddToList titleId={titleId} kind={title.kind} />}
@@ -124,7 +124,7 @@ export function TitleDetail() {
           above describes, reproduced by adding four words, and caught by the check that
           was written after it happened the first time. */}
       <div className="mb-5">
-        <span className="mb-1 block text-xs tracking-wide text-ink-secondary uppercase">
+        <span className="mb-1 block text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
           {COPY.title.yourRating}
         </span>
         <StarRating
@@ -143,7 +143,7 @@ export function TitleDetail() {
           {posterDraft === undefined ? (
             <button
               onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-              className="tap text-xs text-ink-secondary underline"
+              className="tap text-s12 text-ink-secondary underline"
             >
               {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
             </button>
@@ -153,7 +153,7 @@ export function TitleDetail() {
                 value={posterDraft}
                 onChange={(e) => setPosterDraft(e.target.value)}
                 placeholder="Image URL"
-                className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
+                className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
               <Button
@@ -168,7 +168,7 @@ export function TitleDetail() {
               <button
                 onClick={() => setPosterDraft(undefined)}
                 aria-label="Cancel changing the poster"
-                className="px-2 text-sm text-ink-secondary"
+                className="px-2 text-s14 text-ink-secondary"
               >
                 Cancel
               </button>
@@ -183,11 +183,11 @@ export function TitleDetail() {
           heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
       <ContentWarnings titleId={titleId} />
 
-      {loading && episodes.length === 0 && <p className="text-sm text-ink-secondary">Loading episodes…</p>}
+      {loading && episodes.length === 0 && <p className="text-s14 text-ink-secondary">Loading episodes…</p>}
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
+          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
             Season {season}
           </h2>
           <ul className="flex flex-col gap-1.5">

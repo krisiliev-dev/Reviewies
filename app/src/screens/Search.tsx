@@ -89,21 +89,21 @@ export function Search() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Shows, films, anime…"
-        className="w-full rounded-none bg-ground-raised px-4 py-3 text-base outline-none placeholder:text-ink-secondary"
+        className="w-full rounded-none bg-ground-raised px-4 py-3 text-s16 outline-none placeholder:text-ink-secondary"
         autoFocus
       />
 
-      {busy && <p className="mt-4 px-1 text-sm text-ink-secondary">Searching…</p>}
+      {busy && <p className="mt-4 px-1 text-s14 text-ink-secondary">Searching…</p>}
       {error && (
         <div className="mt-4 flex flex-col items-start gap-2 px-1">
-          <p className="text-sm text-trouble" role="status">
+          <p className="text-s14 text-trouble" role="status">
             {error}
           </p>
           {/* Something to press. A message with no action is only a nicer way of being
               stuck, which is what "Searching…" for ever already was. */}
           <button
             onClick={() => setAttempt((n) => n + 1)}
-            className="rounded-pill border border-stroke-signal px-4 py-2 text-sm"
+            className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"
           >
             Try again
           </button>
@@ -214,7 +214,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={COPY.watchlist.notePlaceholder}
-                className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
+                className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
               <Button

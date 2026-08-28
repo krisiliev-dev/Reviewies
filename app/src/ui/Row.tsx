@@ -20,7 +20,7 @@ const ROW_CLASS = 'flex items-center gap-3';
 const TARGET =
   'flex min-w-0 flex-1 items-center gap-3 rounded-none active:bg-ground-raised';
 const TAG =
-  'shrink-0 rounded-plate border border-stroke-hairline px-1.5 py-0.5 text-[0.625rem] font-semibold tracking-wider text-ink-secondary';
+  'shrink-0 rounded-plate border border-stroke-hairline px-1.5 py-0.5 text-s12 font-title font-semibold tracking-t83 text-ink-secondary';
 
 interface Props extends RowContract {
   /**
@@ -67,7 +67,7 @@ export function Row({
   const words = (
     <span className="min-w-0 flex-1">
       <span
-        className={`block truncate text-sm font-medium ${
+        className={`block truncate text-s14 font-title font-semibold ${
           disabled ? 'text-ink-tertiary' : crossedOffText(!!struck)
         }`}
       >
@@ -75,7 +75,7 @@ export function Row({
       </span>
       {code || meta ? (
         <span
-          className={`block truncate text-xs ${disabled ? 'text-ink-tertiary' : 'text-ink-secondary'}`}
+          className={`block truncate text-s12 ${disabled ? 'text-ink-tertiary' : 'text-ink-secondary'}`}
         >
           {code}
           {code && meta ? ' · ' : ''}
@@ -84,8 +84,8 @@ export function Row({
       ) : null}
       {/* The row's own words, not a badge — see the contract for what happened when this
           was a `tag`. Same size and ink as the meta line, on a line of its own. */}
-      {count ? <span className="block truncate text-xs text-ink-secondary">{count}</span> : null}
-      {note ? <span className="block truncate text-xs italic text-ink-secondary">{note}</span> : null}
+      {count ? <span className="block truncate text-s12 text-ink-secondary">{count}</span> : null}
+      {note ? <span className="block truncate text-s12 font-prose font-regular italic text-ink-secondary">{note}</span> : null}
     </span>
   );
 

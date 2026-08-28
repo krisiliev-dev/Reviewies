@@ -79,7 +79,7 @@ function Shell() {
       {!immersive && (
         <a
           href="#tabs"
-          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-pill focus-visible:border border-stroke-signal focus-visible:px-3 focus-visible:py-2 focus-visible:text-sm"
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-2 focus-visible:left-2 focus-visible:z-[var(--z-skip-link)] focus-visible:rounded-pill focus-visible:border border-stroke-signal focus-visible:px-3 focus-visible:py-2 focus-visible:text-s14"
         >
           Skip to navigation
         </a>
@@ -209,7 +209,7 @@ function TabBar() {
                 // which made them the one piece of text in the app that ignored the
                 // reader's setting entirely — while the icons beside them, sized in em,
                 // doubled. Exactly inverted.
-                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-[0.625rem] leading-tight break-words ${
+                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-tight break-words ${
                   isActive ? 'text-ink' : 'text-ink-secondary'
                 }`
               }

@@ -65,12 +65,12 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           the side of its own card — visible in a screenshot and invisible to the
           viewport check, because it escaped the card and not the screen. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">Where to watch</h2>
+        <h2 className="text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Where to watch</h2>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
           aria-label={`Change country — currently ${regionName(region)}`}
-          className="tap text-xs text-ink-secondary underline"
+          className="tap text-s12 text-ink-secondary underline"
         >
           {regionName(region)}
         </button>
@@ -86,8 +86,8 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               aria-checked={r.code === region}
               // Two-letter country codes read aloud as words: "de", "gb".
               aria-label={`Show availability in ${r.name}`}
-              className={`rounded-pill px-3 py-1.5 text-xs ${
-                r.code === region ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
+              className={`rounded-pill px-3 py-1.5 text-s12 font-title font-semibold ${
+                r.code === region ? 'bg-action-fill text-action-label' : 'border border-stroke-signal text-ink-secondary'
               }`}
             >
               {r.code}
@@ -96,20 +96,20 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </div>
       )}
 
-      {providers === undefined && <p className="mt-2 text-sm text-ink-secondary">Checking…</p>}
+      {providers === undefined && <p className="mt-2 text-s14 text-ink-secondary">Checking…</p>}
 
       {unmatched && (
-        <p className="mt-2 text-sm text-ink-secondary">{COPY.whereToWatch.unmatched}</p>
+        <p className="mt-2 text-s14 text-ink-secondary">{COPY.whereToWatch.unmatched}</p>
       )}
 
       {failed && (
-        <p className="mt-2 text-sm text-trouble" role="status">
+        <p className="mt-2 text-s14 text-trouble" role="status">
           {COPY.whereToWatch.failed}
         </p>
       )}
 
       {!failed && !unmatched && nothing && (
-        <p className="mt-2 text-sm text-ink-secondary">
+        <p className="mt-2 text-s14 text-ink-secondary">
           Not on any service in {regionName(region)} that we can see. Try another country
           above.
         </p>
@@ -126,14 +126,14 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               href={providers.link}
               target="_blank"
               rel="noreferrer noopener"
-              className="tap mt-2 inline-block text-xs text-ink-secondary underline"
+              className="tap mt-2 inline-block text-s12 text-ink-secondary underline"
             >
               Open on JustWatch
             </a>
           )}
 
           {/* Licence condition, not a courtesy. */}
-          <p className="mt-2 text-xs text-ink-secondary">{JUSTWATCH_ATTRIBUTION}</p>
+          <p className="mt-2 text-s12 text-ink-secondary">{JUSTWATCH_ATTRIBUTION}</p>
         </>
       )}
     </section>
@@ -144,9 +144,9 @@ function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
     <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-      <span className="text-xs text-ink-secondary">{label}</span>
+      <span className="text-s12 text-ink-secondary">{label}</span>
       {names.map((name) => (
-        <span key={name} className="rounded-plate bg-ground-well px-3 py-1 text-sm">
+        <span key={name} className="rounded-plate bg-ground-well px-3 py-1 text-s14">
           {name}
         </span>
       ))}

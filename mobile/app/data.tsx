@@ -12,8 +12,8 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
-import { radius, theme } from '../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
@@ -179,17 +179,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   toggleText: { flex: 1, minWidth: 0, gap: 2 },
-  toggleLabel: { color: theme.ink, fontSize: 15 },
-  toggleHint: { color: theme.inkSecondary, fontSize: 13 },
+  toggleLabel: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
+  toggleHint: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
   sectionHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
-  blurb: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
-  clockWarning: { color: theme.trouble, fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  clockWarning: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, marginBottom: 4, fontFamily: type.family.body.name },
 
 });

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
-import { radius, tap, theme } from './theme';
+import { radius, tap, theme, tracking } from './theme';
 import { useReducedMotion } from './useReducedMotion';
+import { text, type, track } from '@reviewies/core/tokens';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -172,17 +173,18 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
-  title: { color: theme.ink, fontSize: 17, fontWeight: '600', flexShrink: 1 },
-  done: { color: theme.inkSecondary, fontSize: 15 },
-  result: { color: theme.ink, fontSize: 15, paddingVertical: 16 },
-  muted: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  title: { color: theme.ink, fontSize: text.s16, flexShrink: 1, fontFamily: type.family.title.name },
+  done: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
+  result: { color: theme.ink, fontSize: text.s14, paddingVertical: 16, fontFamily: type.family.body.name },
+  muted: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   body: { gap: 16, paddingBottom: 8 },
   grid: { gap: 8 },
   gridLabel: {
     color: theme.inkSecondary,
-    fontSize: 11,
-    letterSpacing: 0.6,
+    fontSize: text.s12,
+    letterSpacing: tracking(text.s12, track.t83),
     textTransform: 'uppercase',
+    fontFamily: type.family.title.name,
   },
   gridCells: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   cell: {
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     backgroundColor: theme.groundWell,
   },
-  cellText: { color: theme.ink, fontSize: 15, fontWeight: '500', fontVariant: ['tabular-nums'] },
-  link: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
-  footnote: { color: theme.inkSecondary, fontSize: 12, lineHeight: 17 },
+  cellText: { color: theme.ink, fontSize: text.s14, fontVariant: ['tabular-nums'], fontFamily: type.family.data.name },
+  link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
+  footnote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
 });

@@ -1,24 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, track, type, weight } from '@reviewies/core/tokens';
 import { CHOICE_SIZE } from '@reviewies/core/ui/choice';
-import { declarationOf } from '@reviewies/core/test/source';
+import { LABEL_FACE } from '@reviewies/core/ui/button';
+import { declarationOf, styleOf } from '@reviewies/core/test/source';
 
 /**
- * The type layer, and the one role that has been migrated onto it.
+ * The type layer, now that every site is on it.
  *
- * §6.107 landed the scale — seven steps, chosen from a census of 168 `fontSize` literals
- * on the phone and 223 `text-*` classes on the web — and migrated the first batch: a
- * screen's title. That batch was chosen because it is where the layer's absence was
- * doing visible damage. The same role was **24px at weight 600 on the web and 30px at
- * weight 700 on the phone**, six points and a step apart, and until there was a scale
- * nothing could even say the two were the same role.
+ * §6.107 landed the scale and the first role. This file used to say "covers what has
+ * landed and no more" and listed the 340 sites still holding literals; there are none. So
+ * the clauses stop being an allowlist of migrated screens and become the four facts a type
+ * site has — size, face, weight, tracking — each with exactly one owner:
  *
- * This guard covers what has landed and no more. The other 340-odd sites still hold
- * literals; a clause that failed on them would have to be exempted 340 times, which is
- * a list nobody reads. What it *does* insist on is that the migrated role stays migrated
- * and that the two platforms keep answering it the same way.
+ * - **size** — `text.sNN`, six steps. No raw number on the phone, no Tailwind step and no
+ *   arbitrary `text-[…]` on the web. `text-[0.625rem]` was the hole the ban on `text-[Npx]`
+ *   left open, and three sites were living in it.
+ * - **face** — `type.family.<role>`, six files.
+ * - **weight** — *not a fact the site gets to state on the phone*, because a weight is a
+ *   file: React Native ignores `fontWeight` beside a `fontFamily` on Android and
+ *   synthesises it on iOS. On the web it must be stated, and must be the one that face's
+ *   file has, or the browser draws a fake bold out of Archivo 400 or picks Narrow Bold out
+ *   of the same stack for something that asked for SemiBold.
+ * - **tracking** — `track.tNN`, in em. The phone derives points; the web emits em.
  */
 
 const ROOT = resolve(import.meta.dirname, '../../..');
@@ -34,16 +39,21 @@ function filesUnder(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-/** Tailwind's own steps, which are the ones the scale replaces. */
-const BUILT_IN = /\btext-(?:xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\b/;
+/** Tailwind's own steps, and its escape hatch, which are the two things the scale replaces. */
+const BUILT_IN = /\btext-(?:xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\b|\btext-\[/;
+
+/** The utility names Tailwind generates from the `weight` table. */
+const WEIGHT_CLASS = Object.fromEntries(
+  Object.entries(weight).map(([name, value]) => [value, `font-${name}`]),
+) as Record<string, string>;
 
 describe('the type scale', () => {
-  it('is seven steps and nothing else', () => {
+  it('is six steps and nothing else', () => {
     // A magnitude name that does not match its value is the one way this file can lie.
     for (const [name, px] of Object.entries(text)) {
       expect(name, `${name} is not ${px}`).toBe(`s${px}`);
     }
-    expect(Object.keys(text)).toEqual(['s11', 's12', 's14', 's16', 's20', 's24', 's30']);
+    expect(Object.keys(text)).toEqual(['s12', 's14', 's16', 's20', 's24', 's30']);
   });
 
   it('reaches the web as utilities, generated rather than written', () => {
@@ -54,27 +64,154 @@ describe('the type scale', () => {
     for (const [name, value] of Object.entries(weight)) {
       expect(css).toContain(`--font-weight-${name}: ${value};`);
     }
+    for (const [name, em] of Object.entries(track)) {
+      expect(css, `--tracking-${name} is missing`).toContain(`--tracking-${name}: ${em}em;`);
+    }
+  });
+
+  it('has no site left on either platform that names its own size', () => {
+    /*
+     * The end of the census. 222 `fontSize` literals on the phone and 223 `text-*` classes
+     * on the web when this started; the last two were the tab bar's label and glyph, which
+     * live in a navigator's options rather than in a StyleSheet and had been walked past
+     * four times.
+     */
+    const phone: string[] = [];
+    for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
+      for (const m of read(file).matchAll(/fontSize: \d+/g)) phone.push(`${file}: ${m[0]}`);
+    }
+    expect(phone).toEqual([]);
+
+    const web: string[] = [];
+    for (const file of filesUnder('app/src')) {
+      for (const m of read(file).matchAll(/\bclassName=(?:"([^"]*)"|\{`([^`]*)`\})/g)) {
+        const cls = m[1] ?? m[2] ?? '';
+        if (BUILT_IN.test(cls)) web.push(`${file}: ${cls}`);
+      }
+      // And the class strings that live in a constant rather than in an attribute.
+      for (const m of read(file).matchAll(/^const [A-Z_]+ =\s*'([^']*)';/gm)) {
+        if (BUILT_IN.test(m[1])) web.push(`${file}: ${m[1]}`);
+      }
+    }
+    expect(web).toEqual([]);
+  });
+
+  it('never lets the phone state a weight, because a weight is a file', () => {
+    /*
+     * React Native will not synthesise a weight for a named family. On Android the
+     * `fontWeight` beside a `fontFamily` is dropped; on iOS it is applied *on top of* a
+     * file that already has the weight, which is a smeared heading that a screenshot from a
+     * simulator on a Mac will not show as wrong.
+     *
+     * Sixteen sprints of migrated styles carried the pair — `fontWeight: weight.bold`
+     * beside `fontFamily: type.family.display.name` on all five tab roots — because the
+     * token file said "a weight is a file" and the migration wrote the weight anyway.
+     */
+    const offenders: string[] = [];
+    for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
+      for (const m of read(file).matchAll(/fontWeight: [^,}\n]+/g)) offenders.push(`${file}: ${m[0]}`);
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('never lets the web state a weight the face it is on does not have', () => {
+    /*
+     * The same defect, mirrored. A browser will happily synthesise, which is worse than
+     * dropping it: `font-body font-semibold` drew a fake bold out of Archivo 400, and
+     * `font-display font-semibold` picked Archivo Narrow *SemiBold* out of the stack the
+     * bold face shares — so the phone and the web were drawing the same heading in two
+     * different files and both looked plausible.
+     *
+     * Two clauses in one, and the second is the one that matters: a weight class with no
+     * face is a weight applied to the body face, which has exactly one file.
+     */
+    const faceClass = Object.fromEntries(
+      Object.entries(type.family).map(([role, face]) => [
+        `font-${role.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`,
+        WEIGHT_CLASS[face.weight],
+      ]),
+    );
+    const weightClasses = Object.values(WEIGHT_CLASS);
+
+    const offenders: string[] = [];
+    let seen = 0;
+    for (const file of filesUnder('app/src')) {
+      const source = read(file);
+      const strings = [
+        ...[...source.matchAll(/\bclassName=(?:"([^"]*)"|\{`([^`]*)`\})/g)].map((m) => m[1] ?? m[2] ?? ''),
+        ...[...source.matchAll(/^const [A-Z_]+ =\s*'([^']*)';/gm)].map((m) => m[1]),
+      ];
+      for (const cls of strings) {
+        const words = cls.split(/[\s`${}?:'"]+/);
+        const faces = Object.keys(faceClass).filter((f) => words.includes(f));
+        const weights = weightClasses.filter((w) => words.includes(w));
+        if (!faces.length && !weights.length) continue;
+        seen++;
+        if (!faces.length) {
+          offenders.push(`${file}: ${weights.join(' ')} with no face — ${cls.trim()}`);
+          continue;
+        }
+        for (const face of faces) {
+          if (!words.includes(faceClass[face])) {
+            offenders.push(`${file}: ${face} without ${faceClass[face]} — ${cls.trim()}`);
+          }
+          for (const w of weights) {
+            if (w !== faceClass[face]) offenders.push(`${file}: ${face} with ${w} — ${cls.trim()}`);
+          }
+        }
+      }
+    }
+    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(40);
+    expect(offenders).toEqual([]);
+  });
+
+  it('derives tracking from the token on both sides, in em', () => {
+    /*
+     * The fourth fact, and the last one nothing owned. The phone wrote `letterSpacing: 1`
+     * at size 12 in six files; the web wrote Tailwind's `tracking-wide`, which is 0.025em —
+     * a third of it. One role, two platforms, three times apart, and no test could see it
+     * because neither number had a name.
+     *
+     * Points is the reason it is a token rather than a constant: stored as 1, tracking
+     * holds still while the glyphs double at 200% Dynamic Type and the tracked caps close
+     * into a block.
+     */
+    const phone: string[] = [];
+    for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
+      for (const m of read(file).matchAll(/letterSpacing: [^;\n]+/g)) {
+        if (!/tracking\(text\.s\d+, track\.t\d+\)/.test(m[0])) phone.push(`${file}: ${m[0]}`);
+      }
+    }
+    expect(phone).toEqual([]);
+
+    const web: string[] = [];
+    for (const file of filesUnder('app/src')) {
+      for (const m of read(file).matchAll(/\btracking-[a-z0-9]+/g)) {
+        if (!Object.keys(track).some((name) => m[0] === `tracking-${name}`)) {
+          web.push(`${file}: ${m[0]}`);
+        }
+      }
+    }
+    expect(web).toEqual([]);
+    // And the derivation itself, which is the one RN-specific thing the token cannot do.
+    expect(read('mobile/src/ui/theme.ts')).toContain('return size * em;');
   });
 
   it('is what every screen title on the web is drawn at', () => {
     /*
-     * Every `<h1>`, because a screen's title is the role that was migrated. Three of them
-     * exist and each is named: a tab root's large title, a pushed screen's page heading,
-     * and a detail screen's. What is forbidden is a *fourth* spelled as a Tailwind step,
-     * which is what all twenty-one of them were.
-     */
-    /*
-     * Size, face and weight, checked as three facts rather than as one string.
+     * Size, face and weight as three facts rather than one string — §6.112 put
+     * `font-display` between the two halves of `'text-s30 font-bold'` and every clause
+     * that pinned the order failed on a change that was correct.
      *
-     * These were substrings — `'text-s30 font-bold'` — and §6.112 put `font-display`
-     * between the two halves, so every one of them failed on a change that was correct.
-     * A clause that pins the *order* of class names is a clause that fails when somebody
-     * adds a class, which is not what it is for.
+     * The faces changed under this in stage 2. `font-display font-semibold` was a
+     * contradiction the browser resolved silently: display is the Bold file, so a 600 next
+     * to it selected Narrow SemiBold out of the shared stack — the title face, by accident,
+     * on every `<h1>` below 30. Now the face says which file and the weight agrees with it.
      */
     const allowed = [
       { size: 'text-s30', face: 'font-display', weight: 'font-bold' },
-      { size: 'text-s24', face: 'font-display', weight: 'font-semibold' },
-      { size: 'text-s20', face: 'font-display', weight: 'font-semibold' },
+      { size: 'text-s24', face: 'font-title', weight: 'font-semibold' },
+      { size: 'text-s20', face: 'font-title', weight: 'font-semibold' },
     ];
     const wears = (cls: string, role: (typeof allowed)[number]) =>
       cls.includes(role.size) && cls.includes(role.face) && cls.includes(role.weight);
@@ -82,7 +219,8 @@ describe('the type scale', () => {
     // *sentence* under a screen's own title, which is not a screen title and was being
     // drawn as one.
     const ALLOWED_H2 = [
-      { size: 'text-s20', face: 'font-display', weight: 'font-semibold' },
+      { size: 'text-s20', face: 'font-title', weight: 'font-semibold' },
+      { size: 'text-s16', face: 'font-title', weight: 'font-semibold' },
       { size: 'text-s12', face: 'font-title', weight: 'font-semibold' },
     ];
     const offenders: string[] = [];
@@ -101,23 +239,15 @@ describe('the type scale', () => {
     expect(offenders).toEqual([]);
 
     /*
-     * And the `<h2>`s, because that is where the first one went when it stopped being an
-     * `<h1>`. Two treatments: a sentence heading under a screen title, and the eyebrow
-     * every section on Stats and the calendar now uses.
+     * And the `<h2>`s. Three treatments now: the eyebrow, a sentence heading under a
+     * screen title, and the card title that stage 2 finally ruled on — six of them carried
+     * no size at all and inherited the body's 16 *in the body face*, which is how a card's
+     * own title came out in the same face as its paragraph.
      */
     const wrongH2: string[] = [];
     let h2s = 0;
     for (const file of filesUnder('app/src')) {
       for (const m of read(file).matchAll(/<h2 className="([^"]*)"/g)) {
-        /*
-         * The two roles that have been decided: an uppercase eyebrow, and a sentence
-         * heading under a screen title. Six `<h2>`s carry no size at all and inherit the
-         * body's 16 — a card's own title, which is a third role nobody has ruled on. They
-         * are left, and left visible: this counts what it skipped rather than pretending
-         * the screen is finished.
-         */
-        const decided = /uppercase/.test(m[1]) || /text-s\d/.test(m[1]);
-        if (!decided) continue;
         h2s++;
         if (!ALLOWED_H2.some((role) => wears(m[1], role))) wrongH2.push(`${file}: ${m[1]}`);
       }
@@ -126,38 +256,12 @@ describe('the type scale', () => {
     expect(wrongH2).toEqual([]);
   });
 
-  it('is the whole of Up Next and the calendar, which is the batch that landed', () => {
-    /*
-     * §6.110. Two screens the product is actually about, migrated whole so each can be
-     * photographed. The disagreements were written down before anything was touched:
-     *
-     *   arrival heading      web 30/700 (an <h1>)   phone 20/700 (under the title)
-     *   day heading          web 14/600 UPPERCASE   phone 12, plain, no letter-spacing
-     *   "Tell me about"      web 14/600 sentence    phone 12/600 UPPERCASE
-     *   status notes ×6      web 12                 phone 13
-     *   empty blurb          web inherited 16       phone 14
-     *
-     * Five roles, five disagreements, and the first is structural rather than a size: the
-     * web's two arrival states returned a page with no screen title on them at all.
-     */
-    for (const path of ['mobile/app/(tabs)/index.tsx', 'mobile/app/calendar.tsx']) {
-      expect(read(path), `${path} still holds a raw size`).not.toMatch(/fontSize: \d/);
-      expect(read(path), `${path} still holds a raw weight`).not.toMatch(/fontWeight: '\d/);
-    }
-    for (const path of ['app/src/screens/UpNext.tsx', 'app/src/screens/Calendar.tsx']) {
-      expect(read(path), `${path} still holds a Tailwind step`).not.toMatch(BUILT_IN);
-    }
-    // The structural half: every arrival state keeps the screen's own title.
-    const upNext = read('app/src/screens/UpNext.tsx');
-    expect((upNext.match(/>Up Next<\/h1>/g) ?? []).length, 'an arrival state lost its title')
-      .toBe(4);
-  });
-
   it('is what every tab root on the phone is drawn at, at the same step as the web', () => {
     /*
      * The point of the whole layer. The phone's five tab roots draw their own large title;
      * the web's five draw an `<h1>`; they were 30/700 and 24/600 and nobody had chosen
-     * either. One step now, named in one place.
+     * either. One step now, named in one place — and one *file*, which is the half the
+     * weight used to be pretending to carry.
      */
     const roots = [
       'mobile/app/(tabs)/index.tsx',
@@ -167,14 +271,12 @@ describe('the type scale', () => {
       'mobile/app/(tabs)/more.tsx',
     ];
     for (const file of roots) {
-      const source = read(file);
-      expect(source, `${file} draws its title from a literal`).toMatch(
-        /heading: \{[^}]*fontSize: text\.s30[^}]*fontWeight: weight\.bold/,
+      const heading = declarationOf(read(file), 'heading');
+      expect(heading, `${file} has no heading style`).toBeDefined();
+      expect(heading, `${file} draws its title from a literal`).toContain('fontSize: text.s30');
+      expect(heading, `${file}'s title is in whatever face the system offers`).toContain(
+        'fontFamily: type.family.display.name',
       );
-      expect(source, `${file}'s title is in whatever face the system offers`).toMatch(
-        /heading: \{[^}]*fontFamily: type\.family\.display\.name/,
-      );
-      expect(source, `${file} still has a raw 30`).not.toMatch(/fontSize: 30\b/);
     }
     // And the same step on the other side, so the two cannot be migrated apart. The screen's
     // own title, not any of the four `<h1>`s UpNext renders — the arrival and first-run
@@ -184,6 +286,9 @@ describe('the type scale', () => {
     expect(upNext, "the web's Up Next title is off the step the phone's is on").toMatch(
       /<h1 className="[^"]*text-s30 font-display font-bold">Up Next<\/h1>/,
     );
+    // The structural half of §6.110: every arrival state keeps the screen's own title.
+    expect((upNext.match(/>Up Next<\/h1>/g) ?? []).length, 'an arrival state lost its title')
+      .toBe(4);
   });
 
   it('is what the crash screen says on both platforms, which nobody photographs', () => {
@@ -194,10 +299,11 @@ describe('the type scale', () => {
      * this scale killed. Found by the clause above rather than by the migration, which
      * swept `app/src/screens` and missed a screen title living in `app/src/ui`.
      */
-    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('text-s24 font-display font-semibold');
-    const phone = read('mobile/app/_layout.tsx');
-    expect(phone).toMatch(/title: \{[^}]*fontSize: text\.s24[^}]*fontWeight: weight\.semibold/);
-    expect(phone, 'the crash screen still has a raw 18').not.toMatch(/fontSize: 18\b/);
+    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('text-s24 font-title font-semibold');
+    const title = declarationOf(read('mobile/app/_layout.tsx'), 'title');
+    expect(title, 'the crash screen has no title style').toBeDefined();
+    expect(title).toContain('fontSize: text.s24');
+    expect(title).toContain('fontFamily: type.family.title.name');
   });
 
   it('has a call site for every step, so the web actually generates them', () => {
@@ -205,36 +311,63 @@ describe('the type scale', () => {
      * Tailwind v4 is JIT: a utility exists only if its name appears in source text. A step
      * in the scale with no call site is a step that does not exist in the stylesheet, and
      * the first thing to use it would silently get nothing. §6.85 is the sprint that
-     * learned this; the scale is new, so most steps have no call site yet.
+     * learned this.
      *
-     * So this records the truth rather than asserting a future: which steps the web is
-     * actually using today. When a batch migrates, this list grows with it — and if a step
-     * is dropped from the source, the clause says so rather than leaving a dead token.
+     * `s11` is what this clause was for. It recorded, sprint after sprint, that nothing
+     * used it — and in stage 2 the last site that could have wanted it, the tab bar's own
+     * 10pt label, folded to `s12` instead. So the step left the scale rather than staying
+     * in it as a number the stylesheet does not contain.
      */
     const source = filesUnder('app/src').map(read).join('\n');
     const used = Object.keys(text).filter((name) => source.includes(`text-${name}`));
     expect(used).toEqual(['s12', 's14', 's16', 's20', 's24', 's30']);
-    // s11 has no call site yet, and Tailwind v4 is JIT, so `text-s11` does not exist in
-    // the stylesheet. The first screen to reach for it has to be migrated, not sprinkled.
-    expect(used).not.toContain('s11');
+    expect(used).toEqual(Object.keys(text));
+
+    // The same for the faces, which are utilities on exactly the same terms.
+    /*
+     * The faces are utilities on exactly the same terms — with one deliberate absence.
+     * `font-body` has no call site and should not have one: `index.css` sets the body face
+     * on `body`, so every paragraph on the web inherits it and a class at the site would be
+     * 170 repetitions of the default. The phone has no cascade and names it at every site;
+     * that asymmetry is the platforms differing, not the token layer drifting.
+     */
+    const faces = Object.keys(type.family)
+      .map((role) => `font-${role.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`)
+      .filter((cls) => source.includes(cls));
+    expect(faces).toEqual(['font-display', 'font-title', 'font-data', 'font-prose']);
+    expect(read('app/src/index.css'), 'the web body face stopped being set on body')
+      .toContain('font-family: var(--font-body)');
   });
 
-  it('is where the two shared controls get their label size, rather than each side deciding', () => {
+  it('is where the two shared controls get their label size and face, rather than each side deciding', () => {
     /*
      * `Button` and `Choice` are the two controls every screen is made of, and both had
      * their label size decided twice. `SIZE.label` was 16/14/12 as bare numbers beside a
      * web file writing `text-base`/`text-sm`/`text-xs` — the same three sizes, agreeing by
      * hand. `Choice` was worse: it carried no size at all, so the web's chips inherited
      * the body's 16 while the phone's were 14, on all five screens that use it.
+     *
+     * Stage 2 added the face to the same table, for the same reason and one better: the
+     * two sides were writing *different weights* — 600/700 on the phone, medium/semibold on
+     * the web — for a state neither platform can draw with a weight.
      */
     const button = read('core/src/ui/button.ts');
     expect(button).toContain('label: text.s16');
     expect(button).toContain('label: text.s14');
     expect(button).toContain('label: text.s12');
+    expect(LABEL_FACE, 'a button label is the title face on both sides').toBe('title');
     const webButton = read('app/src/ui/Button.tsx');
     for (const step of ['text-s16', 'text-s14', 'text-s12']) {
       expect(webButton, `Button's ${step} row`).toContain(step);
     }
+    // The base class string, not the file: `SELECTED_CLASS` also mentions the face, so
+    // `toContain('font-title')` passed with the label's own face deleted. §6.109.
+    expect(webButton, 'the web button lost its face').toMatch(
+      /'inline-flex[^']*\bfont-title\b[^']*'/,
+    );
+    expect(declarationOf(read('mobile/src/ui/Button.tsx'), 'label')).toContain(
+      'fontFamily: type.family[LABEL_FACE].name',
+    );
 
     /*
      * The values, imported, rather than the source text. `CHOICE_SIZE` has two densities
@@ -251,6 +384,7 @@ describe('the type scale', () => {
     const phoneChoiceLabel = declarationOf(read('mobile/src/ui/Choice.tsx'), 'label');
     expect(phoneChoiceLabel, 'no label style to read').toBeDefined();
     expect(phoneChoiceLabel).toContain('CHOICE_SIZE.chips.label');
+    expect(phoneChoiceLabel).toContain('fontFamily: type.family.title.name');
     /*
      * Both constants, by name. `toContain('text-s14')` passed with the chip's size deleted,
      * because the row's still had one — planted and not caught, which is §6.73 in a clause
@@ -262,44 +396,45 @@ describe('the type scale', () => {
       const line = new RegExp(`^const ${constant} = '([^']*)';$`, 'm').exec(webChoice);
       expect(line, `no ${constant} constant to read`).toBeTruthy();
       expect(line?.[1], `${constant} has no size, so it inherits`).toContain('text-s14');
+      expect(line?.[1], `${constant} has no face, so it inherits`).toContain('font-title');
     }
   });
 
-  it('is the whole of Stats on both platforms, which is the batch that landed', () => {
+  it('sets every figure in the data face, on both platforms', () => {
     /*
-     * One screen migrated whole, so it can be photographed and compared. Seven of its
-     * eight paired roles disagreed before this: the figure tile at 22/700 against 20/600,
-     * its label 12 against 14, the busiest-day note 13 against 14, the section eyebrow 12
-     * against 14, the tally name 14 against an inherited 16, its time 12 against 14, its
-     * count 11 against 12. Not one of those was a decision; they were two files.
+     * The role the scale kept flattening. A figure tile, a sync backlog, a running clock
+     * and an episode code are the same thing — a number you read rather than a word — and
+     * they were `font-semibold tabular-nums` on the web and a bare size on the phone, which
+     * is a proportional face with the digits nudged into columns.
+     *
+     * Named rather than counted, because a count is what let §6.108 pass: these are the
+     * four places a number is the content.
      */
-    const phone = read('mobile/app/stats.tsx');
-    expect(phone, 'a raw size is back on the phone').not.toMatch(/fontSize: \d/);
-    expect(phone, 'a raw weight is back on the phone').not.toMatch(/fontWeight: '\d/);
     const web = read('app/src/screens/Stats.tsx');
-    expect(web, 'a Tailwind step is back on the web').not.toMatch(BUILT_IN);
-
-    // And the pairs that were wrong, named so a future edit cannot quietly re-split them.
-    /*
-     * The tile's value at the step, and mono on the *figure* inside it rather than on the
-     * whole string. This clause read `'text-s20 font-data font-semibold'` — the exact
-     * arrangement that printed `7  days`, pinned as though it were the answer. §6.101's
-     * shape: a guard encoding a decision rather than a rule, and the decision was wrong.
-     */
-    expect(phone).toContain('fontSize: text.s20');   // the figure tile's value
-    expect(web).toContain('text-s20 font-semibold'); // the same tile
-    expect(web, 'the web tile stopped setting its figure in mono').toContain(
-      'font-data tabular-nums',
+    // The `<span>` around the numeral run, not the file: three things here mention the
+    // face, and the one that matters is the one *inside* the value — mono on the whole
+    // string is what printed `7  days`.
+    expect(web, 'the web tile stopped setting its figure in mono').toMatch(
+      /<span className="font-data font-medium tabular-nums">\{(watched|figure)\.?\w*\}<\/span>/,
     );
-    expect(phone, 'the phone tile stopped setting its figure in mono').toContain(
-      'fontFamily: type.family.data.name',
-    );
-    expect(phone, 'the unit went back into mono with the figure').toContain(
-      'figureUnit: { fontFamily: type.family.body.name }',
-    );
+    for (const [file, needle] of [
+      ['app/src/screens/AccountPanel.tsx', 'text-s20 font-data font-medium tabular-nums'],
+      ['app/src/screens/More.tsx', 'text-s20 font-data font-medium tabular-nums'],
+      ['app/src/screens/Settings.tsx', 'text-s20 font-data font-medium tabular-nums'],
+      ['app/src/screens/WatchingMode.tsx', 'font-data font-medium'],
+    ] as const) {
+      expect(read(file), `${file} draws a figure in the body face`).toContain(needle);
+    }
+    const phone = read('mobile/app/stats.tsx');
+    expect(declarationOf(phone, 'figureValue'), 'the phone tile stopped setting its figure in mono')
+      .toContain('fontFamily: type.family.data.name');
+    expect(declarationOf(phone, 'figureUnit'), 'the unit went back into mono with the figure')
+      .toContain('fontFamily: type.family.body.name');
     expect(declarationOf(phone, 'figureLabel'), 'the tile label is off the scale')
       .toContain('fontSize: text.s12');
-    // The tile's own `<dt>`, not the tally count, which carries the same pair of classes.
-    expect(web).toMatch(/<dt className="text-s12 text-ink-secondary">/);
+    // `styleOf`, not `declarationOf`: this screen holds `const clock = usePlaybackClock()`
+    // two hundred lines above the style of the same name, and the clause was reading it.
+    expect(styleOf(read('mobile/app/watching/[targetId].tsx'), 'clock'))
+      .toContain('fontFamily: type.family.data.name');
   });
 });

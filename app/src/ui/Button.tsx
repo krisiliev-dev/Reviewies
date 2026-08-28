@@ -42,8 +42,14 @@ const TONE_CLASS = {
  */
 const DISABLED_CLASS = 'border border-stroke-hairline bg-transparent text-ink-tertiary';
 
-/** `SELECTED.rule` in `border-tally`, `SELECTED.colour` in `working-mark`, and the weight. */
-const SELECTED_CLASS = 'border-tally border-working-mark font-semibold text-ink';
+/**
+ * `SELECTED.rule` in `border-tally`, `SELECTED.colour` in `working-mark`, and the ink step.
+ *
+ * The weight that used to be here is gone, and `LABEL_FACE` in the core says why: the phone
+ * cannot thicken a named family, so a state carried by weight is a state the phone loses.
+ * Three signals remain, which is two more than the state needs.
+ */
+const SELECTED_CLASS = 'border-tally border-working-mark text-ink';
 
 /*
  * The label sizes are `SIZE[size].label` in the core — 16, 14, 12, which are three steps of
@@ -85,7 +91,9 @@ export function Button({
   // for a quiet toggle today and writing the branch anyway would be a branch nothing runs.
   const on = selected && !disabled && boxed;
   const classes = [
-    'inline-flex items-center justify-center gap-2 text-center font-medium',
+    // `font-title` is `LABEL_FACE` in the core, spelled out because Tailwind reads source
+    // text. It carries the weight now — Archivo Narrow SemiBold is one file, not a slider.
+    'inline-flex items-center justify-center gap-2 text-center font-title',
     boxed ? 'rounded-pill' : '',
     SIZE_CLASS[size],
     disabled ? DISABLED_CLASS : TONE_CLASS[tone],

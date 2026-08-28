@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text, View, type ColorValue } from 'react-native';
-import { border, space, theme } from '../../src/ui/theme';
+import { border, size, space, theme } from '../../src/ui/theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Five tabs, and no more.
@@ -14,18 +15,41 @@ import { border, space, theme } from '../../src/ui/theme';
  * requirement in the whole research was that the app opens straight onto the episodes
  * you can mark.
  */
+/**
+ * The bar's own height, from the parts it holds rather than from a number.
+ *
+ * The 24pt glyph, the 4pt gap under it, the label's 16pt line, and `s8` of breathing room
+ * top and bottom. React Navigation's default is sized for a 10pt label; `s12` needs more,
+ * and a literal here would be the same unowned number one layer up.
+ */
+const TAB_BAR_HEIGHT = space.s8 + size.tap + space.s4 + text.s16 + space.s8;
+
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarActiveTintColor: theme.ink,
+        tabBarInactiveTintColor: theme.inkSecondary,
+        /*
+         * `s12`, up from a raw 10, and the bar has to be told about it.
+         *
+         * The default tab bar height is sized for the 10pt label React Navigation assumes;
+         * migrating the label onto the scale without raising the bar clipped the descenders
+         * off all five words — "Up Next" photographed as "Un Next". A step is not a step
+         * until the box around it is one too.
+         */
         tabBarStyle: {
           backgroundColor: theme.ground,
           borderTopColor: theme.strokeHairline,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: space.s8,
         },
-        tabBarActiveTintColor: theme.ink,
-        tabBarInactiveTintColor: theme.inkSecondary,
-        tabBarLabelStyle: { fontSize: 10 },
+        tabBarLabelStyle: {
+          fontSize: text.s12,
+          lineHeight: text.s16,
+          fontFamily: type.family.title.name,
+        },
         sceneStyle: { backgroundColor: theme.ground },
       }}
     >
@@ -71,7 +95,7 @@ function icon(glyph: string) {
           backgroundColor: focused ? theme.ink : 'transparent',
         }}
       />
-      <Text style={{ color, fontSize: 18, lineHeight: 22 }}>{glyph}</Text>
+      <Text style={{ color, fontSize: text.s20, lineHeight: 22 }}>{glyph}</Text>
     </View>
   );
 }

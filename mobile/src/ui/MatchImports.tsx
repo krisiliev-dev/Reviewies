@@ -11,6 +11,7 @@ import { radius, tap, theme } from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 import { ROW } from '@reviewies/core/ui/row';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Finishing a migration.
@@ -174,9 +175,9 @@ export function MatchImports({
 
 const styles = StyleSheet.create({
   block: { gap: 12 },
-  status: { color: theme.inkSecondary, fontSize: 13, lineHeight: 18 },
-  error: { color: theme.trouble, fontSize: 13 },
+  status: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 18, fontFamily: type.family.body.name },
+  error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 8 },
-  name: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  skip: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  name: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
+  skip: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { useListenSync } from '../fingerprint/listen';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * The two microphone controls.
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  status: { color: theme.inkSecondary, fontSize: 12, flexShrink: 1 },
-  note: { color: theme.inkSecondary, fontSize: 12 },
-  blurb: { color: theme.inkSecondary, fontSize: 11, lineHeight: 15 },
+  status: { color: theme.inkSecondary, fontSize: text.s12, flexShrink: 1, fontFamily: type.family.body.name },
+  note: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
+  blurb: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 15, fontFamily: type.family.body.name },
 });

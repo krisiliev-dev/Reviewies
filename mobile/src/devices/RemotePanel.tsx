@@ -4,7 +4,8 @@ import type { Command } from '@reviewies/core/devices/types';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
-import { radius, tap, theme } from '../ui/theme';
+import { radius, tap, theme, tracking } from '../ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -143,26 +144,26 @@ const styles = StyleSheet.create({
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionHeading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontSize: text.s12,
+    letterSpacing: tracking(text.s12, track.t83),
     textTransform: 'uppercase',
+    fontFamily: type.family.title.name,
   },
-  scan: { color: theme.ink, fontSize: 14, fontWeight: '600' },
+  scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   progressTrack: { height: 3, backgroundColor: theme.groundWell, borderRadius: radius.pill },
   progressFill: { height: 3, backgroundColor: theme.workingFill, borderRadius: radius.pill },
-  blurb: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
   device: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12 },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
-  deviceName: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  deviceAddress: { color: theme.inkSecondary, fontSize: 11 },
-  error: { color: theme.trouble, fontSize: 13, lineHeight: 19 },
-  nowPlaying: { color: theme.inkSecondary, fontSize: 13 },
+  deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
+  deviceAddress: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  error: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  nowPlaying: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 
   transport: { flexDirection: 'row', gap: 8 },
   dpad: { alignItems: 'center', gap: 8 },
   dpadRow: { flexDirection: 'row', gap: 8 },
   dpadGap: { minWidth: 72 },
 
-  footnote: { color: theme.inkSecondary, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  footnote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 16, marginTop: 8, fontFamily: type.family.body.name },
 });

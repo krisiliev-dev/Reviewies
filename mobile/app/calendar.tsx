@@ -13,8 +13,8 @@ import {
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
-import { radius, theme } from '../src/ui/theme';
-import { text, weight, type } from '@reviewies/core/tokens';
+import { radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track } from '@reviewies/core/tokens';
 import {
   pushSupported,
   registerForPush,
@@ -206,19 +206,18 @@ const styles = StyleSheet.create({
   delivery: { marginTop: 12, gap: 8 },
   // 13 against the web's 12, for the same six status lines under the same control.
   // 13 is one of the two the scale killed.
-  deliveryNote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17 },
+  deliveryNote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   sectionHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
 
   day: { gap: 6, marginTop: 8 },
@@ -228,8 +227,7 @@ const styles = StyleSheet.create({
   dayHeading: {
     color: theme.inkSecondary,
     fontSize: text.s12,
-    fontWeight: weight.semibold,
-    letterSpacing: 1,
+    letterSpacing: tracking(text.s12, track.t83),
     fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },

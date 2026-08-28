@@ -63,29 +63,29 @@ export function CatchUp({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 className="min-w-0 truncate font-semibold">{seriesName}</h2>
+          <h2 className="min-w-0 truncate text-s16 font-title font-semibold">{seriesName}</h2>
           <button
             onClick={onDone}
             aria-label={marked === undefined ? 'Cancel catching up' : 'Done catching up'}
-            className="tap shrink-0 text-sm text-ink-secondary"
+            className="tap shrink-0 text-s14 text-ink-secondary"
           >
             {marked === undefined ? 'Cancel' : 'Done'}
           </button>
         </div>
 
         {marked !== undefined ? (
-          <p className="py-4 text-sm">
+          <p className="py-4 text-s14">
             {marked === 0
               ? 'Already up to date — nothing to mark.'
               : `Marked ${marked} episode${marked === 1 ? '' : 's'} as watched.`}
           </p>
         ) : seasons === undefined ? (
-          <p className="text-sm text-ink-secondary">Loading…</p>
+          <p className="text-s14 text-ink-secondary">Loading…</p>
         ) : seasons.length === 0 ? (
-          <p className="text-sm text-ink-secondary">No episodes have aired yet.</p>
+          <p className="text-s14 text-ink-secondary">No episodes have aired yet.</p>
         ) : (
           <>
-            <p className="mb-3 text-sm text-ink-secondary">
+            <p className="mb-3 text-s14 text-ink-secondary">
               How far have you got? Nothing here shows episode names, so you cannot be
               spoiled by catching up.
             </p>
@@ -106,12 +106,12 @@ export function CatchUp({
                 {seasons.length > 1 && (
                   <button
                     onClick={() => setSeason(undefined)}
-                    className="tap mt-3 text-xs text-ink-secondary underline"
+                    className="tap mt-3 text-s12 text-ink-secondary underline"
                   >
                     Pick a different season
                   </button>
                 )}
-                <p className="mt-3 text-xs text-ink-secondary">
+                <p className="mt-3 text-s12 text-ink-secondary">
                   {/* Said plainly: the app cannot know when these were really watched,
                       and inventing plausible past dates would be worse. */}
                   Everything up to and including that episode is logged as watched today.
@@ -136,7 +136,7 @@ function Grid({
 }) {
   return (
     <>
-      <p className="mb-2 text-xs tracking-wide text-ink-secondary uppercase">{label}</p>
+      <p className="mb-2 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">{label}</p>
       <div className="flex flex-wrap gap-1.5">
         {values.map((value) => (
           <button
@@ -145,7 +145,7 @@ function Grid({
             // A grid of bare numbers: "3" says nothing about season or episode.
             aria-label={`${label}: ${value}`}
             // Big enough to hit one-handed; this is a grid of small numbers.
-            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3 text-sm font-medium tabular-nums"
+            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3 text-s14 font-data font-medium tabular-nums"
           >
             {value}
           </button>

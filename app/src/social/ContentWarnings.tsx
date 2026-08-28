@@ -61,7 +61,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
     <section className="mb-5">
       <button
         onClick={() => setOpen(!open)}
-        className="rounded-plate bg-ground-raised px-3 py-1.5 text-xs text-ink-secondary"
+        className="rounded-plate bg-ground-raised px-3 py-1.5 text-s12 text-ink-secondary"
         aria-expanded={open}
       >
         {open ? 'Hide content warnings' : 'Content warnings'}
@@ -69,20 +69,20 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
       {open && (
         <div className="mt-2 rounded-plate bg-ground-raised p-3">
-          {summaries === undefined && <p className="text-xs text-ink-secondary">Loading…</p>}
+          {summaries === undefined && <p className="text-s12 text-ink-secondary">Loading…</p>}
 
           {/* Not the same sentence. A request that did not arrive is not an answer, and
               this is the one screen where being told the wrong one matters — somebody
               avoiding a trigger would take "nobody has flagged anything" as a fact. */}
           {failed && (
-            <p className="text-xs text-trouble" role="status">
+            <p className="text-s12 text-trouble" role="status">
               Could not read the warnings for this title. Nothing here means nothing is
               known, not that there is nothing.
             </p>
           )}
 
           {!failed && summaries?.length === 0 && (
-            <p className="text-xs text-ink-secondary">
+            <p className="text-s12 text-ink-secondary">
               Nobody has flagged anything yet. If you have seen it, you can below.
             </p>
           )}
@@ -106,10 +106,10 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                     }`}
                     aria-hidden
                   />
-                  <span className={`text-sm ${s.verdict === 'no' ? 'text-ink-secondary' : ''}`}>
+                  <span className={`text-s14 ${s.verdict === 'no' ? 'text-ink-secondary' : ''}`}>
                     {s.label}
                   </span>
-                  <span className="ml-auto shrink-0 text-xs text-ink-secondary">
+                  <span className="ml-auto shrink-0 text-s12 text-ink-secondary">
                     {s.verdict === 'contested' && 'disputed · '}
                     {s.singleVote && 'one person · '}
                     {describeVotes(s)}
@@ -121,7 +121,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           <button
             onClick={() => setVoting(!voting)}
-            className="tap text-xs text-ink-secondary underline"
+            className="tap text-s12 text-ink-secondary underline"
             aria-expanded={voting}
             aria-label={voting ? 'Done flagging' : 'Flag something'}
           >
@@ -134,7 +134,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                 const own = mine.get(w.id);
                 return (
                   <li key={w.id} className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-sm">{w.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-s14">{w.label}</span>
                     <Button
                       size="inline"
                       label="Yes"
@@ -163,9 +163,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             </ul>
           )}
 
-          {note && <p className="mt-2 text-xs text-trouble">{note}</p>}
+          {note && <p className="mt-2 text-s12 text-trouble">{note}</p>}
 
-          <p className="mt-3 text-xs text-ink-secondary">
+          <p className="mt-3 text-s12 text-ink-secondary">
             Community-reported, so treat it as a heads-up rather than a guarantee.
             Nothing here hides anything.
           </p>

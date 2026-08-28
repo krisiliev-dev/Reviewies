@@ -5,6 +5,7 @@ import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/
 import type { MediaKind } from '@reviewies/core/domain/types';
 import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -108,31 +109,32 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
 const styles = StyleSheet.create({
   block: { marginTop: 8, gap: 6 },
-  toggle: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
+  toggle: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   panel: {
     padding: 12,
     borderRadius: radius.plate,
     backgroundColor: theme.groundWell,
     gap: 6,
   },
-  muted: { color: theme.inkSecondary, fontSize: 12 },
+  muted: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   listRow: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.plate,
     backgroundColor: theme.groundRaised,
   },
-  listName: { color: theme.ink, fontSize: 14 },
+  listName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   newRow: { flexDirection: 'row', gap: 6, alignItems: 'stretch' },
   input: {
     flex: 1,
     minWidth: 0,
     color: theme.ink,
-    fontSize: 14,
+    fontSize: text.s14,
     backgroundColor: theme.groundRaised,
     borderRadius: radius.none,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    fontFamily: type.family.body.name,
   },
-  note: { color: theme.inkSecondary, fontSize: 12 },
+  note: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 });

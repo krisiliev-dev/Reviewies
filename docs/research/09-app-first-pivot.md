@@ -7913,6 +7913,97 @@ built"* against `mobile/src/ui/fonts.ts`, which is §6.41's rule catching an exc
 the thing it excused stopped being true.
 
 
+### 6.113 A weight is a file, and both platforms were asking for one that is not there
+
+Stage 2 of the design finish: the remaining type sites — 166 raw `fontSize` numbers on the
+phone across 30 files, 174 Tailwind steps on the web across 27 — each given its step **and**
+its face in one edit, which was the point of doing them together rather than twice.
+
+The mechanical half went as planned. The judgement half was thirteen paired components and
+about ninety screen sites, written down before anything was touched: eight of eleven readable
+pairs disagreed, and every disagreement was the phone on 11/13/15 — the three sizes the scale
+killed — where the web was on 12/14. So the web's value won wherever the two differed, because
+it was already on the scale's numbers, with the folds `9/10/11 → s12`, `13/15 → s14`,
+`17 → s16`, `18/20/22 → s20`, `26 → s24`.
+
+**But the interesting part is not the sizes. It is that the migration exposed a defect on both
+platforms that the token file had already described and neither renderer had obeyed.**
+
+`core/src/tokens.ts` has said since §6.112 that *a weight is a file* — React Native will not
+synthesise one for a named family, so Archivo Narrow SemiBold and Archivo Narrow Bold are two
+families there, not one family and two weights. Sixteen sprints of migrated styles then wrote
+the weight anyway, right beside the family:
+
+```
+heading: { fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name }
+```
+
+On Android that `fontWeight` is dropped. On iOS it is applied *on top of* a file that already
+carries it, which is a synthesised smear on the largest words in the app — and a simulator
+screenshot taken on a Mac shows it as fine. Every one of those pairs is gone; the phone now
+states the face and nothing else, and a clause fails on the next `fontWeight` anywhere under
+`mobile/`.
+
+The web had the same defect, mirrored, and worse — a browser synthesises rather than dropping:
+
+- `font-body font-semibold` drew a **fake bold out of Archivo 400**, which is the only Archivo
+  file in the bundle. Seventeen sites.
+- `font-display font-semibold` was a contradiction the browser resolved silently. `display` is
+  the Bold file, but the *stack* `'Archivo Narrow', Archivo, …` has both 600 and 700 registered
+  under it, so a 600 beside it picked **Narrow SemiBold** — the title face, by accident, on
+  every `<h1>` at s24 and s20. The phone was drawing the same heading in Narrow Bold. Two
+  platforms, one role, two different files, and both looked plausible.
+
+The rule that came out of it is the one the table can enforce: **each family entry carries the
+weight of its own file**, the phone never states a weight, and the web must state exactly that
+one. `font-body font-semibold` is now a build failure. The generator stopped sniffing filenames
+for the `@font-face` weight — `/Bold/` needed a `&& !semi` guard so SemiBold did not read as
+Bold, which is a substring bug sitting inside a generator — and reads the table instead; the
+generated CSS is byte-identical, which is what says the change was behaviour-preserving.
+
+**A fourth fact nobody owned.** A type site has four: size, face, weight, tracking. The phone
+wrote `letterSpacing: 1` at size 12 in six files. The web wrote Tailwind's `tracking-wide` at
+the same eyebrows — 0.025em, a third of it. One role, three times apart, and no test could see
+it because neither number had a name. `track` is now a token in **thousandths of an em**, and
+em rather than points is the whole reason it is a token: React Native's `letterSpacing` is
+points, so a stored `1` holds still while the glyphs double at 200% Dynamic Type and the caps
+close into a block. The phone derives `tracking(text.s12, track.t83)`; the web emits em.
+
+**The scale lost a step and is better for it.** `s11` had recorded, sprint after sprint, that
+nothing used it — Tailwind v4 is JIT, so a step with no call site is a utility the stylesheet
+does not contain. The last site that could have wanted it was the tab bar's own 10pt label,
+which folded to `s12` instead. Six steps.
+
+**Two things the guards could not have found, and looking did.** Raising that tab label without
+raising the bar clipped the descenders off all five words: *Up Next* photographed as *Un Next*.
+The bar's height is now derived from the parts it holds — glyph, gap, line, breathing room —
+rather than from React Navigation's default, which is sized for the 10pt label it assumes. And
+the poster fallback, at `s12` in a 64pt plate, broke inside the word: `Hollow Crown Saga` came
+out as *Hollo / w / Cro…*. There is no step below 12 to retreat to, so it went to the title
+face — Archivo Narrow is condensed, fits about a third more per line at the same size, and a
+spine label on a shelf has always been set that way.
+
+**And one that only mattered after the change.** `declarationOf` takes the first `name:` or
+`name =` in a file, which is right until a screen has both: `mobile/app/watching/[targetId].tsx`
+holds `const clock = usePlaybackClock()` two hundred lines above `clock: { fontSize… }`, so a
+clause asking for the clock's face was handed a hook call and failed on a file that was correct.
+`styleOf` narrows the haystack to the `StyleSheet.create` block first. §6.109's rule one layer
+along — a needle is only a needle if nothing else in the haystack looks like it, and shrinking
+the haystack is the cheaper half of that.
+
+**Fourteen plants, fourteen catches**, including two on clauses written in this sprint and one
+on `styleOf` itself. Two of them were run wrong first: restoring a plant with `git checkout --`
+reverted *this sprint's uncommitted work* rather than the plant, silently, on three files —
+exactly the accident §6.107 recorded and did not stop happening. Plants restore from a file copy
+now, and the shell script that does it says why.
+
+The two standing meta-guards both fired on this sprint's own work and both were right:
+`clauses.test.ts` caught two new `toContain` needles that occur more than once in the file they
+read, and `coreWiring` noticed that `tokens#weight` had stopped being a mobile import at all —
+deleting an explanation the day the thing it explained ended, which is what §6.41 asks for and
+what nobody had to remember.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7924,11 +8015,21 @@ and which single claim in this document could not be checked at all:
   confirm they *arrive* runs in a browser, where the `@font-face` is served from the same
   origin and cannot really fail; the phone's `useFonts` gate has never executed outside the
   react-native-web export, which does not use it. Two further things are unmeasured and both
-  are the direction's own warnings: `letterSpacing` in React Native is points rather than em,
-  so the tracked caps this design is made of will come apart at 200% text unless every call
-  site computes from the scaled size — and no screen does yet; and Japanese now falls to the
-  platform face by decision, which is a decision about how a mixed Latin/Japanese title looks
-  that nobody has looked at.
+  are the direction's own warnings. The first is closed: §6.113 made tracking a token in em
+  and every one of the eleven call sites derives points from the scaled size, so the tracked
+  caps this design is made of no longer stay put while the glyphs double — though *that* has
+  only been reasoned about, not seen at 200% on a device. The second stands: Japanese falls to
+  the platform face by decision, which is a decision about how a mixed Latin/Japanese title
+  looks that nobody has looked at.
+
+  What §6.113 adds to this entry rather than removing: the faces are now on every word in the
+  app, and the only place anyone has seen them is the react-native-web export — a browser,
+  drawing WOFF-style `@font-face` from the same origin. The two failures that matter are both
+  invisible there. `useFonts` gating the first paint is dead code in that export. And the
+  whole reason the phone must not state a `fontWeight` is an iOS behaviour — synthesising a
+  weight on top of a file that has one — which no check in this repo can observe. The rule is
+  right by the platform's documented behaviour and by the token file's own argument; it has
+  not been *watched* being right.
 - **Nothing has run on a physical device, and §6.111 measured exactly how far short of
   one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
   Android SDK in this container, no `eas` CLI, no Apple or Google account, no device. What

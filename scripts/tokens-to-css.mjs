@@ -21,7 +21,7 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, space, size, radius, text, weight, type,
+  color, label, space, size, radius, text, weight, track, type,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -83,6 +83,7 @@ for (const [name, px] of Object.entries(size)) w(`  --spacing-${name}: ${px}px;`
 w('');
 for (const [name, px] of Object.entries(text)) w(`  --text-${name}: ${px}px;`);
 for (const [name, value] of Object.entries(weight)) w(`  --font-weight-${name}: ${value};`);
+for (const [name, em] of Object.entries(track)) w(`  --tracking-${name}: ${em}em;`);
 w('');
 for (const [name, px] of Object.entries(radius)) w(`  --radius-${name}: ${px}px;`);
 w('');
@@ -108,13 +109,12 @@ w('/* The faces, bundled rather than fetched — see core/src/tokens.ts. */');
 for (const face of faces) {
   const family = face.stack.split(',')[0].replace(/'/g, '').trim();
   const italic = /Italic/.test(face.name);
-  const bold = /Bold/.test(face.name);
-  const semi = /SemiBold/.test(face.name);
-  const medium = /Medium/.test(face.name);
   w('@font-face {');
   w(`  font-family: '${family}';`);
   w(`  src: url('/fonts/${face.name}.ttf') format('truetype');`);
-  w(`  font-weight: ${bold && !semi ? 700 : semi ? 600 : medium ? 500 : 400};`);
+  // From the table, not from the filename. Sniffing `/Bold/` needed a `&& !semi` to stop
+  // SemiBold reading as Bold, which is a substring bug waiting in a generator.
+  w(`  font-weight: ${face.weight};`);
   w(`  font-style: ${italic ? 'italic' : 'normal'};`);
   w('  font-display: block;');
   w('}');

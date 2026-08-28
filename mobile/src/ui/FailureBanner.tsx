@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { onFailure, reportFailure, type Failure } from '@reviewies/core/data/failure';
 import { theme } from './theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * What a failure nobody caught looks like, on the phone.
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  text: { color: theme.ink, flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
+  text: { color: theme.ink, flex: 1, minWidth: 0, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   dismiss: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
-  dismissText: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
+  dismissText: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

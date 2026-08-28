@@ -71,7 +71,7 @@ export function RemoteDrawer() {
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <span aria-hidden="true" className="block text-lg leading-none">
+        <span aria-hidden="true" className="block text-s20 leading-none">
           ⇤
         </span>
       </button>
@@ -102,12 +102,12 @@ export function RemoteDrawer() {
         aria-label="Remote control"
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Remote</h2>
+          <h2 className="text-s16 font-title font-semibold">Remote</h2>
           {/* Named, because Watching Mode has a "Close" of its own. */}
           <button
             onClick={() => setOpen(false)}
             aria-label="Close remote"
-            className="text-sm text-ink-secondary"
+            className="text-s14 text-ink-secondary"
           >
             Close
           </button>
@@ -116,12 +116,12 @@ export function RemoteDrawer() {
         <Status bridge={bridge} />
 
         {bridge.devices.length > 0 && (
-          <label className="flex flex-col gap-1 text-xs text-ink-secondary">
+          <label className="flex flex-col gap-1 text-s12 text-ink-secondary">
             Device
             <select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
-              className="rounded-none bg-ground-raised px-3 py-2 text-base text-white outline-none"
+              className="rounded-none bg-ground-raised px-3 py-2 text-s16 text-white outline-none"
             >
               <option value="">Choose…</option>
               {bridge.devices.map((device) => (
@@ -136,9 +136,9 @@ export function RemoteDrawer() {
         {bridge.playback && (
           <div className="rounded-plate bg-ground-raised p-3">
             {bridge.playback.title && (
-              <p className="truncate text-sm font-medium">{bridge.playback.title}</p>
+              <p className="truncate text-s14 font-title font-semibold">{bridge.playback.title}</p>
             )}
-            <p className="font-mono text-xs tabular-nums text-ink-secondary">
+            <p className="font-data font-medium text-s12 tabular-nums text-ink-secondary">
               {formatTime(bridge.playback.positionSec)}
               {bridge.playback.durationSec
                 ? ` / ${formatTime(bridge.playback.durationSec)}`
@@ -177,7 +177,7 @@ export function RemoteDrawer() {
           <Key spec={HOME} disabled={!bridge.selected} onPress={press} />
         </div>
 
-        {bridge.error && <p className="text-xs text-trouble">{bridge.error}</p>}
+        {bridge.error && <p className="text-s12 text-trouble">{bridge.error}</p>}
       </aside>
     </>
   );
@@ -186,7 +186,7 @@ export function RemoteDrawer() {
 function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
   if (bridge.status === 'connected' && bridge.devices.length === 0) {
     return (
-      <div className="rounded-plate bg-ground-raised p-3 text-xs text-ink-secondary">
+      <div className="rounded-plate bg-ground-raised p-3 text-s12 text-ink-secondary">
         <p>Bridge connected, but no devices found.</p>
         <button onClick={bridge.refresh} className="mt-2 text-ink">
           Scan again
@@ -197,7 +197,7 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
 
   if (bridge.status !== 'connected') {
     return (
-      <p className="rounded-pill bg-ground-raised p-3 text-xs text-ink-secondary">
+      <p className="rounded-pill bg-ground-raised p-3 text-s12 text-ink-secondary">
         {bridge.status === 'connecting'
           ? 'Connecting to your bridge…'
           : 'Bridge offline. It will reconnect on its own.'}

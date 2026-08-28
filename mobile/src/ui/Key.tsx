@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { KEY_DISABLED, KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
 import { radius, space, theme } from './theme';
+import { text, type } from '@reviewies/core/tokens';
 
 /**
  * The React Native renderer of `core/src/ui/key.ts`. The decisions are there.
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     borderColor: theme[KEY_DISABLED.colour],
   },
   pressed: { backgroundColor: theme.groundWell },
-  legend: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  legendCentre: { color: theme.actionLabel, fontWeight: '700' },
+  legend: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
+  legendCentre: { color: theme.actionLabel },
   legendOff: { color: theme[KEY_DISABLED.ink] },
 });

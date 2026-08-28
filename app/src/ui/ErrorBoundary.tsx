@@ -49,14 +49,14 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     if (this.state.failed) {
       return (
         <div className="flex flex-col gap-3 p-4">
-          <h1 className="text-s24 font-display font-semibold">This screen stopped</h1>
+          <h1 className="text-s24 font-title font-semibold">This screen stopped</h1>
           <p className="text-ink-secondary">
             Something on it went wrong. Everything you have tracked is still here — it
             lives on this device and nothing was lost.
           </p>
           <a
             href="/"
-            className="self-start rounded-pill bg-action-fill px-5 py-3 font-medium text-action-label"
+            className="self-start rounded-pill bg-action-fill px-5 py-3 font-title font-semibold text-action-label"
           >
             Go to Up Next
           </a>

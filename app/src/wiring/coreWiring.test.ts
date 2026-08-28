@@ -117,8 +117,14 @@ const LOPSIDED: Record<string, string> = {
    * `tokens.generated.test.ts` is what holds the two ends together.
    */
   'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
-  'mobile only: tokens#weight': 'Same table, same generator, spelled font-semibold on the web.',
   'mobile only: tokens#type': 'The web reads --font-* and @font-face, generated from this table.',
+  'mobile only: tokens#track': 'The web reads --tracking-*, emitted from this table.',
+  /*
+   * `weight` used to be here for the same reason. It is not, because the phone stopped
+   * importing it at all in stage 2: React Native ignores a `fontWeight` beside a
+   * `fontFamily`, so on that side the weight is the file and the table is web-only. The
+   * clause below is what deleted the line — nobody had to remember.
+   */
 
   /*
    * Tailwind compiles from source text, so a class assembled at runtime is a class that
@@ -132,6 +138,7 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/button#BOX_RADIUS': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#PRESSED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#SELECTED': 'Tailwind needs a literal class; button.test.ts couples the two.',
+  'mobile only: ui/button#LABEL_FACE': 'Tailwind needs a literal class; type.test.ts couples the two.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',

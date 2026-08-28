@@ -202,3 +202,21 @@ export function declarationOf(source: string, name: string): string | undefined 
   }
   return source.slice(from, i);
 }
+
+/**
+ * The style named `name` inside a file's `StyleSheet.create({...})`, and nowhere else.
+ *
+ * `declarationOf` takes the first `name:` or `name =` in the file, which is right until a
+ * screen has both — `mobile/app/watching/[targetId].tsx` holds `const clock =
+ * usePlaybackClock()` two hundred lines above `clock: { fontSize... }`, so a clause asking
+ * for the style's face was handed a hook call and failed on a file that was correct.
+ *
+ * §6.109's rule, one layer along: a needle is only a needle if nothing else in the haystack
+ * looks like it. Narrowing the haystack is the cheaper half of that.
+ */
+export function styleOf(source: string, name: string): string | undefined {
+  const structure = blankLiterals(source);
+  const at = structure.indexOf('StyleSheet.create(');
+  if (at < 0) return undefined;
+  return declarationOf(source.slice(at), name);
+}

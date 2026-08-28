@@ -20,7 +20,7 @@ const RING_ON = 'border-working-fill bg-working-fill text-working-on-fill';
 const RING_UNAVAILABLE = 'border-stroke-hairline';
 
 const UNDO_CLASS =
-  'inline-flex h-11 shrink-0 items-center justify-center rounded-pill border-icon border-mark-cross-off px-3 text-xs font-semibold text-ink';
+  'inline-flex h-11 shrink-0 items-center justify-center rounded-pill border-icon border-mark-cross-off px-3 text-s12 font-title font-semibold text-ink';
 
 export function CrossOff({
   watched,
@@ -59,7 +59,7 @@ export function CrossOff({
             row's ink step carry it independently, which is what makes the pencil stroke
             safe to be decorative. The ring is a fixed 44 square either way. */}
         {watched ? (
-          <span aria-hidden="true" className="text-lg leading-none font-bold">
+          <span aria-hidden="true" className="text-s20 leading-none font-title font-semibold">
             ✓
           </span>
         ) : null}

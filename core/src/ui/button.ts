@@ -97,6 +97,18 @@ interface ButtonShape {
  * web still writes its class names out, for the reason `Button.tsx` gives, and
  * `button.test.ts` holds the two spellings to each other.
  */
+/**
+ * A button label is the title face, on both platforms, in every state.
+ *
+ * Not a weight. React Native ignores `fontWeight` once `fontFamily` is set, so a weight is
+ * a file — and the only semibold in the bundle is Archivo Narrow, which is the title face.
+ * The web was writing `font-medium` and thickening to `font-semibold` when selected; the
+ * phone was writing 600 and thickening to 700. Neither number could survive the face, and
+ * the selected state does not need them: it already carries a tally-width border in the
+ * working colour and a step in ink. Three signals were four.
+ */
+export const LABEL_FACE = 'title';
+
 export const SIZE = {
   page: { minHeight: 48, paddingX: space.s20, paddingY: space.s12, label: text.s16 },
   row: { minHeight: size.target, paddingX: space.s16, paddingY: space.s8, label: text.s14 },

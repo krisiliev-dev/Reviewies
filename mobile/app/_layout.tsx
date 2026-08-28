@@ -6,7 +6,7 @@ import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
@@ -169,6 +169,6 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
-  title: { color: theme.ink, fontSize: text.s24, fontWeight: weight.semibold },
-  detail: { color: theme.inkSecondary, fontSize: 14, textAlign: 'center' },
+  title: { color: theme.ink, fontSize: text.s24, fontFamily: type.family.title.name },
+  detail: { color: theme.inkSecondary, fontSize: text.s14, textAlign: 'center', fontFamily: type.family.body.name },
 });
