@@ -40,11 +40,39 @@ describe('the first run, on both platforms', () => {
     }
   });
 
-  it('offers to match what was imported, in both places it is felt', () => {
+  it('offers to match what was imported, in all three places it is felt', () => {
+    /*
+     * This clause said *two*, and the two it named were the wrong two: "once on the
+     * screen that follows an import, and once on the Up Next that has nothing to show
+     * because of it".
+     *
+     * The second of those is the empty branch, and putting the only real offer there
+     * means the offer disappears the moment it starts working. The first show to match
+     * produces an Up Next entry, the screen leaves the empty branch, the panel unmounts,
+     * and every show still waiting has nowhere in the app to be matched from. The comment
+     * beside the original placement had already said what that costs — "matching what has
+     * landed so far leaves the rest of the import behind it, unmatched and unoffered" —
+     * and this clause pinned the arrangement that guarantees it.
+     *
+     * Measured (§6.101): after importing the demo library, the calendar read "2 imported
+     * shows still need matching" and Up Next showed one matched show and no way to reach
+     * the other two. Those two were *asks* — ambiguous matches — which is not a race that
+     * resolves itself but a state that lasts until somebody answers it, and an unmatched
+     * row is invisible to the calendar, to Discover and to everything keyed by a
+     * provider ID.
+     *
+     * Three now: the post-import panel (which explains rather than offers, and carries
+     * `autoStart={false}` for that reason), the empty Up Next, and the Up Next with a
+     * list in it. The last two are conditioned on there being something unmatched.
+     */
     for (const [name, source] of [['web', web()], ['phone', phone()]] as const) {
-      // Once on the screen that follows an import, and once on the Up Next that has
-      // nothing to show because of it.
-      expect(source.split('<MatchImports').length - 1, name).toBe(2);
+      expect(source.split('<MatchImports').length - 1, name).toBe(3);
+      // And the two that are offers are guarded by the count, not by emptiness. An
+      // unconditional one would render on a library that has nothing to match.
+      expect(
+        source.split('{unmatched && !importing ? <MatchImports').length - 1,
+        `${name}: an offer not conditioned on anything being unmatched`,
+      ).toBe(2);
     }
   });
 

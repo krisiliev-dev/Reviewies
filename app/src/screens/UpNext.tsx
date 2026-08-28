@@ -171,6 +171,24 @@ export function UpNext() {
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Up Next</h1>
 
+      {/*
+        Here too, and this is the whole point of the second copy.
+        *
+        * The offer used to live only in the branch above — the one that renders when Up
+        * Next is *empty* — and the comment beside it already said what that costs:
+        * "matching what has landed so far leaves the rest of the import behind it,
+        * unmatched and unoffered". It does, and worse than the sentence suggests. The
+        * first show to match produces an Up Next entry, the screen leaves the empty
+        * branch, this panel unmounts, and the shows still waiting have nowhere in the
+        * app to be matched from. A control offered only while it is not needed.
+        *
+        * Measured: after importing the demo library the calendar read "2 imported shows
+        * still need matching" and Up Next showed one matched show and no way to match
+        * the other two. Those two were asks — ambiguous matches — which is not a race
+        * that resolves itself but a state that lasts until somebody answers it.
+      */}
+      {unmatched && !importing ? <MatchImports /> : null}
+
       {/* §6.64's undo — two tabs racing at the same button showed the row changing under
           the click, and the mis-tap needs the same way back — used to be a banner here,
           two hundred points from the tap that caused it and above a list that had already

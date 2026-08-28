@@ -244,6 +244,20 @@ export const COPY = {
      */
     empty:
       'Nothing airing in the next two months. Track a show that is still running and it will show up here.',
+    /**
+     * The same screen, when the reason for the emptiness is not the one above.
+     *
+     * An imported show has no air dates until it has been matched to the provider — an
+     * export carries names and watch dates and nothing else. So a person who has just
+     * brought in a decade of television, and whose matching has not run or is waiting on
+     * an ambiguous title, is told to "track a show that is still running" while tracking
+     * eleven of them. §6.56's rule, one screen further on: an empty state is a claim
+     * about somebody's own data, and this one was making the wrong claim.
+     */
+    emptyUnmatched: (n: number) =>
+      n === 1
+        ? 'One imported show still needs matching before its air dates arrive. Nothing else is airing in the next two months.'
+        : `${n} imported shows still need matching before their air dates arrive. Nothing else is airing in the next two months.`,
     /** The way out of that empty state, on both platforms since §6.50. */
     findSomething: 'Find something to watch',
     /**

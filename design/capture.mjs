@@ -121,6 +121,40 @@ await page.goto('http://localhost:4200/');
  * data — and if the wait is ever wrong again, the screen it is waiting for is the screen
  * that shows it.
  */
+/*
+ * First on Up Next, because that is where the work happens.
+ *
+ * Matching runs from `MatchImports`, which is mounted on Up Next and nowhere else. This
+ * harness used to sit on `/calendar` for three minutes waiting for rows — on a screen
+ * where nothing was matching — and then navigate away and photograph a library that had
+ * only started progressing again the moment it left.
+ *
+ * §6.101 is what made that visible: before it, matching stopped after the first show
+ * anyway, so waiting in the wrong place and waiting for something that had stalled looked
+ * identical. Two waits now, each on the screen that can actually see its own thing —
+ * Up Next until it stops saying "Matching…", then the calendar until the slowest show's
+ * episodes have landed.
+ */
+await page.goto('http://localhost:4200/');
+let progress = '';
+let stuckFor = 0;
+for (let i = 0; i < 240; i++) {
+  const body = await page.locator('body').innerText();
+  const line = body.match(/Matching… [^\n]*/)?.[0] ?? '';
+  if (!line) break;
+  // Give up on a stalled run rather than on a clock: the counter is the app telling you
+  // whether anything is still happening, and waiting out four minutes of a run that
+  // stopped moving in the first thirty seconds is time spent learning nothing.
+  stuckFor = line === progress ? stuckFor + 1 : 0;
+  progress = line;
+  if (stuckFor >= 45) {
+    console.error(`Matching stopped moving at "${line}" — the screenshots below are of a partly matched library.`);
+    process.exitCode = 1;
+    break;
+  }
+  await page.waitForTimeout(1000);
+}
+
 await page.goto('http://localhost:4200/calendar');
 let filled = false;
 let steady = 0;

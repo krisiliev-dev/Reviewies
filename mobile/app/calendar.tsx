@@ -11,6 +11,7 @@ import {
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
+import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { radius, theme } from '../src/ui/theme';
 import {
@@ -42,10 +43,13 @@ export default function CalendarScreen() {
   const [delivery, setDelivery] = useState<string>();
   const [syncNote, setSyncNote] = useState<string>();
   const [registered, setRegistered] = useState(false);
+  // Why the screen is empty, not only that it is.
+  const [unmatched, setUnmatched] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     void getUpcoming().then(setEntries);
+    void unmatchedImportCount().then(setUnmatched);
     // Opening the calendar is the one moment somebody definitely wants it current.
     // Throttled in the core, so arriving here repeatedly costs nothing; the list is
     // re-read after, because nothing on this platform is watching the table.
@@ -134,7 +138,12 @@ export default function CalendarScreen() {
         {entries === undefined && <ActivityIndicator color={theme.workingFill} />}
         {entries?.length === 0 && (
           <View style={styles.emptyBlock}>
-            <Text style={styles.blurb}>{COPY.calendar.empty}</Text>
+            {/* Which sentence depends on *why* it is empty: an imported show has no air
+                dates until matching gives it a provider ID, so somebody who has just
+                brought in eleven shows was being told to track one. */}
+            <Text style={styles.blurb}>
+              {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
+            </Text>
             {/* Doc 10 §8 said this of the web's copy: a screen whose job is "what is on"
                 should not answer "nothing" and stop, with Discover one tap away. The web
                 got the button; the phone, whose sentence the web borrowed, did not. */}

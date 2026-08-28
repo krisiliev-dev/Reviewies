@@ -169,13 +169,27 @@ export default function UpNextScreen() {
             />
           </View>
         ) : (
-          entries.map((entry) => (
-            <Row
-              key={entry.seriesId}
-              entry={entry}
-              onCatchUp={setCatchingUp}
-            />
-          ))
+          <>
+            {/*
+              Here too, and this is the whole point of the second copy.
+
+              The offer used to live only in the empty branch above, and the comment
+              beside it already said what that costs — "matching what has landed so far
+              leaves the rest of the import behind it, unmatched and unoffered". It does,
+              and worse: the first show to match produces an entry, the screen leaves the
+              empty branch, that panel unmounts, and the shows still waiting have nowhere
+              in the app to be matched from. A control offered only while it is not needed.
+
+              Measured after importing the demo library: the calendar read "2 imported
+              shows still need matching" and this screen showed one matched show and no
+              way to match the other two. Those two were asks — ambiguous matches — which
+              is not a race that resolves itself but a state that lasts until answered.
+            */}
+            {unmatched && !importing ? <MatchImports /> : null}
+            {entries.map((entry) => (
+              <Row key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
+            ))}
+          </>
         )}
       </ScrollView>
 

@@ -249,6 +249,34 @@ describe('the words, on both platforms', () => {
     expect(COPY.calendar.empty).toContain('two months');
   });
 
+  it('tells an imported library why the calendar is empty, on both screens', () => {
+    /*
+     * §6.56's rule one screen further on: an empty state is a claim about somebody's own
+     * data, and this one was making the wrong claim. An imported show has no air dates
+     * until matching gives it a provider ID — an export carries names and watch dates and
+     * nothing else — so somebody who had just brought in eleven shows was told to "track a
+     * show that is still running".
+     *
+     * Both screens, because a sentence that exists in the core and is read by one platform
+     * is the drift §6.53 built this file to stop.
+     */
+    expect(COPY.calendar.emptyUnmatched(1)).toContain('One imported show');
+    expect(COPY.calendar.emptyUnmatched(3)).toContain('3 imported shows');
+    // It still says what is *also* true, so the sentence replaces the other rather than
+    // leaving somebody wondering whether anything is airing.
+    for (const n of [1, 3]) expect(COPY.calendar.emptyUnmatched(n)).toContain('two months');
+
+    for (const path of ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx']) {
+      const source = read(path);
+      expect(source, `${path} does not use it`).toContain('COPY.calendar.emptyUnmatched');
+      // And decides which sentence from the count rather than always showing one.
+      expect(source, `${path} shows it unconditionally`).toContain('unmatched ?');
+      expect(source, `${path} never asks how many are unmatched`).toContain(
+        'unmatchedImportCount',
+      );
+    }
+  });
+
   it('offers a notification hint for every choice, in one voice', () => {
     // Both screens had their own copy of this list and all three hints had drifted.
     expect(NOTIFY_OPTIONS.map((o) => o.key)).toEqual(['off', 'milestones', 'all']);

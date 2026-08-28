@@ -6915,6 +6915,116 @@ to typecheck this workspace — writes a build cache beside each tsconfig, and n
 git to leave it alone.
 
 
+### 6.101 Discover offered you your own library back, and two halves of one feature disagreed about identity
+
+The thing this product is sold on. Trakt's most-repeated roadmap complaint is
+recommendations that keep suggesting what you have already watched; excluding them is,
+as `recommend.ts` says in its own header, "not a filter bolted on at the end — it is the
+point of this module". §6.100's screenshots caught it doing the opposite: **Hollow Crown
+Saga, offered as a suggestion, directly beneath "Because you watched Hollow Crown Saga
+and The Long Dark".**
+
+**Measured before anything was written down, which is the whole of the method here.**
+§6.98 put three explanations for one empty screen into the record before inspecting
+anything and had to retract two. So: reproduce it on the platform whose store is legible
+— the web's Dexie is IndexedDB and can be read from `page.evaluate`, the phone's
+wa-sqlite cannot — import the same CSV, and print the library, the watches and the
+rendered suggestions side by side.
+
+```
+library titleIds : ["local:tv:tvtime-100","local:tv:tvtime-101","local:tv:tvtime-102"]
+watch seriesIds  : ["local:tv:tvtime-100","local:tv:tvtime-101","local:tv:tvtime-102"]
+suggested        : The Long Dark => /title/tmdb:tv:1
+                   Kitchen Nightshift => /title/tmdb:tv:2
+                   Hollow Crown Saga => /title/tmdb:tv:3
+                   Quiet Harbour => /title/tmdb:movie:4
+```
+
+A TV Time export carries names and watch dates and **no provider IDs**, so an import
+lands as `local:tv:tvtime-100`. `excludedTitleIds` compares IDs. The provider's copy of
+the same show is `tmdb:tv:3`. Nothing matches, so every imported show is offered back.
+
+And the seeds — "because you watched…" — resolve through `db.titles` **by name**, which
+works fine. So the two halves of one feature disagreed about what identifies a show, and
+the half that got it right is what made the failure loud enough to see in a screenshot.
+
+**Nothing in `reconcile` is wrong.** Pressing "Match imported shows" fixes everything:
+the library becomes `tmdb:tv:1/2/3`, the calendar fills, and Discover offers only
+*Quiet Harbour*. The bug is that a library can be un-matched at all — and it can, in two
+ways. Matching runs on the next visit to Up Next, so anything done before returning there
+sees local IDs; and a show whose match was ambiguous becomes an **ask**, and an ask nobody
+answers keeps its local ID for as long as it goes unanswered. That second one is not a
+window, it is a state the product deliberately supports (§6.64's ask-flow exists so that
+nothing guesses about somebody's history).
+
+**The fix is narrow on purpose.** `excludedNames()` returns the lowercased names of
+library, watchlist and watch rows whose ID is `local:` — and only those, because that is
+exactly the case where the name is all the row has. A matched row keeps being compared by
+ID, which is the reliable thing. This must never become a general name-matcher: two shows
+share a name often enough — a remake, a translation, a film and the series of it — and
+deciding they are the same is precisely what the ask-flow refuses to do to somebody's
+history. There is a clause holding that line.
+
+**The same blindness had the calendar telling people to track a show they already track.**
+An unmatched show has no air dates, so the calendar is empty, and its empty state said
+*"Nothing airing in the next two months. Track a show that is still running and it will
+show up here"* — to somebody who had just imported eleven of them. §6.56's rule, one
+screen further on: an empty state is a claim about somebody's own data, and this one was
+making the wrong claim. `COPY.calendar.emptyUnmatched` says what is actually missing, on
+both screens, and the copy guard checks both use it.
+
+*This is not the calendar of task #142.* That one photographs empty **after** filling, on a
+matched library, and is still open. This is a different empty calendar with the same
+appearance — which is worth writing down precisely because the resemblance is how a wrong
+explanation gets adopted.
+
+**And a plant caught the tests proving the part rather than the product.** The first
+version of the new clauses called `mergeSuggestions` directly and passed it
+`await excludedNames()` by hand — so deleting the argument from `getSuggestions`, the
+only call site that matters, left every one of them green. Rewritten to go through
+`getSuggestions`.
+
+That exposed a second thing. The module merges twice — once for the seeded feed, once for
+the trending fallback — and the provider in the core test environment returns nothing for
+an imported title's ID, so *every* behavioural test lands in the second branch. A fix
+applied to one call and not the other is unreachable behaviourally here, so that one is a
+source clause: every `mergeSuggestions` call inside `getSuggestions` is handed the name
+set. Named for what it measures.
+
+One more, from the same pass: the first exclusion test used "The Long Dark" — a fixture
+name the provider in that environment has never heard of. Excluding a name nothing was
+going to suggest proves nothing, and it would have passed with the whole fix deleted. It
+now reads the first thing the feed actually offers and excludes *that*.
+
+**And then the recapture answered the question underneath all of it.** With Discover fixed,
+the calendar's new sentence rendered — and it read **"2 imported shows still need matching"**
+on a library of three. Matching had run and matched one. Up Next showed that one show and
+**no way to match the other two**.
+
+`MatchImports` was mounted in exactly one place that matters on each platform: the branch
+that renders when Up Next is *empty*. So the first show to match produces an entry, the
+screen leaves that branch, the panel unmounts, and every show still waiting has nowhere in
+the app to be matched from. **A control offered only while it is not needed.**
+
+The comment beside the original placement had already written the consequence down —
+*"matching what has landed so far leaves the rest of the import behind it, unmatched and
+unoffered"* — and `migrationParity.test.ts` then pinned the count at exactly two, naming
+those two placements as correct. A guard can record a decision as faithfully as it records
+a rule, and this one had made the wrong arrangement permanent.
+
+It is three now on both platforms: the post-import panel that explains (`autoStart={false}`,
+because starting underneath its own explanation talks over itself), the empty Up Next, and
+the Up Next with a list in it — the last two conditioned on the count rather than on
+emptiness. The guard says three, says why two was wrong, and checks that both offers are
+guarded by `unmatched` rather than rendered unconditionally. Four plants, four caught.
+
+This is the mechanism behind more than Discover. An unmatched row is invisible to
+everything keyed by a provider ID, and until now a partially-matched import had no way to
+finish. Whether it is also the cause of task #142's empty calendar photograph is now
+answerable rather than open: the shows that never matched were **asks**, and the harness
+never answered them because it had nowhere to answer them from.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7260,14 +7370,22 @@ and which single claim in this document could not be checked at all:
   *not finished*. That is not the same bug as the empty photograph and it is not proof that
   it is the same bug — but it is the first evidence that this screen's timing is unusual,
   and it is where the next attempt should start.
-- **Discover suggests shows you already track, on the path anybody's library arrives by.**
-  §6.99's capture shows "Hollow Crown Saga" offered under "Because you watched Hollow Crown
-  Saga and The Long Dark". Both platforms now check the exclusion in smoke and both pass —
-  on a library built by tracking shows directly. The capture harness builds its library the
-  other way, by importing a TV Time CSV and reconciling it onto provider IDs, and there it
-  fails. `reconcile` does rewrite `library.titleId` and `watches.seriesId` to the provider
-  ID, so the mechanism is not established; the harness reproduces it by name, which is where
-  the investigation starts rather than ends. It is the exclusion the product is sold on.
+- **A partially-matched import had no way to finish, and the guard had pinned the
+  arrangement that guaranteed it.** §6.101: `MatchImports` was offered only on an *empty*
+  Up Next, so the first show to match unmounted the control that would match the rest.
+  Fixed on both platforms and re-guarded. What this does not settle is task #142 — the
+  calendar photographing empty *after* filling — but it does explain why the harness's
+  library was never fully matched, which was the assumption every earlier attempt at #142
+  rested on.
+- **An un-matched library is invisible to everything keyed by a provider ID, and only two
+  screens have been taught to notice.** §6.101 found and fixed the two that were caught
+  lying: Discover offered imported shows back, and the calendar told somebody to track a
+  show they had already tracked. Both are now name-aware or say why they are empty. What
+  has *not* been swept is everything else that compares by ID while a library row may be
+  `local:` — Stats counts runtime by title, Search's "already tracking" state, the
+  watchlist's duplicate check, `where-to-watch`. None has been looked at, and the state is
+  not a transient: a show whose match was ambiguous stays `local:` until somebody answers
+  the ask, which they may never do.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

@@ -41,6 +41,47 @@ export async function excludedTitleIds(): Promise<Set<string>> {
   return excluded;
 }
 
+/**
+ * The other half of the same question, for the rows that have no provider ID yet.
+ *
+ * A TV Time export carries names and dates and no IDs, so an import lands as
+ * `local:tv:tvtime-100` and stays that way until matching rewrites it. Matching runs on
+ * the next visit to Up Next — but a show whose match was ambiguous becomes an *ask*, and
+ * an ask nobody answers is a library row that keeps its local ID indefinitely.
+ *
+ * Every screen that compares by ID is blind to those rows, and on this one it is worse
+ * than blind: the seeds are resolved through `db.titles` by *name*, so Discover happily
+ * printed "Because you watched Hollow Crown Saga" directly above a suggestion **of**
+ * Hollow Crown Saga. The two halves of one feature disagreed about what identifies a
+ * show, and the half that got it right made the failure louder.
+ *
+ * By name, and only for local rows, because that is exactly the case where the name is
+ * all the row has. Matched rows keep being compared by ID, which is the reliable thing:
+ * this is not a general name-matcher and must not become one — guessing that two names
+ * are the same show is what the ask-flow exists to avoid doing on somebody's history.
+ */
+export async function excludedNames(): Promise<Set<string>> {
+  const [library, watches, watchlist, titles] = await Promise.all([
+    db.library.toArray(),
+    db.watches.toArray(),
+    db.watchlist.toArray(),
+    db.titles.toArray(),
+  ]);
+
+  const nameOf = new Map(titles.map((t) => [t.id, t.name]));
+  const names = new Set<string>();
+  const add = (id: string) => {
+    if (!id.startsWith('local:')) return;
+    const name = nameOf.get(id);
+    if (name) names.add(name.trim().toLowerCase());
+  };
+
+  for (const item of library) add(item.titleId);
+  for (const item of watchlist) add(item.titleId);
+  for (const w of watches) add(w.seriesId ?? w.targetId);
+  return names;
+}
+
 /** The titles worth seeding recommendations from: what you have given the most time to. */
 export async function seedTitles(limit = 5): Promise<Array<{ titleId: string; name: string }>> {
   const watches = await db.watches.toArray();
@@ -69,6 +110,8 @@ export function mergeSuggestions(
   lists: Array<{ seedName: string; results: SearchResult[] }>,
   excluded: Set<string>,
   limit = 30,
+  /** Names of library rows that have no provider ID yet — see `excludedNames`. */
+  excludedNameSet: Set<string> = new Set(),
 ): Suggestion[] {
   const merged = new Map<string, Suggestion>();
 
@@ -76,6 +119,8 @@ export function mergeSuggestions(
     // Position matters: the top of each list is a stronger signal than the tail.
     results.forEach((result, index) => {
       if (excluded.has(result.id)) return;
+      // And by name, for the rows whose ID cannot answer yet.
+      if (excludedNameSet.has(result.name.trim().toLowerCase())) return;
 
       const existing = merged.get(result.id);
       const weight = 1 / (index + 1);
@@ -102,7 +147,11 @@ export function mergeSuggestions(
  * they have already added.
  */
 export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
-  const [excluded, seeds] = await Promise.all([excludedTitleIds(), seedTitles()]);
+  const [excluded, names, seeds] = await Promise.all([
+    excludedTitleIds(),
+    excludedNames(),
+    seedTitles(),
+  ]);
 
   const lists: Array<{ seedName: string; results: SearchResult[] }> = [];
 
@@ -114,12 +163,17 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
     }
   }
 
-  const merged = mergeSuggestions(lists, excluded, limit);
+  const merged = mergeSuggestions(lists, excluded, limit, names);
   if (merged.length > 0) return merged;
 
   try {
     const trending = await getProvider().getTrending();
-    return mergeSuggestions([{ seedName: 'Trending now', results: trending }], excluded, limit);
+    return mergeSuggestions(
+      [{ seedName: 'Trending now', results: trending }],
+      excluded,
+      limit,
+      names,
+    );
   } catch (e) {
     // Rethrown rather than swallowed. Both screens already have an error slot and were
     // never given anything to put in it, so a provider outage showed "Nothing new to

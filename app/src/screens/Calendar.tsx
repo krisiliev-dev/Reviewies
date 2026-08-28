@@ -14,6 +14,7 @@ import {
   type UpcomingEntry,
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
+import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 import { COPY } from '@reviewies/core/copy';
@@ -23,6 +24,9 @@ import { Row as BaseRow } from '../ui/Row';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
+  // Why the screen is empty, not only that it is. An imported show has no air dates
+  // until matching gives it a provider ID.
+  const unmatched = useLiveQuery(() => unmatchedImportCount(), [], undefined);
 
   // Opening the calendar is the one moment somebody definitely wants it current. The
   // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
@@ -120,8 +124,14 @@ export function Calendar() {
           {/* Doc 10 §8: this said nothing was on and stopped, with Discover a tap away.
               A screen whose job is "what shall I watch" should not be a dead end — and
               the phone's version of this sentence already said what to do about it, so
-              this is the phone's copy rather than a third one. */}
-          <p className="text-ink-secondary">{COPY.calendar.empty}</p>
+              this is the phone's copy rather than a third one.
+
+              And which sentence it is depends on *why* it is empty. An imported show has
+              no air dates until matching gives it a provider ID, so somebody who has just
+              brought in eleven shows was being told to track one. */}
+          <p className="text-ink-secondary">
+            {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
+          </p>
           <Link
             to="/discover"
             className="rounded-pill border border-stroke-signal px-4 py-2 text-sm"
