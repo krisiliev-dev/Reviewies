@@ -63,11 +63,28 @@ describe('the type scale', () => {
      * and a detail screen's. What is forbidden is a *fourth* spelled as a Tailwind step,
      * which is what all twenty-one of them were.
      */
-    const allowed = ['text-s30 font-bold', 'text-s24 font-semibold', 'text-s20 font-semibold'];
+    /*
+     * Size, face and weight, checked as three facts rather than as one string.
+     *
+     * These were substrings — `'text-s30 font-bold'` — and §6.112 put `font-display`
+     * between the two halves, so every one of them failed on a change that was correct.
+     * A clause that pins the *order* of class names is a clause that fails when somebody
+     * adds a class, which is not what it is for.
+     */
+    const allowed = [
+      { size: 'text-s30', face: 'font-display', weight: 'font-bold' },
+      { size: 'text-s24', face: 'font-display', weight: 'font-semibold' },
+      { size: 'text-s20', face: 'font-display', weight: 'font-semibold' },
+    ];
+    const wears = (cls: string, role: (typeof allowed)[number]) =>
+      cls.includes(role.size) && cls.includes(role.face) && cls.includes(role.weight);
     // Four roles now, and the fourth is the one §6.110 found: a heading that is a
     // *sentence* under a screen's own title, which is not a screen title and was being
     // drawn as one.
-    const ALLOWED_H2 = ['text-s20 font-semibold', 'text-s12 font-semibold'];
+    const ALLOWED_H2 = [
+      { size: 'text-s20', face: 'font-display', weight: 'font-semibold' },
+      { size: 'text-s12', face: 'font-title', weight: 'font-semibold' },
+    ];
     const offenders: string[] = [];
     let seen = 0;
     for (const file of filesUnder('app/src')) {
@@ -75,7 +92,7 @@ describe('the type scale', () => {
         seen++;
         const cls = m[1];
         if (BUILT_IN.test(cls)) offenders.push(`${file}: ${cls}`);
-        else if (!allowed.some((a) => cls.includes(a))) offenders.push(`${file}: ${cls}`);
+        else if (!allowed.some((role) => wears(cls, role))) offenders.push(`${file}: ${cls}`);
       }
     }
     // The count is a floor rather than a pin: a screen added later should be caught by the
@@ -102,7 +119,7 @@ describe('the type scale', () => {
         const decided = /uppercase/.test(m[1]) || /text-s\d/.test(m[1]);
         if (!decided) continue;
         h2s++;
-        if (!ALLOWED_H2.some((a) => m[1].includes(a))) wrongH2.push(`${file}: ${m[1]}`);
+        if (!ALLOWED_H2.some((role) => wears(m[1], role))) wrongH2.push(`${file}: ${m[1]}`);
       }
     }
     expect(h2s, 'no h2 matched, so this proved nothing').toBeGreaterThan(10);
@@ -154,6 +171,9 @@ describe('the type scale', () => {
       expect(source, `${file} draws its title from a literal`).toMatch(
         /heading: \{[^}]*fontSize: text\.s30[^}]*fontWeight: weight\.bold/,
       );
+      expect(source, `${file}'s title is in whatever face the system offers`).toMatch(
+        /heading: \{[^}]*fontFamily: type\.family\.display\.name/,
+      );
       expect(source, `${file} still has a raw 30`).not.toMatch(/fontSize: 30\b/);
     }
     // And the same step on the other side, so the two cannot be migrated apart. The screen's
@@ -162,7 +182,7 @@ describe('the type scale', () => {
     expect(text.s30).toBe(30);
     const upNext = read('app/src/screens/UpNext.tsx');
     expect(upNext, "the web's Up Next title is off the step the phone's is on").toMatch(
-      /<h1 className="[^"]*text-s30 font-bold">Up Next<\/h1>/,
+      /<h1 className="[^"]*text-s30 font-display font-bold">Up Next<\/h1>/,
     );
   });
 
@@ -174,7 +194,7 @@ describe('the type scale', () => {
      * this scale killed. Found by the clause above rather than by the migration, which
      * swept `app/src/screens` and missed a screen title living in `app/src/ui`.
      */
-    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('text-s24 font-semibold');
+    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('text-s24 font-display font-semibold');
     const phone = read('mobile/app/_layout.tsx');
     expect(phone).toMatch(/title: \{[^}]*fontSize: text\.s24[^}]*fontWeight: weight\.semibold/);
     expect(phone, 'the crash screen still has a raw 18').not.toMatch(/fontSize: 18\b/);
@@ -260,8 +280,23 @@ describe('the type scale', () => {
     expect(web, 'a Tailwind step is back on the web').not.toMatch(BUILT_IN);
 
     // And the pairs that were wrong, named so a future edit cannot quietly re-split them.
+    /*
+     * The tile's value at the step, and mono on the *figure* inside it rather than on the
+     * whole string. This clause read `'text-s20 font-data font-semibold'` — the exact
+     * arrangement that printed `7  days`, pinned as though it were the answer. §6.101's
+     * shape: a guard encoding a decision rather than a rule, and the decision was wrong.
+     */
     expect(phone).toContain('fontSize: text.s20');   // the figure tile's value
     expect(web).toContain('text-s20 font-semibold'); // the same tile
+    expect(web, 'the web tile stopped setting its figure in mono').toContain(
+      'font-data tabular-nums',
+    );
+    expect(phone, 'the phone tile stopped setting its figure in mono').toContain(
+      'fontFamily: type.family.data.name',
+    );
+    expect(phone, 'the unit went back into mono with the figure').toContain(
+      'figureUnit: { fontFamily: type.family.body.name }',
+    );
     expect(declarationOf(phone, 'figureLabel'), 'the tile label is off the scale')
       .toContain('fontSize: text.s12');
     // The tile's own `<dt>`, not the tally count, which carries the same pair of classes.

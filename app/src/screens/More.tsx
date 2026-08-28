@@ -38,7 +38,7 @@ export function More() {
 
   return (
     <div className="flex flex-col gap-3 p-4">
-      <h1 className="text-s30 font-bold">More</h1>
+      <h1 className="text-s30 font-display font-bold">More</h1>
 
       <section className="rounded-plate bg-ground-raised p-4">
         <p className="text-sm text-ink-secondary">

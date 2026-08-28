@@ -70,14 +70,14 @@ export function Calendar() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s24 font-semibold">Upcoming</h1>
+      <h1 className="mb-4 px-1 text-s24 font-display font-semibold">Upcoming</h1>
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
         {/* The eyebrow, at the step §6.108 chose for it on Stats: uppercase with
             letter-spacing reads a size larger than its number, and the phone has drawn
             this heading at 12 since it was written while the web drew it at 14 in
             sentence case. One treatment, on both. */}
-        <h2 className="mb-2 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="mb-2 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
           Tell me about
         </h2>
         {/* Rows, and every hint visible, which is what the phone did and the web did not:
@@ -151,7 +151,7 @@ export function Calendar() {
       <div className="flex flex-col gap-5">
         {grouped.map(([day, dayEntries]) => (
           <section key={day}>
-            <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+            <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
               {formatDay(day)}
             </h2>
             <ul className="flex flex-col gap-1.5">

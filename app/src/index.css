@@ -31,6 +31,11 @@ body,
 body {
   background: var(--ground);
   color: var(--ink);
+  /*
+   * The body face, from the same table the phone reads. Everything above this was drawn in
+   * whatever the browser felt like — sixteen sprints of design work on a system stack.
+   */
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   /* Nothing in a poster-heavy list should rubber-band sideways. */
   overflow-x: hidden;

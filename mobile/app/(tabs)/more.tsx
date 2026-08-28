@@ -10,7 +10,7 @@ import {
 } from '@reviewies/core/metadata/provider';
 import { usingFixtures } from '@reviewies/core/metadata/index';
 import { radius, theme } from '../../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Row as BaseRow } from '../../src/ui/Row';
 
@@ -116,7 +116,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, marginBottom: 8 },
+  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name, marginBottom: 8 },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardText: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },

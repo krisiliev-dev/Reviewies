@@ -14,7 +14,7 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { radius, theme } from '../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import {
   pushSupported,
   registerForPush,
@@ -213,6 +213,7 @@ const styles = StyleSheet.create({
     fontSize: text.s12,
     fontWeight: weight.semibold,
     letterSpacing: 1,
+    fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
   spaced: { marginTop: 20 },
@@ -229,6 +230,7 @@ const styles = StyleSheet.create({
     fontSize: text.s12,
     fontWeight: weight.semibold,
     letterSpacing: 1,
+    fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
 });

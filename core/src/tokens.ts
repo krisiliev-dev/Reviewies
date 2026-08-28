@@ -206,6 +206,48 @@ export const text = {
 } as const;
 
 /**
+ * Six families, and the eight files behind them.
+ *
+ * `docs/design/direction.md` chose them and `docs/design/tokens.md` costed them; this is
+ * where they become real. Two things in those documents did not survive contact:
+ *
+ * **Archivo Expanded is not a face.** The direction's own refusal 2 says so — it is a named
+ * instance of a variable font, React Native cannot set variable axes, and instancing it out
+ * needs a build step this repo does not have. `display` is Archivo Narrow 700 tracked out,
+ * which is what the refusal prescribes.
+ *
+ * **The Japanese faces cost 4.36 MB of a 4.94 MB set.** Measured, after fetching all eight:
+ * the two IBM Plex Sans JP files are 88% of the weight, and either one alone is larger than
+ * the spec's estimate for the whole set (1.2–1.8 MB). So `jp` resolves to the platform's own
+ * Japanese face rather than bundling one. The direction's argument for bundling is that "a
+ * font over the network is a font that fails on a plane" — a *system* font fails on no
+ * plane, and the six Latin faces bundle at 587 KB. What is given up is the exact match with
+ * Archivo Narrow that graft 8 asked for; what is bought is not shipping four and a third
+ * megabytes of Japanese to somebody whose library is in English. Reversible: put the two
+ * files back and change this table.
+ *
+ * A weight is a file. React Native will not synthesise one for a named family, and once
+ * `fontFamily` is set `fontWeight` is ignored on Android and faux-synthesised on iOS — so
+ * Narrow 600 and Narrow 700 are two families here, not one family and two weights.
+ */
+export const type = {
+  family: {
+    /** Mastheads. Archivo Narrow 700, tracked out — the direction's refusal 2. */
+    display: { name: 'ArchivoNarrow-Bold', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
+    /** Section heads and metadata, the tracked caps this design is made of. */
+    title: { name: 'ArchivoNarrow-SemiBold', stack: "'Archivo Narrow', Archivo, ui-sans-serif, system-ui" },
+    body: { name: 'Archivo-Regular', stack: 'Archivo, ui-sans-serif, system-ui' },
+    /** Every number, tabular: predictable column widths are what stop S02E07 wrapping. */
+    data: { name: 'IBMPlexMono-Medium', stack: "'IBM Plex Mono', SFMono-Regular, ui-monospace" },
+    prose: { name: 'Newsreader-Regular', stack: "Newsreader, 'New York', ui-serif" },
+    /** Its own family rather than `fontStyle: 'italic'`, for the same reason as the weights. */
+    proseItalic: { name: 'Newsreader-Italic', stack: "Newsreader, 'New York', ui-serif" },
+    /** Not bundled — see above. The stack names real system faces, not a generic. */
+    jp: { name: null, stack: "'Hiragino Sans', 'Noto Sans CJK JP', 'Yu Gothic', sans-serif" },
+  },
+} as const;
+
+/**
  * Four, which is what the build uses: 500 once, 600 forty-five times, 700 eighteen, and
  * 400 wherever nothing was said.
  *

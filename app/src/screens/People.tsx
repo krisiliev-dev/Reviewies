@@ -57,7 +57,7 @@ export function People() {
   if (!syncConfigured()) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 px-1 text-s24 font-semibold">People</h1>
+        <h1 className="mb-3 px-1 text-s24 font-display font-semibold">People</h1>
         <p className="px-1 text-sm text-ink-secondary">{COPY.people.withoutAccount}</p>
       </div>
     );
@@ -66,7 +66,7 @@ export function People() {
   if (!session) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 px-1 text-s24 font-semibold">People</h1>
+        <h1 className="mb-3 px-1 text-s24 font-display font-semibold">People</h1>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
         <p className="px-1 text-sm text-ink-secondary">{COPY.people.signInToFollow('Your data')}</p>
@@ -76,7 +76,7 @@ export function People() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="px-1 text-s24 font-semibold">People</h1>
+      <h1 className="px-1 text-s24 font-display font-semibold">People</h1>
 
       {listsFailed && (
         <p className="px-1 text-sm text-trouble" role="status">
@@ -240,7 +240,7 @@ function FindPeople({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">Find people</h2>
+      <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">Find people</h2>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -346,7 +346,7 @@ function PersonList({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+      <h2 className="px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
         {heading}
         {people.length > 0 && <span className="ml-1.5 normal-case">{people.length}</span>}
       </h2>

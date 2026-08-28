@@ -118,6 +118,7 @@ const LOPSIDED: Record<string, string> = {
    */
   'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
   'mobile only: tokens#weight': 'Same table, same generator, spelled font-semibold on the web.',
+  'mobile only: tokens#type': 'The web reads --font-* and @font-face, generated from this table.',
 
   /*
    * Tailwind compiles from source text, so a class assembled at runtime is a class that

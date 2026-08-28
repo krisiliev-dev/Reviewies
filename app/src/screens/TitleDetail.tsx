@@ -85,7 +85,7 @@ export function TitleDetail() {
           className="h-36 w-24 rounded-plate"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-s20 font-semibold">
+          <h1 className="text-s20 font-display font-semibold">
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
           </h1>
           {!title && (failed || !loading) && (
@@ -187,7 +187,7 @@ export function TitleDetail() {
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
             Season {season}
           </h2>
           <ul className="flex flex-col gap-1.5">

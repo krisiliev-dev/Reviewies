@@ -160,7 +160,6 @@ const NOT_ON_DISK: Record<string, string> = {
   'app/src/ui/fontBundle.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/typeScale.test.ts': 'docs/design/tokens.md specifies it — not yet built',
   'app/src/ui/watchingDim.test.ts': 'docs/design/tokens.md specifies it — not yet built',
-  'mobile/src/ui/fonts.ts': 'docs/design/tokens.md specifies it — not yet built',
 };
 
 /** Every markdown file in docs/, not just the research directory. */

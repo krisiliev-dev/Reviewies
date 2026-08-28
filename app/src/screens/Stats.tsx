@@ -10,6 +10,7 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { COPY } from '@reviewies/core/copy';
+import { splitFigure } from '@reviewies/core/ui/data';
 import { formatDay } from '@reviewies/core/time';
 
 /**
@@ -49,7 +50,7 @@ export function Stats() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s24 font-semibold">Stats</h1>
+      <h1 className="mb-4 px-1 text-s24 font-display font-semibold">Stats</h1>
 
       {/*
        * Two groups since §6.109, because they are two questions.
@@ -78,7 +79,7 @@ export function Stats() {
 
       {YEARS.length > 0 && (
         <div className="mb-5">
-          <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
             Year in review
           </h2>
           {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
@@ -138,7 +139,7 @@ function Summary({
       {isYearReview && (
         <div className="rounded-plate bg-ground-raised p-4">
           <p className="text-s14 text-ink-secondary">Your {year}</p>
-          <p className="mt-1 text-s30 font-semibold">{formatDuration(summary.minutes)}</p>
+          <p className="mt-1 text-s30 font-data font-semibold">{formatDuration(summary.minutes)}</p>
           <p className="mt-1 text-s14 text-ink-secondary">
             across {summary.episodes} episodes and {summary.distinctTitles}{' '}
             {summary.distinctTitles === 1 ? 'title' : 'titles'}
@@ -165,7 +166,7 @@ function Summary({
       <section>
         {/* s12, not s14: an uppercase eyebrow with letter-spacing reads a step larger than
             its number, and the phone has drawn this at 12 since it was written. */}
-        <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-wide text-ink-secondary uppercase">
           Most watched
         </h2>
         <ul className="flex flex-col gap-1.5">
@@ -195,10 +196,21 @@ function Summary({
 }
 
 function Tile({ label, value }: { label: string; value: string }) {
+  /*
+   * The figure in mono, the unit in the body face.
+   *
+   * Putting `font-data` on the whole value printed **`7  days`** — a word at monospace
+   * letter spacing, which is a typewriter rather than a tabular figure. Mono is for the
+   * numeral run: predictable column widths are the reason the direction asks for it.
+   */
+  const { figure, unit } = splitFigure(value);
   return (
     <div className="rounded-plate bg-ground-raised px-3 py-3">
       <dt className="text-s12 text-ink-secondary">{label}</dt>
-      <dd className="text-s20 font-semibold tabular-nums">{value}</dd>
+      <dd className="text-s20 font-semibold">
+        <span className="font-data tabular-nums">{figure}</span>
+        {unit && <span> {unit}</span>}
+      </dd>
     </div>
   );
 }

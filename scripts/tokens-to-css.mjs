@@ -18,10 +18,10 @@
  *   node scripts/tokens-to-css.mjs           # write
  *   node scripts/tokens-to-css.mjs --check   # exit 1 if the file on disk is stale
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, space, size, radius, text, weight,
+  color, label, space, size, radius, text, weight, type,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -90,6 +90,43 @@ for (const [name, px] of Object.entries(border)) w(`  --border-width-${kebab(nam
 w('}');
 w();
 
+/**
+ * 2b — the faces, and the files behind them.
+ *
+ * `@font-face` here rather than a `<link>` to Google: the phone bundles its faces because
+ * "fully offline" is load-bearing, and a web app that reaches for a font over the network
+ * is the same app failing on the same plane. One set of files, in `assets/fonts/`, copied
+ * into `app/public/fonts/` by this script — the same generate-and-compare shape the palette
+ * uses, rather than a second copy somebody has to keep in step.
+ *
+ * `font-display: block`, not `swap`. Swap paints in the system face and then reflows every
+ * heading on this design's tracked caps, which is a worse first second than a short wait on
+ * a 587 KB set served from the same origin.
+ */
+const faces = Object.values(type.family).filter((f) => f.name);
+w('/* The faces, bundled rather than fetched — see core/src/tokens.ts. */');
+for (const face of faces) {
+  const family = face.stack.split(',')[0].replace(/'/g, '').trim();
+  const italic = /Italic/.test(face.name);
+  const bold = /Bold/.test(face.name);
+  const semi = /SemiBold/.test(face.name);
+  const medium = /Medium/.test(face.name);
+  w('@font-face {');
+  w(`  font-family: '${family}';`);
+  w(`  src: url('/fonts/${face.name}.ttf') format('truetype');`);
+  w(`  font-weight: ${bold && !semi ? 700 : semi ? 600 : medium ? 500 : 400};`);
+  w(`  font-style: ${italic ? 'italic' : 'normal'};`);
+  w('  font-display: block;');
+  w('}');
+}
+w();
+w('@theme {');
+for (const [name, face] of Object.entries(type.family)) {
+  w(`  --font-${kebab(name)}: ${face.stack};`);
+}
+w('}');
+w();
+
 /** 3 — what Tailwind has no namespace for. */
 w('/* Motion and stacking: no Tailwind namespace, so plain properties. */');
 w(':root {');
@@ -112,6 +149,36 @@ w('  }');
 w('}');
 w();
 
+/**
+ * The faces the web serves, copied rather than duplicated by hand.
+ *
+ * `assets/fonts/` is the one copy; the phone's bundler reaches it directly and the web
+ * needs them under `public/`. Byte-compared on `--check`, like the stylesheet, so a face
+ * that changes in one place and not the other fails the build rather than shipping.
+ */
+const FONTS_FROM = resolve(ROOT, 'assets/fonts');
+const FONTS_TO = resolve(ROOT, 'app/public/fonts');
+
+function copyFonts() {
+  mkdirSync(FONTS_TO, { recursive: true });
+  for (const file of readdirSync(FONTS_FROM)) copyFileSync(`${FONTS_FROM}/${file}`, `${FONTS_TO}/${file}`);
+}
+
+function staleFonts() {
+  const want = readdirSync(FONTS_FROM);
+  let have = [];
+  try {
+    have = readdirSync(FONTS_TO);
+  } catch {
+    return want;
+  }
+  return want.filter(
+    (file) =>
+      !have.includes(file) ||
+      !readFileSync(`${FONTS_FROM}/${file}`).equals(readFileSync(`${FONTS_TO}/${file}`)),
+  );
+}
+
 export const css = lines.join('\n');
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
@@ -121,9 +188,16 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
       console.error(`${OUT} is stale. Run: node scripts/tokens-to-css.mjs`);
       process.exit(1);
     }
+    const stale = staleFonts();
+    if (stale.length) {
+      console.error(`${FONTS_TO} is stale for: ${stale.join(', ')}. Run: node scripts/tokens-to-css.mjs`);
+      process.exit(1);
+    }
     console.log('tokens.generated.css is current');
   } else {
     writeFileSync(OUT, css);
     console.log(`wrote ${OUT} — ${css.split('\n').length} lines`);
+    copyFonts();
+    console.log(`copied ${readdirSync(FONTS_FROM).length} faces into ${FONTS_TO}`);
   }
 }

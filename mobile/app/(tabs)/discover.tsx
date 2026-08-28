@@ -10,7 +10,7 @@ import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
 import { radius, theme } from '../../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   under: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold },
+  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name },
   blurb: { color: theme.inkSecondary, fontSize: 14, marginBottom: 4 },
   error: { color: theme.trouble, fontSize: 14 },
   attribution: { color: theme.inkSecondary, fontSize: 10, marginTop: 12 },

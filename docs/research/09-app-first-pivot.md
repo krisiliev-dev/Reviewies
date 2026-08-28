@@ -7828,12 +7828,107 @@ native image picker opens, whether a horizontal scroller inside a vertical one i
 with a thumb — needs somebody to hold a phone.
 
 
+### 6.112 Sixteen sprints of design work on whatever font the browser felt like
+
+*"We should finalise the design before we move onto anything else."* So: the layer under all
+of it. `grep -rn fontFamily` across both apps returned **zero**. Every colour decision, every
+size, every tracked eyebrow of the last twelve sprints was made on the system stack — San
+Francisco in one browser, Roboto in another, whatever the phone had — while
+`docs/design/direction.md` specified six families and `docs/design/tokens.md` costed them and
+wrote the guard for them. The spec was two documents ahead of the code and nobody had noticed
+because a system face is not *missing*; it is just not the one that was chosen.
+
+**Two things in the specification did not survive contact.**
+
+The first the spec had already caught itself: Archivo Expanded is a named instance of a
+variable font, React Native cannot set variable axes, and instancing it out needs a build
+step this repo does not have. `display` is Archivo Narrow 700 tracked out, which the
+direction's own refusal 2 prescribes.
+
+The second nobody had costed. The spec's estimate was *"nine faces, roughly 1.2–1.8 MB"*.
+Fetched:
+
+```
+the two IBM Plex Sans JP faces   4.36 MB   88% of the set
+the six Latin faces               587 KB
+```
+
+Either Japanese file on its own is larger than the estimate for the whole set. So `jp`
+resolves to the platform's own Japanese face and does not bundle. The direction's argument
+for bundling is that *"a font over the network is a font that fails on a plane"* — and a
+**system** font fails on no plane. What is given up is graft 8's exact match with Archivo
+Narrow; what is bought is not shipping four and a third megabytes of Japanese to somebody
+whose library is in English. It is one table entry to reverse.
+
+**The guard the spec wrote found two errors in the table the same spec wrote.**
+
+```
+family.data   'IBM Plex Mono', ui-monospace, SFMono-Regular
+family.prose  Newsreader, ui-serif, 'New York'
+```
+
+Both end in a *named Apple face* rather than a generic. On anything that is neither Apple
+nor has the bundled face loaded, those stacks fall through to nothing at all. G6's clause is
+one line — *every family's stack ends in a generic* — it was specified in `tokens.md` before
+any of this existed, and it failed on the first run against the table that specified it.
+Generic last, on both.
+
+**And the two plants `tokens.md` named, verbatim, both caught.** A family in the tokens with
+no TTF shipped — *"the three sets diverge and the phone silently falls back to system, which
+is the one type failure that looks fine in the simulator and wrong on a device"*. And
+`fontFamily: 'Archivo'` typed into a screen, bypassing the table. A specification that ships
+its own plants is a specification you can check rather than admire, and this is the first
+time in this project one has been used as written.
+
+**What landed, and what did not.** The faces bundle from one place — `assets/fonts/`, copied
+into `app/public/fonts/` by the same generator that emits the stylesheet, byte-compared on
+`--check` like the palette, because two copies of a font file is the problem `palette.test.ts`
+was written about with a different noun. The web sets the body face on `body`; the phone
+gates its first paint on `useFonts`, for the reason `font-display: block` exists — a screen
+drawn in the system face and then reflowed onto tracked condensed caps is a worse first
+second than a wait on 587 KB already inside the bundle. Screen titles, section eyebrows and
+the figures on Stats carry `display`, `title` and `data`.
+
+**And the first screenshot after it showed `7  days`.** Putting `family.data` on the Stats
+tiles put mono on the whole value string, so a *word* came out at monospace letter spacing —
+a typewriter rather than a tabular figure, on the screen the direction wrote the mono rule
+for. The rule is about numerals: predictable column widths are what stop a figure reflowing
+at 200%, and "days" has no column. `splitFigure` in `core/src/ui/data.ts` is the seam that
+`Data` — component 6 of the roster — will formalise, sitting in the core now because the
+defect is live and both renderers need the same split however it is eventually wrapped. It
+was found by looking at the picture, which is the only instrument that would have.
+
+The other three hundred-odd type sites do not carry the faces yet, and the body face on the
+phone lands with them: React Native has no cascade, so `Archivo-Regular` arrives one `StyleSheet` at a time
+rather than from a root rule. That is the next sprint and it is the same work as the type
+migration, which is why it waits rather than being done twice.
+
+**Four guards failed on a change that was right, and that is worth naming.** Every clause
+asserting a screen title read `'text-s30 font-bold'` as one string, and `font-display` goes
+between the two halves. A clause that pins the *order* of class names fails when somebody
+adds a class, which is not what it is for; they check size, face and weight as three facts
+now. Two more failed for the better reason: `coreWiring` wanted the new asymmetry explained,
+and `docsReferences` had an exemption reading *"docs/design/tokens.md specifies it — not yet
+built"* against `mobile/src/ui/fonts.ts`, which is §6.41's rule catching an excuse the moment
+the thing it excused stopped being true.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
 Every item below was checked rather than carried forward — see §6.37 for what that meant
 and which single claim in this document could not be checked at all:
 
+- **The faces are chosen, bundled and guarded, and nobody has seen them.** §6.112 loads six
+  files the design has specified since before any of it was built. Every check that could
+  confirm they *arrive* runs in a browser, where the `@font-face` is served from the same
+  origin and cannot really fail; the phone's `useFonts` gate has never executed outside the
+  react-native-web export, which does not use it. Two further things are unmeasured and both
+  are the direction's own warnings: `letterSpacing` in React Native is points rather than em,
+  so the tracked caps this design is made of will come apart at 200% text unless every call
+  site computes from the scaled size — and no screen does yet; and Japanese now falls to the
+  platform face by decision, which is a decision about how a mixed Latin/Japanese title looks
+  that nobody has looked at.
 - **Nothing has run on a physical device, and §6.111 measured exactly how far short of
   one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
   Android SDK in this container, no `eas` CLI, no Apple or Google account, no device. What
@@ -8136,7 +8231,15 @@ and which single claim in this document could not be checked at all:
   platforms and three of the disagreements were sizes the scale had already killed. §6.110
   takes Up Next and the calendar, plus every uppercase eyebrow in the app, and found the
   structural half of the same problem: the web's two arrival states rendered no screen
-  title at all, and §6.107 had widened that gap rather than finding it.
+  title at all, and §6.107 had widened that gap rather than finding it. §6.112 lands the
+  **faces**, which had never existed at all — zero `fontFamily` in either app, twelve
+  sprints of design decisions taken on the system stack — with G6 exactly as
+  `docs/design/tokens.md` specified it, and both of the plants that document names.
+
+  What is left of type is the other three hundred-odd sites *and the body face with them*.
+  React Native has no cascade, so `Archivo-Regular` reaches a screen only when that screen's
+  `StyleSheet` is migrated; until then the phone is Archivo in its headings and the system
+  face in its paragraphs.
 
   What is left of type is the other 300-odd sites, and the *shape* of what is left has
   changed rather than the size of it. The census found fifteen sizes and the scale keeps

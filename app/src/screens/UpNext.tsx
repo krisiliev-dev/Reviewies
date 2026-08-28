@@ -74,8 +74,8 @@ export function UpNext() {
        * gap rather than finding it, by giving the web's `<h1>` the tab-root treatment. A
        * heading that is a *sentence* is not a screen title, and 30/700 read like one.
        */}
-        <h1 className="text-s30 font-bold">Up Next</h1>
-        <h2 className="text-s20 font-semibold">Your history is in</h2>
+        <h1 className="text-s30 font-display font-bold">Up Next</h1>
+        <h2 className="text-s20 font-display font-semibold">Your history is in</h2>
         <p>
           Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
           {imported.watchlist > 0 && `, ${imported.watchlist} watchlist items`}.
@@ -108,7 +108,7 @@ export function UpNext() {
   if (entries.length === 0 && libraryCount !== 0) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s30 font-bold">Up Next</h1>
+        <h1 className="mb-2 text-s30 font-display font-bold">Up Next</h1>
         {/* Three states, not two. "Nothing here yet … until they are matched" plus a
             button was what somebody saw after importing years of history: an empty
             screen and a chore, so matching runs itself now and the sentence says what
@@ -152,9 +152,9 @@ export function UpNext() {
   if (entries.length === 0) {
     return (
       <div className="flex flex-col gap-3 p-6">
-        <h1 className="text-s30 font-bold">Up Next</h1>
+        <h1 className="text-s30 font-display font-bold">Up Next</h1>
         {/* A heading under the screen's own title — see the note on the arrival state. */}
-        <h2 className="text-s20 font-semibold">Bring your history with you</h2>
+        <h2 className="text-s20 font-display font-semibold">Bring your history with you</h2>
         <p className="text-ink-secondary">
           TV Time is gone. If you got your data out — or pulled it off your phone — this
           reads it and picks up where you left off.
@@ -182,7 +182,7 @@ export function UpNext() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s30 font-bold">Up Next</h1>
+      <h1 className="mb-4 px-1 text-s30 font-display font-bold">Up Next</h1>
 
       {/*
         Here too, and this is the whole point of the second copy.

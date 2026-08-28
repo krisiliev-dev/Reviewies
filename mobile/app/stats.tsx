@@ -10,7 +10,8 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { border, radius, theme } from '../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
+import { splitFigure } from '@reviewies/core/ui/data';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';
@@ -206,10 +207,16 @@ export default function StatsScreen() {
  */
 
 function Figure({ label, value }: { label: string; value: string }) {
+  // The figure in mono, the unit in the body face — see the web's copy of this. Nested
+  // `Text` rather than two siblings so the unit sits on the figure's baseline.
+  const { figure, unit } = splitFigure(value);
   return (
     <View style={styles.figure}>
       <Text style={styles.figureLabel}>{label}</Text>
-      <Text style={styles.figureValue}>{value}</Text>
+      <Text style={styles.figureValue}>
+        {figure}
+        {unit ? <Text style={styles.figureUnit}> {unit}</Text> : null}
+      </Text>
     </View>
   );
 }
@@ -229,7 +236,15 @@ const styles = StyleSheet.create({
   figureLabel: { color: theme.inkSecondary, fontSize: text.s12 },
   // 22/700 here against the web's 20/600 for the same tile. 22 is not a step and the
   // pair had never been compared; s20/semibold, which is what the web already drew.
-  figureValue: { color: theme.ink, fontSize: text.s20, fontWeight: weight.semibold },
+  // Mono, tabular: predictable column widths are what stop a figure reflowing at 200%.
+  figureValue: {
+    color: theme.ink,
+    fontSize: text.s20,
+    fontWeight: weight.semibold,
+    fontFamily: type.family.data.name,
+  },
+  /* Mono is for the numeral run. A word set in it is a typewriter, not a tabular figure. */
+  figureUnit: { fontFamily: type.family.body.name },
   emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
   allTime: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',

@@ -41,7 +41,7 @@ export function Lists() {
   if (!syncConfigured()) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-semibold">Lists</h1>
+        <h1 className="mb-2 text-s24 font-display font-semibold">Lists</h1>
         <p className="text-ink-secondary">{COPY.lists.needsAccount}</p>
       </div>
     );
@@ -57,7 +57,7 @@ export function Lists() {
   if (!session) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-semibold">Lists</h1>
+        <h1 className="mb-2 text-s24 font-display font-semibold">Lists</h1>
         <p className="text-ink-secondary">{COPY.lists.signInToMake('Your data')}</p>
       </div>
     );
@@ -80,7 +80,7 @@ export function Lists() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 px-1 text-s24 font-semibold">Lists</h1>
+      <h1 className="mb-1 px-1 text-s24 font-display font-semibold">Lists</h1>
       <p className="mb-4 px-1 text-sm text-ink-secondary">Films and series together, in one list.</p>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">

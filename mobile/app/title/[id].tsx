@@ -28,7 +28,7 @@ import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { border, radius, tap, theme } from '../../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
@@ -364,6 +364,7 @@ const styles = StyleSheet.create({
     fontSize: text.s12,
     fontWeight: weight.semibold,
     letterSpacing: 1,
+    fontFamily: type.family.title.name,
     textTransform: 'uppercase',
     marginTop: 8,
   },

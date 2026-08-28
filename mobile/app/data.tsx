@@ -13,7 +13,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     fontSize: text.s12,
     fontWeight: weight.semibold,
     letterSpacing: 1,
+    fontFamily: type.family.title.name,
     textTransform: 'uppercase',
   },
   blurb: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },

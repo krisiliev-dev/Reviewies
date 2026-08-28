@@ -21,7 +21,7 @@ import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/p
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { border, radius, theme } from '../../src/ui/theme';
-import { text, weight } from '@reviewies/core/tokens';
+import { text, weight, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
@@ -316,7 +316,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold },
+  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, fontFamily: type.family.display.name },
   input: {
     backgroundColor: theme.groundRaised,
     borderRadius: radius.none,

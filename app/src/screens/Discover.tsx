@@ -35,7 +35,7 @@ export function Discover() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 px-1 text-s30 font-bold">Discover</h1>
+      <h1 className="mb-1 px-1 text-s30 font-display font-bold">Discover</h1>
       <p className="mb-4 px-1 text-sm text-ink-secondary">{COPY.discover.blurb}</p>
 
       {error && <p className="px-1 text-sm text-trouble">{error}</p>}

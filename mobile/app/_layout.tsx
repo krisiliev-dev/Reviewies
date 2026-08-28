@@ -12,6 +12,7 @@ import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
 import type { ErrorBoundaryProps } from 'expo-router';
 import { Button } from '../src/ui/Button';
+import { useAppFonts } from '../src/ui/fonts';
 
 /**
  * Keep one broken screen from taking the app with it.
@@ -70,6 +71,16 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
  * long way from its cause. Gating here means the error can only be a real one.
  */
 export default function RootLayout() {
+  /*
+   * The faces, before anything paints.
+   *
+   * `font-display: block` on the web and this gate on the phone are the same decision: a
+   * screen drawn in the system face and then reflowed onto tracked condensed caps is a
+   * worse first second than a short wait on 587 KB that is already inside the bundle.
+   * There is already a "not ready" branch below for the platform bind, and this joins it
+   * rather than adding a second kind of waiting.
+   */
+  const fontsIn = useAppFonts();
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState<string>();
 
@@ -122,7 +133,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!ready) {
+  if (!ready || !fontsIn) {
     return (
       <View style={styles.centre}>
         <ActivityIndicator color={theme.workingFill} />
