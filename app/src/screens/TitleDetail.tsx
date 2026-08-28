@@ -26,6 +26,7 @@ import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -89,9 +90,9 @@ export function TitleDetail() {
           size="detail"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-s20 font-title font-semibold">
+          <Masthead level="sub">
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
-          </h1>
+          </Masthead>
           {!title && (failed || !loading) && (
             <button
               onClick={() => {

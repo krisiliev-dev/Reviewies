@@ -8,6 +8,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * Uncapped, deliberately. Trakt limiting free watchlists and doubling its price is
@@ -29,7 +30,7 @@ export function Watchlist() {
   if (items.length === 0) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s30 font-display font-bold">Watchlist</h1>
+        <Masthead>Watchlist</Masthead>
         <Note>{COPY.watchlist.empty}</Note>
         <Button
           to="/search"
@@ -45,7 +46,7 @@ export function Watchlist() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s30 font-display font-bold">Watchlist</h1>
+      <Masthead className="px-1">Watchlist</Masthead>
       <ul className="flex flex-col gap-2">
         {items.map(({ item, title }) => (
           <Row

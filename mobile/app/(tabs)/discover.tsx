@@ -15,6 +15,7 @@ import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 
 import { Note } from '../../src/ui/Note';
+import { Masthead } from '../../src/ui/Masthead';
 
 /**
  * Suggestions that exclude what you have already seen.
@@ -48,7 +49,7 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.heading}>Discover</Text>
+        <Masthead>Discover</Masthead>
         <Note>{COPY.discover.blurb}</Note>
 
         {items === undefined && !error && <ActivityIndicator color={theme.workingMark} />}
@@ -150,7 +151,6 @@ const styles = StyleSheet.create({
   under: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   attribution: { color: theme.inkSecondary, fontSize: text.s12, marginTop: 12, fontFamily: type.family.body.name },
 });

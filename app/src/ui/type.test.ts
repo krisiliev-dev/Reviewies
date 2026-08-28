@@ -161,7 +161,12 @@ describe('the type scale', () => {
         }
       }
     }
-    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(40);
+    /*
+     * 31, down from 45, and falling every sprint as components take treatments off the
+     * screens. The population shrinks; the rule does not. The floor tracks it rather than
+     * being left slack above it — §6.107's lesson, several components later.
+     */
+    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(25);
     expect(offenders).toEqual([]);
   });
 
@@ -207,15 +212,15 @@ describe('the type scale', () => {
 
   it('is what every screen title on the web is drawn at', () => {
     /*
-     * Size, face and weight as three facts rather than one string — §6.112 put
-     * `font-display` between the two halves of `'text-s30 font-bold'` and every clause
-     * that pinned the order failed on a change that was correct.
+     * One component now, not twenty-four `<h1>`s.
      *
-     * The faces changed under this in stage 2. `font-display font-semibold` was a
-     * contradiction the browser resolved silently: display is the Bold file, so a 600 next
-     * to it selected Narrow SemiBold out of the shared stack — the title face, by accident,
-     * on every `<h1>` below 30. Now the face says which file and the weight agrees with it.
+     * This clause used to read every `<h1 className>` in `app/src` and check size, face and
+     * weight as three facts. §6.119 moved all of them onto `Masthead`, so there is nothing
+     * at the call sites left to read — which is the point rather than a loss: what it
+     * checked per site, `masthead.test.ts` checks once, plus the gap underneath, which no
+     * per-site grep could see because seven different margins all looked deliberate.
      */
+    const masthead = read('app/src/ui/Masthead.tsx');
     const allowed = [
       { size: 'text-s30', face: 'font-display', weight: 'font-bold' },
       { size: 'text-s24', face: 'font-title', weight: 'font-semibold' },
@@ -223,60 +228,32 @@ describe('the type scale', () => {
     ];
     const wears = (cls: string, role: (typeof allowed)[number]) =>
       cls.includes(role.size) && cls.includes(role.face) && cls.includes(role.weight);
-    // Four roles now, and the fourth is the one §6.110 found: a heading that is a
-    // *sentence* under a screen's own title, which is not a screen title and was being
-    // drawn as one.
-    const ALLOWED_H2 = [
-      { size: 'text-s20', face: 'font-title', weight: 'font-semibold' },
-      { size: 'text-s16', face: 'font-title', weight: 'font-semibold' },
-      { size: 'text-s12', face: 'font-title', weight: 'font-semibold' },
-    ];
-    const offenders: string[] = [];
-    let seen = 0;
-    for (const file of filesUnder('app/src')) {
-      for (const m of read(file).matchAll(/<h1 className="([^"]*)"/g)) {
-        seen++;
-        const cls = m[1];
-        if (BUILT_IN.test(cls)) offenders.push(`${file}: ${cls}`);
-        else if (!allowed.some((role) => wears(cls, role))) offenders.push(`${file}: ${cls}`);
-      }
+    const levels = [...masthead.matchAll(/^ {2}(\w+): '([^']*)',$/gm)].map((m) => m[2]);
+    expect(levels, 'no level classes to read').toHaveLength(3);
+    for (const cls of levels) {
+      expect(BUILT_IN.test(cls), `${cls} is off the scale`).toBe(false);
+      expect(allowed.some((role) => wears(cls, role)), `${cls} is not one of the three`).toBe(true);
     }
-    // The count is a floor rather than a pin: a screen added later should be caught by the
-    // clause above, not by a number somebody has to remember to raise. §6.94.
-    expect(seen, 'nothing matched, so this proved nothing').toBeGreaterThan(15);
-    expect(offenders).toEqual([]);
 
-    /*
-     * And the `<h2>`s. Three treatments now: the eyebrow, a sentence heading under a
-     * screen title, and the card title that stage 2 finally ruled on — six of them carried
-     * no size at all and inherited the body's 16 *in the body face*, which is how a card's
-     * own title came out in the same face as its paragraph.
-     */
-    const wrongH2: string[] = [];
-    let h2s = 0;
+    // And nothing draws a title by hand any more, which is what makes the above sufficient.
+    const offenders: string[] = [];
     for (const file of filesUnder('app/src')) {
-      for (const m of read(file).matchAll(/<h2 className="([^"]*)"/g)) {
-        h2s++;
-        if (!ALLOWED_H2.some((role) => wears(m[1], role))) wrongH2.push(`${file}: ${m[1]}`);
+      if (file.endsWith('ui/Masthead.tsx')) continue;
+      for (const m of read(file).matchAll(/<(h1|h2) className="([^"]*)"/g)) {
+        if (/text-s(20|24|30)\b/.test(m[2])) offenders.push(`${file}: ${m[2]}`);
       }
     }
-    /*
-     * Eight, down from fourteen, because `Section` took the eyebrow — the `<h2>`s it
-     * renders carry no class list of their own for this clause to read. That is the
-     * population shrinking for the right reason, and `section.test.ts` is where the ones
-     * that left are now held. The floor moves with it rather than being left slack: a
-     * slack floor is what let nine deleted tests through in §6.107.
-     */
-    expect(h2s, 'no h2 matched, so this proved nothing').toBeGreaterThan(5);
-    expect(wrongH2).toEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it('is what every tab root on the phone is drawn at, at the same step as the web', () => {
     /*
-     * The point of the whole layer. The phone's five tab roots draw their own large title;
-     * the web's five draw an `<h1>`; they were 30/700 and 24/600 and nobody had chosen
-     * either. One step now, named in one place — and one *file*, which is the half the
-     * weight used to be pretending to carry.
+     * The point of the whole layer. The phone's five tab roots drew their own large title and
+     * the web's five drew an `<h1>`; they were 30/700 and 24/600 and nobody had chosen either.
+     *
+     * They read one component each now, so this reads the components — and the thing it could
+     * never see before is in the table with them: three of the five phone roots set
+     * `marginBottom: 8` and two set nothing.
      */
     const roots = [
       'mobile/app/(tabs)/index.tsx',
@@ -286,23 +263,17 @@ describe('the type scale', () => {
       'mobile/app/(tabs)/more.tsx',
     ];
     for (const file of roots) {
-      const heading = declarationOf(read(file), 'heading');
-      expect(heading, `${file} has no heading style`).toBeDefined();
-      expect(heading, `${file} draws its title from a literal`).toContain('fontSize: text.s30');
-      expect(heading, `${file}'s title is in whatever face the system offers`).toContain(
-        'fontFamily: type.family.display.name',
-      );
+      expect(read(file), `${file} draws its own title`).toContain('<Masthead>');
+      expect(declarationOf(read(file), 'heading'), `${file} kept a heading style`).toBeUndefined();
     }
-    // And the same step on the other side, so the two cannot be migrated apart. The screen's
-    // own title, not any of the four `<h1>`s UpNext renders — the arrival and first-run
-    // headings are on the same step and would have satisfied this with the title changed.
     expect(text.s30).toBe(30);
-    const upNext = read('app/src/screens/UpNext.tsx');
-    expect(upNext, "the web's Up Next title is off the step the phone's is on").toMatch(
-      /<h1 className="[^"]*text-s30 font-display font-bold">Up Next<\/h1>/,
-    );
+    const phone = read('mobile/src/ui/Masthead.tsx');
+    expect(phone).toContain('type.family[MASTHEAD.masthead.face].name');
+    expect(phone).toContain('fontSize: MASTHEAD.masthead.size');
+
     // The structural half of §6.110: every arrival state keeps the screen's own title.
-    expect((upNext.match(/>Up Next<\/h1>/g) ?? []).length, 'an arrival state lost its title')
+    const upNext = read('app/src/screens/UpNext.tsx');
+    expect((upNext.match(/>Up Next<\/Masthead>/g) ?? []).length, 'an arrival state lost its title')
       .toBe(4);
   });
 
@@ -314,7 +285,7 @@ describe('the type scale', () => {
      * this scale killed. Found by the clause above rather than by the migration, which
      * swept `app/src/screens` and missed a screen title living in `app/src/ui`.
      */
-    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('text-s24 font-title font-semibold');
+    expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('<Masthead level="page">');
     const title = declarationOf(read('mobile/app/_layout.tsx'), 'title');
     expect(title, 'the crash screen has no title style').toBeDefined();
     expect(title).toContain('fontSize: text.s24');

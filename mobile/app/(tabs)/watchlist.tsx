@@ -9,11 +9,12 @@ import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 
 import { leadingOf, radius, tap, theme } from '../../src/ui/theme';
-import { text, type, leading } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
+import { Masthead } from '../../src/ui/Masthead';
 
 /**
  * Things you mean to watch, and why.
@@ -33,7 +34,7 @@ export default function WatchlistScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.heading}>Watchlist</Text>
+        <Masthead>Watchlist</Masthead>
 
         {items?.length === 0 && (
           <View style={styles.emptyBlock}>
@@ -162,7 +163,6 @@ function Row({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   /*
    * `cta`/`ctaText` were here — a filled pill "the same shape as Up Next's", said a

@@ -17,6 +17,7 @@ import {
 import { COPY } from '@reviewies/core/copy';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * Lists, mixing film and television freely — the thing r/Simkl called a "severe
@@ -43,7 +44,7 @@ export function Lists() {
   if (!syncConfigured()) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
+        <Masthead level="page">Lists</Masthead>
         <Note>{COPY.lists.needsAccount}</Note>
       </div>
     );
@@ -59,7 +60,7 @@ export function Lists() {
   if (!session) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
+        <Masthead level="page">Lists</Masthead>
         <Note>{COPY.lists.signInToMake('Your data')}</Note>
       </div>
     );
@@ -82,7 +83,7 @@ export function Lists() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 px-1 text-s24 font-title font-semibold">Lists</h1>
+      <Masthead level="page" className="px-1">Lists</Masthead>
       <Note className="mb-4 px-1">Films and series together, in one list.</Note>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">

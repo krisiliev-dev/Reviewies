@@ -33,6 +33,7 @@ import { useImporting } from '../../src/useImporting';
 import { Button } from '../../src/ui/Button';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
+import { Masthead } from '../../src/ui/Masthead';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -72,7 +73,7 @@ export default function UpNextScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.heading}>Up Next</Text>
+        <Masthead>Up Next</Masthead>
 
         {/* §6.64's undo — the row can change under the press when two devices are racing,
             and the ordinary mis-tap needs the same way back — used to be a banner here,
@@ -81,7 +82,7 @@ export default function UpNextScreen() {
 
         {imported ? (
           <View style={styles.empty}>
-            <Text style={styles.firstHeading}>Your history is in</Text>
+            <Masthead level="sub">Your history is in</Masthead>
             <Text style={styles.emptyText}>
               Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
               {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
@@ -119,7 +120,7 @@ export default function UpNextScreen() {
            * the alternative rather than the other way round.
            */
           <View style={styles.empty}>
-            <Text style={styles.firstHeading}>Bring your history with you</Text>
+            <Masthead level="sub">Bring your history with you</Masthead>
             <Text style={styles.emptyText}>
               TV Time is gone. If you got your data out — or pulled it off your phone —
               this reads it and picks up where you left off.
@@ -340,13 +341,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
-  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
   // s20/semibold, the same step and weight as the web's `<h2>` under the screen title.
   // It was 700, which put two bolds one under the other — the title and the sentence
   // beneath it competing rather than ranking.
-  firstHeading: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
   later: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.body.name },
   emptyText: { color: theme.inkSecondary, fontSize: text.s16, fontFamily: type.family.body.name },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a

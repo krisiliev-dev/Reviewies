@@ -8303,6 +8303,61 @@ Seven plants, seven catches. `flat.test.ts`'s radius count fell from 81 to 78 as
 `rounded-plate` call sites became one component, and the floor moved with it.
 
 
+### 6.119 The type was uniform because a guard made it so; the space was not
+
+Stage 3 continued: `Masthead`, the seventh component — and a refusal, which is the more useful
+half.
+
+**The gap a type guard could not see.** The three title treatments have been right since
+§6.112 and `type.test.ts` held them as three facts each. What nothing held is the space
+underneath. Twenty-four `<h1>`s on the web carried **seven different spacings** across those
+three treatments — `mb-1`, `mb-2`, `mb-3`, `mb-4`, none, with and without `px-1` — and on the
+phone three of the five tab roots set `marginBottom: 8` inside their heading style while two
+set nothing, so two screens' titles sat against their content and three did not.
+
+A per-site grep cannot tell a decision from an accident when every value looks deliberate.
+That is the argument for a component rather than an eighth clause, and it is the same shape as
+`Note`'s six line-heights: **the layer with an owner converged and the layer beside it did
+not.** Three gaps now, one per treatment, and `sub` carries zero — which is not a step and is
+not meant to be, because a sub-heading introduces the block directly under it and a gap there
+would separate it from the thing it introduces.
+
+**What was refused, and why that is the finding.** The stage-3 brief listed `Sheet` next.
+There is no `Sheet`: `CatchUp` is the only bottom sheet in the build, one per platform.
+`AddToList` is an inline disclosure, `ContentWarnings` is an expandable `<section>`,
+`RemoteDrawer` is a side drawer and `FailureBanner` is a top banner. A component for one
+caller is the thing itself with an extra file around it.
+
+And `docs/design/components.md`'s own coverage column said so all along — `Sheet` **2**,
+`ChannelStrip` **1**, `PadCell` **1**, `ReactionStrip` **1**. The roster was honest; nobody
+read that column as an argument, including me when I wrote the brief that asked for four more
+components. Three of the last four on the roster are single-caller and should be built as
+*screens getting better*, in #160, rather than as components.
+
+**`Masthead` is also deliberately half-built**, and there is a clause that says so. The roster
+specifies it replacing the phone's fourteen `<Stack.Screen options={{ title }}>` headers:
+`headerShown: false`, a drawn back chevron, and `accessibilityRole="header"` on nine titles
+that are not headers today. That is worth doing and it is a **navigation** change across ten
+files — it trades UIKit's back-label and large-title behaviour for a three-line wrap at 200%.
+It belongs with #160. The clause counts the fourteen so the gap is a recorded decision rather
+than a later discovery, and fails on the day somebody closes it and forgets to delete the note.
+
+**A meta-guard I loosened, and re-proved.** `clauses.test.ts` flagged `accessibilityRole` as
+a needle with a second copy in `Masthead.tsx` — and the second copy was in the component's own
+paragraph explaining why the role lives there. That is the fourth time in six components, and
+stripping the prose before asserting has been the right answer every time; the meta-guard
+counted occurrences in the **raw** file even when the assertion read a stripped copy, so it was
+forbidding the correct technique. It counts in what is actually read now. Then two plants
+confirmed it still bites: an unstripped read of the same file, and a needle appearing twice in
+code.
+
+**And a plant that walked through a floor with slack in it.** The clause counting the phone's
+pushed-screen titles said `toBeGreaterThan(5)` against ten files, so four could vanish
+silently — and it counted *files*, which cannot see one screen lose its title while another in
+the same file keeps it. `lists.tsx` has two. Occurrences, pinned at fourteen, no margin: the
+§6.107 rule, arrived at again from the other end.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

@@ -23,6 +23,7 @@ import { Choice } from '../ui/Choice';
 import { Row as BaseRow } from '../ui/Row';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
+import { Masthead } from '../ui/Masthead';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -72,7 +73,7 @@ export function Calendar() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s24 font-title font-semibold">Upcoming</h1>
+      <Masthead level="page" className="px-1">Upcoming</Masthead>
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
         {/* The eyebrow, at the step §6.108 chose for it on Stats: uppercase with

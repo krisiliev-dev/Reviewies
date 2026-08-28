@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * The screen for an address that is not a screen.
@@ -27,7 +28,7 @@ export function NotFound() {
 
   return (
     <div className="flex flex-col gap-3 p-6">
-      <h1 className="text-s24 font-title font-semibold">Nothing at this address</h1>
+      <Masthead level="page">Nothing at this address</Masthead>
       <Note>
         <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-s14">{pathname}</code> is not
         a screen in this app. It may be an old link, or a typo.

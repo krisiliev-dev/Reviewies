@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react';
 import { Note } from './Note';
+import { Masthead } from './Masthead';
 
 /**
  * Keep one broken screen from taking the app with it.
@@ -50,7 +51,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     if (this.state.failed) {
       return (
         <div className="flex flex-col gap-3 p-4">
-          <h1 className="text-s24 font-title font-semibold">This screen stopped</h1>
+          <Masthead level="page">This screen stopped</Masthead>
           <Note>
             Something on it went wrong. Everything you have tracked is still here — it
             lives on this device and nothing was lost.

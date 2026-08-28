@@ -11,6 +11,7 @@ import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 export function Search() {
   /*
@@ -86,7 +87,7 @@ export function Search() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-3 px-1 text-s30 font-display font-bold">Search</h1>
+      <Masthead className="px-1">Search</Masthead>
       <Field
         label={COPY.fields.search}
         value={query}

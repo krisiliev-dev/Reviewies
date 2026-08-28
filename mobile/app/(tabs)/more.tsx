@@ -10,11 +10,12 @@ import {
 } from '@reviewies/core/metadata/provider';
 import { usingFixtures } from '@reviewies/core/metadata/index';
 import { leadingOf, radius, theme } from '../../src/ui/theme';
-import { text, type, leading } from '@reviewies/core/tokens';
+import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
+import { Masthead } from '../../src/ui/Masthead';
 
 /**
  * Everything not done daily.
@@ -47,7 +48,7 @@ export default function MoreScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text accessibilityRole="header" style={styles.heading}>More</Text>
+        <Masthead>More</Masthead>
 
         <View style={styles.card}>
           <Note>
@@ -118,7 +119,6 @@ function Stat({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   stats: { flexDirection: 'row', gap: 12 },

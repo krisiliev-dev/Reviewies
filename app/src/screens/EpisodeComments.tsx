@@ -19,6 +19,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -95,7 +96,7 @@ export function EpisodeComments() {
         Back
       </button>
 
-      <h1 className="text-s20 font-title font-semibold">{series?.name ?? 'Comments'}</h1>
+      <Masthead level="sub">{series?.name ?? 'Comments'}</Masthead>
       {episode && (
         <Note>
           S{episode.season}E{episode.number} · {episode.name}

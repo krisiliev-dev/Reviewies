@@ -20,6 +20,7 @@ import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -60,7 +61,7 @@ export function People() {
   if (!syncConfigured()) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 px-1 text-s24 font-title font-semibold">People</h1>
+        <Masthead level="page" className="px-1">People</Masthead>
         <Note className="px-1">{COPY.people.withoutAccount}</Note>
       </div>
     );
@@ -69,7 +70,7 @@ export function People() {
   if (!session) {
     return (
       <div className="p-4">
-        <h1 className="mb-3 px-1 text-s24 font-title font-semibold">People</h1>
+        <Masthead level="page" className="px-1">People</Masthead>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
         <Note className="px-1">{COPY.people.signInToFollow('Your data')}</Note>
@@ -79,7 +80,7 @@ export function People() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="px-1 text-s24 font-title font-semibold">People</h1>
+      <Masthead level="page" className="px-1">People</Masthead>
 
       {listsFailed && (
         <p className="px-1 text-s14 text-trouble" role="status">

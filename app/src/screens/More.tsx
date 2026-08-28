@@ -5,6 +5,7 @@ import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * The other half of the navigation.
@@ -40,7 +41,7 @@ export function More() {
 
   return (
     <div className="flex flex-col gap-3 p-4">
-      <h1 className="text-s30 font-display font-bold">More</h1>
+      <Masthead>More</Masthead>
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>

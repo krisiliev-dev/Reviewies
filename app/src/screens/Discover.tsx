@@ -8,6 +8,7 @@ import { Poster } from '../ui/Poster';
 import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * Discovery.
@@ -36,7 +37,7 @@ export function Discover() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 px-1 text-s30 font-display font-bold">Discover</h1>
+      <Masthead className="px-1">Discover</Masthead>
       <Note className="mb-4 px-1">{COPY.discover.blurb}</Note>
 
       {error && <p className="px-1 text-s14 text-trouble">{error}</p>}

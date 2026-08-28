@@ -49,6 +49,10 @@ const EXEMPT: Record<string, string> = {
     'the web extracts a Row component for an upcoming episode and the phone writes the same row inline; both now carry the poster, the name, the episode and the kind — §6.63 is the sprint that gave the phone the poster',
   '/lists':
     'the phone extracts a ListItem component where the web writes the row inline, and orders its two failure lines the other way round; both render both',
+  '/watchlist':
+    'the web draws its Masthead in both branches — empty and populated — because §6.110 found an arrival state that had lost its own title; the phone renders one above the conditional. Same outcome, one structure each',
+  '/title':
+    'the phone puts the title\'s name in the native header through <Stack.Screen options>, where the web draws a Masthead inline. That is the pushed-screen half of the Masthead component, which is a navigation change across ten files rather than a component extraction — #160, and masthead.test.ts counts the fourteen Stack titles so this exemption expires when they do',
 };
 
 /** One copy, in the core, since §6.72. */

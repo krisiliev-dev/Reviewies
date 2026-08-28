@@ -21,6 +21,7 @@ import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Masthead } from '../ui/Masthead';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -41,7 +42,7 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="px-1 text-s24 font-title font-semibold">Your data</h1>
+      <Masthead level="page" className="px-1">Your data</Masthead>
 
       <AccountPanel />
 

@@ -44,13 +44,31 @@ function testFiles(dir: string, out: string[] = []): string[] {
  * narrower than a whole file — a captured match, a filtered line, a declaration — is not
  * this clause's business, and not resolving it is how that stays true.
  */
-function wholeFileRead(subject: string, source: string): string | undefined {
+function wholeFileRead(subject: string, source: string): { path: string; stripped: boolean } | undefined {
   const direct = /^read\('([^']+)'\)$/.exec(subject);
-  if (direct) return direct[1];
+  if (direct) return { path: direct[1], stripped: false };
   const assigned = new RegExp(
-    `\\bconst ${subject}\\s*=\\s*(?:strip(?:Comments)?\\()?read(?:FileSync)?\\(\\s*'([^']+)'`,
+    `\\bconst ${subject}\\s*=\\s*(?:strip(?:Comments)?\\()?read(?:FileSync)?\\(\\s*'([^']+)'([\\s\\S]{0,200})`,
   ).exec(source);
-  return assigned?.[1];
+  if (!assigned) return undefined;
+  /*
+   * A read that removes the file's prose before asserting on it is *narrower* than a whole
+   * file, and the count has to be taken in what is actually read or the clause reports a
+   * copy that the assertion cannot see.
+   *
+   * This matters because the second copy has been in a comment four times in the components
+   * of §6.114-§6.119 — a component's own paragraph explaining why it uses the class the
+   * clause is checking for. Stripping is the right answer there, and a meta-guard that
+   * forbids the right answer pushes people into phrasing comments around it.
+   */
+  const stripped = /strip(?:Comments)?\(/.test(assigned[0])
+    || /\.replace\(\s*\/\\\/\\\*/.test(assigned[2]);
+  return { path: assigned[1], stripped };
+}
+
+/** Comments out, so a needle quoted in prose is not counted as a second copy of itself. */
+function withoutProse(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
 }
 
 interface Ambiguous {
@@ -74,15 +92,16 @@ function ambiguous(): Ambiguous[] {
       if (!target) continue;
       let text: string;
       try {
-        text = read(target);
+        text = read(target.path);
       } catch {
         continue;
       }
+      if (target.stripped) text = withoutProse(text);
       const needle = call[4];
       const occurrences = text.split(needle).length - 1;
       if (occurrences > 1) {
         const line = source.slice(0, m.index).split('\n').length;
-        found.push({ where: `${file}:${line}`, target, needle, occurrences });
+        found.push({ where: `${file}:${line}`, target: target.path, needle, occurrences });
       }
     }
   }

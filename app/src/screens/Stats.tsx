@@ -15,6 +15,7 @@ import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Progress } from '../ui/Progress';
+import { Masthead } from '../ui/Masthead';
 
 /**
  * Stats and Year in Review.
@@ -53,7 +54,7 @@ export function Stats() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-s24 font-title font-semibold">Stats</h1>
+      <Masthead level="page" className="px-1">Stats</Masthead>
 
       {/*
        * Two groups since §6.109, because they are two questions.

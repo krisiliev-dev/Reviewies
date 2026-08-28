@@ -22,6 +22,7 @@ import { COPY } from '@reviewies/core/copy';
 import { useLive } from '../../src/useLive';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
+import { Masthead } from '../../src/ui/Masthead';
 
 export default function SearchScreen() {
   /*
@@ -99,7 +100,7 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text accessibilityRole="header" style={styles.heading}>Search</Text>
+        <Masthead>Search</Masthead>
         <Field
           label={COPY.fields.search}
           value={query}
@@ -325,7 +326,6 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name },
   // The watchlist screen's note field, because it is the same field.
   editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
   loading: { marginTop: 12 },
