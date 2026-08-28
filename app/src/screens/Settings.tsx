@@ -88,7 +88,7 @@ export function Settings() {
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Export</h2>
+        <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">Export</h2>
         <p className="px-1 text-sm text-ink-secondary">{COPY.settings.exportBlurb}</p>
         <Button
           size="page"
@@ -129,14 +129,14 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Import</h2>
+        <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">Import</h2>
         <ImportFormats />
         <ImportFiles />
 
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
           Watching
         </h2>
         <label className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4">
@@ -159,7 +159,7 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
+        <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
           Metadata cache
         </h2>
         <p className="px-1 text-sm text-ink-secondary">

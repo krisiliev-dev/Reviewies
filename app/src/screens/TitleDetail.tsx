@@ -187,7 +187,7 @@ export function TitleDetail() {
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
+          <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
             Season {season}
           </h2>
           <ul className="flex flex-col gap-1.5">

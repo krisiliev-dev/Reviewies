@@ -166,6 +166,42 @@ describe('every workspace', () => {
     expect(shrunk).toEqual([]);
   });
 
+  /**
+   * And the suites that are not `.test.ts`, which the ratchet above cannot see.
+   *
+   * §6.109 caught a vitest file being overwritten. The same accident in `app/smoke.mjs`
+   * would be quieter still: those suites print their own total — "263/263 checks passed"
+   * — and a run with nine fewer checks prints a smaller number and the same word. Nothing
+   * has ever compared one run's total to the last.
+   *
+   * The design harness is ratcheted by its **routes** rather than its clauses, because
+   * `capture.mjs` already fails when a route has no `MUST_SHOW` (§6.105). What that does
+   * not cover is a route and its clause deleted together, which is a screen quietly
+   * dropped out of every design review.
+   *
+   * `core/src/metadata/fixtures.ts` is deliberately **not** here. Its size is not what
+   * matters — §6.43 swept for fixtures smaller than reality and §6.104 for one larger —
+   * and the suites that depend on a particular fixture already fail by name when it stops
+   * existing. A count would guard the wrong property.
+   */
+  const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
+    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 144 },
+    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 71 },
+    'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
+    'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
+    'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },
+    'design/capture.mjs': { pattern: /^ {2}\['\d/gm, least: 12 },
+  };
+
+  it('keeps every check the suites that are not vitest files were holding', () => {
+    const shrunk: string[] = [];
+    for (const [file, { pattern, least }] of Object.entries(SUITE_FLOOR)) {
+      const found = (readFileSync(resolve(ROOT, file), 'utf8').match(pattern) ?? []).length;
+      if (found < least) shrunk.push(`${file}: ${found}, below the ${least} it had`);
+    }
+    expect(shrunk).toEqual([]);
+  });
+
   it('does not pass itself when its tests disappear', () => {
     const vacuous = names.filter((name) => {
       if (MAY_BE_EMPTY[name]) return false;

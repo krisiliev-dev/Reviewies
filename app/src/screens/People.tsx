@@ -240,7 +240,7 @@ function FindPeople({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Find people</h2>
+      <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">Find people</h2>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -346,7 +346,7 @@ function PersonList({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
+      <h2 className="px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
         {heading}
         {people.length > 0 && <span className="ml-1.5 normal-case">{people.length}</span>}
       </h2>

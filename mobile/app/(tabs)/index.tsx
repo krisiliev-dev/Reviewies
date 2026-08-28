@@ -346,9 +346,12 @@ const styles = StyleSheet.create({
   heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
-  firstHeading: { color: theme.ink, fontSize: 20, fontWeight: '700' },
-  later: { color: theme.inkSecondary, fontSize: 14, textDecorationLine: 'underline' },
-  emptyText: { color: theme.inkSecondary, fontSize: 16 },
+  // s20/semibold, the same step and weight as the web's `<h2>` under the screen title.
+  // It was 700, which put two bolds one under the other — the title and the sentence
+  // beneath it competing rather than ranking.
+  firstHeading: { color: theme.ink, fontSize: text.s20, fontWeight: weight.semibold },
+  later: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline' },
+  emptyText: { color: theme.inkSecondary, fontSize: text.s16 },
   // Written out in full rather than as `[cta, ctaQuiet]`. This sits inside a
   // `<Link asChild>`, which clones its child and merges props — and an array style
   // through that path reached the DOM as an index-keyed object, which React refuses to

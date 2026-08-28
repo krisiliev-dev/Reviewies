@@ -102,7 +102,11 @@ try {
     const calendar = await text();
     check(
       `the calendar still draws through the ${mode}`,
-      /Upcoming/.test(calendar) && /Tell me about/.test(calendar),
+      // Case-insensitively: the heading is drawn `uppercase` since §6.110 and `innerText`
+      // returns what is rendered, so a literal match here was asserting a CSS transform
+      // rather than the presence of the section. What is being checked is that the screen
+      // drew at all through a dead provider.
+      /Upcoming/i.test(calendar) && /Tell me about/i.test(calendar),
       calendar.slice(0, 120),
     );
 

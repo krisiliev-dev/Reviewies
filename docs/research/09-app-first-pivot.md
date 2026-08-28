@@ -7689,6 +7689,77 @@ Eleven plants, eleven caught, and the eleventh was against a guard whose first v
 to throw away for being too forgiving.
 
 
+### 6.110 An arrival screen with no title on it, a day that was two different headings, and everything else that can quietly get smaller
+
+The third type batch — the two screens the product is actually about — and the second half
+of §6.109's ratchet.
+
+**The disagreements, written down before anything was touched**, because that comparison is
+where the findings are and doing it afterwards turns them into rounding:
+
+```
+                     web                          phone
+arrival heading      30/700, as an <h1>           20/700, under the screen's title
+day heading          14/600 UPPERCASE tracked     12, plain, no letter-spacing at all
+"Tell me about"      14/600, sentence case        12/600 UPPERCASE
+status notes ×6      12                           13
+empty blurb          inherited 16                 14
+```
+
+Five roles, five disagreements. Four are sizes. **The first is structural, and it is mine.**
+
+**The web's arrival states had no screen title on them at all.** Both of them `return` early
+— a page holding `<h1>Bring your history with you</h1>` and nothing else — so the tab bar
+said *Up Next* and the page said something entirely different, to somebody one minute into
+the app who has no other word telling them where they are. The phone has never done this: it
+draws *Up Next* and puts the arrival heading beneath it.
+
+And §6.107 made it worse rather than finding it. That sprint gave every web `<h1>` the
+tab-root treatment, which is right for the two that say *Up Next* and wrong for the two that
+are sentences — the gap between the platforms went from four points to ten while I was
+unifying screen titles. A heading that is a *sentence* is not a screen title, and at 30/700
+it read like one. Both states keep the title now and the sentence is an `<h2>` at
+`s20/semibold`, which is what the phone's `firstHeading` becomes as well; it was 700, which
+put two bolds one under the other and made the title and the sentence beneath it compete
+rather than rank.
+
+**A day is a heading like any other heading.** The calendar's day headings were an uppercase
+letter-spaced eyebrow on the web and a plain grey 12 on the phone — the same role in two
+entirely different treatments, on the screen whose whole content is days. One treatment now,
+and it is the one §6.108 chose for Stats: `s12/semibold`, uppercase, tracked. Which then
+applied to every other uppercase eyebrow in the app — eight on the web still at `text-sm`,
+three on the phone already at 12 but holding raw numbers. Eleven sites, no visual change on
+the phone, one step smaller on the web, and the treatment owned in one place at last.
+
+Six `<h2>`s carry no size at all and inherit 16. They are a third role — a card's own title
+— that nobody has ruled on, and the clause counts what it skipped rather than pretending the
+screen is finished.
+
+**Then the other half of the ratchet.** §6.109 caught a vitest file being overwritten, and
+covers `.test.ts` blocks and nothing else. The same accident in `app/smoke.mjs` would be
+quieter: those suites print their own total — *"263/263 checks passed"* — and a run with nine
+fewer checks prints a smaller number and the same word. Nothing has ever compared one run's
+total to the last. Measured:
+
+```
+app/smoke.mjs 144   mobile/smoke.mjs 71   extension/smoke.mjs 21
+bridge/e2e.mjs 22   app/failures.mjs 12   design/capture.mjs 12 routes
+```
+
+All ratcheted. The design harness by its **routes** rather than its clauses, because
+`capture.mjs` already fails when a route has no `MUST_SHOW` — what that misses is a route and
+its clause deleted together, which is a screen quietly dropped out of every design review.
+Planted exactly that: `11-people` removed from both tables, caught.
+
+`core/src/metadata/fixtures.ts` is deliberately not ratcheted, and the reason is worth
+writing down rather than leaving as an omission. Its size is not the property that matters —
+§6.43 swept for fixtures smaller than reality and §6.104 for one larger — and every suite
+that depends on a particular fixture already fails by name when it stops existing. A count
+would guard the wrong thing and read as though the right thing were covered.
+
+Eight plants, eight caught.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7985,7 +8056,10 @@ and which single claim in this document could not be checked at all:
 
   §6.108 takes the second batch: `Button` and `Choice` — the two controls every screen is
   made of — and the whole of Stats, where seven of eight paired roles disagreed between the
-  platforms and three of the disagreements were sizes the scale had already killed.
+  platforms and three of the disagreements were sizes the scale had already killed. §6.110
+  takes Up Next and the calendar, plus every uppercase eyebrow in the app, and found the
+  structural half of the same problem: the web's two arrival states rendered no screen
+  title at all, and §6.107 had widened that gap rather than finding it.
 
   What is left of type is the other 300-odd sites, and the *shape* of what is left has
   changed rather than the size of it. The census found fifteen sizes and the scale keeps
@@ -8103,13 +8177,14 @@ and which single claim in this document could not be checked at all:
   empty. §6.106 is the first evidence about what that costs: two of the
   three findings the track filed had the right conclusion and the wrong stated reason, and
   both were settled by a check that took two minutes.
-- **A suite can get smaller and nothing says so — now with one exception.** §6.109 wrote a
-  test file over one that already existed and `npm run verify` stayed green through the loss
-  of nine checks; a ratchet on each workspace's block count catches that class now. What it
-  does not catch is the same accident in anything that is not a `.test.ts`: a smoke check
-  deleted from `app/smoke.mjs`, a `MUST_SHOW` clause dropped from `design/capture.mjs`, a
-  fixture shrunk. Those all report a total when they run and nothing compares it to
-  yesterday's.
+- **A suite can get smaller, and now six more of them cannot.** §6.109 wrote a test file
+  over one that already existed and `npm run verify` stayed green through the loss of nine
+  checks. §6.110 extended the ratchet to everything that is not a `.test.ts`: both smoke
+  suites, the failure suite, the extension's and the bridge's, and the design harness by its
+  route count. `fixtures.ts` is deliberately left out and the reason is recorded rather than
+  omitted. What is still uncovered is *quality* rather than count — a check rewritten to
+  assert less holds its line and its number, and §6.73 has produced four of those in four
+  sprints.
 - **`toContain` on a whole file is almost never the check you meant — and now something
   enumerates them.** §6.108 found one by planting; §6.109 swept and found six, five of them
   mine, the oldest being a clause about the selected state satisfied four times over by

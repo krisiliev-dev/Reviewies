@@ -13,6 +13,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { radius, theme } from '../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
@@ -182,8 +183,8 @@ const styles = StyleSheet.create({
   toggleHint: { color: theme.inkSecondary, fontSize: 13 },
   sectionHeading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: text.s12,
+    fontWeight: weight.semibold,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },

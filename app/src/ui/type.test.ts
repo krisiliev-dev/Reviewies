@@ -64,6 +64,10 @@ describe('the type scale', () => {
      * which is what all twenty-one of them were.
      */
     const allowed = ['text-s30 font-bold', 'text-s24 font-semibold', 'text-s20 font-semibold'];
+    // Four roles now, and the fourth is the one §6.110 found: a heading that is a
+    // *sentence* under a screen's own title, which is not a screen title and was being
+    // drawn as one.
+    const ALLOWED_H2 = ['text-s20 font-semibold', 'text-s12 font-semibold'];
     const offenders: string[] = [];
     let seen = 0;
     for (const file of filesUnder('app/src')) {
@@ -78,6 +82,58 @@ describe('the type scale', () => {
     // clause above, not by a number somebody has to remember to raise. §6.94.
     expect(seen, 'nothing matched, so this proved nothing').toBeGreaterThan(15);
     expect(offenders).toEqual([]);
+
+    /*
+     * And the `<h2>`s, because that is where the first one went when it stopped being an
+     * `<h1>`. Two treatments: a sentence heading under a screen title, and the eyebrow
+     * every section on Stats and the calendar now uses.
+     */
+    const wrongH2: string[] = [];
+    let h2s = 0;
+    for (const file of filesUnder('app/src')) {
+      for (const m of read(file).matchAll(/<h2 className="([^"]*)"/g)) {
+        /*
+         * The two roles that have been decided: an uppercase eyebrow, and a sentence
+         * heading under a screen title. Six `<h2>`s carry no size at all and inherit the
+         * body's 16 — a card's own title, which is a third role nobody has ruled on. They
+         * are left, and left visible: this counts what it skipped rather than pretending
+         * the screen is finished.
+         */
+        const decided = /uppercase/.test(m[1]) || /text-s\d/.test(m[1]);
+        if (!decided) continue;
+        h2s++;
+        if (!ALLOWED_H2.some((a) => m[1].includes(a))) wrongH2.push(`${file}: ${m[1]}`);
+      }
+    }
+    expect(h2s, 'no h2 matched, so this proved nothing').toBeGreaterThan(10);
+    expect(wrongH2).toEqual([]);
+  });
+
+  it('is the whole of Up Next and the calendar, which is the batch that landed', () => {
+    /*
+     * §6.110. Two screens the product is actually about, migrated whole so each can be
+     * photographed. The disagreements were written down before anything was touched:
+     *
+     *   arrival heading      web 30/700 (an <h1>)   phone 20/700 (under the title)
+     *   day heading          web 14/600 UPPERCASE   phone 12, plain, no letter-spacing
+     *   "Tell me about"      web 14/600 sentence    phone 12/600 UPPERCASE
+     *   status notes ×6      web 12                 phone 13
+     *   empty blurb          web inherited 16       phone 14
+     *
+     * Five roles, five disagreements, and the first is structural rather than a size: the
+     * web's two arrival states returned a page with no screen title on them at all.
+     */
+    for (const path of ['mobile/app/(tabs)/index.tsx', 'mobile/app/calendar.tsx']) {
+      expect(read(path), `${path} still holds a raw size`).not.toMatch(/fontSize: \d/);
+      expect(read(path), `${path} still holds a raw weight`).not.toMatch(/fontWeight: '\d/);
+    }
+    for (const path of ['app/src/screens/UpNext.tsx', 'app/src/screens/Calendar.tsx']) {
+      expect(read(path), `${path} still holds a Tailwind step`).not.toMatch(BUILT_IN);
+    }
+    // The structural half: every arrival state keeps the screen's own title.
+    const upNext = read('app/src/screens/UpNext.tsx');
+    expect((upNext.match(/>Up Next<\/h1>/g) ?? []).length, 'an arrival state lost its title')
+      .toBe(4);
   });
 
   it('is what every tab root on the phone is drawn at, at the same step as the web', () => {
@@ -138,6 +194,9 @@ describe('the type scale', () => {
     const source = filesUnder('app/src').map(read).join('\n');
     const used = Object.keys(text).filter((name) => source.includes(`text-${name}`));
     expect(used).toEqual(['s12', 's14', 's16', 's20', 's24', 's30']);
+    // s11 has no call site yet, and Tailwind v4 is JIT, so `text-s11` does not exist in
+    // the stylesheet. The first screen to reach for it has to be migrated, not sprinkled.
+    expect(used).not.toContain('s11');
   });
 
   it('is where the two shared controls get their label size, rather than each side deciding', () => {

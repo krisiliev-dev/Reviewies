@@ -64,7 +64,18 @@ export function UpNext() {
   if (imported) {
     return (
       <div className="flex flex-col gap-3 p-6">
-        <h1 className="text-s30 font-bold">Your history is in</h1>
+      {/*
+       * The screen keeps its own title, and the arrival line is a heading under it.
+       *
+       * These two states used to `return` a page with no "Up Next" on it at all: the tab
+       * bar said one thing and the page said another, and somebody one minute into the app
+       * lost the only word telling them where they were. The phone has never done that —
+       * it draws the title and puts the arrival heading beneath — and §6.107 widened the
+       * gap rather than finding it, by giving the web's `<h1>` the tab-root treatment. A
+       * heading that is a *sentence* is not a screen title, and 30/700 read like one.
+       */}
+        <h1 className="text-s30 font-bold">Up Next</h1>
+        <h2 className="text-s20 font-semibold">Your history is in</h2>
         <p>
           Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
           {imported.watchlist > 0 && `, ${imported.watchlist} watchlist items`}.
@@ -84,7 +95,7 @@ export function UpNext() {
         <MatchImports autoStart={false} />
         <button
           onClick={() => setImported(undefined)}
-          className="tap self-start text-sm text-ink-secondary underline"
+          className="tap self-start text-s14 text-ink-secondary underline"
         >
           Later
         </button>
@@ -141,14 +152,16 @@ export function UpNext() {
   if (entries.length === 0) {
     return (
       <div className="flex flex-col gap-3 p-6">
-        <h1 className="text-s30 font-bold">Bring your history with you</h1>
+        <h1 className="text-s30 font-bold">Up Next</h1>
+        {/* A heading under the screen's own title — see the note on the arrival state. */}
+        <h2 className="text-s20 font-semibold">Bring your history with you</h2>
         <p className="text-ink-secondary">
           TV Time is gone. If you got your data out — or pulled it off your phone — this
           reads it and picks up where you left off.
         </p>
         <ImportFormats />
         <ImportFiles label="Import from TV Time" onImported={setImported} primary />
-        <p className="mt-2 px-1 text-sm text-ink-secondary">
+        <p className="mt-2 px-1 text-s14 text-ink-secondary">
           Nothing to import? Search for a show and start from there.
         </p>
         {/* The secondary of the two. It was the bright one and the import was the muted

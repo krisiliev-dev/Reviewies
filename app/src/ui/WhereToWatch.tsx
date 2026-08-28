@@ -65,7 +65,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           the side of its own card — visible in a screenshot and invisible to the
           viewport check, because it escaped the card and not the screen. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="text-sm font-semibold tracking-wide text-ink-secondary uppercase">Where to watch</h2>
+        <h2 className="text-s12 font-semibold tracking-wide text-ink-secondary uppercase">Where to watch</h2>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}

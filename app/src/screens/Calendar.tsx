@@ -73,7 +73,13 @@ export function Calendar() {
       <h1 className="mb-4 px-1 text-s24 font-semibold">Upcoming</h1>
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
-        <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>
+        {/* The eyebrow, at the step §6.108 chose for it on Stats: uppercase with
+            letter-spacing reads a size larger than its number, and the phone has drawn
+            this heading at 12 since it was written while the web drew it at 14 in
+            sentence case. One treatment, on both. */}
+        <h2 className="mb-2 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+          Tell me about
+        </h2>
         {/* Rows, and every hint visible, which is what the phone did and the web did not:
             the web showed one hint in a paragraph underneath, so choosing between three
             options meant selecting each in turn to read what it does. §6.51's rule is
@@ -87,31 +93,31 @@ export function Calendar() {
         />
 
         {preference !== 'off' && !notificationsSupported() && (
-          <p className="mt-2 text-xs text-trouble">
+          <p className="mt-2 text-s12 text-trouble">
             This browser cannot show notifications. The calendar below still works.
           </p>
         )}
-        {pushNote && <p className="mt-2 text-xs text-ink-secondary">{pushNote}</p>}
+        {pushNote && <p className="mt-2 text-s12 text-ink-secondary">{pushNote}</p>}
         {syncNote && (
-          <p className="mt-2 text-xs text-ink-secondary" role="status">
+          <p className="mt-2 text-s12 text-ink-secondary" role="status">
             {syncNote}
           </p>
         )}
         {preference !== 'off' && !vapidPublicKey() && (
-          <p className="mt-2 text-xs text-ink-secondary">
+          <p className="mt-2 text-s12 text-ink-secondary">
             Push delivery is not configured on this build, so alerts will not arrive.
             The calendar below still works.
           </p>
         )}
         {preference !== 'off' && permission === 'denied' && (
-          <p className="mt-2 text-xs text-trouble">
+          <p className="mt-2 text-s12 text-trouble">
             Notifications are blocked in browser settings.
           </p>
         )}
         {preference !== 'off' && permission === 'default' && (
           // On iOS the Push API only exists once installed to the Home Screen —
           // a Safari tab can never grant this.
-          <p className="mt-2 text-xs text-ink-secondary">
+          <p className="mt-2 text-s12 text-ink-secondary">
             On iPhone, add Reviewies to your Home Screen first — Safari tabs cannot receive
             notifications.
           </p>
@@ -129,12 +135,13 @@ export function Calendar() {
               And which sentence it is depends on *why* it is empty. An imported show has
               no air dates until matching gives it a provider ID, so somebody who has just
               brought in eleven shows was being told to track one. */}
-          <p className="text-ink-secondary">
+          {/* It had no size and inherited 16; the phone's `blurb` is 14. */}
+          <p className="text-s14 text-ink-secondary">
             {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
           </p>
           <Link
             to="/discover"
-            className="rounded-pill border border-stroke-signal px-4 py-2 text-sm"
+            className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"
           >
             {COPY.calendar.findSomething}
           </Link>
@@ -144,7 +151,7 @@ export function Calendar() {
       <div className="flex flex-col gap-5">
         {grouped.map(([day, dayEntries]) => (
           <section key={day}>
-            <h2 className="mb-2 px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">
+            <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
               {formatDay(day)}
             </h2>
             <ul className="flex flex-col gap-1.5">

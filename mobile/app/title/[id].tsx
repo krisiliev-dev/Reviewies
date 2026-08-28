@@ -28,6 +28,7 @@ import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { border, radius, tap, theme } from '../../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
@@ -360,8 +361,8 @@ const styles = StyleSheet.create({
   season: { gap: 6 },
   seasonHeading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: text.s12,
+    fontWeight: weight.semibold,
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginTop: 8,

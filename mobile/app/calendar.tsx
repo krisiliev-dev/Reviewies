@@ -14,6 +14,7 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { radius, theme } from '../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import {
   pushSupported,
   registerForPush,
@@ -203,20 +204,31 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   delivery: { marginTop: 12, gap: 8 },
-  deliveryNote: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
+  // 13 against the web's 12, for the same six status lines under the same control.
+  // 13 is one of the two the scale killed.
+  deliveryNote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17 },
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   sectionHeading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: text.s12,
+    fontWeight: weight.semibold,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-  blurb: { color: theme.inkSecondary, fontSize: 14, lineHeight: 20 },
+  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20 },
 
 
   day: { gap: 6, marginTop: 8 },
-  dayHeading: { color: theme.inkSecondary, fontSize: 12 },
+  // The same eyebrow as every other section heading in the app, which this was not:
+  // the web drew the day as uppercase 14/600 with letter-spacing and the phone drew
+  // it as plain 12 — the same role, two entirely different treatments.
+  dayHeading: {
+    color: theme.inkSecondary,
+    fontSize: text.s12,
+    fontWeight: weight.semibold,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
 });
