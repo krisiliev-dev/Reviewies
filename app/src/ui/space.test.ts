@@ -107,7 +107,11 @@ describe('the space scale, on the phone', () => {
      * headings, the way `SCREEN.edge` did for fifteen containers and `Field` for
      * twenty-three inputs before that.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(203);
+    /*
+     * 195, down from 203: `lists.tsx`'s card became a `Row` and took its head, body and
+     * inset with it, and three more fills became rules that need no padding of their own.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(195);
     expect(off).toEqual([]);
   });
 });

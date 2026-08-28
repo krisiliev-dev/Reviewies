@@ -144,7 +144,12 @@ describe('the flat rule', () => {
      * because a component took the decision, which is the fourth sprint running that this
      * floor has moved for that reason rather than because a scan broke.
      */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(74);
+    /*
+     * 70, down from 74: four `rounded-plate` card fills became ruled rows. Fifth sprint
+     * running this floor has moved because a fill stopped being a fill, which is the
+     * direction's whole argument arriving one migration at a time.
+     */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(70);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

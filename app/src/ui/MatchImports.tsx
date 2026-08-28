@@ -141,7 +141,7 @@ export function MatchImports({
       {error && <p className="text-s14 text-trouble">{error}</p>}
 
       {asks.map((ask) => (
-        <div key={ask.localId} className="rounded-plate bg-ground-raised p-3">
+        <div key={ask.localId} className="-mx-s16 border-b border-b-stroke-hairline px-s16 py-s12">
           <p className="text-s16 font-title font-semibold">{ask.name}</p>
           {/* Said plainly, because the honest reason to ask is not "we failed" — it is
               that more than one answer looked right, and picking one would be a guess

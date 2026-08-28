@@ -171,7 +171,7 @@ function ListCard({
   }, [open, list.id]);
 
   return (
-    <li className="rounded-plate bg-ground-raised p-3">
+    <li className="-mx-s16 border-b border-b-stroke-hairline px-s16 py-s12">
       <button
         onClick={onToggle}
         aria-expanded={open}

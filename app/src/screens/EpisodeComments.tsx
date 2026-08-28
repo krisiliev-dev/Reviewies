@@ -205,7 +205,7 @@ export function EpisodeComments() {
 
           <ul className="mt-4 flex flex-col gap-2">
             {visible.map((c) => (
-              <li key={c.id} className="rounded-plate bg-ground-raised p-3">
+              <li key={c.id} className="-mx-s16 border-b border-b-stroke-hairline px-s16 py-s12">
                 <Note level="footnote" className="flex items-center gap-2">
                   <span className="min-w-0 flex-1">
                     {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}

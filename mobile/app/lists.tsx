@@ -1,4 +1,3 @@
-import { SURFACE } from '@reviewies/core/ui/surface';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
@@ -14,7 +13,7 @@ import {
   type ListSummary,
 } from '@reviewies/core/social/lists';
 import { db } from '@reviewies/core/data/db';
-import { leadingOf, radius, theme } from '../src/ui/theme';
+import { leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
@@ -188,27 +187,32 @@ function ListCard({
   }, [expanded, list.id]);
 
   return (
-    <View style={styles.card}>
-      <Pressable
-        onPress={onToggle}
-        style={styles.cardHead}
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        accessibilityLabel={`${expanded ? 'Collapse' : 'Expand'} ${list.name}`}
-      >
-        <View style={styles.cardBody}>
-          <Text style={styles.cardName}>{list.name}</Text>
-          <Text style={styles.cardMeta}>
-            {list.itemCount} {list.itemCount === 1 ? 'title' : 'titles'}
-            {list.isPublic ? ' · public' : ' · private'}
-            {list.mine ? '' : ' · someone else’s'}
-          </Text>
-        </View>
-        <Text style={styles.chevron}>{expanded ? '⌄' : '›'}</Text>
-      </Pressable>
-
-      {expanded && (
-        <View style={styles.cardItems}>
+    /*
+     * A `Row`, not a card. `docs/design/direction.md` asks for full-bleed rows on
+     * hairlines and this screen was the last list in the app still drawn as inset raised
+     * boxes — visible for the first time in `18-lists-in.png`, because until §6.126 this
+     * screen photographed a sign-in gate.
+     *
+     * `Row` already draws exactly this shape: its rule is on the block rather than the
+     * row's own line, so the expanded items sit inside the same ruled band instead of
+     * getting a rule of their own. That is what `under` is for, and it was written for
+     * this case before this case reached it.
+     */
+    <BaseRow
+      title={list.name}
+      meta={`${list.itemCount} ${list.itemCount === 1 ? 'title' : 'titles'}${
+        list.isPublic ? ' · public' : ' · private'
+      }${list.mine ? '' : ' · someone else’s'}`}
+      density="index"
+      open={{
+        name: `${expanded ? 'Collapse' : 'Expand'} ${list.name}`,
+        does: 'act',
+        run: onToggle,
+      }}
+      trailing={<Text style={styles.chevron}>{expanded ? '⌄' : '›'}</Text>}
+      under={
+        expanded ? (
+          <View style={styles.cardItems}>
           {items === undefined && !itemsFailed && <ActivityIndicator color={theme.workingMark} />}
           {itemsFailed && (
             <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
@@ -290,9 +294,10 @@ function ListCard({
               </Text>
             </Pressable>
           )}
-        </View>
-      )}
-    </View>
+          </View>
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -305,13 +310,9 @@ const styles = StyleSheet.create({
 
   newRow: { flexDirection: 'row', gap: 8 },
 
-  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, overflow: 'hidden' },
-  cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  cardBody: { flex: 1 },
-  cardName: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
-  cardMeta: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
-  cardItems: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
+  /* No inset and no fill: `Row` owns the band now, and `under` sits inside it. */
+  cardItems: { gap: 8 },
   mix: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   remove: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

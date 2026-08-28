@@ -1,4 +1,5 @@
-import { SURFACE } from '@reviewies/core/ui/surface';
+import { SCREEN } from '@reviewies/core/ui/screen';
+import { ROW } from '@reviewies/core/ui/row';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
@@ -8,7 +9,7 @@ import {
   type RunProgress,
 } from '@reviewies/core/data/reconcile';
 import { Poster } from './Poster';
-import { radius, tap, theme } from './theme';
+import { tap, theme, space} from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 
@@ -176,7 +177,15 @@ export function MatchImports({
 const styles = StyleSheet.create({
   block: { gap: 12 },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
-  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 8 },
+  /* One proposal among several, which is a list. Ruled, and it bleeds like the rest. */
+  card: {
+    borderBottomWidth: ROW.rule,
+    borderBottomColor: theme[ROW.colour],
+    marginHorizontal: SCREEN.bleed,
+    paddingHorizontal: SCREEN.edge,
+    paddingVertical: space.s12,
+    gap: space.s8,
+  },
   name: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   skip: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

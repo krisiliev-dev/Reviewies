@@ -1,5 +1,5 @@
 import { Block } from '../../src/ui/Block';
-import { SURFACE } from '@reviewies/core/ui/surface';
+import { ROW } from '@reviewies/core/ui/row';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -16,7 +16,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
-import { leadingOf, radius, theme } from '../../src/ui/theme';
+import { leadingOf, radius, theme, space} from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
@@ -258,7 +258,20 @@ const styles = StyleSheet.create({
 
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
-  comment: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 6 },
+  /*
+   * A ruled entry, not a card. A comment is one of a list of comments — `SURFACE`'s rule is
+   * that a card is a summary or a form, one object taken in whole, and a list of things
+   * gets rules. It bleeds to the edge for the same reason every other list on this screen
+   * does (§6.121); only the words stay in the column.
+   */
+  comment: {
+    borderBottomWidth: ROW.rule,
+    borderBottomColor: theme[ROW.colour],
+    marginHorizontal: SCREEN.bleed,
+    paddingHorizontal: SCREEN.edge,
+    paddingVertical: space.s12,
+    gap: space.s6,
+  },
   handle: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   body: { color: theme.ink, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.prose.name },
   image: { width: '100%', height: 180, borderRadius: radius.plate },

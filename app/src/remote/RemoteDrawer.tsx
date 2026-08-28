@@ -143,7 +143,7 @@ export function RemoteDrawer() {
         )}
 
         {bridge.playback && (
-          <div className="rounded-plate bg-ground-raised p-3">
+          <div className="-mx-s16 border-b border-b-stroke-hairline px-s16 py-s12">
             {bridge.playback.title && (
               <p className="truncate text-s14 font-title font-semibold">{bridge.playback.title}</p>
             )}

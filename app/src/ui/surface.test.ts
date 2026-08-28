@@ -114,12 +114,23 @@ describe('a press', () => {
       }
     }
     /*
-     * Seven, down from ten. Three went with the boxed section headings — `account.tsx`,
-     * `people.tsx` and `comments/[targetId].tsx` were a heading over a block inside a
-     * raised box, which is what `Block` draws without the box. The count is exact so the
-     * next one to move has to be a decision somebody writes down.
+     * **Three**, and these three are the rule rather than what is left of a migration.
+     * Ten became seven when `Block` took the boxed section headings; seven became three
+     * when the four that were *lists of things* became ruled rows — `lists.tsx` (which
+     * `18-lists-in.png` showed as inset cards on a screen where every other rule reaches
+     * the paper), `comments`' individual comment, `RemotePanel`'s device and
+     * `MatchImports`' proposal.
+     *
+     * What is left is exactly what `SURFACE.card` says a card is — a summary or a form,
+     * one object taken in whole:
+     *
+     * - `(tabs)/more.tsx`'s stats block: three figures and a sentence, read at once;
+     * - `ImportFiles.tsx`'s report: what an import did, after it did it;
+     * - `ContentWarnings.tsx`'s panel: a disclosure over the page, not a list in it.
+     *
+     * Exact, not a floor. A fourth card is a decision somebody has to write down.
      */
-    expect(cards.length, 'no card fills read the table').toBe(7);
+    expect(cards.length, 'no card fills read the table').toBe(3);
     expect(raw).toEqual([]);
   });
 });

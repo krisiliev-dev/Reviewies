@@ -8875,6 +8875,56 @@ And the target-size clause is measured on the screen where it failed, not assert
 source: `hitSlop` is real on a device and invisible to layout, so only the box counts. The
 plant removes `tap` and the harness prints `Add to list 47x16`.
 
+### 6.127 The last four card fills, and a component that had been waiting for them
+
+`docs/design/direction.md`'s fifth argument for LATE EDITION is density as an
+information-design problem, and it names *"rules instead of card fills"* first. Four
+sprints have chipped at it. This finishes the part that is a list of things.
+
+`18-lists-in.png` is why it happened now rather than as an argument. Until §6.126 the Lists
+screen photographed a sign-in gate; the moment it could be seen, it showed **inset raised
+cards on a screen where every other rule ran to the paper's edge**. Nobody had to be
+convinced of anything.
+
+## `Row` had already been written for this
+
+`lists.tsx`'s card was a pressable head with an expandable body, and `Row`'s own comment has
+said since §6.121 that *"the rule is on the block, not on the row's own line, so a group
+underneath sits inside the same ruled band rather than getting a rule of its own"* — which
+is exactly the shape, and `under` is exactly the prop. The migration deleted five style
+declarations (`card`, `cardHead`, `cardBody`, `cardName`, `cardMeta`) and replaced them with
+a component that already existed. The screen has one fewer bespoke row implementation than
+it did, which is what #140 and #141 were for.
+
+`RowContract`'s `open` is optional — *"omit and the row is text, not a control"* — so even
+the non-interactive cases could have been `Row`. They are not: a comment is an author, a
+time and a paragraph of somebody's prose, and `Row`'s slots are `title / code / meta /
+count / tag / note`. Forcing it in would be the thing `row.ts` warns about in the same
+file: *"a migration is not licence to rewrite what a screen says."* Those three took the
+rule and the bleed and kept their own content.
+
+## Three cards left, and they are the rule rather than the residue
+
+`surface.test.ts` pins the count at **three**, exact rather than a floor. Ten became seven
+when `Block` took the boxed section headings (§6.123); seven became three here. What is
+left is precisely what `SURFACE.card` says a card is — a summary or a form, one object taken
+in whole:
+
+- `(tabs)/more.tsx`'s stats block: three figures and a sentence, read at once;
+- `ImportFiles.tsx`'s report: what an import did, after it did it;
+- `ContentWarnings.tsx`'s panel: a disclosure over the page, not a list in it.
+
+A fourth is now a decision somebody has to write down.
+
+Both platforms in the same sprint, which is the sixth time that has been the point: the web
+counterparts in `Lists`, `EpisodeComments`, `RemoteDrawer` and `MatchImports` took
+`-mx-s16 border-b border-b-stroke-hairline px-s16` — the same mechanism `Row` uses, spelled
+as literals because Tailwind compiles from source text.
+
+Floors moved for the right reason again: the web's radius sweep 74 → 70, the phone's spacing
+scan 203 → 195. Fifth sprint running that a fill has stopped being a fill and taken its
+padding with it.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

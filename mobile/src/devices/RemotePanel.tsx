@@ -1,11 +1,11 @@
-import { SURFACE } from '@reviewies/core/ui/surface';
+import { ROW } from '@reviewies/core/ui/row';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
-import { leadingOf, radius, tap, theme } from '../ui/theme';
+import { leadingOf, tap, theme, space} from '../ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from '../ui/Section';
@@ -149,7 +149,14 @@ const styles = StyleSheet.create({
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
-  device: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12 },
+  /* A device is an entry in a list of devices, so a rule rather than a fill. */
+  device: {
+    borderBottomWidth: ROW.rule,
+    borderBottomColor: theme[ROW.colour],
+    marginHorizontal: SCREEN.bleed,
+    paddingHorizontal: SCREEN.edge,
+    paddingVertical: space.s12,
+  },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   deviceAddress: { color: theme.inkSecondary },
