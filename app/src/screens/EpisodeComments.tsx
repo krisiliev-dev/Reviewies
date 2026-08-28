@@ -18,6 +18,7 @@ import {
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -133,9 +134,11 @@ export function EpisodeComments() {
           </div>
 
           <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
-            <textarea
+            <Field
+              multiline
+              label={COPY.fields.comment}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
               // Pasting a screenshot straight in is the actual flow — people
               // screenshot the scene and paste it, they do not go via a file picker.
               onPaste={(e) => {
@@ -143,8 +146,6 @@ export function EpisodeComments() {
                 if (file) void attach(file);
               }}
               placeholder="What did you think?"
-              rows={3}
-              className="w-full resize-y rounded-none bg-ground-raised px-3 py-3 text-s16 outline-none placeholder:text-ink-secondary"
             />
 
             {image && (

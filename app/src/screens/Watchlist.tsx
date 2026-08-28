@@ -7,6 +7,7 @@ import { Poster } from '../ui/Poster';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 /**
  * Uncapped, deliberately. Trakt limiting free watchlists and doubling its price is
@@ -116,11 +117,13 @@ function Row({
       under={
         editing ? (
           <div className="flex gap-1.5">
-            <input
+            <Field
+              size="row"
+              label={COPY.controls.noteFor(name)}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
               placeholder={COPY.watchlist.notePlaceholder}
-              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
+              className="min-w-0 flex-1"
               autoFocus
             />
             <Button tone="primary" label="Save" name={`Save note for ${name}`} onPress={save} />

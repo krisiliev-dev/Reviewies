@@ -1,13 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
@@ -29,6 +21,7 @@ import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/al
 import { COPY } from '@reviewies/core/copy';
 import { useLive } from '../../src/useLive';
 import { Note } from '../../src/ui/Note';
+import { Field } from '../../src/ui/Field';
 
 export default function SearchScreen() {
   /*
@@ -107,12 +100,11 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text accessibilityRole="header" style={styles.heading}>Search</Text>
-        <TextInput
+        <Field
+          label={COPY.fields.search}
           value={query}
-          onChangeText={setQuery}
+          onChange={setQuery}
           placeholder="Shows, films, anime…"
-          placeholderTextColor={theme.inkSecondary}
-          style={styles.input}
           autoFocus
           autoCorrect={false}
         />
@@ -258,17 +250,20 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
       under={
         noting ? (
           <View style={styles.editor}>
-            <TextInput
+            {/*
+              `size="row"`, not `page`: this is the note beside a result rather than the
+              search box at the top of the screen, and a note field wearing the page density
+              read as a second place to search.
+            */}
+            <Field
+              size="row"
+              label={COPY.controls.noteFor(result.name)}
               value={note}
-              onChangeText={setNote}
+              onChange={setNote}
               placeholder={COPY.watchlist.notePlaceholder}
-              placeholderTextColor={theme.inkSecondary}
-              // Not `styles.input`, which is the search box at the top of this screen —
-              // a note field wearing it would read as a second place to search.
-              style={styles.noteInput}
               autoFocus
               onSubmitEditing={watchlist}
-              accessibilityLabel={`Note for ${result.name}`}
+              style={styles.grow}
             />
             <Button
               size="inline"
@@ -326,31 +321,13 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
 }
 
 const styles = StyleSheet.create({
+  /** A field that shares its row with a button. Layout, which the call site owns. */
+  grow: { flex: 1, minWidth: 0 },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
   heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name },
-  input: {
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    color: theme.ink,
-    fontSize: text.s16,
-    fontFamily: type.family.body.name,
-  },
   // The watchlist screen's note field, because it is the same field.
   editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
-  noteInput: {
-    flex: 1,
-    color: theme.ink,
-    fontSize: text.s14,
-    backgroundColor: theme.groundWell,
-    borderRadius: radius.none,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 44,
-    fontFamily: type.family.body.name,
-  },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },
   retry: {

@@ -9,6 +9,8 @@ import { getProvider, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from './Poster';
 import { Row as BaseRow } from './Row';
 import { Note } from './Note';
+import { Field } from './Field';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Finishing a migration.
@@ -239,12 +241,13 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
         }}
         className="flex gap-1.5"
       >
-        <input
+        <Field
+          size="row"
+          label={COPY.fields.matchSearch(ask.name)}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label={`Search for the show ${ask.name} really is`}
+          onChange={setQuery}
           placeholder="Search by name"
-          className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-2 text-s14 outline-none placeholder:text-ink-secondary"
+          className="min-w-0 flex-1"
         />
         <button
           type="submit"

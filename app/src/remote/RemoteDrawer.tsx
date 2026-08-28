@@ -123,7 +123,14 @@ export function RemoteDrawer() {
             <select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
-              className="rounded-none bg-ground-raised px-3 py-2 text-s16 text-white outline-none"
+              /*
+                Not a `Field` — a `select` is a different control — but it had the same two
+                defects. `outline-none` removed the focus ring at the one control in the
+                drawer a keyboard reaches, and `text-white` is a colour the palette does not
+                contain: pure white against every ink in the table, on a screen whose whole
+                argument is that it is printed matter rather than a lit rectangle.
+              */
+              className="rounded-none bg-ground-raised px-3 py-2 text-s16 text-ink"
             >
               <option value="">Choose…</option>
               {bridge.devices.map((device) => (

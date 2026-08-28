@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COPY } from '@reviewies/core/copy';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
 import { Note } from '../../src/ui/Note';
+import { Field } from '../../src/ui/Field';
 
 /**
  * Things you mean to watch, and why.
@@ -114,16 +115,15 @@ function Row({
 
         {editing ? (
           <View style={styles.editor}>
-            <TextInput
+            <Field
+              size="row"
+              label={COPY.controls.noteFor(name)}
               value={draft}
-              onChangeText={setDraft}
+              onChange={setDraft}
               placeholder={COPY.watchlist.notePlaceholder}
-              placeholderTextColor={theme.inkSecondary}
-              style={styles.input}
               multiline
               autoFocus
               onSubmitEditing={save}
-              accessibilityLabel={`Note for ${name}`}
             />
             <Button
               size="inline"
@@ -175,14 +175,4 @@ const styles = StyleSheet.create({
   note: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.proseItalic.name },
   addNote: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   editor: { gap: 6 },
-  input: {
-    color: theme.ink,
-    fontSize: text.s14,
-    backgroundColor: theme.groundWell,
-    borderRadius: radius.none,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 44,
-    fontFamily: type.family.body.name,
-  },
 });

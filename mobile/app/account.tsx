@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import {
@@ -17,6 +17,7 @@ import { leadingOf, radius, theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from '../src/ui/Note';
+import { Field } from '../src/ui/Field';
 
 /**
  * Signing in, framed as optional throughout.
@@ -127,24 +128,22 @@ export default function AccountScreen() {
               episode comments and shared reactions.
             </Note>
 
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor={theme.inkSecondary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={styles.input}
-            />
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password (8+ characters)"
-              placeholderTextColor={theme.inkSecondary}
-              secureTextEntry
-              style={styles.input}
-            />
+            <Field
+            label={COPY.fields.email}
+            value={email}
+            onChange={setEmail}
+            placeholder="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+            <Field
+            label={COPY.fields.password}
+            value={password}
+            onChange={setPassword}
+            placeholder="Password (8+ characters)"
+            secureTextEntry
+          />
 
             {/* The comment this replaces read "while busy the label is a spinner, which
                 has no text to read" — a workaround written beside the decision that
@@ -186,15 +185,6 @@ const styles = StyleSheet.create({
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   rejected: { marginTop: 12, gap: 8 },
   rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
-  input: {
-    backgroundColor: theme.groundWell,
-    borderRadius: radius.none,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: theme.ink,
-    fontSize: text.s14,
-    fontFamily: type.family.body.name,
-  },
   toggle: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.body.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 });

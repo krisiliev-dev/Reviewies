@@ -10,6 +10,7 @@ import { AddToList } from '../social/AddToList';
 import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 export function Search() {
   /*
@@ -86,11 +87,11 @@ export function Search() {
   return (
     <div className="p-4">
       <h1 className="mb-3 px-1 text-s30 font-display font-bold">Search</h1>
-      <input
+      <Field
+        label={COPY.fields.search}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={setQuery}
         placeholder="Shows, films, anime…"
-        className="w-full rounded-none bg-ground-raised px-4 py-3 text-s16 outline-none placeholder:text-ink-secondary"
         autoFocus
       />
 
@@ -211,11 +212,13 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
         <>
           {noting ? (
             <div className="flex gap-1.5">
-              <input
+              <Field
+                size="row"
+                label={COPY.controls.noteFor(result.name)}
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={setNote}
                 placeholder={COPY.watchlist.notePlaceholder}
-                className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
+                className="min-w-0 flex-1"
                 autoFocus
               />
               <Button

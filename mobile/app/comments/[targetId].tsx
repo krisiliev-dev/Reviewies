@@ -1,14 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
 import { watchCount } from '@reviewies/core/data/repo';
@@ -29,6 +20,7 @@ import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from '../../src/ui/Note';
+import { Field } from '../../src/ui/Field';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -147,13 +139,12 @@ export default function CommentsScreen() {
               {hidden > 0 && <Text style={styles.hidden}>{hidden} hidden</Text>}
             </View>
 
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="What did you think?"
-              placeholderTextColor={theme.inkSecondary}
+            <Field
               multiline
-              style={styles.input}
+              label={COPY.fields.comment}
+              value={draft}
+              onChange={setDraft}
+              placeholder="What did you think?"
             />
             {image && (
               <View style={styles.attached}>
@@ -265,16 +256,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   hidden: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
 
-  input: {
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    padding: 16,
-    color: theme.ink,
-    fontSize: text.s14,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    fontFamily: type.family.body.name,
-  },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
   comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },

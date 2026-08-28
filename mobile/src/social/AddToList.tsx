@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
@@ -7,6 +7,8 @@ import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { text, type } from '@reviewies/core/tokens';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -81,15 +83,15 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
           ))}
 
           <View style={styles.newRow}>
-            <TextInput
+            <Field
+              size="row"
+              label={COPY.fields.listName}
               value={newName}
-              onChangeText={setNewName}
-              placeholder="New list…"
-              placeholderTextColor={theme.inkSecondary}
+              onChange={setNewName}
+              placeholder={COPY.fields.newListPlaceholder}
               maxLength={120}
-              style={styles.input}
               onSubmitEditing={createAndAdd}
-              accessibilityLabel="Name for a new list"
+              style={styles.grow}
             />
             <Button
               onPress={createAndAdd}
@@ -109,6 +111,8 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 }
 
 const styles = StyleSheet.create({
+  /** A field that shares its row with a button. Layout, which the call site owns. */
+  grow: { flex: 1, minWidth: 0 },
   block: { marginTop: 8, gap: 6 },
   toggle: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   panel: {
@@ -125,15 +129,4 @@ const styles = StyleSheet.create({
   },
   listName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   newRow: { flexDirection: 'row', gap: 6, alignItems: 'stretch' },
-  input: {
-    flex: 1,
-    minWidth: 0,
-    color: theme.ink,
-    fontSize: text.s14,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontFamily: type.family.body.name,
-  },
 });

@@ -8147,6 +8147,66 @@ ink with a reading measure and is *not* a note. The **face** is what separates t
 narrowing the clause to the body face is what made it true rather than merely passing.
 
 
+### 6.116 Every place a person types had the focus ring switched off
+
+Stage 3 continued: `Field`, the fourth component. The drift was the reason to look and not
+the reason to write it.
+
+**The census.** Eleven inputs on the web wore eight treatments and twelve on the phone wore
+five: two grounds (`raised` and `well`) plus a bordered variant, four paddings, two sizes and
+an inherited third. That is a control nobody had ever decided.
+
+**The defect.** Every web input carried `outline-none` — seventeen across the app — and nothing
+put a ring back at any of them. `index.css` draws a two-ring `:focus-visible` designed
+carefully for this build, the inner ring in the ground because a near-white ring around a
+near-white fill is 1.00:1, and every place a person types switched it off. Somebody tabbing
+through search, sign-in, a list name or a comment box had nothing showing where they were.
+
+The brief for this sprint said `index.css` still pointed its focus rule at a deleted colour.
+It does not — that was fixed when the ring was rewritten — and the note is recorded here rather
+than acted on, because a stale premise acted on is a change nobody needed.
+
+**The second defect, which was worse and easier to miss.** Not one input in either app had a
+label. Every single one relied on its `placeholder`, which is gone the moment somebody types
+into it — so a screen reader announces the box, and a returning user re-reading a half-filled
+form has nothing to tell two fields apart. `Field` requires `label` in its type, so this is
+fixed by construction rather than by a sweep that has to be repeated.
+
+Writing those labels at the call sites immediately produced the thing `copy.ts` exists to
+stop: the web said *"New list name"* and the phone said *"Name for a new list"* for the same
+box, and `copy.test.ts` caught it within minutes. They live in `COPY.fields` now, and so does
+the placeholder, which had two spellings across four sites for the same reason.
+
+**A field is a ruled box.** §6.90 spent 822 sites turning fills into rules and the inputs kept
+two grounds and a border between them. The direction lists the search field's border among the
+strokes that *mean* something, so it is `stroke.signal` at 4.87:1 rather than `stroke.hairline`
+at 1.42, which WCAG 1.4.11 does not consider to exist. Two densities, the same split `Button`
+has.
+
+On the phone the focus state is drawn rather than inherited: React Native has no
+`:focus-visible`, so a focused field differed from an unfocused one only by a caret. It
+thickens to `border.mark` in the focus colour — the same two channels the web's ring uses.
+
+**The plant that survived, on the one clause that mattered.** `field.test.ts` scanned rendered
+`<input …>` elements for `outline-none`. `Field` writes `className={classes}`, so putting the
+class back into its `BOX` constant left every clause green — the guard written for exactly this
+defect could not see the defect reintroduced at its own source. It reads the component's code
+with the prose stripped now, and three separate plants confirm it: in the constant, on the
+element, and in another file.
+
+**Two more found on the way.** The remote drawer's device `<select>` carried both defects at
+once — `outline-none` at the one control in the drawer a keyboard reaches, and `text-white`,
+which is a colour the palette does not contain and never has. And stripping the dead
+`TextInput` imports afterwards revealed that `tsc --noEmit -p mobile/tsconfig.json` does not
+flag them either, which is §6.115's finding on the other platform: **neither app's convenient
+typecheck is the one the build runs.**
+
+`space.test.ts`'s site count fell from 240 to 229 and its floor moved down with a reason, the
+same way `type.test.ts`'s `<h2>` count did when `Section` landed. A component taking a decision
+off the screens is the population falling for the right reason; a floor left slack above it is
+what let nine deleted tests through in §6.107.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

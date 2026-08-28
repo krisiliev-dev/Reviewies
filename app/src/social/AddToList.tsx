@@ -4,6 +4,8 @@ import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/
 import type { MediaKind } from '@reviewies/core/domain/types';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -80,12 +82,14 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
           </ul>
 
           <form onSubmit={createAndAdd} className="mt-2 flex gap-1.5">
-            <input
+            <Field
+              size="row"
+              label={COPY.fields.listName}
               value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="New list…"
+              onChange={setNewName}
+              placeholder={COPY.fields.newListPlaceholder}
               maxLength={120}
-              className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
+              className="min-w-0 flex-1"
             />
             <Button
               submit

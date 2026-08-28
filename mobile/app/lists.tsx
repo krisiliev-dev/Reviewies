@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { getSession, syncConfigured } from '@reviewies/core/sync/auth';
 import {
@@ -27,6 +19,7 @@ import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from '../src/ui/Note';
+import { Field } from '../src/ui/Field';
 
 /**
  * Lists, mixing film and television freely.
@@ -109,14 +102,14 @@ export default function ListsScreen() {
       <Stack.Screen options={{ title: 'Lists' }} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.newRow}>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="New list…"
-            placeholderTextColor={theme.inkSecondary}
-            maxLength={120}
-            style={styles.input}
-          />
+          <Field
+          label={COPY.fields.listName}
+          value={name}
+          onChange={setName}
+          placeholder={COPY.fields.newListPlaceholder}
+          maxLength={120}
+          style={styles.grow}
+        />
           <Button
             onPress={create}
             disabled={!name.trim() || busy}
@@ -302,21 +295,13 @@ function ListCard({
 }
 
 const styles = StyleSheet.create({
+  /** A field that shares its row with a button. Layout, which the call site owns. */
+  grow: { flex: 1, minWidth: 0 },
   listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
 
   newRow: { flexDirection: 'row', gap: 8 },
-  input: {
-    flex: 1,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: theme.ink,
-    fontSize: text.s14,
-    fontFamily: type.family.body.name,
-  },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },

@@ -19,6 +19,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -166,19 +167,19 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
         </>
       ) : (
         <div className="mt-2 flex flex-col gap-2">
-          <input
+          <Field
+            label={COPY.fields.handle}
             value={handle}
-            onChange={(e) => setHandle(e.target.value)}
+            onChange={setHandle}
             placeholder="Handle"
-            className="rounded-none bg-ground-well px-3 py-3 outline-none placeholder:text-ink-secondary"
             autoFocus
           />
-          <input
+          <Field
+            label={COPY.fields.displayName}
             value={displayName ?? ''}
-            onChange={(e) => setDisplayName(e.target.value)}
+            onChange={setDisplayName}
             placeholder="Display name (optional)"
             maxLength={60}
-            className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
           <div className="flex gap-2">
             <Button tone="primary" label="Save" name="Save how you appear" onPress={save} />
@@ -243,11 +244,11 @@ function FindPeople({
   return (
     <section className="flex flex-col gap-2">
       <Section className="px-1">Find people</Section>
-      <input
+      <Field
+        label={COPY.fields.findPeople}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={setQuery}
         placeholder="Handle or name"
-        className="w-full rounded-none bg-ground-raised px-4 py-3 outline-none placeholder:text-ink-secondary"
       />
 
       {/* "Nobody by that name" was said for both no match and no answer, and somebody

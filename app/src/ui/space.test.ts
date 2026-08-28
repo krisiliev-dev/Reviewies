@@ -89,7 +89,14 @@ describe('the space scale, on the phone', () => {
     // the new count: a floor set to today's number fails on the next legitimate deletion
     // and gets nudged again, which is a ratchet nobody reads. It is here to catch a scan
     // that has stopped matching, and a hundred-site drop is what that looks like.
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(240);
+    /*
+     * 225, down from 240, because `Field` absorbed the padding of twenty-three inputs — the
+     * same shrinkage `type.test.ts`'s `<h2>` count took when `Section` landed. A component
+     * taking a decision off the screens is the population falling for the right reason, and
+     * the floor moves with it rather than being left slack: a slack floor is what let nine
+     * deleted tests through in §6.107.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(225);
     expect(off).toEqual([]);
   });
 });

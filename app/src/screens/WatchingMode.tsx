@@ -19,6 +19,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Choice } from '../ui/Choice';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
@@ -282,12 +283,11 @@ export function WatchingMode() {
       </div>
 
       <div className="safe-bottom border-t border-stroke-hairline p-3">
-        <input
+        <Field
+          label="Search emoji"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={setQuery}
           placeholder="Search any emoji…"
-          className="w-full rounded-none bg-ground-raised px-4 py-3 text-s16 outline-none placeholder:text-ink-secondary"
-          aria-label="Search emoji"
         />
       </div>
     </div>

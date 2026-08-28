@@ -141,12 +141,50 @@ export const COPY = {
     saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
     /**
+     * The announced name of a field, which is not its placeholder.
+     *
+     * `Field` requires a label because every input in the app had none: each relied on a
+     * placeholder, and a placeholder is gone the moment somebody types into it. Two fields
+     * on one screen both saying "Why did you save this?" are two fields a screen reader
+     * cannot tell apart, which is what naming them by title fixes.
+     */
+    noteFor: (name: string) => `Your note about ${name}`,
+    /**
      * Signed: negative moves the clock back. Both the fixed ±5s buttons and the drift
      * correction go through this, so the app has one way of saying it rather than the
      * two the same screen had.
      */
     seek: (seconds: number) =>
       `Move the clock ${seconds < 0 ? 'back' : 'forward'} ${Math.abs(seconds)} seconds`,
+  },
+
+  /**
+   * What each field is called out loud.
+   *
+   * `Field` requires a label because not one input in the app had one — every single one
+   * relied on its placeholder, and a placeholder is gone the moment somebody types. The
+   * labels live here for the reason all the words do: written at the call sites, the two
+   * platforms immediately said "New list name" and "Name for a new list" for the same box,
+   * which `copy.test.ts` caught within minutes of them being written.
+   */
+  fields: {
+    search: 'Search for a show, film or anime',
+    listName: 'Name for a new list',
+    handle: 'Your handle',
+    displayName: 'Your display name, optional',
+    findPeople: 'Find somebody by handle or name',
+    email: 'Email',
+    password: 'Password',
+    posterUrl: 'Address of a poster image to use instead',
+    comment: 'What you thought of this episode',
+    emoji: 'Search any emoji',
+    matchSearch: (name: string) => `Search for the show ${name} really is`,
+    /**
+     * And the placeholder, which is a different sentence from the label and also had two
+     * spellings: the Lists screen said "New list name" while the three other places the
+     * same box appears said "New list…". §6.98's rule, in the layer §6.116 was building.
+     */
+    newListPlaceholder: 'New list…',
   },
 
   watchlist: {

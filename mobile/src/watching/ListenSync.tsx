@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { useListenSync } from '../fingerprint/listen';

@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
@@ -37,6 +29,7 @@ import { Button } from '../../src/ui/Button';
 import { Section } from '../../src/ui/Section';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
+import { Field } from '../../src/ui/Field';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -162,16 +155,17 @@ export default function TitleScreen() {
               </Pressable>
             ) : (
               <View style={styles.posterRow}>
-                <TextInput
-                  value={posterDraft}
-                  onChangeText={setPosterDraft}
-                  placeholder="Image URL"
-                  placeholderTextColor={theme.inkSecondary}
-                  autoFocus
-                  autoCapitalize="none"
-                  style={styles.posterInput}
-                  accessibilityLabel="Poster image URL"
-                />
+                <Field
+                size="row"
+                label={COPY.fields.posterUrl}
+                value={posterDraft}
+                onChange={setPosterDraft}
+                placeholder="Image URL"
+                keyboardType="url"
+                autoFocus
+                autoCapitalize="none"
+                style={styles.grow}
+              />
                 <Button
                   tone="primary"
                   label="Save"
@@ -331,20 +325,11 @@ function EpisodeRow({
 }
 
 const styles = StyleSheet.create({
+  /** A field that shares its row with a button. Layout, which the call site owns. */
+  grow: { flex: 1, minWidth: 0 },
   posterEdit: { marginBottom: 12 },
   posterToggle: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   posterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  posterInput: {
-    flex: 1,
-    minWidth: 0,
-    color: theme.ink,
-    fontSize: text.s14,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontFamily: type.family.body.name,
-  },
   posterCancel: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
   content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },

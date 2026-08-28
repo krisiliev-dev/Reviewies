@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Session } from '@supabase/supabase-js';
 import { getSession, onAuthChange, syncConfigured } from '@reviewies/core/sync/auth';
@@ -23,6 +23,7 @@ import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
 import { Section } from '../src/ui/Section';
 import { Note } from '../src/ui/Note';
+import { Field } from '../src/ui/Field';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -124,15 +125,14 @@ export default function PeopleScreen() {
             </>
           ) : (
             <>
-              <TextInput
-                value={handle}
-                onChangeText={setHandle}
-                placeholder="Handle"
-                placeholderTextColor={theme.inkSecondary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={styles.input}
-              />
+              <Field
+            label={COPY.fields.handle}
+            value={handle}
+            onChange={setHandle}
+            placeholder="Handle"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
               <View style={styles.row}>
                 <Button onPress={saveHandle} tone="primary" label="Save" name="Save your handle" />
                 <Button
@@ -225,15 +225,14 @@ function FindPeople({
   return (
     <View style={styles.section}>
       <Section>Find people</Section>
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Handle or name"
-        placeholderTextColor={theme.inkSecondary}
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={styles.input}
-      />
+      <Field
+          label={COPY.fields.findPeople}
+          value={query}
+          onChange={setQuery}
+          placeholder="Handle or name"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
       {/* See the web's copy: "Nobody by that name" was said for both no match and no
           answer, and somebody would conclude a friend is not here and stop looking. */}
       {actionFailed && (
@@ -394,14 +393,5 @@ const styles = StyleSheet.create({
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   section: { gap: 8 },
-  input: {
-    backgroundColor: theme.groundWell,
-    borderRadius: radius.none,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: theme.ink,
-    fontSize: text.s14,
-    fontFamily: type.family.body.name,
-  },
 
 });

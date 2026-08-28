@@ -16,6 +16,7 @@ import {
 } from '@reviewies/core/social/lists';
 import { COPY } from '@reviewies/core/copy';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 /**
  * Lists, mixing film and television freely — the thing r/Simkl called a "severe
@@ -85,12 +86,13 @@ export function Lists() {
       <Note className="mb-4 px-1">Films and series together, in one list.</Note>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">
-        <input
+        <Field
+          label={COPY.fields.listName}
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="New list name"
+          onChange={setName}
+          placeholder={COPY.fields.newListPlaceholder}
           maxLength={120}
-          className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-3 outline-none placeholder:text-ink-secondary"
+          className="min-w-0 flex-1"
         />
         {/* The disabled treatment used to be spelled here, with the reason beside it:
             `disabled:opacity-40` on an accent fill gave a maroon block with unreadable

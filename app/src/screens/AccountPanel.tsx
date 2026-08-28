@@ -6,6 +6,7 @@ import { retryRejectedWrites } from '@reviewies/core/sync/driver';
 import { Button } from '../ui/Button';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 /**
  * Account and sync controls.
@@ -62,22 +63,22 @@ export function AccountPanel() {
         </Note>
 
         <form onSubmit={submit} className="flex flex-col gap-2">
-          <input
+          <Field
             type="email"
             required
+            label={COPY.fields.email}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             placeholder="Email"
-            className="rounded-none bg-ground-well px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
-          <input
+          <Field
             type="password"
             required
             minLength={8}
+            label={COPY.fields.password}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             placeholder="Password (8+ characters)"
-            className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
           <Button
             submit

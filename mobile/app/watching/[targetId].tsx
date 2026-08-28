@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  AppState,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +27,7 @@ import { Choice } from '../../src/ui/Choice';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
+import { Field } from '../../src/ui/Field';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -298,15 +291,14 @@ export default function WatchingScreen() {
 
         {/* Search is deliberately a small part of the screen. Most of it is the pad,
             because picking from a grid is what you can do without reading. */}
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search any emoji…"
-          placeholderTextColor={theme.inkSecondary}
-          style={styles.search}
-          autoCorrect={false}
-          accessibilityLabel="Search any emoji"
-        />
+        <Field
+            label={COPY.fields.emoji}
+            value={query}
+            onChange={setQuery}
+            placeholder="Search any emoji…"
+            autoCorrect={false}
+            style={styles.searchBox}
+          />
   
       {/* "Hidden in a drawer to the side" — and here rather than only on its own screen,
           because reaching for the remote should not cost you the clock and the stream. */}
@@ -324,6 +316,8 @@ export default function WatchingScreen() {
  */
 
 const styles = StyleSheet.create({
+  /** The emoji search sits inside the pad sheet with a margin of its own. */
+  searchBox: { margin: 12 },
   // Clips. The remote drawer is 300 wide, absolute against this, and parked at
   // `translateX(300)` while closed — so with nothing clipping it the page measured 690
   // in a 390 viewport and could be scrolled sideways to reveal a drawer that is supposed
@@ -378,14 +372,4 @@ const styles = StyleSheet.create({
   padLabel: { color: theme.inkSecondary, fontSize: text.s12, textAlign: 'center', fontFamily: type.family.title.name },
   noMatch: { color: theme.inkSecondary, fontSize: text.s14, padding: 8, fontFamily: type.family.body.name },
 
-  search: {
-    margin: 12,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.none,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    color: theme.ink,
-    fontSize: text.s14,
-    fontFamily: type.family.body.name,
-  },
 });

@@ -25,6 +25,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Field } from '../ui/Field';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -154,11 +155,14 @@ export function TitleDetail() {
             </button>
           ) : (
             <div className="flex gap-1.5">
-              <input
+              <Field
+                size="row"
+                type="url"
+                label={COPY.fields.posterUrl}
                 value={posterDraft}
-                onChange={(e) => setPosterDraft(e.target.value)}
+                onChange={setPosterDraft}
                 placeholder="Image URL"
-                className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-s14 outline-none placeholder:text-ink-secondary"
+                className="min-w-0 flex-1"
                 autoFocus
               />
               <Button
