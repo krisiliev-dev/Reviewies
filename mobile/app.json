@@ -11,7 +11,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "dev.krisiliev.reviewies",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded — it is never recorded, saved, or sent anywhere.",
+        "NSMicrophoneUsageDescription": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded \u2014 it is never recorded, saved, or sent anywhere.",
         "NSLocalNetworkUsageDescription": "Reviewies talks directly to a TV or streaming stick on your Wi-Fi so it can act as a remote.",
         "NSBonjourServices": [
           "_roku-rcp._tcp",
@@ -22,21 +22,30 @@
     },
     "android": {
       "package": "dev.krisiliev.reviewies",
-      "edgeToEdgeEnabled": true,
       "permissions": [
         "RECORD_AUDIO",
         "INTERNET",
         "ACCESS_NETWORK_STATE"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#131114"
+      },
+      "backgroundColor": "#131114"
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       [
         "expo-router",
-        { "sitemap": false }
+        {
+          "sitemap": false
+        }
       ],
       "expo-sqlite",
       "expo-sharing",
@@ -49,9 +58,21 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded — it is never recorded, saved, or sent anywhere.",
+          "microphonePermission": "Reviewies listens to the room to work out where you are in an episode, and keeps listening so the timing stays right through pauses and skips. Audio is analysed on this device and discarded \u2014 it is never recorded, saved, or sent anywhere.",
           "enableBackgroundRecording": true,
           "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "imageWidth": 200,
+          "backgroundColor": "#131114",
+          "dark": {
+            "backgroundColor": "#131114"
+          }
         }
       ]
     ],
@@ -59,6 +80,9 @@
       "tmdbToken": "",
       "supabaseUrl": "",
       "supabaseAnonKey": ""
-    }
+    },
+    "icon": "./assets/icon.png",
+    "backgroundColor": "#131114",
+    "primaryColor": "#F0A93B"
   }
 }

@@ -7760,12 +7760,89 @@ would guard the wrong thing and read as though the right thing were covered.
 Eight plants, eight caught.
 
 
+### 6.111 Nobody had ever asked the phone build what it would install, and it answered in five parts
+
+The sprint brief said the calendar's headings. §6.110's own conclusion said something else:
+the largest untested claim in this project is not a font size, it is that the app works on a
+phone. So this asked the one question on that path that can be answered from here — *what
+would a phone actually install* — by running `expo prebuild` for the first time in the
+project's life.
+
+**It succeeded, and it reported two problems by name.**
+
+```
+» android: EDGE_TO_EDGE_PLUGIN: `edgeToEdgeEnabled` customization is no longer available
+» android: userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
+```
+
+The second is the one that matters. `tokens.ts` says, in its own words, that *"this app is
+dark by decision rather than by preference — the premise of Watching Mode is a dark room
+with the television on"*, and `app.json` declares `userInterfaceStyle: "dark"` to say so.
+**Nothing implemented it.** On the platform this product pivoted to be, the native shell was
+left following the system theme, and the only way to find that out was to generate the
+project — which sixteen sprints of phone work never did.
+
+**Reading the generated XML found three more that nothing warned about.**
+
+`splashscreen_background: #FFFFFF`. A white flash, full screen, before a near-black app —
+the first thing anybody sees, and the exact opposite of the product.
+
+`colorPrimary: #023c69`. Expo's scaffold navy, tinting every native ripple and
+text-selection handle, in a colour that appears nowhere in this app's token tables.
+
+And **six icon and splash assets in `mobile/assets/`, half a megabyte of them, referenced by
+nothing.** `app.json` had no `icon`, no `splash`, no `adaptiveIcon`, no `web.favicon`. Worse
+than a missing icon: the file sitting there unreferenced is Expo's own template — a blue
+chevron on pale blue *with the construction guides still drawn on it* — so the app would
+have installed under this product's name wearing the scaffold's face. §6.67 swept the code
+for things that ship and never execute; this is the same class in the one file nothing had
+ever read.
+
+**Two of the five were fixed twice, because the first fix silenced the warning and changed
+nothing.** Setting the top-level `splash.backgroundColor` to the app's ground left the
+generated `colors.xml` saying `#FFFFFF`: SDK 57 reads that key through the
+`expo-splash-screen` plugin, which was not a dependency. And installing `expo-system-ui`
+stopped the `userInterfaceStyle` warning without altering a line of the generated theme,
+because that one works at runtime. §6.87's rule in a new place — **a warning that stops is
+not a feature that starts**, and the only way to tell was to read the output rather than the
+log. Every colour the manifest names now comes out of `core/src/tokens.ts`.
+
+**And the guard written to catch "referenced by nothing" was satisfied by a substring.**
+The clause asked whether the manifest text contained `icon.png`. It did — inside
+`splash-icon.png`. So the plant that removed the app icon entirely, which is *the state this
+project shipped in for its whole life*, passed. That is §6.109's shape for the third sprint
+running, twenty minutes after writing the clause, in a guard whose entire subject is a thing
+being referenced. `clauses.test.ts` could not see it either, because it watches
+`expect(read(file))` and this reads parsed JSON.
+
+The rule keeps getting restated and keeps recurring, so here it is in the sharpest form the
+evidence supports: **a needle is only a needle if nothing else in the haystack looks like
+it**, and the way to know is not to re-read the clause but to delete the thing it names and
+watch. Five plants, one survived, and the survivor was the one that mattered most.
+
+**What is still blocked on a person**, stated plainly because the rest of this is not:
+there is no Android SDK in this container, no `eas` CLI, no Apple or Google account, and no
+device. `expo prebuild` is as far as this can be taken from here. Everything downstream —
+whether the app launches, whether `getExpoPushTokenAsync` returns anything, whether the
+native image picker opens, whether a horizontal scroller inside a vertical one is usable
+with a thumb — needs somebody to hold a phone.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
 Every item below was checked rather than carried forward — see §6.37 for what that meant
 and which single claim in this document could not be checked at all:
 
+- **Nothing has run on a physical device, and §6.111 measured exactly how far short of
+  one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
+  Android SDK in this container, no `eas` CLI, no Apple or Google account, no device. What
+  that first prebuild found — a declared dark mode with nothing implementing it, a white
+  splash, Expo's scaffold navy on every native ripple, and the template icon shipping under
+  this product's name — was five defects invisible to sixteen sprints of phone work,
+  because every suite here drives the react-native-web export and none of them reads
+  `app.json`. There is a guard on the manifest now. There is still nothing between it and a
+  home screen.
 - **Nothing has run on a physical device.** The phone's smoke suite drives the
   react-native-web export, which is a real build and not a real phone. Its 200% text
   check (§6.38) doubles every computed font size rather than using the system setting,
@@ -8185,6 +8262,13 @@ and which single claim in this document could not be checked at all:
   omitted. What is still uncovered is *quality* rather than count — a check rewritten to
   assert less holds its line and its number, and §6.73 has produced four of those in four
   sprints.
+- **The ambiguous-needle mistake has now survived the guard written for it.** §6.109 swept
+  the source clauses and left `clauses.test.ts` running; §6.111 made the same mistake in a
+  clause reading *parsed JSON*, which that guard does not watch, and the plant that removed
+  the app icon passed because `icon.png` is a substring of `splash-icon.png`. Three sprints,
+  three recurrences, each in a clause written minutes earlier. The mechanical guard covers
+  one spelling of the mistake and the mistake is not about spelling — it is about reaching
+  for the container because the container is in your hand.
 - **`toContain` on a whole file is almost never the check you meant — and now something
   enumerates them.** §6.108 found one by planting; §6.109 swept and found six, five of them
   mine, the oldest being a clause about the selected state satisfied four times over by
