@@ -8646,6 +8646,95 @@ for the rules treatment: `lists.tsx`, `comments`' individual comment, `RemotePan
 device, `MatchImports.tsx`'s proposal. `SURFACE.card` names all seven, so they are countable
 rather than merely present.
 
+### 6.124 The phone's web export cannot carry configuration, and a build can ship the last build's
+
+#164 asked why four of the twelve photographed routes show a gate rather than a screen. The
+answer is not that the harness declined to sign in. It is that **the phone's web export has
+never been able to carry configuration at all**, and the design track had been photographing
+the consequence for its whole existence without anyone asking why.
+
+Established, in this order, each step measured rather than reasoned:
+
+1. the root `.env` holds a real 244-character `VITE_TMDB_TOKEN` and a real Supabase URL;
+2. `npx expo config --type public` resolves them into `extra.tmdbToken` and
+   `extra.supabaseUrl` — `mobile/app.config.ts` works exactly as written;
+3. the exported bundle carries `tmdbToken: ""` and `supabaseUrl: ""` — `app.json`'s
+   placeholders, not the resolved values;
+4. serving that export and opening `/account` says **"Sync is not configured on this
+   build"**, with `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` both set at
+   export time.
+
+So every phone web build ever made has run with no metadata provider and no sync. And
+`mobile/app.config.ts` is the file whose own header reads *"without this a build run from
+`mobile/` finds nothing and ships the empty configuration all over again — the same failure
+this file exists to fix, one directory up."* It fixed which directory the `.env` is read
+from and not whether the value survives to the bundle. §6.41's shape at the largest scale
+this build has produced: a mechanism, explained at length, wired to nothing.
+
+## And a second defect underneath it
+
+Metro inlines `process.env.EXPO_PUBLIC_X` where the source names one — a plant confirmed
+that, and confirmed the two ways it fails: a **computed** key (`process.env[name]`) is not
+matched and not inlined, and where Metro has **nothing to inline** the expression survives
+into a bundle with no `process`, so reading `.env` off `undefined` throws.
+
+The inlining is also **cached across builds.** An export run with no environment at all
+still embedded `design-harness.invalid` from the previous run. In a deploy pipeline that is
+a build shipping the configuration of whatever was built before it — a staging URL, or
+another project's key — with nothing in the output to say so. `--clear` fixes it and makes
+every export slow enough to time the harness out.
+
+## What is not landing, and why that is the right answer
+
+A fix that reads `process.env.EXPO_PUBLIC_*` with a static member access behind a `typeof`
+guard **does** deliver the configuration: the harness URL appears in the bundle, `/account`
+renders a real sign-in form, and with a fabricated session and PostgREST intercepted, the
+three gated routes photograph properly for the first time. Those screenshots existed, and
+`account` showed sprint 36's `Block` migration working — "SIGNED IN" as a `Section` eyebrow
+rather than a boxed `s16` heading.
+
+It also breaks the phone's core loop. `mobile/smoke.mjs` falls from **199 checks to 22**:
+the app boots, draws Up Next, and then marking an episode watched never advances. That
+reproduces with the cache cleared and with it warm, so it is the change and not the caching.
+I do not know why, and three hypotheses were wrong.
+
+So none of it is committed. A repository that photographs its social screens and cannot mark
+an episode watched is worse than one that does neither, and shipping a core-loop regression
+to gain a screenshot would invert the whole point of the design track. The finding is worth
+more than the fix here: nobody knew this, four sprints of design review were quietly
+scoped to an unconfigurable build, and #164 now carries the working approach — the session
+storage format (supabase-js v2 stores the session object directly, not v1's
+`{ currentSession }` wrapper), the PostgREST stub shape, and the two Metro traps — so the
+next attempt starts from the evidence rather than from the beginning.
+
+One thing that went right and is worth keeping as a rule: the first `want` regex for the
+People shot was `/@you|Ana|Following/`, and `Following` is a **heading**. A screen with no
+people in it satisfied a clause named for people, and it passed while the follows fixture
+was wrong. A needle that matches the label rather than the content is the fourth guard in
+this build to have had that defect.
+
+## And a correction to the paragraph above, made by testing the claim rather than keeping it
+
+The sentence "it also breaks the phone's core loop" was written from an A/B that looked
+clean and was not. `mobile/smoke.mjs` fails at **22 of 23 checks with `mobile/src/platform.ts`
+reverted to HEAD and the Metro cache cleared** — that is, with none of this sprint's code
+present at all. It dies immediately after the `_sitemap` check, when the run returns to `/`
+and re-seeds by searching for a show.
+
+So the attribution was wrong, and I do not know what the cause is. It is not the config
+change, not the cache poisoning, and not disk (26 GB free). The one run that reported
+199/199 today is the one I trusted, and every run after it has been worse, which is the
+signature of something accumulating in the environment rather than something in the diff.
+
+Two things follow, and the second matters more than the first. The fix stays unlanded,
+because "reverted for the wrong reason" is not the same as "safe to land" and a second
+guess is not better than the first. And **this entry nearly shipped a false attribution**:
+a paragraph blaming a change that a five-minute check at HEAD exonerates. §6.120 caught a
+premise I had copied without testing; this is the same defect one step further on — a
+premise I *generated*, from evidence I had gathered myself, and did not go back and falsify.
+The rule that keeps earning its place is not "check the brief". It is check the claim,
+including the one you just made.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
