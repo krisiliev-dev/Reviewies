@@ -27,15 +27,25 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   const [providers, setProviders] = useState<CachedProviders | null>();
   /** Told apart from "nowhere to watch it", which is what this used to say. §6.58. */
   const [failed, setFailed] = useState(false);
+  /**
+   * And apart from both: nothing was asked, because there is nothing to ask about.
+   *
+   * An imported title has no provider ID until matching gives it one. The fixture
+   * provider answered for any ID at all, so this section named a streaming service, in
+   * the reader's country, credited to JustWatch, for a show nothing had identified.
+   */
+  const [unmatched, setUnmatched] = useState(false);
   const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setProviders(undefined);
     setFailed(false);
+    setUnmatched(false);
     void getProvidersCached(titleId, region).then((result) => {
       if (cancelled) return;
-      setProviders(result.providers ?? null);
+      setUnmatched(!!result.unmatched);
+      setProviders(result.unmatched ? null : (result.providers ?? null));
       setFailed(!!result.failed && !result.providers);
     });
     return () => {
@@ -91,13 +101,15 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
 
       {providers === undefined && <Text style={styles.muted}>Checking…</Text>}
 
+      {unmatched && <Text style={styles.muted}>{COPY.whereToWatch.unmatched}</Text>}
+
       {failed && (
         <Text style={styles.failed} accessibilityLiveRegion="polite">
           {COPY.whereToWatch.failed}
         </Text>
       )}
 
-      {!failed && nothing && (
+      {!failed && !unmatched && nothing && (
         <Text style={styles.muted}>
           Not on any service in {regionName(region)} that we can see. Try another country
           above.

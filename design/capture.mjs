@@ -196,19 +196,35 @@ if (!filled) {
   process.exitCode = 1;
 }
 
+/**
+ * Where each screen is, and — for the ones behind More — what to press to get there.
+ *
+ * The `via` half is not decoration. A screen pushed onto the stack renders a navigation
+ * bar with a back control; the same screen opened by URL has no history behind it, so the
+ * bar appears without one, at a different size and weight. Measured on the same build:
+ *
+ *   Up Next, a tab      30px / 700, no back control     (an inline large title)
+ *   Stats, via More     15px / 600, one back control    (a navigation bar)
+ *   Stats, by URL       18px / 500, no back control     (neither)
+ *
+ * Every screenshot of a More screen this harness has ever taken was the third one, and a
+ * design review looking at them read "the headings are inconsistent" — filed as a bug that
+ * was never in the app. The screens are two deliberate conventions; the harness was the
+ * third thing. It navigates the way somebody does now.
+ */
 const routes = [
   ['03-upnext', '/'],
   ['04-search', '/search'],
   ['05-discover', '/discover'],
   ['06-watchlist', '/watchlist'],
   ['07-more', '/more'],
-  ['08-stats', '/stats'],
-  ['09-calendar', '/calendar'],
-  ['10-lists', '/lists'],
-  ['11-people', '/people'],
-  ['12-account', '/account'],
-  ['13-data', '/data'],
-  ['14-remote', '/remote'],
+  ['08-stats', '/stats', 'Stats'],
+  ['09-calendar', '/calendar', 'Upcoming'],
+  ['10-lists', '/lists', 'Lists'],
+  ['11-people', '/people', 'People'],
+  ['12-account', '/account', 'Account'],
+  ['13-data', '/data', 'Your data'],
+  ['14-remote', '/remote', 'Remote'],
 ];
 /**
  * What a screen must be showing for its photograph to be worth looking at.
@@ -255,10 +271,40 @@ async function suggestsWhatYouTrack() {
 }
 
 const hollow = [];
-for (const [name, path] of routes) {
-  await page.goto(`http://localhost:4200${path}`);
-  await shot(name);
+for (const [name, path, via] of routes) {
+  if (via) {
+    // Through More, so the screen gets the stack it would really have. Falls back to the
+    // address if the link cannot be found, and says so rather than quietly photographing
+    // the wrong thing.
+    await page.goto('http://localhost:4200/more');
+    await page.waitForTimeout(1200);
+    const link = page.getByText(via, { exact: true }).first();
+    if (await link.count()) {
+      await link.click();
+      await page.waitForTimeout(1200);
+    } else {
+      console.error(`${name}: no "${via}" on More, so this is a by-address screenshot.`);
+      process.exitCode = 1;
+      await page.goto(`http://localhost:4200${path}`);
+    }
+  } else {
+    await page.goto(`http://localhost:4200${path}`);
+  }
   const want = MUST_SHOW[name];
+  if (want) {
+    /*
+     * Wait for the thing that makes the photograph worth taking, rather than for a fixed
+     * delay — a positive condition, which is the rule §6.98 and §6.102 both cost a sprint
+     * to learn. Reaching these screens through More rather than by address means they
+     * mount fresh and load their own data, and `shot()`'s pause is a pause rather than a
+     * promise. It still fails by name if the wait runs out.
+     */
+    for (let i = 0; i < 20; i++) {
+      if (want.test(await page.locator('body').innerText())) break;
+      await page.waitForTimeout(500);
+    }
+  }
+  await shot(name);
   if (want) {
     const body = await page.locator('body').innerText();
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);

@@ -152,6 +152,15 @@ export class FixtureProvider implements MetadataProvider {
   }
 
   async getWatchProviders(id: string, country: string): Promise<CachedProviders | undefined> {
+    /*
+     * Nothing for a title this provider has never heard of, which is what a real one does.
+     *
+     * This returned availability for *any* ID, so the one screen that makes a claim about
+     * the outside world made it for shows that do not exist here — and a fixture that
+     * never says "no" hides every bug that depends on being told no. §6.43 swept for
+     * fixtures smaller than reality; this is the same shape pointing the other way.
+     */
+    if (!FIXTURES.some((f) => titleId(f) === id)) return undefined;
     return {
       id,
       country,

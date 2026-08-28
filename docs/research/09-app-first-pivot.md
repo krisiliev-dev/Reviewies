@@ -7172,6 +7172,75 @@ any probe that cares which provider it is talking to builds with `VITE_TMDB_TOKE
 rather than trusting `dist`.
 
 
+### 6.104 A streaming service named for a show the app cannot identify, and a bug that was never in the app
+
+Two items, and they are the same shape twice: a thing that answers when it should decline,
+and a thing that photographs a screen nobody can reach.
+
+**The last screen of the unmatched sweep was the one making a claim about the world.**
+§6.101 opened it, §6.103 measured three of the four, and `where-to-watch` was the one left.
+Measured in a browser on the fixture build — a supported state, the More screen says
+*"running on sample data"* — the title page of an imported show that nothing had identified
+read:
+
+> **WHERE TO WATCH** — United States — Stream — **Example Streaming** — *Streaming
+> availability data provided by JustWatch.*
+
+A confident statement about where you can watch a programme, in the reader's country,
+credited by name to a third party, about a title the app could not name. It is §6.58's bug
+class one state further along: that one was a network error rendered as *"not on any
+service"*, this one is *nothing was asked* rendered as an answer.
+
+`getProvidersCached` had two outcomes — an answer, and a failure — and the third was
+missing. It has it now, and the check sits **before the cache**, not after: a cached row for
+an ID no provider knows is still an answer nobody should have been given. The fixture is the
+other half. `FixtureProvider.getWatchProviders` returned availability for *any* ID, which is
+exactly how this stayed invisible for a sprint after §6.101 named the identity split — **a
+fixture that never says no hides every bug that depends on being told no.** §6.43 swept for
+fixtures smaller than reality; this is that shape pointing the other way, a fixture larger
+than reality, answering a question the real provider would refuse. Both `WhereToWatch`
+renderers now read the flag and say the third sentence — *"Match this show to a real one and
+we can say where it is streaming"* — and the other two stand down rather than appearing
+beside it. Thirteen cases, six plants, six caught, including one that only fires from the
+source clause, because the defect was never in the module.
+
+**And #145 was not the bug it was filed as.** The task said one screen's heading is a
+different size from every other screen's, with the mechanism narrowed: tab screens draw
+their own `<Text accessibilityRole="header">` at 30, More screens use expo-router's
+`<Stack.Screen options={{ title }} />`. Both true. What the task then asked was which
+mechanism should win — and the answer is that they are two conventions and both are right.
+An inline large title on a tab root, a navigation bar with a back control on a pushed screen,
+is what every platform does.
+
+The third rendering is the one nobody chose:
+
+```
+Up Next, a tab      30px / 700, no back control     an inline large title
+Stats, via More     15px / 600, one back control    a navigation bar
+Stats, by URL       18px / 500, no back control     neither
+```
+
+`design/capture.mjs` visited every screen by address. A screen opened by URL has no history
+behind it, so expo-router renders the bar without a back control, at a size and weight that
+belong to neither convention. **Every screenshot of a More screen this harness has ever
+taken was the third row**, and the design review that filed #145 was reading them faithfully.
+The inconsistency was real; the app was not where it lived.
+
+The routes table now carries a third element — what to press on More to get there — and the
+More screens are reached by clicking through, falling to the address with a named complaint
+and a non-zero exit rather than quietly photographing the wrong thing. `08-stats.png` shows
+the back arrow and the bar title; the screens are what a person sees. The same pass made
+`MUST_SHOW` **wait for** its condition instead of sleeping past it, which is §6.98 and
+§6.102's rule applied before it cost a third sprint: these screens now mount fresh and load
+their own data, so a fixed pause was a pause rather than a promise.
+
+What both halves have in common is worth naming, because it is the third time this record
+has hit it: **an instrument that answers a question it was never in a position to answer.**
+The fixture answered for an ID it had never heard of; the harness answered *what does this
+screen look like* from a route no navigation reaches. Neither reported a limit. A guard that
+declines is a guard you can trust; the dangerous ones are obliging.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7519,12 +7588,16 @@ and which single claim in this document could not be checked at all:
   calendar photographing empty *after* filling — but it does explain why the harness's
   library was never fully matched, which was the assumption every earlier attempt at #142
   rested on.
-- **The un-matched sweep is done for the screens that were named, and `where-to-watch` is
-  the one left.** §6.101 fixed Discover and the calendar; §6.103 measured the rest. Stats
-  is correct and needs nothing — it counts by watch rows, which carry the local ID.
-  Search knew nothing about the library at all, by ID or otherwise, and now reads
-  `core/src/data/already.ts`. `where-to-watch` has still not been looked at: it asks the
-  provider about a title ID, and a `local:` one will not be a title the provider knows.
+- **The un-matched sweep is finished for every screen that was named, and what is left is
+  the next screen nobody has named yet.** §6.101 fixed Discover and the calendar; §6.103
+  measured Stats (correct — it counts by watch rows, which carry the local ID) and Search
+  (knew nothing about the library at all, and now reads `core/src/data/already.ts`);
+  §6.104 fixed `where-to-watch`, which was naming a streaming service in the reader's
+  country for a show the app could not identify. What is not settled is how the *next* one
+  gets found. Every one of these was found by asking of a particular screen "what does it
+  do with a `local:` ID", one screen at a time, from a list I wrote by hand. Nothing
+  enumerates the call sites that key on a provider ID, so the sweep is complete only in
+  the sense that the list is.
 - **Three confident wrong explanations in one sprint, and the only thing that caught any
   of them was re-running.** §6.103: the probe results that said matching had failed were
   a build pointed at a network this container cannot reach; the per-row query that
@@ -7540,6 +7613,15 @@ and which single claim in this document could not be checked at all:
   that were entirely the setup's. The smoke script blanks the token deliberately and a
   hand-run probe does not. Probes now listen for `requestfailed`, which named the host in
   one line — but nothing *enforces* that a probe builds what it thinks it is measuring.
+- **A design review can only judge what the harness photographed, and for the More screens
+  that was never the app.** §6.104: `design/capture.mjs` opened every screen by address, so
+  expo-router drew a navigation bar with no back control at a size belonging to neither of
+  the app's two heading conventions — and #145 was filed against the app for it. Fixed by
+  navigating through More, and the harness now complains by name and exits non-zero if it
+  has to fall back to an address. What is not covered is the general case: `mobile/smoke.mjs`
+  still reaches several screens by their own address (§7's device bullet says so for the
+  unmatched-route screen), and nothing distinguishes "reached the way a person would" from
+  "reached at all". Every screenshot is evidence about a route as much as about a screen.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

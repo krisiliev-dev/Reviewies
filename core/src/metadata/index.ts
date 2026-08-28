@@ -93,6 +93,25 @@ export interface ProvidersResult {
   providers?: CachedProviders;
   /** Set when the asking failed, as opposed to the answer being "nowhere". */
   failed?: string;
+  /**
+   * Set when there is nothing to ask *about* — a third state, and not a failure.
+   *
+   * A TV Time export carries names and no provider IDs, so an imported title is
+   * `local:tv:tvtime-101` until matching rewrites it, and indefinitely if the match was
+   * ambiguous and the ask goes unanswered. No provider has ever heard of that ID.
+   *
+   * This existed as neither of the two states above, and the consequence was not an empty
+   * panel. The fixture provider answered `getWatchProviders` for *any* ID, so the title
+   * page of a show the app cannot identify read **"Where to watch — United States —
+   * Stream — Example Streaming — data provided by JustWatch"**: a confident claim about
+   * the real world, in somebody's country, attributed to a third party, about a show
+   * nothing had matched. Running without a TMDB token is a supported state — the More
+   * screen says "running on sample data" — so that is a thing a person could actually see.
+   *
+   * Asking is the bug, so this does not ask. §6.58 taught this call to tell "nowhere"
+   * apart from "could not look"; this is the third thing it could not say.
+   */
+  unmatched?: true;
 }
 
 /**
@@ -107,6 +126,10 @@ export async function getProvidersCached(
   id: string,
   country: string,
 ): Promise<ProvidersResult> {
+  // Before the cache, because a stale answer for an ID no provider knows is still an
+  // answer nobody should have been given.
+  if (id.startsWith('local:')) return { unmatched: true };
+
   const cached = await db.providers.get(id);
   if (cached && cached.country === country && !isStale(cached.fetchedAt)) {
     return { providers: cached };

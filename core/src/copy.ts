@@ -328,6 +328,16 @@ export const COPY = {
      * when the request failed — a statement about the world made from a network error.
      */
     failed: 'Could not check where this is streaming just now.',
+    /**
+     * The third thing this section can be, and the one it could not say.
+     *
+     * An imported title has no provider ID until matching gives it one, so there is
+     * nothing to look availability up *by* — and the fixture provider answered anyway,
+     * which is how the title page of an unidentified show came to name a streaming
+     * service in somebody's country and credit JustWatch for it. Not "nowhere to watch",
+     * not "could not check": nothing was ever asked, and this says so.
+     */
+    unmatched: 'Match this show to a real one and we can say where it is streaming.',
   },
 
   comments: {
