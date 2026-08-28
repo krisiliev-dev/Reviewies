@@ -7080,6 +7080,98 @@ rather than the app, and nothing depends on it. Written down because it is the s
 thing that gets adopted as an explanation later if it is not.
 
 
+### 6.103 What Search knew about your library, which was nothing — and a build pointed at a network this container cannot reach
+
+§6.101 opened a sweep and did not finish it: an unmatched library row carries a `local:` ID
+and everything keyed by a provider ID is blind to it. Two screens had been taught to notice.
+This is the rest of the list, measured rather than assumed — and one of the four turned out
+to be fine, which is worth as much as the ones that were not.
+
+**Stats is correct.** With one show matched and one stranded, all time reads *Watched 9.0h ·
+Episodes 18 · Titles 2*, and **most watched** names the stranded show first: *Ghost Signal
+5.0h, 10 episodes*. It counts by watch rows, which carry the local ID and are perfectly real.
+Nothing to fix, and now written down so the next sweep does not re-derive it.
+
+**Search knew nothing about your library at all.** Not "was blind to unmatched rows" —
+*nothing*. Each `ResultRow` had `const [added, setAdded] = useState(...)` and that was the
+entire basis for its label, so every result offered **Track** for ever, including for the
+three hundred shows somebody had just imported. Which is most of the reason to search when
+you have brought a decade of history with you: to find the thing you already have.
+
+`addToLibrary` is an upsert, so pressing it again does no damage — measured, the library goes
+from `["local:tv:tvtime-101","tmdb:tv:1"]` to exactly the same thing. The button simply
+appeared to do nothing, which is its own kind of wrong. But the unmatched case is the one
+with teeth: a check by ID alone would still say **Track** for a stranded row, and *that*
+press writes a second library row under the provider's ID for a show already held under a
+local one.
+
+So `core/src/data/already.ts` answers by ID, and by name for `local:` rows only — §6.101's
+rule, unchanged, for the same reason and with the same clause holding the line against it
+becoming a general name-matcher. Both search screens read it; the local state still wins so
+a press reads immediately. Verified in a browser: *The Long Dark · **Tracking***.
+
+Six plants, six caught — including one that only fired once the search screens were checked
+by source, because the defect was never in the module. It was that nobody asked it anything.
+
+**And then the phone smoke stopped at check 31 of 186, on my own fix.** Tracking a show from
+Search wrote its library row — the button said *Tracking* — and Up Next then said *"All
+caught up"* about a show with eighteen unwatched episodes. Measured rather than reasoned:
+stash the phone's search screen, rebuild, re-run the same steps, and it works. So it was
+mine.
+
+**The first explanation was wrong, and I had already written it here.** I had put the hook
+inside `ResultRow` — a full scan of the titles table per result, repeated on every render —
+and that was enough of a mistake to be satisfying. I hoisted it to the screen, wrote the
+paragraph explaining that the phone's single-worker store could not absorb what Dexie
+could, and re-ran. **It failed identically.** The paragraph was three sentences of
+plausible mechanism attached to something that was not the cause, in the same section whose
+own lesson is *measure the bench too*.
+
+The cause is one line further on:
+
+```js
+await addToLibrary(result.id, result.kind);
+if (result.kind === 'show') await getEpisodesCached(result.id);   // ← never reached
+```
+
+A **live** query on the library re-renders this screen the instant `addToLibrary` writes its
+row, and `track()` is not finished at that point. The re-render abandoned the continuation,
+so the show was tracked with no episodes and Up Next was telling the truth about what it
+could see. Reading once when the screen opens fixes it — and is what the feature actually
+needs: this answers *what did I already have when I opened this screen*, `added` answers
+*what have I done since*, and nothing here has to react to a write it made itself.
+
+The hoist stays. A scan per result is still wrong, and there is a clause for it now —
+`alreadyHave()` must appear before `function ResultRow` and not after, because the clause
+that was supposed to cover this asked only whether the file mentions it *anywhere*, which
+the broken version did. Both per-row plants are caught. But the hoist was a fix for a
+different bug than the one that was failing, and calling it the cause was the third
+confident wrong explanation this record has had to take back.
+
+**And the sprint's real lesson is about the bench, not the app.** Three consecutive probe
+runs said matching had matched *zero of two* shows, including one that had matched in every
+previous run. I was one step from writing that down as a finding. What it actually was:
+
+```
+REQFAIL https://api.themoviedb.org/3/search/multi?query=Long  net::ERR_ABORTED
+```
+
+The served `app/dist` was built by `npm run verify`, which runs `app build` with whatever
+`.env` supplies — including a real TMDB token. The smoke script blanks it (`VITE_TMDB_TOKEN=
+npm run build`) precisely so the suite runs on fixtures; a probe run by hand does not, and
+inherits whatever the last build left behind. So the app was talking to a network this
+container cannot reach, search hung, matching found no candidates, and every screen after it
+was measuring a build I had not meant to make.
+
+§6.98's rule is *measure before writing an explanation down*, and it held. But the rule has a
+second half this sprint supplies: **measure the bench too.** A probe against a build whose
+provenance you have not checked is a measurement of your own setup. What made it visible was
+listening for `requestfailed` — one line, and it named the host, the path and the failure. It
+is in the probe pattern now: any probe against a served build reports failed requests, and
+any probe that cares which provider it is talking to builds with `VITE_TMDB_TOKEN=` itself
+rather than trusting `dist`.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7427,15 +7519,27 @@ and which single claim in this document could not be checked at all:
   calendar photographing empty *after* filling — but it does explain why the harness's
   library was never fully matched, which was the assumption every earlier attempt at #142
   rested on.
-- **An un-matched library is invisible to everything keyed by a provider ID, and only two
-  screens have been taught to notice.** §6.101 found and fixed the two that were caught
-  lying: Discover offered imported shows back, and the calendar told somebody to track a
-  show they had already tracked. Both are now name-aware or say why they are empty. What
-  has *not* been swept is everything else that compares by ID while a library row may be
-  `local:` — Stats counts runtime by title, Search's "already tracking" state, the
-  watchlist's duplicate check, `where-to-watch`. None has been looked at, and the state is
-  not a transient: a show whose match was ambiguous stays `local:` until somebody answers
-  the ask, which they may never do.
+- **The un-matched sweep is done for the screens that were named, and `where-to-watch` is
+  the one left.** §6.101 fixed Discover and the calendar; §6.103 measured the rest. Stats
+  is correct and needs nothing — it counts by watch rows, which carry the local ID.
+  Search knew nothing about the library at all, by ID or otherwise, and now reads
+  `core/src/data/already.ts`. `where-to-watch` has still not been looked at: it asks the
+  provider about a title ID, and a `local:` one will not be a title the provider knows.
+- **Three confident wrong explanations in one sprint, and the only thing that caught any
+  of them was re-running.** §6.103: the probe results that said matching had failed were
+  a build pointed at a network this container cannot reach; the per-row query that
+  "explained" the phone smoke failure was a real mistake but not that failure's cause, and
+  the paragraph asserting it was got written before the re-run. §6.98 said *measure before
+  writing an explanation down* and this record has now taken back four. What is missing is
+  not the rule — it is that a fix which passes its own unit tests still has to be run
+  against the suite that reported the bug **before** the prose is written, and nothing
+  makes that ordering visible.
+- **The bench is part of what gets measured, and was not.** §6.103's probes read a build
+  that `npm run verify` had produced with a real TMDB token from `.env`, so the app was
+  calling a network this container cannot reach; three runs reported matching failures
+  that were entirely the setup's. The smoke script blanks the token deliberately and a
+  hand-run probe does not. Probes now listen for `requestfailed`, which named the host in
+  one line — but nothing *enforces* that a probe builds what it thinks it is measuring.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

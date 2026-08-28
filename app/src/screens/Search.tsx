@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../data/db';
+import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
 import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } from '@reviewies/core/metadata/index';
 import { SEARCH_TIMEOUT_MS } from '@reviewies/core/metadata/provider';
@@ -9,6 +10,24 @@ import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
 
 export function Search() {
+  /*
+   * Read once when the screen opens, not as a live subscription.
+   *
+   * A live query on the library re-renders this screen the instant `track()` writes its
+   * row — and `track()` is not finished at that point: `addToLibrary` comes first and
+   * `getEpisodesCached` after it. The re-render abandoned that continuation, so the show
+   * was tracked with no episodes cached and Up Next said "all caught up" about eighteen
+   * unwatched ones. Measured: with this as a live query the phone smoke stops at check 31,
+   * without it the same steps pass.
+   *
+   * One-shot is also what the feature needs. This answers "what did I already have when I
+   * opened this screen"; `added` answers "what have I done since", and it wins. Nothing
+   * here has to react to a write it made itself.
+   */
+  const [have, setHave] = useState<AlreadyHave>();
+  useEffect(() => {
+    void alreadyHave().then(setHave);
+  }, []);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [busy, setBusy] = useState(false);
@@ -92,15 +111,16 @@ export function Search() {
 
       <ul className="mt-4 flex flex-col gap-2">
         {results.map((r) => (
-          <ResultRow key={r.id} result={r} />
+          <ResultRow key={r.id} result={r} have={have} />
         ))}
       </ul>
     </div>
   );
 }
 
-function ResultRow({ result }: { result: SearchResult }) {
+function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
   const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
+  const shelf = added ?? shelfFor(result, have);
   const [note, setNote] = useState('');
   const [noting, setNoting] = useState(false);
 
@@ -210,16 +230,16 @@ function ResultRow({ result }: { result: SearchResult }) {
             <div className="flex flex-wrap gap-1.5">
               <Button
                 onPress={track}
-                disabled={added === 'library'}
+                disabled={shelf === 'library'}
                 tone="primary"
-                label={added === 'library' ? 'Tracking' : 'Track'}
+                label={shelf === 'library' ? 'Tracking' : 'Track'}
                 name={`Track ${result.name}`}
               />
               <Button
                 onPress={() => setNoting(true)}
-                disabled={added === 'watchlist'}
+                disabled={shelf === 'watchlist'}
                 tone="secondary"
-                label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+                label={shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'}
                 name={`Add ${result.name} to your watchlist`}
               />
               {/* Films only: "watched" is not a thing you can say about a whole series
