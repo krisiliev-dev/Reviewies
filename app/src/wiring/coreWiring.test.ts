@@ -81,7 +81,6 @@ const UNREACHED: Record<string, string> = {
    * entry the moment product code reaches the export.
    */
 
-  'tokens#elevation': 'Reached only by flat.test.ts, which is what it is for.',
   /*
    * `tokens#ratio` was here, saying "values landed; migrates with the poster component". It
    * migrated: `core/src/ui/poster.ts` derives both poster heights from it. The stale check
@@ -160,6 +159,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',
   'mobile only: ui/field#FIELD_BOX': 'Tailwind needs a literal class; field.test.ts couples the two.',
   'mobile only: ui/screen#SCREEN': 'Tailwind needs a literal class; screen.test.ts couples the two.',
+  'mobile only: ui/surface#PRESS': 'Tailwind needs a literal class; surface.test.ts couples the two.',
+  'mobile only: ui/surface#SURFACE': 'Tailwind needs a literal class; surface.test.ts couples the two.',
   'mobile only: ui/progress#PROGRESS_SIZE': 'Tailwind needs a literal class; progress.test.ts couples the two.',
   'mobile only: ui/progress#PROGRESS_COLOUR': 'Tailwind needs a literal class; progress.test.ts couples the two.',
 

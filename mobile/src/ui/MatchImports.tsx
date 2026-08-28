@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
@@ -175,7 +176,7 @@ export function MatchImports({
 const styles = StyleSheet.create({
   block: { gap: 12 },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
-  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 8 },
+  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 8 },
   name: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   skip: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

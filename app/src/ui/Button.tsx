@@ -100,7 +100,7 @@ export function Button({
     on ? SELECTED_CLASS : '',
     // Press is a thickening and a ground step, at 0ms. Never a transition, so the app is
     // identical with motion reduced and `motion.test.ts` has no ternary to find.
-    disabled ? '' : 'active:border-2 active:bg-ground-raised',
+    disabled ? '' : 'active:border-2 active:bg-ground-well',
     className,
   ]
     .filter(Boolean)

@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
   deleteCommentText: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   content: { padding: SCREEN.edge, gap: 12, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   episode: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
-  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 8 },
+  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 8 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
 
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
-  comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },
+  comment: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 6 },
   handle: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   body: { color: theme.ink, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.prose.name },
   image: { width: '100%', height: 180, borderRadius: radius.plate },

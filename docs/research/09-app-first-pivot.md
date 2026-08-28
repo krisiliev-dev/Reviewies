@@ -8496,6 +8496,86 @@ it: on `07-more.png` the rules now run to the edge and the stats card at the top
 is visibly the only thing left inset, which is the direction's own case for rules over card
 fills, made by the screen instead of by a document.
 
+### 6.122 Four controls said a press rises, two said it sinks, and the rise was invisible
+
+The brief for this sprint was "rules instead of card fills" — the direction's density
+argument, made visible by §6.121's photographs. Counting the card sites before starting
+turned up something better underneath them, and it is the same shape as graft 4's
+complaint about amber doing six jobs: **one token, several meanings, and two of them
+collide.**
+
+`groundRaised` was doing four jobs — a card fill, a press state, a raised surface
+(`FailureBanner`, `CatchUp`), and a control fill (`Key`, the pills in `ListenSync`). The
+press job is the one that broke, and the app held two opinions about it:
+
+- `Key` and Watching Mode's pad **sink** to `groundWell`;
+- `Row`, `Choice` and `Button` **rise** to `groundRaised`.
+
+Four controls against two, in one product, and nothing had ever compared them because each
+is defensible on the screen it appears on and no screen shows both.
+
+**The rise is also the card fill.** `lists.tsx`, `people.tsx`, `account.tsx` and
+`comments/[targetId].tsx` wrap rows in `groundRaised`, and the web does the same on five
+screens — so a row inside a card presses to the colour it is already painted and *nothing
+happens*, on the highest-frequency gesture in the product.
+
+That is measured, not deduced. `design/capture.mjs` now holds the pointer down and reads
+the computed background, because a style that exists only while pressed is in no stylesheet
+a source clause can read. At rest a row is transparent; held, it repaints. Wrapping Up
+Next's rows in the fill the other four screens already use and re-running printed
+`-> rgb(28, 25, 30) on rgb(28, 25, 30)` — the press and the thing behind it, the same
+colour. It is not photographable on today's routes only because every card holding
+pressable rows sits behind an account, which is luck rather than design.
+
+## The direction is arithmetic, and the cost is stated
+
+| press | on `ground` | on `groundRaised` |
+| --- | --- | --- |
+| rise to `groundRaised` | 1.080 | **1.000 — invisible** |
+| sink to `groundWell` | 1.046 | 1.129 |
+
+The rise is *stronger* on the plain page. That is a real cost and it is paid deliberately:
+the sink is the only one of the two that is never zero, and a press that vanishes on four
+screens is a worse failure than one that is slightly quieter on the rest. Both are faint;
+on the phone the haptic carries the confirmation and the colour corroborates it.
+
+**A third token with a name, a meaning and no consumers.** `elevation` in the token file has
+said `sunken / base / raised` since it was written, and no renderer had ever read it —
+`coreWiring.test.ts` even carried the excuse *"Reached only by flat.test.ts, which is what
+it is for."* `core/src/ui/surface.ts` reads it now, and the stale check fired on that entry
+the moment it stopped being true, which is what it is for. After `ratio.poster` (§6.118) and
+heading depth (§6.120), that is three; the pattern is a vocabulary written down at the same
+time as the thing it describes and then never wired to it.
+
+## What the guards caught, including one in the migration script
+
+Four plants against `surface.test.ts` — a web control going back to rising, a phone control
+naming its own ground, the press becoming the card fill, a card fill escaping the table —
+and one against the harness, which is the original defect and puts the reading back to
+`rgb(28, 25, 30) on rgb(28, 25, 30)`.
+
+`button.test.ts` had a clause asserting the web button contains `active:bg-ground-raised`.
+It passed for as long as the button rose, which was the defect: the clause was correct about
+the class and silent about what the class did. It reads the table now.
+
+And my own migration script hit §6.109's trap. It guarded each insert with
+`if 'ui/surface' not in s` — and the comment it had just written into `Row.tsx` said *"See
+`core/src/ui/surface.ts`"*, so the check was satisfied by its own prose and the import was
+never added. The needle-in-a-comment problem, five sprints running, this time in the tool
+doing the migration rather than in a test. `tsc` caught it immediately, which is the
+`noUnusedLocals` from §6.120 earning its place two sprints later — as it did again on a dead
+`m` binding in the new guard itself.
+
+## What this sprint did not do
+
+The card fills are still there. Ten sites on the phone now read `SURFACE.card` instead of
+naming the ground, which makes them findable and countable, and the vocabulary states the
+rule — *a card is a summary or a form, one object taken in whole; a list of things gets
+rules*. Applying that rule site by site is the next sprint, and it is a judgement per site
+rather than a sweep: `More`'s stats block is a summary and stays, `lists.tsx`'s expandable
+list is a list and goes. The press collision is fixed either way, which is why it was worth
+taking first.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

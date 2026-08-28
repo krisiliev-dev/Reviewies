@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
-  report: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 4 },
+  report: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 4 },
   reportHead: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   reportLine: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   reportName: { color: theme.ink },

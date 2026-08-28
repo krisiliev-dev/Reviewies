@@ -28,7 +28,7 @@ const BLOCK =
   'flex flex-col gap-1.5 rounded-none border-b border-b-stroke-hairline bg-transparent py-2 -mx-s16 px-s16';
 const ROW_CLASS = 'flex items-center gap-3';
 const TARGET =
-  'flex min-w-0 flex-1 items-center gap-3 rounded-none active:bg-ground-raised';
+  'flex min-w-0 flex-1 items-center gap-3 rounded-none active:bg-ground-well';
 const TAG =
   'shrink-0 rounded-plate border border-stroke-hairline px-1.5 py-0.5 text-s12 font-title font-semibold tracking-t83 text-ink-secondary';
 

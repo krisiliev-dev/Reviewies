@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
@@ -182,7 +183,7 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
+  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   rejected: { marginTop: 12, gap: 8 },
   rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },

@@ -6,6 +6,7 @@ import {
   type ChoiceContract,
 } from '@reviewies/core/ui/choice';
 import { border, radius, theme } from './theme';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { type } from '@reviewies/core/tokens';
 import { Note } from './Note';
 
@@ -80,7 +81,7 @@ export function Choice<T extends string | number>({
                 borderLeftColor: on && rows ? theme[CHOSEN.colour] : 'transparent',
               },
               // Instant, so Reduce Motion changes nothing. Same reasoning as `Button`.
-              pressed ? { backgroundColor: theme.groundRaised } : null,
+              pressed ? { backgroundColor: theme[PRESS] } : null,
             ]}
           >
             <View style={rows ? styles.rowBody : undefined}>

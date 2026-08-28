@@ -1,3 +1,4 @@
+import { PRESS } from '@reviewies/core/ui/surface';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SCREEN } from '@reviewies/core/ui/screen';
@@ -144,7 +145,10 @@ const styles = StyleSheet.create({
   target: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: ROW.gap },
   // A ground step, not a scale: press feedback that was never motion is feedback Reduce
   // Motion has nothing to substitute for.
-  pressed: { backgroundColor: theme.groundRaised },
+  // A press sinks, on every control on both platforms. It used to rise — to the card
+  // fill four screens wrap their rows in, so a press inside one repainted to the colour
+  // it was already painted and nothing happened. See `core/src/ui/surface.ts`.
+  pressed: { backgroundColor: theme[PRESS] },
   body: { flex: 1, minWidth: 0, gap: space.s2 },
   title: { color: theme[ROW_INK.title], fontSize: text.s14, fontFamily: type.family.title.name },
   meta: { color: theme[ROW_INK.meta], fontSize: text.s12, fontFamily: type.family.body.name },

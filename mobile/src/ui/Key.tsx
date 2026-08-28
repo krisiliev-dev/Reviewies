@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { KEY_DISABLED, KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
 import { radius, space, theme } from './theme';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { text, type } from '@reviewies/core/tokens';
 
 /**
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     borderWidth: KEY_DISABLED.rule,
     borderColor: theme[KEY_DISABLED.colour],
   },
-  pressed: { backgroundColor: theme.groundWell },
+  pressed: { backgroundColor: theme[PRESS] },
   legend: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   legendCentre: { color: theme.actionLabel },
   legendOff: { color: theme[KEY_DISABLED.ink] },

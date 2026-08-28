@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: SCREEN.edge, gap: 12 },
 
-  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
+  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 12 },
   stats: { flexDirection: 'row', gap: 12 },
   stat: { flex: 1, backgroundColor: theme.groundWell, borderRadius: radius.plate, padding: 12 },
   statLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },

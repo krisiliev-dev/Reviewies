@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
-  device: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12 },
+  device: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12 },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   deviceAddress: { color: theme.inkSecondary },

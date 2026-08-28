@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { syncConfigured } from '@reviewies/core/sync/auth';
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   toggleText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
-  panel: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 12 },
+  panel: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 12, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dot: { width: 6, height: 6, borderRadius: radius.pill, backgroundColor: theme.strokeSignal },
   dotYes: { backgroundColor: theme.workingMark },

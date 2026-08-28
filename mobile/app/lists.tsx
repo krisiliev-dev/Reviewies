@@ -1,3 +1,4 @@
+import { SURFACE } from '@reviewies/core/ui/surface';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
 
   newRow: { flexDirection: 'row', gap: 8 },
 
-  card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, overflow: 'hidden' },
+  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   cardBody: { flex: 1 },
   cardName: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },

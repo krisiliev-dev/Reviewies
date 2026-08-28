@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { declarationOf, stripComments } from '@reviewies/core/test/source';
 import { BOX_RADIUS, BUSY, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { CHOSEN } from '@reviewies/core/ui/choice';
 import { border, color, radius, size, text } from '@reviewies/core/tokens';
 
@@ -230,7 +231,13 @@ describe('the button contract', () => {
     expect(BOX_RADIUS).toBe(radius.pill);
     expect(WEB).toContain('rounded-pill');
     expect(WEB).toContain(`active:border-${PRESSED.stroke}`);
-    expect(WEB).toContain(`active:bg-ground-raised`);
+    /*
+     * From the table, not spelled. This line used to say `active:bg-ground-raised` and it
+     * passed for as long as the button rose on press — which was the defect: `groundRaised`
+     * is also the card fill, so a button inside a card pressed to the colour behind it. The
+     * clause was correct about the class and silent about what the class did.
+     */
+    expect(WEB).toContain(`active:bg-${PRESS.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`);
     expect(PRESSED.fill).toBe('groundRaised');
   });
 

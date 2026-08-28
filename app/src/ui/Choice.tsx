@@ -55,7 +55,7 @@ export function Choice<T extends string | number>({
             onClick={() => onChange(option.key)}
             /* `shrink-0` only matters in the scrolling arrangement, where flex would
                otherwise squeeze thirteen chips into the width it has. */
-            className={`${rows ? ROW : CHIP} ${scroll ? 'shrink-0' : ''} ${on ? (rows ? ROW_ON : CHIP_ON) : rows ? ROW_OFF : CHIP_OFF} active:bg-ground-raised`}
+            className={`${rows ? ROW : CHIP} ${scroll ? 'shrink-0' : ''} ${on ? (rows ? ROW_ON : CHIP_ON) : rows ? ROW_OFF : CHIP_OFF} active:bg-ground-well`}
           >
             <span className={rows ? 'flex-1' : undefined}>
               <span className="block">{option.label}</span>

@@ -503,6 +503,60 @@ async function insetRules(page) {
   });
 }
 
+
+/**
+ * What a press actually looks like, held down and read out of the document.
+ *
+ * The app has **two** press conventions and does not know it. `Key` and Watching Mode's
+ * pad sink to `groundWell`; `Row`, `Choice` and `Button` rise to `groundRaised`. Four
+ * controls say a press rises and two say it sinks, in one product, and nothing had ever
+ * compared them because each is correct on its own screen.
+ *
+ * The rise is the one that breaks. `groundRaised` is also the card fill — `lists.tsx`,
+ * `people.tsx`, `account.tsx` and `comments/[targetId].tsx` all wrap rows in it — so a
+ * press inside a card repaints to the colour it is already painted, and produces no
+ * feedback at all. The sink has no such collision, because nothing is filled with
+ * `groundWell` that also contains a control.
+ *
+ * Measured by pressing, because a style that only exists while the pointer is down is not
+ * in any stylesheet a source clause could read.
+ */
+async function pressReadings(page) {
+  const out = [];
+  const targets = page.locator('[role=link], a, [role=button], button');
+  const n = Math.min(await targets.count(), 6);
+  for (let i = 0; i < n; i++) {
+    const el = targets.nth(i);
+    const box = await el.boundingBox().catch(() => null);
+    if (!box || box.width < 60 || box.height < 20) continue;
+    const read = () =>
+      el.evaluate((node) => {
+        // The nearest ancestor that actually paints, which is what a press must differ from.
+        let behind = node.parentElement;
+        while (behind) {
+          const bg = getComputedStyle(behind).backgroundColor;
+          if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
+          behind = behind.parentElement;
+        }
+        return {
+          own: getComputedStyle(node).backgroundColor,
+          behind: behind ? getComputedStyle(behind).backgroundColor : 'none',
+          name: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 28),
+        };
+      });
+    const rest = await read();
+    await page.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 20));
+    await page.mouse.down();
+    await page.waitForTimeout(120);
+    const held = await read();
+    await page.mouse.up();
+    await page.waitForTimeout(60);
+    if (held.own === rest.own) continue; // not a control that paints on press
+    out.push({ ...held, rest: rest.own });
+  }
+  return out;
+}
+
 const unjudged = routes.map(([name]) => name).filter((name) => !MUST_SHOW[name]);
 if (unjudged.length) {
   console.error(`These screens have no MUST_SHOW clause, so nothing knows what they should be showing:\n  ${unjudged.join('\n  ')}`);
@@ -512,6 +566,9 @@ if (unjudged.length) {
 const hollow = [];
 /** Rules that stop short of the edge — the direction's first named property. */
 const inset = [];
+/** Every press that repaints, and the ones that repaint to the colour behind them. */
+const presses = [];
+const invisible = [];
 for (const [name, path, via] of routes) {
   if (via) {
     // Through More, so the screen gets the stack it would really have. Falls back to the
@@ -552,6 +609,12 @@ for (const [name, path, via] of routes) {
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
   }
   for (const rule of await insetRules(page)) inset.push(`${name}: ${rule}`);
+  for (const p of await pressReadings(page)) {
+    presses.push(`${name}: "${p.name}" ${p.rest} -> ${p.own} on ${p.behind}`);
+    if (p.own === p.behind) {
+      invisible.push(`${name}: "${p.name}" presses to ${p.own}, which is what it sits on`);
+    }
+  }
   await THEN[name]?.();
   if (name === '05-discover') {
     const already = await suggestsWhatYouTrack();
@@ -569,6 +632,12 @@ if (inset.length) {
   process.exitCode = 1;
 }
 console.log(`\nfull-bleed: ${inset.length} inset rules across ${routes.length} routes`);
+console.log(`presses measured: ${presses.length}`);
+for (const p of presses) console.log(`  ${p}`);
+if (invisible.length) {
+  console.error(`Presses that repaint to the colour behind them, so nothing happens:\n  ${invisible.join('\n  ')}`);
+  process.exitCode = 1;
+}
 
 // A title page and Watching Mode need a real target.
 await page.goto('http://localhost:4200/');

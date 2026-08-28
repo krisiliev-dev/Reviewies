@@ -24,6 +24,7 @@ import {
 } from '@reviewies/core/watching/reactions';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
-  padPressed: { backgroundColor: theme.groundWell, transform: [{ scale: 0.94 }] },
+  padPressed: { backgroundColor: theme[PRESS], transform: [{ scale: 0.94 }] },
   padEmoji: { fontSize: text.s30 },
   padLabel: { color: theme.inkSecondary, fontSize: text.s12, textAlign: 'center', fontFamily: type.family.title.name },
   noMatch: { color: theme.inkSecondary, fontSize: text.s14, padding: 8, fontFamily: type.family.body.name },
