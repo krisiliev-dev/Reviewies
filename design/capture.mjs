@@ -557,6 +557,48 @@ async function pressReadings(page) {
   return out;
 }
 
+
+/**
+ * How far a screen's first content sits below its own title.
+ *
+ * Three screens centred their message — `lists.tsx`, `people.tsx`, `account.tsx` — in a
+ * `flex: 1` container with `justifyContent: 'center'`, while every other screen and the
+ * whole of the web top-aligned. `10-lists.png` is what that looked like: "Lists" pinned to
+ * the top, some seven hundred points of nothing, and "Lists need an account" floating at
+ * 55% of the viewport with the tab bar under it.
+ *
+ * The rule (`EMPTY_ALIGN` in `core/src/ui/screen.ts`) is that a screen with a title is a
+ * screen and its message is content, so it begins where content begins. `_layout.tsx`
+ * centres and is right to — it replaces the whole app before the router mounts, with no
+ * title at all — which is exactly why this measures the gap *below a title* rather than
+ * looking for centring: a full-screen state has nothing to be below.
+ *
+ * Measured, not grepped. `justifyContent: 'center'` is a legitimate declaration in a dozen
+ * places and the defect is where the words land.
+ */
+async function floatingContent(page) {
+  return page.evaluate(() => {
+    const heading = document.querySelector('h1, [role="heading"]');
+    if (!heading) return null;
+    const top = heading.getBoundingClientRect();
+    let nearest = Infinity;
+    let what = '';
+    for (const el of document.querySelectorAll('p, span, div, li, a, button')) {
+      if (el.contains(heading) || heading.contains(el)) continue;
+      const text = (el.textContent || '').trim();
+      if (!text || el.children.length > 0) continue;
+      const r = el.getBoundingClientRect();
+      // Below the title, on screen, and not the tab bar pinned to the foot.
+      if (r.top < top.bottom || r.top > window.innerHeight * 0.92 || r.width === 0) continue;
+      if (r.top - top.bottom < nearest) {
+        nearest = r.top - top.bottom;
+        what = text.slice(0, 34);
+      }
+    }
+    return nearest === Infinity ? null : { gap: Math.round(nearest), what };
+  });
+}
+
 const unjudged = routes.map(([name]) => name).filter((name) => !MUST_SHOW[name]);
 if (unjudged.length) {
   console.error(`These screens have no MUST_SHOW clause, so nothing knows what they should be showing:\n  ${unjudged.join('\n  ')}`);
@@ -566,6 +608,8 @@ if (unjudged.length) {
 const hollow = [];
 /** Rules that stop short of the edge — the direction's first named property. */
 const inset = [];
+/** Screens whose first words float far below their own title. */
+const floating = [];
 /** Every press that repaints, and the ones that repaint to the colour behind them. */
 const presses = [];
 const invisible = [];
@@ -609,6 +653,16 @@ for (const [name, path, via] of routes) {
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
   }
   for (const rule of await insetRules(page)) inset.push(`${name}: ${rule}`);
+  const below = await floatingContent(page);
+  /*
+   * A quarter of the viewport. Ordinary screens put their first words twelve to forty
+   * points under the title; a centred message on an otherwise blank screen lands three
+   * hundred or more. No margin beyond that: a threshold with slack in it tolerates exactly
+   * the half-drift this exists to notice.
+   */
+  if (below && below.gap > 844 * 0.25) {
+    floating.push(`${name}: "${below.what}" sits ${below.gap}pt below the title`);
+  }
   for (const p of await pressReadings(page)) {
     presses.push(`${name}: "${p.name}" ${p.rest} -> ${p.own} on ${p.behind}`);
     if (p.own === p.behind) {
@@ -633,6 +687,10 @@ if (inset.length) {
 }
 console.log(`\nfull-bleed: ${inset.length} inset rules across ${routes.length} routes`);
 console.log(`presses measured: ${presses.length}`);
+if (floating.length) {
+  console.error(`Screens whose message floats instead of beginning where content begins:\n  ${floating.join('\n  ')}`);
+  process.exitCode = 1;
+}
 for (const p of presses) console.log(`  ${p}`);
 if (invisible.length) {
   console.error(`Presses that repaint to the colour behind them, so nothing happens:\n  ${invisible.join('\n  ')}`);

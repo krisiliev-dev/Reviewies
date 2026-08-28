@@ -45,6 +45,44 @@ export const SCREEN = {
 } as const;
 
 /**
+ * Where a screen's message goes when the screen has nothing else in it.
+ *
+ * Three screens centred theirs — `lists.tsx`, `people.tsx` and `account.tsx` — in a
+ * container that is `flex: 1` with `justifyContent: 'center'`, while every other screen
+ * top-aligned. `10-lists.png` is what that looks like: the title "Lists" pinned to the top,
+ * roughly seven hundred points of nothing, and then "Lists need an account" floating at
+ * 55% of the viewport with the tab bar below it.
+ *
+ * The distinction that settles it is not empty-versus-gated, it is **whether the screen
+ * has a name**. Those three render `<Stack.Screen options={{ title }} />` and then centre
+ * the message in what is left, so they are half a full-screen state and half an ordinary
+ * screen and read as neither. `_layout.tsx` centres too and is *right* to: it replaces the
+ * entire app before the router mounts, with no title and no tab bar, which is what a
+ * full-screen state actually is.
+ *
+ * So: **a screen with a title is a screen, and its message is content.** It begins where
+ * its content would have begun. That is what the web has always done — it centres nothing
+ * — and what the phone's own data, stats and calendar screens do.
+ *
+ * `top`, not a token: this is a rule about alignment, and the space above the message is
+ * already `MASTHEAD`'s `gapBelow` and the screen's own edge. A second number here would be
+ * a third opinion about the same gap.
+ */
+export const EMPTY_ALIGN = 'top' as const;
+
+/**
+ * The one place a centred, full-height state is correct, and why.
+ *
+ * `_layout.tsx` before the router mounts: no title, no tab bar, nothing else on the
+ * screen. Named here rather than left as a difference somebody notices later, and
+ * `screen.test.ts` fails if the entry outlives the file — the §6.41 rule applied before
+ * the excuse has had time to go stale.
+ */
+export const FULL_SCREEN: Record<string, string> = {
+  '_layout': 'Replaces the whole app before the router mounts: no title, no tab bar, nothing to be content inside of.',
+};
+
+/**
  * Screens that do not take the standard edge, and why.
  *
  * Watching Mode only. It is the one immersive route — no tab bar, no masthead, the frame

@@ -306,7 +306,12 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   content: { padding: SCREEN.edge, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
-  centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
+  /*
+   * Top-aligned, and `SCREEN.edge` rather than a fourth screen edge of its own. This
+   * used to be `flex: 1, padding: 24, justifyContent: 'center'` — a message floating at
+   * 55% of an otherwise blank screen under a title pinned to the top. See `EMPTY_ALIGN`.
+   */
+  centre: { flex: 1, padding: SCREEN.edge, backgroundColor: theme.ground },
 
   newRow: { flexDirection: 'row', gap: 8 },
 

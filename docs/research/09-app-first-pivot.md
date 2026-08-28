@@ -8925,6 +8925,58 @@ Floors moved for the right reason again: the web's radius sweep 74 → 70, the p
 scan 203 → 195. Fifth sprint running that a fill has stopped being a fill and taken its
 padding with it.
 
+### 6.128 Half a full-screen state, and the distinction that settles it
+
+Three screens centred their message — `lists.tsx`, `people.tsx`, `account.tsx` — in a
+container that is `flex: 1` with `justifyContent: 'center'`, while every other phone screen
+and **the whole of the web** top-aligned. `10-lists.png` is what that looked like: the title
+"Lists" pinned to the top, four hundred and thirty-four points of nothing measured, and
+"Lists need an account" floating past the middle of the viewport with the tab bar under it.
+
+## The rule is not empty-versus-gated
+
+That was the obvious framing and it is the wrong one. All three of these are *gates* — an
+account is missing — and so is nothing else on the phone, so the framing explains nothing
+about why these three differ from the rest.
+
+What settles it is **whether the screen has a name.** Those three render
+`<Stack.Screen options={{ title }} />` and then centre the message in what is left, so they
+are half a full-screen state and half an ordinary screen and read as neither: a heading
+anchored to the top, a message anchored to nothing.
+
+`_layout.tsx` centres too and is *right* to. It replaces the entire app before the router
+mounts — no title, no tab bar, nothing else on the screen — which is what a full-screen
+state actually is. So the rule is: **a screen with a title is a screen, and its message is
+content.** It begins where its content would have begun.
+
+That is what the web has always done, and what the phone's own data, stats and calendar
+screens do. The parity finding is the same shape as the last six: one platform moved and
+the other did not, and nobody compared them because each looked internally consistent.
+
+## Two premises in the brief were wrong, and checking cost four minutes
+
+It said `06-watchlist.png` and `10-lists.png` both show a centred empty state. `06-watchlist`
+has a **row in it** — it is not an empty state at all. And it implied the web had the same
+problem to fix; the web centres nothing, and never has. Only three screens were ever
+affected, all on the phone.
+
+## Measured where it lands, guarded where it is written
+
+`design/capture.mjs` finds the first text below the screen's own heading and reports a gap
+over a quarter of the viewport — because `justifyContent: 'center'` is a legitimate
+declaration in a dozen places and the defect is *where the words end up*. The plant restores
+the centring and it prints
+`10-lists: "Lists need an account — they are m" sits 434pt below the title`.
+
+`screen.test.ts` holds the source side: no screen that renders a title may centre a
+full-height container, `_layout` is named in `FULL_SCREEN` with its reason, and the
+exemption fails if it outlives the file or if that file ever grows a title. Three plants,
+each caught by the right clause.
+
+One more number fell out of it. Those containers carried `padding: 24` — a **fourth** screen
+edge that §6.121 could not absorb, because that migration matched on `content:` and this was
+called `centre`. They take `SCREEN.edge` now, and the phone's spacing scan went 195 → 194.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

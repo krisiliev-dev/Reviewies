@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EDGE_EXEMPT, SCREEN } from '@reviewies/core/ui/screen';
+import { EDGE_EXEMPT, EMPTY_ALIGN, FULL_SCREEN, SCREEN } from '@reviewies/core/ui/screen';
 import { space } from '@reviewies/core/tokens';
 
 /**
@@ -99,6 +99,46 @@ describe('the screen edge', () => {
     const phone = withoutProse(read('mobile/src/ui/Row.tsx'));
     expect(phone).toContain('marginHorizontal: SCREEN.bleed');
     expect(phone).toContain('paddingHorizontal: SCREEN.edge');
+  });
+
+  it('puts a screen\'s message where its content begins, not in the middle of it', () => {
+    /*
+     * Three screens centred theirs in a `flex: 1` container while every other screen and
+     * the whole of the web top-aligned. `10-lists.png`: the title pinned to the top, some
+     * seven hundred points of nothing, and the sentence at 55% of the viewport.
+     *
+     * The rule turns on whether the screen **has a name**, not on whether it is empty.
+     * Those three render a `<Stack.Screen options={{ title }} />` and then centre the
+     * message in what is left, so they are half a full-screen state and half a screen.
+     * `_layout.tsx` centres and is right to: it replaces the app before the router mounts.
+     */
+    expect(EMPTY_ALIGN).toBe('top');
+
+    const offenders: string[] = [];
+    for (const file of phoneFiles()) {
+      const source = withoutProse(read(file));
+      const name = file.split('/').pop()?.replace('.tsx', '') ?? '';
+      if (FULL_SCREEN[name]) continue;
+      // A screen that names itself and then centres a container that fills the rest.
+      if (!/<Stack\.Screen/.test(source)) continue;
+      for (const m of source.matchAll(/\{[^{}]*flex: 1[^{}]*justifyContent: 'center'[^{}]*\}/g)) {
+        offenders.push(`${file}: ${m[0].slice(0, 60)}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+
+    // And the one that is allowed to has no title to be below.
+    const layout = withoutProse(read('mobile/app/_layout.tsx'));
+    expect(layout, 'the full-screen state grew a title; it is a screen now')
+      .not.toMatch(/<Stack\.Screen options=\{\{ title/);
+  });
+
+  it('keeps no exemption for a full-screen state that no longer exists', () => {
+    for (const [name, why] of Object.entries(FULL_SCREEN)) {
+      expect(() => read(`mobile/app/${name}.tsx`), `${name} is gone; drop its exemption`)
+        .not.toThrow();
+      expect(why.length, `${name}'s exemption gives no reason`).toBeGreaterThan(40);
+    }
   });
 
   it('keeps no exemption for a screen that no longer exists', () => {

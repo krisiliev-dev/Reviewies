@@ -111,7 +111,12 @@ describe('the space scale, on the phone', () => {
      * 195, down from 203: `lists.tsx`'s card became a `Row` and took its head, body and
      * inset with it, and three more fills became rules that need no padding of their own.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(195);
+    /*
+     * 194, down one: three `padding: 24` containers became `SCREEN.edge`. That 24 was a
+     * fourth screen edge that §6.121 could not absorb, because it was not a `content:`
+     * container and the migration matched on the name.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(193);
     expect(off).toEqual([]);
   });
 });

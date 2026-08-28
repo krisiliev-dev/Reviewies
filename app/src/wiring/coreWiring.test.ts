@@ -25,6 +25,10 @@ const ROOT = resolve(__dirname, '../../..');
 const UNREACHED: Record<string, string> = {
   'data/db#clearDatabase':
     'Test seam: unbinds the database so the proxy\'s "call setDatabase() first" error can be read. Its previous reason here said the suites that swap Dexie for SQLite need it — they do not, they call setDatabase, and nothing called this at all. §6.59 pointed the seam at the error it is good for rather than deleting it; core/src/data/db.test.ts drives it now, which this scan reads as test code.',
+  'ui/screen#EMPTY_ALIGN':
+    'Where a screen puts its message when it has nothing else in it. A rule about alignment rather than a value a renderer reads — the three screens it governs simply stopped centring — so screen.test.ts is what holds them to it, and design/capture.mjs measures where the words actually land.',
+  'ui/screen#FULL_SCREEN':
+    'The one place a centred, full-height state is correct, and why: _layout.tsx replaces the whole app before the router mounts. A design decision beside the decision it qualifies; screen.test.ts reads it and fails when the entry outlives the file.',
   'ui/screen#EDGE_EXEMPT':
     'The screens that do not take the standard edge, and why. It is a design decision rather than a test fixture — Watching Mode is immersive and has no rows to bleed — so it lives beside the decision it qualifies; screen.test.ts is what reads it, and what fails when an entry outlives its screen.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',
