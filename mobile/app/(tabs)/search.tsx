@@ -16,7 +16,7 @@ import { border, radius, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
-import { ROW } from '@reviewies/core/ui/row';
+
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
 import { COPY } from '@reviewies/core/copy';
 import { useLive } from '../../src/useLive';
@@ -240,7 +240,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
       title={result.name}
       meta={`${result.kind === 'show' ? 'Series' : 'Film'}${result.year ? ` · ${result.year}` : ''}`}
       lead={
-        <Poster url={result.posterUrl} name={result.name} width={ROW.lead.width} height={ROW.lead.height} />
+        <Poster url={result.posterUrl} name={result.name} />
       }
       open={{
         // The poster was the only target and the words beside it were not one.
@@ -338,7 +338,6 @@ const styles = StyleSheet.create({
   },
   retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
-
 
   under: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
 });

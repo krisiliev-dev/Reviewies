@@ -103,7 +103,7 @@ function SuggestionRow({
         <Poster
           url={suggestion.posterUrl}
           name={suggestion.name}
-          className="h-16 w-11 shrink-0 rounded-plate"
+         
         />
       }
       under={

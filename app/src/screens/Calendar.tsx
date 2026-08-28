@@ -202,7 +202,7 @@ function Row({ entry }: { entry: UpcomingEntry }) {
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
-          className="h-16 w-11 shrink-0 rounded-plate"
+         
         />
       }
     />

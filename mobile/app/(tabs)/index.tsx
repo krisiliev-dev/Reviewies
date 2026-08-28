@@ -33,7 +33,6 @@ import { useImporting } from '../../src/useImporting';
 import { Button } from '../../src/ui/Button';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
-import { ROW } from '@reviewies/core/ui/row';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -280,9 +279,7 @@ function Row({
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
-          width={ROW.lead.width}
-          height={ROW.lead.height}
-        />
+                  />
       }
       open={{
         // The poster used to be the only target and the words beside it were not one.

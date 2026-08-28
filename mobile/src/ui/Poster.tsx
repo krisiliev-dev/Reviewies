@@ -1,53 +1,60 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { radius, space, theme } from './theme';
+import { POSTER_PLATE, POSTER_SIZE, type PosterSize } from '@reviewies/core/ui/poster';
 import { text, type } from '@reviewies/core/tokens';
+import { theme } from './theme';
 
 /**
- * Artwork, with the title as the fallback.
+ * The React Native renderer of `core/src/ui/poster.ts`. The decisions are there.
  *
- * A missing poster is normal — imported history is full of titles that never matched
- * a provider — so the empty state has to be legible rather than a grey rectangle.
+ * A missing poster is normal — imported history is full of titles that never matched a
+ * provider — so the empty state has to be legible rather than a grey rectangle.
  */
 export function Poster({
   url,
   name,
-  width = 64,
-  height = 96,
+  size = 'row',
 }: {
   url?: string;
   name: string;
-  width?: number;
-  height?: number;
+  size?: PosterSize;
 }) {
-  const style = { width, height, borderRadius: radius.plate };
-
+  const box = { width: POSTER_SIZE[size].width, height: POSTER_SIZE[size].height };
   if (!url) {
     return (
-      <View style={[styles.fallback, style]}>
+      <View style={[styles.plate, styles.fallback, box]}>
         <Text numberOfLines={4} style={styles.fallbackText}>
           {name}
         </Text>
       </View>
     );
   }
-  return <Image source={{ uri: url }} style={style} resizeMode="cover" />;
+  return (
+    <View style={[styles.plate, box]}>
+      <Image source={{ uri: url }} style={styles.image} resizeMode="cover" />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  /*
+   * The plate, and the band along its foot — the direction's, a 4pt strip in the ground at
+   * the bottom edge. It is what makes a poster read as something mounted rather than
+   * something floating, and it is a fill, so it takes a space step.
+   */
+  plate: {
+    borderRadius: POSTER_PLATE.radius,
+    borderBottomWidth: POSTER_PLATE.band,
+    borderBottomColor: theme.ground,
+    overflow: 'hidden',
+  },
+  image: { width: '100%', height: '100%' },
   fallback: {
     backgroundColor: theme.groundWell,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: space.s2,
+    padding: 2,
   },
-  /*
-   * The title face, which is the condensed one, and that is the whole reason.
-   *
-   * A 64pt plate at `s12` in Archivo broke inside the word — `Hollow Crown Saga` came out
-   * as "Hollo / w / Cro…" — and there is no step below 12 to retreat to. Archivo Narrow
-   * fits about a third more per line at the same size, which is what a condensed face is
-   * for and what a spine label on a shelf has always done.
-   */
+  /** The condensed face: a 44pt plate at `s12` in Archivo broke inside the word. §6.113. */
   fallbackText: {
     color: theme.inkSecondary,
     fontSize: text.s12,

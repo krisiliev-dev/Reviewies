@@ -13,7 +13,7 @@ import { radius, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
-import { ROW } from '@reviewies/core/ui/row';
+
 import { Note } from '../../src/ui/Note';
 
 /**
@@ -109,7 +109,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       // Saying why is what separates a recommendation from an advert. In `note` because
       // that is the slot for a sentence about the row rather than a fact about it.
       note={COPY.discover.because(item.because)}
-      lead={<Poster url={item.posterUrl} name={item.name} width={ROW.lead.width} height={ROW.lead.height} />}
+      lead={<Poster url={item.posterUrl} name={item.name} />}
       open={{
         // §6.96: the poster and the title were separate links to the same route under the
         // same name, so the card announced "Open Quiet Harbour" twice.

@@ -206,7 +206,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
         to: `/title/${encodeURIComponent(result.id)}`,
       }}
       lead={
-        <Poster url={result.posterUrl} name={result.name} className="h-16 w-11 shrink-0 rounded-plate" />
+        <Poster url={result.posterUrl} name={result.name} />
       }
       under={
         <>

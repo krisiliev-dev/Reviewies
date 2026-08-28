@@ -80,7 +80,13 @@ const UNREACHED: Record<string, string> = {
    */
 
   'tokens#elevation': 'Reached only by flat.test.ts, which is what it is for.',
-  'tokens#ratio': 'Values landed; migrates with the poster component.',
+  /*
+   * `tokens#ratio` was here, saying "values landed; migrates with the poster component". It
+   * migrated: `core/src/ui/poster.ts` derives both poster heights from it. The stale check
+   * below deleted the line the moment product code reached the export, which is the whole
+   * point of that clause — and this one had been true and unread long enough for the row
+   * poster to sit two points off the ratio it names. §6.118.
+   */
 
   'sync/clock#resetClock':
     'Test seam: the learned server offset is module state and a case must not inherit the previous one\u2019s. Nothing in the product forgets it — the offset describes the device, not the account, so signing out is not a reason to unlearn it.',

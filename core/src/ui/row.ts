@@ -45,8 +45,13 @@ export const ROW = {
   minHeight: { listing: 66, index: size.target },
   padY: space.s8,
   gap: space.s12,
-  /** The poster at row size. Everything that carries one carries the same one. */
-  lead: { width: 44, height: 64 },
+  /**
+   * The lead's box comes from `POSTER_SIZE.row` now, not from here.
+   *
+   * It said 44 x 64 while `minHeight.listing` two lines above says 66 — which is the 2:3 of
+   * 44 that `ratio.poster` has specified all along and that nothing had ever read. So every
+   * listing row in the app carried a two-point strip of dead ground under its artwork.
+   */
 } as const;
 
 /**

@@ -29,7 +29,7 @@ export function Row({
 }: RowContract & {
   /** A route to push. The phone has no `href` to give. */
   open?: { name: string; run(): void };
-  /** `<Poster/>` at `ROW.lead`, a time, or nothing. */
+  /** `<Poster/>` at row size, a time, or nothing. */
   lead?: ReactNode;
   /** `<CrossOff/>` | `<Button size="row"/>` | a chevron. Names itself. */
   trailing?: ReactNode;

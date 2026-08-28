@@ -8260,6 +8260,49 @@ copy **in the component's own prose comment**, so `toContain('bg-working-mark')`
 by the sentence explaining why it is that colour.
 
 
+### 6.118 A token nobody read, and the two points it cost every row in the app
+
+Stage 3 continued: `Poster`, the sixth component. It existed on both platforms and decided
+nothing — every call site passed its own width and height, seven web sites writing `h-16 w-11`
+and six phone sites passing `ROW.lead`.
+
+**The two platforms agreed on the numbers, which is why nothing had complained, and both were
+wrong in the same place.**
+
+`ratio.poster` has said 2/3 since the token file was written and **nothing had ever read it**.
+So the detail poster is 96 x 144, which is exactly 2:3, and the row poster was 44 x **64**,
+which is not: 2:3 of 44 is 66. And `ROW.minHeight.listing` — two lines above where `ROW.lead`
+used to sit — **is 66**. Somebody wrote the row's height from the ratio and the poster's by
+eye, in the same table, and every listing row in the app has since carried a two-point strip
+of dead ground under its artwork: Up Next, the watchlist, search, discover, the calendar,
+every list. Small enough to read as a rendering artefact, which is what an unread token buys.
+
+Both heights are computed from the ratio now. A size names a width and nothing else.
+
+**`coreWiring` deleted its own excuse, on schedule.** The `UNREACHED` table carried
+*"`tokens#ratio`: values landed; migrates with the poster component"* — and the stale check
+removed it the moment `poster.ts` reached the export. That is §6.41 working exactly as
+designed. It is also the uncomfortable half: the entry was *true* for as long as it stood,
+and the thing it was waiting for is the thing that would have caught the 64.
+
+**A utility that does not exist looks exactly like a utility.** The band along the poster's
+foot — the direction's 4pt strip in the ground — spells naturally as `border-b-s4`, and it
+generates **nothing**: the space scale goes into Tailwind's `--spacing` namespace while border
+widths come from `--border-width-*`, which holds strokes only. The band would simply not have
+appeared on the web, in silence, and the phone would have had it. §6.85's trap, found by
+checking the built stylesheet for the rule rather than by trusting the class name. Both sides
+read `POSTER_PLATE.band` directly now.
+
+**The needle-in-a-comment problem, caught by the clause that had it.** `poster.test.ts` bans
+`border-b-s\d` in the component — and the component's own paragraph explains why that spelling
+is wrong, so the clause read its own explanation as the violation. Three sprints running this
+has been `clauses.test.ts`'s finding; this time the guard failed on itself before it was
+committed, which is the cheaper way round.
+
+Seven plants, seven catches. `flat.test.ts`'s radius count fell from 81 to 78 as seven
+`rounded-plate` call sites became one component, and the floor moved with it.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

@@ -27,7 +27,7 @@ import { formatDay } from '@reviewies/core/time';
 import { Button } from '../src/ui/Button';
 import { Row } from '../src/ui/Row';
 import { Section } from '../src/ui/Section';
-import { ROW } from '@reviewies/core/ui/row';
+
 import { Choice } from '../src/ui/Choice';
 import { Note } from '../src/ui/Note';
 
@@ -189,8 +189,6 @@ export default function CalendarScreen() {
                   <Poster
                     url={entry.posterUrl}
                     name={entry.seriesName}
-                    width={ROW.lead.width}
-                    height={ROW.lead.height}
                   />
                 }
                 open={{
@@ -213,7 +211,6 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-
 
   day: { gap: 6, marginTop: 8 },
   // The same eyebrow as every other section heading in the app, which this was not:

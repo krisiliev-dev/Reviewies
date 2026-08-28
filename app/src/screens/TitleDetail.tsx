@@ -86,7 +86,7 @@ export function TitleDetail() {
         <Poster
           url={libraryItem?.posterOverride ?? title?.posterUrl}
           name={title?.name ?? ''}
-          className="h-36 w-24 rounded-plate"
+          size="detail"
         />
         <div className="min-w-0 flex-1">
           <h1 className="text-s20 font-title font-semibold">

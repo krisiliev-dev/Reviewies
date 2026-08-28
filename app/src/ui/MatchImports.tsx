@@ -182,7 +182,7 @@ export function MatchImports({
                   <Poster
                     url={candidate.posterUrl}
                     name={candidate.name}
-                    className="h-16 w-11 shrink-0 rounded-plate"
+                   
                   />
                 }
               />
@@ -286,7 +286,7 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
               <Poster
                 url={result.posterUrl}
                 name={result.name}
-                className="h-16 w-11 shrink-0 rounded-plate"
+               
               />
             }
           />

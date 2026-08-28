@@ -10,7 +10,7 @@ import { Poster } from './Poster';
 import { leadingOf, radius, tap, theme } from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
-import { ROW } from '@reviewies/core/ui/row';
+
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from './Note';
 
@@ -149,8 +149,6 @@ export function MatchImports({
                 <Poster
                   url={candidate.posterUrl}
                   name={candidate.name}
-                  width={ROW.lead.width}
-                  height={ROW.lead.height}
                 />
               }
             />

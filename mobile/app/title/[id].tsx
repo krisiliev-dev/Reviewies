@@ -94,7 +94,7 @@ export default function TitleScreen() {
       <Stack.Screen options={{ title: title?.name ?? 'Title' }} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Poster url={title?.posterUrl} name={title?.name ?? ''} width={96} height={144} />
+          <Poster url={title?.posterUrl} name={title?.name ?? ''} size="detail" />
           <View style={styles.headerBody}>
             <Text style={styles.title}>
               {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}

@@ -7,7 +7,7 @@ import { db } from '@reviewies/core/data/db';
 import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
 import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
-import { ROW } from '@reviewies/core/ui/row';
+
 import { leadingOf, radius, tap, theme } from '../../src/ui/theme';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
@@ -88,7 +88,7 @@ function Row({
       title={name}
       meta={year ? String(year) : undefined}
       lead={
-        <Poster url={posterUrl} name={name} width={ROW.lead.width} height={ROW.lead.height} />
+        <Poster url={posterUrl} name={name} />
       }
       open={{
         // Was `Open ${name}` on a `button` role wrapping only the poster, so the words

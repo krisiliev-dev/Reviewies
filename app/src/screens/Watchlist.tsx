@@ -88,7 +88,7 @@ function Row({
       title={name}
       meta={year ? String(year) : undefined}
       open={{ name: `Open ${name}`, to: `/title/${encodeURIComponent(titleId)}` }}
-      lead={<Poster url={posterUrl} name={name} className="h-16 w-11 shrink-0 rounded-plate" />}
+      lead={<Poster url={posterUrl} name={name} />}
       trailing={
         /*
          * A row-level action, in the row's slot for one — and *not* the destructive tone.
