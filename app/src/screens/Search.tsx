@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
 import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } from '@reviewies/core/metadata/index';
@@ -7,6 +6,7 @@ import { SEARCH_TIMEOUT_MS } from '@reviewies/core/metadata/provider';
 import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 import { Button } from '../ui/Button';
+import { Row as BaseRow } from '../ui/Row';
 
 export function Search() {
   const [query, setQuery] = useState('');
@@ -174,71 +174,72 @@ function ResultRow({ result }: { result: SearchResult }) {
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
-      <Link
-        to={`/title/${encodeURIComponent(result.id)}`}
-        aria-label={`Open ${result.name}`}
-        className="shrink-0"
-      >
-        <Poster url={result.posterUrl} name={result.name} className="h-24 w-16 rounded-plate" />
-      </Link>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{result.name}</p>
-        <p className="text-xs text-ink-secondary">
-          {result.kind === 'show' ? 'Series' : 'Film'}
-          {result.year ? ` · ${result.year}` : ''}
-        </p>
-
-        {noting ? (
-          <div className="mt-2 flex gap-1.5">
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Why? e.g. Ana recommended"
-              className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
-              autoFocus
-            />
-            <button
-              onClick={saveToWatchlist}
-              aria-label={`Save ${result.name} to your watchlist`}
-              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
-            >
-              Save
-            </button>
-          </div>
-        ) : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Button
-              onPress={track}
-              disabled={added === 'library'}
-              tone="primary"
-              label={added === 'library' ? 'Tracking' : 'Track'}
-              name={`Track ${result.name}`}
-            />
-            <Button
-              onPress={() => setNoting(true)}
-              disabled={added === 'watchlist'}
-              tone="secondary"
-              label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-              name={`Add ${result.name} to your watchlist`}
-            />
-            {/* Films only: "watched" is not a thing you can say about a whole series
-                in one tap without lying about which episodes. */}
-            {result.kind === 'film' && (
-              <Button
-                onPress={log}
-                disabled={added === 'logged'}
-                tone="secondary"
-                label={added === 'logged' ? 'Logged' : 'Seen it'}
-                name={`Log that you have seen ${result.name}`}
+    <BaseRow
+      title={result.name}
+      meta={`${result.kind === 'show' ? 'Series' : 'Film'}${result.year ? ` · ${result.year}` : ''}`}
+      open={{
+        // The poster was the only target and the words beside it were not one.
+        name: `Open ${result.name}`,
+        to: `/title/${encodeURIComponent(result.id)}`,
+      }}
+      lead={
+        <Poster url={result.posterUrl} name={result.name} className="h-16 w-11 shrink-0 rounded-plate" />
+      }
+      under={
+        <>
+          {noting ? (
+            <div className="flex gap-1.5">
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Why? e.g. Ana recommended"
+                className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
+                autoFocus
               />
-            )}
-          </div>
-        )}
+              <button
+                onClick={saveToWatchlist}
+                aria-label={`Save ${result.name} to your watchlist`}
+                className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
+              >
+                Save
+              </button>
+            </div>
+          ) : (
+            /* Three actions, each naming its own row. The direction's "one action" is a
+               naming rule rather than a counting one — see `Row`'s `under` — and these
+               three were each added deliberately for a reason doc 4 records. */
+            <div className="flex flex-wrap gap-1.5">
+              <Button
+                onPress={track}
+                disabled={added === 'library'}
+                tone="primary"
+                label={added === 'library' ? 'Tracking' : 'Track'}
+                name={`Track ${result.name}`}
+              />
+              <Button
+                onPress={() => setNoting(true)}
+                disabled={added === 'watchlist'}
+                tone="secondary"
+                label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+                name={`Add ${result.name} to your watchlist`}
+              />
+              {/* Films only: "watched" is not a thing you can say about a whole series
+                  in one tap without lying about which episodes. */}
+              {result.kind === 'film' && (
+                <Button
+                  onPress={log}
+                  disabled={added === 'logged'}
+                  tone="secondary"
+                  label={added === 'logged' ? 'Logged' : 'Seen it'}
+                  name={`Log that you have seen ${result.name}`}
+                />
+              )}
+            </div>
+          )}
 
-        {!noting && <AddToList titleId={result.id} kind={result.kind} />}
-      </div>
-    </li>
+          {!noting && <AddToList titleId={result.id} kind={result.kind} />}
+        </>
+      }
+    />
   );
 }

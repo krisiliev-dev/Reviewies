@@ -30,7 +30,9 @@ import { StarRating } from '../../src/ui/StarRating';
 import { border, radius, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
-import { CrossOff, crossedOff } from '../../src/ui/CrossOff';
+import { CrossOff } from '../../src/ui/CrossOff';
+import { Row as BaseRow } from '../../src/ui/Row';
+import { Button } from '../../src/ui/Button';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -249,81 +251,77 @@ function EpisodeRow({
     }
   }
 
+  const which = `season ${episode.season} episode ${episode.number}, ${episode.name}`;
+
   return (
-    <View style={styles.episode}>
-      <View style={styles.episodeBody}>
-        {/* The ink step is the third channel, beside the ring's fill and its tick. A line
-            through text is invisible to a screen reader and hard to see at a glance; the
-            three together are what make any one of them safe to miss. */}
-        <Text numberOfLines={1} style={[styles.episodeName, crossedOff(watched)]}>
-          <Text style={styles.episodeNumber}>{episode.number}. </Text>
-          {episode.name}
-        </Text>
-        <Text style={styles.episodeMeta}>
-          {aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}
-          {episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''}
-          {/* Requested across r/Letterboxd, r/Simkl and r/Serializd. */}
-          {rewatches > 1 ? ` · watched ${rewatches}×` : ''}
-        </Text>
-
-        {/* "A series of 8 television episodes is really just a series of 8 films"
-            — r/Letterboxd. Only offered once watched. */}
-      </View>
-
-      <Pressable
-        onPress={() => router.push(`/watching/${encodeURIComponent(episode.id)}`)}
-        style={styles.react}
-        accessibilityRole="link"
-        // Every episode row carries a React and a Talk. Read in a list they are the
-        // same two words repeated down the screen.
-        accessibilityLabel={`React along with season ${episode.season} episode ${episode.number}, ${episode.name}`}
-      >
-        <Text style={styles.reactText}>React</Text>
-      </Pressable>
-
-      <Pressable
-        onPress={() => router.push(`/comments/${encodeURIComponent(episode.id)}`)}
-        style={styles.react}
-        accessibilityRole="link"
-        accessibilityLabel={`Comments on season ${episode.season} episode ${episode.number}, ${episode.name}`}
-      >
-        <Text style={styles.reactText}>Talk</Text>
-      </Pressable>
-
-      {/* The `checked` this used to carry sat on `accessibilityRole="button"`, which has
-          no way to announce it — §6.95's defect on the control it matters most on. A ring
-          is a checkbox. */}
-      <CrossOff
-        watched={watched}
-        disabled={!aired && !watched}
-        onChange={toggle}
-        // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
-        // rule is that every name in a list of rows carries what tells it from its
-        // neighbours, and the episode number alone does not once a show has two seasons.
-        name={
-          watched
-            ? `Unmark season ${episode.season} episode ${episode.number}, ${episode.name}`
-            : `Mark season ${episode.season} episode ${episode.number}, ${episode.name} watched`
-        }
-        onUndo={() => void unwatchLatest(episode.id)}
-        undoName={`Undo marking season ${episode.season} episode ${episode.number}, ${episode.name} watched`}
-      />
-
-      {/* Same reason as the title's, and the same quote behind it: "a series of 8
-          television episodes is really just a series of 8 films". A film's rating does
-          not get whatever space three buttons leave over. */}
-      {watched && (
-        <View style={styles.episodeRating}>
-          <StarRating
-            of={`season ${episode.season} episode ${episode.number}, ${episode.name}`}
-            value={rating?.value}
-            onChange={(value) =>
-              value === undefined ? clearRating(episode.id) : rate(episode.id, value)
-            }
+    <BaseRow
+      title={`${episode.number}. ${episode.name}`}
+      // The ink step and the stroke both come from `struck`, which the component takes
+      // from `CrossOff` — this row spelled out its own `crossedOff` before, and a row free
+      // to spell its own is a row free to pick a different colour.
+      struck={watched}
+      disabled={!aired && !watched}
+      meta={`${aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}${
+        episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''
+      }${
+        // Requested across r/Letterboxd, r/Simkl and r/Serializd.
+        rewatches > 1 ? ` · watched ${rewatches}×` : ''
+      }`}
+      // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
+      // the ink rather than fading it: "not yet" has to read differently from "broken".
+      tag={!aired && !watched ? 'NOT YET' : undefined}
+      trailing={
+        /* The `checked` this used to carry sat on `accessibilityRole="button"`, which has
+           no way to announce it — §6.95's defect on the control it matters most on. */
+        <CrossOff
+          watched={watched}
+          disabled={!aired && !watched}
+          onChange={toggle}
+          // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
+          // rule is that every name in a list of rows carries what tells it from its
+          // neighbours, and the episode number alone does not once a show has two seasons.
+          name={watched ? `Unmark ${which}` : `Mark ${which} watched`}
+          onUndo={() => void unwatchLatest(episode.id)}
+          undoName={`Undo marking ${which} watched`}
+        />
+      }
+      under={
+        <View style={styles.episodeUnder}>
+          {/* Every episode row carries a React and a Talk. Read in a list they are the
+              same two words repeated down the screen, so the names carry the episode. */}
+          {/* `Button`s, because the web's equivalents measured 31×16 and 21×16 as bare
+              underlined text in `under` — thirty-six controls a third of the height a
+              thumb needs. `hitSlop` covered it here; the component makes the drawn
+              control the right size rather than the touchable region around it. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/watching/${encodeURIComponent(episode.id)}`}
+            label="React"
+            name={`React along with ${which}`}
           />
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/comments/${encodeURIComponent(episode.id)}`}
+            label="Talk"
+            name={`Comments on ${which}`}
+          />
+          {/* "A series of 8 television episodes is really just a series of 8 films"
+              — r/Letterboxd. A film's rating does not get whatever space the controls
+              leave over. Only offered once watched. */}
+          {watched && (
+            <StarRating
+              of={which}
+              value={rating?.value}
+              onChange={(value) =>
+                value === undefined ? clearRating(episode.id) : rate(episode.id, value)
+              }
+            />
+          )}
         </View>
-      )}
-    </View>
+      }
+    />
   );
 }
 
@@ -378,29 +376,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  episode: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  episodeBody: { flex: 1, minWidth: 0, gap: 2 },
-  episodeName: { color: theme.ink, fontSize: 14 },
-  episodeNumber: { color: theme.inkSecondary },
-  episodeMeta: { color: theme.inkSecondary, fontSize: 11 },
-  episodeRating: { width: '100%', marginTop: 4 },
+  episodeUnder: { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
 
-  react: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-  },
-  reactText: { color: theme.inkSecondary, fontSize: 12 },
-
-  disabled: { borderColor: theme.strokeHairline },
 });

@@ -443,6 +443,31 @@ try {
         reasons.length > 0 && overlong.length === 0,
         overlong[0] ?? reasons[0] ?? '(no suggestions on this library)',
       );
+
+      /*
+       * And that none of them is a show you already track — which is the *point* of this
+       * screen, the most repeated request on Trakt's roadmap, and the thing the web has
+       * checked since it shipped while the phone never has. It went unchecked here long
+       * enough for a design screenshot to catch it instead: a capture of this screen
+       * showed "Hollow Crown Saga" suggested directly under "Because you watched Hollow
+       * Crown Saga and The Long Dark".
+       *
+       * By the row's accessible name, and only when there are rows: "none of these is
+       * something you track" is not a claim you can make about no suggestions at all.
+       */
+      const tracked = (await text()).match(/Because you watched ([^\n]+)/)?.[1] ?? '';
+      const seeds = tracked.split(' and ').map((n) => n.trim()).filter(Boolean);
+      const suggested = await Promise.all(
+        (await page.getByRole('link', { name: /^Open / }).all()).map(async (row) =>
+          ((await row.getAttribute('aria-label')) ?? '').replace(/^Open /, ''),
+        ),
+      );
+      const already = suggested.filter((name) => seeds.includes(name));
+      check(
+        'discover excludes what you already track',
+        suggested.length > 0 && already.length === 0,
+        already.length ? `suggested: ${already.join(', ')}` : `${suggested.length} suggested`,
+      );
     }
     // Six is the tab bar alone, so anything at or below that means the screen's own
     // controls did not declare themselves.

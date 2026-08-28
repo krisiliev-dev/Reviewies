@@ -9,6 +9,8 @@ import {
 import { Poster } from './Poster';
 import { radius, tap, theme } from './theme';
 import { Button } from './Button';
+import { Row as BaseRow } from './Row';
+import { ROW } from '@reviewies/core/ui/row';
 
 /**
  * Finishing a migration.
@@ -130,23 +132,26 @@ export function MatchImports({
             history onto it.
           </Text>
           {ask.candidates.map((candidate) => (
-            <Pressable
+            <BaseRow
               key={candidate.id}
-              style={styles.candidate}
-              onPress={() => choose(ask, candidate.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`${ask.name} is ${candidate.name}${
-                candidate.year ? `, ${candidate.year}` : ''
-              }`}
-            >
-              <Poster url={candidate.posterUrl} name={candidate.name} width={40} height={56} />
-              <View style={styles.candidateBody}>
-                <Text numberOfLines={1} style={styles.candidateName}>
-                  {candidate.name}
-                </Text>
-                <Text style={styles.status}>{candidate.year ?? 'Year unknown'}</Text>
-              </View>
-            </Pressable>
+              title={candidate.name}
+              meta={candidate.year ? String(candidate.year) : 'Year unknown'}
+              open={{
+                // Pressing this *is* the answer — nothing opens — so the row says so and
+                // this announces a button rather than a link.
+                does: 'act',
+                name: `${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`,
+                run: () => choose(ask, candidate.id),
+              }}
+              lead={
+                <Poster
+                  url={candidate.posterUrl}
+                  name={candidate.name}
+                  width={ROW.lead.width}
+                  height={ROW.lead.height}
+                />
+              }
+            />
           ))}
           <Pressable
             onPress={() =>
@@ -173,15 +178,5 @@ const styles = StyleSheet.create({
   error: { color: theme.trouble, fontSize: 13 },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 8 },
   name: { color: theme.ink, fontSize: 15, fontWeight: '600' },
-  candidate: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: theme.groundWell,
-    borderRadius: radius.plate,
-    padding: 8,
-  },
-  candidateBody: { flex: 1, minWidth: 0 },
-  candidateName: { color: theme.ink, fontSize: 14 },
   skip: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
 });

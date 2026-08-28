@@ -800,17 +800,39 @@ try {
   //
   // This is the only moment in the run when the database is genuinely empty, so it has
   // to happen here or not at all.
+  //
+  // Waited for rather than slept through. This was a flat 400ms and it passed seventy-six
+  // times and failed once, on the calendar — whose entries query is the slowest thing on
+  // any screen here, and which had not decided yet. A fixed wait turns "this screen is
+  // slow" into "this screen is wrong", at random, and the honest instrument is one that
+  // waits until the screen has stopped saying `Loading…` and then says how long it took.
   for (const [name, expected] of [
     [/Stats/, /Nothing watched in this period yet/i],
     [/Upcoming/, /Nothing airing in the next two months/i],
   ]) {
+    const screen = String(name).slice(1, -1);
     await viaMore(name);
-    await page.waitForTimeout(400);
+    // Arrived, before asking whether it has finished: `viaMore` clicks and returns, so
+    // a `Loading…` that has not been rendered yet is a `Loading…` this would not wait for.
+    await page.getByRole('heading', { name }).first().waitFor({ timeout: 5000 });
+    const began = Date.now();
+    const settled = await page
+      .locator('text=/Loading…/')
+      .first()
+      .waitFor({ state: 'detached', timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
+    const took = Date.now() - began;
     const body = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
     check(
-      `${String(name).slice(1, -1)} says what empty means`,
-      expected.test(body),
-      body.slice(0, 120),
+      `${screen} says what empty means`,
+      settled && expected.test(body),
+      // The part being judged, not the top of the page: the calendar's settings section
+      // is long enough to fill a 120-character slice on its own, so the one run that
+      // failed showed me the notification copy and nothing about why.
+      settled
+        ? `after ${took}ms: …${body.slice(Math.max(0, body.length - 160))}`
+        : `still loading after ${took}ms`,
     );
   }
   await page.getByRole('link', { name: /Watchlist/ }).click();
@@ -1596,13 +1618,28 @@ try {
   await page.waitForTimeout(800);
   // Check the suggested titles specifically, not the whole page: a tracked show
   // legitimately appears in the "Because you watched…" attribution.
-  const suggestedTitles = await page.locator('li p.font-medium').allInnerTexts();
+  //
+  // By the row's accessible name rather than by `li p.font-medium`, which is what this
+  // was. `Row` renders its title in a `<span>`, so after the migration the locator
+  // matched nothing — and an empty list does not contain "The Long Dark", so the
+  // *exclusion* check went green on zero rows while the suggestion check went red. A
+  // locator built out of styling classes breaks whenever the styling moves, and this one
+  // broke into a pass. The name is what the row promises a reader; it is also stable.
+  const suggestedTitles = (await page.getByRole('link', { name: /^Open / }).all()).length
+    ? await Promise.all(
+        (await page.getByRole('link', { name: /^Open / }).all()).map(async (row) =>
+          ((await row.getAttribute('aria-label')) ?? '').replace(/^Open /, ''),
+        ),
+      )
+    : [];
+  // Stated before the exclusion, and the exclusion depends on it: "none of these is a
+  // show you track" is not a claim you can make about no rows at all (§6.56).
+  check('discover suggests something', suggestedTitles.length > 0, `${suggestedTitles.length} suggested`);
   check(
     'discover excludes what you already track',
-    !suggestedTitles.includes('The Long Dark'),
+    suggestedTitles.length > 0 && !suggestedTitles.includes('The Long Dark'),
     suggestedTitles.join(', '),
   );
-  check('discover suggests something', suggestedTitles.length > 0, `${suggestedTitles.length} suggested`);
   check(
     'discover explains why',
     /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),

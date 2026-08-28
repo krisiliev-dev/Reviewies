@@ -31,6 +31,8 @@ import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
 import { Button } from '../../src/ui/Button';
 import { CrossOff } from '../../src/ui/CrossOff';
+import { Row as BaseRow } from '../../src/ui/Row';
+import { ROW } from '@reviewies/core/ui/row';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -244,77 +246,81 @@ function Row({
     setMarkedId(undefined);
   }
 
+  const code = `S${episode.season}E${episode.number}`;
+
   return (
-    <View style={styles.row}>
-      <Pressable
-        onPress={() => router.push(`/title/${encodeURIComponent(entry.seriesId)}`)}
-        accessibilityRole="link"
-        // A poster is an image with no text in it. Without this the control announces
-        // as nothing at all, which is what a tappable View amounts to.
-        accessibilityLabel={`Open ${entry.seriesName}`}
-      >
-        <Poster url={entry.posterUrl} name={entry.seriesName} />
-      </Pressable>
-
-      <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={styles.title}>
-          {entry.seriesName}
-        </Text>
-        <Text numberOfLines={1} style={styles.subtitle}>
-          S{episode.season}E{episode.number} · {episode.name}
-        </Text>
-        {/* A count, not a vague "NEW" badge — the most repeated complaint on Trakt's
-            roadmap. */}
-        <Text style={styles.remaining}>
-          {entry.remaining === 0
-            ? 'Last one'
-            : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`}
-        </Text>
-
-        {/* Quiet, because it is the exception. Coming back to a show after a week away
-            and marking six episodes one at a time is the thing this avoids. */}
-        <Pressable
-          onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Catch up on ${entry.seriesName}`}
-          style={tap}
-        >
-          <Text style={styles.catchUp}>Caught up further?</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.actions}>
-        {/* Was a filled "Watched" pill that disabled itself for the length of a local
-            write, with its undo a screen away. The ring is the same tap in the dark,
-            one-handed, and the way back is beside it. */}
+    <BaseRow
+      title={entry.seriesName}
+      code={code}
+      meta={episode.name}
+      // A count, not a vague "NEW" badge — the most repeated complaint on Trakt's roadmap.
+      // In `count` rather than `tag`: this was `17 MORE` for one sprint, and a number
+      // whose unit has been shortened away to fit a pill is the badge it was replacing.
+      count={
+        entry.remaining === 0
+          ? 'Last one'
+          : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`
+      }
+      lead={
+        <Poster
+          url={entry.posterUrl}
+          name={entry.seriesName}
+          width={ROW.lead.width}
+          height={ROW.lead.height}
+        />
+      }
+      open={{
+        // The poster used to be the only target and the words beside it were not one.
+        name: `Open ${entry.seriesName}, ${code}, ${episode.name}`,
+        run: () => router.push(`/title/${encodeURIComponent(entry.seriesId)}`),
+      }}
+      trailing={
+        /* Was a filled "Watched" pill that disabled itself for the length of a local
+           write, with its undo a screen away. The ring is the same tap in the dark,
+           one-handed, and the way back is beside it. */
         <CrossOff
           watched={justMarked}
           name={
             justMarked
-              ? `Unmark ${entry.seriesName} S${episode.season}E${episode.number}`
-              : `Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`
+              ? `Unmark ${entry.seriesName} ${code}`
+              : `Mark ${entry.seriesName} ${code} watched`
           }
           onChange={(next) => (next ? onWatched() : undoMark())}
           onUndo={undoMark}
-          undoName={`Undo marking ${entry.seriesName} S${episode.season}E${episode.number} watched`}
+          undoName={`Undo marking ${entry.seriesName} ${code} watched`}
         />
+      }
+      under={
+        /* Two controls that are about the row rather than beside it, which is what the
+           `under` slot is for. "Caught up further?" sat *inside the words* before, so the
+           row's one navigation target had a second control nested in it. */
+        <View style={styles.under}>
+          {/* Quiet, because it is the exception. Coming back to a show after a week away
+              and marking six episodes one at a time is the thing this avoids. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            label="Caught up further?"
+            name={`Catch up on ${entry.seriesName}`}
+            onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
+          />
 
-        {/* Watching Mode, from the screen somebody is actually on.
-            *
-            * It was reachable on the phone only from a title page — open the show,
-            * find the episode, tap there — while the web has offered it in this row
-            * since it shipped. The differentiator of the product, three taps deep on
-            * the platform the product pivoted to be. Doc 10, second evening. */}
-        <Link
-          href={`/watching/${encodeURIComponent(episode.id)}`}
-          accessibilityLabel={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
-          style={styles.watchAlong}
-        >
-          Watch along
-        </Link>
-      </View>
-    </View>
+          {/* Watching Mode, from the screen somebody is actually on.
+              *
+              * It was reachable on the phone only from a title page — open the show,
+              * find the episode, tap there — while the web has offered it in this row
+              * since it shipped. The differentiator of the product, three taps deep on
+              * the platform the product pivoted to be. Doc 10, second evening. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/watching/${encodeURIComponent(episode.id)}`}
+            label="Watch along"
+            name={`Watch along with ${entry.seriesName} ${code}`}
+          />
+        </View>
+      }
+    />
   );
 }
 
@@ -333,32 +339,9 @@ const styles = StyleSheet.create({
   // through that path reached the DOM as an index-keyed object, which React refuses to
   // set. The export booted to a blank page; the smoke suite caught it.
 
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
-  rowBody: { flex: 1, minWidth: 0, gap: 2 },
-  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  subtitle: { color: theme.inkSecondary, fontSize: 14 },
-  catchUp: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
   // Right-aligned, not stretched. `alignItems: 'stretch'` put the 44pt ring at the *left*
   // edge of the action column with a full-width pill under it, so the one control meant to
   // be in the same place on every row of every list was floating in the middle of the row.
-  actions: { gap: 6, alignItems: 'flex-end' },
-  watchAlong: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    color: theme.inkSecondary,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 12,
-    textAlign: 'center',
-    minHeight: 24,
-  },
-  remaining: { color: theme.inkSecondary, fontSize: 12 },
+  under: { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
 
 });

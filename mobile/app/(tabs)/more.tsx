@@ -1,5 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
@@ -11,6 +11,7 @@ import {
 import { usingFixtures } from '@reviewies/core/metadata/index';
 import { radius, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
+import { Row as BaseRow } from '../../src/ui/Row';
 
 /**
  * Everything not done daily.
@@ -29,6 +30,7 @@ const LINKS = [
 ] as const;
 
 export default function MoreScreen() {
+  const router = useRouter();
   const counts = useLive(
     async () => ({
       watches: await db.watches.count(),
@@ -65,23 +67,23 @@ export default function MoreScreen() {
           )}
         </View>
 
+        {/* A contents page, which is what `density="index"` is: no poster, so the row is
+            a thumb tall rather than a poster tall. */}
         {LINKS.map((link) => (
-          <Link key={link.href} href={link.href} asChild>
-            <Pressable
-              style={styles.link}
-              accessibilityRole="link"
+          <BaseRow
+            key={link.href}
+            density="index"
+            title={link.label}
+            meta={link.detail}
+            open={{
               // The detail line is the half that says what the screen is for, and it is
               // a separate Text node — read on its own, "Upcoming" and "›" is all a
               // screen reader gets.
-              accessibilityLabel={`${link.label} — ${link.detail}`}
-            >
-              <View style={styles.linkBody}>
-                <Text style={styles.linkLabel}>{link.label}</Text>
-                <Text style={styles.linkDetail}>{link.detail}</Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </Pressable>
-          </Link>
+              name: `${link.label} — ${link.detail}`,
+              run: () => router.push(link.href),
+            }}
+            trailing={<Text style={styles.chevron}>›</Text>}
+          />
         ))}
 
         <View style={styles.footer}>
@@ -122,17 +124,6 @@ const styles = StyleSheet.create({
   statLabel: { color: theme.inkSecondary, fontSize: 11 },
   statValue: { color: theme.ink, fontSize: 20, fontWeight: '700' },
 
-  link: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  linkBody: { flex: 1 },
-  linkLabel: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  linkDetail: { color: theme.inkSecondary, fontSize: 13 },
   chevron: { color: theme.inkSecondary, fontSize: 22 },
 
   footer: { marginTop: 16, gap: 4 },

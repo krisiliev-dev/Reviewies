@@ -104,6 +104,12 @@ export function routesOffered(source: string, platform: 'web' | 'phone'): Set<st
           /\bto=["'`]([^"'`]+)["'`]/g,
           /\bto=\{`([^`]+)`\}/g,
           /\bto:\s*[`'"]([^`'"]+)[`'"]/g,
+          // `href` on the web too, so the two lists are the same list. It reads
+          // `ErrorBoundary`'s way home, which nothing else here spells that way; it costs
+          // nothing and it closes the direction this asymmetry could still break in.
+          /\bhref=["'`]([^"'`]+)["'`]/g,
+          /\bhref=\{`([^`]+)`\}/g,
+          /\bhref:\s*[`'"]([^`'"]+)[`'"]/g,
           /navigate\(\s*[`'"]([^`'"]+)[`'"]/g,
         ]
       : [
@@ -111,6 +117,17 @@ export function routesOffered(source: string, platform: 'web' | 'phone'): Set<st
           /\bhref=\{`([^`]+)`\}/g,
           /\bhref:\s*[`'"]([^`'"]+)[`'"]/g,
           /\bto=["'`]([^"'`]+)["'`]/g,
+          // The third `to` spelling, which the web's list had and this one did not — and
+          // the last of the six, because both lists now carry all of them rather than a
+          // chosen subset each. A subset is a decision that has to be revisited every time
+          // a call site changes its spelling, and it has been wrong twice.
+          // §6.97 widened both sides for `to:` in a literal and stopped there; this sprint
+          // gave the phone `<Button to={`/watching/${id}`} />` — a template inside braces
+          // — and the scanner reported three destinations as web-only that both platforms
+          // offer. Twice now the fix for this file has been to widen it *evenly*: a
+          // spelling one side can read and the other cannot invents a difference that is
+          // the scanner's, not the product's.
+          /\bto=\{`([^`]+)`\}/g,
           /\bto:\s*[`'"]([^`'"]+)[`'"]/g,
           /router\.(?:push|replace|navigate)\(\s*[`'"]([^`'"]+)[`'"]/g,
         ];

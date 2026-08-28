@@ -73,7 +73,10 @@ export function Button({
       <Text
         style={[
           styles.label,
-          { color: theme[label_] },
+          // From the table, not from this file. A single size here printed `inline` at
+          // fifteen points where the web printed twelve, so a quiet control under a row
+          // came out louder than the row's own words.
+          { fontSize: metrics.label, color: theme[label_] },
           shape.underline ? styles.underlined : null,
         ]}
       >
@@ -99,6 +102,6 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  label: { fontSize: 15, fontWeight: '600' },
+  label: { fontWeight: '600' },
   underlined: { textDecorationLine: 'underline' },
 });

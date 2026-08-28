@@ -7,6 +7,7 @@ import {
 } from '@reviewies/core/data/reconcile';
 import { getProvider, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from './Poster';
+import { Row as BaseRow } from './Row';
 
 /**
  * Finishing a migration.
@@ -163,25 +164,25 @@ export function MatchImports({
           )}
           <ul className="flex flex-col gap-1.5">
             {ask.candidates.map((candidate) => (
-              <li key={candidate.id}>
-                <button
-                  onClick={() => choose(ask, candidate.id)}
-                  aria-label={`${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`}
-                  className="flex w-full items-center gap-3 rounded-plate bg-ground-well p-2 text-left"
-                >
+              <BaseRow
+                key={candidate.id}
+                title={candidate.name}
+                meta={candidate.year ? String(candidate.year) : 'Year unknown'}
+                open={{
+                  // Pressing this *is* the answer — nothing opens — so the row says so
+                  // and the phone announces a button rather than a link.
+                  does: 'act',
+                  name: `${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`,
+                  run: () => choose(ask, candidate.id),
+                }}
+                lead={
                   <Poster
                     url={candidate.posterUrl}
                     name={candidate.name}
-                    className="h-14 w-10 shrink-0 rounded-plate"
+                    className="h-16 w-11 shrink-0 rounded-plate"
                   />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm">{candidate.name}</span>
-                    <span className="block text-xs text-ink-secondary">
-                      {candidate.year ?? 'Year unknown'}
-                    </span>
-                  </span>
-                </button>
-              </li>
+                }
+              />
             ))}
           </ul>
           <button
@@ -268,23 +269,23 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
 
       <ul className="flex flex-col gap-1.5">
         {results?.map((result) => (
-          <li key={result.id}>
-            <button
-              onClick={() => onChosen(result.id)}
-              aria-label={`${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`}
-              className="flex w-full items-center gap-3 rounded-plate bg-ground-well p-2 text-left"
-            >
+          <BaseRow
+            key={result.id}
+            title={result.name}
+            meta={result.year ? String(result.year) : 'Year unknown'}
+            open={{
+              does: 'act',
+              name: `${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`,
+              run: () => onChosen(result.id),
+            }}
+            lead={
               <Poster
                 url={result.posterUrl}
                 name={result.name}
-                className="h-14 w-10 shrink-0 rounded-plate"
+                className="h-16 w-11 shrink-0 rounded-plate"
               />
-              <span className="min-w-0">
-                <span className="block truncate text-sm">{result.name}</span>
-                <span className="block text-xs text-ink-secondary">{result.year ?? 'Year unknown'}</span>
-              </span>
-            </button>
-          </li>
+            }
+          />
         ))}
       </ul>
     </div>

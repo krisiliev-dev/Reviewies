@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
 import { db } from '../data/db';
+import { Row as BaseRow } from '../ui/Row';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 
@@ -59,23 +59,27 @@ export function More() {
         )}
       </section>
 
-      <nav className="flex flex-col gap-2" aria-label="More sections">
-        {LINKS.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            aria-label={`${link.label} — ${link.detail}`}
-            className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4"
-          >
-            <span className="min-w-0">
-              <span className="block">{link.label}</span>
-              <span className="block text-sm text-ink-secondary">{link.detail}</span>
-            </span>
-            <span aria-hidden="true" className="shrink-0 text-ink-secondary">
-              ›
-            </span>
-          </Link>
-        ))}
+      <nav aria-label="More sections">
+        {/* A contents page, which is what `density="index"` is: no poster, so the row is
+            a thumb tall rather than a poster tall. The names are unchanged — every one of
+            these is still the string it was, which is what the smoke suite and anybody's
+            muscle memory navigate by. */}
+        <ul className="flex flex-col">
+          {LINKS.map((link) => (
+            <BaseRow
+              key={link.to}
+              density="index"
+              title={link.label}
+              meta={link.detail}
+              open={{ name: `${link.label} — ${link.detail}`, to: link.to }}
+              trailing={
+                <span aria-hidden="true" className="shrink-0 pl-2 text-ink-secondary">
+                  ›
+                </span>
+              }
+            />
+          ))}
+        </ul>
       </nav>
     </div>
   );

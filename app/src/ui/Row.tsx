@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ROW, type RowContract } from '@reviewies/core/ui/row';
+import { ROW, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { crossedOffText } from './CrossOff';
 
 /**
@@ -28,7 +28,7 @@ interface Props extends RowContract {
    * keep working; `run` only for a target that has no URL. Either, not neither: the union
    * is what makes a row that goes nowhere a compile error rather than a dead card.
    */
-  open?: { name: string } & ({ to: string; run?: never } | { run(): void; to?: never });
+  open?: RowOpen & ({ to: string; run?: never } | { run(): void; to?: never });
   /** `<Poster/>` at row size, a time, or nothing. */
   lead?: ReactNode;
   /** `<CrossOff/>` | `<Button size="row"/>` | a chevron. Names itself. */
@@ -53,6 +53,7 @@ export function Row({
   title,
   code,
   meta,
+  count,
   tag,
   note,
   open,
@@ -81,6 +82,9 @@ export function Row({
           {meta}
         </span>
       ) : null}
+      {/* The row's own words, not a badge — see the contract for what happened when this
+          was a `tag`. Same size and ink as the meta line, on a line of its own. */}
+      {count ? <span className="block truncate text-xs text-ink-secondary">{count}</span> : null}
       {note ? <span className="block truncate text-xs italic text-ink-secondary">{note}</span> : null}
     </span>
   );

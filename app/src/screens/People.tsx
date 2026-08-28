@@ -15,6 +15,8 @@ import {
   type Person,
 } from '@reviewies/core/social/people';
 import { COPY } from '@reviewies/core/copy';
+import { Row as BaseRow } from '../ui/Row';
+import { Button } from '../ui/Button';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -274,42 +276,55 @@ function FindPeople({
           const already = following.some((f) => f.id === p.id);
           const isBlocked = blocked.some((b) => b.id === p.id);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-ground-raised px-3 py-3">
-              <PersonName person={p} />
-              <button
-                onClick={async () => {
-                  setActionFailed(false);
-                  const result = already ? await unfollow(p.id) : await follow(p.id);
-                  if (!result.ok) {
-                    setActionFailed(true);
-                    return;
-                  }
-                  onChanged();
-                }}
-                disabled={isBlocked}
-                aria-label={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
-                className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium disabled:opacity-40 ${
-                  already ? 'border border-stroke-signal text-ink-secondary' : 'bg-action-fill text-action-label'
-                }`}
-              >
-                {already ? 'Following' : 'Follow'}
-              </button>
-              <button
-                onClick={async () => {
-                  setActionFailed(false);
-                  const result = await blockPerson(p.id);
-                  if (!result.ok) {
-                    setActionFailed(true);
-                    return;
-                  }
-                  onChanged();
-                }}
-                aria-label={`Block @${p.handle}`}
-                className="shrink-0 rounded-pill border border-stroke-signal px-3 py-1.5 text-xs text-ink-secondary"
-              >
-                Block
-              </button>
-            </li>
+            <BaseRow
+              key={p.id}
+              title={p.displayName ?? `@${p.handle}`}
+              meta={p.displayName ? `@${p.handle}` : undefined}
+              // No poster and nowhere to go: this product has no profile screen, so a
+              // person row is words and its actions. `open` is left off rather than given
+              // a no-op, which the contract makes a compile error.
+              density="index"
+              trailing={
+                <Button
+                  size="inline"
+                  tone={already ? 'secondary' : 'primary'}
+                  label={already ? 'Following' : 'Follow'}
+                  name={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
+                  // Was `disabled:opacity-40`, which the component bans and says why: a
+                  // faded control reads as broken rather than as unavailable.
+                  disabled={isBlocked}
+                  onPress={async () => {
+                    setActionFailed(false);
+                    const result = already ? await unfollow(p.id) : await follow(p.id);
+                    if (!result.ok) {
+                      setActionFailed(true);
+                      return;
+                    }
+                    onChanged();
+                  }}
+                />
+              }
+              under={
+                /* Underneath rather than beside Follow. Blocking somebody is the one
+                   action on this screen you cannot take back with the same tap, and it
+                   sat a thumb's width from the one people come here to press. */
+                <Button
+                  size="inline"
+                  tone="destructive"
+                  label="Block"
+                  name={`Block @${p.handle}`}
+                  onPress={async () => {
+                    setActionFailed(false);
+                    const result = await blockPerson(p.id);
+                    if (!result.ok) {
+                      setActionFailed(true);
+                      return;
+                    }
+                    onChanged();
+                  }}
+                />
+              }
+            />
           );
         })}
       </ul>
@@ -353,26 +368,31 @@ function PersonList({
         {people.map((p) => {
           const act = action(p);
           return (
-            <li key={p.id} className="flex items-center gap-2 rounded-plate bg-ground-raised px-3 py-3">
-              <PersonName person={p} />
-              {act && (
-                <button
-                  onClick={async () => {
-                    setFailed(false);
-                    const result = await act.run();
-                    if (!result.ok) {
-                      setFailed(true);
-                      return;
-                    }
-                    onChanged();
-                  }}
-                  aria-label={`${act.label} @${p.handle}`}
-                  className="shrink-0 rounded-pill border border-stroke-signal px-3 py-1.5 text-xs text-ink-secondary"
-                >
-                  {act.label}
-                </button>
-              )}
-            </li>
+            <BaseRow
+              key={p.id}
+              title={p.displayName ?? `@${p.handle}`}
+              meta={p.displayName ? `@${p.handle}` : undefined}
+              density="index"
+              trailing={
+                act ? (
+                  <Button
+                    size="inline"
+                    tone="secondary"
+                    label={act.label}
+                    name={`${act.label} @${p.handle}`}
+                    onPress={async () => {
+                      setFailed(false);
+                      const result = await act.run();
+                      if (!result.ok) {
+                        setFailed(true);
+                        return;
+                      }
+                      onChanged();
+                    }}
+                  />
+                ) : undefined
+              }
+            />
           );
         })}
       </ul>
@@ -380,11 +400,8 @@ function PersonList({
   );
 }
 
-function PersonName({ person }: { person: Person }) {
-  return (
-    <div className="min-w-0 flex-1">
-      <p className="truncate text-sm">{person.displayName ?? `@${person.handle}`}</p>
-      {person.displayName && <p className="truncate text-xs text-ink-secondary">@{person.handle}</p>}
-    </div>
-  );
-}
+/*
+ * `PersonName` was here, and is not: it was the row's words and the row owns those now —
+ * the display name as the title, the handle as the meta line, which is what it did by
+ * hand in two places. Left behind, it would be a second way to spell a person's name.
+ */

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import {
   clearRating,
@@ -13,7 +13,9 @@ import {
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
-import { CrossOff, crossedOffText } from '../ui/CrossOff';
+import { Button } from '../ui/Button';
+import { CrossOff } from '../ui/CrossOff';
+import { Row as BaseRow } from '../ui/Row';
 import { StarRating } from '../ui/StarRating';
 import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
@@ -220,81 +222,81 @@ function EpisodeRow({
   const aired = hasAired(episode);
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
 
+  const which = `season ${episode.season} episode ${episode.number}, ${episode.name}`;
+
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-ground-raised px-3 py-3">
-      <div className="min-w-0 flex-1">
-        {/* The ink step is the third channel, beside the ring's fill and its tick. A line
-            through text is invisible to a screen reader and hard to see at a glance; the
-            three together are what make any one of them safe to miss. */}
-        <p className={`truncate text-sm ${crossedOffText(watched)}`}>
-          <span className="text-ink-secondary">{episode.number}.</span> {episode.name}
-        </p>
-        <p className="text-xs text-ink-secondary">
-          {aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}
-          {episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''}
-          {/* Rewatch counts: requested across r/Letterboxd, r/Simkl and r/Serializd. */}
-          {rewatches > 1 && ` · watched ${rewatches}×`}
-        </p>
-        {/* Episode-level ratings: "a series of 8 television episodes is really just a
-            series of 8 films" — r/Letterboxd. Only offered once watched. */}
-      </div>
-
-      {/* Every row carries the same three words. Read down a season they are "React,
-          Talk, Mark" forty times over with nothing to tell them apart. */}
-      <Link
-        to={`/watching/${encodeURIComponent(episode.id)}`}
-        aria-label={`React along with season ${episode.season} episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
-      >
-        React
-      </Link>
-
-      <Link
-        to={`/comments/${encodeURIComponent(episode.id)}`}
-        aria-label={`Comments on season ${episode.season} episode ${episode.number}, ${episode.name}`}
-        className="shrink-0 rounded-plate bg-ground-well px-3 py-1.5 text-xs text-ink-secondary"
-      >
-        Talk
-      </Link>
-
-      {/* Was a pill reading "Mark" or "Watched", announcing `aria-pressed` and fading to
-          30% when unaired — three separate things the component settles. Unaired is now a
-          hairline ring rather than a fade, which reads as "not yet" instead of as broken. */}
-      <CrossOff
-        watched={watched}
-        disabled={!aired && !watched}
-        // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
-        // rule is that every name in a list of rows carries what tells it from its
-        // neighbours, and the episode number alone does not once a show has two seasons.
-        name={
-          watched
-            ? `Unmark season ${episode.season} episode ${episode.number}, ${episode.name}`
-            : `Mark season ${episode.season} episode ${episode.number}, ${episode.name} watched`
-        }
-        onChange={(next) =>
-          next
-            ? markWatched({ targetId: episode.id, seriesId, runtimeMin: episode.runtimeMin })
-            : unwatchLatest(episode.id)
-        }
-        onUndo={() => unwatchLatest(episode.id)}
-        undoName={`Undo marking season ${episode.season} episode ${episode.number}, ${episode.name} watched`}
-      />
-
-      {/* A line of its own, below the row rather than squeezed into the column beside
-          three buttons — same reason as the title's. "A series of 8 television episodes
-          is really just a series of 8 films" (r/Letterboxd), and a film's rating does
-          not get the leftovers. Only offered once watched. */}
-      {watched && (
-        <div className="w-full">
-          <StarRating
-            of={`season ${episode.season} episode ${episode.number}, ${episode.name}`}
-            value={rating?.value}
-            onChange={(value) =>
-              value === undefined ? clearRating(episode.id) : rate(episode.id, value)
-            }
+    <BaseRow
+      title={`${episode.number}. ${episode.name}`}
+      // The ink step and the stroke both come from `struck`, which the component takes
+      // from `CrossOff` — this row spelled out its own `crossedOffText` before, and a row
+      // free to spell its own is a row free to pick a different colour.
+      struck={watched}
+      disabled={!aired && !watched}
+      meta={`${aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}${
+        episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''
+      }${
+        // Rewatch counts: requested across r/Letterboxd, r/Simkl and r/Serializd.
+        rewatches > 1 ? ` · watched ${rewatches}×` : ''
+      }`}
+      // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
+      // the ink rather than fading it: "not yet" has to read differently from "broken".
+      tag={!aired && !watched ? 'NOT YET' : undefined}
+      trailing={
+        /* Was a pill reading "Mark" or "Watched", announcing `aria-pressed` and fading to
+           30% when unaired — three separate things the component settles. */
+        <CrossOff
+          watched={watched}
+          disabled={!aired && !watched}
+          // The season, because two episodes can be "5, Episode 5" on one page. Doc 6 §5's
+          // rule is that every name in a list of rows carries what tells it from its
+          // neighbours, and the episode number alone does not once a show has two seasons.
+          name={watched ? `Unmark ${which}` : `Mark ${which} watched`}
+          onChange={(next) =>
+            next
+              ? markWatched({ targetId: episode.id, seriesId, runtimeMin: episode.runtimeMin })
+              : unwatchLatest(episode.id)
+          }
+          onUndo={() => unwatchLatest(episode.id)}
+          undoName={`Undo marking ${which} watched`}
+        />
+      }
+      under={
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Every row carries the same three words. Read down a season they are "React,
+              Talk, Mark" forty times over with nothing to tell them apart, so the names
+              carry the episode and the printed words stay short. */}
+          {/* `Button`s, because as bare underlined links in `under` these measured 31×16
+              and 21×16 — thirty-six controls a third of the height a thumb needs, on the
+              screen with the most of them. The component is what keeps 44 from being a
+              thing each call site has to remember. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/watching/${encodeURIComponent(episode.id)}`}
+            label="React"
+            name={`React along with ${which}`}
           />
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/comments/${encodeURIComponent(episode.id)}`}
+            label="Talk"
+            name={`Comments on ${which}`}
+          />
+          {/* "A series of 8 television episodes is really just a series of 8 films"
+              (r/Letterboxd), and a film's rating does not get the leftovers. Only offered
+              once watched. */}
+          {watched && (
+            <StarRating
+              of={which}
+              value={rating?.value}
+              onChange={(value) =>
+                value === undefined ? clearRating(episode.id) : rate(episode.id, value)
+              }
+            />
+          )}
         </div>
-      )}
-    </li>
+      }
+    />
   );
 }

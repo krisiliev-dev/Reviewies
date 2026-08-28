@@ -175,6 +175,35 @@ const MUST_SHOW = {
   '09-calendar': /Hollow Crown Saga/,
 };
 
+/**
+ * And one screen judged on what it must *not* show.
+ *
+ * Discover's whole claim is that nothing you already track appears in it. The phone smoke
+ * has a check for that now and it passes — on a library built by tracking shows directly,
+ * which is not how anybody's library is built. This harness's library is the other path:
+ * a TV Time CSV imported and then reconciled onto provider IDs, and a capture of this
+ * screen showed "Hollow Crown Saga" suggested directly under "Because you watched Hollow
+ * Crown Saga and The Long Dark".
+ *
+ * That observation came from looking at a picture, which is not a method. This is the
+ * check that makes it reproducible, in the one harness whose conditions produce it: no
+ * suggested title may be a title the same screen names as a reason.
+ */
+async function suggestsWhatYouTrack() {
+  const body = await page.locator('body').innerText();
+  const seeds = (body.match(/Because you watched ([^\n]+)/)?.[1] ?? '')
+    .split(' and ')
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (!seeds.length) return [];
+  const names = await Promise.all(
+    (await page.getByRole('link', { name: /^Open / }).all()).map(async (row) =>
+      ((await row.getAttribute('aria-label')) ?? '').replace(/^Open /, ''),
+    ),
+  );
+  return names.filter((name) => seeds.includes(name));
+}
+
 const hollow = [];
 for (const [name, path] of routes) {
   await page.goto(`http://localhost:4200${path}`);
@@ -184,9 +213,15 @@ for (const [name, path] of routes) {
     const body = await page.locator('body').innerText();
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
   }
+  if (name === '05-discover') {
+    const already = await suggestsWhatYouTrack();
+    if (already.length) {
+      hollow.push(`${name} (${path}) suggests what you already track: ${already.join(', ')}`);
+    }
+  }
 }
 if (hollow.length) {
-  console.error(`Screenshots of an empty screen, which is not a screenshot of the screen:\n  ${hollow.join('\n  ')}`);
+  console.error(`Screenshots that do not show what makes them worth taking:\n  ${hollow.join('\n  ')}`);
   process.exitCode = 1;
 }
 

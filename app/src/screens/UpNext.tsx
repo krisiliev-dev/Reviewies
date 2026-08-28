@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   getUpNext,
   markWatched,
@@ -20,6 +20,7 @@ import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
 import { CrossOff } from '../ui/CrossOff';
+import { Row as BaseRow } from '../ui/Row';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -242,76 +243,77 @@ function UpNextRow({
     setMarkedId(undefined);
   }
 
+  const code = `S${episode.season}E${episode.number}`;
+
   return (
-    // Wraps. At twice the text size the poster and the action column together are
-    // wider than a phone, and with `flex-nowrap` the actions went past the right edge —
-    // half a Watched button is as unusable as none. The smoke suite's 200% check only
-    // noticed controls that were *entirely* gone, which these never were.
-    <li className="flex flex-wrap items-center gap-3 rounded-plate bg-ground-raised p-3">
-      <Link
-        to={`/title/${encodeURIComponent(entry.seriesId)}`}
-        aria-label={`Open ${entry.seriesName}`}
-        className="shrink-0"
-      >
+    <BaseRow
+      title={entry.seriesName}
+      code={code}
+      meta={episode.name}
+      // A count, not a vague "NEW" badge — the most repeated complaint on Trakt's roadmap.
+      // In `count` rather than `tag`: this was `17 MORE` for one sprint, and a number
+      // whose unit has been shortened away to fit a pill is the badge it was replacing.
+      count={
+        entry.remaining === 0
+          ? 'Last one'
+          : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`
+      }
+      open={{
+        // The poster used to be the only target and the words beside it were not one.
+        name: `Open ${entry.seriesName}, ${code}, ${episode.name}`,
+        to: `/title/${encodeURIComponent(entry.seriesId)}`,
+      }}
+      lead={
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
-          className="h-24 w-16 rounded-plate"
+          className="h-16 w-11 shrink-0 rounded-plate"
         />
-      </Link>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{entry.seriesName}</p>
-        <p className="truncate text-sm text-ink-secondary">
-          S{episode.season}E{episode.number} · {episode.name}
-        </p>
-        {/* A count, not a vague "NEW" badge — the most repeated complaint on Trakt's roadmap. */}
-        <p className="mt-0.5 text-xs text-ink-secondary">
-          {entry.remaining === 0
-            ? 'Last one'
-            : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`}
-        </p>
-        {/* For anyone who binged away from the app. The alternative is the show page,
-            which lists the name of every episode ahead of you. */}
-        {entry.remaining > 0 && (
-          <button
-            onClick={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
-            aria-label={`Catch up on ${entry.seriesName}`}
-            className="tap mt-1 text-xs text-ink-secondary underline"
-          >
-            Caught up further?
-          </button>
-        )}
-      </div>
-
-      {/* Right-aligned, not stretched. `items-stretch` put the 44pt ring at the *left*
-          edge of the action column with a full-width pill under it, so the one control
-          that is meant to be in the same place on every row of every list was floating
-          in the middle of the row. It is at the trailing edge now and the link is its
-          own width. */}
-      <div className="flex shrink-0 flex-col items-end gap-1.5">
-        {/* Was a filled "Watched" pill whose undo appeared as a banner at the top of the
-            screen. The ring is the same tap in the dark, one-handed, and the way back is
-            beside it rather than above a list that has already reflowed. */}
+      }
+      trailing={
+        /* Was a filled "Watched" pill whose undo appeared as a banner at the top of the
+           screen. The ring is the same tap in the dark, one-handed, and the way back is
+           beside it rather than above a list that has already reflowed. */
         <CrossOff
           watched={justMarked}
-          name={
-            justMarked
-              ? `Unmark ${entry.seriesName} S${episode.season}E${episode.number}`
-              : `Mark ${entry.seriesName} S${episode.season}E${episode.number} watched`
-          }
+          name={justMarked ? `Unmark ${entry.seriesName} ${code}` : `Mark ${entry.seriesName} ${code} watched`}
           onChange={(next) => (next ? onWatched() : undoMark())}
           onUndo={undoMark}
-          undoName={`Undo marking ${entry.seriesName} S${episode.season}E${episode.number} watched`}
+          undoName={`Undo marking ${entry.seriesName} ${code} watched`}
         />
-        <Link
-          to={`/watching/${encodeURIComponent(episode.id)}`}
-          aria-label={`Watch along with ${entry.seriesName} S${episode.season}E${episode.number}`}
-          className="rounded-pill border border-stroke-signal px-4 py-2 text-center text-xs text-ink-secondary"
-        >
-          Watch along
-        </Link>
-      </div>
-    </li>
+      }
+      under={
+        /* Two controls about the row rather than beside it, which is what `under` is for.
+           "Caught up further?" sat *inside the words* before, so the row's one navigation
+           target had a second control nested in it. Wrapping is kept: at twice the text
+           size these two together are wider than a phone, and `flex-nowrap` used to push
+           them past the right edge — half a control is as unusable as none, and the
+           smoke's 200% check only noticed ones that were entirely gone. */
+        <div className="flex flex-wrap items-center gap-4">
+          {/* For anyone who binged away from the app. The alternative is the show page,
+              which lists the name of every episode ahead of you. */}
+          {entry.remaining > 0 && (
+            <Button
+              size="inline"
+              tone="quiet"
+              label="Caught up further?"
+              name={`Catch up on ${entry.seriesName}`}
+              onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
+            />
+          )}
+          {/* A `Button`, because moving this into `under` as a bare underlined link made
+              it 66×16 — a target a third of the height a thumb needs, on the row people
+              open this app for. It was a bordered pill before the migration and the
+              component is what keeps 44 from being something each call site remembers. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/watching/${encodeURIComponent(episode.id)}`}
+            label="Watch along"
+            name={`Watch along with ${entry.seriesName} ${code}`}
+          />
+        </div>
+      }
+    />
   );
 }

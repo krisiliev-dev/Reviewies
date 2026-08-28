@@ -11,6 +11,8 @@ import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
 import { radius, theme } from '../../src/ui/theme';
 import { Button } from '../../src/ui/Button';
+import { Row as BaseRow } from '../../src/ui/Row';
+import { ROW } from '@reviewies/core/ui/row';
 
 /**
  * Suggestions that exclude what you have already seen.
@@ -99,43 +101,26 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
   }
 
   return (
-    <View style={styles.row}>
-      {/* One target, not two. The poster and the title were separate `link`s to the same
-          route with the same name, so the card announced "Open Quiet Harbour" twice and a
-          screen reader had to try both to learn they were the same place. Doc 6 §5's rule
-          is that a row exposes at most one navigation target; the web's copy of this card
-          has always had one. Wrapping both makes the target bigger, too. */}
-      <Pressable
-        onPress={() => router.push(`/title/${encodeURIComponent(item.id)}`)}
-        accessibilityRole="link"
-        accessibilityLabel={`Open ${item.name}`}
-        style={styles.open}
-      >
-        <Poster url={item.posterUrl} name={item.name} />
-        <View style={styles.opened}>
-          <Text numberOfLines={1} style={styles.title}>
-            {item.name}
-          </Text>
-          <Text style={styles.year}>
-            {item.kind === 'show' ? 'Series' : 'Film'}
-            {item.year ? ` · ${item.year}` : ''}
-          </Text>
-          {/* Saying why is what separates a recommendation from an advert. Inside the
-              link because it is about the show; the announced name comes from
-              `accessibilityLabel`, so this does not lengthen it. */}
-          <Text numberOfLines={2} style={styles.because}>
-            {COPY.discover.because(item.because)}
-          </Text>
-        </View>
-      </Pressable>
-
-      <View style={styles.rowBody}>
-        {/* Doc 10, second evening: a suggestion here was a link and nothing else, so
-            the screen whose whole job is getting something into your library made you
-            open the show to do it. The web has offered both since Discover shipped. */}
-        <View style={styles.actions}>
-          {/* `disabled` on the component drops the fill for an outline and steps the
-              label to the tertiary ink. It does NOT fade: `styles.disabled` here was
+    <BaseRow
+      title={item.name}
+      meta={`${item.kind === 'show' ? 'Series' : 'Film'}${item.year ? ` · ${item.year}` : ''}`}
+      // Saying why is what separates a recommendation from an advert. In `note` because
+      // that is the slot for a sentence about the row rather than a fact about it.
+      note={COPY.discover.because(item.because)}
+      lead={<Poster url={item.posterUrl} name={item.name} width={ROW.lead.width} height={ROW.lead.height} />}
+      open={{
+        // §6.96: the poster and the title were separate links to the same route under the
+        // same name, so the card announced "Open Quiet Harbour" twice.
+        name: `Open ${item.name}`,
+        run: () => router.push(`/title/${encodeURIComponent(item.id)}`),
+      }}
+      under={
+        /* Doc 10, second evening: a suggestion here was a link and nothing else, so the
+           screen whose whole job is getting something into your library made you open the
+           show to do it. The web has offered both since Discover shipped. */
+        <View style={styles.under}>
+          {/* `disabled` on the component drops the fill for an outline and steps the label
+              to the tertiary ink. It does NOT fade: `styles.disabled` here was
               `opacity: 0.5`, which is the exact thing `appearance.test.ts` has banned on
               the web since it "gave a maroon block with dark red lettering — it read as
               broken rather than as waiting". The phone had eight of these and no guard. */}
@@ -151,35 +136,20 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             disabled={added === 'watchlist'}
             tone="secondary"
             label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            name={`Add ${item.name} to your watchlist`}
+            name={`Add ${item.name} to watchlist`}
           />
         </View>
-      </View>
-    </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' },
+  under: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
   heading: { color: theme.ink, fontSize: 30, fontWeight: '700' },
   blurb: { color: theme.inkSecondary, fontSize: 14, marginBottom: 4 },
   error: { color: theme.trouble, fontSize: 14 },
-  // A column now: the one link holds the poster and everything about the show, and the
-  // two actions sit under it. It was a row of poster-plus-body, with the poster its own
-  // link to the same place under the same name.
-  row: {
-    gap: 8,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
-  open: { flexDirection: 'row', gap: 12 },
-  opened: { flex: 1, minWidth: 0, gap: 4 },
-  rowBody: { gap: 4 },
-  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  year: { color: theme.inkSecondary, fontSize: 12 },
-  because: { color: theme.inkSecondary, fontSize: 12 },
   attribution: { color: theme.inkSecondary, fontSize: 10, marginTop: 12 },
 });

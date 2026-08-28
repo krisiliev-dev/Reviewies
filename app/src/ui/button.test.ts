@@ -104,6 +104,34 @@ describe('the button contract', () => {
     }
   });
 
+  it('prints the label at the same size on both platforms', () => {
+    /*
+     * Found by looking at a screenshot rather than by a check. The web's three sizes
+     * carried three text sizes and the phone's renderer had one `fontSize: 15` for all
+     * three, so a `size="inline"` control printed at fifteen points on the phone and
+     * twelve on the web — and Up Next's two quiet controls under the row came out larger
+     * than the row's own meta line and louder than the title beside them.
+     *
+     * The number is in the table now. The web still writes its class names out for
+     * Tailwind's scanner, so this is the seam where the two spellings meet, and it is
+     * checked rather than trusted.
+     */
+    const TAILWIND = { page: 'text-base', row: 'text-sm', inline: 'text-xs' } as const;
+    const POINTS = { 'text-base': 16, 'text-sm': 14, 'text-xs': 12 } as const;
+    for (const [name, metrics] of Object.entries(SIZE)) {
+      const cls = TAILWIND[name as keyof typeof TAILWIND];
+      expect(WEB, `the web's ${name} size does not print at ${cls}`).toMatch(
+        new RegExp(`${name}: '[^']*\\b${cls}\\b`),
+      );
+      expect(metrics.label, `${name}: the table and ${cls} disagree`).toBe(POINTS[cls]);
+    }
+    // And the phone reads it from the table rather than from its own stylesheet.
+    expect(PHONE).toContain('fontSize: metrics.label');
+    expect(PHONE, 'a font size hard-coded beside the one in the table').not.toMatch(
+      /label: \{ fontSize:/,
+    );
+  });
+
   it('never fades a disabled action, on either platform', () => {
     /*
      * `appearance.test.ts` bans `disabled:opacity` on a filled action on the web and

@@ -24,6 +24,7 @@ import { db } from '@reviewies/core/data/db';
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
+import { Row as BaseRow } from '../src/ui/Row';
 
 /**
  * Lists, mixing film and television freely.
@@ -229,45 +230,47 @@ function ListCard({
               say so rather than looking like a broken TV list. */}
           {items && items.length > 0 && <Text style={styles.mix}>{describeMix(items)}</Text>}
 
+          {/* Openable. Every other list of titles in the app takes you to the title;
+              here the name was plain text, so the one screen whose entire content is
+              titles somebody chose was the one screen you could not get out of — you
+              had to remember the name and search for it. */}
           {items?.map((item) => (
-            <View key={item.titleId} style={styles.item}>
-              {/* Openable. Every other list of titles in the app takes you to the
-                  title; here the name was plain text, so the one screen whose entire
-                  content is titles somebody chose was the one screen you could not
-                  get out of — you had to remember the name and search for it. */}
-              <Pressable
-                onPress={() => router.push(`/title/${encodeURIComponent(item.titleId)}`)}
-                style={styles.itemOpen}
-                hitSlop={6}
-                accessibilityRole="link"
-                accessibilityLabel={`Open ${item.name ?? item.titleId}`}
-              >
-                <Text numberOfLines={1} style={styles.itemName}>
-                  {item.name ?? item.titleId}
-                </Text>
-              </Pressable>
-              {list.mine && (
-                <Pressable
-                  onPress={async () => {
-                    setChangeFailed(false);
-                    // The row used to disappear whether or not the server agreed, and
-                    // come back the next time anybody opened the list.
-                    const result = await removeFromList(list.id, item.titleId);
-                    if (!result.ok) {
-                      setChangeFailed(true);
-                      return;
-                    }
-                    onChanged();
-                    setItems(items.filter((i) => i.titleId !== item.titleId));
-                  }}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${item.name ?? item.titleId} from ${list.name}`}
-                >
-                  <Text style={styles.remove}>Remove</Text>
-                </Pressable>
-              )}
-            </View>
+            <BaseRow
+              key={item.titleId}
+              title={item.name ?? item.titleId}
+              // No poster on a list item, so the shorter of the two heights.
+              density="index"
+              tag={item.kind === 'show' ? 'SERIES' : 'FILM'}
+              open={{
+                // The list's name, because a screen with three lists open at once
+                // otherwise announces the same title three times with nothing to tell
+                // the copies apart — the collision §6.96 measures.
+                name: `Open ${item.name ?? item.titleId}, on ${list.name}`,
+                run: () => router.push(`/title/${encodeURIComponent(item.titleId)}`),
+              }}
+              trailing={
+                list.mine ? (
+                  <Button
+                    size="inline"
+                    tone="quiet"
+                    label="Remove"
+                    name={`Remove ${item.name ?? item.titleId} from ${list.name}`}
+                    onPress={async () => {
+                      setChangeFailed(false);
+                      // The row used to disappear whether or not the server agreed, and
+                      // come back the next time anybody opened the list.
+                      const result = await removeFromList(list.id, item.titleId);
+                      if (!result.ok) {
+                        setChangeFailed(true);
+                        return;
+                      }
+                      onChanged();
+                      setItems(items.filter((i) => i.titleId !== item.titleId));
+                    }}
+                  />
+                ) : undefined
+              }
+            />
           ))}
 
           {list.mine && (
@@ -321,10 +324,5 @@ const styles = StyleSheet.create({
   chevron: { color: theme.inkSecondary, fontSize: 20 },
   cardItems: { paddingHorizontal: 16, paddingBottom: 16, gap: 8 },
   mix: { color: theme.inkSecondary, fontSize: 11 },
-  item: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  // minHeight, not padding: the row is inside a scroll view where a taller target is
-  // free, and WCAG 2.5.8 wants 24px whether or not the name is one line.
-  itemOpen: { flex: 1, minHeight: 24, justifyContent: 'center' },
-  itemName: { color: theme.ink, fontSize: 14 },
   remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline' },
 });

@@ -86,11 +86,25 @@ interface ButtonShape {
  * `phoneTextScaling.test.ts` exists because the web's floor was once written in rem and
  * doubled along with the text.
  */
+/*
+ * `label` is here because the phone did not have it. The web's three sizes carried three
+ * text sizes — `text-base`, `text-sm`, `text-xs` — and the phone's renderer had a single
+ * `fontSize: 15` for all three, so `size="inline"` printed at fifteen points there and at
+ * twelve on the web. Found by looking at a screenshot: Up Next's two `under` controls came
+ * out larger than the row's own meta line and louder than the title beside them.
+ *
+ * The numbers are Tailwind's, because the web's are and the point is that they agree; the
+ * web still writes its class names out, for the reason `Button.tsx` gives, and
+ * `button.test.ts` holds the two spellings to each other.
+ */
 export const SIZE = {
-  page: { minHeight: 48, paddingX: space.s20, paddingY: space.s12 },
-  row: { minHeight: size.target, paddingX: space.s16, paddingY: space.s8 },
-  inline: { minHeight: size.target, paddingX: space.s8, paddingY: space.s4 },
-} as const satisfies Record<ButtonSize, { minHeight: number; paddingX: number; paddingY: number }>;
+  page: { minHeight: 48, paddingX: space.s20, paddingY: space.s12, label: 16 },
+  row: { minHeight: size.target, paddingX: space.s16, paddingY: space.s8, label: 14 },
+  inline: { minHeight: size.target, paddingX: space.s8, paddingY: space.s4, label: 12 },
+} as const satisfies Record<
+  ButtonSize,
+  { minHeight: number; paddingX: number; paddingY: number; label: number }
+>;
 
 /**
  * Press is a thickening and a ground step, applied instantly.

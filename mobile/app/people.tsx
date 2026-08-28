@@ -19,6 +19,7 @@ import {
 import { radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
+import { Row as BaseRow } from '../src/ui/Row';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -251,47 +252,57 @@ function FindPeople({
         const already = following.some((f) => f.id === person.id);
         const isBlocked = blocked.some((b) => b.id === person.id);
         return (
-          <View key={person.id} style={styles.person}>
-            <PersonName person={person} />
-            <Pressable
-              onPress={async () => {
-                setActionFailed(false);
-                const result = already ? await unfollow(person.id) : await follow(person.id);
-                if (!result.ok) {
-                  setActionFailed(true);
-                  return;
-                }
-                onChanged();
-              }}
-              disabled={isBlocked}
-              style={[styles.small, already ? styles.smallMuted : styles.smallOn, isBlocked && styles.disabled]}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: isBlocked, selected: already }}
-              // A search result is a row of identical words. Which person "Follow"
-              // belongs to is only visible, never spoken.
-              accessibilityLabel={`${already ? 'Unfollow' : 'Follow'} @${person.handle}`}
-            >
-              <Text style={already ? styles.smallMutedText : styles.smallOnText}>
-                {already ? 'Following' : 'Follow'}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={async () => {
-                setActionFailed(false);
-                const blockResult = await blockPerson(person.id);
-                if (!blockResult.ok) {
-                  setActionFailed(true);
-                  return;
-                }
-                onChanged();
-              }}
-              style={[styles.small, styles.smallMuted]}
-              accessibilityRole="button"
-              accessibilityLabel={`Block @${person.handle}`}
-            >
-              <Text style={styles.smallMutedText}>Block</Text>
-            </Pressable>
-          </View>
+          <BaseRow
+            key={person.id}
+            title={person.displayName ?? `@${person.handle}`}
+            meta={person.displayName ? `@${person.handle}` : undefined}
+            // No poster and nowhere to go: this product has no profile screen, so a
+            // person row is words and its actions. `open` is left off rather than given
+            // a no-op, which the contract makes a compile error.
+            density="index"
+            trailing={
+              <Button
+                size="inline"
+                tone={already ? 'secondary' : 'primary'}
+                label={already ? 'Following' : 'Follow'}
+                // A search result is a row of identical words. Which person "Follow"
+                // belongs to is only visible, never spoken.
+                name={`${already ? 'Unfollow' : 'Follow'} @${person.handle}`}
+                // Was `styles.disabled`, an opacity, which the component bans and says
+                // why: a faded control reads as broken rather than as unavailable.
+                disabled={isBlocked}
+                onPress={async () => {
+                  setActionFailed(false);
+                  const result = already ? await unfollow(person.id) : await follow(person.id);
+                  if (!result.ok) {
+                    setActionFailed(true);
+                    return;
+                  }
+                  onChanged();
+                }}
+              />
+            }
+            under={
+              /* Underneath rather than beside Follow. Blocking somebody is the one
+                 action on this screen you cannot take back with the same tap, and it
+                 sat a thumb's width from the one people come here to press. */
+              <Button
+                size="inline"
+                tone="destructive"
+                label="Block"
+                name={`Block @${person.handle}`}
+                onPress={async () => {
+                  setActionFailed(false);
+                  const blockResult = await blockPerson(person.id);
+                  if (!blockResult.ok) {
+                    setActionFailed(true);
+                    return;
+                  }
+                  onChanged();
+                }}
+              />
+            }
+          />
         );
       })}
     </View>
@@ -331,43 +342,42 @@ function PersonList({
       {people.map((person) => {
         const act = action(person);
         return (
-          <View key={person.id} style={styles.person}>
-            <PersonName person={person} />
-            {act && (
-              <Pressable
-                onPress={async () => {
-                  setFailed(false);
-                  const result = await act.run();
-                  if (!result.ok) {
-                    setFailed(true);
-                    return;
-                  }
-                  onChanged();
-                }}
-                style={[styles.small, styles.smallMuted]}
-                accessibilityRole="button"
-                accessibilityLabel={`${act.label} @${person.handle}`}
-              >
-                <Text style={styles.smallMutedText}>{act.label}</Text>
-              </Pressable>
-            )}
-          </View>
+          <BaseRow
+            key={person.id}
+            title={person.displayName ?? `@${person.handle}`}
+            meta={person.displayName ? `@${person.handle}` : undefined}
+            density="index"
+            trailing={
+              act ? (
+                <Button
+                  size="inline"
+                  tone="secondary"
+                  label={act.label}
+                  name={`${act.label} @${person.handle}`}
+                  onPress={async () => {
+                    setFailed(false);
+                    const result = await act.run();
+                    if (!result.ok) {
+                      setFailed(true);
+                      return;
+                    }
+                    onChanged();
+                  }}
+                />
+              ) : undefined
+            }
+          />
         );
       })}
     </View>
   );
 }
 
-function PersonName({ person }: { person: Person }) {
-  return (
-    <View style={styles.personBody}>
-      <Text numberOfLines={1} style={styles.personName}>
-        {person.displayName ?? `@${person.handle}`}
-      </Text>
-      {person.displayName && <Text style={styles.personHandle}>@{person.handle}</Text>}
-    </View>
-  );
-}
+/*
+ * `PersonName` was here, and is not: it was the row's words and the row owns those now —
+ * the display name as the title, the handle as the meta line, which is what it did by
+ * hand in two places. Left behind, it would be a second way to spell a person's name.
+ */
 
 const styles = StyleSheet.create({
   searchFailed: { color: theme.trouble, fontSize: 14, lineHeight: 20 },
@@ -398,21 +408,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  person: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
-  personBody: { flex: 1, minWidth: 0 },
-  personName: { color: theme.ink, fontSize: 14 },
-  personHandle: { color: theme.inkSecondary, fontSize: 11 },
-  small: { borderRadius: radius.plate, paddingHorizontal: 12, paddingVertical: 8 },
-  smallOn: { backgroundColor: theme.actionFill },
-  smallOnText: { color: theme.actionLabel, fontSize: 12, fontWeight: '600' },
-  smallMuted: { backgroundColor: theme.groundWell },
-  smallMutedText: { color: theme.inkSecondary, fontSize: 12 },
-  disabled: { backgroundColor: theme.groundWell, borderColor: theme.strokeHairline },
 });

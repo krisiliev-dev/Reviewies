@@ -22,6 +22,8 @@ import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { border, radius, theme } from '../../src/ui/theme';
 import { Button } from '../../src/ui/Button';
+import { Row as BaseRow } from '../../src/ui/Row';
+import { ROW } from '@reviewies/core/ui/row';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -180,28 +182,26 @@ function ResultRow({ result }: { result: SearchResult }) {
   }
 
   return (
-    <View style={styles.row}>
-      <Pressable
-        onPress={() => router.push(`/title/${encodeURIComponent(result.id)}`)}
-        accessibilityRole="link"
-        accessibilityLabel={`Open ${result.name}`}
-      >
-        <Poster url={result.posterUrl} name={result.name} />
-      </Pressable>
+    <BaseRow
+      title={result.name}
+      meta={`${result.kind === 'show' ? 'Series' : 'Film'}${result.year ? ` · ${result.year}` : ''}`}
+      lead={
+        <Poster url={result.posterUrl} name={result.name} width={ROW.lead.width} height={ROW.lead.height} />
+      }
+      open={{
+        // The poster was the only target and the words beside it were not one.
+        name: `Open ${result.name}`,
+        run: () => router.push(`/title/${encodeURIComponent(result.id)}`),
+      }}
+      under={
+        <View style={styles.under}>
+          {/* Three actions, each naming its own row. The direction's "one action" is a
+              naming rule rather than a counting one — see `Row`'s `under` — and each of
+              these was added deliberately for a reason doc 4 records.
 
-      <View style={styles.rowBody}>
-        <Text numberOfLines={1} style={styles.title}>
-          {result.name}
-        </Text>
-        <Text style={styles.subtitle}>
-          {result.kind === 'show' ? 'Series' : 'Film'}
-          {result.year ? ` · ${result.year}` : ''}
-        </Text>
-
-        <View style={styles.actions}>
-          {/* Labelled with the title, because "Watchlist" on its own is what the tab
-              bar also says — ambiguous to a screen reader working down the page, and
-              ambiguous to anything else trying to name one particular control. */}
+              Labelled with the title, because "Watchlist" on its own is what the tab bar
+              also says: ambiguous to a screen reader working down the page, and ambiguous
+              to anything else trying to name one particular control. */}
           <Button
             onPress={track}
             disabled={added === 'library'}
@@ -227,15 +227,15 @@ function ResultRow({ result }: { result: SearchResult }) {
               name={`Log that you have seen ${result.name}`}
             />
           )}
-        </View>
 
-        {/* The web's result row has offered this since lists shipped; the phone's made
-            you open the title first. Not a route and not a core call from this file — it
-            is a component, which is why §6.50's guard could not see it and §6.63's,
-            which compares what each screen renders, could. */}
-        <AddToList titleId={result.id} kind={result.kind} />
-      </View>
-    </View>
+          {/* The web's result row has offered this since lists shipped; the phone's made
+              you open the title first. Not a route and not a core call from this file — it
+              is a component, which is why §6.50's guard could not see it and §6.63's,
+              which compares what each screen renders, could. */}
+          <AddToList titleId={result.id} kind={result.kind} />
+        </View>
+      }
+    />
   );
 }
 
@@ -262,16 +262,6 @@ const styles = StyleSheet.create({
   retryText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
   error: { color: theme.trouble, fontSize: 14 },
 
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    padding: 12,
-  },
-  rowBody: { flex: 1, minWidth: 0, gap: 2 },
-  title: { color: theme.ink, fontSize: 16, fontWeight: '600' },
-  subtitle: { color: theme.inkSecondary, fontSize: 12 },
 
-  actions: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
+  under: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
 });

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { db } from '../data/db';
+import { Row as BaseRow } from '../ui/Row';
+import { Button } from '../ui/Button';
 import { useSync } from '../sync/useSync';
 import {
   createList,
@@ -144,7 +146,11 @@ function ListCard({
   onToggle: () => void;
   onChanged: () => void;
 }) {
-  const [items, setItems] = useState<ListItem[]>();
+  // Widened with the name, because the web showed the raw `titleId` — a machine string
+  // on the one screen whose entire content is titles somebody chose by hand. The phone
+  // has resolved it against the local titles table since it was written; this is the
+  // parity gap the migration walked past before noticing it.
+  const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
   const [itemsFailed, setItemsFailed] = useState<string>();
   const [changeFailed, setChangeFailed] = useState(false);
 
@@ -153,9 +159,16 @@ function ListCard({
     // `failed` was dropped here, so a list whose items could not be fetched rendered as
     // "Nothing on this list yet" — the screen telling somebody their own work is gone
     // because a request came back empty-handed. §6.57.
-    void fetchListItems(list.id).then((r) => {
-      setItems(r.items);
+    void fetchListItems(list.id).then(async (r) => {
       setItemsFailed(r.failed);
+      setItems(
+        await Promise.all(
+          r.items.map(async (item) => ({
+            ...item,
+            name: (await db.titles.get(item.titleId))?.name,
+          })),
+        ),
+      );
     });
   }, [open, list.id]);
 
@@ -214,41 +227,46 @@ function ListCard({
             <p className="text-sm text-ink-secondary">{COPY.lists.listEmpty}</p>
           )}
 
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col">
             {items?.map((item) => (
-              <li key={item.titleId} className="flex items-center gap-2 rounded-plate bg-ground-well px-3 py-2">
-                <Link
-                  to={`/title/${encodeURIComponent(item.titleId)}`}
-                  className="min-w-0 flex-1 truncate text-sm"
-                >
-                  {item.titleId}
-                </Link>
-                <span className="shrink-0 text-[0.625rem] text-ink-secondary uppercase">
-                  {item.kind === 'show' ? 'Series' : 'Film'}
-                </span>
-                {list.mine && (
-                  <button
-                    onClick={async () => {
-                      setChangeFailed(false);
-                      // The row used to disappear whether or not the server agreed, and
-                      // come back on the next load.
-                      const result = await removeFromList(list.id, item.titleId);
-                      if (!result.ok) {
-                        setChangeFailed(true);
-                        return;
-                      }
-                      const reloaded = await fetchListItems(list.id);
-                      setItems(reloaded.items);
-                      setItemsFailed(reloaded.failed);
-                      onChanged();
-                    }}
-                    className="shrink-0 px-1 text-xs text-ink-secondary"
-                    aria-label={`Remove from ${list.name}`}
-                  >
-                    ✕
-                  </button>
-                )}
-              </li>
+              <BaseRow
+                key={item.titleId}
+                title={item.name ?? item.titleId}
+                // No poster on a list item, so the shorter of the two heights.
+                density="index"
+                tag={item.kind === 'show' ? 'SERIES' : 'FILM'}
+                open={{
+                  // The list's name, because a screen that has three lists open at once
+                  // otherwise announces the same title three times with nothing to tell
+                  // the copies apart — which is the collision §6.96 measures.
+                  name: `Open ${item.name ?? item.titleId}, on ${list.name}`,
+                  to: `/title/${encodeURIComponent(item.titleId)}`,
+                }}
+                trailing={
+                  list.mine ? (
+                    <Button
+                      size="inline"
+                      tone="quiet"
+                      label="Remove"
+                      name={`Remove ${item.name ?? item.titleId} from ${list.name}`}
+                      onPress={async () => {
+                        setChangeFailed(false);
+                        // The row used to disappear whether or not the server agreed, and
+                        // come back on the next load.
+                        const result = await removeFromList(list.id, item.titleId);
+                        if (!result.ok) {
+                          setChangeFailed(true);
+                          return;
+                        }
+                        const reloaded = await fetchListItems(list.id);
+                        setItems(reloaded.items);
+                        setItemsFailed(reloaded.failed);
+                        onChanged();
+                      }}
+                    />
+                  ) : undefined
+                }
+              />
             ))}
           </ul>
         </div>

@@ -15,6 +15,7 @@ export function Row({
   title,
   code,
   meta,
+  count,
   tag,
   note,
   open,
@@ -58,6 +59,13 @@ export function Row({
           {meta}
         </Text>
       ) : null}
+      {/* The row's own words, not a badge — see the contract for what happened when this
+          was a `tag`. Same size and ink as the meta line, on a line of its own. */}
+      {count ? (
+        <Text numberOfLines={1} style={styles.meta}>
+          {count}
+        </Text>
+      ) : null}
       {note ? (
         <Text numberOfLines={2} style={styles.note}>
           {note}
@@ -82,7 +90,10 @@ export function Row({
         {open ? (
           <Pressable
             onPress={open.run}
-            accessibilityRole="link"
+            // From the contract, not from the shape of the callback: a row that chooses
+            // an import candidate is not a link, and inferring that from what `run` does
+            // would be a check easier to satisfy than its name suggests.
+            accessibilityRole={open.does === 'act' ? 'button' : 'link'}
             // Required by the contract, and it carries what tells this row from its
             // neighbours: a screen of rows is the same two words down the page, and a
             // screen reader reads the control rather than what is above it.

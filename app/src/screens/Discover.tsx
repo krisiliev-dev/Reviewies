@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
@@ -7,6 +6,7 @@ import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import { Poster } from '../ui/Poster';
 import { Button } from '../ui/Button';
+import { Row as BaseRow } from '../ui/Row';
 
 /**
  * Discovery.
@@ -91,27 +91,24 @@ function SuggestionRow({
   }
 
   return (
-    <li className="flex items-start gap-3 rounded-plate bg-ground-raised p-3">
-      <Link
-        to={`/title/${encodeURIComponent(suggestion.id)}`}
-        aria-label={`Open ${suggestion.name}`}
-        className="shrink-0"
-      >
-        <Poster url={suggestion.posterUrl} name={suggestion.name} className="h-24 w-16 rounded-plate" />
-      </Link>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{suggestion.name}</p>
-        <p className="text-xs text-ink-secondary">
-          {suggestion.kind === 'show' ? 'Series' : 'Film'}
-          {suggestion.year ? ` · ${suggestion.year}` : ''}
-        </p>
-        <p className="mt-1 truncate text-xs text-ink-secondary">
-          {COPY.discover.because(suggestion.because)}
-        </p>
-
-        {/* Wraps, for the same reason the Up Next row does. */}
-        <div className="mt-2 flex flex-wrap gap-1.5">
+    <BaseRow
+      title={suggestion.name}
+      meta={`${suggestion.kind === 'show' ? 'Series' : 'Film'}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
+      // Saying why is what separates a recommendation from an advert. In `note` because
+      // that is the slot for a sentence about the row rather than a fact about it.
+      note={COPY.discover.because(suggestion.because)}
+      open={{ name: `Open ${suggestion.name}`, to: `/title/${encodeURIComponent(suggestion.id)}` }}
+      lead={
+        <Poster
+          url={suggestion.posterUrl}
+          name={suggestion.name}
+          className="h-16 w-11 shrink-0 rounded-plate"
+        />
+      }
+      under={
+        /* Wraps, for the same reason the Up Next row does: at twice the text size two
+           controls and a poster are wider than a phone. */
+        <div className="flex flex-wrap gap-1.5">
           <Button
             onPress={track}
             disabled={busy}
@@ -127,7 +124,7 @@ function SuggestionRow({
             name={`Add ${suggestion.name} to your watchlist`}
           />
         </div>
-      </div>
-    </li>
+      }
+    />
   );
 }

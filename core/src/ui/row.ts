@@ -82,6 +82,19 @@ export const ROW_INK = {
  */
 export interface RowOpen {
   name: string;
+  /**
+   * Whether pressing the row goes to that thing or does something to it.
+   *
+   * Almost every row navigates, so that is the default. `act` is for the row that is a
+   * choice: MatchImports offers three candidate posters for an imported show and pressing
+   * one *is* the answer — nothing is opened. The web already told these apart by accident,
+   * because a row with no URL is a `<button>` there either way; the phone did not, and
+   * would have announced "link" for the control that resolves an import.
+   *
+   * It lives in the shared contract rather than in each renderer because it is a fact
+   * about the row, not about a platform: the same press means the same thing on both.
+   */
+  does?: 'navigate' | 'act';
 }
 
 export interface RowContract {
@@ -90,9 +103,20 @@ export interface RowContract {
   code?: string;
   /** The episode name, or `Series · 2021`. */
   meta?: string;
-  /** `AIRS FRI`, `SEASON FINALE`. A word about the row, not a control. */
+  /**
+   * The row's own third line, in words: `17 more episodes`, `Last one`.
+   *
+   * It exists because of what happened without it. Sprint 14 moved Up Next's remaining
+   * count into `tag`, where it had to become `17 MORE` to fit — a number with its unit
+   * shortened away, which is exactly the vague badge the count was written to replace
+   * ("a count, not a vague NEW badge" is the oldest comment on that line, and the most
+   * repeated complaint on Trakt's roadmap). The slot a sentence does not fit in is not
+   * the slot for it, and a migration is not licence to rewrite what a screen says.
+   */
+  count?: string;
+  /** `AIRS FRI`, `SEASON FINALE`. Two words at most, and never a shortened sentence. */
   tag?: string;
-  /** The watchlist's "why you saved it". */
+  /** The watchlist's "why you saved it" — somebody's own words, and set in italic to say so. */
   note?: string;
   /** At most one. Omit and the row is text, not a control. */
   open?: RowOpen;

@@ -6712,6 +6712,133 @@ good are now provably good, and the one that is not says so.
 No `Row` call sites migrated. Eight remain, and the call-site guard with them.
 
 
+### 6.99 The last eight rows, a badge that ate a sentence, and a probe that found a third of what was there
+
+The eight remaining `Row` call sites, on both platforms: Lists, People, MatchImports and the
+More screen's contents page. All ten implementations are now the component, twenty entries in
+`MIGRATED`, and every screen's hand-built row styles are deleted rather than left to rot.
+
+**A migration is not a licence to rewrite what a screen says.** Up Next's remaining count —
+*"17 more episodes"*, the answer to "how much of this show is left", and a line whose oldest
+comment reads *"a count, not a vague NEW badge — the most repeated complaint on Trakt's
+roadmap"* — went into the `tag` slot, where a bordered ten-pixel pill with wide tracking
+could not hold it. So it became **`17 MORE`**: seventeen more *what*. The slot reshaped the
+copy to fit itself, and the shortened unit turned the count back into precisely the vague
+badge it had been written to replace.
+
+The smoke caught it, by name — *"shows a remaining count, not a vague badge"* — which is what
+a check named for the thing it measures does. The fix is not a wider slot but the right one:
+`RowContract` grew `count`, the row's own third line, in words, documented with what happened
+without it. `tag` is now `AIRS FRI` and `SEASON FINALE` and nothing that was a sentence.
+
+**A row that answers a question is not a row that opens one.** MatchImports offers three
+candidate posters for an imported show and pressing one *is* the answer; nothing opens. The
+web told these apart by accident — a row with no URL is a `<button>` there either way — and
+the phone announced `link` for both, a promise to take you somewhere. `RowOpen` grew
+`does?: 'navigate' | 'act'`, in the shared contract because it is a fact about the row rather
+than about a platform, and the phone reads its role from that rather than inferring it from
+the shape of the callback.
+
+**The web was showing a machine string on the one screen made entirely of names people
+chose.** The phone's Lists resolved each `titleId` against the local titles table and showed
+the show's name; the web rendered the id. The migration copied that forward before noticing
+it. Both resolve the name now.
+
+**A probe that found eighteen violations where there were fifty-seven.** The call-site guard —
+no bare `Pressable`/`<button>` carrying its own background, border or padding outside the
+component set — has been blocked for four sprints on the row migration, and the row migration
+is now done. So: measure first. The probe split each file on the tag and took the head up to
+the first `>`.
+
+`onPress={() => setOpen(false)}` contains a `>`. Every control whose handler is an arrow
+function had its head truncated before the `style` or `className` prop that decides the
+verdict, so it was read as clean. Eighteen reported; fifty-seven actually there.
+
+The galling part is that this exact bug, with this exact fix, is written down two sections
+up: §6.97's *keeps the target one control* clause failed the same way, and the repair was to
+walk the JSX tracking brace depth. A `>` inside `{…}`, a string or a template ends nothing. I
+wrote that helper, described it in the record, and then wrote a fresh probe four days later
+without it. **A lesson recorded is not a lesson applied**; the instrument drawer is only
+useful if the next instrument is built from it.
+
+Re-measured with proper parsing: fifty-seven. That is not one sprint's careful work, and the
+standing rule is that a guard lands *with* its migration or not at all — no allowlists, no
+budgets, because a budget is an allowlist that counts. So the guard does not land this sprint,
+and it does not land as a narrower thing wearing the wider name.
+
+What it does get is a real plan. Of the fifty-seven, twenty-six paint the accent fill
+themselves — `bg-action-fill` on the web, `theme.actionFill` on the phone — and every one of
+those is either `Button`'s primary tone or `Choice`'s selected state, both of which exist and
+are migrated elsewhere. **The accent fill belongs to two components and no screen paints it**
+is complete, checkable, has no exemptions, and is sprint 15. The remainder are surfaces with
+no component yet — the emoji pad, the remote's device list, the drift banner, a switch row —
+and those need components before they can need a guard.
+
+**A check that passed seventy-six times and failed once, on the slowest screen in the app.**
+The web smoke's empty-state check slept a flat 400ms and then asked whether the calendar said
+what empty means. The calendar's entries query is the slowest thing on any screen here, and
+once it had not decided yet — so the screen still read `Loading…` and a check named for what
+the screen *says* failed for how long it *took*. Worse, its failure message sliced the first
+120 characters of the body, and the calendar's notification panel is longer than that: the one
+run that failed reported the push-permission copy and nothing about the cause.
+
+It waits for arrival, then for `Loading…` to leave, then judges — and reports either
+`still loading after Nms` or the tail of the body, which is the part being judged. A fixed
+wait turns *this screen is slow* into *this screen is wrong*, at random, and the calendar
+being slow is a fact worth reading rather than sleeping through: it is also the open question
+in #142, which now has a measured lead it did not have before.
+
+**And a plant that proved less than the clause it was testing.** The new `does` clause read
+`expect(source).toContain("does: 'act'")`, and the web MatchImports file has two candidate
+lists. Deleting `does` from one of them left the clause green. It checks every `open={{` on
+those screens now — which is the rule as stated, *on MatchImports every row acts* — and both
+one-of-two and two-of-two plants are caught.
+
+`npx tsc --noEmit -p app` is also weaker than it looks: it passed on the `does` property that
+`tsc -b` — what the build actually runs — rejected as unknown, because the web renderer
+re-declares `open` with its own union. Typechecking a workspace with project references means
+`tsc -b`, not `-p`.
+
+**Then the screenshots, which is where the two real findings were.** Both smoke suites were
+green — 261/261 on the web, 185/185 on the phone — and the capture harness was passing every
+screen it declares. Neither found either of these.
+
+*The phone printed every button label at one size.* The web's three `Button` sizes carry
+`text-base`, `text-sm` and `text-xs`; the phone's renderer had a single `fontSize: 15` for all
+three. So the two `size="inline"` controls this sprint moved into Up Next's `under` slot came
+out at fifteen points — bigger than the row's own meta line, louder than the title beside
+them, on the row this whole product exists to show. `SIZE` carries `label` now, both renderers
+read it, and `button.test.ts` holds the Tailwind class and the number to each other. Four
+plants, four caught. This has been wrong for every `inline` and `page` button on the phone
+since `Button` shipped, and every guard in the suite passed over it, because they check what
+the source *says* and this was a thing the source said consistently and wrongly.
+
+*And Discover suggests shows you already track.* The screenshot has "Hollow Crown Saga"
+offered as a suggestion directly beneath "Because you watched Hollow Crown Saga and The Long
+Dark" — the exclusion that is this screen's entire reason to exist, and the most repeated
+request on Trakt's roadmap, failing on the app's own demo library.
+
+The web smoke has checked this since it shipped. The phone never has, so that check went in
+first — and **it passes**: two suggestions, neither tracked. The difference is how the library
+was built. The smoke tracks shows directly; the capture harness imports a TV Time CSV and
+reconciles it onto provider IDs, which is how anybody's library actually arrives. `reconcile`
+does rewrite `library.titleId` and `watches.seriesId` to the provider ID, so why the exclusion
+misses on that path is not yet known — and after §6.98 there is no guess written here.
+
+What is written is a check. The capture harness now judges Discover on what it must *not*
+show, in the one place whose conditions reproduce it: no suggested title may be a title the
+same screen names as a reason. It fails today, by name, alongside the calendar. Two screens
+that photograph wrong and say so is a better position than two that photograph wrong quietly.
+
+**And `offers.test.ts` invented three differences again, for the third time and the same
+reason.** Converting the phone's `<Link href>` controls to `<Button to={\`…\`}>` reported
+`/watching` and `/comments` as web-only: the web's spelling list had `to={\`…\`}` and the
+phone's did not. §6.97 widened both sides for `to:` in a literal and stopped there, which is
+how a subset stays a subset. Both lists now carry all six spellings — `to`/`href`, as a
+quoted prop, as a braced template, and as an object key — so there is nothing left to widen
+unevenly. That is the actual fix; teaching it one more spelling was not.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7000,15 +7127,32 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **Five of sixteen components exist, and `Row` is two call sites into ten.** `Button`
-  (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row` (§6.97) is
-  built and guarded, with calendar and watchlist migrated on both platforms. Up Next, the
-  title page, Search, Discover, Lists, People, MatchImports and More still build their own,
-  so eight screens can still write their own fill and padding with nothing to say so, and
-  the call-site guard cannot land until they stop. Two dismiss surfaces (RemoteDrawer's
-  scrim, CatchUp's backdrop) are not controls and have to be excluded by shape rather than
-  by an allowlist when it does. The poster is the one holding `ratio` in `coreWiring`'s
-  exemption list.
+- **Five of sixteen components exist, `Row` is finished, and the call-site guard is not
+  blocked on it any more — it is blocked on being three times the size anybody thought.**
+  `Button` (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row`
+  (§6.97, §6.99) is built, guarded and migrated at all ten implementations on both
+  platforms — twenty entries in `MIGRATED`, every screen's hand-built row styles deleted.
+  What blocks the guard now is arithmetic: the probe that reported eighteen bare controls
+  carrying their own box was truncating every element head at the first `>`, which every
+  arrow-function handler supplies, so it never reached the prop that decides. Properly
+  parsed, there are **fifty-seven**. Twenty-six of those paint the accent fill themselves
+  and are all `Button`'s primary tone or `Choice`'s selected state — a complete rule with
+  no exemptions, and the next sprint. The rest are surfaces with no component yet (the
+  emoji pad, the remote's device list, the drift banner, a switch row), and a component has
+  to exist before a guard can point at it. Two dismiss surfaces (RemoteDrawer's scrim,
+  CatchUp's backdrop) are not controls and have to be excluded by shape rather than by an
+  allowlist when the guard does land. The poster is the one holding `ratio` in
+  `coreWiring`'s exemption list.
+- **Moving a control into a slot is a design change, and twice this sprint it was made
+  without being decided.** Up Next's remaining count went into `tag` and had to shorten to
+  `17 MORE` to fit — the unit dropped, the count turned back into the vague badge it was
+  written to replace — and thirty-eight "React"/"Talk"/"Watch along" links went into
+  `under` as bare underlined text at 16 pixels tall, a third of the height a thumb needs.
+  Both were caught by smoke checks named for what they measure, and both are fixed: a
+  `count` slot for the first, `Button size="inline" tone="quiet"` for the rest. What has no
+  guard is the general case. Nothing compares what a screen *said* before a migration with
+  what it says after, so the next slot that does not fit its contents will shorten them
+  again and only a check that happens to name that exact sentence will notice.
 - **The calendar's rows have still never been looked at, and §6.97's reason for it was
   wrong.** It said the fixture episodes "aired in 2024". They do not:
   `FixtureProvider.getEpisodes` generates weekly air dates counting *back from today*, so the
@@ -7023,6 +7167,21 @@ and which single claim in this document could not be checked at all:
   them were wrong, so there is no fourth guess here. What has changed is that the harness now
   refuses to hand the screenshot over quietly: it fails by name when a screen it photographs
   is not showing what makes it worth photographing, and it fails today, on this.
+
+  §6.99 added one measured fact that was not there before: the calendar's entries query is
+  the slowest thing on any screen in the app, slow enough that the smoke's flat 400ms wait
+  lost the race once in seventy-seven runs and reported the screen as *wrong* rather than as
+  *not finished*. That is not the same bug as the empty photograph and it is not proof that
+  it is the same bug — but it is the first evidence that this screen's timing is unusual,
+  and it is where the next attempt should start.
+- **Discover suggests shows you already track, on the path anybody's library arrives by.**
+  §6.99's capture shows "Hollow Crown Saga" offered under "Because you watched Hollow Crown
+  Saga and The Long Dark". Both platforms now check the exclusion in smoke and both pass —
+  on a library built by tracking shows directly. The capture harness builds its library the
+  other way, by importing a TV Time CSV and reconciling it onto provider IDs, and there it
+  fails. `reconcile` does rewrite `library.titleId` and `watches.seriesId` to the provider
+  ID, so the mechanism is not established; the harness reproduces it by name, which is where
+  the investigation starts rather than ends. It is the exclusion the product is sold on.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as
