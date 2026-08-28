@@ -19,7 +19,7 @@ import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../src/ui/Button';
-import { Section } from '../src/ui/Section';
+import { Block } from '../src/ui/Block';
 import { Note } from '../src/ui/Note';
 
 /**
@@ -160,23 +160,9 @@ export default function DataScreen() {
   );
 }
 
-/**
- * A titled block of this screen. Renamed from `Section` when the shared component took
- * that name: this is the box, `Section` is the label on it, and one file holding both
- * under one name is how the label ended up hand-written nine times.
- */
-function Block({ heading, children }: { heading: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Section>{heading}</Section>
-      {children}
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 24, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
-  section: { gap: 12 },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',

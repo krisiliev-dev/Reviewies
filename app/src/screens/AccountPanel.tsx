@@ -1,3 +1,4 @@
+import { Block } from '../ui/Block';
 import { useState } from 'react';
 import { signIn, signOut, signUp } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
@@ -26,14 +27,13 @@ export function AccountPanel() {
 
   if (!configured) {
     return (
-      <section className="rounded-plate bg-ground-raised p-4">
-        <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
+      <Block heading="Sync">
         <Note>
           Not configured. Reviewies works fully offline without it — set
           <code className="mx-1">VITE_SUPABASE_URL</code> and
           <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> to sync across devices.
         </Note>
-      </section>
+      </Block>
     );
   }
 
@@ -55,8 +55,7 @@ export function AccountPanel() {
 
   if (!session) {
     return (
-      <section className="rounded-plate bg-ground-raised p-4">
-        <h2 className="mb-1 text-s16 font-title font-semibold">Sync across devices</h2>
+      <Block heading="Sync across devices">
         <Note className="mb-3">
           Optional. Everything already works on this device — an account adds sync and
           shared reactions.
@@ -98,13 +97,12 @@ export function AccountPanel() {
 
         {error && <p className="mt-2 text-s14 text-trouble">{error}</p>}
         {notice && <Note className="mt-2">{notice}</Note>}
-      </section>
+      </Block>
     );
   }
 
   return (
-    <section className="rounded-plate bg-ground-raised p-4">
-      <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
+    <Block heading="Sync">
       <Note>Signed in as {session.user.email}</Note>
 
       <dl className="mt-3 flex gap-4 text-s14">
@@ -163,6 +161,6 @@ export function AccountPanel() {
           Sign out
         </button>
       </div>
-    </section>
+    </Block>
   );
 }

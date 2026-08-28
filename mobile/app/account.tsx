@@ -1,4 +1,4 @@
-import { SURFACE } from '@reviewies/core/ui/surface';
+import { Block } from '../src/ui/Block';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
@@ -14,7 +14,7 @@ import {
 } from '@reviewies/core/sync/auth';
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
-import { leadingOf, radius, theme } from '../src/ui/theme';
+import { leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { Button } from '../src/ui/Button';
 import { text, type, leading } from '@reviewies/core/tokens';
@@ -88,8 +88,7 @@ export default function AccountScreen() {
       <Stack.Screen options={{ title: 'Account' }} />
       <ScrollView contentContainerStyle={styles.content}>
         {session ? (
-          <View style={styles.card}>
-            <Text style={styles.cardHeading}>Signed in</Text>
+          <Block heading="Signed in">
             <Note>{session.user.email}</Note>
             {/* The screen said an account adds sync while nothing on this platform ever
                 pushed a row. Now it does, and it says what it is doing rather than
@@ -121,10 +120,9 @@ export default function AccountScreen() {
               </View>
             )}
             <Button onPress={() => void signOut()} tone="secondary" label="Sign out" name="Sign out" />
-          </View>
+          </Block>
         ) : (
-          <View style={styles.card}>
-            <Text style={styles.cardHeading}>Sync across devices</Text>
+          <Block heading="Sync across devices">
             <Note>
               Optional. Everything already works on this device — an account adds sync,
               episode comments and shared reactions.
@@ -173,7 +171,7 @@ export default function AccountScreen() {
 
             {error && <Text style={styles.error}>{error}</Text>}
             {notice && <Note>{notice}</Note>}
-          </View>
+          </Block>
         )}
       </ScrollView>
     </>
@@ -183,8 +181,6 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   rejected: { marginTop: 12, gap: 8 },
   rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   toggle: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.body.name },

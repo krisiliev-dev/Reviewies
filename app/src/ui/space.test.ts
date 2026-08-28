@@ -102,7 +102,12 @@ describe('the space scale, on the phone', () => {
      * before that. Three sprints running, a component or a table taking a decision off the
      * screens has moved this number, which is the population falling for the right reason.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(210);
+    /*
+     * 203, down from 210: `Block` absorbed the padding and gap of four boxed section
+     * headings, the way `SCREEN.edge` did for fifteen containers and `Field` for
+     * twenty-three inputs before that.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(203);
     expect(off).toEqual([]);
   });
 });

@@ -138,7 +138,13 @@ describe('the flat rule', () => {
      * `Section` and `Field` landed. The floor moves with the population rather than being
      * left slack above it; a slack floor is what let nine deleted tests through in §6.107.
      */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(78);
+    /*
+     * 74, down from 78. Four `rounded-plate` card fills went when `Block` replaced the
+     * boxed section headings on `AccountPanel` and `People` — the population falling
+     * because a component took the decision, which is the fourth sprint running that this
+     * floor has moved for that reason rather than because a scan broke.
+     */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(74);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

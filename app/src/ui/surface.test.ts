@@ -113,7 +113,13 @@ describe('a press', () => {
         raw.push(`${file}: a card fill that does not go through the table`);
       }
     }
-    expect(cards.length, 'no card fills read the table').toBe(10);
+    /*
+     * Seven, down from ten. Three went with the boxed section headings — `account.tsx`,
+     * `people.tsx` and `comments/[targetId].tsx` were a heading over a block inside a
+     * raised box, which is what `Block` draws without the box. The count is exact so the
+     * next one to move has to be a decision somebody writes down.
+     */
+    expect(cards.length, 'no card fills read the table').toBe(7);
     expect(raw).toEqual([]);
   });
 });

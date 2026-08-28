@@ -1,3 +1,4 @@
+import { Block } from '../ui/Block';
 import { useCallback, useEffect, useState } from 'react';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
@@ -146,8 +147,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
   }
 
   return (
-    <section className="rounded-plate bg-ground-raised p-4">
-      <h2 className="mb-1 text-s16 font-title font-semibold">You</h2>
+    <Block heading="You">
 
       {!editing ? (
         <>
@@ -199,7 +199,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
       )}
 
       {note && <Note className="mt-2">{note}</Note>}
-    </section>
+    </Block>
   );
 }
 

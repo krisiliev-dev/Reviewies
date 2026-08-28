@@ -8576,6 +8576,76 @@ rather than a sweep: `More`'s stats block is a summary and stays, `lists.tsx`'s 
 list is a list and goes. The press collision is fixed either way, which is why it was worth
 taking first.
 
+### 6.123 One file spelled it both ways, which is what tells drift from a distinction
+
+The brief was "rules instead of card fills", a judgement per site. Reading the sites turned
+the question into a better one: **what is the card actually containing?** On five of the ten
+phone sites the answer was *a heading and the block it heads* — and that is one object, with
+a component's shape.
+
+Two disagreements, both invisible while each screen is read alone:
+
+- **the label had two treatments.** `data.tsx`, `stats.tsx` and the web's `Settings.tsx`
+  used `Section` — the `s12` eyebrow the design system already owns. `account.tsx`,
+  `people.tsx`, `comments/[targetId].tsx`, `AccountPanel.tsx` and `People.tsx` used a
+  hand-written `s16` in the title face, boxed in a raised card.
+- **the gap had three values**: `12` on data, account and people; `8` in comments; `mb-1` —
+  **four pixels** — on the web. §6.119's finding about the gap under a screen title, one
+  level down.
+
+The thing that settles it as drift rather than a considered distinction: **`people.tsx` does
+both, in one scroll view.** `<Section>Find people</Section>` at line 229 and a boxed `s16`
+"You" at line 114. Two kinds of block chosen on purpose do not appear twice in one file
+under two spellings.
+
+And `data.tsx` had already written the component — locally, at the bottom of the file, with
+a comment reading *"this is the box, `Section` is the label on it, and one file holding both
+under one name is how the label ended up hand-written nine times."* The diagnosis was
+correct and it was made where only one screen could benefit from it. `Block` is that
+function, lifted, on both platforms.
+
+## What the first version of the guard got wrong, and why it stayed wrong on purpose
+
+The clause swept every `<h2 class="… text-s16 …">` and caught two sites I had not counted:
+`CatchUp.tsx` and `RemoteDrawer.tsx`. They are **not** the same object — an overlay has a
+*title*, a screen has *labelled blocks* — and, decisively, **both platforms already agree**:
+`mobile/src/ui/CatchUp.tsx` line 179 says `s16` in the title face, exactly as the web does.
+
+So there is no drift there to fix. The overlay title is a real treatment with no owner, and
+it belongs to a later sprint; forcing it onto `Masthead.sub` for tidiness would be repairing
+something nobody has shown to be broken, which is precisely the mistake the last four briefs
+kept making about their own premises. The two files are named in the clause with that reason
+and a staleness check, rather than skipped.
+
+## What the counts did
+
+Every floor that moved, moved because a component took a decision off the screens, which is
+the fourth sprint running: `flat.test.ts`'s radius sweep 78 → 74, `space.test.ts` 210 → 203,
+`surface.test.ts`'s card count 10 → **7**. That last one is the sprint's actual result stated
+as a number, and it is exact rather than a floor, so the eighth card to move has to be a
+decision somebody writes down.
+
+Five plants, all caught: a screen going back to the boxed heading, the phone regrowing a
+`cardHeading` style, a screen dropping `Block`, the gap leaving the scale, and an exemption
+outliving its file.
+
+## What could not be photographed, and why that is worth saying
+
+Every screen this sprint touched — `account.tsx`, `people.tsx`, `comments/[targetId].tsx`,
+`AccountPanel.tsx`, `People.tsx` — is behind an account, and the design harness seeds a
+local library with no session. So `12-account.png` shows "Sync is not configured on this
+build" and the migrated blocks are not in any photograph. The change is verified by the
+suites, the typechecker and the plants; it is **not** verified by eye, and the honest form of
+that is to say so rather than to let a green run imply otherwise. `data.tsx` is the one
+migrated screen that does photograph, and it is unchanged by construction: its local `Block`
+used `gap: 12` and `BLOCK.gap` is `space.s12`.
+
+Three cards remain by decision — `(tabs)/more.tsx`'s stats summary, `ImportFiles.tsx`'s
+report, and `ContentWarnings.tsx`'s panel — and four more are lists of things still waiting
+for the rules treatment: `lists.tsx`, `comments`' individual comment, `RemotePanel.tsx`'s
+device, `MatchImports.tsx`'s proposal. `SURFACE.card` names all seven, so they are countable
+rather than merely present.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

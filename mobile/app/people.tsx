@@ -1,4 +1,4 @@
-import { SURFACE } from '@reviewies/core/ui/surface';
+import { Block } from '../src/ui/Block';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
@@ -17,7 +17,7 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
-import { leadingOf, radius, theme } from '../src/ui/theme';
+import { leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
@@ -110,8 +110,7 @@ export default function PeopleScreen() {
           </Text>
         )}
 
-        <View style={styles.card}>
-          <Text style={styles.cardHeading}>You</Text>
+        <Block heading="You">
           {handle === undefined ? (
             <>
               <Note>{me ? `@${me.handle}` : 'Loading…'}</Note>
@@ -148,7 +147,7 @@ export default function PeopleScreen() {
             </>
           )}
           {note && <Text style={styles.error}>{note}</Text>}
-        </View>
+        </Block>
 
         <FindPeople following={following} blocked={blocked} onChanged={load} />
 
@@ -391,9 +390,6 @@ const styles = StyleSheet.create({
   link: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-
-  card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   section: { gap: 8 },
 
 });
