@@ -10,6 +10,7 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { border, radius, theme } from '../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';
@@ -215,8 +216,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     padding: 16,
   },
-  figureLabel: { color: theme.inkSecondary, fontSize: 12 },
-  figureValue: { color: theme.ink, fontSize: 22, fontWeight: '700' },
+  figureLabel: { color: theme.inkSecondary, fontSize: text.s12 },
+  // 22/700 here against the web's 20/600 for the same tile. 22 is not a step and the
+  // pair had never been compared; s20/semibold, which is what the web already drew.
+  figureValue: { color: theme.ink, fontSize: text.s20, fontWeight: weight.semibold },
   emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
   allTime: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
@@ -224,14 +227,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  allTimeText: { color: theme.ink, fontSize: 14, fontWeight: '600' },
-  note: { color: theme.inkSecondary, fontSize: 13 },
+  allTimeText: { color: theme.ink, fontSize: text.s14, fontWeight: weight.semibold },
+  // 13 against the web's 14. 13 is one of the two the scale killed.
+  note: { color: theme.inkSecondary, fontSize: text.s14 },
 
   section: { gap: 12, marginTop: 6 },
   sectionHeading: {
     color: theme.inkSecondary,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: text.s12,
+    fontWeight: weight.semibold,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -244,10 +248,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     padding: 12,
   },
-  tallyCount: { color: theme.inkSecondary, fontSize: 11 },
+  // 11 against the web's 12, for the same line under the same bar.
+  tallyCount: { color: theme.inkSecondary, fontSize: text.s12 },
   tallyHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  tallyName: { color: theme.ink, fontSize: 14, flex: 1 },
-  tallyTime: { color: theme.inkSecondary, fontSize: 12 },
+  tallyName: { color: theme.ink, fontSize: text.s14, fontWeight: weight.medium, flex: 1 },
+  // 12 against the web's 14, beside a name that is the same size on both.
+  tallyTime: { color: theme.inkSecondary, fontSize: text.s14 },
   barTrack: { height: 6, backgroundColor: theme.groundWell, borderRadius: radius.pill, overflow: 'hidden' },
   barFill: { height: 6, backgroundColor: theme.workingFill, borderRadius: radius.pill },
 });

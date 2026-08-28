@@ -17,7 +17,7 @@
  * one that is on", which is the entire content of the control. Only one of those is true
  * here, and it is the same one on all five screens.
  */
-import { border, size, space } from '../tokens.ts';
+import { border, size, space, text } from '../tokens.ts';
 
 export type ChoiceDensity = 'chips' | 'rows';
 
@@ -52,9 +52,18 @@ export const CHOSEN = {
  * 44 is the house standard and there is no reason for a chip to be the exception.
  */
 export const CHOICE_SIZE = {
-  chips: { minHeight: size.target, minWidth: size.target, paddingX: space.s12, gap: space.s8 },
-  rows: { minHeight: size.target, minWidth: 0, paddingX: space.s16, gap: space.s2 },
-} as const satisfies Record<ChoiceDensity, { minHeight: number; minWidth: number; paddingX: number; gap: number }>;
+  chips: {
+    minHeight: size.target, minWidth: size.target, paddingX: space.s12, gap: space.s8,
+    label: text.s14, hint: text.s12,
+  },
+  rows: {
+    minHeight: size.target, minWidth: 0, paddingX: space.s16, gap: space.s2,
+    label: text.s14, hint: text.s12,
+  },
+} as const satisfies Record<
+  ChoiceDensity,
+  { minHeight: number; minWidth: number; paddingX: number; gap: number; label: number; hint: number }
+>;
 
 /**
  * What a screen reader is told, on both platforms.

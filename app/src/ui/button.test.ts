@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
 import { BOX_RADIUS, BUSY, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
 import { CHOSEN } from '@reviewies/core/ui/choice';
-import { border, color, radius, size } from '@reviewies/core/tokens';
+import { border, color, radius, size, text } from '@reviewies/core/tokens';
 
 /**
  * One table, two renderers, and something that notices when they part.
@@ -117,15 +117,27 @@ describe('the button contract', () => {
      * Tailwind's scanner, so this is the seam where the two spellings meet, and it is
      * checked rather than trusted.
      */
-    const TAILWIND = { page: 'text-base', row: 'text-sm', inline: 'text-xs' } as const;
-    const POINTS = { 'text-base': 16, 'text-sm': 14, 'text-xs': 12 } as const;
+    /*
+     * The spellings moved in §6.108: `text-base`/`text-sm`/`text-xs` were Tailwind's own
+     * steps, and 16/14/12 are three steps of the scale that replaced them. The seam is the
+     * same seam — Tailwind reads source text and cannot be handed a number — so the classes
+     * are still written out here and still checked against the table rather than trusted.
+     * What changed is that the table's values now come from `text` rather than being bare
+     * numbers that happened to agree.
+     */
+    const CLASS = { page: 'text-s16', row: 'text-s14', inline: 'text-s12' } as const;
+    const POINTS = { 'text-s16': text.s16, 'text-s14': text.s14, 'text-s12': text.s12 } as const;
     for (const [name, metrics] of Object.entries(SIZE)) {
-      const cls = TAILWIND[name as keyof typeof TAILWIND];
+      const cls = CLASS[name as keyof typeof CLASS];
       expect(WEB, `the web's ${name} size does not print at ${cls}`).toMatch(
         new RegExp(`${name}: '[^']*\\b${cls}\\b`),
       );
       expect(metrics.label, `${name}: the table and ${cls} disagree`).toBe(POINTS[cls]);
     }
+    // And the table reads the scale rather than restating it.
+    expect(read('core/src/ui/button.ts'), 'a bare number back in the size table').not.toMatch(
+      /label: \d+/,
+    );
     // And the phone reads it from the table rather than from its own stylesheet.
     expect(PHONE).toContain('fontSize: metrics.label');
     expect(PHONE, 'a font size hard-coded beside the one in the table').not.toMatch(

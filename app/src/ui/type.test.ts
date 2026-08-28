@@ -130,6 +130,62 @@ describe('the type scale', () => {
      */
     const source = filesUnder('app/src').map(read).join('\n');
     const used = Object.keys(text).filter((name) => source.includes(`text-${name}`));
-    expect(used).toEqual(['s20', 's24', 's30']);
+    expect(used).toEqual(['s12', 's14', 's16', 's20', 's24', 's30']);
+  });
+
+  it('is where the two shared controls get their label size, rather than each side deciding', () => {
+    /*
+     * `Button` and `Choice` are the two controls every screen is made of, and both had
+     * their label size decided twice. `SIZE.label` was 16/14/12 as bare numbers beside a
+     * web file writing `text-base`/`text-sm`/`text-xs` — the same three sizes, agreeing by
+     * hand. `Choice` was worse: it carried no size at all, so the web's chips inherited
+     * the body's 16 while the phone's were 14, on all five screens that use it.
+     */
+    const button = read('core/src/ui/button.ts');
+    expect(button).toContain('label: text.s16');
+    expect(button).toContain('label: text.s14');
+    expect(button).toContain('label: text.s12');
+    const webButton = read('app/src/ui/Button.tsx');
+    for (const step of ['text-s16', 'text-s14', 'text-s12']) {
+      expect(webButton, `Button's ${step} row`).toContain(step);
+    }
+
+    const choice = read('core/src/ui/choice.ts');
+    expect(choice).toContain('label: text.s14');
+    expect(choice).toContain('hint: text.s12');
+    expect(read('mobile/src/ui/Choice.tsx')).toContain('CHOICE_SIZE.chips.label');
+    /*
+     * Both constants, by name. `toContain('text-s14')` passed with the chip's size deleted,
+     * because the row's still had one — planted and not caught, which is §6.73 in a clause
+     * written twenty minutes earlier for the third sprint running. A file containing a
+     * string is not the control carrying it.
+     */
+    const webChoice = read('app/src/ui/Choice.tsx');
+    for (const constant of ['CHIP', 'ROW']) {
+      const line = new RegExp(`^const ${constant} = '([^']*)';$`, 'm').exec(webChoice);
+      expect(line, `no ${constant} constant to read`).toBeTruthy();
+      expect(line?.[1], `${constant} has no size, so it inherits`).toContain('text-s14');
+    }
+  });
+
+  it('is the whole of Stats on both platforms, which is the batch that landed', () => {
+    /*
+     * One screen migrated whole, so it can be photographed and compared. Seven of its
+     * eight paired roles disagreed before this: the figure tile at 22/700 against 20/600,
+     * its label 12 against 14, the busiest-day note 13 against 14, the section eyebrow 12
+     * against 14, the tally name 14 against an inherited 16, its time 12 against 14, its
+     * count 11 against 12. Not one of those was a decision; they were two files.
+     */
+    const phone = read('mobile/app/stats.tsx');
+    expect(phone, 'a raw size is back on the phone').not.toMatch(/fontSize: \d/);
+    expect(phone, 'a raw weight is back on the phone').not.toMatch(/fontWeight: '\d/);
+    const web = read('app/src/screens/Stats.tsx');
+    expect(web, 'a Tailwind step is back on the web').not.toMatch(BUILT_IN);
+
+    // And the pairs that were wrong, named so a future edit cannot quietly re-split them.
+    expect(phone).toContain('fontSize: text.s20');   // the figure tile's value
+    expect(web).toContain('text-s20 font-semibold'); // the same tile
+    expect(phone).toContain('fontSize: text.s12');   // its label
+    expect(web).toContain('text-s12 text-ink-secondary');
   });
 });

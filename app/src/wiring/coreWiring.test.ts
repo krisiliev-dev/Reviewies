@@ -117,8 +117,6 @@ const LOPSIDED: Record<string, string> = {
    * `tokens.generated.test.ts` is what holds the two ends together.
    */
   'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
-  'mobile only: tokens#text':
-    'The web reads text-sNN utilities, generated from this table into @theme.',
   'mobile only: tokens#weight': 'Same table, same generator, spelled font-semibold on the web.',
 
   /*

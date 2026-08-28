@@ -6,6 +6,7 @@ import {
   type ChoiceContract,
 } from '@reviewies/core/ui/choice';
 import { border, radius, theme } from './theme';
+import { weight } from '@reviewies/core/tokens';
 
 /**
  * The React Native renderer of `core/src/ui/choice.ts`. The decisions are there.
@@ -99,8 +100,10 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   rows: { flexDirection: 'column' },
   rowBody: { flex: 1 },
-  label: { fontSize: 14 },
-  on: { fontWeight: '600' },
-  hint: { color: theme.inkSecondary, fontSize: 12, lineHeight: 17 },
-  tick: { color: theme.workingMark, fontSize: 14 },
+  // From `CHOICE_SIZE` in the core, which is where the web reads them too — the two were
+  // 14 here and an inherited 16 there.
+  label: { fontSize: CHOICE_SIZE.chips.label },
+  on: { fontWeight: weight.semibold },
+  hint: { color: theme.inkSecondary, fontSize: CHOICE_SIZE.chips.hint, lineHeight: 17 },
+  tick: { color: theme.workingMark, fontSize: CHOICE_SIZE.chips.label },
 });

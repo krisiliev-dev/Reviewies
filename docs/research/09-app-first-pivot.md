@@ -7511,6 +7511,86 @@ nobody reads. The scale exists, it is generated, it is proved to render, and the
 is on it.
 
 
+### 6.108 One screen migrated whole, seven of its eight roles disagreeing, and a clause I wrote twenty minutes before it failed to catch anything
+
+The second type batch. §6.107 landed the scale and migrated a screen's title; this takes the
+two controls every screen is made of and one screen end to end.
+
+**`Button` and `Choice`, because they are what the app is built out of.** `SIZE.label` in the
+core was `16`, `14`, `12` as bare numbers, beside a web file writing `text-base`, `text-sm`,
+`text-xs` — the same three sizes, agreeing by hand, with a guard checking that they still
+did. Both sides now read the scale. `Choice` was worse: it carried **no size at all**, so the
+web's chips inherited the body's 16 while the phone's stylesheet said 14 — the same control,
+one step apart, on all five screens that use it, and nothing in `core/src/ui/choice.ts` had an
+opinion. `CHOICE_SIZE` has `label` and `hint` now, the way `SIZE` has `label`.
+
+**And Stats, migrated whole so it could be photographed and compared.** Seven of its eight
+paired roles disagreed:
+
+```
+                        web                 phone
+figure tile value       20 / 600            22 / 700
+figure tile label       14                  12
+busiest-day note        14                  13
+"MOST WATCHED" eyebrow  14 / 600            12 / 600
+tally name              16 (inherited)      14
+tally time              14                  12
+tally count             12                  11
+```
+
+Not one of those was a decision. They are two files written by the same hand at different
+times, and 22, 13 and 11 are three of the eight sizes the scale had already killed. The
+resolutions are judged rather than rounded: the tile takes the web's 20/semibold because 22
+is not a step; the eyebrow takes the *phone's* 12, because uppercase with letter-spacing
+reads a size larger than its number and the web's 14 was the outlier; everything else folds
+to 14 or 12.
+
+**§6.107's warning paid for itself immediately.** The plants went in *after* the migration,
+and two of the four — the phone's tile back to `fontSize: 22`, the web's back to `text-xl` —
+produce **identical pixels to what shipped**. `text-xl` is 20px and so is `text-s20`. No
+screenshot changes, no browser check can see it, and the only thing that can say the value
+stopped coming from the owner is a clause reading the source. Both failed by name.
+
+**The third plant was not caught, by a clause written twenty minutes earlier.**
+
+```ts
+expect(read('app/src/ui/Choice.tsx'), 'the web chip has no size again').toContain('text-s14');
+```
+
+Deleting the size from the chip left the *row* constant's, so the file still contained the
+string and the clause was happy. That is §6.73 — a check easier to satisfy than its name
+suggests — for the fourth sprint running, and the third time this month it has been in a
+clause of mine rather than in one I inherited. **A file containing a string is not the
+control carrying it.** Both constants are read by name now and the re-plant fails.
+
+The pattern is stable enough to state plainly: `toContain` on a whole file is almost never
+the check you meant. It is the check you *wrote* because the file was in your hand.
+
+**Two of the older guards had to move, and one of them was pinning the old world.**
+`button.test.ts` asserted the web's label sizes were `text-base`/`text-sm`/`text-xs` — the
+Tailwind steps the scale replaces — so the migration failed it. That is a guard encoding a
+decision rather than a rule, the shape §6.101 named when `migrationParity` pinned
+`MatchImports` at the arrangement that was broken. Rewritten to check the same *seam* — the
+class the web writes against the number the table holds — with the spellings that are now
+true. And `coreWiring`'s "mobile only: tokens#text" exemption went stale the moment the web
+started importing `text`, which the suite noticed by itself.
+
+**#149 is measured and still open, deliberately.** The Stats period control, on a ten-year
+library, at 390 pixels wide:
+
+```
+thirteen chips, three rows, 148px of group, first figure at y=236 of an 844px viewport
+```
+
+Twenty-eight per cent of the fold, every chip 44 tall and 14pt, so the ten year buttons carry
+exactly as much weight as the three period ones. And the years are Year in Review — the thing
+TV Time's REWIND made people love — dressed as a filter. What the measurement does *not*
+settle is the remedy: a second labelled group names the feature but makes the block taller,
+and the change that would fix the height is a new interaction. Half-changing it inside a type
+sprint would be smuggling a design decision in under a migration. The numbers are on the task
+and the next pass owes a photograph of the alternative before choosing.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7805,7 +7885,11 @@ and which single claim in this document could not be checked at all:
   to render in a browser, and migrated at one role — a screen's title, on both platforms,
   with five plants caught. Every layer now exists.
 
-  What is left of type is the other 340-odd sites, and the *shape* of what is left has
+  §6.108 takes the second batch: `Button` and `Choice` — the two controls every screen is
+  made of — and the whole of Stats, where seven of eight paired roles disagreed between the
+  platforms and three of the disagreements were sizes the scale had already killed.
+
+  What is left of type is the other 300-odd sites, and the *shape* of what is left has
   changed rather than the size of it. The census found fifteen sizes and the scale keeps
   seven, so every remaining literal is a judgement — 13 and 15 fold into 14, 17 into 16,
   18 and 22 into 20 — and a batch migrated by find-and-replace would land four hundred
@@ -7921,6 +8005,14 @@ and which single claim in this document could not be checked at all:
   empty. §6.106 is the first evidence about what that costs: two of the
   three findings the track filed had the right conclusion and the wrong stated reason, and
   both were settled by a check that took two minutes.
+- **`toContain` on a whole file is almost never the check you meant.** §6.108: a clause
+  asserting the web's `Choice` chip carries a size passed with the size deleted, because
+  the *row* constant in the same file still had one. Written twenty minutes before it was
+  planted against, and it is the fourth sprint running that §6.73's shape has turned up —
+  and the third time this month in a clause of mine rather than an inherited one. The
+  three found so far are all the same mistake: reading the file because the file was in
+  hand, rather than the construct being judged. Nothing enumerates the clauses in this
+  repository that assert against a whole file when they mean a single declaration.
 - **A guard can stop seeing the thing it was built for, by being obeyed.** §6.106: the
   copy guard resolves a shared sentence out of `COPY` so that moving copy into the owner
   does not blind it — for strings. Names take the title, so they are functions, and moving
@@ -7951,6 +8043,15 @@ and which single claim in this document could not be checked at all:
   contexts against one IndexedDB on purpose, so a flake is plausible rather than
   mysterious — but a check that is sometimes red is a check nobody will believe when it
   matters. It needs to be made deterministic or made to report what it could not observe.
+- **Stats' period control is thirteen chips on a ten-year library, and the remedy is not
+  measured.** §6.108 measured the problem: three rows, 148px of group, the first figure at
+  y=236 of an 844px viewport — twenty-eight per cent of the fold, with the ten year buttons
+  carrying exactly the weight of the three period ones, and Year in Review dressed as a
+  filter. What is not settled is what to do. A second labelled group names the feature and
+  makes the block *taller*; the change that fixes the height is a new interaction. #149
+  holds the numbers, and the next pass owes a photograph of the alternative before choosing
+  — a design decision smuggled in under a migration is how a screen ends up with something
+  nobody argued for.
 - **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
   rather than structure precisely because they are — the direction's `radius.none` is for
   full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those

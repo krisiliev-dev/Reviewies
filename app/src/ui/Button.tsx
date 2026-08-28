@@ -45,10 +45,15 @@ const DISABLED_CLASS = 'border border-stroke-hairline bg-transparent text-ink-te
 /** `SELECTED.rule` in `border-tally`, `SELECTED.colour` in `working-mark`, and the weight. */
 const SELECTED_CLASS = 'border-tally border-working-mark font-semibold text-ink';
 
+/*
+ * The label sizes are `SIZE[size].label` in the core — 16, 14, 12, which are three steps of
+ * the scale — and they are spelled out here because Tailwind v4 reads source text and
+ * cannot be handed a number. `type.test.ts` holds the two together.
+ */
 const SIZE_CLASS = {
-  page: 'min-h-12 px-5 py-3 text-base',
-  row: 'min-h-11 px-4 py-2 text-sm',
-  inline: 'min-h-11 px-2 py-1 text-xs',
+  page: 'min-h-12 px-5 py-3 text-s16',
+  row: 'min-h-11 px-4 py-2 text-s14',
+  inline: 'min-h-11 px-2 py-1 text-s12',
 } as const;
 
 export function Button({

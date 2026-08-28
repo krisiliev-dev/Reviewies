@@ -12,7 +12,7 @@
  * that keeps them from drifting, and a contract that pulls in a renderer is one nothing
  * can check.
  */
-import { border, color, radius, size, space } from '../tokens.ts';
+import { border, color, radius, size, space, text } from '../tokens.ts';
 
 export type ButtonTone = 'primary' | 'secondary' | 'quiet' | 'destructive';
 export type ButtonSize = 'page' | 'row' | 'inline';
@@ -98,9 +98,9 @@ interface ButtonShape {
  * `button.test.ts` holds the two spellings to each other.
  */
 export const SIZE = {
-  page: { minHeight: 48, paddingX: space.s20, paddingY: space.s12, label: 16 },
-  row: { minHeight: size.target, paddingX: space.s16, paddingY: space.s8, label: 14 },
-  inline: { minHeight: size.target, paddingX: space.s8, paddingY: space.s4, label: 12 },
+  page: { minHeight: 48, paddingX: space.s20, paddingY: space.s12, label: text.s16 },
+  row: { minHeight: size.target, paddingX: space.s16, paddingY: space.s8, label: text.s14 },
+  inline: { minHeight: size.target, paddingX: space.s8, paddingY: space.s4, label: text.s12 },
 } as const satisfies Record<
   ButtonSize,
   { minHeight: number; paddingX: number; paddingY: number; label: number }
