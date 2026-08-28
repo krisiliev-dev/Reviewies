@@ -3,6 +3,7 @@ import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
 import { useDialog } from '../ui/useDialog';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
+import { Data } from '../ui/Data';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -138,11 +139,21 @@ export function RemoteDrawer() {
             {bridge.playback.title && (
               <p className="truncate text-s14 font-title font-semibold">{bridge.playback.title}</p>
             )}
-            <p className="font-data font-medium text-s12 tabular-nums text-ink-secondary">
-              {formatTime(bridge.playback.positionSec)}
-              {bridge.playback.durationSec
-                ? ` / ${formatTime(bridge.playback.durationSec)}`
-                : ''}
+            {/*
+              Two timecodes and a state, as three things rather than one string.
+              `font-data` on the whole line was the last hand-written use of the face, and
+              keeping it would have meant a written exemption in the guard — which is the
+              §6.59 shape, an excuse that outlives what it excuses. Written out, each
+              timecode is a figure and `paused` is a word, which is what they are.
+            */}
+            <p className="text-s12 text-ink-secondary">
+              <Data value={formatTime(bridge.playback.positionSec)} size="s12" />
+              {bridge.playback.durationSec ? (
+                <>
+                  {' / '}
+                  <Data value={formatTime(bridge.playback.durationSec)} size="s12" />
+                </>
+              ) : null}
               {bridge.playback.paused ? ' · paused' : ''}
             </p>
           </div>

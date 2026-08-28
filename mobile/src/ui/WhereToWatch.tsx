@@ -6,6 +6,7 @@ import type { CachedProviders } from '@reviewies/core/domain/types';
 import { border, radius, tap, theme, tracking } from './theme';
 import { COPY } from '@reviewies/core/copy';
 import { text, type, track } from '@reviewies/core/tokens';
+import { Section } from './Section';
 
 /**
  * Where a title can be watched right now.
@@ -67,7 +68,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   return (
     <View style={styles.block}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Where to watch</Text>
+        <Section>Where to watch</Section>
         <Pressable
           onPress={() => setPicking(!picking)}
           hitSlop={8}
@@ -164,13 +165,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
-  heading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    textTransform: 'uppercase',
-    fontFamily: type.family.title.name,
-  },
   region: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   regions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {

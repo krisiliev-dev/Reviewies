@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
+import { Data } from './Data';
 
 /**
  * Bring a history in from somewhere else.
@@ -130,7 +131,7 @@ export function ImportFiles({
             <ul className="mt-2 flex flex-col gap-1">
               {files.map((f) => (
                 <li key={f.name} className="text-s12 text-ink-secondary">
-                  <span className="font-data font-medium">{f.name}</span> — {f.outcome}
+                  <Data value={f.name} size="s12" /> — {f.outcome}
                 </li>
               ))}
             </ul>

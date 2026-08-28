@@ -179,7 +179,15 @@ describe('the type scale', () => {
     const phone: string[] = [];
     for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
       for (const m of read(file).matchAll(/letterSpacing: [^;\n]+/g)) {
-        if (!/tracking\(text\.s\d+, track\.t\d+\)/.test(m[0])) phone.push(`${file}: ${m[0]}`);
+        /*
+         * `tracking(<a size>, track.tNN)`. The size may be `text.s12` at a screen, or a
+         * component's own table entry — `SECTION.section.size`, which is `text.s12` one
+         * indirection along. Requiring the literal would have made `Section` illegal for
+         * doing the thing this clause is for.
+         */
+        if (!/tracking\((?:text\.s\d+|[A-Z][\w.]*\.size), track\.t\d+\)/.test(m[0])) {
+          phone.push(`${file}: ${m[0]}`);
+        }
       }
     }
     expect(phone).toEqual([]);
@@ -252,7 +260,14 @@ describe('the type scale', () => {
         if (!ALLOWED_H2.some((role) => wears(m[1], role))) wrongH2.push(`${file}: ${m[1]}`);
       }
     }
-    expect(h2s, 'no h2 matched, so this proved nothing').toBeGreaterThan(10);
+    /*
+     * Eight, down from fourteen, because `Section` took the eyebrow — the `<h2>`s it
+     * renders carry no class list of their own for this clause to read. That is the
+     * population shrinking for the right reason, and `section.test.ts` is where the ones
+     * that left are now held. The floor moves with it rather than being left slack: a
+     * slack floor is what let nine deleted tests through in §6.107.
+     */
+    expect(h2s, 'no h2 matched, so this proved nothing').toBeGreaterThan(5);
     expect(wrongH2).toEqual([]);
   });
 
@@ -410,31 +425,28 @@ describe('the type scale', () => {
      * Named rather than counted, because a count is what let §6.108 pass: these are the
      * four places a number is the content.
      */
-    const web = read('app/src/screens/Stats.tsx');
-    // The `<span>` around the numeral run, not the file: three things here mention the
-    // face, and the one that matters is the one *inside* the value — mono on the whole
-    // string is what printed `7  days`.
-    expect(web, 'the web tile stopped setting its figure in mono').toMatch(
-      /<span className="font-data font-medium tabular-nums">\{(watched|figure)\.?\w*\}<\/span>/,
-    );
+    /*
+     * One component now, rather than a needle per screen. §6.114 pulled every figure onto
+     * `Data`; what this clause used to check per site, `data.test.ts` checks once and in
+     * more detail — including that the *unit* stays out of the mono face, which is the
+     * half a per-screen grep could never see.
+     */
+    expect(read('app/src/screens/Stats.tsx'), 'the web tile stopped going through Data')
+      .toContain('<Data value={value} size="s20" />');
     for (const [file, needle] of [
-      ['app/src/screens/AccountPanel.tsx', 'text-s20 font-data font-medium tabular-nums'],
-      ['app/src/screens/More.tsx', 'text-s20 font-data font-medium tabular-nums'],
-      ['app/src/screens/Settings.tsx', 'text-s20 font-data font-medium tabular-nums'],
-      ['app/src/screens/WatchingMode.tsx', 'font-data font-medium'],
+      ['app/src/screens/AccountPanel.tsx', '<Data value={pending} size="s20" />'],
+      ['app/src/screens/More.tsx', '<Data value={value} size="s20" />'],
+      ['app/src/screens/Settings.tsx', '<Data value={value} size="s20" />'],
+      ['app/src/screens/WatchingMode.tsx', '<Data value={formatTimecode(clock.positionMs)}'],
     ] as const) {
       expect(read(file), `${file} draws a figure in the body face`).toContain(needle);
     }
     const phone = read('mobile/app/stats.tsx');
-    expect(declarationOf(phone, 'figureValue'), 'the phone tile stopped setting its figure in mono')
-      .toContain('fontFamily: type.family.data.name');
-    expect(declarationOf(phone, 'figureUnit'), 'the unit went back into mono with the figure')
-      .toContain('fontFamily: type.family.body.name');
-    expect(declarationOf(phone, 'figureLabel'), 'the tile label is off the scale')
+    expect(phone, 'the phone tile stopped going through Data')
+      .toContain('<Data value={value} size="s20" style={styles.figureValue} />');
+    expect(styleOf(phone, 'figureLabel'), 'the tile label is off the scale')
       .toContain('fontSize: text.s12');
-    // `styleOf`, not `declarationOf`: this screen holds `const clock = usePlaybackClock()`
-    // two hundred lines above the style of the same name, and the clause was reading it.
-    expect(styleOf(read('mobile/app/watching/[targetId].tsx'), 'clock'))
-      .toContain('fontFamily: type.family.data.name');
+    expect(read('mobile/app/watching/[targetId].tsx'), 'the clock stopped going through Data')
+      .toContain('<Data value={formatTimecode(clock.positionMs)}');
   });
 });

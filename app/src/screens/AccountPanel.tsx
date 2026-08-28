@@ -4,6 +4,7 @@ import { useSync } from '../sync/useSync';
 import { COPY } from '@reviewies/core/copy';
 import { retryRejectedWrites } from '@reviewies/core/sync/driver';
 import { Button } from '../ui/Button';
+import { Data } from '../ui/Data';
 
 /**
  * Account and sync controls.
@@ -107,7 +108,7 @@ export function AccountPanel() {
       <dl className="mt-3 flex gap-4 text-s14">
         <div>
           <dt className="text-s12 text-ink-secondary">Waiting to upload</dt>
-          <dd className="text-s20 font-data font-medium tabular-nums">{pending}</dd>
+          <dd><Data value={pending} size="s20" /></dd>
         </div>
         {lastRunAt && (
           <div>

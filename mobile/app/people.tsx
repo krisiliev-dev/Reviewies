@@ -21,6 +21,7 @@ import { text, type, track } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
+import { Section } from '../src/ui/Section';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -222,7 +223,7 @@ function FindPeople({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeading}>Find people</Text>
+      <Section>Find people</Section>
       <TextInput
         value={query}
         onChangeText={setQuery}
@@ -330,10 +331,10 @@ function PersonList({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeading}>
+      <Section>
         {heading}
         {people.length > 0 ? ` ${people.length}` : ''}
-      </Text>
+      </Section>
       {people.length === 0 && empty ? <Text style={styles.blurb}>{empty}</Text> : null}
       {failed && (
         <Text style={styles.failed} accessibilityLiveRegion="polite">
@@ -393,13 +394,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
   section: { gap: 8 },
-  sectionHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    fontFamily: type.family.title.name,
-    textTransform: 'uppercase',
-  },
   input: {
     backgroundColor: theme.groundWell,
     borderRadius: radius.none,

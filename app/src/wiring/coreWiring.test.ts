@@ -118,7 +118,11 @@ const LOPSIDED: Record<string, string> = {
    */
   'mobile only: tokens#z': 'The web reads var(--z-*), emitted from this table.',
   'mobile only: tokens#type': 'The web reads --font-* and @font-face, generated from this table.',
-  'mobile only: tokens#track': 'The web reads --tracking-*, emitted from this table.',
+  /*
+   * `tokens#track` was here for one sprint. `Section` imports it on both sides now — the
+   * web through the component rather than through the generated CSS — so the reason expired
+   * and the clause below deleted it, which is the whole point of that clause.
+   */
   /*
    * `weight` used to be here for the same reason. It is not, because the phone stopped
    * importing it at all in stage 2: React Native ignores a `fontWeight` beside a
@@ -139,6 +143,10 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/button#PRESSED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#SELECTED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#LABEL_FACE': 'Tailwind needs a literal class; type.test.ts couples the two.',
+  'mobile only: ui/section#SECTION_FACE': 'Tailwind needs a literal class; section.test.ts couples the two.',
+  'mobile only: ui/section#SECTION_RULE': 'A CSS rule is a border utility; section.test.ts couples the two.',
+  'mobile only: ui/data#DATA_FACE': 'Tailwind needs a literal class; data.test.ts couples the two.',
+  'mobile only: ui/data#DATA_UNIT_FACE': 'The web unit inherits the body face; data.test.ts couples the two.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',

@@ -3,6 +3,7 @@ import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metad
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
 import { COPY } from '@reviewies/core/copy';
+import { Section } from './Section';
 
 /**
  * Where a title can be watched right now.
@@ -65,7 +66,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           the side of its own card — visible in a screenshot and invisible to the
           viewport check, because it escaped the card and not the screen. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Where to watch</h2>
+        <Section>Where to watch</Section>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}

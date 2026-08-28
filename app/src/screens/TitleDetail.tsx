@@ -22,6 +22,8 @@ import { ContentWarnings } from '../social/ContentWarnings';
 import { WhereToWatch } from '../ui/WhereToWatch';
 import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { COPY } from '@reviewies/core/copy';
+import { Section } from '../ui/Section';
+import { Data } from '../ui/Data';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -100,7 +102,7 @@ export function TitleDetail() {
               {COPY.title.tryAgain}
             </button>
           )}
-          {title?.year && <p className="text-s14 text-ink-secondary">{title.year}</p>}
+          {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
           {title?.overview && (
             <p className="mt-2 line-clamp-3 text-s14 text-ink-secondary">{title.overview}</p>
           )}
@@ -124,9 +126,9 @@ export function TitleDetail() {
           above describes, reproduced by adding four words, and caught by the check that
           was written after it happened the first time. */}
       <div className="mb-5">
-        <span className="mb-1 block text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+        <Section as="span" className="block">
           {COPY.title.yourRating}
-        </span>
+        </Section>
         <StarRating
           of={title?.name ?? 'this title'}
           value={rating?.value}
@@ -187,9 +189,9 @@ export function TitleDetail() {
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+          <Section className="px-1">
             Season {season}
-          </h2>
+          </Section>
           <ul className="flex flex-col gap-1.5">
             {eps.map((e) => (
               <EpisodeRow

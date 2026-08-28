@@ -5,6 +5,8 @@ import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 import { radius, tap, theme, tracking } from './theme';
 import { useReducedMotion } from './useReducedMotion';
 import { text, type, track } from '@reviewies/core/tokens';
+import { Section } from './Section';
+import { Data } from './Data';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -138,7 +140,7 @@ function Grid({
 }) {
   return (
     <View style={styles.grid}>
-      <Text style={styles.gridLabel}>{label}</Text>
+      <Section>{label}</Section>
       <View style={styles.gridCells}>
         {values.map((value) => (
           <Pressable
@@ -149,7 +151,7 @@ function Grid({
             accessibilityRole="button"
             accessibilityLabel={`${label}: ${value}`}
           >
-            <Text style={styles.cellText}>{value}</Text>
+            <Data value={value} style={styles.cellText} />
           </Pressable>
         ))}
       </View>
@@ -179,13 +181,6 @@ const styles = StyleSheet.create({
   muted: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   body: { gap: 16, paddingBottom: 8 },
   grid: { gap: 8 },
-  gridLabel: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    textTransform: 'uppercase',
-    fontFamily: type.family.title.name,
-  },
   gridCells: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   cell: {
     minWidth: 46,
@@ -195,7 +190,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     backgroundColor: theme.groundWell,
   },
-  cellText: { color: theme.ink, fontSize: text.s14, fontVariant: ['tabular-nums'], fontFamily: type.family.data.name },
+  cellText: { color: theme.ink },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   footnote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
 });

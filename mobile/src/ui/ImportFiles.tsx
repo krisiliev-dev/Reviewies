@@ -7,6 +7,7 @@ import { restoreAccount, type RestoreReport } from '@reviewies/core/social/resto
 import { border, radius, theme } from './theme';
 import { Button } from './Button';
 import { text, type } from '@reviewies/core/tokens';
+import { Data } from './Data';
 
 /**
  * Bring a history in from somewhere else.
@@ -129,7 +130,7 @@ export function ImportFiles({
           </Text>
           {files?.map((file) => (
             <Text key={file.name} style={styles.reportLine}>
-              <Text style={styles.reportName}>{file.name}</Text> — {file.outcome}
+              <Data value={file.name} size="s12" style={styles.reportName} /> — {file.outcome}
             </Text>
           ))}
           {report.warnings.map((warning) => (

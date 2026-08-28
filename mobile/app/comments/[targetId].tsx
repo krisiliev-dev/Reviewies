@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   deleteComment: { minHeight: 24, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' },
   deleteCommentText: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
-  episode: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
+  episode: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
   blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 8 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },

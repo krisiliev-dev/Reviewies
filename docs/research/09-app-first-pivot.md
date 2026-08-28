@@ -8004,6 +8004,87 @@ deleting an explanation the day the thing it explained ended, which is what §6.
 what nobody had to remember.
 
 
+### 6.114 Two headings that were the same heading, and a face that had spread to sentences
+
+Stage 3 of the design finish, and the first two of the eleven components: `Section` and
+`Data`. Both were chosen because stage 2 left them as visible seams rather than because a
+roster said so.
+
+**`Section`.** Twenty-three sites drew a section label by hand — fourteen on the web as the
+string `text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase`, nine on
+the phone as the same five properties in a `StyleSheet`. That is a component that already
+exists and has no name, and task #156 is what it costs: the calendar's section heading and
+its day heading were **byte-identical** on the phone. Not similar — the same five properties,
+in the same order, in the same file. So `TODAY` and the `NEXT TWO MONTHS` it sits inside were
+drawn the same, and a reader had no way to tell which one was the container.
+
+Hand-copied treatments cannot disagree on purpose, only by accident. Two levels in one table
+have to be given different values, and they differ on four channels rather than one — case,
+tracking, ink, and a hairline rule running from the dateline to the right edge. Four, because
+a single-channel difference is the one the next person tuning a value flattens again. The rule
+is the direction's own: *"the rule running to the right edge — the part that actually does the
+printed-matter work — is geometry, not type, and costs nothing."*
+
+The web had a third defect the phone did not: **no container heading at all**, so its day
+headings opened onto nothing and `group` would have had nothing to be subordinate to. It has
+one now, which is §6.51's rule — the better version wins whichever platform had it.
+
+`Section` also owns `accessibilityRole="header"`, and owning it is the point: React Native has
+no `<h2>`, so before this the role was a prop somebody had to remember. **One of the nine sites
+carried it and eight did not**, which means eight section labels were announced as ordinary
+text.
+
+**`Data`.** `splitFigure` had been called by hand three times on one screen and nowhere else.
+Pulling every figure through it found the same defect from both ends:
+
+- **Mono on the whole value string** is `7  days` — a word at a typewriter's letter spacing.
+  That was already known.
+- **Mono on anything containing a digit** is the other end, and it was live in four places:
+  `"You look behind the crowd by 12s — tap to correct"`, `"disputed · one person · 3 of 5"`,
+  `"S1E6 · Episode 6"` and an episode's own name. Stage 2 gave them the data face for having
+  numbers in them. **A sentence containing a number is a sentence.**
+
+Between those two, the face's actual remit turned out to be wider than "numbers" and narrower
+than "anything numeric": **machine-readable literals** — a figure, a timecode, an episode code,
+an IP address, a filename. That is not imposed; it is where the build converged. The two sites
+that were neither number nor prose, a device address and a file name, wanted mono for exactly
+the reason a figure does.
+
+And the fact that made the face worth having was set almost nowhere. **The phone set
+`fontVariant: ['tabular-nums']` at 2 of its 13 number sites; the web set `tabular-nums` at 8 of
+its 10 — and the star rating had the tabular *without* the face on the web and the face
+*without* the tabular on the phone.** One value, drawn two wrong ways. A proportional face with
+tabular figures gets half of what the direction asks for; mono without them gets the other half.
+
+The last hand-written use of the face was the remote drawer's `12:34 / 45:00 · paused`. Keeping
+it would have meant a written exemption in the guard, which is the §6.59 shape — so the line
+became three things instead of one string, which is also what it is.
+
+**A guard that survived its plant, and what it was missing.** `data.test.ts` asserted that the
+figure's class string appeared in the component. Planting that same class onto the *unit's*
+span left the assertion true, so `7  days` came back with eleven clauses green. A file
+containing a string is not the element carrying it — §6.109 again, in a guard written to catch
+§6.112's own defect. Both `Data` clauses read the specific element now.
+
+`clauses.test.ts` then named two more of this sprint's needles unprompted, including one where
+the second copy of the needle was **in the component's own prose comment**: deleting the real
+`fontVariant` line left the assertion satisfied by a sentence describing it.
+
+**And two the guards could not have found.** `shape.test.ts` noticed the two title screens had
+stopped matching, which turned up an eyebrow written a third way — tracked and faced but with
+**no `textTransform` at all**, calling `.toUpperCase()` on the copy string instead. A clause
+looking for the transform could not see it. Tracking is the reliable tell, and the clause now
+uses it — with the boundary drawn by *shape* rather than by a name: `Row`'s tag is tracked at
+the same step and is not a label, because it sits inside a hairline plate. A style with a
+border or a fill is a box, and a box is not an eyebrow. An exemption list would have been the
+§6.59 shape one layer along.
+
+`docsReferences` caught the other: **a section sign in front of 6.156.** Task #156 is a task,
+and giving it a § invented a cross-reference to a document section that does not exist, six
+times. Naming the defect here needed care for the same reason — spelled out, this paragraph
+would be the seventh, and the guard cannot tell an example from a use.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

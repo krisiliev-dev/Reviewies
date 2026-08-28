@@ -18,6 +18,7 @@ import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../src/ui/Button';
+import { Section } from '../src/ui/Section';
 
 /**
  * Getting your history in, and getting it back out.
@@ -53,7 +54,7 @@ export default function DataScreen() {
           </Text>
         )}
 
-        <Section heading="Export">
+        <Block heading="Export">
           <Text style={styles.blurb}>{COPY.settings.exportBlurb}</Text>
           <Button
             onPress={async () => {
@@ -85,14 +86,14 @@ export default function DataScreen() {
             label="Export watch history (CSV)"
             name="Export watch history (CSV)"
           />
-        </Section>
+        </Block>
 
-        <Section heading="Import">
+        <Block heading="Import">
           <ImportFormats />
           <ImportFiles />
-        </Section>
+        </Block>
 
-        <Section heading="Watching">
+        <Block heading="Watching">
           {/* The whole row, not the switch.
               *
               * The switch alone measured 40x20 under react-native-web, below the 24px
@@ -129,12 +130,12 @@ export default function DataScreen() {
               <Switch value={openComments} />
             </View>
           </Pressable>
-        </Section>
+        </Block>
 
         {/* The web has offered this since the settings screen existed and the phone
             never has, which is the same shape as everything else found in this pass:
             the core could do it and one platform simply never asked. */}
-        <Section heading="Metadata cache">
+        <Block heading="Metadata cache">
           <Text style={styles.blurb}>
             Artwork and episode listings are cached from the metadata provider and expire
             automatically. Clearing them never touches your own history, and shows carried
@@ -151,16 +152,21 @@ export default function DataScreen() {
               {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
             </Text>
           )}
-        </Section>
+        </Block>
       </ScrollView>
     </>
   );
 }
 
-function Section({ heading, children }: { heading: string; children: React.ReactNode }) {
+/**
+ * A titled block of this screen. Renamed from `Section` when the shared component took
+ * that name: this is the box, `Section` is the label on it, and one file holding both
+ * under one name is how the label ended up hand-written nine times.
+ */
+function Block({ heading, children }: { heading: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeading}>{heading}</Text>
+      <Section>{heading}</Section>
       {children}
     </View>
   );
@@ -181,13 +187,6 @@ const styles = StyleSheet.create({
   toggleText: { flex: 1, minWidth: 0, gap: 2 },
   toggleLabel: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
   toggleHint: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
-  sectionHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    fontFamily: type.family.title.name,
-    textTransform: 'uppercase',
-  },
   blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
   clockWarning: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, marginBottom: 4, fontFamily: type.family.body.name },
 

@@ -21,6 +21,7 @@ import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../ui/Choice';
 import { Row as BaseRow } from '../ui/Row';
+import { Section } from '../ui/Section';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -77,9 +78,7 @@ export function Calendar() {
             letter-spacing reads a size larger than its number, and the phone has drawn
             this heading at 12 since it was written while the web drew it at 14 in
             sentence case. One treatment, on both. */}
-        <h2 className="mb-2 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
-          Tell me about
-        </h2>
+        <Section>Tell me about</Section>
         {/* Rows, and every hint visible, which is what the phone did and the web did not:
             the web showed one hint in a paragraph underneath, so choosing between three
             options meant selecting each in turn to read what it does. §6.51's rule is
@@ -148,12 +147,23 @@ export function Calendar() {
         </div>
       )}
 
+      {/*
+        The section the day headings sit inside, which only the phone had.
+        Sixty days on both platforms; the phone said so above the list and the web did
+        not, so the web's day headings opened onto nothing. §6.51's rule — the better
+        version wins whichever platform had it — and it is also what makes `group` below
+        mean something rather than being a second treatment of the same depth.
+      */}
+      <Section className="px-1">Next two months</Section>
+
       <div className="flex flex-col gap-5">
         {grouped.map(([day, dayEntries]) => (
           <section key={day}>
-            <h2 className="mb-2 px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+            {/* `group`, not `section`: this sits *inside* "Next two months" and the phone
+                drew the two identically — the same five properties in the same file. task #156. */}
+            <Section level="group" className="px-1">
               {formatDay(day)}
-            </h2>
+            </Section>
             <ul className="flex flex-col gap-1.5">
               {dayEntries.map((entry) => (
                 <Row key={entry.episode.id} entry={entry} />

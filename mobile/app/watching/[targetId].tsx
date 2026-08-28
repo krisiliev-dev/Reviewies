@@ -33,6 +33,7 @@ import {
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
 import { text, type } from '@reviewies/core/tokens';
+import { Data } from '../../src/ui/Data';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -170,7 +171,7 @@ export default function WatchingScreen() {
               </Text>
             )}
           </View>
-          <Text style={styles.clock}>{formatTimecode(clock.positionMs)}</Text>
+          <Data value={formatTimecode(clock.positionMs)} style={styles.clock} />
         </View>
 
         {/* The stream sits at the top, per the brief: reactions appear as you reach
@@ -331,8 +332,8 @@ const styles = StyleSheet.create({
   headerMiddle: { flex: 1, alignItems: 'center' },
   close: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
   series: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
-  episode: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
-  clock: { color: theme.ink, fontSize: text.s14, fontVariant: ['tabular-nums'], fontFamily: type.family.data.name },
+  episode: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
+  clock: { color: theme.ink },
 
   startBlock: { padding: 16, gap: 12 },
   startBlurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     padding: 12,
   },
-  driftText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  driftText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 
   pad: { padding: 12 },
   padGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

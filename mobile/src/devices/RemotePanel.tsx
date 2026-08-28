@@ -6,6 +6,8 @@ import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
 import { radius, tap, theme, tracking } from '../ui/theme';
 import { text, type, track } from '@reviewies/core/tokens';
+import { Section } from '../ui/Section';
+import { Data } from '../ui/Data';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -40,7 +42,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
     <>
         <View style={styles.devices}>
           <View style={styles.devicesHead}>
-            <Text style={styles.sectionHeading}>Device</Text>
+            <Section>Device</Section>
             <Pressable
               onPress={remote.scan}
               disabled={remote.scanning}
@@ -76,7 +78,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
               accessibilityLabel={`Use ${found.name} at ${found.address}`}
             >
               <Text style={styles.deviceName}>{found.name}</Text>
-              <Text style={styles.deviceAddress}>{found.address}</Text>
+              <Data value={found.address} size="s12" style={styles.deviceAddress} />
             </Pressable>
           ))}
         </View>
@@ -142,13 +144,6 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    textTransform: 'uppercase',
-    fontFamily: type.family.title.name,
-  },
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   progressTrack: { height: 3, backgroundColor: theme.groundWell, borderRadius: radius.pill },
   progressFill: { height: 3, backgroundColor: theme.workingFill, borderRadius: radius.pill },
@@ -156,7 +151,7 @@ const styles = StyleSheet.create({
   device: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12 },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
-  deviceAddress: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  deviceAddress: { color: theme.inkSecondary },
   error: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
   nowPlaying: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 

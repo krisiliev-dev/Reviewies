@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 import { useDialog } from './useDialog';
+import { Section } from './Section';
+import { Data } from './Data';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -136,7 +138,7 @@ function Grid({
 }) {
   return (
     <>
-      <p className="mb-2 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">{label}</p>
+      <Section as="p">{label}</Section>
       <div className="flex flex-wrap gap-1.5">
         {values.map((value) => (
           <button
@@ -145,9 +147,9 @@ function Grid({
             // A grid of bare numbers: "3" says nothing about season or episode.
             aria-label={`${label}: ${value}`}
             // Big enough to hit one-handed; this is a grid of small numbers.
-            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3 text-s14 font-data font-medium tabular-nums"
+            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3"
           >
-            {value}
+            <Data value={value} />
           </button>
         ))}
       </div>

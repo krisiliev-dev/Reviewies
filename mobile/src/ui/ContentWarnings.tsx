@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   dotContested: { backgroundColor: theme.inkTertiary },
   label: { color: theme.ink, fontSize: text.s14, flex: 1, fontFamily: type.family.body.name },
   labelMuted: { color: theme.inkSecondary },
-  votes: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  votes: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   vote: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,

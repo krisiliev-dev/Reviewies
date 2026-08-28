@@ -7,6 +7,7 @@ import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from '@reviewies/core/watching/emoji';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
+import { Data } from '../ui/Data';
 import {
   isStale,
   matchesEpisode,
@@ -207,8 +208,8 @@ export function WatchingMode() {
             </p>
           )}
         </div>
-        <span className="min-w-12 text-right font-data font-medium text-s14 tabular-nums text-ink-secondary">
-          {formatTimecode(clock.positionMs)}
+        <span className="min-w-12 text-right">
+          <Data value={formatTimecode(clock.positionMs)} className="text-ink-secondary" />
         </span>
       </header>
 

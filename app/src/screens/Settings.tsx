@@ -18,6 +18,8 @@ import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../ui/Button';
+import { Section } from '../ui/Section';
+import { Data } from '../ui/Data';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -88,7 +90,7 @@ export function Settings() {
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Export</h2>
+        <Section className="px-1">Export</Section>
         <p className="px-1 text-s14 text-ink-secondary">{COPY.settings.exportBlurb}</p>
         <Button
           size="page"
@@ -129,16 +131,16 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Import</h2>
+        <Section className="px-1">Import</Section>
         <ImportFormats />
         <ImportFiles />
 
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+        <Section className="px-1">
           Watching
-        </h2>
+        </Section>
         <label className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4">
           <span className="min-w-0">
             <span className="block">Open the conversation after marking watched</span>
@@ -159,9 +161,9 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+        <Section className="px-1">
           Metadata cache
-        </h2>
+        </Section>
         <p className="px-1 text-s14 text-ink-secondary">
           Artwork and episode listings are cached from the metadata provider and expire
           automatically. Clearing them never touches your own history, and shows carried
@@ -200,7 +202,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
       <dt className="text-s12 text-ink-secondary">{label}</dt>
-      <dd className="text-s20 font-data font-medium tabular-nums">{value}</dd>
+      <dd><Data value={value} size="s20" /></dd>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
+import { Data } from '../ui/Data';
 
 /**
  * The other half of the navigation.
@@ -89,7 +90,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
       <dt className="text-s12 text-ink-secondary">{label}</dt>
-      <dd className="text-s20 font-data font-medium tabular-nums">{value}</dd>
+      <dd><Data value={value} size="s20" /></dd>
     </div>
   );
 }

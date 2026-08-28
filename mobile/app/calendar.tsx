@@ -26,6 +26,7 @@ import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Button } from '../src/ui/Button';
 import { Row } from '../src/ui/Row';
+import { Section } from '../src/ui/Section';
 import { ROW } from '@reviewies/core/ui/row';
 import { Choice } from '../src/ui/Choice';
 
@@ -65,9 +66,7 @@ export default function CalendarScreen() {
     <>
       <Stack.Screen options={{ title: 'Upcoming' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.sectionHeading} accessibilityRole="header">
-          Tell me about
-        </Text>
+        <Section>Tell me about</Section>
         {/* This control is where `Choice` came from. It was the only one of five that
             said `radiogroup`/`radio` and put the hint in the announced name; the other
             four were buttons carrying a `selected` flag. The component is this one,
@@ -135,7 +134,9 @@ export default function CalendarScreen() {
 
         {/* Sixty days on both platforms now — it was thirty here and sixty on the
             web, the same screen showing a different amount of the future. */}
-        <Text style={[styles.sectionHeading, styles.spaced]}>Next two months</Text>
+        <View style={styles.spaced}>
+          <Section>Next two months</Section>
+        </View>
         {entries === undefined && <ActivityIndicator color={theme.workingFill} />}
         {entries?.length === 0 && (
           <View style={styles.emptyBlock}>
@@ -163,7 +164,9 @@ export default function CalendarScreen() {
             {/* "Today" / "Tomorrow" / "Friday", the same words the web uses — this
                 printed the raw `2026-08-26` and left you to work out which day that
                 was. §6.66. */}
-            <Text style={styles.dayHeading}>{formatDay(day)}</Text>
+            {/* `group`: this sits inside "Next two months", and the two styles were
+                byte-identical before `Section` had to give them different values. task #156. */}
+            <Section level="group">{formatDay(day)}</Section>
             {list.map((entry) => (
               /* Doc 6 §5 named this row as the one that still got the naming wrong: the
                  whole entry was a single `Pressable` labelled `Open {name}`, so the
@@ -208,13 +211,6 @@ const styles = StyleSheet.create({
   // 13 is one of the two the scale killed.
   deliveryNote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
-  sectionHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    fontFamily: type.family.title.name,
-    textTransform: 'uppercase',
-  },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
@@ -224,11 +220,4 @@ const styles = StyleSheet.create({
   // The same eyebrow as every other section heading in the app, which this was not:
   // the web drew the day as uppercase 14/600 with letter-spacing and the phone drew
   // it as plain 12 — the same role, two entirely different treatments.
-  dayHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    fontFamily: type.family.title.name,
-    textTransform: 'uppercase',
-  },
 });

@@ -17,6 +17,7 @@ import {
 import { COPY } from '@reviewies/core/copy';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
+import { Section } from '../ui/Section';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -240,7 +241,7 @@ function FindPeople({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">Find people</h2>
+      <Section className="px-1">Find people</Section>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -346,10 +347,10 @@ function PersonList({
 
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="px-1 text-s12 font-title font-semibold tracking-t83 text-ink-secondary uppercase">
+      <Section className="px-1">
         {heading}
         {people.length > 0 && <span className="ml-1.5 normal-case">{people.length}</span>}
-      </h2>
+      </Section>
 
       {people.length === 0 && empty && <p className="px-1 text-s14 text-ink-secondary">{empty}</p>}
       {failed && (

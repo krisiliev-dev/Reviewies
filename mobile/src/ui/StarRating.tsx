@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from './theme';
 import { text, type } from '@reviewies/core/tokens';
+import { Data } from './Data';
 
 /**
  * Half-star ratings.
@@ -70,7 +71,7 @@ export function StarRating({
           </View>
         );
       })}
-      {value !== undefined && <Text style={styles.value}>{value.toFixed(1)}</Text>}
+      {value !== undefined && <Data value={value.toFixed(1)} size="s12" style={styles.value} />}
     </View>
   );
 }
@@ -82,5 +83,5 @@ const styles = StyleSheet.create({
   on: { color: theme.workingMark },
   half: { position: 'absolute', top: 0, bottom: 0, left: 0, width: MIN_HALF },
   right: { left: undefined, right: 0 },
-  value: { color: theme.inkSecondary, fontSize: text.s12, marginLeft: 6, fontFamily: type.family.data.name },
+  value: { color: theme.inkSecondary, marginLeft: 6 },
 });

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Data } from './Data';
 
 /**
  * Half-star rating, the convention people already know from Letterboxd.
@@ -78,7 +79,7 @@ export function StarRating({
         </span>
       ))}
       {value !== undefined && (
-        <span className="ml-1.5 text-s12 text-ink-secondary tabular-nums">{value.toFixed(1)}</span>
+        <Data value={value.toFixed(1)} size="s12" className="ml-1.5 text-ink-secondary" />
       )}
     </div>
   );

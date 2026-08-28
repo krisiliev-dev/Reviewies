@@ -34,6 +34,8 @@ import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { Button } from '../../src/ui/Button';
+import { Section } from '../../src/ui/Section';
+import { Data } from '../../src/ui/Data';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -117,7 +119,7 @@ export default function TitleScreen() {
                 <Text style={styles.retryText}>{COPY.title.tryAgain}</Text>
               </Pressable>
             )}
-            {title?.year ? <Text style={styles.year}>{title.year}</Text> : null}
+            {title?.year ? <Data value={title.year} style={styles.year} /> : null}
           </View>
         </View>
 
@@ -132,7 +134,7 @@ export default function TitleScreen() {
         {title && <AddToList titleId={titleId} kind={title.kind} />}
 
         <View style={styles.ratingBlock}>
-          <Text style={styles.ratingLabel}>{COPY.title.yourRating.toUpperCase()}</Text>
+          <Section>{COPY.title.yourRating}</Section>
           <StarRating
             of={title?.name ?? 'this title'}
             value={rating?.value}
@@ -205,7 +207,7 @@ export default function TitleScreen() {
 
         {seasons.map(([season, list]) => (
           <View key={season} style={styles.season}>
-            <Text style={styles.seasonHeading}>Season {season}</Text>
+            <Section>Season {season}</Section>
             {list.map((episode) => (
               <EpisodeRow
                 key={episode.id}
@@ -353,21 +355,12 @@ const styles = StyleSheet.create({
   },
   retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   title: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
-  year: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
+  year: { color: theme.inkSecondary },
   overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: 20, fontFamily: type.family.prose.name },
   ratingBlock: { gap: 6 },
-  ratingLabel: { color: theme.inkSecondary, fontSize: text.s12, letterSpacing: tracking(text.s12, track.t83), fontFamily: type.family.title.name },
   loading: { marginTop: 24 },
 
   season: { gap: 6 },
-  seasonHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    fontFamily: type.family.title.name,
-    textTransform: 'uppercase',
-    marginTop: 8,
-  },
 
   episodeUnder: { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
 

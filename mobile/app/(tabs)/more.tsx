@@ -13,6 +13,7 @@ import { radius, theme } from '../../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Row as BaseRow } from '../../src/ui/Row';
+import { Data } from '../../src/ui/Data';
 
 /**
  * Everything not done daily.
@@ -108,7 +109,7 @@ function Stat({ label, value }: { label: string; value: number }) {
   return (
     <View style={styles.stat}>
       <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+      <Data value={value} size="s20" style={styles.statValue} />
     </View>
   );
 }
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 12 },
   stat: { flex: 1, backgroundColor: theme.groundWell, borderRadius: radius.plate, padding: 12 },
   statLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  statValue: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.data.name },
+  statValue: { color: theme.ink },
 
   chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
 

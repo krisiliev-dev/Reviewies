@@ -11,10 +11,11 @@ import {
 } from '@reviewies/core/stats/compute';
 import { border, radius, theme, tracking } from '../src/ui/theme';
 import { text, type, track } from '@reviewies/core/tokens';
-import { splitFigure } from '@reviewies/core/ui/data';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';
+import { Section } from '../src/ui/Section';
+import { Data } from '../src/ui/Data';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -82,7 +83,7 @@ export default function StatsScreen() {
 
         {years.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeading}>Year in review</Text>
+            <Section>Year in review</Section>
             <Choice
               name="Which year to review"
               scroll
@@ -162,14 +163,14 @@ export default function StatsScreen() {
 
             {summary.topTitles.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionHeading}>Most watched</Text>
+                <Section>Most watched</Section>
                 {summary.topTitles.map((title) => (
                   <View key={title.titleId} style={styles.tallyCard}>
                     <View style={styles.tallyHead}>
                       <Text numberOfLines={1} style={styles.tallyName}>
                         {title.name}
                       </Text>
-                      <Text style={styles.tallyTime}>{formatDuration(title.minutes)}</Text>
+                      <Data value={formatDuration(title.minutes)} style={styles.tallyTime} />
                     </View>
                     {/* Width by time, not by episode count — the same rule as the
                         ranking, or the picture would contradict the order. */}
@@ -185,9 +186,11 @@ export default function StatsScreen() {
                         shipped and this did not. A bar with no number beside it is a
                         shape: it says one show beat another and not by how much of what.
                         §6.62 put the two screenshots side by side. */}
-                    <Text style={styles.tallyCount}>
-                      {title.episodes} {title.episodes === 1 ? 'episode' : 'episodes'}
-                    </Text>
+                    <Data
+                      value={`${title.episodes} ${title.episodes === 1 ? 'episode' : 'episodes'}`}
+                      size="s12"
+                      style={styles.tallyCount}
+                    />
                   </View>
                 ))}
               </View>
@@ -207,16 +210,10 @@ export default function StatsScreen() {
  */
 
 function Figure({ label, value }: { label: string; value: string }) {
-  // The figure in mono, the unit in the body face — see the web's copy of this. Nested
-  // `Text` rather than two siblings so the unit sits on the figure's baseline.
-  const { figure, unit } = splitFigure(value);
   return (
     <View style={styles.figure}>
       <Text style={styles.figureLabel}>{label}</Text>
-      <Text style={styles.figureValue}>
-        {figure}
-        {unit ? <Text style={styles.figureUnit}> {unit}</Text> : null}
-      </Text>
+      <Data value={value} size="s20" style={styles.figureValue} />
     </View>
   );
 }
@@ -234,16 +231,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   figureLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  // 22/700 here against the web's 20/600 for the same tile. 22 is not a step and the
-  // pair had never been compared; s20/semibold, which is what the web already drew.
-  // Mono, tabular: predictable column widths are what stop a figure reflowing at 200%.
-  figureValue: {
-    color: theme.ink,
-    fontSize: text.s20,
-    fontFamily: type.family.data.name,
-  },
-  /* Mono is for the numeral run. A word set in it is a typewriter, not a tabular figure. */
-  figureUnit: { fontFamily: type.family.body.name },
+  figureValue: { color: theme.ink },
   emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
   allTime: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
@@ -256,13 +244,6 @@ const styles = StyleSheet.create({
   note: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 
   section: { gap: 12, marginTop: 6 },
-  sectionHeading: {
-    color: theme.inkSecondary,
-    fontSize: text.s12,
-    letterSpacing: tracking(text.s12, track.t83),
-    textTransform: 'uppercase',
-    fontFamily: type.family.title.name,
-  },
   // A card, like the web's. It was bare text on the page background with a hairline
   // running the full width of the screen under it, which reads as a progress bar rather
   // than as a chart. §6.62.
@@ -273,11 +254,11 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   // 11 against the web's 12, for the same line under the same bar.
-  tallyCount: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.data.name },
+  tallyCount: { color: theme.inkSecondary },
   tallyHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   tallyName: { color: theme.ink, fontSize: text.s14, flex: 1, fontFamily: type.family.body.name },
   // 12 against the web's 14, beside a name that is the same size on both.
-  tallyTime: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.data.name },
+  tallyTime: { color: theme.inkSecondary },
   barTrack: { height: 6, backgroundColor: theme.groundWell, borderRadius: radius.pill, overflow: 'hidden' },
   barFill: { height: 6, backgroundColor: theme.workingFill, borderRadius: radius.pill },
 });
