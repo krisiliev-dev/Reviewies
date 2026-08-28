@@ -31,6 +31,31 @@ function filesUnder(dir: string, out: string[] = []): string[] {
 }
 
 describe('a screen title', () => {
+  it('is in the app\'s own face on a pushed screen too', () => {
+    /*
+     * The nine screens behind the tab roots were drawing their titles in React
+     * Navigation's default — the platform system font, at whatever size it chose —
+     * because `_layout.tsx` set `headerStyle` and `headerTintColor` and never
+     * `headerTitleStyle`. Six sprints of type work stopped at the tab bar, and nothing
+     * noticed because no clause reads the navigator's options and the titles *are*
+     * headings, so the accessibility guards were satisfied.
+     *
+     * It is visible the moment two shots sit side by side: `03-upnext` is Archivo
+     * Expanded Bold, `08-stats` was not Archivo at all. §6.130.
+     *
+     * `MASTHEAD.sub`, not `masthead`: a pushed screen is a step inside the app, which is
+     * what the chevron beside it says. That pairing is deliberate and is not what this
+     * clause is about — the typeface was.
+     */
+    const layout = read('mobile/app/_layout.tsx');
+    expect(layout, 'the pushed header has no title style at all')
+      .toMatch(/headerTitleStyle:/);
+    expect(layout, 'the pushed header does not take the app face')
+      .toMatch(/fontFamily: type\.family\[MASTHEAD\.sub\.face\]\.name/);
+    expect(layout, 'the pushed header size is not on the scale')
+      .toMatch(/fontSize: MASTHEAD\.sub\.size/);
+  });
+
   it('carries one gap per treatment, on the scale', () => {
     /*
      * The finding, as a rule. Seven spacings across three treatments is one decision made

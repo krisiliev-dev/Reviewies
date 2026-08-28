@@ -9075,6 +9075,105 @@ head appends "· you" to mark the one that is yours, so the shot read **"you · 
 correct screen that looks like a duplication bug in the only artefact a future reader can
 consult. It is `mara` now.
 
+### 6.130 The flagship, photographed at last, and the two platforms disagreeing on it
+
+`watching/[targetId]` was the last route in the product with no photograph — the emoji
+pad, the reaction stream, the transport, the one screen `EDGE_EXEMPT` names as exempt from
+the screen edge, and the one the brief calls the reason this exists rather than another
+tracker. Every design judgement about it had been made from source.
+
+The line in `capture.mjs` that reaches the title page has said *"a title page and Watching
+Mode need a real target"* since it was written, and only ever took the title page. §6.41's
+rule again, in a comment rather than a test: a promise outlives the thing it promised.
+
+## What the photograph found
+
+Not untidiness. A **disagreement**, and one that writes bad data.
+
+The web disables every pad cell until the clock is going —
+`disabled={!clock.running && clock.positionMs === 0 && !autoSynced}`. The phone does not.
+`22-watching-start` is twenty live-looking cells sitting above a "Start watching" button
+nobody has pressed.
+
+The web is right, and not as a matter of taste. A reaction **is a timestamp**: it is stored
+as `tMs`, replayed to other people at that offset, and cross-validated by content there. A
+tap before the clock starts writes a real row at `0` and contributes a false moment to
+everyone else's stream. So it is the component's rule, not a screen's: **a pad cell is
+inert until there is a clock to attach a moment to.**
+
+`core/src/ui/padCell.ts` owns it, and the pad is the last of the three surfaces
+`accentFill.test.ts` named as having none: *"the remainder are surfaces with no component
+yet: Watching Mode's emoji pad, the remote's device list, `data.tsx`'s switch row. A
+component has to exist before a guard can point at it."* Two to go.
+
+## And off is not a fade
+
+The web drew disabled as `disabled:opacity-30` — at twenty cells, a pad that reads as a
+failed render rather than as a pad waiting. That is the treatment `appearance.test.ts` bans
+on a filled control, at twenty times the area.
+
+It is `SURFACE_OFF` on both platforms now: the fill goes, a hairline arrives, the ink steps
+to tertiary. That constant was `KEY_DISABLED` in `ui/key.ts` and the name became wrong the
+moment a second control needed it — it is not a property of keys, it is what "off" looks
+like on a surface, so it lives in `ui/surface.ts`. `Button` keeps spelling the same three
+values in its own tone table on purpose: `quiet` has no rule to lose, so the tones
+genuinely differ and one constant would not fit them.
+
+## Three things the photographs corrected in my own work
+
+**The reason was redundant.** The component first returned the sentence *"Start watching
+first — a reaction is a moment in the episode"* for each screen to print, on §6.104's rule
+that a thing which is off should say why. The next run showed three sentences about
+starting stacked on one screen — "Tap the moment you press play", a filled "Start
+watching", then the reason — and the third pushed the pad's last row under the search box.
+The condition that holds the pad back **is** the condition that shows the start block, and
+the start block comes first in the reading order. §6.104 was already satisfied by the right
+thing. `padHeldBack` became `padLive`.
+
+**`Block` was the wrong component.** The density label looked like exactly its job: a label
+and the thing it labels, hand-written on both platforms in two different spellings — the
+phone stacking a `Text` at `gap: 4`, the web using a `Note` as a layout wrapper. Migrated,
+photographed, reverted: `Block` stacks at `BLOCK.gap` under `Section`'s tracked caps, and
+those twenty points cost the running state the pad's fifth row. The boundary is written
+into `block.test.ts` rather than left to be rediscovered: **`Block` labels a block of
+content; a label on a control sits with its control.** Three chips in a transport row are
+not a block. Both platforms now spell it the web's way, inline, and both keep the pad
+whole.
+
+**A plant backup keyed by basename.** `app/src/ui/PadCell.tsx` and
+`mobile/src/ui/PadCell.tsx` are the same filename — which is *the three-file pattern*, so
+this will be true of every component from here on. Backing them up by `basename` put the
+phone's file over the web's, and the "restore" left the web renderer holding React Native.
+`plant.sh` has keyed by full path since it was written; hand-rolling the copy is what broke
+it. §6.121's rule needs the corollary said out loud: **a restore is only a restore if it
+put back the file you took.**
+
+## The remote drawer, and the last of #160
+
+`24-watching-remote` is the drawer with no device, which nothing had photographed either.
+Two readings of it were wrong and checking cost a minute: it *does* dim behind the drawer
+(`rgba(0,0,0,0.4)`), and its two visible "Close" controls *are* distinguished — the inner
+one is `accessibilityLabel="Close remote"`, with a comment saying why.
+
+What was real: **"Scan Wi-Fi" was an action drawn as a heading** — a bare `Text` in the
+title face at primary ink inside a `Pressable`, brighter than the `Section` eyebrow beside
+it and shaped like nothing. The same class as §6.126's 47x16 "Add to list", in the same
+kind of place: a surface no design pass had ever seen. It is a `Button`.
+
+And #160's pushed-screen headers, settled on the visual argument as the brief asked. The
+layout stays: a chevron and a smaller title is what tells you a screen is a step rather
+than a place, the argument for making them tab-root mastheads rested on an accessibility
+claim that was false (§6.120), and what is left is a preference against replacing the
+platform's own header on nine routes.
+
+But putting `08-stats` beside `03-upnext` found the actual defect underneath it.
+`_layout.tsx` set `headerStyle` and `headerTintColor` and **never `headerTitleStyle`**, so
+every pushed screen drew its title in React Navigation's default: the platform system font,
+at whatever size it chose. Six sprints of type work stopped at the tab bar. Nothing noticed
+because the titles *are* headings, so every accessibility clause was satisfied, and no guard
+had ever read the navigator's options. They take `MASTHEAD.sub` now, and `masthead.test.ts`
+reads the layout.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9541,11 +9640,18 @@ and which single claim in this document could not be checked at all:
   What §6.129 adds rather than removes: the track now has twenty-one shots and the last
   gated screen among them. `19-comments-sealed`, `20-comments-in` and `21-comments-writing`
   cover the route that needed an account *and* a watched episode, which is why no harness
-  had ever reached it. **One route is still unphotographed, and it is a flagship**:
-  `watching/[targetId]` — Watching Mode, the immersive screen with the emoji pad, the
-  reaction strip and the transport, the one screen `EDGE_EXEMPT` names and the one the
-  brief called the reason the product exists. Every design judgement about it to date has
-  been made from source.
+  had ever reached it.
+
+  And §6.130 closes it: **every route in the product now has a photograph.** The last one
+  was the flagship — `watching/[targetId]`, with the emoji pad, the reaction stream and the
+  transport — and it is `22-watching-start`, `23-watching-live` and `24-watching-remote`.
+  What that changes about this bullet is the kind of thing left unknown. It is no longer
+  "a screen nobody has seen"; it is **a state nobody has seen**. The three shots cover
+  before playback, during, and the drawer with no device, and the same screen has at least
+  four more nobody has looked at: the emoji search with a query in it, the search with no
+  match, a drift correction offered, and `ListenSync` actually listening. Every screen in
+  the app has states behind a control, and the harness photographs the ones somebody
+  thought to walk to.
 
   And a second thing the walk to those three shots settled, which applies to every future
   one: `expo export` writes a dynamic route as the literal file `comments/[targetId].html`,

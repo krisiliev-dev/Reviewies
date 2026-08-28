@@ -141,6 +141,8 @@ interface MastheadProps {
 >
 > So the argument for replacing the native header is **visual, not assistive**: a pushed title is in the system face at the system size while every tab root is in Archivo Narrow on our scale. That is real, it is visible in `design/screens/08-stats.png`, and it belongs with the layout work in #160 — not with a component extraction sold on a role the screens already had.
 
+> **And what putting the two shots side by side actually found (§6.130).** The layout question — should a pushed screen wear the tab-root masthead — is settled as **no**, on the visual argument alone: a chevron and a smaller title is what tells you a screen is a step rather than a place, and replacing the platform's own header on nine routes buys a consistency that is not a defect. What *was* a defect sat underneath it. `mobile/app/_layout.tsx` set `headerStyle` and `headerTintColor` and never `headerTitleStyle`, so every pushed screen drew its title in React Navigation's default — the platform system font, at whatever size it chose. Six sprints of type work stopped at the tab bar, and no guard noticed because the titles *are* headings and nothing had ever read the navigator's options. They take `MASTHEAD.sub` now; `masthead.test.ts` reads the layout.
+
 **States:** one, plus `back` present/absent. **A11y:** title is `accessibilityRole="header"`; `back` is a 44×44 `Button as="button"` with a required name (never bare "Back" — `watching/[targetId].tsx:155` already learned this and named its close control "Leave Watching Mode" because two things on that screen said "Close").
 
 **Replaces:** the five tab `styles.heading` declarations and all 14 `<Stack.Screen options={{ title }} />` call sites across ten files.
@@ -424,6 +426,15 @@ mobile/src/ui/Button.tsx         RN renderer, StyleSheet
 ```
 
 Shared: `Button`, `Section`, `Poster`, `Row`, `Data`, `Note`, `Field`, `Choice`, `CrossOff`, `Progress`, `Key`, `PadCell`, plus the contracts under `Sheet` and `ReactionStrip`.
+
+**`PadCell` is built (§6.130), and it is not an extraction.** The emoji pad was the last of the three surfaces `accentFill.test.ts` named as having no component, and nothing had ever photographed it. What the photograph found was a *disagreement*: the web disabled every cell until the clock was going and the phone left all twenty live, so a tap before you press play wrote a reaction at `tMs: 0` — a false moment contributed to everyone else's stream. A reaction is a timestamp, so the rule belongs to the component: **a pad cell is inert until there is a clock to attach a moment to.** Off is `SURFACE_OFF` on both platforms, never a fade; the web's `disabled:opacity-30` made twenty cells read as a failed render.
+
+Two boundaries came out of the same sprint and are worth stating here, because both were found by building the wrong thing first and looking at it:
+
+- **A control does not have to carry its own reason when the screen has already given it.** The pad first printed *"Start watching first — a reaction is a moment in the episode"*, on the rule that a thing which is off should say why. The condition that holds the pad back is the same condition that shows the start block, and the start block comes first in the reading order — so the screen said it three times and the third sentence pushed the pad's last row off the viewport.
+- **`Block` labels a block of content. A label on a control sits with its control.** Watching Mode's density label looked exactly like `Block`'s job and was migrated to it; `Block` stacks at `BLOCK.gap` under `Section`'s tracked caps, and those twenty points cost the same row. Three chips in a transport row are not a block.
+
+**`SURFACE_OFF` is the disabled treatment, and it lives in `ui/surface.ts`.** The fill goes, a hairline rule arrives, the ink steps to tertiary — never an opacity. It was `KEY_DISABLED` in `ui/key.ts` until a second control needed it; it is not a property of keys, it is what "off" looks like on a surface. `Button` keeps the same three values in its own per-tone table on purpose, because `quiet` has no rule to lose and one constant would not fit the four tones.
 Phone-only: `Masthead` (the web has no push stack), `ChannelStrip` (the web's nav carries eight destinations, not five).
 
 ### Where React Native and the DOM disagree, and how each is expressed

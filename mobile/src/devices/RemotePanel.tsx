@@ -5,13 +5,14 @@ import type { Command } from '@reviewies/core/devices/types';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
-import { leadingOf, tap, theme, space} from '../ui/theme';
+import { leadingOf, theme, space} from '../ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Progress } from '../ui/Progress';
+import { Button } from '../ui/Button';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -47,17 +48,21 @@ export function RemotePanel({ remote }: { remote: Remote }) {
         <View style={styles.devices}>
           <View style={styles.devicesHead}>
             <Section>Device</Section>
-            <Pressable
+            {/* A `Button`. It was a bare `Text` in the title face at primary ink inside a
+                `Pressable` — brighter than the `Section` eyebrow beside it and shaped like
+                nothing, so `24-watching-remote` reads it as a second heading rather than
+                as the one action on a drawer that has no device. Same class as §6.126's
+                47x16 "Add to list", and in the same place: a surface no design pass had
+                ever photographed. §6.130. */}
+            <Button
+              size="inline"
+              tone="secondary"
               onPress={remote.scan}
+              busy={remote.scanning}
               disabled={remote.scanning}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Scan the Wi-Fi for a device"
-              accessibilityState={{ disabled: remote.scanning, busy: remote.scanning }}
-              style={tap}
-            >
-              <Text style={styles.scan}>{remote.scanning ? 'Scanning…' : 'Scan Wi-Fi'}</Text>
-            </Pressable>
+              label={remote.scanning ? 'Scanning…' : 'Scan Wi-Fi'}
+              name="Scan the Wi-Fi for a device"
+            />
           </View>
 
           {remote.scanning && (
@@ -148,7 +153,6 @@ const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   /* A device is an entry in a list of devices, so a rule rather than a fill. */
   device: {
     borderBottomWidth: ROW.rule,

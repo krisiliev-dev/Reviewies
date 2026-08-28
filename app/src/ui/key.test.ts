@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
-import { KEY_DISABLED, KEY_HEIGHT, TRANSPORT, DPAD, VOLUME, HOME } from '@reviewies/core/ui/key';
+import { KEY_HEIGHT, TRANSPORT, DPAD, VOLUME, HOME } from '@reviewies/core/ui/key';
+import { SURFACE_OFF } from '@reviewies/core/ui/surface';
 import type { KeySpec } from '@reviewies/core/ui/key';
 import { border, color, size } from '@reviewies/core/tokens';
 
@@ -109,7 +110,7 @@ describe('the remote fascia', () => {
      * fade `appearance.test.ts` bans — a faded fill is a dark block with dark lettering
      * on it, and reads as broken rather than as waiting.
      */
-    expect(KEY_DISABLED.rule).toBe(border.hairline);
+    expect(SURFACE_OFF.rule).toBe(border.hairline);
     for (const [platform, source] of Object.entries(CALLERS)) {
       expect(source, `${platform} renders live keys with no device`).toMatch(
         /disabled=\{!(remote\.device|bridge\.selected)\}/,
@@ -132,7 +133,7 @@ describe('the remote fascia', () => {
     };
     for (const theme of ['dark', 'light'] as const) {
       const table = color[theme];
-      expect(contrast(table[KEY_DISABLED.ink], table.ground), theme).toBeGreaterThan(4.5);
+      expect(contrast(table[SURFACE_OFF.ink], table.ground), theme).toBeGreaterThan(4.5);
     }
   });
 

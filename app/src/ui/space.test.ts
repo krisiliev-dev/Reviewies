@@ -115,8 +115,13 @@ describe('the space scale, on the phone', () => {
      * 194, down one: three `padding: 24` containers became `SCREEN.edge`. That 24 was a
      * fourth screen edge that §6.121 could not absorb, because it was not a `content:`
      * container and the migration matched on the name.
+     *
+     * 192 after §6.130, down two: Watching Mode's `padGrid`, `padButton`, `padPressed`
+     * and `densityBlock` went to `PadCell` and `Block`. The spacing did not vanish — it
+     * moved into two components, where one file owns it and this scan does not count it
+     * against a screen.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(193);
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(191);
     expect(off).toEqual([]);
   });
 });

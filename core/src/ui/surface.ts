@@ -46,7 +46,7 @@
  * than a press that is a little quieter on the rest. Both are faint; on the phone the
  * haptic carries the confirmation and this is the corroboration.
  */
-import { elevation } from '../tokens.ts';
+import { border, elevation } from '../tokens.ts';
 
 /**
  * Where a control goes while it is held. One direction, for every control on both
@@ -69,4 +69,25 @@ export const SURFACE = {
   card: elevation.raised,
   /** Held down, and the inside of a plate. */
   sunk: elevation.sunken,
+} as const;
+
+/**
+ * A control that is present and not yet pressable: the fill goes, a hairline rule
+ * arrives, the ink steps to tertiary.
+ *
+ * Never an opacity. A faded fill gives a dark block with dark lettering on it — the
+ * reason `appearance.test.ts` bans `disabled:opacity` on a filled action, found by
+ * looking at one — and at twenty cells the web's `disabled:opacity-30` made Watching
+ * Mode's whole pad read as a failed render rather than as a pad waiting for a clock.
+ *
+ * This was `KEY_DISABLED` in `ui/key.ts` and the name became wrong the moment a second
+ * control needed it. It is not a property of keys; it is what "off" looks like on a
+ * surface, which is this file's subject. `Button` spells the same three values in its
+ * own tone table and stays there on purpose: `quiet` has no rule to lose, so the tones
+ * genuinely differ and one constant would not fit them.
+ */
+export const SURFACE_OFF = {
+  rule: border.hairline,
+  colour: 'strokeHairline',
+  ink: 'inkTertiary',
 } as const;

@@ -708,4 +708,77 @@ if (await link.count()) {
   await link.click();
   await shot('15-title');
 }
+
+/*
+ * Watching Mode, which the line above has promised since it was written and never took.
+ *
+ * It was the last route in the product with no photograph, and it is the flagship — the
+ * emoji pad, the reaction stream, the transport, the one screen `EDGE_EXEMPT` names as
+ * exempt from the screen edge. Every design judgement about it had been made from source.
+ *
+ * It is a dynamic route, so a deep link to `/watching/<id>` is a 404 against a static
+ * export (§6.129); it has to be reached the way a person reaches it, from an episode row's
+ * own "React" button. That is also why it took this long: the harness only grew a title
+ * page to press it from in §6.105.
+ *
+ * Numbered from 22 rather than 16 on purpose. These come from the signed-out pass, which
+ * runs first, so the numbers are out of creation order — but 16 to 21 are cited by name in
+ * §6.126 and §6.129, and renaming a photograph the record already points at costs more
+ * than a gap in a sequence. The numbers are identity, not order.
+ */
+// `hollow` above is already reported and this runs after it, so these get their own list
+// and their own message rather than pushing into one that has been printed.
+const unseen = [];
+const watching = page.getByRole('link', { name: /^React along with /i }).first();
+await watching.waitFor({ timeout: 20000 });
+await watching.click();
+await page.waitForTimeout(2500);
+await shot('22-watching-start');
+const before = await page.locator('body').innerText();
+// The start block, not the running screen: this is what you see before you press play, and
+// "Start watching" is the only thing on it that no other state prints.
+if (!/Tap the moment you press play/i.test(before)) {
+  unseen.push('22-watching-start is not the before-playback state');
+}
+
+await page.getByRole('button', { name: 'Start watching' }).click();
+await page.waitForTimeout(1500);
+// A reaction of your own, so the stream has something in it. Nothing else can put one
+// there: `fetchRemoteReactions` needs an account, and an empty stream photographs as a
+// blank strip that looks exactly like a broken one.
+await page.getByRole('button', { name: /^React with /i }).first().click();
+await page.waitForTimeout(2500);
+await shot('23-watching-live');
+const live = await page.locator('body').innerText();
+if (!/Pause|Resume/.test(live)) unseen.push('23-watching-live has no transport, so the clock never started');
+/*
+ * The timecode is the one thing on this screen that proves it is *running* rather than
+ * merely started, and it is the screen's whole premise. Read twice, a second apart.
+ */
+const readClock = async () =>
+  (await page.locator('body').innerText()).match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/)?.[0];
+const first = await readClock();
+await page.waitForTimeout(2000);
+if (!first || first === (await readClock())) {
+  unseen.push(`23-watching-live's clock is not moving (${first ?? 'no timecode on the screen'})`);
+}
+
+/*
+ * And the drawer, which is the state a person meets when there is no television to talk
+ * to. It is the only part of this screen that can say "nothing is set up" and nobody has
+ * ever seen it say it.
+ */
+const drawer = page.getByRole('button', { name: /remote|device/i }).first();
+if (await drawer.count()) {
+  await drawer.click();
+  await page.waitForTimeout(1500);
+  await shot('24-watching-remote');
+} else {
+  unseen.push('24-watching-remote: nothing on Watching Mode opens the remote drawer');
+}
+
 await browser.close();
+if (unseen.length) {
+  console.error(`Watching Mode shots that do not show what makes them worth taking:\n  ${unseen.join('\n  ')}`);
+  process.exitCode = 1;
+}

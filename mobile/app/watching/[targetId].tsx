@@ -13,9 +13,11 @@ import {
 import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePlaybackClock';
 import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../../src/ui/ReactionStream';
+import { PadCell, PadGrid } from '../../src/ui/PadCell';
+import { padLive } from '@reviewies/core/ui/padCell';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
-import { radius, tap, theme } from '../../src/ui/theme';
+import { radius, space, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import {
@@ -24,7 +26,6 @@ import {
 } from '@reviewies/core/watching/reactions';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
-import { PRESS } from '@reviewies/core/ui/surface';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
@@ -133,6 +134,7 @@ export default function WatchingScreen() {
   }, [reactions]);
 
   const pad = query.trim() ? searchEmoji(query) : EMOJI_PAD;
+  const padReady = padLive(clock.running || clock.positionMs > 0);
 
   async function react(emoji: string) {
     await addReaction(targetId, clock.positionMs, emoji);
@@ -220,6 +222,18 @@ export default function WatchingScreen() {
               name={COPY.controls.seek(5)}
               onPress={() => clock.nudge(5000)}
             />
+            {/* A control label, beside its control — the web's spelling, which the phone
+                stacked and right-aligned into the middle of a wrapped row.
+                `23-watching-live` is what that looked like: "Density" centred over the
+                first chip, the only label of its kind on the screen.
+                
+                Not `Block`. That was tried first and the photograph refused it: `Block`
+                is a section label above a block of content, so it stacks at `BLOCK.gap`
+                with `Section`'s tracked caps, and the twenty extra points pushed the pad's
+                last row under the search box — costing the running state the one property
+                this screen is built around. Three chips in a control row are not a block,
+                and forcing the component there was applying a rule outside its subject.
+                §6.130. */}
             <View style={styles.densityBlock}>
               <Text style={styles.densityLabel}>{COPY.watching.densityLabel}</Text>
               {/* "8", "24", "60" on their own are three numbers next to each other. The
@@ -269,25 +283,23 @@ export default function WatchingScreen() {
         )}
 
         <ScrollView contentContainerStyle={styles.pad} keyboardShouldPersistTaps="handled">
-          <View style={styles.padGrid}>
+          {/* Inert until the clock is going: a reaction is a timestamp, and there is no
+              moment to attach one to before you press play. The web has always disabled
+              these and the phone never did — `22-watching-start` was twenty live-looking
+              cells above an unpressed "Start watching". The start block above is the
+              explanation; the pad does not repeat it. §6.130. */}
+          <PadGrid>
             {pad.map((item) => (
-              <Pressable
+              <PadCell
                 key={item.emoji}
+                emoji={item.emoji}
+                label={item.label}
+                disabled={!padReady}
                 onPress={() => react(item.emoji)}
-                // Big targets: this is tapped in the dark without looking down for long.
-                style={({ pressed }) => [styles.padButton, pressed && styles.padPressed]}
-                accessibilityRole="button"
-                // Without this the emoji is read by its Unicode name and then the label
-                // underneath it: "face with tears of joy, Funny". One name, and the one
-                // a person would say.
-                accessibilityLabel={`React with ${item.label.toLowerCase()}`}
-              >
-                <Text style={styles.padEmoji}>{item.emoji}</Text>
-                <Text style={styles.padLabel}>{item.label}</Text>
-              </Pressable>
+              />
             ))}
             {pad.length === 0 && <Text style={styles.noMatch}>No emoji matches that.</Text>}
-          </View>
+          </PadGrid>
         </ScrollView>
 
         {/* Search is deliberately a small part of the screen. Most of it is the pad,
@@ -344,9 +356,10 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
   },
-  // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
-  // line and is what carried it past the edge once the row wrapped.
-  densityBlock: { alignItems: 'flex-end', gap: 4 },
+
+  // Inline, not stacked: the label sits with its chips on one line, which is what the
+  // web has always done and what keeps the pad's fifth row above the search box.
+  densityBlock: { flexDirection: 'row', alignItems: 'center', gap: space.s6 },
   densityLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 
   drift: {
@@ -358,19 +371,6 @@ const styles = StyleSheet.create({
   driftText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 
   pad: { padding: 12 },
-  padGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  padButton: {
-    width: '23%',
-    aspectRatio: 1,
-    backgroundColor: theme.groundRaised,
-    borderRadius: radius.plate,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  padPressed: { backgroundColor: theme[PRESS], transform: [{ scale: 0.94 }] },
-  padEmoji: { fontSize: text.s30 },
-  padLabel: { color: theme.inkSecondary, fontSize: text.s12, textAlign: 'center', fontFamily: type.family.title.name },
   noMatch: { color: theme.inkSecondary, fontSize: text.s14, padding: 8, fontFamily: type.family.body.name },
 
 });

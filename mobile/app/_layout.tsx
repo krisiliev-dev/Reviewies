@@ -7,6 +7,7 @@ import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
+import { MASTHEAD } from '@reviewies/core/ui/masthead';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
@@ -151,6 +152,28 @@ export default function RootLayout() {
           headerTintColor: theme.ink,
           headerShadowVisible: false,
           contentStyle: { backgroundColor: theme.ground },
+          /*
+           * The title on a pushed screen, in the app's own face.
+           *
+           * It was not set, so every pushed screen wore React Navigation's default —
+           * the platform system font at whatever size it chose. Six sprints of type
+           * work, `face.masthead`, the whole scale, and the nine screens behind the tab
+           * roots were drawing their titles in a typeface this design does not contain.
+           * Visible the moment two shots sit side by side: `03-upnext` is Archivo
+           * Expanded Bold and `08-stats` is not Archivo at all.
+           *
+           * `MASTHEAD.sub` is the level: a pushed screen is a step inside the app rather
+           * than the top of it, which is what the chevron beside it already says. That
+           * pairing is not drift and is deliberately left alone — the argument for making
+           * these look like tab-root mastheads rested on an accessibility claim that was
+           * false (§6.120, corrected in `components.md` §3), and what is left is a
+           * preference against replacing the platform's own header on nine routes. The
+           * *typeface* was the defect. §6.130.
+           */
+          headerTitleStyle: {
+            fontFamily: type.family[MASTHEAD.sub.face].name,
+            fontSize: MASTHEAD.sub.size,
+          },
         }}
       >
         {/* The tab group draws its own chrome. */}

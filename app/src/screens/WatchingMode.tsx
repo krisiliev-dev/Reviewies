@@ -6,6 +6,8 @@ import { formatTimecode, usePlaybackClock } from '@reviewies/core/watching/usePl
 import { forget, remember, resumeFor } from '@reviewies/core/watching/resume';
 import { ReactionStream } from '../watching/ReactionStream';
 import { EMOJI_PAD, loadEmojiIndex, searchEmoji } from '@reviewies/core/watching/emoji';
+import { padLive } from '@reviewies/core/ui/padCell';
+import { PadCell, PadGrid } from '../ui/PadCell';
 import { addReaction, estimateDriftMs, fetchRemoteReactions } from '@reviewies/core/watching/reactions';
 import { Data } from '../ui/Data';
 import {
@@ -65,6 +67,14 @@ export function WatchingMode() {
   const [query, setQuery] = useState('');
   const [dismissedDrift, setDismissedDrift] = useState(false);
   const [autoSynced, setAutoSynced] = useState(false);
+  /*
+   * `autoSynced` counts as started, and that is why this is a value rather than a repeat
+   * of the condition. Hearing the episode is proof it is playing, so a match sets a clock
+   * the person never pressed — and a pad still off at that point would be off during the
+   * episode. The phone has no equivalent flag because `ListenSync`'s correction starts the
+   * clock outright there.
+   */
+  const padReady = padLive(clock.running || clock.positionMs > 0 || autoSynced);
 
   /**
    * Pick up where you left off.
@@ -265,22 +275,21 @@ export function WatchingMode() {
 
       {/* Most of the screen is big preselected buttons — this gets used in the dark,
           without looking away from the television. */}
-      <div className="grid flex-1 grid-cols-4 content-start gap-2 overflow-y-auto p-3">
+      {/* Off until there is a clock, which this screen already did — and drew as
+          `disabled:opacity-30`, twenty cells of a pad that reads as a failed render.
+          `PadCell` owns both the rule and its treatment now, and the phone reads the
+          same rule instead of leaving every cell live. §6.130. */}
+      <PadGrid>
         {(results.length ? results : EMOJI_PAD).map((e) => (
-          <button
+          <PadCell
             key={e.emoji + e.label}
-            onClick={() => react(e.emoji)}
-            disabled={!clock.running && clock.positionMs === 0 && !autoSynced}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-plate bg-ground-raised text-s30 active:scale-90 disabled:opacity-30"
-            // The emoji is aria-hidden, so this is the whole name — "Funny" alone does
-            // not say it is something you do.
-            aria-label={`React with ${e.label.toLowerCase()}`}
-          >
-            <span aria-hidden="true">{e.emoji}</span>
-            <Note level="footnote" as="span">{e.label}</Note>
-          </button>
+            emoji={e.emoji}
+            label={e.label}
+            disabled={!padReady}
+            onPress={() => react(e.emoji)}
+          />
         ))}
-      </div>
+      </PadGrid>
 
       <div className="safe-bottom border-t border-stroke-hairline p-3">
         <Field
@@ -371,8 +380,15 @@ function SyncBar({
           proportion is not a promise anybody can act on — a quarter of a quiet episode
           is nothing — and the two platforms meant different things by the same word
           until §6.55. */}
-      <Note level="footnote" as="div" className="ml-auto flex items-center gap-1.5">
-        {COPY.watching.densityLabel}
+      {/* A control label beside its control, which is what this always was — the phone
+          stacked and right-aligned it into a wrapped row and now matches this.
+          
+          Deliberately not `Block`: it stacks at `BLOCK.gap` under `Section`'s tracked
+          caps, and on the phone those twenty points pushed the pad's last row off screen.
+          `Block` labels a block of content; three chips in a control row are not one.
+          §6.130. */}
+      <div className="ml-auto flex items-center gap-1.5">
+        <Note level="footnote" as="span">{COPY.watching.densityLabel}</Note>
         {/* `min-h-6` was 24px — WCAG 2.5.8's floor rather than the house standard of 44,
             on the flagship screen. The phone's version of this control was worse still at
             26×24 and wearing a button's role. `Choice` is 44 on both. */}
@@ -386,7 +402,7 @@ function SyncBar({
             hint: COPY.watching.densityChoice(value),
           }))}
         />
-      </Note>
+      </div>
     </div>
   );
 }

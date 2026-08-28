@@ -21,7 +21,6 @@
  * here is a rule and a step in the ink, the same treatment `Button` gives it.
  */
 import type { Command } from '../devices/types.ts';
-import { border } from '../tokens.ts';
 
 /**
  * Text presentation, requested rather than assumed.
@@ -53,19 +52,6 @@ export type KeySize = 'pad' | 'wide' | 'centre';
  * the phone's was right, so the web's moved.
  */
 export const KEY_HEIGHT = 60;
-
-/**
- * Disabled: the fill goes, a hairline rule arrives, the ink steps to tertiary.
- *
- * Never an opacity. A faded fill gives a dark block with dark lettering on it — the
- * reason `appearance.test.ts` bans `disabled:opacity` on a filled action, found by
- * looking at one.
- */
-export const KEY_DISABLED = {
-  rule: border.hairline,
-  colour: 'strokeHairline',
-  ink: 'inkTertiary',
-} as const;
 
 export interface KeySpec {
   command: Command;

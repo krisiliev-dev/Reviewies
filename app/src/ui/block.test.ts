@@ -118,6 +118,18 @@ describe('a labelled block', () => {
      * and `comments/[targetId].tsx` on the phone; `AccountPanel.tsx` and `People.tsx` on
      * the web. No margin: a floor with slack in it tolerates a screen quietly going back
      * to assembling the pair by hand, which is the accident this exists to notice.
+     *
+     * Still six after §6.130, and the seventh candidate is the reason to say so. Watching
+     * Mode's density label looked like this component's job — a label and the thing it
+     * labels, hand-written on both platforms in two different spellings. It was migrated,
+     * photographed, and reverted: `Block` stacks at `BLOCK.gap` under `Section`'s tracked
+     * caps, and those twenty points pushed the emoji pad's last row under the search box,
+     * costing the flagship screen the property it is built around — twenty reactions
+     * reachable in the dark without scrolling.
+     *
+     * So the boundary is written down rather than left to be rediscovered: **`Block`
+     * labels a block of content. A label on a control sits with its control.** Three chips
+     * in a transport row are not a block.
      */
     expect(callers.length, 'a screen stopped using Block; say why').toBe(6);
     // And both platforms are in that set, because the last four sprints were all about one

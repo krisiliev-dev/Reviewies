@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 904, app: 522, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 904, app: 529, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -192,6 +192,13 @@ describe('every workspace', () => {
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },
     'design/capture.mjs': { pattern: /^ {2}\['\d/gm, least: 12 },
     /*
+     * And the four clauses on Watching Mode, which the route count above cannot see: they
+     * are not routes. §6.130 reaches that screen by walking to it — a dynamic route cannot
+     * be deep-linked in the phone's web export — so the shots live outside the `routes`
+     * table, and the thing that could vanish quietly is the checks, not a row in a list.
+     */
+    'design/capture.mjs#watching': { pattern: /unseen\.push\(/g, least: 4 },
+    /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *
      * `capture.mjs` is ratcheted by routes because a route with no `MUST_SHOW` already
@@ -206,9 +213,11 @@ describe('every workspace', () => {
 
   it('keeps every check the suites that are not vitest files were holding', () => {
     const shrunk: string[] = [];
-    for (const [file, { pattern, least }] of Object.entries(SUITE_FLOOR)) {
+    for (const [key, { pattern, least }] of Object.entries(SUITE_FLOOR)) {
+      // A `#suffix` names a second count in the same file rather than a second file.
+      const file = key.split('#')[0];
       const found = (readFileSync(resolve(ROOT, file), 'utf8').match(pattern) ?? []).length;
-      if (found < least) shrunk.push(`${file}: ${found}, below the ${least} it had`);
+      if (found < least) shrunk.push(`${key}: ${found}, below the ${least} it had`);
     }
     expect(shrunk).toEqual([]);
   });
