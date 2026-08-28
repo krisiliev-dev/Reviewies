@@ -29,6 +29,36 @@ const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
+/**
+ * Anything this run asks for that is not the local export.
+ *
+ * The suite reached **api.themoviedb.org** on every run, and nobody knew. `app`'s smoke
+ * script has always built with `VITE_TMDB_TOKEN=` to force the fixture provider; this one
+ * did not, so it used whatever credentials the developer's `.env` happened to hold — the
+ * same repository, the same question, two different answers, which is the shape #97 was
+ * written to catch and did not look at build scripts.
+ *
+ * It passed for as long as the network did. When TMDB stopped answering here, search hung
+ * for `SEARCH_TIMEOUT_MS`, the run died at the seeding step, and a sprint went into
+ * blaming the diff — because a suite whose determinism is an accident fails like a
+ * regression. The 200-check run and the 22-check run were the same commit.
+ *
+ * So: no off-origin request, asserted rather than assumed. A fixture provider that has
+ * quietly become a network provider is exactly what this cannot express any other way.
+ */
+const offOrigin = [];
+page.on('request', (r) => {
+  const url = r.url();
+  if (!url.startsWith(BASE) && !url.startsWith('data:') && !url.startsWith('blob:')) {
+    offOrigin.push(url.slice(0, 120));
+  }
+});
+
+/** Logged failures, which never reach `pageerror` and are most of what a query does. */
+const consoleErrors = [];
+page.on('console', (m) => {
+  if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 300));
+});
 
 const text = async () => (await page.locator('body').innerText()).replace(/\s+/g, ' ');
 
@@ -349,6 +379,21 @@ try {
   // --- Search and track ------------------------------------------------------
   await page.getByText('Find something to watch').click();
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
+  /*
+   * Before waiting for a result, not after: by the time the wait times out the run is
+   * dead and the reason is a Playwright message about a locator. Asserted here, a suite
+   * that has quietly become a network suite says so in one line and keeps going.
+   *
+   * Typing is the moment it bites — the search provider is chosen from the token, and a
+   * build carrying one reaches api.themoviedb.org. Give the debounce time to fire first;
+   * `SEARCH_TIMEOUT_MS` is ten seconds and this is well inside it.
+   */
+  await page.waitForTimeout(1500);
+  check(
+    'search asks the fixtures, not the internet',
+    offOrigin.length === 0,
+    [...new Set(offOrigin)].slice(0, 2).join(' | '),
+  );
   await page.waitForSelector('text=The Long Dark', { timeout: 15000 });
   check('search returns results', true);
   await audit('Search', 6);
@@ -1117,9 +1162,37 @@ try {
     check(`${where} never skips a heading level`, !skipped, JSON.stringify(skipped ?? {}));
   }
 
+  check(
+    'never left the local export',
+    offOrigin.length === 0,
+    [...new Set(offOrigin)].slice(0, 3).join(' | '),
+  );
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } catch (err) {
+  /*
+   * The page's own errors, on the way out.
+   *
+   * `errors` has collected every `pageerror` since line 31, and the only clause that read
+   * it was the last one in the happy path — so on the run that actually needed it, the
+   * suite reported a Playwright timeout and threw away the reason. #165 spent a sprint
+   * guessing at a failure the browser had already explained: three hypotheses, three
+   * ten-minute experiments, and the answer sitting in an array nobody printed.
+   *
+   * The console too, not only uncaught exceptions: a query that fails inside a promise
+   * chain and is logged rather than thrown never reaches `pageerror` at all, and "the app
+   * booted and then could not write" is exactly that shape.
+   */
   check('smoke run completed', false, err.message);
+  if (errors.length) console.error(`\npage errors before the failure:\n  ${errors.join('\n  ')}`);
+  if (consoleErrors.length) {
+    console.error(`\nconsole errors before the failure:\n  ${consoleErrors.join('\n  ')}`);
+  }
+  console.error(`\nlast URL: ${page.url()}`);
+  try {
+    console.error(`body at failure: ${(await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 400)}`);
+  } catch {
+    console.error('body at failure: the page could not be read');
+  }
 } finally {
   await browser.close();
 }

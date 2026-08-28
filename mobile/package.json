@@ -50,8 +50,8 @@
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "test": "vitest run",
-    "export": "expo export --platform web",
-    "smoke": "node ../scripts/portFree.mjs 4200 && expo export --platform web && node ../scripts/served.mjs 4200 \"npx serve dist -p 4200 --no-clipboard\" node smoke.mjs",
+    "export": "expo export --platform web --clear",
+    "smoke": "node ../scripts/portFree.mjs 4200 && VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= VITE_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= EXPO_PUBLIC_SUPABASE_ANON_KEY= expo export --platform web --clear && node ../scripts/served.mjs 4200 \"npx serve dist -p 4200 --no-clipboard\" node smoke.mjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true

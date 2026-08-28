@@ -186,7 +186,7 @@ describe('every workspace', () => {
    */
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
     'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 144 },
-    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 75 },
+    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 77 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },

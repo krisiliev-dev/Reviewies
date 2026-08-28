@@ -8646,7 +8646,20 @@ for the rules treatment: `lists.tsx`, `comments`' individual comment, `RemotePan
 device, `MatchImports.tsx`'s proposal. `SURFACE.card` names all seven, so they are countable
 rather than merely present.
 
-### 6.124 The phone's web export cannot carry configuration, and a build can ship the last build's
+### 6.124 ~~The phone's web export cannot carry configuration~~ — retracted, see §6.125
+
+> **RETRACTED.** The central claim below — that `app.config.ts`'s `extra` does not reach the
+> web export — is **false**, and §6.125 shows how: the exported app makes a live request to
+> `api.themoviedb.org` with the real token from the root `.env`. Configuration reaches the
+> bundle perfectly well. What I grepped was `app.json`'s placeholder `extra` embedded
+> alongside the resolved one, and I read a matching string as a measurement.
+>
+> The entry is kept rather than deleted because the mistake is the useful part: every step
+> in it was measured, and the conclusion was still wrong, because the *last* step —
+> "therefore the app has no configuration" — was an inference dressed as an observation.
+> Asking the app what it did, rather than asking the bundle what it contained, took four
+> minutes and settled it. §6.87's rule was there all along and I applied it to headings and
+> not to this.
 
 #164 asked why four of the twelve photographed routes show a gate rather than a screen. The
 answer is not that the harness declined to sign in. It is that **the phone's web export has
@@ -8734,6 +8747,78 @@ premise I had copied without testing; this is the same defect one step further o
 premise I *generated*, from evidence I had gathered myself, and did not go back and falsify.
 The rule that keeps earning its place is not "check the brief". It is check the claim,
 including the one you just made.
+
+### 6.125 A suite whose determinism was an accident, and it had never been true
+
+`mobile/smoke.mjs` reached **api.themoviedb.org** on every run it has ever made, and nobody
+knew — including the four sprints that used it as a release gate.
+
+`app`'s smoke script has always built with `VITE_TMDB_TOKEN=` to force the fixture provider.
+The phone's did not. So it used whatever credentials the developer's `.env` happened to
+hold, and on this machine that is a real 244-character token: `getProvider()` returns
+`TmdbProvider` instead of `FixtureProvider`, and the seeding search goes over the wire. The
+same repository, the same question, two different answers — the shape #97 was written to
+catch, which it missed because it compared *screens* and not build scripts.
+
+It passed for as long as the network did. When TMDB stopped answering here, search hung for
+`SEARCH_TIMEOUT_MS`, the run died at the seeding step, and a sprint went into blaming a
+diff — because **a suite whose determinism is an accident fails like a regression.** The
+199-check run and the 22-check run were the same commit.
+
+## How it was found, which is the part worth keeping
+
+By fixing the blind spot first. `mobile/smoke.mjs` collected every `pageerror` into an array
+and read it only in the last clause of the happy path, so on the one run that needed it the
+suite reported a Playwright timeout and threw the reason away. Printing the collected
+errors, the console, the URL and the body on the *failure* path took ten minutes and gave:
+`last URL: /search`, body `Searching…`, no errors at all. Then watching that screen for
+twenty seconds showed the spinner turn for exactly ten — `SEARCH_TIMEOUT_MS` — which is not
+what a hung fixture looks like. It is what a network looks like. One more probe listed the
+off-origin requests and printed the TMDB URL.
+
+Three sprints of hypotheses were replaced by four measurements, and every one of the
+hypotheses had been about the diff.
+
+## And the retraction
+
+§6.124 claimed the phone's web export cannot carry configuration at all. **That is false.**
+The app reaching TMDB with the root `.env`'s token is proof it carries configuration
+perfectly well. What I had measured was a `tmdbToken\":\"\"` string in the bundle —
+`app.json`'s placeholder `extra`, sitting beside the resolved one — and I read a matching
+string as a measurement.
+
+Every step in §6.124 was measured and the conclusion was still wrong, because the last step
+was an inference wearing an observation's clothes: *the bundle contains an empty string,
+therefore the app has no configuration.* Asking the app what it **did** — one Playwright
+probe listing its requests — took four minutes. §6.87's rule is that emitted is not
+rendered; I applied it to headings all sprint and not to this. The entry is struck through
+in place rather than deleted, because the retraction is more instructive than the entry.
+
+## What is guarded now
+
+- `mobile/package.json`'s smoke and the `design` script both build with **all three**
+  credentials blanked, so the provider is the fixture provider by construction rather than
+  by whether somebody has a `.env`.
+- `--clear` on both, because Metro caches the resolved config: an export run with no
+  environment still embedded the previous run's values, so changing the environment does not
+  change the build. That one is real and was worth keeping from §6.124.
+- Two clauses. `search asks the fixtures, not the internet` sits **immediately after typing
+  and before waiting for a result** — by the time a `waitForSelector` times out the run is
+  dead and all it can say is that a locator never appeared. And `never left the local
+  export` at the end, for everything else. The plant restores the original defect and the
+  first clause names the URL: `https://api.themoviedb.org/3/search/multi?query=long`.
+
+The phone's suite is **201/201** and deterministic for the first time.
+
+## One real defect this exposed and then hid again
+
+With sync configured, `Search: every control is big enough to hit` fails: **"Add to list" is
+47x16**, against the 24-point floor WCAG 2.5.8 asks for and `theme.ts`'s `tap` exists to
+enforce. It has never been measured because the control only exists when there is an account,
+and the suite has never deliberately arranged one. Blanking the credentials makes the suite
+deterministic and also makes that control unreachable again — which is #164's subject, and
+the honest way to put it is that the phone's suite now covers the signed-out half properly
+and the signed-in half not at all. The target-size failure is filed rather than lost.
 
 ## 7. What is still not known
 
