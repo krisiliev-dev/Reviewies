@@ -461,6 +461,8 @@ Phone-only: `Masthead` (the web has no push stack), `ChannelStrip` (the web's na
 3. **New: one geometry guard.** No `borderRadius`, `paddingHorizontal`/`paddingVertical`, or `backgroundColor: theme.accent` outside `mobile/src/ui/` and `app/src/ui/`. This is the mechanical form of the thing this whole layer exists to stop, and it is the same shape as `oneClient.test.ts` and `dials.test.ts` — a rule with an exemption list you have to be uncomfortable to write in.
 4. **`copy.test.ts`** — it did not catch that `COPY.calendar.findSomething` is written as a literal at four call sites on both platforms. Add: no string literal in a component may equal a `COPY` value.
 
+
+**Landed (§6.131): `bareControl.test.ts`.** No control outside the component set draws its own fill, rule or padding — the guard item 3 above describes, at last. It could not land for thirty sprints because three surfaces had no component to point at and because the population was mis-measured. The count went **57 → 32 → 7**: `jsxElements` (now in `core/src/test/source.ts`, so the next probe is built from it rather than rewritten without it) found the ones an arrow-function handler had hidden, and `styleOf` found the phone's, which a probe reading only the opening tag cannot see at all. Nineteen controls across both platforms were spelling out `Button`'s secondary tone by hand. Seven remain, each named with a reason, and a third clause fails when an exemption outlives the control it excuses — which is what separates a named list from a budget.
 ---
 
 ## What this layer does not cover, said plainly

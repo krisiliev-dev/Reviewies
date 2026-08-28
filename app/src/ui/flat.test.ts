@@ -149,7 +149,14 @@ describe('the flat rule', () => {
      * running this floor has moved because a fill stopped being a fill, which is the
      * direction's whole argument arriving one migration at a time.
      */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(70);
+    /*
+     * 51, down from 70 — the largest single fall this floor has taken, and the first from
+     * a *call-site* migration rather than a component one. §6.131 turned nineteen
+     * hand-drawn `rounded-pill` and `rounded-plate` controls into `Button`s across both
+     * platforms. The population shrinks because the decision moved, which is the sixth
+     * sprint running this has been the reason.
+     */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(51);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

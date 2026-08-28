@@ -79,18 +79,18 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
             <Note level="footnote">No lists yet — make one below.</Note>
           )}
 
+          {/* `Button`, `size="inline"`, the same as the web's twin. Both were hand-drawn
+              plates in the raised fill — which §6.122 established is the *card* fill, so
+              each one pressed to the colour it was already painted and nothing happened.
+              §6.131. */}
           {lists?.map((list) => (
-            <Pressable
+            <Button
               key={list.id}
+              size="inline"
               onPress={() => add(list.id, list.name)}
-              style={styles.listRow}
-              accessibilityRole="button"
-              accessibilityLabel={`Add to ${list.name}`}
-            >
-              <Text numberOfLines={1} style={styles.listName}>
-                {list.name}
-              </Text>
-            </Pressable>
+              label={list.name}
+              name={`Add to ${list.name}`}
+            />
           ))}
 
           <View style={styles.newRow}>
@@ -132,12 +132,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.groundWell,
     gap: 6,
   },
-  listRow: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.plate,
-    backgroundColor: theme.groundRaised,
-  },
-  listName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   newRow: { flexDirection: 'row', gap: 6, alignItems: 'stretch' },
 });

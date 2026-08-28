@@ -220,3 +220,53 @@ export function styleOf(source: string, name: string): string | undefined {
   if (at < 0) return undefined;
   return declarationOf(source.slice(at), name);
 }
+
+/**
+ * Every JSX element of one tag, as `{ open, children }`, found by walking rather than by
+ * regex.
+ *
+ * §6.99 is the reason this lives here rather than in a test file. The call-site probe
+ * split each file on the tag and took the head up to the first `>` — and
+ * `onPress={() => setOpen(false)}` contains a `>`, so every control whose handler is an
+ * arrow function had its head truncated before the `style` prop that decides the verdict.
+ * It reported eighteen violations where there were fifty-seven.
+ *
+ * The galling part, written down at the time: **the same bug with the same fix was already
+ * in the record**, two sections up, and I wrote a fresh probe four days later without it.
+ * *A lesson recorded is not a lesson applied; the instrument drawer is only useful if the
+ * next instrument is built from it.* So the walker is an instrument now, in the drawer,
+ * and `row.test.ts` — which had its own copy — reads it from here.
+ *
+ * `open` is the opening tag including its attributes; `children` is what is between the
+ * tags, or `undefined` for a self-closing element (which is different from empty).
+ */
+export function jsxElements(
+  source: string,
+  tag: string,
+): Array<{ open: string; children?: string }> {
+  const out: Array<{ open: string; children?: string }> = [];
+  // Structure, so a `>` inside a string or a template literal ends nothing either. The
+  // slices come back out of the original text, so a clause reads what is written.
+  const structure = blankLiterals(source);
+  for (let at = structure.indexOf(`<${tag}`); at !== -1; at = structure.indexOf(`<${tag}`, at + 1)) {
+    // `<Pressable` must not match `<PressableThing`.
+    const after = structure[at + tag.length + 1];
+    if (after && /[A-Za-z0-9_]/.test(after)) continue;
+    let depth = 0;
+    let i = at;
+    for (; i < structure.length; i++) {
+      if (structure[i] === '{') depth++;
+      else if (structure[i] === '}') depth--;
+      else if (structure[i] === '>' && depth === 0) break;
+    }
+    if (i >= structure.length) continue;
+    const open = source.slice(at, i + 1);
+    if (structure[i - 1] === '/') {
+      out.push({ open });
+      continue;
+    }
+    const close = structure.indexOf(`</${tag}>`, i);
+    out.push({ open, children: close === -1 ? undefined : source.slice(i + 1, close) });
+  }
+  return out;
+}

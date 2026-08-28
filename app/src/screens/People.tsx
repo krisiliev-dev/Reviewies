@@ -184,16 +184,15 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
           />
           <div className="flex gap-2">
             <Button tone="primary" label="Save" name="Save how you appear" onPress={save} />
-            <button
-              onClick={() => {
+            <Button
+              onPress={() => {
                 setHandle(undefined);
                 setDisplayName(undefined);
                 setNote(undefined);
               }}
-              className="rounded-pill border border-stroke-signal px-4 py-2"
-            >
-              Cancel
-            </button>
+              label="Cancel"
+              name="Cancel changing how you appear"
+            />
           </div>
         </div>
       )}

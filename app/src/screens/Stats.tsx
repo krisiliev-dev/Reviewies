@@ -16,6 +16,7 @@ import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Progress } from '../ui/Progress';
 import { Masthead } from '../ui/Masthead';
+import { Button } from '../ui/Button';
 
 /**
  * Stats and Year in Review.
@@ -109,15 +110,14 @@ export function Stats() {
               with ten years in the app reads as a lost library rather than an empty
               period, and the years above are not an obvious answer to it. §6.54. */}
           {years.length > 0 && (window !== 'all' || year !== undefined) && (
-            <button
-              onClick={() => {
+            <Button
+              onPress={() => {
                 setYear(undefined);
                 setWindow('all');
               }}
-              className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"
-            >
-              {COPY.stats.showAllTime}
-            </button>
+              label={COPY.stats.showAllTime}
+              name={COPY.stats.showAllTime}
+            />
           )}
         </div>
       ) : (

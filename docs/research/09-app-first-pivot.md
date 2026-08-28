@@ -9174,6 +9174,103 @@ because the titles *are* headings, so every accessibility clause was satisfied, 
 had ever read the navigator's options. They take `MASTHEAD.sub` now, and `masthead.test.ts`
 reads the layout.
 
+### 6.131 The guard §6.99 has been waiting on for thirty sprints, and the number it was waiting for
+
+`accentFill.test.ts` has carried this sentence since it was written: *"The wider rule this
+came out of — no bare control carrying its own background, border or padding — is not this,
+and is not landed. It had fifty-seven violations when measured properly (§6.99), and the
+remainder are surfaces with no component yet."*
+
+Stage 5 is the sweep-up, so the first job was to **re-measure rather than argue**. It is
+the only honest way to say how much was left.
+
+## Fifty-seven, thirty-two, nine, seven
+
+§6.99's first probe said **eighteen**. It split each file on the tag and took the head up to
+the first `>`, and `onPress={() => setOpen(false)}` contains a `>` — so every control with
+an arrow-function handler was truncated before the prop that decides the verdict, and read
+as clean. Re-measured with a brace-aware walk: **fifty-seven**.
+
+The lesson §6.99 wrote at the time is the one this sprint began with: *the same bug with the
+same fix was already in the record, two sections up, and I wrote a fresh probe four days
+later without it. A lesson recorded is not a lesson applied; the instrument drawer is only
+useful if the next instrument is built from it.* So `jsxElements` is in
+`core/src/test/source.ts` now, beside `declarationOf` and `styleOf`, and `row.test.ts` —
+which had its own private copy — reads it from there.
+
+Measured with it: **thirty-two**. Twenty-six of the fifty-seven went with §6.122's
+accent-fill migration, which is exactly the plan §6.99 laid out.
+
+And thirty-two was itself two numbers, which is the part worth keeping. The first pass
+reported **twenty-three, every one on the web**. That is not a fact about the web; it is the
+tell that the probe could not see the phone at all. A phone control writes
+`style={styles.retry}` and its dress is two hundred lines below in `StyleSheet.create`, so
+reading the opening tag finds nothing. `styleOf` resolves them, and nine of the thirty-two
+were the phone's — including both platforms' copies of the same three controls, which is the
+kind of thing only a measurement that reaches both can show.
+
+## What nineteen of them were
+
+Not a spread of odd cases. Nineteen controls across the two platforms were spelling out
+`Button`'s **secondary tone** by hand — `rounded-pill border border-stroke-signal px-4 py-2`
+on the web, and on the phone the same thing in a `StyleSheet`: `border.hairline` in
+`strokeSignal`, `radius.pill`, sixteen and twelve. Retry on Search, retry on the title
+screen, "show all time" on Stats, sign out, cancel, export the CSV, clear the cache, find
+something to watch. Both platforms, the same control, drawn twice by hand.
+
+Three of them were worse than untidy. Watching Mode's web transport — Pause, −5s, +5s — was
+`rounded-plate bg-ground-well`: a plate wearing the **sunken** ground, which §6.122
+established is where a press *goes*. The resting state of the web's transport was the
+pressed state of everything else in the app. Its phone twins have been `Button`s since
+sprint 9 and nobody had put the two screens side by side.
+
+Two more carried `disabled:opacity-50` and `disabled:opacity-40` — the fade that `Button`,
+`Key`, `Row` and now `PadCell` all refuse, on `ListenSync`, on the flagship screen.
+
+## The seven that are left, and why an exemption list is not a budget
+
+`bareControl.test.ts` lands with the migration, as the standing rule requires. Seven
+controls are named in it, each with the reason it is not a `Button` or a `Row`: the skip
+link (invisible until focused, then it has to paint itself, and there is one), the remote
+drawer's handle on both platforms (a tab on the screen edge, deliberately not a button
+shape) and its scrim (`aria-hidden`, not a control at all), and **the three surfaces
+`accentFill.test.ts` has named since §6.99** — the device list, `data.tsx`'s switch row and
+Watching Mode's drift banner. Those three still have no component and are still honest about
+it.
+
+The difference between that and a budget is the third clause: every line in `EXEMPT` is a
+claim that *this file still contains such a control*, and the test fails when it stops
+being true. An exemption cannot outlive the thing it excuses — §6.41's rule, spelled the way
+`screen.ts` spells its two lists. Planted by emptying `data.tsx`'s style object, it prints
+`mobile/app/data.tsx is exempt and has no bare control left`.
+
+## A plant that did not plant
+
+The second plant — a phone control whose dress lives in the `StyleSheet`, which is the
+exact case that hid nine — **passed**, and for a moment that looked like a hole in the
+guard. It was not. The replacement string had sixteen spaces of indentation where the file
+had fourteen, so nothing was planted at all and the suite was reporting on unmodified code.
+
+§6.107's whole subject, one turn further along: a plant proves nothing unless you check that
+it landed. `grep -c` on the planted needle before running the suite is two seconds and it is
+now the habit. Re-run properly, the clause names the file.
+
+## And the other half of stage 5
+
+`docs/design/on-a-device.md` — every claim in this document that a browser, a simulator or a
+static export cannot settle, with what to do and what would count as an answer. Nine
+entries: the font gate that is dead code in every run ever made, iOS synthesising a weight,
+200% text on a renderer that cannot scale, the Japanese fallback nothing phone-shaped has
+drawn, nine `hitSlop`s nothing has ever pressed, the haptic that §6.122's tradeoff rests on
+and nobody has felt, an mDNS scan with no network and no television, a whole episode behind
+a locked screen, and light mode.
+
+Light mode is in it under protest, and the entry says so: it is **not** a device question.
+Nothing prevents the harness taking a light pass; it simply never has, which is how an amber
+that fails 3:1 on paper survived twelve places through eight design sprints. It should be
+closed before device work, not during it, because a light-mode defect found on a phone is
+one a second harness pass would have found for free.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9652,6 +9749,13 @@ and which single claim in this document could not be checked at all:
   match, a drift correction offered, and `ListenSync` actually listening. Every screen in
   the app has states behind a control, and the harness photographs the ones somebody
   thought to walk to.
+
+  What §6.131 adds: `docs/design/on-a-device.md` is the list of what a photograph cannot
+  settle at all — nine claims where the instrument and the subject disagree, each with what
+  to do and what would count as an answer. That is the handover, and it is what makes device
+  work possible rather than speculative. Its ninth entry is light mode, in it under protest:
+  nothing prevents the harness taking a light pass, so that one belongs to #162 and should
+  be closed before any device work rather than during it.
 
   And a second thing the walk to those three shots settled, which applies to every future
   one: `expo export` writes a dynamic route as the literal file `comments/[targetId].html`,

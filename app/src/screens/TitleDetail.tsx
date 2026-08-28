@@ -94,16 +94,16 @@ export function TitleDetail() {
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
           </Masthead>
           {!title && (failed || !loading) && (
-            <button
-              onClick={() => {
+            <Button
+              onPress={() => {
                 setFailed(false);
                 setLoading(true);
                 setAttempt((n) => n + 1);
               }}
-              className="mt-2 rounded-pill border border-stroke-signal px-4 py-2 text-s14"
-            >
-              {COPY.title.tryAgain}
-            </button>
+              label={COPY.title.tryAgain}
+              name={COPY.title.tryAgain}
+              className="mt-2"
+            />
           )}
           {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
           {title?.overview && (
@@ -175,13 +175,12 @@ export function TitleDetail() {
                   setPosterDraft(undefined);
                 }}
               />
-              <button
-                onClick={() => setPosterDraft(undefined)}
-                aria-label="Cancel changing the poster"
-                className="px-2 text-s14 text-ink-secondary"
-              >
-                Cancel
-              </button>
+              <Button
+                tone="quiet"
+                onPress={() => setPosterDraft(undefined)}
+                label="Cancel"
+                name="Cancel changing the poster"
+              />
             </div>
           )}
         </div>

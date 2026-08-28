@@ -244,8 +244,10 @@ export function EpisodeComments() {
                       had `deleteComment` since comments existed and neither platform
                       called it. */}
                   {c.mine && (
-                    <button
-                      onClick={async () => {
+                    <Button
+                      size="inline"
+                      tone="quiet"
+                      onPress={async () => {
                         const result = await deleteComment(c.id);
                         if (!result.ok) {
                           setError(result.reason);
@@ -253,11 +255,10 @@ export function EpisodeComments() {
                         }
                         await load();
                       }}
-                      className="min-h-[24px] shrink-0 rounded-pill px-2 text-ink-secondary underline"
-                      aria-label="Delete your comment"
-                    >
-                      Delete
-                    </button>
+                      label="Delete"
+                      name="Delete your comment"
+                      className="shrink-0"
+                    />
                   )}
                 </Note>
                 <p className="mt-1 text-s14 whitespace-pre-wrap">{c.body}</p>

@@ -19,6 +19,16 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 
+/*
+ * What a retry control is called, on either platform.
+ *
+ * It was `/try again/i`, and §6.131 broke it by making the web's Search retry a `Button`
+ * with the name the *phone* had been using — "Try that search again". §6.56's rule is that
+ * a control carries what tells it from its neighbours, so the specific name is the right
+ * one and this needle was the bare one; the title screen's is still "Try again".
+ */
+const RETRY = /try\b.*\bagain/i;
+
 const BASE = process.env.BASE ?? 'http://localhost:4173';
 const OUT = 'screenshots/';
 
@@ -83,7 +93,7 @@ try {
     );
     check(
       `search offers something to press after the ${mode}`,
-      await page.getByRole('button', { name: /try again/i }).isVisible().catch(() => false),
+      await page.getByRole('button', { name: RETRY }).isVisible().catch(() => false),
     );
 
     await page.goto(`${BASE}/discover`, { waitUntil: 'domcontentloaded' });
@@ -124,7 +134,7 @@ try {
     check(
       `and says why, with something to press, through the ${mode}`,
       /Could not load this title/.test(title) &&
-        (await page.getByRole('button', { name: /try again/i }).isVisible().catch(() => false)),
+        (await page.getByRole('button', { name: RETRY }).isVisible().catch(() => false)),
       title.slice(0, 140),
     );
     check(
@@ -155,7 +165,7 @@ try {
   );
   check(
     'with something to press',
-    await page.getByRole('button', { name: /try again/i }).isVisible().catch(() => false),
+    await page.getByRole('button', { name: RETRY }).isVisible().catch(() => false),
   );
   await page.screenshot({ path: OUT + 'f1-hung-search.png' });
 } catch (err) {

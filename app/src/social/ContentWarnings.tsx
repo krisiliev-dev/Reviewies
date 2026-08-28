@@ -60,13 +60,12 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
   return (
     <section className="mb-5">
-      <button
-        onClick={() => setOpen(!open)}
-        className="rounded-plate bg-ground-raised px-3 py-1.5 text-s12 text-ink-secondary"
-        aria-expanded={open}
-      >
-        {open ? 'Hide content warnings' : 'Content warnings'}
-      </button>
+      <Button
+        size="inline"
+        onPress={() => setOpen(!open)}
+        label={open ? 'Hide content warnings' : 'Content warnings'}
+        name={open ? 'Hide content warnings' : 'Show content warnings'}
+      />
 
       {open && (
         <div className="mt-2 rounded-plate bg-ground-raised p-3">

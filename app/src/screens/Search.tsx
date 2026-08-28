@@ -104,12 +104,11 @@ export function Search() {
           </p>
           {/* Something to press. A message with no action is only a nicer way of being
               stuck, which is what "Searching…" for ever already was. */}
-          <button
-            onClick={() => setAttempt((n) => n + 1)}
-            className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"
-          >
-            Try again
-          </button>
+          <Button
+            onPress={() => setAttempt((n) => n + 1)}
+            label="Try again"
+            name="Try that search again"
+          />
         </div>
       )}
 

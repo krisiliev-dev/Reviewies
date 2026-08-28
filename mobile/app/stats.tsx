@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import {
   availableYears,
@@ -9,13 +9,14 @@ import {
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
-import { border, radius, theme } from '../src/ui/theme';
+import { radius, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';
 import { Section } from '../src/ui/Section';
+import { Button } from '../src/ui/Button';
 import { Data } from '../src/ui/Data';
 import { Note } from '../src/ui/Note';
 import { Progress } from '../src/ui/Progress';
@@ -128,17 +129,14 @@ export default function StatsScreen() {
             {/* The web's copy of this, for the same reason: nine year-buttons above
                 an empty period is not an answer somebody reads as one. §6.54. */}
             {years.length > 0 && (window !== 'all' || year !== undefined) && (
-              <Pressable
+              <Button
                 onPress={() => {
                   setYear(undefined);
                   setWindow('all');
                 }}
-                style={styles.allTime}
-                accessibilityRole="button"
-                accessibilityLabel={COPY.stats.showAllTime}
-              >
-                <Text style={styles.allTimeText}>{COPY.stats.showAllTime}</Text>
-              </Pressable>
+                label={COPY.stats.showAllTime}
+                name={COPY.stats.showAllTime}
+              />
             )}
           </View>
         ) : null}
@@ -233,13 +231,6 @@ const styles = StyleSheet.create({
   figureLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   figureValue: { color: theme.ink },
   emptyBlock: { gap: 12, alignItems: 'flex-start', marginTop: 8 },
-  allTime: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  allTimeText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   // 13 against the web's 14. 13 is one of the two the scale killed.
 
   section: { gap: 12, marginTop: 6 },

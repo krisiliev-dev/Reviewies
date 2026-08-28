@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { stripComments } from '@reviewies/core/test/source';
+import { jsxElements, stripComments } from '@reviewies/core/test/source';
 import { ROW, ROW_INK } from '@reviewies/core/ui/row';
 import { border, color, size } from '@reviewies/core/tokens';
 
@@ -158,23 +158,16 @@ describe('the listing row', () => {
      * `[^>]*>` stopped inside `style={({ pressed }) => [...]}`, because an arrow function
      * in a prop contains a `>`. Tracking brace depth is what tells an attribute's `>`
      * from the tag's own.
+     *
+     * The walker was written here and lived here, privately, and §6.99 then wrote a fresh
+     * probe four days later without it and mis-measured a migration by thirty-nine. It is
+     * `jsxElements` in `core/src/test/source.ts` now — §6.131 moved it, and this is the
+     * call site that proves the move is real rather than a claim in a commit message.
      */
-    const childrenOf = (source: string, tag: string): string[] => {
-      const out: string[] = [];
-      for (let at = source.indexOf(`<${tag}`); at !== -1; at = source.indexOf(`<${tag}`, at + 1)) {
-        let depth = 0;
-        let i = at;
-        for (; i < source.length; i++) {
-          if (source[i] === '{') depth++;
-          else if (source[i] === '}') depth--;
-          else if (source[i] === '>' && depth === 0) break;
-        }
-        if (source[i - 1] === '/') continue; // self-closing: no children to read
-        const close = source.indexOf(`</${tag}>`, i);
-        if (close !== -1) out.push(source.slice(i + 1, close));
-      }
-      return out;
-    };
+    const childrenOf = (source: string, tag: string): string[] =>
+      jsxElements(source, tag)
+        .map(({ children }) => children)
+        .filter((children): children is string => children !== undefined);
 
     for (const [platform, source] of BOTH) {
       const targets = ['Link', 'Pressable', 'button'].flatMap((tag) => childrenOf(source, tag));

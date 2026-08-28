@@ -341,30 +341,21 @@ function SyncBar({
     // Five controls and a density picker in one row, which fits a phone once and not at
     // twice the text size. Wrapping keeps Hold reachable; it was running off the edge.
     <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
-      <button
-        onClick={clock.toggle}
-        aria-label={clock.running ? 'Pause the clock' : 'Resume the clock'}
-        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
-      >
-        {clock.running ? 'Pause' : 'Resume'}
-      </button>
+      {/* `Button`s. These three were the transport, hand-drawn as
+          `rounded-plate bg-ground-well` — a plate wearing the *sunken* ground, which
+          §6.122 established is where a press *goes*, so the resting state of the web's
+          transport was the pressed state of everything else in the app. The phone's
+          equivalents have been `Button`s since sprint 9 and nobody compared them. §6.131. */}
+      <Button
+        onPress={clock.toggle}
+        label={clock.running ? 'Pause' : 'Resume'}
+        name={clock.running ? 'Pause the clock' : 'Resume the clock'}
+      />
       {/* Manual drift correction, always available. The crowd-derived estimate
           above handles the common case; these cover the rest. */}
       {/* "−5s" is a minus sign, a digit and a letter; what it does is a sentence. */}
-      <button
-        onClick={() => clock.nudge(-5000)}
-        aria-label={COPY.controls.seek(-5)}
-        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
-      >
-        −5s
-      </button>
-      <button
-        onClick={() => clock.nudge(5000)}
-        aria-label={COPY.controls.seek(5)}
-        className="rounded-plate bg-ground-well px-3 py-2 text-s14"
-      >
-        +5s
-      </button>
+      <Button onPress={() => clock.nudge(-5000)} label="−5s" name={COPY.controls.seek(-5)} />
+      <Button onPress={() => clock.nudge(5000)} label="+5s" name={COPY.controls.seek(5)} />
       {/* A toggle, and `selected` draws it now — it announced `aria-pressed` and painted
           the accent fill, which is the app's one filled shape and means "worth pressing"
           rather than "already on". */}

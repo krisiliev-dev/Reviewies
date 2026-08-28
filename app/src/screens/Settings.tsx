@@ -10,7 +10,7 @@ import {
   TMDB_ATTRIBUTION,
   usingFixtures,
 } from '@reviewies/core/metadata/index';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
@@ -22,8 +22,10 @@ import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
+import { Row } from '../ui/Row';
 
 export function Settings() {
+  const navigate = useNavigate();
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
   const [cleared, setCleared] = useState<number>();
   const [exportNote, setExportNote] = useState<string>();
@@ -49,16 +51,15 @@ export function Settings() {
       {/* People-management lives one level down rather than in the tab bar: the bar
           already carries eight destinations, and simplicity was the loudest single
           demand in the research. */}
-      <Link
-        to="/people"
-        className="flex items-center justify-between rounded-plate bg-ground-raised px-4 py-4"
-      >
-        <span>
-          <span className="text-s16 font-title font-semibold">People</span>
-          <Note as="span" className="block">Your handle, following, blocking</Note>
-        </span>
-        <Note as="span" aria-hidden>›</Note>
-      </Link>
+      {/* A `Row`, not a hand-drawn card: a title, a line under it and a chevron is
+          exactly what `Row` draws, and this was the last screen assembling one itself —
+          in a `rounded-plate bg-ground-raised` that §6.122 established is the *card* fill
+          and so presses to the colour it is already painted. §6.131. */}
+      <Row
+        title="People"
+        meta="Your handle, following, blocking"
+        open={{ name: 'People — your handle, following, blocking', run: () => navigate('/people') }}
+      />
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>
@@ -118,18 +119,18 @@ export function Settings() {
             rest of the file is complete.
           </Note>
         )}
-        <button
-          onClick={async () =>
+        <Button
+          size="page"
+          onPress={async () =>
             downloadFile(
               `reviewies-watches-${todayKey()}.csv`,
               await exportWatchesCsv(),
               'text/csv',
             )
           }
-          className="rounded-pill border border-stroke-signal px-4 py-3"
-        >
-          Export watch history (CSV)
-        </button>
+          label="Export watch history (CSV)"
+          name="Export watch history as a CSV file"
+        />
       </section>
 
       <section className="flex flex-col gap-2">
@@ -171,12 +172,12 @@ export function Settings() {
           automatically. Clearing them never touches your own history, and shows carried
           over from an import keep their names.
         </Note>
-        <button
-          onClick={() => void clearMetadataCache().then((n) => setCleared(n))}
-          className="rounded-pill border border-stroke-signal px-4 py-3"
-        >
-          Clear cached metadata
-        </button>
+        <Button
+          size="page"
+          onPress={() => void clearMetadataCache().then((n) => setCleared(n))}
+          label="Clear cached metadata"
+          name="Clear cached metadata"
+        />
         {cleared !== undefined && (
           <Note className="px-1" role="status">
             {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}

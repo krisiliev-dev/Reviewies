@@ -12,6 +12,7 @@ import {
   CONTRIBUTION_MS,
   fetchReference,
 } from '@reviewies/core/fingerprint/references';
+import { Button } from '../ui/Button';
 
 /**
  * Listen-to-sync, and contributing the timeline that makes it possible.
@@ -102,30 +103,31 @@ export function ListenSync({
   return (
     <div className="mx-3 mb-2 rounded-plate border border-stroke-signal px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={listen}
+        {/* `Button`s. Both of these were hand-drawn pills carrying
+            `disabled:opacity-50` and `disabled:opacity-40` — the fade four components in
+            this app now refuse, on the screen the product is named for. §6.131. */}
+        <Button
+          size="inline"
+          onPress={listen}
           disabled={!!busy}
-          aria-busy={busy === 'listening'}
-          className="rounded-pill bg-ground-raised px-3 py-1.5 text-s12 disabled:opacity-50"
-        >
-          {busy === 'listening' ? 'Listening…' : 'Sync by listening'}
-        </button>
-        <button
-          onClick={contribute}
+          busy={busy === 'listening'}
+          label={busy === 'listening' ? 'Listening…' : 'Sync by listening'}
+          name={busy === 'listening' ? 'Listening…' : 'Sync by listening'}
+        />
+        <Button
+          size="inline"
+          onPress={contribute}
           disabled={!!busy || positionMs < 1000}
-          aria-busy={busy === 'contributing'}
+          busy={busy === 'contributing'}
+          label={busy === 'contributing' ? 'Recording…' : 'Help map this episode'}
           // The title attribute is a tooltip on a pointer and nothing at all otherwise;
           // the reason it is disabled has to be part of the name.
-          aria-label={
+          name={
             positionMs < 1000
               ? 'Help map this episode — start the episode first'
               : 'Help map this episode'
           }
-          className="rounded-pill bg-ground-raised px-3 py-1.5 text-s12 text-ink-secondary disabled:opacity-40"
-          title={positionMs < 1000 ? 'Start the episode first' : undefined}
-        >
-          {busy === 'contributing' ? 'Recording…' : 'Help map this episode'}
-        </button>
+        />
       </div>
 
       <Note level="footnote" className="mt-1.5">

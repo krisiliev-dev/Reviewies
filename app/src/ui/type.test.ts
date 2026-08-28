@@ -166,7 +166,11 @@ describe('the type scale', () => {
      * screens. The population shrinks; the rule does not. The floor tracks it rather than
      * being left slack above it — §6.107's lesson, several components later.
      */
-    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(25);
+    /*
+     * 24, down from 25: §6.131's call-site migration. `Button` carries `font-title` for
+     * every one of the nineteen controls that used to state it themselves.
+     */
+    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(24);
     expect(offenders).toEqual([]);
   });
 

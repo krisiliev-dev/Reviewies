@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
@@ -12,7 +12,7 @@ import {
 import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/provider';
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
-import { border, radius, theme } from '../../src/ui/theme';
+import { theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
@@ -129,14 +129,14 @@ export default function SearchScreen() {
             </Text>
             {/* Something to press. A message with no action is only a nicer way of
                 being stuck, which is what a spinner that never stops already was. */}
-            <Pressable
-              onPress={() => setAttempt((n) => n + 1)}
-              style={styles.retry}
-              accessibilityRole="button"
-              accessibilityLabel="Try that search again"
-            >
-              <Text style={styles.retryText}>Try again</Text>
-            </Pressable>
+            {/* `Button`. It was a hand-drawn pill spelling out `Button`'s `secondary` tone —
+                a hairline in `strokeSignal`, `radius.pill`, 16/12 padding — beside a web twin
+                doing the same thing in Tailwind. §6.131. */}
+              <Button
+                onPress={() => setAttempt((n) => n + 1)}
+                label="Try again"
+                name="Try that search again"
+              />
           </View>
         )}
 
@@ -330,13 +330,6 @@ const styles = StyleSheet.create({
   editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },
-  retry: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 
   under: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },

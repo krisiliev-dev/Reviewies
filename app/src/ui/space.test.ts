@@ -121,7 +121,12 @@ describe('the space scale, on the phone', () => {
      * moved into two components, where one file owns it and this scan does not count it
      * against a screen.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(191);
+    /*
+     * 182, down eleven: §6.131's call-site migration took `paddingHorizontal`/`Vertical`
+     * off nine phone controls with the styles that carried them, and `AddToList`'s list
+     * row and Stats' all-time pill lost their whole style objects.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(182);
     expect(off).toEqual([]);
   });
 });
@@ -158,7 +163,11 @@ describe('the space scale, on the web', () => {
         }
       });
     }
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(400);
+    /*
+     * 372, down from 400: the web half of §6.131's call-site migration. Nineteen controls
+     * spelled their own `px-4 py-2`; `Button`'s size table spells it once.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(372);
     expect(off).toEqual([]);
   });
 

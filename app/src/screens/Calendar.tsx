@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
 import {
   getPreference,
   getUpcoming,
@@ -24,6 +23,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
+import { Button } from '../ui/Button';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -140,12 +140,11 @@ export function Calendar() {
           <Note>
             {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
           </Note>
-          <Link
+          <Button
             to="/discover"
-            className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"
-          >
-            {COPY.calendar.findSomething}
-          </Link>
+            label={COPY.calendar.findSomething}
+            name={COPY.calendar.findSomething}
+          />
         </div>
       )}
 

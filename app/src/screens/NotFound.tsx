@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
@@ -34,9 +34,7 @@ export function NotFound() {
         a screen in this app. It may be an old link, or a typo.
       </Note>
       <Button size="page" tone="primary" to="/" label="Go to Up Next" name="Go to Up Next" />
-      <Link to="/more" className="rounded-pill bg-ground-raised px-4 py-3 text-center">
-        See everything else
-      </Link>
+      <Button size="page" to="/more" label="See everything else" name="See everything else" />
     </div>
   );
 }

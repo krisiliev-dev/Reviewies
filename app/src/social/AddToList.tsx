@@ -46,19 +46,20 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
   return (
     <div className="mt-2">
-      <button
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        // A pill, like every other secondary action on a row. It was an underlined text
-        // link sitting among pills, which is a third control idiom on a screen that
-        // already has two — §6.61 counted them rather than felt them. The rule the app
-        // follows now: filled accent for the one action a row exists for, a ghost pill
-        // for the others, and underlined text only for a rare aside that opens something
-        // else ("Use a different poster", "Caught up further?").
-        className="tap rounded-pill border border-stroke-signal px-3 py-1.5 text-s12 text-ink-secondary"
-      >
-        {open ? 'Cancel' : 'Add to list'}
-      </button>
+      {/* `Button`, `size="inline"`. The comment below was right about the idiom and the
+          screen drew it by hand anyway — the same pill `Button` has drawn since sprint 7.
+          A pill, like every other secondary action on a row. It was an underlined text
+          link sitting among pills, which is a third control idiom on a screen that
+          already has two — §6.61 counted them rather than felt them. The rule the app
+          follows now: filled accent for the one action a row exists for, a ghost pill
+          for the others, and underlined text only for a rare aside that opens something
+          else ("Use a different poster", "Caught up further?"). §6.131. */}
+      <Button
+        size="inline"
+        onPress={() => setOpen(!open)}
+        label={open ? 'Cancel' : 'Add to list'}
+        name={open ? 'Cancel adding to a list' : 'Add to list'}
+      />
 
       {open && (
         <div className="mt-2 rounded-plate border border-stroke-signal p-3">
@@ -70,13 +71,13 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
           <ul className="flex flex-col gap-1">
             {lists?.map((list) => (
               <li key={list.id}>
-                <button
-                  onClick={() => add(list.id, list.name)}
-                  aria-label={`Add to ${list.name}`}
-                  className="w-full truncate rounded-plate bg-ground-raised px-3 py-1.5 text-left text-s14"
-                >
-                  {list.name}
-                </button>
+                <Button
+                  size="inline"
+                  onPress={() => add(list.id, list.name)}
+                  label={list.name}
+                  name={`Add to ${list.name}`}
+                  className="w-full truncate"
+                />
               </li>
             ))}
           </ul>

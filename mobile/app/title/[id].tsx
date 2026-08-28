@@ -19,7 +19,7 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { border, leadingOf, radius, tap, theme } from '../../src/ui/theme';
+import { leadingOf, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
@@ -101,18 +101,15 @@ export default function TitleScreen() {
               {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
             </Text>
             {!title && (failed || !loading) && (
-              <Pressable
-                onPress={() => {
-                  setFailed(false);
-                  setLoading(true);
-                  setAttempt((n) => n + 1);
-                }}
-                style={styles.retry}
-                accessibilityRole="button"
-                accessibilityLabel={COPY.title.tryAgain}
-              >
-                <Text style={styles.retryText}>{COPY.title.tryAgain}</Text>
-              </Pressable>
+              <Button
+                  onPress={() => {
+                    setFailed(false);
+                    setLoading(true);
+                    setAttempt((n) => n + 1);
+                  }}
+                  label={COPY.title.tryAgain}
+                  name={COPY.title.tryAgain}
+                />
             )}
             {title?.year ? <Data value={title.year} style={styles.year} /> : null}
           </View>
@@ -334,15 +331,6 @@ const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
-  retry: {
-    alignSelf: 'flex-start',
-    marginTop: 12,
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   title: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
   year: { color: theme.inkSecondary },
   overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: leadingOf(text.s16, leading.l143), fontFamily: type.family.prose.name },

@@ -132,12 +132,12 @@ export function AccountPanel() {
       {rejected > 0 && (
         <div className="mt-3 rounded-plate bg-ground/40 p-3" role="status">
           <p className="text-s14 text-trouble">{COPY.sync.rejected(rejected)}</p>
-          <button
-            onClick={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
-            className="mt-2 rounded-pill border border-stroke-signal px-3 py-1.5 text-s14 font-title font-semibold"
-          >
-            {COPY.sync.retryRejected}
-          </button>
+          <Button
+            onPress={async () => setRetryNote(COPY.sync.retrying(await retryRejectedWrites()))}
+            label={COPY.sync.retryRejected}
+            name={COPY.sync.retryRejected}
+            className="mt-2"
+          />
           {retryNote && <Note level="footnote" className="mt-2">{retryNote}</Note>}
         </div>
       )}
@@ -153,13 +153,11 @@ export function AccountPanel() {
           disabled={busy}
           onPress={() => void sync()}
         />
-        <button
-          onClick={() => void signOut()}
-          aria-label="Sign out of your account"
-          className="rounded-pill border border-stroke-signal px-4 py-2"
-        >
-          Sign out
-        </button>
+        <Button
+          onPress={() => void signOut()}
+          label="Sign out"
+          name="Sign out of your account"
+        />
       </div>
     </Block>
   );
