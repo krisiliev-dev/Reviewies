@@ -32,6 +32,9 @@ function sources(dir: string, out: string[] = []): string[] {
 const PHONE = ['mobile/app', 'mobile/src'].flatMap((t) => sources(resolve(ROOT, t)));
 const read = (path: string) => stripComments(readFileSync(path, 'utf8'));
 const RENDERER = read(resolve(ROOT, 'mobile/src/ui/Choice.tsx'));
+/** Repo-relative, because `read` above takes an absolute path and a clause that
+ *  forgets is green from the repo root and red under `npm run verify`. */
+const inRepo = (path: string) => read(resolve(ROOT, path));
 
 describe('the choice contract', () => {
   it('reads a renderer and a table rather than nothing', () => {
@@ -90,6 +93,49 @@ describe('the choice contract', () => {
       for (const ground of [table.ground, table.groundRaised, table.groundWell]) {
         expect(contrast(table[CHOSEN.colour], ground), `${theme} on ${ground}`).toBeGreaterThan(3);
       }
+    }
+  });
+
+  it('offers one scrolling line, and both renderers actually do it', () => {
+    /*
+     * §6.109. A group whose length is the person's data rather than the product's:
+     * Stats has one chip per year with a watch in it, so a decade of imported TV Time
+     * put thirteen chips in three rows above the figures the screen exists for.
+     *
+     * Both halves are checked because a prop declared and honoured on one platform is
+     * the shape §6.87 named — emitted is not rendered — and this contract has five call
+     * sites that must not start scrolling by accident.
+     */
+    expect(inRepo('core/src/ui/choice.ts'), 'the contract has no scroll').toMatch(
+      /^\s*scroll\?: boolean;$/m,
+    );
+    const web = inRepo('app/src/ui/Choice.tsx');
+    expect(web, 'the web declares scroll and does nothing with it').toContain('overflow-x-auto');
+    expect(web, 'thirteen chips would be squeezed rather than scrolled').toContain('shrink-0');
+    const phone = inRepo('mobile/src/ui/Choice.tsx');
+    expect(phone, 'the phone declares scroll and does nothing with it').toMatch(
+      /const Group = scroll \? ScrollView : View;/,
+    );
+    // And it is off unless asked for: four of the five call sites are fixed lists.
+    expect(web).toContain("scroll = false");
+    expect(phone).toContain("scroll = false");
+  });
+
+  it('is two questions on Stats, on both platforms', () => {
+    /*
+     * The windows and the years were one radiogroup, which reads as one question with
+     * thirteen answers. Measured on a ten-year library at 390px: 148px of control and the
+     * first figure at y=236 of an 844px viewport, against 88 and 222 for two groups with
+     * the years scrolling. The alternative that keeps the years wrapping came to 140 and
+     * pushed the figures to 274 — recorded because it was built and photographed, not
+     * because it was imagined.
+     */
+    for (const path of ['app/src/screens/Stats.tsx', 'mobile/app/stats.tsx']) {
+      const source = inRepo(path);
+      const groups = source.match(/<Choice\b/g) ?? [];
+      expect(groups.length, `${path} does not offer two groups`).toBe(2);
+      expect(source, `${path} does not name Year in review`).toContain('Year in review');
+      expect(source, `${path}'s years do not scroll`).toMatch(/\bscroll\b/);
     }
   });
 

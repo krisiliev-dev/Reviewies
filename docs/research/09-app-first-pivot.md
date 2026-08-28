@@ -7591,6 +7591,104 @@ sprint would be smuggling a design decision in under a migration. The numbers ar
 and the next pass owes a photograph of the alternative before choosing.
 
 
+### 6.109 Six clauses that could not say which one they had found, and a control chosen by building all three
+
+Two halves. One is a design decision made by photographing the alternatives; the other is
+the mistake this record has now made four sprints running, swept and then made mechanical.
+
+**The sweep first, because it is the one that generalises.** §6.108 planted a deletion
+against a clause written twenty minutes earlier and it passed. The clause was mine and it
+looked fine:
+
+```ts
+expect(read('app/src/ui/Choice.tsx'), 'the web chip has no size again').toContain('text-s14');
+```
+
+The chip lost its size and the *row* constant still had one, so the file still contained the
+string. That is mechanically detectable, and detecting it is better than remembering it: a
+needle occurring more than once in the file a clause reads means the clause cannot say which
+one it found, and it will pass when the one it means is deleted. **Six of them**, and five
+were mine:
+
+```
+button.test.ts  'text-ink' in Button.tsx                  4x   satisfied by text-ink-secondary
+type.test.ts    'text-s30 font-bold' in UpNext.tsx        4x   four <h1>s on that screen
+type.test.ts    'label: text.s14' in choice.ts            2x   CHOICE_SIZE has two densities
+type.test.ts    'hint: text.s12' in choice.ts             2x   the same two
+type.test.ts    'CHOICE_SIZE.chips.label' in Choice.tsx   2x   label and tick read the same value
+type.test.ts    'text-s12 text-ink-secondary' in Stats     2x   the tile label and the tally count
+```
+
+The first is the oldest and the worst. A clause named *"draws being on, rather than only
+announcing it"* asserted that the web's selected state steps its label up to `ink` — and
+`toContain('text-ink')` was satisfied four times over by `text-ink-secondary` and
+`text-ink-tertiary` in a tone table it was not looking at. Deleting `text-ink` from
+`SELECTED_CLASS` entirely left that clause green.
+
+Two things came out of it. `declarationOf(source, name)` in `core/src/test/source.ts` —
+structure found on `blankLiterals`, so a brace in a string does not end a value early, and
+the slice comes back out of the original text — so a clause can judge the construct instead
+of the file. And where the thing is a *value* rather than text, the answer is smaller still:
+import it. `CHOICE_SIZE.chips.label === text.s14` beats any amount of grepping.
+
+**Then the sweep was made permanent, because a one-off sweep is a fact about one afternoon.**
+`app/src/wiring/clauses.test.ts` reads every test file in `app/src`, finds each `expect()`
+whose subject is a whole file, and fails when the needle occurs more than once in it. Six
+plants restoring the six ambiguities, six caught; a seventh plant put the original
+`Choice.tsx` clause back and the new guard reported it by file, line, count and remedy.
+
+Its second clause is the one that matters in five years: it counts how many whole-file
+assertions the scan actually found and fails if that number collapses. A guard that reads
+guards can be defeated by a renaming, and an empty result read as a clean bill of health is
+§6.56's rule pointed at the suite itself.
+
+`not.toContain` is deliberately exempt. *"This file says it nowhere"* is exactly what a
+whole-file read is for, and more occurrences make that claim stronger rather than weaker.
+
+**And the period control, decided by building all three and looking.** §6.108 measured the
+problem and refused to pick a remedy without pictures. Three arrangements, same ten-year
+library, same 390px screen:
+
+```
+                            groups   control   figures at   chips on screen
+today                          1      148px       y=236        13 of 13
+labelled, still wrapping       2      140px       y=274        13 of 13
+labelled, one scrolling row    2       88px       y=222        9 of 13
+```
+
+The middle one is the arrangement the task proposed and it is worse: naming the years costs
+a heading line, so the figures the screen exists for end up *lower* than before. It was built
+and photographed before that was obvious, which is the entire argument for building it.
+
+The scrolling row wins on every number, and the cost is the only thing worth checking:
+the earliest years start off-screen. Measured rather than assumed — focusing the 2017 chip
+scrolls it to `left: 346, right: 390`, inside the viewport, and choosing it works. Thirteen
+chips, all reachable, none of them shouting.
+
+It landed as a `scroll` prop on the shared contract rather than as an `overflow-x-auto` on
+Stats, because five screens use `Choice` and four of them are fixed lists that must not start
+scrolling by accident. Off by default; the phone swaps its `View` for a horizontal
+`ScrollView`; both renderers are guarded, and planting either one declaring the prop and
+ignoring it fails — §6.87's rule, which is that emitted is not rendered.
+
+**And the sprint destroyed nine tests, green the whole way.** `core/src/test/source.test.ts`
+already existed — thirteen cases about reading source as code, from §6.72 — and the new
+helper's tests were written *over* it with a `cat >`. `npm run verify` passed. Every file on
+disk was still collected, every collected test still passed, and nine checks had stopped
+existing. The only thing that noticed was reading the summary line: **930 became 921**, and
+the number had no other witness.
+
+The four new cases are merged into the file they nearly replaced, and there is a ratchet now:
+each workspace's `it(` blocks counted in source, failing only when a suite gets *smaller*.
+Written slack first, with floors a few per cent under the real counts — and the plant walked
+straight through it, because nine out of nine hundred is inside any sensible margin. A margin
+here is a margin for exactly the accident it exists to catch, so there is none. Removing a
+test on purpose now means editing one number with a reason beside it.
+
+Eleven plants, eleven caught, and the eleventh was against a guard whose first version I had
+to throw away for being too forgiving.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -8005,14 +8103,28 @@ and which single claim in this document could not be checked at all:
   empty. §6.106 is the first evidence about what that costs: two of the
   three findings the track filed had the right conclusion and the wrong stated reason, and
   both were settled by a check that took two minutes.
-- **`toContain` on a whole file is almost never the check you meant.** §6.108: a clause
-  asserting the web's `Choice` chip carries a size passed with the size deleted, because
-  the *row* constant in the same file still had one. Written twenty minutes before it was
-  planted against, and it is the fourth sprint running that §6.73's shape has turned up —
-  and the third time this month in a clause of mine rather than an inherited one. The
-  three found so far are all the same mistake: reading the file because the file was in
-  hand, rather than the construct being judged. Nothing enumerates the clauses in this
-  repository that assert against a whole file when they mean a single declaration.
+- **A suite can get smaller and nothing says so — now with one exception.** §6.109 wrote a
+  test file over one that already existed and `npm run verify` stayed green through the loss
+  of nine checks; a ratchet on each workspace's block count catches that class now. What it
+  does not catch is the same accident in anything that is not a `.test.ts`: a smoke check
+  deleted from `app/smoke.mjs`, a `MUST_SHOW` clause dropped from `design/capture.mjs`, a
+  fixture shrunk. Those all report a total when they run and nothing compares it to
+  yesterday's.
+- **`toContain` on a whole file is almost never the check you meant — and now something
+  enumerates them.** §6.108 found one by planting; §6.109 swept and found six, five of them
+  mine, the oldest being a clause about the selected state satisfied four times over by
+  `text-ink-secondary` in a table it was not looking at. `declarationOf` in
+  `core/src/test/source.ts` is the answer where the thing is text, and importing the value
+  is the better answer where it is a value. `app/src/wiring/clauses.test.ts` keeps the
+  sweep running: it fails when any clause reads a whole file for a needle that file carries
+  more than once, and it counts what it scanned so a renaming cannot turn it into an empty
+  pass.
+
+  What that does *not* cover is the needle that is unique today. A file grows a second
+  occurrence and the clause silently becomes ambiguous — at which point this guard starts
+  failing, which is the design, but nothing warns at the moment of writing. And the same
+  shape exists in the smoke suites, which assert against `innerText()` of a whole page and
+  have never been swept for it.
 - **A guard can stop seeing the thing it was built for, by being obeyed.** §6.106: the
   copy guard resolves a shared sentence out of `COPY` so that moving copy into the owner
   does not blind it — for strings. Names take the title, so they are functions, and moving
@@ -8043,15 +8155,15 @@ and which single claim in this document could not be checked at all:
   contexts against one IndexedDB on purpose, so a flake is plausible rather than
   mysterious — but a check that is sometimes red is a check nobody will believe when it
   matters. It needs to be made deterministic or made to report what it could not observe.
-- **Stats' period control is thirteen chips on a ten-year library, and the remedy is not
-  measured.** §6.108 measured the problem: three rows, 148px of group, the first figure at
-  y=236 of an 844px viewport — twenty-eight per cent of the fold, with the ten year buttons
-  carrying exactly the weight of the three period ones, and Year in Review dressed as a
-  filter. What is not settled is what to do. A second labelled group names the feature and
-  makes the block *taller*; the change that fixes the height is a new interaction. #149
-  holds the numbers, and the next pass owes a photograph of the alternative before choosing
-  — a design decision smuggled in under a migration is how a screen ends up with something
-  nobody argued for.
+- **Stats' period control is settled, and what it cost is one thing nobody has seen.**
+  §6.109 built all three arrangements and photographed them: the one the task proposed —
+  labelled, still wrapping — came to 140px and pushed the figures *lower* than the 148px it
+  replaced, which was not obvious until it existed. The scrolling row is 88px with the
+  figures at y=222, and focus scrolls the off-screen years into view. What has not been
+  seen is a person using it: a horizontal scroller on a screen that also scrolls vertically
+  is a gesture conflict on a real touch device, and this repository has never run on one
+  (see the first bullet). The `scroll` prop is off for the other four `Choice` call sites,
+  so the risk is scoped to one control on one screen.
 - **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
   rather than structure precisely because they are — the direction's `radius.none` is for
   full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those

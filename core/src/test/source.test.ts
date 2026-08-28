@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blankLiterals, stripComments, stripMarkdownComments } from './source.ts';
+import { blankLiterals, declarationOf, stripComments, stripMarkdownComments } from './source.ts';
 
 /**
  * The helper every source-level guard now leans on, tested for the two mistakes it
@@ -77,5 +77,47 @@ describe('blanking every literal', () => {
     // is not a comment, and the string blanking must reach it first.
     const blanked = blankLiterals('const u = "https://example.com"; const kept = 1;');
     expect(blanked).toContain('const kept = 1');
+  });
+});
+
+/**
+ * The helper §6.109 wrote so that a clause stops asking whether a file mentions a thing.
+ *
+ * Every case here is a shape that actually defeated a guard in this repository, rather
+ * than a shape it might: two style keys carrying the same value, a constant whose value
+ * contains the needle a sibling also contains, and a value with a brace inside a string.
+ */
+describe('reading one declaration out of a file', () => {
+  const SOURCE = `
+const CHIP = 'rounded-plate min-h-11 text-s14';
+const ROW = 'flex w-full min-h-11 text-left text-s14';
+const styles = StyleSheet.create({
+  label: { fontSize: CHOICE_SIZE.chips.label },
+  tick: { color: theme.workingMark, fontSize: CHOICE_SIZE.chips.label },
+  pattern: { content: '{ not a brace }' },
+});
+`;
+
+  it('returns what a constant is set to, and not its neighbour', () => {
+    expect(declarationOf(SOURCE, 'CHIP')).toContain('text-s14');
+    expect(declarationOf(SOURCE, 'CHIP')).toContain('rounded-plate');
+    expect(declarationOf(SOURCE, 'CHIP'), 'it ran into ROW').not.toContain('flex w-full');
+  });
+
+  it('tells two style keys apart when they hold the same value', () => {
+    // The case that let a planted deletion pass: `toContain` on the file was satisfied by
+    // `tick` after `label` had lost it.
+    expect(declarationOf(SOURCE, 'label')).toContain('CHOICE_SIZE.chips.label');
+    expect(declarationOf(SOURCE, 'label'), 'it swallowed tick').not.toContain('workingMark');
+  });
+
+  it('is not ended early by a brace inside a string', () => {
+    expect(declarationOf(SOURCE, 'pattern')).toContain('{ not a brace }');
+  });
+
+  it('says nothing rather than something, when there is no such declaration', () => {
+    // A needle that has stopped existing and one that has stopped matching are different
+    // failures, and a clause should be able to tell them apart.
+    expect(declarationOf(SOURCE, 'nothingCalledThis')).toBeUndefined();
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { stripComments } from '@reviewies/core/test/source';
+import { declarationOf, stripComments } from '@reviewies/core/test/source';
 import { BOX_RADIUS, BUSY, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
 import { CHOSEN } from '@reviewies/core/ui/choice';
 import { border, color, radius, size, text } from '@reviewies/core/tokens';
@@ -168,8 +168,15 @@ describe('the button contract', () => {
     expect(PHONE).toContain('SELECTED.rule');
     expect(PHONE).toContain('theme[SELECTED.colour]');
     expect(PHONE).toContain('SELECTED.label.on');
-    expect(WEB).toContain('border-working-mark');
-    expect(WEB).toContain('text-ink');
+    /*
+     * `SELECTED_CLASS`, not the file. `toContain('text-ink')` was satisfied four times
+     * over by `text-ink-secondary` and `text-ink-tertiary` in the tone table, so this
+     * clause passed with the label step deleted from the very constant it names. §6.109.
+     */
+    const selected = declarationOf(WEB, 'SELECTED_CLASS');
+    expect(selected, 'there is no SELECTED_CLASS to read').toBeDefined();
+    expect(selected).toContain('border-working-mark');
+    expect(selected, 'being on no longer steps the label up').toMatch(/\btext-ink\b/);
     expect(WEB, 'a fill standing in for being on').not.toMatch(
       /SELECTED_CLASS = '[^']*bg-/,
     );

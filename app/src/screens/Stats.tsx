@@ -44,36 +44,56 @@ export function Stats() {
    * keys are strings so the whole group has one key type; `Your 2024` stays the announced
    * name rather than a bare number beside three phrases.
    */
-  const PERIODS = [
-    ...WINDOWS.map((w) => ({ key: w.key as string, label: w.label })),
-    ...years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` })),
-  ];
+  const PERIODS = WINDOWS.map((w) => ({ key: w.key as string, label: w.label }));
+  const YEARS = years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` }));
 
   return (
     <div className="p-4">
       <h1 className="mb-4 px-1 text-s24 font-semibold">Stats</h1>
 
-      {/* One group, which is what it always was — a single `radiogroup` holding both the
-          windows and the years, hand-built twice inside it. `Choice` draws being chosen as
-          a rule and a weight step rather than the accent fill, which is the app's one
-          filled shape and belongs to the thing worth pressing rather than the thing
-          already chosen. */}
+      {/*
+       * Two groups since §6.109, because they are two questions.
+       *
+       * "How far back" has three fixed answers; "which year" has as many as the person has
+       * history, and on a decade of imported TV Time that was ten more chips in the same
+       * radiogroup, unlabelled, carrying the same weight as the three that matter most.
+       * Measured at 148px of control with the first figure at y=236 of an 844px screen.
+       * Two groups with the years scrolling: 88px, figures at 222, and Year in Review —
+       * the thing TV Time's REWIND made people love — finally says its own name.
+       *
+       * `Choice` draws being chosen as a rule and a weight step rather than the accent
+       * fill, which is the app's one filled shape and belongs to the thing worth pressing.
+       */}
       <div className="mb-5">
         <Choice
           name="Which stretch of time these figures cover"
           options={PERIODS}
-          value={year ? String(year) : window}
+          value={year === undefined ? window : ''}
           onChange={(next) => {
-            const asYear = Number(next);
-            if (Number.isNaN(asYear)) {
-              setWindow(next as Window);
-              setYear(undefined);
-            } else {
-              setYear(asYear);
-            }
+            setWindow(next as Window);
+            setYear(undefined);
           }}
         />
       </div>
+
+      {YEARS.length > 0 && (
+        <div className="mb-5">
+          <h2 className="mb-2 px-1 text-s12 font-semibold tracking-wide text-ink-secondary uppercase">
+            Year in review
+          </h2>
+          {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
+              scroller that stops short of the margin reads as a clipped list. */}
+          <div className="-mx-4 px-4">
+            <Choice
+              name="Which year to review"
+              options={YEARS}
+              scroll
+              value={year === undefined ? '' : String(year)}
+              onChange={(next) => setYear(Number(next))}
+            />
+          </div>
+        </div>
+      )}
 
       {summary === undefined ? (
         <p className="text-s14 text-ink-secondary">Loading…</p>

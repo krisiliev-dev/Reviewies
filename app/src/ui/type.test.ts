@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { text, weight } from '@reviewies/core/tokens';
+import { CHOICE_SIZE } from '@reviewies/core/ui/choice';
+import { declarationOf } from '@reviewies/core/test/source';
 
 /**
  * The type layer, and the one role that has been migrated onto it.
@@ -98,9 +100,14 @@ describe('the type scale', () => {
       );
       expect(source, `${file} still has a raw 30`).not.toMatch(/fontSize: 30\b/);
     }
-    // And the same step on the other side, so the two cannot be migrated apart.
+    // And the same step on the other side, so the two cannot be migrated apart. The screen's
+    // own title, not any of the four `<h1>`s UpNext renders — the arrival and first-run
+    // headings are on the same step and would have satisfied this with the title changed.
     expect(text.s30).toBe(30);
-    expect(read('app/src/screens/UpNext.tsx')).toContain('text-s30 font-bold');
+    const upNext = read('app/src/screens/UpNext.tsx');
+    expect(upNext, "the web's Up Next title is off the step the phone's is on").toMatch(
+      /<h1 className="[^"]*text-s30 font-bold">Up Next<\/h1>/,
+    );
   });
 
   it('is what the crash screen says on both platforms, which nobody photographs', () => {
@@ -150,10 +157,21 @@ describe('the type scale', () => {
       expect(webButton, `Button's ${step} row`).toContain(step);
     }
 
-    const choice = read('core/src/ui/choice.ts');
-    expect(choice).toContain('label: text.s14');
-    expect(choice).toContain('hint: text.s12');
-    expect(read('mobile/src/ui/Choice.tsx')).toContain('CHOICE_SIZE.chips.label');
+    /*
+     * The values, imported, rather than the source text. `CHOICE_SIZE` has two densities
+     * and both carry the same pair, so `toContain('label: text.s14')` could not say which
+     * one it had found — and a clause that cannot tell them apart passes when one loses it.
+     * Importing is strictly better than grepping wherever the thing is a value.
+     */
+    for (const density of ['chips', 'rows'] as const) {
+      expect(CHOICE_SIZE[density].label, `${density} labels are off the scale`).toBe(text.s14);
+      expect(CHOICE_SIZE[density].hint, `${density} hints are off the scale`).toBe(text.s12);
+    }
+    // The `label` style, not the file: `tick` reads the same value, so this passed with
+    // the label's own size deleted. The exact plant §6.108 recorded, one file along.
+    const phoneChoiceLabel = declarationOf(read('mobile/src/ui/Choice.tsx'), 'label');
+    expect(phoneChoiceLabel, 'no label style to read').toBeDefined();
+    expect(phoneChoiceLabel).toContain('CHOICE_SIZE.chips.label');
     /*
      * Both constants, by name. `toContain('text-s14')` passed with the chip's size deleted,
      * because the row's still had one — planted and not caught, which is §6.73 in a clause
@@ -185,7 +203,9 @@ describe('the type scale', () => {
     // And the pairs that were wrong, named so a future edit cannot quietly re-split them.
     expect(phone).toContain('fontSize: text.s20');   // the figure tile's value
     expect(web).toContain('text-s20 font-semibold'); // the same tile
-    expect(phone).toContain('fontSize: text.s12');   // its label
-    expect(web).toContain('text-s12 text-ink-secondary');
+    expect(declarationOf(phone, 'figureLabel'), 'the tile label is off the scale')
+      .toContain('fontSize: text.s12');
+    // The tile's own `<dt>`, not the tally count, which carries the same pair of classes.
+    expect(web).toMatch(/<dt className="text-s12 text-ink-secondary">/);
   });
 });

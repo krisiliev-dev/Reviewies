@@ -126,6 +126,46 @@ describe('every workspace', () => {
     expect(missed).toEqual([]);
   }, 120_000);
 
+  /**
+   * How many checks each workspace holds, as a floor.
+   *
+   * §6.109 wrote a new test file over one that already existed — `core/src/test/
+   * source.test.ts`, thirteen cases about reading source as code, replaced by four about
+   * one new helper — and `npm run verify` went **green**. Every file on disk was still
+   * collected, every collected test still passed, and nine checks had stopped existing.
+   * The only thing that noticed was reading the summary line and seeing 930 become 921.
+   *
+   * A ratchet: the number a suite holds today, and it only fails when a suite gets
+   * *smaller*. Adding tests never touches it, which is what separates this from the pins
+   * §6.94 warns about — those encode an arrangement somebody chose, and this encodes
+   * nothing but "nothing was destroyed".
+   *
+   * It was written slack first — floors a few per cent below the real counts — and the
+   * plant walked straight through it: deleting the nine cases that were actually lost
+   * left core above a floor of 890. A margin here is a margin for exactly the accident
+   * this exists to catch, so there is none. Removing a test on purpose means editing one
+   * number with a reason beside it, which is the whole intent.
+   *
+   * Counted as `it(` blocks in source, not as cases reported by the runner: a loop or an
+   * `it.each` turns one block into several, and the two numbers differ by forty in `app`
+   * alone. What matters here is that a block stops existing.
+   */
+  const FLOOR: Record<string, number> = {
+    core: 900, app: 449, mobile: 42, relay: 24, bridge: 24, extension: 21,
+  };
+
+  it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
+    const shrunk: string[] = [];
+    for (const [name, floor] of Object.entries(FLOOR)) {
+      const dir = resolve(ROOT, name);
+      const cases = testFiles(dir)
+        .map((f) => (readFileSync(f, 'utf8').match(/^\s*(?:it|test)(?:\.\w+)?\(/gm) ?? []).length)
+        .reduce((a, b) => a + b, 0);
+      if (cases < floor) shrunk.push(`${name}: ${cases} checks, below the ${floor} it had`);
+    }
+    expect(shrunk).toEqual([]);
+  });
+
   it('does not pass itself when its tests disappear', () => {
     const vacuous = names.filter((name) => {
       if (MAY_BE_EMPTY[name]) return false;

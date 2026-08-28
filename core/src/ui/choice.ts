@@ -83,4 +83,22 @@ export interface ChoiceContract<T extends string | number> {
   value: T;
   onChange(next: T): void;
   density?: ChoiceDensity;
+  /**
+   * One line that scrolls sideways, rather than as many rows as it takes.
+   *
+   * For a group whose length is the person's data rather than the product's. Stats offers
+   * one chip per year with a watch in it, so somebody arriving from ten years of TV Time
+   * meets thirteen chips in three rows — measured at 148px of control with the first
+   * figure a third of the way down an 844px screen, and the ten year buttons carrying
+   * exactly the weight of the three period ones.
+   *
+   * Measured against the alternatives rather than argued: wrapping in a second labelled
+   * group came to 140px and pushed the figures *lower*; this comes to 88 and lifts them.
+   * What it costs is that the earliest years start off-screen — checked, and focus scrolls
+   * them into view, so a keyboard and a screen reader still reach all thirteen.
+   *
+   * Only for a group that is genuinely a list. A group of three fixed options that
+   * scrolled would be hiding a choice for no reason.
+   */
+  scroll?: boolean;
 }

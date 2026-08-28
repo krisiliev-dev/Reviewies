@@ -155,3 +155,50 @@ export function blankLiterals(source: string): string {
   }
   return out.join('');
 }
+
+/**
+ * One named declaration, so a clause can judge the construct rather than the file.
+ *
+ * §6.109's sweep. A guard that reads a source file and asserts `toContain('text-s14')`
+ * is answering "does this file mention it", and what it almost always means is "does
+ * *this* constant carry it". The two come apart the moment a second occurrence exists —
+ * measured, six clauses in this repository could not tell one from another, including
+ * one that passed with the very thing it names deleted, because a sibling still had it.
+ *
+ * Takes the name of a `const`, an object key or a style key, and returns the text of what
+ * it is set to. Structure is found on `blankLiterals`, so a brace inside a string or a
+ * regex does not end the value early; the slice comes back out of the original text, so
+ * what a clause reads is what is written.
+ *
+ * Returns `undefined` when there is no such declaration, which a clause should assert on
+ * rather than swallow: a needle that has stopped existing and a needle that has stopped
+ * matching are different failures.
+ */
+export function declarationOf(source: string, name: string): string | undefined {
+  const structure = blankLiterals(source);
+  const start = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:=]\\s*`)
+    .exec(structure);
+  if (!start) return undefined;
+  let i = start.index + start[0].length;
+  const OPEN = '{[(';
+  const CLOSE = '}])';
+  const stack: string[] = [];
+  const from = i;
+  for (; i < structure.length; i++) {
+    const c = structure[i];
+    if (OPEN.includes(c)) stack.push(CLOSE[OPEN.indexOf(c)]);
+    else if (CLOSE.includes(c)) {
+      if (!stack.length) break;
+      if (stack[stack.length - 1] !== c) break;
+      stack.pop();
+      if (!stack.length) {
+        i++;
+        break;
+      }
+    } else if (!stack.length && (c === ',' || c === ';' || c === '\n')) {
+      // A value that is not a bracketed expression ends at its own line or separator.
+      if (source.slice(from, i).trim()) break;
+    }
+  }
+  return source.slice(from, i);
+}

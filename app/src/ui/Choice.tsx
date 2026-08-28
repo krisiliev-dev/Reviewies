@@ -25,13 +25,22 @@ export function Choice<T extends string | number>({
   value,
   onChange,
   density = 'chips',
+  scroll = false,
 }: ChoiceContract<T>) {
   const rows = density === 'rows';
   return (
     <div
       role="radiogroup"
       aria-label={name}
-      className={rows ? 'flex flex-col' : 'flex flex-wrap items-center gap-2'}
+      /* Written out rather than assembled, for the reason at the top of this file:
+         Tailwind's scanner reads source text, so a class built at runtime never compiles. */
+      className={
+        rows
+          ? 'flex flex-col'
+          : scroll
+            ? 'flex flex-nowrap items-center gap-2 overflow-x-auto'
+            : 'flex flex-wrap items-center gap-2'
+      }
     >
       {options.map((option) => {
         const on = option.key === value;
@@ -43,7 +52,9 @@ export function Choice<T extends string | number>({
             aria-checked={on}
             aria-label={announce(option)}
             onClick={() => onChange(option.key)}
-            className={`${rows ? ROW : CHIP} ${on ? (rows ? ROW_ON : CHIP_ON) : rows ? ROW_OFF : CHIP_OFF} active:bg-ground-raised`}
+            /* `shrink-0` only matters in the scrolling arrangement, where flex would
+               otherwise squeeze thirteen chips into the width it has. */
+            className={`${rows ? ROW : CHIP} ${scroll ? 'shrink-0' : ''} ${on ? (rows ? ROW_ON : CHIP_ON) : rows ? ROW_OFF : CHIP_OFF} active:bg-ground-raised`}
           >
             <span className={rows ? 'flex-1' : undefined}>
               <span className="block">{option.label}</span>

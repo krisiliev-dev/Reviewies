@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   CHOICE_SIZE,
   CHOSEN,
@@ -21,18 +21,31 @@ export function Choice<T extends string | number>({
   value,
   onChange,
   density = 'chips',
+  scroll = false,
 }: ChoiceContract<T>) {
   const metrics = CHOICE_SIZE[density];
   const rows = density === 'rows';
 
+  /*
+   * One line that scrolls, when the group's length is the person's data. See the contract
+   * in the core for the measurements this was chosen on.
+   */
+  const Group = scroll ? ScrollView : View;
+  const groupProps = scroll
+    ? ({ horizontal: true, showsHorizontalScrollIndicator: false } as const)
+    : {};
+
   return (
-    <View
+    <Group
       accessibilityRole="radiogroup"
       accessibilityLabel={name}
-      style={[
-        rows ? styles.rows : styles.chips,
-        { gap: rows ? metrics.gap : CHOICE_SIZE.chips.gap },
-      ]}
+      {...groupProps}
+      contentContainerStyle={scroll ? styles.scrolling : undefined}
+      style={
+        scroll
+          ? undefined
+          : [rows ? styles.rows : styles.chips, { gap: rows ? metrics.gap : CHOICE_SIZE.chips.gap }]
+      }
     >
       {options.map((option) => {
         const on = option.key === value;
@@ -92,13 +105,14 @@ export function Choice<T extends string | number>({
           </Pressable>
         );
       })}
-    </View>
+    </Group>
   );
 }
 
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   rows: { flexDirection: 'column' },
+  scrolling: { flexDirection: 'row', alignItems: 'center', gap: CHOICE_SIZE.chips.gap },
   rowBody: { flex: 1 },
   // From `CHOICE_SIZE` in the core, which is where the web reads them too — the two were
   // 14 here and an inherited 16 there.

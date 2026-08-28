@@ -59,35 +59,45 @@ export default function StatsScreen() {
     <>
       <Stack.Screen options={{ title: 'Stats' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        {/* One group, which is what it always was: a single radiogroup with two hand-built
-            chip lists inside it. `Choice` draws being chosen as a rule and a weight step
-            rather than the accent fill — the app's one filled shape belongs to the thing
-            worth pressing, not the thing already chosen — and it is 44 tall, where these
-            chips were not.
-
-            TV Time's REWIND was among its most-loved features; the years are that. */}
+        {/*
+         * Two groups since §6.109, because they are two questions — see the web's copy of
+         * this screen for the measurements the arrangement was chosen on. "How far back"
+         * has three fixed answers; "which year" has as many as the person has history,
+         * and a decade of imported TV Time put ten more chips in the same unlabelled
+         * group carrying the same weight as the three that matter most.
+         *
+         * TV Time's REWIND was among its most-loved features; the years are that, and
+         * they now say so.
+         */}
         <Choice
           name="Which stretch of time these figures cover"
-          options={[
-            ...WINDOWS.map((option) => ({ key: option.key as string, label: option.label })),
-            ...years.map((value) => ({
-              key: String(value),
-              label: String(value),
-              hint: `your ${value}`,
-            })),
-          ]}
-          value={year === undefined ? window : String(year)}
+          options={WINDOWS.map((option) => ({ key: option.key as string, label: option.label }))}
+          value={year === undefined ? window : ''}
           onChange={(next) => {
-            const asYear = Number(next);
-            if (Number.isNaN(asYear)) {
-              setWindow(next as Window);
-              setYear(undefined);
-            } else {
-              setWindow('year');
-              setYear(asYear);
-            }
+            setWindow(next as Window);
+            setYear(undefined);
           }}
         />
+
+        {years.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeading}>Year in review</Text>
+            <Choice
+              name="Which year to review"
+              scroll
+              options={years.map((value) => ({
+                key: String(value),
+                label: String(value),
+                hint: `your ${value}`,
+              }))}
+              value={year === undefined ? '' : String(year)}
+              onChange={(next) => {
+                setWindow('year');
+                setYear(Number(next));
+              }}
+            />
+          </View>
+        )}
 
         {!summary && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
 
