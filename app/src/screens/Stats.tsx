@@ -14,6 +14,7 @@ import { formatDay } from '@reviewies/core/time';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Progress } from '../ui/Progress';
 
 /**
  * Stats and Year in Review.
@@ -182,12 +183,12 @@ function Summary({
               </div>
               {/* Bar length is time, not episode count — the whole point of
                   runtime weighting. */}
-              <div className="mt-2 h-1.5 overflow-hidden rounded-pill border border-stroke-signal">
-                <div
-                  className="h-full rounded-pill bg-working-fill"
-                  style={{ width: `${Math.max(4, (t.minutes / maxMinutes) * 100)}%` }}
-                />
-              </div>
+              <Progress
+                className="mt-2"
+                value={t.minutes}
+                max={maxMinutes}
+                label={`${t.name}, ${formatDuration(t.minutes)} of your ${formatDuration(maxMinutes)} most-watched`}
+              />
               <Note level="footnote" className="mt-1">
                 {t.episodes} {t.episodes === 1 ? 'episode' : 'episodes'}
               </Note>

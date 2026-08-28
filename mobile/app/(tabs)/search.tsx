@@ -117,7 +117,7 @@ export default function SearchScreen() {
         */}
         {busy && (
           <>
-            <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+            <ActivityIndicator color={theme.workingMark} style={styles.loading} />
             <Note accessibilityLiveRegion="polite">Searching…</Note>
           </>
         )}

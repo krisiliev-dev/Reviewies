@@ -9,6 +9,7 @@ import { text, type, track, leading } from '@reviewies/core/tokens';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
+import { Progress } from '../ui/Progress';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -58,8 +59,8 @@ export function RemotePanel({ remote }: { remote: Remote }) {
           </View>
 
           {remote.scanning && (
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${remote.progress * 100}%` }]} />
+            <View>
+              <Progress size="rule" value={remote.progress} max={1} label="Scanning your network" />
             </View>
           )}
 
@@ -146,8 +147,6 @@ const styles = StyleSheet.create({
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
-  progressTrack: { height: 3, backgroundColor: theme.groundWell, borderRadius: radius.pill },
-  progressFill: { height: 3, backgroundColor: theme.workingFill, borderRadius: radius.pill },
   device: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12 },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },

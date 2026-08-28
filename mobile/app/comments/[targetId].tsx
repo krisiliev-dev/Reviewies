@@ -181,7 +181,7 @@ export default function CommentsScreen() {
             />
             {error && <Text style={styles.error}>{error}</Text>}
 
-            {loading && <ActivityIndicator color={theme.workingFill} />}
+            {loading && <ActivityIndicator color={theme.workingMark} />}
 
             {!loading && visible.length === 0 && (
               <Note>

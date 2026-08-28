@@ -8207,6 +8207,59 @@ off the screens is the population falling for the right reason; a floor left sla
 what let nine deleted tests through in §6.107.
 
 
+### 6.117 Amber that fails on paper, and only on paper
+
+Stage 3 continued: `Progress`, the fifth component, and the first one written for a live
+accessibility failure rather than for drift.
+
+`docs/design/tokens.md` §3 measured it two stages ago and stated the rule exactly:
+
+> in light, `working.fill` is only ever a filled area with dark ink on it — never a stroke,
+> never a tick, never a progress fill, never a word.
+
+**Amber on the light page is 1.77:1.** That fails 3:1 as a non-text UI component, not merely
+as text. The document said so; the build broke it in twelve places:
+
+- the **Stats tally bar**, `bg-working-fill` on both platforms;
+- the **busy underline** under a working button, a 2pt rule in the same colour;
+- the remote's **scan progress**;
+- and **ten `ActivityIndicator`s** on the phone, every loading spinner in the app.
+
+The rule is that the ink is what rescues the amber. `CrossOff`'s ring is a filled area with
+dark ink on it at 9.34:1 and is the one legal use in the build. A bar has nothing on it, so it
+is a *mark* and takes `working.mark` — `#8A5A08` in light, 5.22:1 on the page.
+
+**Why nobody saw it.** In dark both tokens resolve to the same amber. The failure exists only
+under `data-theme="light"`, and not one of the fifteen screenshots in `design/screens` is
+taken in it — the design track has been looking at half the app for eight sprints. The phone
+is unaffected today for a reason that is luck rather than design: `mobile/src/ui/theme.ts` is
+`color.dark` and nothing switches it, so ten spinners were waiting for a light mode to become
+wrong. They are on the mark colour now, and a clause asserts the theme is still pinned so the
+day that changes it says so.
+
+The guard states it as a rule rather than a list of sites: **a class string or style naming
+`working.fill` must also name `working.on-fill`.** Amber carrying meaning on its own is what
+cannot happen; amber with ink on it is fine. It also does the contrast arithmetic itself
+rather than trusting that somebody once did — 1.77 and 5.22 are computed from the table in the
+clause, so a re-picked hex fails immediately.
+
+**A bug in the component I had just written.** The clause for the minimum bar width caught it:
+`progressPercent(0, 100)` returned 4, because the floor clamped everything rather than only
+non-zero values. "Barely any" and "none" are different facts — §6.104's distinction, one layer
+down — and a bar measuring nothing was drawing 4%.
+
+**And the heights were on the wrong scale.** The remote's bar was 3pt, which is `border.tally`
+— a *stroke* width used for a *fill*. §6.90's note that "a stroke scale that quietly contains
+fills is a scale that will grow a 96 next" runs in this direction too.
+
+Nine plants, nine catches, including one on the arithmetic itself: repointing `working.mark` at
+the amber hex fails the clause immediately.
+
+`clauses.test.ts` fired again — for the third time this sprint sequence, a needle had a second
+copy **in the component's own prose comment**, so `toContain('bg-working-mark')` was satisfied
+by the sentence explaining why it is that colour.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -8224,6 +8277,14 @@ and which single claim in this document could not be checked at all:
   only been reasoned about, not seen at 200% on a device. The second stands: Japanese falls to
   the platform face by decision, which is a decision about how a mixed Latin/Japanese title
   looks that nobody has looked at.
+
+  And a third, found by §6.117 rather than by looking: **nothing has ever been photographed in
+  light mode.** All fifteen shots in `design/screens` are dark, the phone is pinned to
+  `color.dark`, and the web's light theme applies only under an explicit `data-theme`. That is
+  how an amber that fails 3:1 on paper survived in twelve places through eight design sprints —
+  the design track has been reviewing half the app. `design/capture.mjs` does not take a light
+  pass, and until it does, every claim in this document about the light palette rests on
+  arithmetic rather than on anyone having seen it.
 
   What §6.113 adds to this entry rather than removing: the faces are now on every word in the
   app, and the only place anyone has seen them is the react-native-web export — a browser,

@@ -198,7 +198,7 @@ export default function TitleScreen() {
 
         {loading && seasons.length === 0 && (
           <>
-            <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+            <ActivityIndicator color={theme.workingMark} style={styles.loading} />
             <Note accessibilityLiveRegion="polite">Loading episodes…</Note>
           </>
         )}

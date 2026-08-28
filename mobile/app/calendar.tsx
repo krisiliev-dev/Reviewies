@@ -138,7 +138,7 @@ export default function CalendarScreen() {
         <View style={styles.spaced}>
           <Section>Next two months</Section>
         </View>
-        {entries === undefined && <ActivityIndicator color={theme.workingFill} />}
+        {entries === undefined && <ActivityIndicator color={theme.workingMark} />}
         {entries?.length === 0 && (
           <View style={styles.emptyBlock}>
             {/* Which sentence depends on *why* it is empty: an imported show has no air

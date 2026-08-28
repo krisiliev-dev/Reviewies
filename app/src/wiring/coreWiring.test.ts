@@ -151,6 +151,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/note#NOTE_INK': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',
   'mobile only: ui/field#FIELD_BOX': 'Tailwind needs a literal class; field.test.ts couples the two.',
+  'mobile only: ui/progress#PROGRESS_SIZE': 'Tailwind needs a literal class; progress.test.ts couples the two.',
+  'mobile only: ui/progress#PROGRESS_COLOUR': 'Tailwind needs a literal class; progress.test.ts couples the two.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',

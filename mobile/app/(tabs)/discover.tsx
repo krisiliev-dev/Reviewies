@@ -51,7 +51,7 @@ export default function DiscoverScreen() {
         <Text accessibilityRole="header" style={styles.heading}>Discover</Text>
         <Note>{COPY.discover.blurb}</Note>
 
-        {items === undefined && !error && <ActivityIndicator color={theme.workingFill} />}
+        {items === undefined && !error && <ActivityIndicator color={theme.workingMark} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {items?.length === 0 && (
           <Note>{COPY.discover.empty}</Note>

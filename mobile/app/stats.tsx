@@ -17,6 +17,7 @@ import { Choice } from '../src/ui/Choice';
 import { Section } from '../src/ui/Section';
 import { Data } from '../src/ui/Data';
 import { Note } from '../src/ui/Note';
+import { Progress } from '../src/ui/Progress';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -102,7 +103,7 @@ export default function StatsScreen() {
           </View>
         )}
 
-        {!summary && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
+        {!summary && <ActivityIndicator color={theme.workingMark} style={styles.loading} />}
 
         {/*
          * Four zeros, or the sentence — never both, and never the zeros first.
@@ -175,14 +176,11 @@ export default function StatsScreen() {
                     </View>
                     {/* Width by time, not by episode count — the same rule as the
                         ranking, or the picture would contradict the order. */}
-                    <View style={styles.barTrack}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          { width: `${Math.max(4, (title.minutes / longest) * 100)}%` },
-                        ]}
-                      />
-                    </View>
+                    <Progress
+                      value={title.minutes}
+                      max={longest}
+                      label={`${title.name}, ${formatDuration(title.minutes)} of your ${formatDuration(longest)} most-watched`}
+                    />
                     {/* The count under the bar, which the web has had since Stats
                         shipped and this did not. A bar with no number beside it is a
                         shape: it says one show beat another and not by how much of what.
@@ -259,6 +257,4 @@ const styles = StyleSheet.create({
   tallyName: { color: theme.ink, fontSize: text.s14, flex: 1, fontFamily: type.family.body.name },
   // 12 against the web's 14, beside a name that is the same size on both.
   tallyTime: { color: theme.inkSecondary },
-  barTrack: { height: 6, backgroundColor: theme.groundWell, borderRadius: radius.pill, overflow: 'hidden' },
-  barFill: { height: 6, backgroundColor: theme.workingFill, borderRadius: radius.pill },
 });

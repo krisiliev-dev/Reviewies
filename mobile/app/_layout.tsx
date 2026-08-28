@@ -136,7 +136,7 @@ export default function RootLayout() {
   if (!ready || !fontsIn) {
     return (
       <View style={styles.centre}>
-        <ActivityIndicator color={theme.workingFill} />
+        <ActivityIndicator color={theme.workingMark} />
       </View>
     );
   }

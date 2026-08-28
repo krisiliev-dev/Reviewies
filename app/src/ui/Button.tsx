@@ -115,7 +115,7 @@ export function Button({
       {busy ? (
         <span
           aria-hidden="true"
-          className="ml-2 w-4 self-end border-t-mark border-working-fill"
+          className="ml-2 w-4 self-end border-t-mark border-working-mark"
           style={{ height: BUSY.underline }}
         />
       ) : null}

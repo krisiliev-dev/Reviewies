@@ -65,7 +65,7 @@ export default function UpNextScreen() {
   if (entries === undefined) {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
-        <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+        <ActivityIndicator color={theme.workingMark} style={styles.loading} />
       </SafeAreaView>
     );
   }

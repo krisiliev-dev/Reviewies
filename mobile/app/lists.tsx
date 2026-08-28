@@ -125,7 +125,7 @@ export default function ListsScreen() {
           </Text>
         )}
 
-        {lists === undefined && <ActivityIndicator color={theme.workingFill} />}
+        {lists === undefined && <ActivityIndicator color={theme.workingMark} />}
         {/* See the web's copy of this: "No lists yet" was shown for both having none
             and failing to ask. */}
         {failed && (
@@ -207,7 +207,7 @@ function ListCard({
 
       {expanded && (
         <View style={styles.cardItems}>
-          {items === undefined && !itemsFailed && <ActivityIndicator color={theme.workingFill} />}
+          {items === undefined && !itemsFailed && <ActivityIndicator color={theme.workingMark} />}
           {itemsFailed && (
             <Text style={styles.listsFailed} accessibilityLiveRegion="polite">
               {COPY.lists.itemsFailed}
