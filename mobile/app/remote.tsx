@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { useRemote } from '../src/devices/useRemote';
 import { RemotePanel } from '../src/devices/RemotePanel';
 import { theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 
 /**
  * The remote as a screen of its own, for when nothing is playing yet.
@@ -25,5 +26,5 @@ export default function RemoteScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
+  content: { padding: SCREEN.edge, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
 });

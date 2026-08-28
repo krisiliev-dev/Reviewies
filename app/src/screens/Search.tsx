@@ -86,7 +86,7 @@ export function Search() {
   }, [query, attempt]);
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       <Masthead className="px-1">Search</Masthead>
       <Field
         label={COPY.fields.search}

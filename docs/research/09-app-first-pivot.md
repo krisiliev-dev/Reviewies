@@ -8432,6 +8432,70 @@ One of those new clauses shipped broken and was caught before it ran: it read `p
 comparison and the level-skip check could not fail. A check that is collected, runs, and proves
 nothing — #121's subject — written into the file whose subject is that class of defect.
 
+### 6.121 A component that had claimed to reach the edge since it was written
+
+`docs/design/direction.md` chose LATE EDITION, and the first property its comparison names
+is **full-bleed rows on hairlines** — a printed artefact you mark up, where the rule runs to
+the paper's edge and only the words are inset. `mobile/src/ui/Row.tsx` has said the same
+thing in a comment of its own since the day it was written: *"Full bleed and ruled, not a
+card."*
+
+It has never once been true. The design harness measures it now, and the run before the fix
+found **21 rules across seven screens, every one of them at `16..374` of 390** — the row
+reading as a card with three sides missing, on Up Next, Search, Discover, Watchlist, More and
+the calendar.
+
+No source clause could have found it, and that is the point rather than an excuse. `Row.tsx`
+is *correct*: `border-b` on a block with no horizontal margin is exactly what a full-bleed
+rule looks like. The defect lived entirely in what contained it — every screen wrapping its
+rows in its own padding — so a guard reading the component would have confirmed the claim it
+was breaking. §6.120's rule, one sprint later and from the other side: a class name is not an
+edge, so the check measures `getBoundingClientRect()` against the viewport.
+
+## The edge had no owner, which is why it could not be fixed in one place
+
+Measuring it turned up the reason. Every other layer in this system got an owner sprints ago
+— space, radius, type, colour, tracking, leading, and heading depth last sprint. The one
+measurement **every single screen makes** had none:
+
+- the phone wrote the literal `16` in **fifteen** containers. Uniform, but by coincidence:
+  nothing would have objected to a sixteenth writing 12, and `space.s16` sat unread beside
+  every one of them;
+- the web wrote Tailwind's **default** scale — off the token namespace entirely — at **three
+  different values**: `p-6` on Up Next, Watchlist, Lists and Not Found, `p-4` on ten screens,
+  `p-3` on Watching Mode.
+
+So Up Next, the screen this product opens on, had a 24px edge on the web and a 16pt edge on
+the phone, and #97's parity audit did not catch it because both platforms looked internally
+plausible. `SCREEN.edge` and `SCREEN.bleed` are in `core/src/ui/screen.ts` now, `bleed` is
+the exact negative of `edge` — a bleed that does not match overhangs, which is a horizontal
+scrollbar on the web and a clipped rule on the phone, so the harness catches overshoot as
+well as shortfall — and the row cancels its container's edge and re-applies it to itself.
+
+Six plants: a screen picking its own edge back up, a phone container going back to a literal,
+the web row losing its bleed, the bleed drifting off the edge, an exemption outliving its
+screen, and — against the harness rather than the suite — the phone row losing its bleed,
+which puts all 21 measurements back.
+
+**And one thing I nearly committed as a lie.** After the last plant I restored the file and
+wrote up the result, but did not re-run `npm run design` — so `design/screens` still held the
+*planted* photographs, showing inset rules under a commit message claiming they reached the
+edge. Reading a screenshot rather than trusting the run that produced it is what caught it,
+which is the same discipline as the rest of this entry pointed at my own output. A plant is
+not restored until everything derived from it has been rebuilt.
+
+Two exemptions and a note. Watching Mode keeps its own edge — it is the one immersive route,
+no tab bar, no masthead, no rows to bleed — named in `EDGE_EXEMPT` with the reason, and
+`screen.test.ts` fails if that entry outlives the screen. `AccountPanel.tsx` lives in
+`screens/` and is not a screen: it is a card inside Settings, and the first migration pass
+widened its padding before the route table said otherwise. The guard reads the route table
+rather than the directory for exactly that reason.
+
+The new photographs make the next piece of work obvious without anyone having to argue for
+it: on `07-more.png` the rules now run to the edge and the stats card at the top of the screen
+is visibly the only thing left inset, which is the direction's own case for rules over card
+fills, made by the screen instead of by a document.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

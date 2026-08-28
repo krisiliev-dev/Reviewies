@@ -27,7 +27,7 @@ export function NotFound() {
   const { pathname } = useLocation();
 
   return (
-    <div className="flex flex-col gap-3 p-6">
+    <div className="flex flex-col gap-3 p-s16">
       <Masthead level="page">Nothing at this address</Masthead>
       <Note>
         <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-s14">{pathname}</code> is not

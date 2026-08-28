@@ -14,6 +14,7 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import {
   pushSupported,
   registerForPush,
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   delivery: { marginTop: 12, gap: 8 },
   // 13 against the web's 12, for the same six status lines under the same control.
   // 13 is one of the two the scale killed.
-  content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  content: { padding: SCREEN.edge, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
 

@@ -36,7 +36,7 @@ export function Discover() {
   }, [load]);
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       <Masthead className="px-1">Discover</Masthead>
       <Note className="mb-4 px-1">{COPY.discover.blurb}</Note>
 

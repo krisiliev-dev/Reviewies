@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { ROW, ROW_INK, type RowContract } from '@reviewies/core/ui/row';
 import { border, radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
@@ -128,6 +129,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     paddingVertical: ROW.padY,
     gap: space.s6,
+    /*
+     * And it actually reaches the edge now, which the comment above had claimed since the
+     * component was written and no screen had ever allowed. The row cancels its container's
+     * edge on both sides and re-applies it to itself, so the rule runs to the paper and the
+     * words stay in the column. The design harness measured 21 rules at `16..374 of 390`
+     * before this; a class name is not an edge.
+     */
+    marginHorizontal: SCREEN.bleed,
+    paddingHorizontal: SCREEN.edge,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: ROW.gap, minHeight: ROW.minHeight.listing },
   index: { minHeight: ROW.minHeight.index },

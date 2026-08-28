@@ -14,6 +14,7 @@ import {
 } from '@reviewies/core/social/lists';
 import { db } from '@reviewies/core/data/db';
 import { leadingOf, radius, theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   /** A field that shares its row with a button. Layout, which the call site owns. */
   grow: { flex: 1, minWidth: 0 },
   listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
-  content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
+  content: { padding: SCREEN.edge, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
 
   newRow: { flexDirection: 'row', gap: 8 },

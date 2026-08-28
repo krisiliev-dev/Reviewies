@@ -5,6 +5,7 @@ import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
 import { leadingOf, radius, tap, theme } from '../ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
@@ -143,7 +144,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
+  content: { padding: SCREEN.edge, gap: 20, backgroundColor: theme.ground, flexGrow: 1 },
   devices: { gap: 8 },
   devicesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },

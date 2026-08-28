@@ -10,6 +10,7 @@ import {
   type Window,
 } from '@reviewies/core/stats/compute';
 import { border, radius, theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
@@ -218,7 +219,7 @@ function Figure({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
+  content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   loading: { marginTop: 32 },
 
   figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

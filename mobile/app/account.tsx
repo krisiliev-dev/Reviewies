@@ -14,6 +14,7 @@ import {
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
 import { leadingOf, radius, theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { Button } from '../src/ui/Button';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from '../src/ui/Note';
@@ -179,7 +180,7 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
+  content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },

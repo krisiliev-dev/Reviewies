@@ -13,6 +13,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
 import { leadingOf, radius, theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
@@ -174,7 +175,7 @@ function Block({ heading, children }: { heading: string; children: React.ReactNo
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 24, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  content: { padding: SCREEN.edge, gap: 24, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   section: { gap: 12 },
   toggleRow: {
     flexDirection: 'row',

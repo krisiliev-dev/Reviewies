@@ -17,6 +17,7 @@ import {
   type Person,
 } from '@reviewies/core/social/people';
 import { leadingOf, radius, theme } from '../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
@@ -383,7 +384,7 @@ function PersonList({
 
 const styles = StyleSheet.create({
   searchFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
-  content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  content: { padding: SCREEN.edge, gap: 20, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
   failed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   link: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },

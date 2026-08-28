@@ -96,7 +96,13 @@ describe('the space scale, on the phone', () => {
      * the floor moves with it rather than being left slack: a slack floor is what let nine
      * deleted tests through in §6.107.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(225);
+    /*
+     * 210, down from 225, because `SCREEN.edge` absorbed the literal `16` from fifteen
+     * screen containers — the same shrinkage `Field` caused at 240 and `Section` caused
+     * before that. Three sprints running, a component or a table taking a decision off the
+     * screens has moved this number, which is the population falling for the right reason.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(210);
     expect(off).toEqual([]);
   });
 });

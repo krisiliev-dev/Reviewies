@@ -20,6 +20,7 @@ import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { border, leadingOf, radius, tap, theme } from '../../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
   posterToggle: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   posterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   posterCancel: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
-  content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
+  content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
   retry: {

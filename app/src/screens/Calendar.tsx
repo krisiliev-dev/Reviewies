@@ -72,7 +72,7 @@ export function Calendar() {
   const grouped = entries ? groupByDay(entries) : [];
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       <Masthead level="page" className="px-1">Upcoming</Masthead>
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">

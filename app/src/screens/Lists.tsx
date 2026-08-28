@@ -43,7 +43,7 @@ export function Lists() {
 
   if (!syncConfigured()) {
     return (
-      <div className="p-6">
+      <div className="p-s16">
         <Masthead level="page">Lists</Masthead>
         <Note>{COPY.lists.needsAccount}</Note>
       </div>

@@ -26,6 +26,7 @@ import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { tap, theme } from '../../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
@@ -340,7 +341,7 @@ function Row({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
-  content: { padding: 16, gap: 8 },
+  content: { padding: SCREEN.edge, gap: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
   // s20/semibold, the same step and weight as the web's `<h2>` under the screen title.

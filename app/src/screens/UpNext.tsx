@@ -65,7 +65,7 @@ export function UpNext() {
    */
   if (imported) {
     return (
-      <div className="flex flex-col gap-3 p-6">
+      <div className="flex flex-col gap-3 p-s16">
       {/*
        * The screen keeps its own title, and the arrival line is a heading under it.
        *

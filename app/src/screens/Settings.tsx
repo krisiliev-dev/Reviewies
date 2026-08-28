@@ -41,7 +41,7 @@ export function Settings() {
   );
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-6 p-s16">
       <Masthead level="page" className="px-1">Your data</Masthead>
 
       <AccountPanel />

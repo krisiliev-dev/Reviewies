@@ -463,6 +463,46 @@ const THEN = {
  * A route with no clause is a route nobody has decided anything about, and it will be
  * reviewed anyway. Fail here rather than hand over a photograph of an unknown state.
  */
+
+/**
+ * How far the rules actually reach, measured against the viewport edge.
+ *
+ * `docs/design/direction.md` picks LATE EDITION, and the first thing its comparison
+ * names is **full-bleed rows on hairlines** — a printed artefact you mark up, where the
+ * rule runs to the paper's edge and only the words are inset. `mobile/src/ui/Row.tsx`
+ * says so in a comment of its own: *"Full bleed and ruled, not a card."*
+ *
+ * It is not. Every screen wraps its rows in `content: { padding: 16 }`, so the rule stops
+ * 16pt short at both ends and the row reads as a card with three sides missing. The
+ * component's claim and the screen's container disagree, and the component's claim is the
+ * one written down.
+ *
+ * Measured rather than grepped, for the §6.120 reason: a class name is not an edge.
+ * `border-b` is present and correct in both renderers, and the defect is entirely in what
+ * contains them — which no clause reading `Row.tsx` could ever see.
+ */
+async function insetRules(page) {
+  return page.evaluate(() => {
+    const width = document.documentElement.clientWidth;
+    const out = [];
+    for (const el of document.querySelectorAll('*')) {
+      const cs = getComputedStyle(el);
+      const w = parseFloat(cs.borderBottomWidth);
+      if (!w || w > 2 || cs.borderBottomStyle === 'none') continue;
+      // A rule, not a bordered control: controls are allowed to be inset, and are the
+      // reason this cannot simply count every thin bottom border on the page.
+      if (parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 80 || r.height < 8) continue;
+      if (Math.abs(r.left) > 1 || Math.abs(r.right - width) > 1) {
+        out.push(`${Math.round(r.left)}..${Math.round(r.right)} of ${width}: ` +
+          (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 32));
+      }
+    }
+    return out;
+  });
+}
+
 const unjudged = routes.map(([name]) => name).filter((name) => !MUST_SHOW[name]);
 if (unjudged.length) {
   console.error(`These screens have no MUST_SHOW clause, so nothing knows what they should be showing:\n  ${unjudged.join('\n  ')}`);
@@ -470,6 +510,8 @@ if (unjudged.length) {
 }
 
 const hollow = [];
+/** Rules that stop short of the edge — the direction's first named property. */
+const inset = [];
 for (const [name, path, via] of routes) {
   if (via) {
     // Through More, so the screen gets the stack it would really have. Falls back to the
@@ -509,6 +551,7 @@ for (const [name, path, via] of routes) {
     const body = await page.locator('body').innerText();
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
   }
+  for (const rule of await insetRules(page)) inset.push(`${name}: ${rule}`);
   await THEN[name]?.();
   if (name === '05-discover') {
     const already = await suggestsWhatYouTrack();
@@ -521,6 +564,11 @@ if (hollow.length) {
   console.error(`Screenshots that do not show what makes them worth taking:\n  ${hollow.join('\n  ')}`);
   process.exitCode = 1;
 }
+if (inset.length) {
+  console.error(`Rules that stop short of the edge, so the row reads as a card:\n  ${inset.join('\n  ')}`);
+  process.exitCode = 1;
+}
+console.log(`\nfull-bleed: ${inset.length} inset rules across ${routes.length} routes`);
 
 // A title page and Watching Mode need a real target.
 await page.goto('http://localhost:4200/');

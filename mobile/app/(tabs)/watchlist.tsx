@@ -9,6 +9,7 @@ import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 
 import { tap, theme } from '../../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
@@ -162,7 +163,7 @@ function Row({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
-  content: { padding: 16, gap: 12 },
+  content: { padding: SCREEN.edge, gap: 12 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   /*
    * `cta`/`ctaText` were here — a filled pill "the same shape as Up Next's", said a

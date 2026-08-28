@@ -84,7 +84,7 @@ export function EpisodeComments() {
   const hidden = comments.length - visible.length;
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       {/* `tap`, like every other back control in the app. It was 31x20 — under the 24px
           floor WCAG 2.5.8 sets — for as long as this screen has existed, and no check
           had ever measured it because no suite had ever stopped here. §6.40. */}

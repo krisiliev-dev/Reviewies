@@ -13,6 +13,7 @@ import { SEARCH_TIMEOUT_MS, type SearchResult } from '@reviewies/core/metadata/p
 import { AddToList } from '../../src/social/AddToList';
 import { Poster } from '../../src/ui/Poster';
 import { border, radius, theme } from '../../src/ui/theme';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   /** A field that shares its row with a button. Layout, which the call site owns. */
   grow: { flex: 1, minWidth: 0 },
   screen: { flex: 1, backgroundColor: theme.ground },
-  content: { padding: 16, gap: 12 },
+  content: { padding: SCREEN.edge, gap: 12 },
   // The watchlist screen's note field, because it is the same field.
   editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
   loading: { marginTop: 12 },

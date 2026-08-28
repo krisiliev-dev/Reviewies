@@ -29,7 +29,7 @@ export function Watchlist() {
 
   if (items.length === 0) {
     return (
-      <div className="p-6">
+      <div className="p-s16">
         <Masthead>Watchlist</Masthead>
         <Note>{COPY.watchlist.empty}</Note>
         <Button

@@ -60,7 +60,7 @@ export function People() {
 
   if (!syncConfigured()) {
     return (
-      <div className="p-4">
+      <div className="p-s16">
         <Masthead level="page" className="px-1">People</Masthead>
         <Note className="px-1">{COPY.people.withoutAccount}</Note>
       </div>

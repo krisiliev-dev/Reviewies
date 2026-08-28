@@ -40,7 +40,7 @@ export function More() {
   const stats = useLiveQuery(() => getStats('all'), []);
 
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-3 p-s16">
       <Masthead>More</Masthead>
 
       <section className="rounded-plate bg-ground-raised p-4">

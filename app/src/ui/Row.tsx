@@ -14,9 +14,18 @@ import { Note } from './Note';
  * Written-out class strings rather than interpolation, for the reason `Button.tsx` gives:
  * Tailwind's scanner reads source text, so a class assembled at runtime is never compiled.
  */
-/** The rule is on the block, so a group underneath shares the row's ruled band. */
+/**
+ * The rule is on the block, so a group underneath shares the row's ruled band — and the
+ * block bleeds past its container so the rule reaches the paper's edge.
+ *
+ * `-mx-s16 px-s16` is the whole of the full-bleed mechanism: cancel the screen's edge, then
+ * re-apply it to the row, so the words stay in the column and only the rule runs out. The
+ * numbers are `SCREEN.edge` and `SCREEN.bleed`, spelled as literals here because Tailwind
+ * compiles from source text and a class assembled at runtime is never generated —
+ * `screen.test.ts` is what holds these two to the table.
+ */
 const BLOCK =
-  'flex flex-col gap-1.5 rounded-none border-b border-b-stroke-hairline bg-transparent py-2';
+  'flex flex-col gap-1.5 rounded-none border-b border-b-stroke-hairline bg-transparent py-2 -mx-s16 px-s16';
 const ROW_CLASS = 'flex items-center gap-3';
 const TARGET =
   'flex min-w-0 flex-1 items-center gap-3 rounded-none active:bg-ground-raised';

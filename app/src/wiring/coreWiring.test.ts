@@ -25,6 +25,8 @@ const ROOT = resolve(__dirname, '../../..');
 const UNREACHED: Record<string, string> = {
   'data/db#clearDatabase':
     'Test seam: unbinds the database so the proxy\'s "call setDatabase() first" error can be read. Its previous reason here said the suites that swap Dexie for SQLite need it — they do not, they call setDatabase, and nothing called this at all. §6.59 pointed the seam at the error it is good for rather than deleting it; core/src/data/db.test.ts drives it now, which this scan reads as test code.',
+  'ui/screen#EDGE_EXEMPT':
+    'The screens that do not take the standard edge, and why. It is a design decision rather than a test fixture — Watching Mode is immersive and has no rows to bleed — so it lives beside the decision it qualifies; screen.test.ts is what reads it, and what fails when an entry outlives its screen.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',
   'data/importing#resetImports':
     'Test seam: whether an import is running is module state, so cases must not inherit it.',
@@ -157,6 +159,7 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/note#NOTE_INK': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',
   'mobile only: ui/field#FIELD_BOX': 'Tailwind needs a literal class; field.test.ts couples the two.',
+  'mobile only: ui/screen#SCREEN': 'Tailwind needs a literal class; screen.test.ts couples the two.',
   'mobile only: ui/progress#PROGRESS_SIZE': 'Tailwind needs a literal class; progress.test.ts couples the two.',
   'mobile only: ui/progress#PROGRESS_COLOUR': 'Tailwind needs a literal class; progress.test.ts couples the two.',
 

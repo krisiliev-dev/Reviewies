@@ -82,7 +82,7 @@ export function TitleDetail() {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       <div className="mb-5 flex gap-4">
         <Poster
           url={libraryItem?.posterOverride ?? title?.posterUrl}

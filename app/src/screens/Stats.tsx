@@ -53,7 +53,7 @@ export function Stats() {
   const YEARS = years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` }));
 
   return (
-    <div className="p-4">
+    <div className="p-s16">
       <Masthead level="page" className="px-1">Stats</Masthead>
 
       {/*
