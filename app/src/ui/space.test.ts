@@ -167,7 +167,8 @@ describe('the space scale, on the web', () => {
      * 372, down from 400: the web half of §6.131's call-site migration. Nineteen controls
      * spelled their own `px-4 py-2`; `Button`'s size table spells it once.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(372);
+    /* 366, down six, for the same deletion. */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(366);
     expect(off).toEqual([]);
   });
 

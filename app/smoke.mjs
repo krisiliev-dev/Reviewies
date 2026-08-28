@@ -1813,7 +1813,10 @@ try {
 
   await viaMore(/Your data/);
   await page.waitForSelector('text=Choose files', { timeout: 5000 });
-  await audit('Your data', 12);
+  // 11, down from 12: §6.133 deleted this screen's People row, which was a second copy of
+  // a destination already on More — and the `offers.test.ts` exemption that excused it
+  // gave a reason ("the web has no More tab") that had not been true since §6.79.
+  await audit('Your data', 11);
   await noGhosts('Your data');
   await scaled('Your data');
 

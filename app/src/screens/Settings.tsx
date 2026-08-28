@@ -1,8 +1,4 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../data/db';
-import { getStats } from '@reviewies/core/data/repo';
-import { formatDuration } from '@reviewies/core/stats/compute';
 import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
 import {
   clearMetadataCache,
@@ -10,7 +6,6 @@ import {
   TMDB_ATTRIBUTION,
   usingFixtures,
 } from '@reviewies/core/metadata/index';
-import { useNavigate } from 'react-router-dom';
 import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
@@ -19,28 +14,14 @@ import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
-import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
-import { Row } from '../ui/Row';
 
 export function Settings() {
-  const navigate = useNavigate();
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
   const [cleared, setCleared] = useState<number>();
   const [exportNote, setExportNote] = useState<string>();
 
-  const stats = useLiveQuery(() => getStats('all'), [], undefined);
-  const counts = useLiveQuery(
-    async () => ({
-      watches: await db.watches.count(),
-      library: await db.library.count(),
-      watchlist: await db.watchlist.count(),
-      reactions: await db.reactions.count(),
-    }),
-    [],
-    undefined,
-  );
 
   return (
     <div className="flex flex-col gap-6 p-s16">
@@ -55,43 +36,19 @@ export function Settings() {
           exactly what `Row` draws, and this was the last screen assembling one itself —
           in a `rounded-plate bg-ground-raised` that §6.122 established is the *card* fill
           and so presses to the colour it is already painted. §6.131. */}
-      {/* In a `<ul>`, because `Row` renders an `<li>` and §6.131 dropped this one straight
-          into a `flex flex-col`. An `<li>` outside a list is invalid markup and announces
-          as a list item belonging to nothing; one destination is still a list of
-          destinations.
+      {/* What was here: a People row and a copy of More's "everything lives on this
+          device" summary. Both were duplicates, and §6.131 migrated the first to `Row`
+          rather than asking whether it should exist.
           
-          It is *not* why the row was centred, which is what this comment first said. That
-          was `Row`'s `<button>` branch inheriting a UA `text-align: center`, found by
-          walking the computed styles after the list made no difference. §6.132. */}
-      <ul>
-        <Row
-          title="People"
-          meta="Your handle, following, blocking"
-          open={{ name: 'People — your handle, following, blocking', run: () => navigate('/people') }}
-        />
-      </ul>
-
-      <section className="rounded-plate bg-ground-raised p-4">
-        <Note>
-          Everything lives on this device. Nothing here needs an account, and nothing is
-          withheld — this is the whole point of the app.
-        </Note>
-        {counts && (
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-s14">
-            <Stat label="Watches" value={counts.watches} />
-            <Stat label="Tracked" value={counts.library} />
-            <Stat label="Watchlist" value={counts.watchlist} />
-            <Stat label="Reactions" value={counts.reactions} />
-          </dl>
-        )}
-        {stats && stats.minutes > 0 && (
-          <Note className="mt-3">
-            {/* formatDuration rather than minutes/60: 90 minutes was rendering as
-                "1 hours watched", which is wrong twice over. */}
-            {formatDuration(stats.minutes)} watched, counted by actual runtime.
-          </Note>
-        )}
-      </section>
+          The web's More lists five destinations and People is one of them; this screen is
+          another of them ("Your data"). A destination that appears on the contents page and
+          again inside one of its own entries is navigation in two places, drawn two ways —
+          More's carries a chevron at `density="index"` and this one did not.
+          
+          The summary is the same duplication one level up, and the phone settles it: its
+          More has the block once and its `data.tsx` has neither. Web-only drift, found by
+          the web's first design pass. The fourth tile — Reactions — moved to More rather
+          than being lost with the copy. §6.133. */}
 
       {/* Only ever rendered by a device that is genuinely an hour or more out. Sync
           corrects for it and needs no help; the calendar and "aired today" cannot be
@@ -207,15 +164,6 @@ export function Settings() {
           </>
         )}
       </Note>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-plate bg-ground-well px-3 py-2">
-      <Note level="footnote" as="dt">{label}</Note>
-      <dd><Data value={value} size="s20" /></dd>
     </div>
   );
 }

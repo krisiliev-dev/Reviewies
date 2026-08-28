@@ -156,7 +156,8 @@ describe('the flat rule', () => {
      * platforms. The population shrinks because the decision moved, which is the sixth
      * sprint running this has been the reason.
      */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(51);
+    /* 49, down two: §6.133 deleted Settings' duplicate summary card and its People row. */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(49);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

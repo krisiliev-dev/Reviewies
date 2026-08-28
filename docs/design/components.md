@@ -223,6 +223,8 @@ Two further departures from the spec above, both from migrating real screens. "A
 
 
 **The `run` branch had never rendered (§6.132).** `Row` opens either a `<Link>` (when `open.to` is a URL) or a `<button>` (when it is `open.run`), and every call site passed `to` until §6.131 — so a branch that had been in the component since it was written first rendered on Settings' People row, and inherited the `<button>` UA default `text-align: center`. `TARGET` carries `text-left` now, so the two branches cannot disagree about where a row's words start, and `row.test.ts` holds it. Two related rules came out of the same shot: a `Row` is an `<li>` and must sit inside a `<ul>`/`<ol>` — true by habit at every other call site and never stated — and the web app now has a design pass (`design/capture-web.mjs`) that would have shown it years earlier.
+
+**And a row is not a place to put a destination twice (§6.133).** Settings carried a `Row` for `/people` that More already listed — the same words, without More's chevron and at a different density — and an `offers.test.ts` exemption excused it with a reason ("the web has no More tab") that had not been true since §6.79. The row is gone. Before adding a `Row` for a destination, check the contents page: a navigation target drawn two ways in one product is worse than one drawn once.
 ---
 
 ## 6. `Data` — every screen that has a number

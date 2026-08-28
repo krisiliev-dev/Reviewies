@@ -9363,6 +9363,71 @@ So it is deferred, and this is the reason. `docs/design/on-a-device.md` entry 9 
 mode was a gap in the harness rather than a limit of it; that was right for the web and
 wrong for the phone, and the entry is corrected.
 
+### 6.133 The web app, reviewed at last, and a destination that existed twice
+
+§6.132 built the web's design pass and then spent itself on the four defects that pass's
+own first run threw up. This is the review it made possible: ten routes, in both themes,
+each put beside its phone twin in `design/screens/`.
+
+## What holds up
+
+Most of it, and that is worth saying plainly rather than skipping to the findings. `More` is
+the best screen in the product — a summary card, then five destination rows at
+`density="index"` with a chevron each and a hairline between, full-bleed, nothing decorative.
+`Discover` says what it is showing and why ("Because you watched Hollow Crown Saga and The
+Long Dark") in the review face, which is the one place italics earn their place. The light
+pass holds: warm paper ground, near-black ink, rules that read, poster plates that read as
+plates. And `light-06-stats` is the first picture of what `progress.test.ts` has asserted
+since §6.113 — the tally bar and the chosen chip's underline in the **dark** amber
+`workingMark`, not the `workingFill` that measures 1.77:1 on paper. A guard that could only
+ever be arithmetic now has a photograph behind it.
+
+## A destination that existed twice, drawn two ways
+
+`/people` is on More: title, sub-line, chevron, `density="index"`, `open.to`. It was *also*
+a row on Settings: the same words, no chevron, default density, `open.run` — and that second
+one is mine, migrated to `Row` in §6.131 without anybody asking whether it should exist.
+
+Underneath it, an exemption in `offers.test.ts` whose reason was **false**:
+
+> `/settings web-only →/people` — *"the phone reaches People from the More tab, which is
+> where its whole second tier lives; the web has no More tab so Settings carries the link"*
+
+The web has had a More tab since §6.79. The row was never the only way to reach People; it
+was a second copy of a destination on the contents page, inside one of that page's own
+entries. Deleting it made `offers.test.ts` fail with *"keeps no exemption that no longer
+describes a difference"*, which is the §6.41 clause doing exactly its job.
+
+**An excuse that was never true is worse than one that has expired.** An expired excuse
+reads as something that used to be right; a false one reads as a decision somebody made, and
+it is why the row survived a migration whose whole subject was call sites.
+
+## And a block that existed twice, with different contents
+
+"Everything lives on this device…" over a grid of counts, on both More and Settings — three
+tiles on one and four on the other. The phone settles it without a judgement call: its More
+carries the block once and its `data.tsx` carries neither. Web-only drift, invisible until
+the web had a design pass.
+
+The copy is gone and the fourth tile came with it, so `Reactions` is on More rather than out
+of the product. `type.test.ts` named `Settings.tsx` as a file that must draw its figures
+through `Data`; that entry went with the block it named, rather than being left to fail one
+day for a reason nobody can reconstruct.
+
+## What is left, filed rather than half-done
+
+Two findings from the same pass are **shared** between the platforms, which makes them
+design decisions rather than drift, and each is a sprint of its own:
+
+- **`Upcoming` opens on a settings form.** "Tell me about" — three notification options and
+  a paragraph about Safari — takes the top 470 points of a 900-point screen called Upcoming,
+  above the thing you came for. That is `compose.ts`'s rule (§6.129) one screen along: on a
+  screen whose purpose is reading, the thing that changes settings is revealed, not resident.
+  Both platforms do it. **#168.**
+- **The chosen option is marked twice**, seven hundred points apart: an amber left-rule *and*
+  an amber ✓ at the far right. `Choice`'s spelling is a rule and a weight step (§6.95); this
+  screen adds a third signal, on both platforms. **#169.**
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9843,6 +9908,15 @@ and which single claim in this document could not be checked at all:
   match, a drift correction offered, and `ListenSync` actually listening. Every screen in
   the app has states behind a control, and the harness photographs the ones somebody
   thought to walk to.
+
+  And what §6.133 adds, which is the first time this bullet has had an answer rather than a
+  restatement: the web app has now been *reviewed*, not only photographed, and the review
+  found a destination that existed twice and a summary block that existed twice — neither
+  visible from either screen alone, both obvious the moment two shots sat side by side.
+  Two more findings from the same pass are **shared** between the platforms and are filed as
+  #168 and #169 rather than half-done. The judgement gap this bullet names is unchanged: a
+  person looked at the pictures and thought something was odd, and the clauses only made the
+  pictures worth looking at.
 
   What §6.131 adds: `docs/design/on-a-device.md` is the list of what a photograph cannot
   settle at all — nine claims where the instrument and the subject disagree, each with what

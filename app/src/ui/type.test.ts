@@ -411,7 +411,11 @@ describe('the type scale', () => {
     for (const [file, needle] of [
       ['app/src/screens/AccountPanel.tsx', '<Data value={pending} size="s20" />'],
       ['app/src/screens/More.tsx', '<Data value={value} size="s20" />'],
-      ['app/src/screens/Settings.tsx', '<Data value={value} size="s20" />'],
+      // `Settings.tsx` was here and draws no figure any more: its copy of More's
+      // "everything lives on this device" block was a duplicate and went in §6.133. The
+      // entry goes with the thing it named rather than being left to fail one day for a
+      // reason nobody can reconstruct.
+
       ['app/src/screens/WatchingMode.tsx', '<Data value={formatTimecode(clock.positionMs)}'],
     ] as const) {
       expect(read(file), `${file} draws a figure in the body face`).toContain(needle);

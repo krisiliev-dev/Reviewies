@@ -36,6 +36,7 @@ export function More() {
     watches: await db.watches.count(),
     library: await db.library.count(),
     watchlist: await db.watchlist.count(),
+    reactions: await db.reactions.count(),
   }));
   const stats = useLiveQuery(() => getStats('all'), []);
 
@@ -48,11 +49,16 @@ export function More() {
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
         </Note>
+        {/* Four, in two columns. Three was this screen's count and four was Settings'
+            copy of the same block; the copy is gone (§6.133) and Reactions came here
+            rather than out of the product. Two columns because four across a phone is a
+            number per fifth of the width. */}
         {counts && (
-          <dl className="mt-3 grid grid-cols-3 gap-2 text-s14">
+          <dl className="mt-3 grid grid-cols-2 gap-2 text-s14">
             <Stat label="Watches" value={counts.watches} />
             <Stat label="Tracked" value={counts.library} />
             <Stat label="Watchlist" value={counts.watchlist} />
+            <Stat label="Reactions" value={counts.reactions} />
           </dl>
         )}
         {stats && stats.minutes > 0 && (

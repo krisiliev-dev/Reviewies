@@ -43,8 +43,16 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
  * the other platform is not worse off for the difference.
  */
 const EXEMPT: Record<string, string> = {
-  '/settings web-only →/people':
-    'the phone reaches People from the More tab, which is where its whole second tier lives; the web has no More tab so Settings carries the link',
+  /*
+   * `/settings web-only →/people` was here, and its reason was **false**: "the web has no
+   * More tab so Settings carries the link". The web has had a More tab since §6.79, and
+   * `More.tsx` lists People among its five destinations — so the row on Settings was a
+   * second copy of a destination rather than the only way to reach one.
+   *
+   * §6.133 deleted the row, and this clause is what noticed the exemption had nothing left
+   * to excuse. An excuse that was never true is worse than one that has expired: it reads
+   * as a decision somebody made.
+   */
   '/calendar web-only setPreference()':
     'the phone reaches the same core setter through syncPreference in mobile/src/notifications, which writes the preference and then tells the backend which device to notify — one hop further out than this reads, not a missing control',
 
