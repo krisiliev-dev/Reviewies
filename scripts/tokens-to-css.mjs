@@ -21,7 +21,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, space, size, radius,
+  color, label, space, size, radius, text, weight,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -80,6 +80,9 @@ label.dark.forEach((_, i) => w(`  --color-label-${i}: var(--label-${i});`));
 w('');
 for (const [name, px] of Object.entries(space)) w(`  --spacing-${name}: ${px}px;`);
 for (const [name, px] of Object.entries(size)) w(`  --spacing-${name}: ${px}px;`);
+w('');
+for (const [name, px] of Object.entries(text)) w(`  --text-${name}: ${px}px;`);
+for (const [name, value] of Object.entries(weight)) w(`  --font-weight-${name}: ${value};`);
 w('');
 for (const [name, px] of Object.entries(radius)) w(`  --radius-${name}: ${px}px;`);
 w('');

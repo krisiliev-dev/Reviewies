@@ -51,7 +51,7 @@ export function Stats() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-2xl font-semibold">Stats</h1>
+      <h1 className="mb-4 px-1 text-s24 font-semibold">Stats</h1>
 
       {/* One group, which is what it always was — a single `radiogroup` holding both the
           windows and the years, hand-built twice inside it. `Choice` draws being chosen as

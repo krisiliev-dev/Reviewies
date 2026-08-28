@@ -577,6 +577,35 @@ try {
     resolved.body === 'rgb(19, 17, 20)',
     resolved.body,
   );
+  /**
+   * And the type scale, which is new and is the one layer whose failure looks like nothing.
+   *
+   * A colour that does not resolve paints black on black and something eventually notices.
+   * A `--text-*` namespace Tailwind declined to process makes `text-s30` generate nothing —
+   * and measured, by deleting the property and rebuilding, the title then renders at
+   * **16px / 700**: Tailwind's own preflight has already flattened `h1` to inherit, so the
+   * fallback is not the browser's big default but body text in bold. Every other check in
+   * this suite would stay green through that. §6.87's argument one layer along: emitted is
+   * not rendered.
+   *
+   * Read off a real heading rather than an injected probe. Tailwind v4 is JIT, so a class
+   * with no call site does not exist; a heading is where the call sites are.
+   */
+  const type = await page.evaluate(() => {
+    const h1 = document.querySelector('h1');
+    if (!h1) return { size: 'no h1', weight: '' };
+    const style = getComputedStyle(h1);
+    return { size: style.fontSize, weight: style.fontWeight };
+  });
+  check(
+    'a screen title is drawn at the token size and weight',
+    // text.s30 and weight.bold — the tab-root large title, one step on both platforms
+    // since §6.107. Compared exactly, not as "is it big": the measured failure is 16px at
+    // the same weight, which reads as an unstyled page rather than as a missing token.
+    type.size === '30px' && type.weight === '700',
+    `${type.size} / ${type.weight}`,
+  );
+
   check(
     'Tailwind generated a utility from the @theme block',
     // #8A8079 — stroke.signal, the stroke that means something.

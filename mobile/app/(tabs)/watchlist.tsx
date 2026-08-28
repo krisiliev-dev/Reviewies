@@ -9,6 +9,7 @@ import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
 import { radius, tap, theme } from '../../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
 
@@ -160,7 +161,7 @@ function Row({
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
-  heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
+  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, marginBottom: 8 },
   empty: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   /*

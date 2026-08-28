@@ -85,7 +85,7 @@ export function TitleDetail() {
           className="h-36 w-24 rounded-plate"
         />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-s20 font-semibold">
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
           </h1>
           {!title && (failed || !loading) && (

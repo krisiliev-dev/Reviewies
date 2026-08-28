@@ -26,6 +26,7 @@ import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { border, radius, tap, theme } from '../../src/ui/theme';
+import { text, weight } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   loading: { marginTop: 48 },
   content: { padding: 16, gap: 8 },
-  heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
+  heading: { color: theme.ink, fontSize: text.s30, fontWeight: weight.bold, marginBottom: 8 },
 
   empty: { gap: 16, paddingTop: 8 },
   firstHeading: { color: theme.ink, fontSize: 20, fontWeight: '700' },

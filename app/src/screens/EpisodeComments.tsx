@@ -93,7 +93,7 @@ export function EpisodeComments() {
         Back
       </button>
 
-      <h1 className="text-xl font-semibold">{series?.name ?? 'Comments'}</h1>
+      <h1 className="text-s20 font-semibold">{series?.name ?? 'Comments'}</h1>
       {episode && (
         <p className="text-sm text-ink-secondary">
           S{episode.season}E{episode.number} · {episode.name}

@@ -27,7 +27,7 @@ export function Watchlist() {
   if (items.length === 0) {
     return (
       <div className="p-6">
-        <h1 className="mb-2 text-2xl font-semibold">Watchlist</h1>
+        <h1 className="mb-2 text-s30 font-bold">Watchlist</h1>
         <p className="text-ink-secondary">{COPY.watchlist.empty}</p>
         <Button
           to="/search"
@@ -43,7 +43,7 @@ export function Watchlist() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-2xl font-semibold">Watchlist</h1>
+      <h1 className="mb-4 px-1 text-s30 font-bold">Watchlist</h1>
       <ul className="flex flex-col gap-2">
         {items.map(({ item, title }) => (
           <Row

@@ -7428,6 +7428,89 @@ stronger.
 Three plants, three caught, one of them against a clause written twenty minutes earlier.
 
 
+### 6.107 The same screen's title, six points and a weight apart, on two platforms that had no way to say so
+
+The type layer, deferred since the token sprints and waited on by four tasks. It lands here
+with one role migrated, which is how the space and radius layers landed too.
+
+**The census first, because the scale should be chosen from what the build does.** Both
+platforms together — the phone's `fontSize` literals and the web's `text-*` classes resolved
+to pixels:
+
+```
+14  158 sites      16   12          26   1
+12  102            18   10          22   3
+13   25            30    9          17   3
+24   21             8    8 (10px)    9   2
+15   19            20    7
+11   17
+```
+
+Fifteen sizes. Seven survive: **11, 12, 14, 16, 20, 24, 30**. What goes is 13 and 15 —
+forty-four sites one point either side of 14, which `tokens.ts`'s own header has complained
+about since the day it was written — then 17 beside 16, 18 and 22 beside 20, 26 beside 24,
+and 9 and 10, which fold up into 11 rather than down out of legibility. Magnitudes, not
+uses: `text.s14`, never `text.body`, for the reason the file already gives.
+
+**And then the thing the census makes sayable.** Look at the two rows in the middle: 24 with
+21 sites and 30 with 9. Those are not two roles. They are *one* role, drawn twice:
+
+```
+web    every <h1> on every screen        text-2xl font-semibold      24px / 600
+phone  every tab root's large title      fontSize: 30, weight 700    30px / 700
+```
+
+Six points and a weight step apart, on nineteen web screens and five phone ones, for as long
+as both have existed. That is what §7 meant by "no owner for a screen heading at all", and it
+is what #145 was really about — the task was filed as one screen's heading being wrong, §6.104
+found the harness was photographing a route nobody navigates, and underneath both was this:
+nothing in the repository could state that a web `<h1>` and a phone tab-root title are the
+same thing, so nothing could notice they disagreed.
+
+The migrated batch is that role, judged into three:
+
+```
+a tab root's large title      text.s30 / bold         both platforms
+a pushed screen's heading     text.s24 / semibold     web; the phone's is the navigation bar
+a detail screen's heading     text.s20 / semibold     web
+```
+
+The phone's 30 wins for the tab root, and the web moves to it. The web is this product at
+390 pixels wide — the design harness shoots it at exactly that — and a tab root's inline
+large title is the convention the phone follows. Naming a step and then keeping two values
+for it would have been the layer without the point of the layer.
+
+**The guard found the twenty-second screen title, which the migration had missed.** The sweep
+walked `app/src/screens`; `ErrorBoundary.tsx` lives in `app/src/ui`. So the crash screen — the
+one a person sees when the app has fallen over — kept `text-2xl font-semibold`, and the clause
+that reads *every* `<h1>` under `app/src` reported it before any plant did. Following it to
+the phone found the same screen at **18/600** against the web's 24/600: the same role, two
+sizes again, and 18 is one of the four the scale had just killed. Both on `s24`/semibold now,
+with their own clause. A directory is not a role, and a sweep scoped by path will miss
+whatever moved.
+
+**Five plants, five caught**, and one of them is the one the brief asked for by name. §6.106
+found that a guard can be blinded by its own fix, so this sprint planted *after* the
+migration rather than only before: putting `fontSize: 30, fontWeight: '700'` back into a
+phone tab root produces **identical pixels** — nothing renders differently, no screenshot
+changes, no browser check can see it — and only a clause reading the source can say that the
+value stopped coming from the owner. It failed, by file and by name.
+
+**And the fifth plant corrected the comment I had just written.** The smoke's new check reads
+a rendered `<h1>` and compares it to the token, because a `--text-*` namespace Tailwind
+declined to process is the one failure that looks like nothing: the screens still render, the
+text is still there, every other check stays green. I wrote that the fallback would be the
+browser's own big bold `h1` default, one point away from 30 — and deleting the property and
+rebuilding measured it at **16px / 700**. Tailwind's preflight has already flattened `h1` to
+inherit, so what a missing type scale actually produces is a screen title at body size. Worse
+than I guessed, and a better argument for the check than the one I had written for it.
+
+What has *not* moved is the other 340-odd sites. The guard covers the migrated role and says
+so; a clause that failed on the rest would need three hundred exemptions, which is a list
+nobody reads. The scale exists, it is generated, it is proved to render, and the first role
+is on it.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7717,10 +7800,20 @@ and which single claim in this document could not be checked at all:
 - **The token layer is specified in full and built in part, and only the built part is
   guarded.** §6.85 landed colour, motion, z-order and elevation with guards proved by
   planting; §6.88 landed space across 156 sites, §6.89 radius across 244, and §6.90 colour
-  across 822 — each with its guard in the same commit. **Type is the only layer left
-  specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
-  and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
-  in `core/src/tokens.ts` is now read by product code rather than only by a guard.
+  across 822 — each with its guard in the same commit. §6.107 lands **type**: a seven-step
+  scale chosen from a census of both platforms, generated into the web's `@theme`, proved
+  to render in a browser, and migrated at one role — a screen's title, on both platforms,
+  with five plants caught. Every layer now exists.
+
+  What is left of type is the other 340-odd sites, and the *shape* of what is left has
+  changed rather than the size of it. The census found fifteen sizes and the scale keeps
+  seven, so every remaining literal is a judgement — 13 and 15 fold into 14, 17 into 16,
+  18 and 22 into 20 — and a batch migrated by find-and-replace would land four hundred
+  decisions nobody made. §6.90's rule for the fills applies to every one of them. The
+  guard covers the migrated role and says so, because a clause failing on the rest would
+  need three hundred exemptions, and a list that long is a list nobody reads. Nine font
+  faces are still specified and unshipped, and G6/G7/G8/G12 still cannot land until their
+  sites do.
 - **Five of sixteen components exist, `Row` is finished, and the guard that lands is the
   narrow one that is actually complete.** `Button` (§6.93, §6.94, §6.100), `Choice`
   (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row` (§6.97, §6.99) is built, guarded

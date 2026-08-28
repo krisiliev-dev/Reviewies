@@ -70,7 +70,7 @@ export function Calendar() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-4 px-1 text-2xl font-semibold">Upcoming</h1>
+      <h1 className="mb-4 px-1 text-s24 font-semibold">Upcoming</h1>
 
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
         <h2 className="mb-2 text-sm font-semibold">Tell me about</h2>

@@ -130,6 +130,18 @@
   --spacing-target: 44px;
   --spacing-tap: 24px;
 
+  --text-s11: 11px;
+  --text-s12: 12px;
+  --text-s14: 14px;
+  --text-s16: 16px;
+  --text-s20: 20px;
+  --text-s24: 24px;
+  --text-s30: 30px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
   --radius-none: 0px;
   --radius-plate: 2px;
   --radius-pill: 999px;

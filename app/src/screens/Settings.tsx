@@ -38,7 +38,7 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <h1 className="px-1 text-2xl font-semibold">Your data</h1>
+      <h1 className="px-1 text-s24 font-semibold">Your data</h1>
 
       <AccountPanel />
 

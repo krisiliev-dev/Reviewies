@@ -26,7 +26,7 @@ export function NotFound() {
 
   return (
     <div className="flex flex-col gap-3 p-6">
-      <h1 className="text-2xl font-semibold">Nothing at this address</h1>
+      <h1 className="text-s24 font-semibold">Nothing at this address</h1>
       <p className="text-ink-secondary">
         <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-sm">{pathname}</code> is not
         a screen in this app. It may be an old link, or a typo.

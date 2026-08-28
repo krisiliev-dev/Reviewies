@@ -84,7 +84,7 @@ export function Search() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-3 px-1 text-2xl font-semibold">Search</h1>
+      <h1 className="mb-3 px-1 text-s30 font-bold">Search</h1>
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}

@@ -175,6 +175,47 @@ export const space = {
   s16: 16, s20: 20, s24: 24, s32: 32, s48: 48,
 } as const;
 
+/**
+ * Seven steps, chosen the way `space` was: cover what the build already uses most and
+ * kill the ones carrying no distinction.
+ *
+ * The census, both platforms together — the phone's `fontSize` literals and the web's
+ * `text-*` classes resolved to pixels:
+ *
+ *   14  158 sites      16   12          26   1
+ *   12  102            18   10          22   3
+ *   13   25            30    9          17   3
+ *   24   21             8    8 (10px)    9   2
+ *   15   19            20    7
+ *   11   17
+ *
+ * Fifteen sizes. What goes: **13 and 15**, which sit one point either side of 14 and
+ * account for 44 sites between them — this file's own header has complained about that
+ * pair since the day it was written. Then 17 (beside 16), 18 and 22 (beside 20), 26
+ * (beside 24), and 10 and 9, which fold up into 11 rather than down out of legibility.
+ *
+ * What stays is what the two platforms already agree on: 12 and 14 are most of the app,
+ * 24 is every screen title on the web and 30 is every screen title on the phone — which
+ * is the first thing this layer is for. Same role, six points and a weight apart, and
+ * until now nothing could even state that they were the same role.
+ *
+ * Magnitudes, not uses, for the reason in the header: `text.s14`, never `text.body`.
+ */
+export const text = {
+  s11: 11, s12: 12, s14: 14, s16: 16, s20: 20, s24: 24, s30: 30,
+} as const;
+
+/**
+ * Four, which is what the build uses: 500 once, 600 forty-five times, 700 eighteen, and
+ * 400 wherever nothing was said.
+ *
+ * Strings because React Native's `fontWeight` is a string union and CSS takes either;
+ * one spelling that works in both places beats two that agree by hand.
+ */
+export const weight = {
+  regular: '400', medium: '500', semibold: '600', bold: '700',
+} as const;
+
 /** Floors, not rhythm, which is why they sit outside the scale. */
 export const size = { target: 44, tap: 24 } as const;
 
