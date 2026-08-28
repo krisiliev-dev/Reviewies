@@ -94,6 +94,19 @@ function Row({
         name: `Open ${name}`,
         run: () => router.push(`/title/${encodeURIComponent(titleId)}`),
       }}
+      trailing={
+        /* The web's slot for a row-level action, which this screen was not using: Remove
+           sat under the note, stacked, in the same secondary underline the note affordance
+           uses — two row controls in one slot with nothing telling them apart. See the
+           web's copy of this for why the tone is `quiet` and not `destructive`. */
+        <Button
+          size="inline"
+          tone="quiet"
+          label="Remove"
+          name={COPY.controls.removeFromWatchlist(name)}
+          onPress={() => removeFromWatchlist(titleId)}
+        />
+      }
       under={
         <View style={styles.rowBody}>
 
@@ -138,15 +151,6 @@ function Row({
           </Pressable>
         )}
 
-        <Pressable
-          onPress={() => removeFromWatchlist(titleId)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove ${name} from your watchlist`}
-          style={tap}
-        >
-          <Text style={styles.remove}>Remove</Text>
-        </Pressable>
         </View>
       }
     />
@@ -179,5 +183,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 44,
   },
-  remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
 });

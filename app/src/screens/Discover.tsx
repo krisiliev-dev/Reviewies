@@ -121,7 +121,7 @@ function SuggestionRow({
             disabled={busy}
             tone="secondary"
             label="Watchlist"
-            name={`Add ${suggestion.name} to your watchlist`}
+            name={COPY.controls.addToWatchlist(suggestion.name)}
           />
         </div>
       }

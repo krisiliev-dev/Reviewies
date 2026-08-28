@@ -25,6 +25,7 @@ import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
+import { COPY } from '@reviewies/core/copy';
 import { useLive } from '../../src/useLive';
 
 export default function SearchScreen() {
@@ -144,6 +145,8 @@ export default function SearchScreen() {
 function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
   const router = useRouter();
   const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
+  const [note, setNote] = useState('');
+  const [noting, setNoting] = useState(false);
   /*
    * What you already have, from the store rather than from this session.
    *
@@ -188,10 +191,23 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
     setAdded('library');
   }
 
+  /**
+   * Saved *with* the reason, which this screen could not do.
+   *
+   * The web's search row has opened a note field since the watchlist shipped and the
+   * phone's called `addToWatchlist` with nothing — so the phone's own empty watchlist
+   * said "Add something from Search, then say why you saved it" over a screen with no
+   * way to say why. A screen naming a way out it does not have is §6.50's class, and
+   * this one was naming it about itself.
+   *
+   * The note is most of what a watchlist is for — doc 4: *"I have ZERO memory for why
+   * they're there"* — and a note you can read but never write is a note nobody has.
+   */
   async function watchlist() {
     await cacheTitle();
-    await addToWatchlist(result.id, result.kind);
+    await addToWatchlist(result.id, result.kind, note.trim() || undefined);
     setAdded('watchlist');
+    setNoting(false);
   }
 
   /**
@@ -227,6 +243,29 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
         run: () => router.push(`/title/${encodeURIComponent(result.id)}`),
       }}
       under={
+        noting ? (
+          <View style={styles.editor}>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder={COPY.watchlist.notePlaceholder}
+              placeholderTextColor={theme.inkSecondary}
+              // Not `styles.input`, which is the search box at the top of this screen —
+              // a note field wearing it would read as a second place to search.
+              style={styles.noteInput}
+              autoFocus
+              onSubmitEditing={watchlist}
+              accessibilityLabel={`Note for ${result.name}`}
+            />
+            <Button
+              size="inline"
+              tone="primary"
+              label="Save"
+              name={COPY.controls.saveToWatchlist(result.name)}
+              onPress={watchlist}
+            />
+          </View>
+        ) : (
         <View style={styles.under}>
           {/* Three actions, each naming its own row. The direction's "one action" is a
               naming rule rather than a counting one — see `Row`'s `under` — and each of
@@ -243,11 +282,11 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
             name={`Track ${result.name}`}
           />
           <Button
-            onPress={watchlist}
+            onPress={() => setNoting(true)}
             disabled={shelf === 'watchlist'}
             tone="secondary"
             label={shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            name={`Add ${result.name} to watchlist`}
+            name={COPY.controls.addToWatchlist(result.name)}
           />
           {/* Films only: "watched" is not a thing you can say about a whole series in
               one tap without lying about which episodes. */}
@@ -267,6 +306,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
               which compares what each screen renders, could. */}
           <AddToList titleId={result.id} kind={result.kind} />
         </View>
+        )
       }
     />
   );
@@ -283,6 +323,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     color: theme.ink,
     fontSize: 16,
+  },
+  // The watchlist screen's note field, because it is the same field.
+  editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
+  noteInput: {
+    flex: 1,
+    color: theme.ink,
+    fontSize: 14,
+    backgroundColor: theme.groundWell,
+    borderRadius: radius.none,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 44,
   },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },

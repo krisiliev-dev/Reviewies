@@ -401,20 +401,40 @@ try {
   await page.getByText('Search', { exact: true }).first().click();
   await page.getByPlaceholder('Shows, films, anime…').fill('hollow');
   await page.waitForSelector('text=Hollow Crown Saga', { timeout: 20000 });
-  await page.getByLabel('Add Hollow Crown Saga to watchlist').click();
+  // "to *your* watchlist" — one spelling now, from `COPY.controls.addToWatchlist`. The
+  // two platforms announced this same button two different ways for as long as both have
+  // existed, and the guard whose subject is that could not see either, because a name
+  // with a title in it is a template rather than a quoted string. §6.106.
+  await page.getByLabel('Add Hollow Crown Saga to your watchlist').click();
+
+  /*
+   * The composer this screen did not have.
+   *
+   * The phone's empty watchlist says "Add something from Search, then say why you saved
+   * it" and its Search called `addToWatchlist` with no note — so the screen was naming a
+   * way out that did not exist, about itself. The reason is most of what a watchlist is
+   * for: "I have ZERO memory for why they're there".
+   */
+  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam.');
+  await page.getByLabel('Save Hollow Crown Saga to your watchlist').click();
   await page.waitForSelector('text=On watchlist', { timeout: 15000 });
 
   await page.getByText('Watchlist', { exact: true }).first().click();
-  await page.waitForSelector('text=Add a note', { timeout: 15000 });
-  check('a watchlist note can be written on the phone', true);
+  await page.waitForTimeout(1500);
+  check(
+    'a reason written on Search arrives on the watchlist',
+    (await text()).includes('Recommended by Sam.'),
+    (await text()).slice(0, 140),
+  );
 
-  await page.getByText('Add a note').first().click();
-  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam.');
+  // And is still editable where it lives, which is the half the phone already had.
+  await page.getByLabel('Edit note for Hollow Crown Saga').click();
+  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam and Ana.');
   await page.getByText('Save', { exact: true }).first().click();
   await page.waitForTimeout(1200);
   check(
-    'and the note survives being written',
-    (await text()).includes('Recommended by Sam.'),
+    'and the note survives being rewritten',
+    (await text()).includes('Recommended by Sam and Ana.'),
   );
 
   // Back where the rest of this script expects to be. Leaving the app on another tab

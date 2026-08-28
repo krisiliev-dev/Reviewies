@@ -136,7 +136,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             disabled={added === 'watchlist'}
             tone="secondary"
             label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-            name={`Add ${item.name} to watchlist`}
+            name={COPY.controls.addToWatchlist(item.name)}
           />
         </View>
       }

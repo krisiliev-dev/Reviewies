@@ -342,14 +342,14 @@ function SyncBar({
       {/* "−5s" is a minus sign, a digit and a letter; what it does is a sentence. */}
       <button
         onClick={() => clock.nudge(-5000)}
-        aria-label="Move the clock back 5 seconds"
+        aria-label={COPY.controls.seek(-5)}
         className="rounded-plate bg-ground-well px-3 py-2 text-sm"
       >
         −5s
       </button>
       <button
         onClick={() => clock.nudge(5000)}
-        aria-label="Move the clock forward 5 seconds"
+        aria-label={COPY.controls.seek(5)}
         className="rounded-plate bg-ground-well px-3 py-2 text-sm"
       >
         +5s
@@ -421,7 +421,7 @@ function DriftHint({
         size="inline"
         tone="primary"
         label="Fix"
-        name={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
+        name={COPY.controls.seek(behind ? seconds : -seconds)}
         onPress={onApply}
       />
       <Button

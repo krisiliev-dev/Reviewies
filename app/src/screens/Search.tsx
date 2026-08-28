@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../data/db';
+import { COPY } from '@reviewies/core/copy';
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
 import { getEpisodesCached, getProvider, getTitleCached, type SearchResult } from '@reviewies/core/metadata/index';
@@ -212,14 +213,14 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Why? e.g. Ana recommended"
+                placeholder={COPY.watchlist.notePlaceholder}
                 className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
               <Button
                 tone="primary"
                 label="Save"
-                name={`Save ${result.name} to your watchlist`}
+                name={COPY.controls.saveToWatchlist(result.name)}
                 onPress={saveToWatchlist}
               />
             </div>
@@ -240,7 +241,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
                 disabled={shelf === 'watchlist'}
                 tone="secondary"
                 label={shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'}
-                name={`Add ${result.name} to your watchlist`}
+                name={COPY.controls.addToWatchlist(result.name)}
               />
               {/* Films only: "watched" is not a thing you can say about a whole series
                   in one tap without lying about which episodes. */}

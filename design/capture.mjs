@@ -357,10 +357,15 @@ const MUST_SHOW = {
    * so this screen has been photographed empty for every review there has ever been, on a
    * library of a hundred and fourteen episodes, and the harness agreed that was fine. An
    * alternation that includes the empty state is not a clause about the screen; it is a
-   * clause about the screen *or* its absence. `USE` below puts something on the watchlist
+   * clause about the screen *or* its absence. `THEN` below puts something on the watchlist
    * first, the way a person would.
+   *
+   * The note, not the affordance to write one: since §6.106 the phone's search row can
+   * save the reason with the title, so the row that arrives here carries it. A clause
+   * naming the note is the strongest thing this screen can be asked for — it can only
+   * pass if a row exists, was saved through the app, and kept what was said about it.
    */
-  '06-watchlist': /Add a note|Why\?/,
+  '06-watchlist': /Ana recommended/,
   '09-calendar': /Hollow Crown Saga/,
 };
 
@@ -443,7 +448,7 @@ const THEN = {
     }
     await add.click();
     await page.waitForTimeout(600);
-    const note = page.getByPlaceholder(/Why\?/i).first();
+    const note = page.getByPlaceholder(/Why did you save/i).first();
     if (await note.count()) await note.fill('Ana recommended');
     // The web opens a note composer here and the phone saves straight away — also filed.
     const save = page

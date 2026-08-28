@@ -62,6 +62,25 @@ export function sentences(source: string): string[] {
     keep(m[1]);
   }
   for (const m of src.matchAll(/\{\s*['"]([^'"]{6,})['"]\s*\}/g)) keep(m[1]);
+
+  /**
+   * And the names built out of a template, which is where a control's name usually lives.
+   *
+   * These props are read above only as quoted literals, and a name that includes the
+   * title is not one: it is `` name={`Add ${result.name} to watchlist`} ``. So the two
+   * search screens announced the same button as *"Add X to watchlist"* and *"Add X to
+   * your watchlist"* for as long as both have existed, and this guard — whose whole
+   * subject is the same sentence written twice — could not see either of them. §6.98
+   * gave the words one owner and then compared only half of them.
+   *
+   * The interpolations become one constant word so the comparison is about the prose
+   * around them rather than about what was substituted in.
+   */
+  for (const m of src.matchAll(
+    /\b(?:placeholder|aria-label|accessibilityLabel|accessibilityHint|title|label|name)=\{`([^`]{6,})`\}/g,
+  )) {
+    keep(m[1].replace(/\$\{[^}]*\}/g, 'something'));
+  }
   for (const m of src.matchAll(/['"]([A-Z][^'"]{15,})['"]/g)) keep(m[1]);
 
   /**
@@ -77,6 +96,30 @@ export function sentences(source: string): string[] {
     const group = (COPY as Record<string, Record<string, unknown>>)[m[1]];
     const value = group?.[m[2]];
     if (typeof value === 'string') keep(value);
+    /*
+     * And the ones that take an argument, which is most of the names.
+     *
+     * Resolving only strings left the hole this block exists to close, one type across:
+     * move a name into `COPY.controls.addToWatchlist(name)` and the *web* stops
+     * contributing a sentence at all, so the phone can keep its own spelling and nothing
+     * pairs with it. Planted exactly that — reverted the phone's search row to
+     * `` `Add ${name} to watchlist` `` after both sides had been moved into the owner —
+     * and this suite passed. A guard that stops seeing a thing once it has been fixed is
+     * a guard that only works until it has done its job once.
+     *
+     * Called with a placeholder per parameter. What comes back may read oddly for a
+     * numeric one; it reads *identically* oddly on both sides, which is all a comparison
+     * needs.
+     */
+    if (typeof value === 'function') {
+      const fn = value as (...args: unknown[]) => unknown;
+      try {
+        const out = fn(...Array.from({ length: fn.length }, () => 'something'));
+        if (typeof out === 'string') keep(out);
+      } catch {
+        // A shared sentence that cannot be built from placeholders tells us nothing here.
+      }
+    }
   }
   return [...found];
 }

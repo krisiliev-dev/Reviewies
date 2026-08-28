@@ -118,10 +118,48 @@ export const COPY = {
     allCaughtUp: 'All caught up — nothing has aired that you have not seen.',
   },
 
+  /**
+   * The names of controls, which are copy and were not being read as copy.
+   *
+   * §6.98 gave the words one owner and §6.98's guard compares what each pair of screens
+   * says — but it read a name only when it was a quoted literal, and a control's name
+   * almost never is: it has the title in it, so it is a template. Widening the guard to
+   * read those found four of them at once, in both directions:
+   *
+   *   web  "Add X to your watchlist"      phone  "Add X to watchlist"
+   *   web  "Remove X from watchlist"      phone  "Remove X from your watchlist"
+   *   web  "Move the clock 5 seconds forward"     and, on the same screen, "Move the
+   *        clock forward 5 seconds"
+   *
+   * The watchlist pair disagrees one way on Search and Discover and the *other* way on
+   * the watchlist itself, which is what drift with nobody watching looks like. These are
+   * the sentences a screen reader says out loud, so they are the copy somebody who cannot
+   * see the screen actually reads.
+   */
+  controls: {
+    addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
+    saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
+    removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
+    /**
+     * Signed: negative moves the clock back. Both the fixed ±5s buttons and the drift
+     * correction go through this, so the app has one way of saying it rather than the
+     * two the same screen had.
+     */
+    seek: (seconds: number) =>
+      `Move the clock ${seconds < 0 ? 'back' : 'forward'} ${Math.abs(seconds)} seconds`,
+  },
+
   watchlist: {
     /** The phone's, which names the way out. The web's was "Nothing saved yet." */
     empty: 'Nothing saved yet. Add something from Search, then say why you saved it.',
-    /** Second person, matching the sentence above. The web asked "Why is this here?" */
+    /**
+     * Second person, matching the sentence above. The web asked "Why is this here?"
+     *
+     * The web's *search* row asked a third thing — "Why? e.g. Ana recommended" — which
+     * nothing owned and this guard could not see, because a `placeholder` on the phone is
+     * `placeholder={...}` and the comparison read quoted literals. One field, one
+     * question, on all four of the places it appears.
+     */
     notePlaceholder: 'Why did you save this?',
   },
 

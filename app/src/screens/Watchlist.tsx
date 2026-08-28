@@ -88,13 +88,29 @@ function Row({
       open={{ name: `Open ${name}`, to: `/title/${encodeURIComponent(titleId)}` }}
       lead={<Poster url={posterUrl} name={name} className="h-16 w-11 shrink-0 rounded-plate" />}
       trailing={
-        <button
-          onClick={() => removeFromWatchlist(titleId)}
-          className="shrink-0 px-2 py-1 text-xs text-ink-secondary"
-          aria-label={`Remove ${name} from watchlist`}
-        >
-          Remove
-        </button>
+        /*
+         * A row-level action, in the row's slot for one — and *not* the destructive tone.
+         *
+         * The finding said two controls that mean opposite things wore one shape, and it
+         * was right about the phone: Remove sat in `under` beside "Add a note", the same
+         * colour, size and underline, stacked. It was wrong about the remedy. `tone=
+         * "destructive"` was tried and photographed, and a list where every row carries a
+         * trouble-coloured pill reads as a warning about your own watchlist — but the
+         * argument that settles it is the repo's own: the one existing use of that tone is
+         * **Block**, described there as "the one action on this screen you cannot take back
+         * with the same tap". Removing from a watchlist is a list membership you can add
+         * back with the same tap from Search. It is not destruction, and the shape has to
+         * mean what it means everywhere else.
+         *
+         * What was actually wrong was the stacking. This slot, on both platforms.
+         */
+        <Button
+          size="inline"
+          tone="quiet"
+          label="Remove"
+          name={COPY.controls.removeFromWatchlist(name)}
+          onPress={() => removeFromWatchlist(titleId)}
+        />
       }
       under={
         editing ? (

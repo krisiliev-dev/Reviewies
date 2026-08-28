@@ -7347,6 +7347,87 @@ that finds it is planting the failure and watching what the guard says.
 Seven plants, seven caught.
 
 
+### 6.106 The words had one owner and half of them were never read, and a guard that stopped working once it had worked
+
+The design track's first three findings, and the guard that should have caught two of them
+years ago.
+
+**The phone's empty watchlist told you to do something the phone would not let you do.**
+*"Nothing saved yet. Add something from Search, then say why you saved it."* The web's
+search row has opened a note field since the watchlist shipped; the phone's called
+`addToWatchlist(id, kind)` with nothing and moved on. §6.50's class — a screen naming a way
+out it does not have — except this one was naming it about itself, and the reason is most
+of what a watchlist is for: *"the amount of things I have in my wishlist that i have ZERO
+memory for why they're there"*. The phone has the composer now, and the phone smoke saves a
+reason from Search and finds it on the watchlist rather than only writing one where it
+already could.
+
+**And the same button announced itself two different ways on the two platforms, for as long
+as both have existed.**
+
+```
+web    "Add X to your watchlist"          phone   "Add X to watchlist"
+web    "Remove X from watchlist"          phone   "Remove X from your watchlist"
+web    "Move the clock 5 seconds forward"   and, on the same screen, "Move the clock
+       forward 5 seconds"
+```
+
+Note the second row: the platforms disagree one way on Search and Discover and the *other*
+way on the watchlist itself. That is what drift with nobody watching looks like — not one
+side being behind, but both of them wandering.
+
+§6.98 gave the words one owner and built a guard whose entire subject is *the same sentence
+written twice*. It could not see any of these, because it read a name only when it was a
+quoted literal — and a control's name almost never is. It has the title in it:
+
+```jsx
+name={`Add ${result.name} to watchlist`}
+```
+
+A template, not a string, and so invisible to a comparison that matched `="…"`. The guard
+reads those now, with the interpolations replaced by one constant word so the comparison is
+about the prose rather than about what was substituted in. It found all four at once. They
+are the sentences a screen reader says out loud, which makes them the copy that somebody who
+cannot see the screen actually reads — the half of the words nothing had ever compared.
+
+**Then the plant caught a hole I had just made.** With both sides moved onto
+`COPY.controls.addToWatchlist`, I reverted the phone to its old literal and ran the guard.
+It passed. The resolution step reads `COPY.x.y` and keeps the value *if it is a string* —
+and a name that takes the title is a function, so the web now contributed nothing at all and
+the phone's literal had nothing to pair with. The guard's own comment warns about exactly
+this shape one type across: *"a screen that has moved its wording into COPY has no literal
+left to compare, so the other platform could quietly keep — or grow — its own version"*.
+Fixing the drift is what opened the hole. **A guard that stops seeing a thing once it has
+been fixed is a guard that works exactly once.** It calls the functions with placeholders
+now, and the re-plant fails.
+
+**And the watchlist row, where the filed reason was wrong and the conclusion was right.**
+The finding was two identical stacked underlined links, *one of them destructive*. The
+stacking was real: the phone put Remove in `under` beside "Add a note" — same colour, same
+size, same underline, two row controls in one slot — where the web has always put it in the
+row's `trailing`.
+
+The remedy in the task was `tone="destructive"`, and it is wrong. It was tried, captured and
+looked at: a list where every row carries a trouble-coloured pill reads as a warning about
+your own watchlist. But taste is not the argument that settles it. The repo already has one.
+The single existing use of that tone is **Block**, described at its call site as *"the one
+action on this screen you cannot take back with the same tap"*. Removing something from a
+watchlist is a list membership you add back with the same tap from Search. It is not
+destruction, and a shape that means something has to mean it everywhere. `quiet`, in
+`trailing`, on both platforms — the distinction is the slot, which is what it was on the web
+all along.
+
+That is the second sprint running where something I filed had the right conclusion and the
+wrong reason: §6.105's was a date, this one was a tone. Both survived into a written task
+and were caught by doing the cheap check — reading a shutdown date, reading the one other
+call site. The pattern is worth naming because the record now has five wrong explanations in
+it and every one of them was written *confidently*: a finding's conclusion and a finding's
+reason are two claims, and filing them together makes the weaker one look as checked as the
+stronger.
+
+Three plants, three caught, one of them against a clause written twenty minutes earlier.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7362,7 +7443,12 @@ and which single claim in this document could not be checked at all:
   composer and its new attach control have never rendered there. Its unmatched-route
   screen is reached in the suite by its own address rather than by asking for a wrong one,
   because the static server answers an unknown path before the app boots; that expo-router
-  routes to it on a device is the framework's business and is not under test here.
+  routes to it on a device is the framework's business and is not under test here. A
+  smaller one, found by looking: the design screenshots break a poster placeholder's title
+  mid-word — "Quiet Harbou / r" — because react-native-web wraps on characters where React
+  Native wraps on words. Nothing is wrong with the component; the renderer under the review
+  is not the renderer under the product, and a design review cannot tell those apart by
+  looking.
 - **Offline here is a switch, not a bad connection.** §6.56 runs both apps with
   Playwright's offline mode, which is a clean break: every request fails at once and
   keeps failing. What that does not reproduce is the case people actually meet — a
@@ -7739,7 +7825,18 @@ and which single claim in this document could not be checked at all:
   looking at a picture and thinking something was odd — the clauses only made the pictures
   worth looking at, and then reproduced what the looking found. Nothing enumerates the
   questions a review should ask, and nothing notices a screen that is *ugly* rather than
-  empty.
+  empty. §6.106 is the first evidence about what that costs: two of the
+  three findings the track filed had the right conclusion and the wrong stated reason, and
+  both were settled by a check that took two minutes.
+- **A guard can stop seeing the thing it was built for, by being obeyed.** §6.106: the
+  copy guard resolves a shared sentence out of `COPY` so that moving copy into the owner
+  does not blind it — for strings. Names take the title, so they are functions, and moving
+  those in blinded it completely: the plant that restored the old divergence passed. It
+  resolves functions now. What is not covered is the general case. Every guard in this
+  repository that reads *source* has this shape available to it — the fix for a defect can
+  remove the evidence the guard was reading — and the only reason this one was found is
+  that the standing method plants a violation after every fix. Nothing enumerates which
+  guards are vulnerable to their own success.
 - **Three consecutive waits in one harness were wrong the same way, across four sprints.**
   §6.98 found a wait that broke on its first sample while the page was booting; §6.102
   recorded me reintroducing it four sections later; §6.105 found the matching wait treating

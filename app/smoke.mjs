@@ -1479,7 +1479,10 @@ try {
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   await page.getByRole('button', { name: 'Add Quiet Harbour to your watchlist' }).click();
-  await page.getByPlaceholder(/Why\?/).fill('Ana recommended');
+  // `COPY.watchlist.notePlaceholder`, spelled out because this file cannot import it.
+  // The web's search row asked its own third question — "Why? e.g. Ana recommended" —
+  // which nothing owned; §6.106 moved it onto the owner and this locator with it.
+  await page.getByPlaceholder(/Why did you save/).fill('Ana recommended');
   await page.getByRole('button', { name: 'Save Quiet Harbour to your watchlist' }).click();
 
   await page.getByRole('link', { name: /Watchlist/ }).click();

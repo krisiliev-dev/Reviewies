@@ -215,12 +215,12 @@ export default function WatchingScreen() {
                 is a sentence and what it shows is three characters. */}
             <Button
               label="−5s"
-              name="Move the clock back 5 seconds"
+              name={COPY.controls.seek(-5)}
               onPress={() => clock.nudge(-5000)}
             />
             <Button
               label="+5s"
-              name="Move the clock forward 5 seconds"
+              name={COPY.controls.seek(5)}
               onPress={() => clock.nudge(5000)}
             />
             <View style={styles.densityBlock}>
