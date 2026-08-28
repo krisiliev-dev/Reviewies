@@ -29,6 +29,13 @@ const ANA_ID = '00000000-0000-4000-8000-000000000002';
 const BEN_ID = '00000000-0000-4000-8000-000000000003';
 
 /**
+ * The episode the comments hang off: Kitchen Nightshift season 1 episode 1, which the
+ * fixture provider makes without a token or a network (`core/src/metadata/fixtures.ts`).
+ */
+export const EPISODE_ID = 'tmdb:ep:2-1-1';
+export const SERIES_ID = 'tmdb:tv:2';
+
+/**
  * Rows the intercepted PostgREST answers with, shaped by the **queries** rather than by the
  * tables.
  *
@@ -42,7 +49,13 @@ const BEN_ID = '00000000-0000-4000-8000-000000000003';
  */
 const ROWS = {
   profiles: [
-    { id: USER_ID, handle: 'you', display_name: 'You' },
+    /*
+     * A handle, not the word "you". `20-comments-in` first read "you · you", because the
+     * comment head prints the handle and then appends "· you" to mark the one that is
+     * yours — a fixture that stands in for the viewer by *naming itself* "you" makes a
+     * correct screen look like a duplication bug in the photograph nobody can re-run.
+     */
+    { id: USER_ID, handle: 'mara', display_name: 'Mara Ellis' },
     { id: ANA_ID, handle: 'ana', display_name: 'Ana Ruiz' },
     { id: BEN_ID, handle: 'ben_w', display_name: null },
   ],
@@ -60,7 +73,32 @@ const ROWS = {
     { list_id: 'list-1', target_id: 'tmdb:movie:2', position: 1 },
     { list_id: 'list-2', target_id: 'tmdb:tv:3', position: 0 },
   ],
-  comments: [],
+  comments: [
+    {
+      id: 'comment-1', target_id: EPISODE_ID, user_id: ANA_ID, deleted: false,
+      body: 'Called it in episode one.', image_url: null,
+      created_at: '2026-02-14T21:04:00Z', profiles: { handle: 'ana' },
+    },
+    {
+      id: 'comment-2', target_id: EPISODE_ID, user_id: BEN_ID, deleted: false,
+      body:
+        'The kitchen scene runs nearly four minutes without a cut and I did not notice ' +
+        'until the second watch. That is the whole show in one shot.',
+      image_url: null,
+      created_at: '2026-02-14T22:31:00Z', profiles: { handle: 'ben_w' },
+    },
+    {
+      id: 'comment-3', target_id: EPISODE_ID, user_id: USER_ID, deleted: false,
+      body:
+        'What gets me about this one is how little it explains. Nobody says why the diner ' +
+        'matters, nobody recaps the falling-out, and the episode trusts you to sit with ' +
+        'that for twenty-two minutes. Half an hour of television that would rather be ' +
+        'quiet than be clear is rare enough that I want to write it down before the season ' +
+        'talks me out of it.',
+      image_url: null,
+      created_at: '2026-02-15T08:12:00Z', profiles: { handle: 'mara' },
+    },
+  ],
 };
 
 /**
@@ -112,6 +150,24 @@ export async function signIn(page) {
  * a screen showing "nothing yet" is a truthful photograph of an unhandled query and an
  * error banner is not.
  */
+/**
+ * Episodes the stub will admit having comments on, and the reason this is not a fixture
+ * column.
+ *
+ * The spoiler gate is **not** code in the app — it is a row-level security policy, so the
+ * server never sends a comment on an episode you have not watched. A stub that answered
+ * every `comments` query out of `ROWS` would therefore photograph a screen the real
+ * product cannot produce: comments visible above an unwatched episode. So the gate lives
+ * on the stub's side of the wire, where the real one lives, and the harness opens it at
+ * the moment the journey marks the episode watched.
+ */
+const admitted = new Set();
+
+/** The journey has watched this episode, so the server may now send its comments. */
+export function serverAdmits(targetId) {
+  admitted.add(targetId);
+}
+
 export async function stubBackend(page, baseUrl) {
   await page.route(`${baseUrl}/**`, async (route) => {
     const url = new URL(route.request().url());
@@ -125,6 +181,8 @@ export async function stubBackend(page, baseUrl) {
     if (!table) return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
 
     let rows = ROWS[table] ?? [];
+    // The policy first, then the query — which is the order Postgres applies them in.
+    if (table === 'comments') rows = rows.filter((r) => admitted.has(r.target_id));
     for (const [param, value] of url.searchParams) {
       if (['select', 'order', 'limit', 'offset'].includes(param)) continue;
       const [op, ...rest] = value.split('.');

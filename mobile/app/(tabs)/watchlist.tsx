@@ -117,13 +117,18 @@ function Row({
 
         {editing ? (
           <View style={styles.editor}>
+            {/* Not `multiline`, which it was, and which made `onSubmitEditing` below dead:
+                React Native gives a multiline input the Return key for a newline, so the
+                one gesture that saves a note without aiming at a button did nothing. It
+                was also the only one of the four note fields in the product that was
+                multiline — the web's watchlist and both search screens are single-line —
+                so the outlier was the one carrying a prop that could not fire. §6.129. */}
             <Field
               size="row"
               label={COPY.controls.noteFor(name)}
               value={draft}
               onChange={setDraft}
               placeholder={COPY.watchlist.notePlaceholder}
-              multiline
               autoFocus
               onSubmitEditing={save}
             />

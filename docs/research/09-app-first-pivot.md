@@ -8977,6 +8977,104 @@ One more number fell out of it. Those containers carried `padding: 24` — a **f
 edge that §6.121 could not absorb, because that migration matched on `content:` and this was
 called `centre`. They take `SCREEN.edge` now, and the phone's spacing scan went 195 → 194.
 
+### 6.129 The one route nothing had photographed, and what the photograph showed
+
+`comments/[targetId]` was the last route the design track had never seen. It needs two
+things at once — an account, and a watched episode — so no harness could reach it: the
+signed-out pass shows "Comments need an account", and §6.126's signed-in pass has no local
+library. It stayed unseen through nine design sprints on the strength of nobody being able
+to get there.
+
+Sprint 42 walked there, and the walk itself found two things before the screen did.
+
+## A dynamic route is only reachable the way a person reaches it
+
+The first attempt deep-linked to `/comments/tmdb:ep:2-1-1`. `expo export` writes a dynamic
+route as the **literal file** `comments/[targetId].html`, so `serve` answered with a 404 —
+and the harness photographed the 404, called it a screen, and moved on. The fix is not a
+rewrite rule. It is to arrive the way the product intends: from `/search`, through the
+result row, into the title screen, and out of the episode's own "Talk" button. Which is also
+the only honest way to photograph a **gate**, because the gate is a rule about what you have
+watched and not a property of a URL.
+
+Two roles were wrong on the way, for the same reason: `Row`'s `open` renders `role="link"`
+and `CrossOff` renders `role="checkbox"`, not the `button` a reader would assume. A locator
+written from the source rather than from the rendered tree finds nothing and says only that
+it waited.
+
+## And the stub has to hold the rule the server holds
+
+The spoiler gate is a row-level security policy — the server does not send a comment on an
+episode you have not watched — so a stub that answered every `comments` query out of its
+fixtures would have photographed a screen the real product **cannot produce**: comments
+sitting above an unwatched episode, in a document about spoiler safety. `signedIn.mjs` keeps
+the gate on the stub's side of the wire, where the real one lives, and the harness opens it
+at the moment the journey marks the episode watched. Policy first, then the query, which is
+the order Postgres applies them in.
+
+## What the screen was actually doing
+
+`20-comments-in.png`, first run: an effort filter, a 350-point empty text box, "Attach a
+screenshot", "Post" — and then, **880 points down an 844-point viewport**, the first word
+anybody had written. You arrive at a conversation and the conversation is below the fold.
+
+Both platforms did it, in the same order. `mobile/app/comments/[targetId].tsx` and
+`app/src/screens/EpisodeComments.tsx` were ported from one another, so the agreement is not
+evidence of a decision — it is evidence that neither ever asked what the screen is for.
+
+Doc 8 answered that a year ago. *"I could've used any other tracking app, but I stayed with
+TVTime because I enjoyed reading the comments."* People ranked its successors by how many
+comments an episode had. **Reading is the draw; writing is what some of those readers also
+do.** A screen that spends its first screenful on an empty form has the ratio backwards.
+
+`core/src/ui/compose.ts` states the rule: on a screen whose purpose is reading, **composing
+is revealed, not resident**. One control where the form was; the form appears in its place
+when asked for, and folds away again once the thing is posted. This is not new here —
+`search.tsx`'s note editor already worked exactly this way. The rule exists so the third and
+fourth screens do not each decide it again, which is how the gap under a section label ended
+up with three values (§6.127's `BLOCK`) and the screen edge with five (§6.121's `SCREEN`).
+
+The effort filter moved too, and for the same reason: it is a *reading* control, so it
+belongs against the list it filters rather than stranded above a composer.
+
+## Drawn is not in the text
+
+The clause that proves the rule was wrong twice in one line. It looked for the composer's
+placeholder — `/What did you think\?/` — in `innerText`, to be **absent** on arrival and
+**present** after the reveal. `TextInput` becomes `<textarea placeholder="…">`, and a
+placeholder is an attribute: painted on the screen, absent from the text. So the absence
+clause passed for the wrong reason and the presence clause failed on a screenshot that
+plainly showed those words.
+
+It counts `role=textbox` now. §6.87's rule turned one more way: emitted is not rendered, and
+*drawn* is not *in the text*.
+
+## The plant, and a harness that says why
+
+`COMPOSE_OPEN = true` and a rebuild. The first version of the run died on
+`waiting for getByRole('button', { name: /^Say something$/ })` — a true failure that sends a
+reader hunting for a missing button instead of at the clause four lines above, which had
+already worked out exactly what was wrong. Counting the opener before clicking it lets the
+run reach its own report:
+
+```
+Signed-in screenshots that do not show what makes them worth taking:
+  20-comments-in opens on the composer; COMPOSE_OPEN is not being honoured
+```
+
+A harness that fails is not the same as a harness that says why.
+
+## Three shots that did not exist
+
+`19-comments-sealed`, `20-comments-in`, `21-comments-writing`. The composer is now a state
+behind a control, and a state behind a control is exactly the kind of thing this document
+keeps finding nobody has ever looked at — so it is photographed on the way past.
+
+One fixture changed with them. The viewer's profile called itself `you`, and the comment
+head appends "· you" to mark the one that is yours, so the shot read **"you · you"** — a
+correct screen that looks like a duplication bug in the only artefact a future reader can
+consult. It is `mara` now.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9439,6 +9537,23 @@ and which single claim in this document could not be checked at all:
   empty. §6.106 is the first evidence about what that costs: two of the
   three findings the track filed had the right conclusion and the wrong stated reason, and
   both were settled by a check that took two minutes.
+
+  What §6.129 adds rather than removes: the track now has twenty-one shots and the last
+  gated screen among them. `19-comments-sealed`, `20-comments-in` and `21-comments-writing`
+  cover the route that needed an account *and* a watched episode, which is why no harness
+  had ever reached it. **One route is still unphotographed, and it is a flagship**:
+  `watching/[targetId]` — Watching Mode, the immersive screen with the emoji pad, the
+  reaction strip and the transport, the one screen `EDGE_EXEMPT` names and the one the
+  brief called the reason the product exists. Every design judgement about it to date has
+  been made from source.
+
+  And a second thing the walk to those three shots settled, which applies to every future
+  one: `expo export` writes a dynamic route as the literal file `comments/[targetId].html`,
+  so a deep link to `/comments/<id>` on a plain static server is a **404** — and the first
+  run photographed that 404 and called it a screen. A dynamic route in the phone's web
+  export is only reachable the way a person reaches it. That is a constraint on the
+  harness, not on the product, but it means the coverage question above has a sharper form:
+  a screen behind a dynamic route cannot be photographed at all without a journey to it.
 - **A suite can get smaller, and now six more of them cannot.** §6.109 wrote a test file
   over one that already existed and `npm run verify` stayed green through the loss of nine
   checks. §6.110 extended the ratchet to everything that is not a `.test.ts`: both smoke

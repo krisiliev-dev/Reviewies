@@ -15,7 +15,7 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
-import { HARNESS_SUPABASE_URL, signIn, stubBackend } from './signedIn.mjs';
+import { EPISODE_ID, HARNESS_SUPABASE_URL, serverAdmits, signIn, stubBackend } from './signedIn.mjs';
 
 const BASE = 'http://localhost:4201';
 const OUT = new URL('./screens/', import.meta.url).pathname;
@@ -53,6 +53,105 @@ for (const [name, path, want] of SHOTS) {
   if (!want.test(await page.locator('body').innerText())) {
     hollow.push(`${name} (${path}) does not show ${want}`);
   }
+}
+
+/*
+ * The comments screen, both halves of it, walked rather than deep-linked.
+ *
+ * `comments/[targetId]` is the one route with no photograph at all, and it has two designed
+ * states: sealed until you have watched the episode, and the comments themselves. Neither
+ * could be reached before this file existed — the screen needs an account, and the gate
+ * needs a local watch.
+ *
+ * Walked, and the first attempt at this proved it has to be. `expo export` writes a
+ * *dynamic* route as the literal file `comments/[targetId].html`, so `serve` answers a deep
+ * link to `/comments/tmdb:ep:2-1-1` with a 404 — and the harness photographed that 404 and
+ * called it a screen. A dynamic route on the phone's web export is only reachable the way a
+ * person reaches it: from a static route, through the control that pushes to it. Which is
+ * also the honest way to photograph a gate, since the gate is a rule and not a URL.
+ */
+await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+await page.getByPlaceholder('Shows, films, anime…').fill('Kitchen');
+const open = page.getByRole('link', { name: /^Open Kitchen Nightshift$/i });
+await open.waitFor({ timeout: 20000 });
+await open.click();
+
+// A `link`, and the mark below is a `checkbox` — the roles `Row`'s `open` and
+// `CrossOff` actually render, rather than the ones a reader would guess.
+const talkTo = page.getByRole('link', { name: /^Comments on season 1 episode 1, /i });
+await talkTo.waitFor({ timeout: 20000 });
+await talkTo.click();
+await page.waitForTimeout(2000);
+await page.screenshot({ path: `${OUT}19-comments-sealed.png` });
+console.log('shot', '19-comments-sealed');
+if (!/Hidden until you watch it/i.test(await page.locator('body').innerText())) {
+  hollow.push('19-comments-sealed does not show the spoiler gate');
+}
+
+await page.goBack();
+const mark = page.getByRole('checkbox', { name: /^Mark season 1 episode 1, /i });
+await mark.waitFor({ timeout: 20000 });
+await mark.click();
+// The server's side of the gate opens because the journey watched it, not because a
+// screenshot needed it to. See `serverAdmits` in signedIn.mjs.
+serverAdmits(EPISODE_ID);
+await page.waitForTimeout(1000);
+
+await page.getByRole('link', { name: /^Comments on season 1 episode 1, /i }).click();
+await page.waitForTimeout(2500);
+await page.screenshot({ path: `${OUT}20-comments-in.png` });
+console.log('shot', '20-comments-in');
+/*
+ * A needle from a comment body, not from the composer.
+ *
+ * "Post" and "What did you think?" are printed by an empty comments list just as happily,
+ * so either would pass on a screen with nothing in it — §6.109's rule, which cost this file
+ * a run when `/Following/` matched a heading above no people.
+ */
+const talk = await page.locator('body').innerText();
+if (!/Called it in episode one/i.test(talk)) {
+  hollow.push('20-comments-in shows no comments; the gate or the fixtures are wrong');
+}
+// And that the walk actually left the gate behind, rather than photographing it twice.
+if (/Hidden until you watch it/i.test(talk)) {
+  hollow.push('20-comments-in is still sealed after the episode was marked watched');
+}
+/*
+ * The rule §6.129 states, measured on the rendered screen rather than asserted in source.
+ *
+ * `COMPOSE_OPEN` is a boolean two files import; a screen that ignored it would still
+ * import it. What the rule claims is that a person arriving here meets the conversation
+ * and not a form, so the measurement is **how many text boxes exist**.
+ *
+ * Boxes rather than the placeholder, which is what the first version of this looked for.
+ * `TextInput` becomes a `<textarea placeholder="…">`, and a placeholder is an attribute:
+ * it is painted on the screen and absent from `innerText`. So `/What did you think\?/`
+ * was false on a screen that plainly showed those words — the absence clause passed for
+ * the wrong reason and the presence clause failed for it. §6.87's rule reflected: emitted
+ * is not rendered, and *drawn* is not *in the text*.
+ */
+if (await page.getByRole('textbox').count()) {
+  hollow.push('20-comments-in opens on the composer; COMPOSE_OPEN is not being honoured');
+}
+
+/*
+ * And the composer itself, which is now a state behind a control and would otherwise be
+ * the next thing nothing had ever photographed.
+ *
+ * `count()` before `click()`, so that a build where the composer is already open reaches
+ * the report rather than dying here. Planted with `COMPOSE_OPEN = true`, the first version
+ * of this failed on "waiting for Say something" — true, and it sends a reader looking for
+ * a missing button instead of at the clause four lines above that had already worked out
+ * exactly what was wrong. A harness that fails is not the same as one that says why.
+ */
+const opener = page.getByRole('button', { name: /^Say something$/i });
+if (await opener.count()) await opener.click();
+await page.waitForTimeout(1200);
+await page.screenshot({ path: `${OUT}21-comments-writing.png` });
+console.log('shot', '21-comments-writing');
+if (!(await page.getByRole('textbox').count())) {
+  hollow.push('21-comments-writing does not show the composer');
 }
 
 /*

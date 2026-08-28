@@ -16,6 +16,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { COPY } from '@reviewies/core/copy';
+import { COMPOSE, COMPOSE_OPEN } from '@reviewies/core/ui/compose';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
@@ -29,6 +30,8 @@ export function EpisodeComments() {
   const [gated, setGated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [effort, setEffort] = useState(0);
+  // Revealed, not resident: `core/src/ui/compose.ts` and §6.129.
+  const [writing, setWriting] = useState(COMPOSE_OPEN);
   const [draft, setDraft] = useState('');
   const [image, setImage] = useState<string>();
   const [uploading, setUploading] = useState(false);
@@ -74,6 +77,8 @@ export function EpisodeComments() {
       await postComment(targetId, draft, image);
       setDraft('');
       setImage(undefined);
+      // Posted, so the form has done its job and the conversation gets the space back.
+      setWriting(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not post that');
@@ -118,6 +123,86 @@ export function EpisodeComments() {
         </div>
       ) : (
         <>
+          {!writing ? (
+            <div className="mt-4">
+              <Button
+                onPress={() => setWriting(true)}
+                tone="secondary"
+                label={COMPOSE.open}
+                name={COMPOSE.open}
+              />
+            </div>
+          ) : (
+            <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
+              <Field
+                multiline
+                label={COPY.fields.comment}
+                value={draft}
+                onChange={setDraft}
+                // Pasting a screenshot straight in is the actual flow — people
+                // screenshot the scene and paste it, they do not go via a file picker.
+                onPaste={(e) => {
+                  const file = [...e.clipboardData.files][0];
+                  if (file) void attach(file);
+                }}
+                placeholder="What did you think?"
+              />
+
+              {image && (
+                <div className="flex items-center gap-2">
+                  <img src={image} alt="" className="h-16 w-16 rounded-plate object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImage(undefined)}
+                    aria-label="Remove the attached screenshot"
+                    className="tap text-s12 text-ink-secondary underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Button
+                  submit
+                  disabled={(!draft.trim() && !image) || uploading}
+                  tone="primary"
+                  label="Post"
+                  name="Post"
+                />
+
+                {/* Screenshots were core to TV Time's comment culture and are named
+                    most often as the thing successors dropped. */}
+                <label className="cursor-pointer rounded-pill border border-stroke-signal px-4 py-2 text-s14 text-ink-secondary">
+                  {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
+                  <input
+                    type="file"
+                    accept={IMAGE_TYPES.join(',')}
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void attach(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+
+                <Button
+                  onPress={() => {
+                    setWriting(false);
+                    setDraft('');
+                    setImage(undefined);
+                    setError(undefined);
+                  }}
+                  tone="quiet"
+                  label={COMPOSE.cancel}
+                  name={COMPOSE.cancel}
+                />
+              </div>
+              {error && <p className="text-s14 text-trouble">{error}</p>}
+            </form>
+          )}
+
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Choice
               name="How much effort a comment has to show"
@@ -133,63 +218,6 @@ export function EpisodeComments() {
             />
             {hidden > 0 && <Note level="footnote" as="span">{hidden} hidden</Note>}
           </div>
-
-          <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
-            <Field
-              multiline
-              label={COPY.fields.comment}
-              value={draft}
-              onChange={setDraft}
-              // Pasting a screenshot straight in is the actual flow — people
-              // screenshot the scene and paste it, they do not go via a file picker.
-              onPaste={(e) => {
-                const file = [...e.clipboardData.files][0];
-                if (file) void attach(file);
-              }}
-              placeholder="What did you think?"
-            />
-
-            {image && (
-              <div className="flex items-center gap-2">
-                <img src={image} alt="" className="h-16 w-16 rounded-plate object-cover" />
-                <button
-                  type="button"
-                  onClick={() => setImage(undefined)}
-                  aria-label="Remove the attached screenshot"
-                  className="tap text-s12 text-ink-secondary underline"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button
-                submit
-                disabled={(!draft.trim() && !image) || uploading}
-                tone="primary"
-                label="Post"
-                name="Post"
-              />
-
-              {/* Screenshots were core to TV Time's comment culture and are named
-                  most often as the thing successors dropped. */}
-              <label className="cursor-pointer rounded-pill border border-stroke-signal px-4 py-2 text-s14 text-ink-secondary">
-                {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
-                <input
-                  type="file"
-                  accept={IMAGE_TYPES.join(',')}
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void attach(file);
-                    e.target.value = '';
-                  }}
-                />
-              </label>
-            </div>
-            {error && <p className="text-s14 text-trouble">{error}</p>}
-          </form>
 
           {loading && <Note className="mt-4">Loading…</Note>}
 

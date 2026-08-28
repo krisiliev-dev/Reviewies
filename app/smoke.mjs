@@ -1011,8 +1011,22 @@ try {
       !/Hidden until you watch it/.test(conversation),
       conversation.slice(0, 110),
     );
+    /*
+     * Reading first, then writing — §6.129's rule, walked rather than asserted.
+     *
+     * This clause used to be one line: a placeholder exists. It does not any more, and
+     * that is the point. The composer was 880 points of empty form above the first
+     * comment on a screen people come to in order to read, so it is behind a control now.
+     * Both halves are checked, because "no composer" and "no composer you can get to" look
+     * identical from the outside and only one of them is the design.
+     */
     check(
-      'and offers somewhere to write',
+      'does not open on a form',
+      (await page.getByRole('textbox').count()) === 0,
+    );
+    await page.getByRole('button', { name: /^Say something$/ }).click();
+    check(
+      'and offers somewhere to write, one tap in',
       (await page.getByPlaceholder(/What did you think/i).count()) > 0,
     );
     check(

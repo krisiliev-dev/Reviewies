@@ -18,6 +18,7 @@ import {
 import { pickCommentImage } from '../../src/comments/pickImage';
 import { leadingOf, radius, theme, space} from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
+import { COMPOSE, COMPOSE_OPEN } from '@reviewies/core/ui/compose';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
@@ -48,6 +49,8 @@ export default function CommentsScreen() {
   const [error, setError] = useState<string>();
   const [image, setImage] = useState<string>();
   const [uploading, setUploading] = useState(false);
+  // Revealed, not resident: `core/src/ui/compose.ts` and §6.129.
+  const [writing, setWriting] = useState(COMPOSE_OPEN);
 
   const [episode, setEpisode] = useState<{ season: number; number: number; name: string }>();
 
@@ -96,6 +99,8 @@ export default function CommentsScreen() {
       await postComment(targetId, draft, image);
       setDraft('');
       setImage(undefined);
+      // Posted, so the form has done its job and the conversation gets the space back.
+      setWriting(false);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not post that');
@@ -125,6 +130,71 @@ export default function CommentsScreen() {
           </Block>
         ) : (
           <>
+            {!writing ? (
+              <Button
+                onPress={() => setWriting(true)}
+                tone="secondary"
+                label={COMPOSE.open}
+                name={COMPOSE.open}
+              />
+            ) : (
+              <>
+                <Field
+                  multiline
+                  label={COPY.fields.comment}
+                  value={draft}
+                  onChange={setDraft}
+                  placeholder="What did you think?"
+                />
+                {image && (
+                  <View style={styles.attached}>
+                    <Image source={{ uri: image }} style={styles.attachedImage} resizeMode="cover" />
+                    <Pressable
+                      onPress={() => setImage(undefined)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove the attached screenshot"
+                      hitSlop={8}
+                      style={styles.removeAttached}
+                    >
+                      <Text style={styles.deleteCommentText}>Remove</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                <Button
+                  onPress={attach}
+                  busy={uploading}
+                  disabled={uploading}
+                  tone="secondary"
+                  label={uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
+                  name={image ? 'Replace the attached screenshot' : COPY.comments.attach}
+                />
+
+                {/* An image on its own is a post: core turns an empty body into 📷, the
+                    same as the web. */}
+                <Button
+                  onPress={submit}
+                  disabled={(!draft.trim() && !image) || uploading}
+                  tone="primary"
+                  label="Post"
+                  name="Post"
+                />
+                <Button
+                  onPress={() => {
+                    setWriting(false);
+                    setDraft('');
+                    setImage(undefined);
+                    setError(undefined);
+                  }}
+                  tone="quiet"
+                  label={COMPOSE.cancel}
+                  name={COMPOSE.cancel}
+                />
+                {/* The failure belongs to the form: an upload that was rejected or a post
+                    the server refused. It folds away with it. */}
+                {error && <Text style={styles.error}>{error}</Text>}
+              </>
+            )}
             <View style={styles.chips}>
               <Choice
                 name="How much effort a comment has to show"
@@ -140,48 +210,6 @@ export default function CommentsScreen() {
               />
               {hidden > 0 && <Text style={styles.hidden}>{hidden} hidden</Text>}
             </View>
-
-            <Field
-              multiline
-              label={COPY.fields.comment}
-              value={draft}
-              onChange={setDraft}
-              placeholder="What did you think?"
-            />
-            {image && (
-              <View style={styles.attached}>
-                <Image source={{ uri: image }} style={styles.attachedImage} resizeMode="cover" />
-                <Pressable
-                  onPress={() => setImage(undefined)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Remove the attached screenshot"
-                  hitSlop={8}
-                  style={styles.removeAttached}
-                >
-                  <Text style={styles.deleteCommentText}>Remove</Text>
-                </Pressable>
-              </View>
-            )}
-
-            <Button
-              onPress={attach}
-              busy={uploading}
-              disabled={uploading}
-              tone="secondary"
-              label={uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
-              name={image ? 'Replace the attached screenshot' : COPY.comments.attach}
-            />
-
-            {/* An image on its own is a post: core turns an empty body into 📷, the
-                same as the web. */}
-            <Button
-              onPress={submit}
-              disabled={(!draft.trim() && !image) || uploading}
-              tone="primary"
-              label="Post"
-              name="Post"
-            />
-            {error && <Text style={styles.error}>{error}</Text>}
 
             {loading && <ActivityIndicator color={theme.workingMark} />}
 

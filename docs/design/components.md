@@ -297,6 +297,12 @@ Sunken well ground, 1pt rule, 2pt corner, ≥44pt. This is the fix for screen 04
 
 **Replaces:** 11 `TextInput`s across `search`, `watchlist`, `lists`, `people` (×2), `account` (×2), `title/[id]`, `comments`, `watching`, `AddToList`.
 
+**Where a `Field` may stand (§6.129).** On a screen whose purpose is *reading*, composing is revealed, not resident. `core/src/ui/compose.ts` owns the rule and `COMPOSE_OPEN` is its stated default: a screen that should open composed says so against that, rather than quietly passing `true`. `compose.test.ts` holds the source side and `design/capture-signedin.mjs` holds the rendered one — `20-comments-in` fails if the screen a person arrives at has a text box on it at all.
+
+This came out of the only route the design track had never photographed. `comments/[targetId]` opened on an effort filter, a 350-point empty box, "Attach a screenshot" and "Post", with the first word anybody had written 880 points down an 844-point viewport. Doc 8 is unambiguous about why that is backwards: people stayed with TV Time *to read the comments*, and ranked its successors by how many an episode had.
+
+Two things follow for this component. A `multiline` field is the shape of a composer — 350 points of screen whether or not anybody wanted to write — so every one of them in the product has to be behind a reveal, and `compose.test.ts` enumerates them. And `multiline` is not free on the phone: React Native gives a multiline input the Return key for a newline, so an `onSubmitEditing` beside it never fires. The phone's watchlist note was the only one of the four note fields in the product that was multiline, and it was carrying exactly that dead prop.
+
 ---
 
 ## 9. `Choice` — the radiogroup

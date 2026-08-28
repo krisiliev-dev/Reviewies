@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 904, app: 518, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 904, app: 522, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -185,12 +185,23 @@ describe('every workspace', () => {
    * existing. A count would guard the wrong property.
    */
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
-    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 144 },
+    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 145 },
     'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 77 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },
     'design/capture.mjs': { pattern: /^ {2}\['\d/gm, least: 12 },
+    /*
+     * The signed-in pass, counted by its **clauses** rather than by its routes.
+     *
+     * `capture.mjs` is ratcheted by routes because a route with no `MUST_SHOW` already
+     * fails (§6.105), so the routes are the thing that could go missing quietly. This file
+     * has no such rule: it reaches its screens by walking — search, a title, an episode's
+     * own Talk button — so there is no list of routes to count. What it has instead is
+     * seven things it refuses to photograph without, and every one of them was added
+     * because a run had already produced a screenshot that showed none of it.
+     */
+    'design/capture-signedin.mjs': { pattern: /hollow\.push\(/g, least: 7 },
   };
 
   it('keeps every check the suites that are not vitest files were holding', () => {
