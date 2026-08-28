@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { jsxElements, stripComments } from '@reviewies/core/test/source';
 import { ROW, ROW_INK } from '@reviewies/core/ui/row';
 import { border, color, size } from '@reviewies/core/tokens';
@@ -15,6 +15,17 @@ import { border, color, size } from '@reviewies/core/tokens';
  */
 const ROOT = resolve(import.meta.dirname, '../../..');
 const read = (path: string) => stripComments(readFileSync(resolve(ROOT, path), 'utf8'));
+
+/** Every `.tsx` under a directory, so a clause can sweep call sites rather than name them. */
+function filesUnder(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+    if (['node_modules', 'dist', '.expo'].includes(entry.name)) continue;
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) filesUnder(path, out);
+    else if (/\.tsx$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
 
 const RENDERERS = {
   phone: read('mobile/src/ui/Row.tsx'),
@@ -177,6 +188,53 @@ describe('the listing row', () => {
       }
       expect(source, `${platform} has nowhere to put a group`).toContain('{under}');
     }
+  });
+
+  it('does not let the browser centre a row whose target is a button', () => {
+    /*
+     * `Row` opens either a `<Link>` or a `<button>`, and their UA defaults disagree:
+     * `text-align: start` against `center`. Every call site passed `open.to` until §6.131,
+     * so the `run` branch had never rendered — and the one that used it put a row's title
+     * and sub-line in the middle of the screen.
+     *
+     * The clause is on the shared class rather than on either branch: whatever the two
+     * render, they must not disagree about where the words start.
+     */
+    expect(RENDERERS.web, 'the web target does not reset text alignment').toMatch(
+      /const TARGET =[\s\S]*?text-left/,
+    );
+  });
+
+  it('is inside a list on the web, because it renders a list item', () => {
+    /*
+     * `Row` is an `<li>`. §6.131 migrated Settings' People link to it and dropped the row
+     * straight into a `flex flex-col`, and `light-10-settings` — the first photograph the
+     * web app has ever had — shows what that looks like: the title and its sub-line
+     * centred in the middle of the screen, reading as neither a row nor a heading.
+     *
+     * It is also invalid markup, and that half is the reason this is a clause rather than
+     * a note. An `<li>` outside a list announces as a list item belonging to no list, and
+     * nothing in the suite could see it: every other call site happened to be inside a
+     * `.map()` under a `<ul>`, so the rule was true by habit and had never been stated.
+     *
+     * Reading structure rather than text: a `<Row` whose nearest enclosing tag among
+     * `ul`/`ol` is missing. Crude, and it does not need to be clever — the failure is a
+     * call site with no list anywhere above it in the file's own JSX.
+     */
+    const offenders: string[] = [];
+    for (const file of filesUnder('app/src')) {
+      const source = read(file);
+      if (!/<Row\b/.test(source) || file.endsWith('ui/Row.tsx')) continue;
+      // `WhereToWatch` has a local `Row` of its own that is not this component.
+      if (!source.includes("from './Row'") && !source.includes("from '../ui/Row'")) continue;
+      for (const at of [...source.matchAll(/<Row\b/g)].map((m) => m.index ?? 0)) {
+        const before = source.slice(0, at);
+        const opens = (before.match(/<(?:ul|ol)\b/g) ?? []).length;
+        const closes = (before.match(/<\/(?:ul|ol)>/g) ?? []).length;
+        if (opens <= closes) offenders.push(`${file}: a <Row> with no list around it`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it('steps the ink rather than fading it, and reads on the ground', () => {

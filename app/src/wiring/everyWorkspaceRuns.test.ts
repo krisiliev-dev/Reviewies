@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 904, app: 532, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 904, app: 534, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -209,6 +209,12 @@ describe('every workspace', () => {
      * because a run had already produced a screenshot that showed none of it.
      */
     'design/capture-signedin.mjs': { pattern: /hollow\.push\(/g, least: 7 },
+    /*
+     * And the web's pass, by its clauses for the same reason — it reaches its routes by
+     * address rather than by walking, but its ten routes are a table inside a function and
+     * the thing that could vanish quietly is a check, not a row.
+     */
+    'design/capture-web.mjs': { pattern: /problems\.push\(/g, least: 7 },
   };
 
   it('keeps every check the suites that are not vitest files were holding', () => {

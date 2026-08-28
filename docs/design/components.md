@@ -221,6 +221,8 @@ Two further departures from the spec above, both from migrating real screens. "A
 
 `under` has a size lesson attached to it too. Thirty-eight controls moved there as bare underlined links and measured 16 pixels tall — the slot has no metrics of its own, so anything that goes in it must be a component that brings its own. `Button size="inline" tone="quiet"` is what those are now.
 
+
+**The `run` branch had never rendered (§6.132).** `Row` opens either a `<Link>` (when `open.to` is a URL) or a `<button>` (when it is `open.run`), and every call site passed `to` until §6.131 — so a branch that had been in the component since it was written first rendered on Settings' People row, and inherited the `<button>` UA default `text-align: center`. `TARGET` carries `text-left` now, so the two branches cannot disagree about where a row's words start, and `row.test.ts` holds it. Two related rules came out of the same shot: a `Row` is an `<li>` and must sit inside a `<ul>`/`<ol>` — true by habit at every other call site and never stated — and the web app now has a design pass (`design/capture-web.mjs`) that would have shown it years earlier.
 ---
 
 ## 6. `Data` — every screen that has a number

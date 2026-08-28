@@ -55,11 +55,21 @@ export function Settings() {
           exactly what `Row` draws, and this was the last screen assembling one itself —
           in a `rounded-plate bg-ground-raised` that §6.122 established is the *card* fill
           and so presses to the colour it is already painted. §6.131. */}
-      <Row
-        title="People"
-        meta="Your handle, following, blocking"
-        open={{ name: 'People — your handle, following, blocking', run: () => navigate('/people') }}
-      />
+      {/* In a `<ul>`, because `Row` renders an `<li>` and §6.131 dropped this one straight
+          into a `flex flex-col`. An `<li>` outside a list is invalid markup and announces
+          as a list item belonging to nothing; one destination is still a list of
+          destinations.
+          
+          It is *not* why the row was centred, which is what this comment first said. That
+          was `Row`'s `<button>` branch inheriting a UA `text-align: center`, found by
+          walking the computed styles after the list made no difference. §6.132. */}
+      <ul>
+        <Row
+          title="People"
+          meta="Your handle, following, blocking"
+          open={{ name: 'People — your handle, following, blocking', run: () => navigate('/people') }}
+        />
+      </ul>
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>

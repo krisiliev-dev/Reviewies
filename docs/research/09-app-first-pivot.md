@@ -9271,6 +9271,98 @@ that fails 3:1 on paper survived twelve places through eight design sprints. It 
 closed before device work, not during it, because a light-mode defect found on a phone is
 one a second harness pass would have found for free.
 
+### 6.132 ~~Nothing has ever been photographed in light mode~~ — the premise was wrong, and what it was hiding
+
+§7 has said for eight sprints that all the screenshots are dark, that this is how an amber
+failing 3:1 on paper survived twelve places, and that **"the design track has been
+reviewing half the app."** Checking it before acting on it — §6.124's lesson — found
+something else.
+
+## Light mode is not half the app. It is not in the app.
+
+**Nothing sets `data-theme`.** Not a control, not a preference, not `prefers-color-scheme`
+(§6.87 removed that deliberately), and `app/index.html` declares
+`<meta name="color-scheme" content="dark">`. On the phone `mobile/src/ui/theme.ts` resolves
+`color.dark` at module load and `app.json` pins `userInterfaceStyle: "dark"`.
+
+`color.light` is read by **twelve test files and by nothing else**. It is the fourth token
+layer in this build to have a name, a meaning and no consumers — after `ratio.poster`
+(§6.118), heading depth (§6.120) and `elevation` (§6.122) — and much the largest.
+
+So the amber survived harmlessly, and the design track has been reviewing all of the
+shipping app in the only theme the shipping app has. That clause in §7 is retracted.
+
+## What it was hiding: the web app has never had a design pass at all
+
+`design/capture.mjs` serves `mobile/dist`. Every one of the twenty-four shots in
+`design/screens` is **the phone**. The web app's only screenshots are `app/screenshots/`,
+taken by its smoke suite as evidence for checks rather than to be looked at.
+
+That is the real gap, and it is a bigger one than the task named. `design/capture-web.mjs`
+closes it: ten routes in the theme the product ships in, and the same ten again under
+`data-theme="light"` — because the light table is what twelve guards assert about and no
+photograph has ever shown what they are asserting about. Twenty shots, in `design/web/`.
+
+`design/library.mjs` holds the seeded library both harnesses now import. It was private to
+`capture.mjs`, and the choice at the moment of writing a second harness was to copy it or
+to share it. A fixture copied is a fixture that drifts.
+
+## Four things the first honest run found
+
+**A `<button>` centres its text and an `<a>` does not.** `light-10-settings` showed
+"People" and its sub-line in the middle of the screen. `Row` opens either a `<Link>` or a
+`<button>`, and **every call site until §6.131 passed `open.to`** — so the `run` branch had
+been in the component since it was written and had never rendered. The first call site to
+use it inherited the UA default. §6.115's family: code that ships and has never executed.
+
+The first diagnosis was wrong and is worth recording as such. An `<li>` outside a list is
+also true of that call site, and putting the list back changed nothing; walking the computed
+styles from the text upward showed `textAlign: center` starting at the `<button>` and
+`start` on its parent. Both are fixed, and the comment that blamed the list is corrected in
+place rather than left standing.
+
+**The design pass was reaching the internet.** `graphql.anilist.co`, on every run, because
+the seeded library contains `Hollow Crown Saga` — one season of ninety-six episodes, which
+is exactly the shape `correctAnimeSeasons` re-cuts, and that correction finds the AniList
+entry by title because ARM cannot be queried by TMDB ID. The fixture was built to exercise
+that path (§6.124), so the request is the fixture working. But AniList takes no key, so
+§6.125's credential-blanking could not switch it off, and nothing had ever noticed.
+
+Off-origin requests are aborted now, not merely counted, and the one expected host is named
+with its reason — plus a clause that fails if it is ever *not* reached, so the allowance
+cannot outlive what it allows (§6.41).
+
+**A harness that waited vaguely passed for reasons it did not know.** `networkidle` timed
+out on the second run of the file, so the waits became explicit — and the moment they did,
+the app said plainly that matching had stalled. Idle had been absorbing a network round
+trip nobody knew was happening. §6.125's shape: determinism by accident is not determinism.
+
+**And I wrote a press for a button that was not there.** Reading a truncated failure
+message — "…Match imported sh" — I added a click on "Match imported shows". A probe showed
+`button count: 0` and "Matching… 1 of 3" already climbing: `MatchImports` renders that
+button only while it is *not* running. Two guesses in a row from evidence that did not
+support them; the probe took a minute and settled it. Fix → measure → then write.
+
+## What the light pass shows, now that it exists
+
+It holds up. Warm paper ground, near-black ink, rules that read, poster plates that read as
+plates. And `light-06-stats` is the first picture of what `progress.test.ts` has been
+asserting since §6.113: the tally bar and the selected chip's underline are the **dark**
+amber `workingMark`, not the bright `workingFill` that measures 1.77:1 on paper. A guard
+that could only ever be arithmetic now has a photograph behind it.
+
+## The phone, and why it is not here
+
+Making the phone render light is not a harness flag. `theme` is `color.dark` resolved at
+module load and consumed by `StyleSheet.create` at module scope in every renderer, so a
+runtime theme means every style object in the app becomes a function of it. That is a large
+change to ship a state no user can reach, on a platform whose dark-only stance is a written
+decision — the premise of Watching Mode is a dark room with a television on.
+
+So it is deferred, and this is the reason. `docs/design/on-a-device.md` entry 9 said light
+mode was a gap in the harness rather than a limit of it; that was right for the web and
+wrong for the phone, and the entry is corrected.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9289,13 +9381,15 @@ and which single claim in this document could not be checked at all:
   the platform face by decision, which is a decision about how a mixed Latin/Japanese title
   looks that nobody has looked at.
 
-  And a third, found by §6.117 rather than by looking: **nothing has ever been photographed in
-  light mode.** All fifteen shots in `design/screens` are dark, the phone is pinned to
-  `color.dark`, and the web's light theme applies only under an explicit `data-theme`. That is
-  how an amber that fails 3:1 on paper survived in twelve places through eight design sprints —
-  the design track has been reviewing half the app. `design/capture.mjs` does not take a light
-  pass, and until it does, every claim in this document about the light palette rests on
-  arithmetic rather than on anyone having seen it.
+  And a third, found by §6.117 rather than by looking, ~~**nothing has ever been photographed
+  in light mode**, so the design track has been reviewing half the app~~ — **retracted in
+  §6.132.** Light mode is not a state the product can display: nothing sets `data-theme`, the
+  phone resolves `color.dark` at module load, and `color.light` is read by twelve test files
+  and nothing else. The amber survived harmlessly. What the claim was hiding is that
+  `design/capture.mjs` serves `mobile/dist`, so all twenty-four shots are **the phone** and the
+  web app had never had a design pass at all. `design/capture-web.mjs` now photographs it in
+  both themes; the phone's light mode is deferred with its cost written down in
+  `docs/design/on-a-device.md`.
 
   What §6.113 adds to this entry rather than removing: the faces are now on every word in the
   app, and the only place anyone has seen them is the react-native-web export — a browser,

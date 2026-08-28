@@ -182,15 +182,25 @@ listener: a match, a near-miss and a refusal, with what the screen said each tim
 **Claim.** The light palette meets its contrast floors, and amber is never a text colour in
 it.
 
-**Why the harness cannot say.** Nothing prevents it — this one is a gap in the harness
-rather than a limit of it. All twenty-four shots in `design/screens` are dark, the phone is
-pinned to `color.dark`, and the web's light theme applies only under an explicit
-`data-theme`. **The design track has been reviewing half the app.** #162 is open for it and
-it should be closed *before* device work rather than as part of it, because a light-mode
-defect found on a device is one that a second harness pass would have found for free.
+**Corrected (§6.132), and half of this entry was wrong.** Light mode is not a state the
+product can display. Nothing sets `data-theme` — not a control, not a preference, not
+`prefers-color-scheme`, and `app/index.html` declares `<meta name="color-scheme"
+content="dark">`; the phone resolves `color.dark` at module load and `app.json` pins
+`userInterfaceStyle: "dark"`. `color.light` is read by twelve test files and nothing else.
+So the amber that fails 3:1 on paper survived *harmlessly*, and the claim that "the design
+track has been reviewing half the app" was false.
 
-**An answer.** A light pass in `design/capture.mjs` and twenty-four more photographs. Then
-this entry moves out of this document, because it was never a device question.
+**Done for the web.** `design/capture-web.mjs` photographs ten routes under
+`data-theme="light"` alongside the shipping theme, so the light table that twelve guards
+assert about is visible for the first time. It holds up, and `light-06-stats` is the picture
+`progress.test.ts` never had.
+
+**Still open, and it is a device question after all.** The phone cannot render light without
+`theme` becoming a runtime value, which makes every `StyleSheet.create` in the app a
+function of it — a large change to ship a state no user can reach, on a platform whose
+dark-only stance is a written decision. If the phone ever gains a light mode, this entry
+becomes real again and the thirteen amber spinners `progress.ts` warns about inherit the
+problem the web's two already had.
 
 ---
 

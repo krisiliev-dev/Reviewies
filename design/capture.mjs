@@ -35,55 +35,7 @@ mkdirSync(OUT, { recursive: true });
  * Two seasons of the two multi-season fixtures and a run of the long one: enough rows that
  * a list is judged as a list, and enough left unwatched that Up Next has something in it.
  */
-/**
- * When this library was watched, relative to today rather than fixed in 2024.
- *
- * The dates used to be a hard-coded `2024-03-nn`, written when that was recent. Absolute
- * dates in a fixture rot: every day the clock moves, the seeded history sits further in
- * the past, and by the time this was looked at the whole library was two calendar years
- * behind. Stats opens on *this year*, so the screen a design review had been judging read
- * "Watched 0m · Episodes 0 · Titles 0" over a hundred and fourteen episodes — which is
- * §6.104's shape again: an instrument answering a question it was not in a position to
- * answer.
- *
- * What it should represent is a real migrant. TV Time shut down on 15 July 2026, so
- * somebody importing has history that ends a few weeks before today and runs back over
- * years. `TAIL_DAYS` is that gap; the per-show offsets spread the three shows across
- * about eighteen months, so more than one year chip exists and Year in Review has
- * something to review. Episodes inside a season are consecutive days, which is what
- * gives the screen a streak to name.
- */
-const TAIL_DAYS = 44;
-const dayString = (daysAgo) => {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
-const CSV = (() => {
-  const rows = ['show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id'];
-  // Season lengths as `core/src/metadata/fixtures.ts` declares them, so nothing is
-  // imported that the provider will then say does not exist.
-  const shows = [
-    { name: 'The Long Dark', seasons: [8, 10] },
-    { name: 'Kitchen Nightshift', seasons: [12] },
-    { name: 'Hollow Crown Saga', seasons: [96] },
-  ];
-  shows.forEach((show, i) => {
-    show.seasons.forEach((episodes, s) => {
-      // Not the whole season: leaving the tail unwatched is what gives Up Next a row and
-      // the title page something to cross off.
-      const watched = Math.max(1, episodes - 3);
-      for (let n = 1; n <= watched; n++) {
-        const d = dayString(TAIL_DAYS + i * 200 + s * 60 + (watched - n));
-        rows.push(
-          `${show.name},${s + 1},${n},Episode ${n},True,${d} 20:00:00,1,${d},${100 + i},${1000 + i * 200 + s * 100 + n}`,
-        );
-      }
-    });
-  });
-  return rows.join('\n');
-})();
+import { CSV } from './library.mjs';
 
 const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });

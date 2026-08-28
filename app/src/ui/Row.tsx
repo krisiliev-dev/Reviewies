@@ -27,8 +27,21 @@ import { Note } from './Note';
 const BLOCK =
   'flex flex-col gap-1.5 rounded-none border-b border-b-stroke-hairline bg-transparent py-2 -mx-s16 px-s16';
 const ROW_CLASS = 'flex items-center gap-3';
+/*
+ * `text-left`, because one of the two branches below is a `<button>`.
+ *
+ * A `<button>`'s UA default is `text-align: center` and an `<a>`'s is `start`, and every
+ * `Row` call site until §6.131 passed `open.to` — so the `run` branch had been in this
+ * component since it was written and had never rendered. The first call site to use it
+ * put "People" and its sub-line in the middle of the screen, and the first photograph the
+ * web app has ever had is what showed it (§6.132).
+ *
+ * Measured rather than reasoned: walking up from the text, `textAlign: center` starts at
+ * the `<button>` and is `start` on its parent. The first guess — an `<li>` outside a list —
+ * was wrong, and putting the list back did not move the words.
+ */
 const TARGET =
-  'flex min-w-0 flex-1 items-center gap-3 rounded-none active:bg-ground-well';
+  'flex min-w-0 flex-1 items-center gap-3 rounded-none text-left active:bg-ground-well';
 const TAG =
   'shrink-0 rounded-plate border border-stroke-hairline px-1.5 py-0.5 text-s12 font-title font-semibold tracking-t83 text-ink-secondary';
 
