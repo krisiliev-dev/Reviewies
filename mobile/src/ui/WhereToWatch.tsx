@@ -3,10 +3,11 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { border, radius, tap, theme, tracking } from './theme';
+import { border, leadingOf, radius, tap, theme, tracking } from './theme';
 import { COPY } from '@reviewies/core/copy';
-import { text, type, track } from '@reviewies/core/tokens';
+import { text, type, track, leading } from '@reviewies/core/tokens';
 import { Section } from './Section';
+import { Note } from './Note';
 
 /**
  * Where a title can be watched right now.
@@ -101,9 +102,9 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </View>
       )}
 
-      {providers === undefined && <Text style={styles.muted}>Checking…</Text>}
+      {providers === undefined && <Note>Checking…</Note>}
 
-      {unmatched && <Text style={styles.muted}>{COPY.whereToWatch.unmatched}</Text>}
+      {unmatched && <Note>{COPY.whereToWatch.unmatched}</Note>}
 
       {failed && (
         <Text style={styles.failed} accessibilityLiveRegion="polite">
@@ -112,10 +113,10 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
       )}
 
       {!failed && !unmatched && nothing && (
-        <Text style={styles.muted}>
+        <Note>
           Not on any service in {regionName(region)} that we can see. Try another country
           above.
-        </Text>
+        </Note>
       )}
 
       {providers && !nothing && (
@@ -176,8 +177,7 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: theme.actionFill },
   chipText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
   chipTextOn: { color: theme.actionLabel },
-  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, marginTop: 6, fontFamily: type.family.body.name },
-  muted: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
+  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), marginTop: 6, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
   rowLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   service: {

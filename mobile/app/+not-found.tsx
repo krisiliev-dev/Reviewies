@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Stack, usePathname } from 'expo-router';
-import { theme } from '../src/ui/theme';
+import { leadingOf, theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
-import { text, type } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from '../src/ui/Note';
 
 /**
  * The screen for an address that is not a screen.
@@ -23,10 +24,10 @@ export default function NotFoundScreen() {
     <View style={styles.screen}>
       <Stack.Screen options={{ title: 'Not found' }} />
       <Text style={styles.title}>Nothing at this address</Text>
-      <Text style={styles.body}>
+      <Note>
         <Text style={styles.path}>{pathname}</Text> is not a screen in this app. It may be
         an old link, or a typo.
-      </Text>
+      </Note>
       {/* §6.34's scar — an array style through `expo-router`'s Link reaches the DOM as an
           index-keyed object and throws on first render, a blank page — is why these were
           written as one flat object each. `Button` takes the destination itself, so there
@@ -46,6 +47,5 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground, padding: 20, gap: 12 },
   title: { color: theme.ink, fontSize: text.s20, marginTop: 8, fontFamily: type.family.title.name },
-  body: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 22, fontFamily: type.family.body.name },
   path: { color: theme.ink },
 });

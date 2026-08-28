@@ -28,6 +28,7 @@ import { ROW } from '@reviewies/core/ui/row';
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
 import { COPY } from '@reviewies/core/copy';
 import { useLive } from '../../src/useLive';
+import { Note } from '../../src/ui/Note';
 
 export default function SearchScreen() {
   /*
@@ -116,7 +117,18 @@ export default function SearchScreen() {
           autoCorrect={false}
         />
 
-        {busy && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
+        {/*
+          The spinner *and* the sentence. A bare `ActivityIndicator` announces nothing to a
+          screen reader and does not say what is being waited on; the web had said
+          "Searching…" here since it was written. §6.104's rule — a state has to be legible
+          as words, not only as motion.
+        */}
+        {busy && (
+          <>
+            <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+            <Note accessibilityLiveRegion="polite">Searching…</Note>
+          </>
+        )}
         {error && (
           <View style={styles.failed}>
             <Text style={styles.error} accessibilityLiveRegion="polite">

@@ -11,8 +11,9 @@ import {
   type ContentWarningId,
   type WarningSummary,
 } from '@reviewies/core/social/contentWarnings';
-import { border, radius, theme } from './theme';
-import { text, type } from '@reviewies/core/tokens';
+import { border, leadingOf, radius, theme } from './theme';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from './Note';
 
 /**
  * Content warnings, voted on by whoever has seen it.
@@ -76,7 +77,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
       {open && (
         <View style={styles.panel}>
-          {summaries === undefined && <Text style={styles.blurb}>Loading…</Text>}
+          {summaries === undefined && <Note level="footnote">Loading…</Note>}
           {/* Not the same sentence — see the web's copy of this. A request that did not
               arrive is not an answer, and somebody avoiding a trigger would take
               "nobody has flagged anything" as one. */}
@@ -87,9 +88,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             </Text>
           )}
           {!failed && summaries?.length === 0 && (
-            <Text style={styles.blurb}>
+            <Note level="footnote">
               Nobody has flagged anything yet. If you have seen it, you can below.
-            </Text>
+            </Note>
           )}
 
           {summaries?.map((summary) => (
@@ -157,10 +158,10 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           {note && <Text style={styles.error}>{note}</Text>}
 
-          <Text style={styles.blurb}>
+          <Note level="footnote">
             Community-reported, so treat it as a heads-up rather than a guarantee.
             Nothing here hides anything.
-          </Text>
+          </Note>
         </View>
       )}
     </View>
@@ -168,7 +169,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 }
 
 const styles = StyleSheet.create({
-  warningFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  warningFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   wrap: { gap: 8 },
   toggle: {
     alignSelf: 'flex-start',
@@ -196,6 +197,5 @@ const styles = StyleSheet.create({
   voteText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
   voteTextOn: { color: theme.actionLabel },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 16, fontFamily: type.family.body.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
 });

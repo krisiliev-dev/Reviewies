@@ -22,6 +22,7 @@ import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../ui/Choice';
 import { Row as BaseRow } from '../ui/Row';
 import { Section } from '../ui/Section';
+import { Note } from '../ui/Note';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -96,17 +97,17 @@ export function Calendar() {
             This browser cannot show notifications. The calendar below still works.
           </p>
         )}
-        {pushNote && <p className="mt-2 text-s12 text-ink-secondary">{pushNote}</p>}
+        {pushNote && <Note level="footnote" className="mt-2">{pushNote}</Note>}
         {syncNote && (
-          <p className="mt-2 text-s12 text-ink-secondary" role="status">
+          <Note level="footnote" className="mt-2" role="status">
             {syncNote}
-          </p>
+          </Note>
         )}
         {preference !== 'off' && !vapidPublicKey() && (
-          <p className="mt-2 text-s12 text-ink-secondary">
+          <Note level="footnote" className="mt-2">
             Push delivery is not configured on this build, so alerts will not arrive.
             The calendar below still works.
-          </p>
+          </Note>
         )}
         {preference !== 'off' && permission === 'denied' && (
           <p className="mt-2 text-s12 text-trouble">
@@ -116,14 +117,14 @@ export function Calendar() {
         {preference !== 'off' && permission === 'default' && (
           // On iOS the Push API only exists once installed to the Home Screen —
           // a Safari tab can never grant this.
-          <p className="mt-2 text-s12 text-ink-secondary">
+          <Note level="footnote" className="mt-2">
             On iPhone, add Reviewies to your Home Screen first — Safari tabs cannot receive
             notifications.
-          </p>
+          </Note>
         )}
       </section>
 
-      {entries === undefined && <p className="px-1 text-ink-secondary">Loading…</p>}
+      {entries === undefined && <Note className="px-1">Loading…</Note>}
       {entries?.length === 0 && (
         <div className="flex flex-col items-start gap-3 px-1">
           {/* Doc 10 §8: this said nothing was on and stopped, with Discover a tap away.
@@ -135,9 +136,9 @@ export function Calendar() {
               no air dates until matching gives it a provider ID, so somebody who has just
               brought in eleven shows was being told to track one. */}
           {/* It had no size and inherited 16; the phone's `blurb` is 14. */}
-          <p className="text-s14 text-ink-secondary">
+          <Note>
             {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
-          </p>
+          </Note>
           <Link
             to="/discover"
             className="rounded-pill border border-stroke-signal px-4 py-2 text-s14"

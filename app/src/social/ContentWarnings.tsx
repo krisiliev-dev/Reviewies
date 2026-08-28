@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 import {
   CONTENT_WARNINGS,
   clearContentWarningVote,
@@ -69,7 +70,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
       {open && (
         <div className="mt-2 rounded-plate bg-ground-raised p-3">
-          {summaries === undefined && <p className="text-s12 text-ink-secondary">Loading…</p>}
+          {summaries === undefined && <Note level="footnote">Loading…</Note>}
 
           {/* Not the same sentence. A request that did not arrive is not an answer, and
               this is the one screen where being told the wrong one matters — somebody
@@ -82,9 +83,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
           )}
 
           {!failed && summaries?.length === 0 && (
-            <p className="text-s12 text-ink-secondary">
+            <Note level="footnote">
               Nobody has flagged anything yet. If you have seen it, you can below.
-            </p>
+            </Note>
           )}
 
           {summaries && summaries.length > 0 && (
@@ -109,11 +110,11 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                   <span className={`text-s14 ${s.verdict === 'no' ? 'text-ink-secondary' : ''}`}>
                     {s.label}
                   </span>
-                  <span className="ml-auto shrink-0 text-s12 text-ink-secondary">
+                  <Note level="footnote" as="span" className="ml-auto shrink-0">
                     {s.verdict === 'contested' && 'disputed · '}
                     {s.singleVote && 'one person · '}
                     {describeVotes(s)}
-                  </span>
+                  </Note>
                 </li>
               ))}
             </ul>
@@ -165,10 +166,10 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           {note && <p className="mt-2 text-s12 text-trouble">{note}</p>}
 
-          <p className="mt-3 text-s12 text-ink-secondary">
+          <Note level="footnote" className="mt-3">
             Community-reported, so treat it as a heads-up rather than a guarantee.
             Nothing here hides anything.
-          </p>
+          </Note>
         </div>
       )}
     </section>

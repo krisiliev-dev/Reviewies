@@ -143,6 +143,9 @@
   --tracking-t0: 0em;
   --tracking-t20: 0.02em;
   --tracking-t83: 0.083em;
+  --leading-l100: 1;
+  --leading-l120: 1.2;
+  --leading-l143: 1.43;
 
   --radius-none: 0px;
   --radius-plate: 2px;

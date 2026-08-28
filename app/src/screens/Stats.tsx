@@ -13,6 +13,7 @@ import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 /**
  * Stats and Year in Review.
@@ -98,10 +99,10 @@ export function Stats() {
       )}
 
       {summary === undefined ? (
-        <p className="text-s14 text-ink-secondary">Loading…</p>
+        <Note>Loading…</Note>
       ) : summary.episodes === 0 ? (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-s14 text-ink-secondary">{COPY.stats.empty}</p>
+          <Note>{COPY.stats.empty}</Note>
           {/* There is history, just not in this window. Saying "nothing" to somebody
               with ten years in the app reads as a lost library rather than an empty
               period, and the years above are not an obvious answer to it. §6.54. */}
@@ -139,14 +140,14 @@ function Summary({
     <div className="flex flex-col gap-5">
       {isYearReview && (
         <div className="rounded-plate bg-ground-raised p-4">
-          <p className="text-s14 text-ink-secondary">Your {year}</p>
+          <Note>Your {year}</Note>
           <p className="mt-1">
             <Data value={formatDuration(summary.minutes)} size="s30" />
           </p>
-          <p className="mt-1 text-s14 text-ink-secondary">
+          <Note className="mt-1">
             across {summary.episodes} episodes and {summary.distinctTitles}{' '}
             {summary.distinctTitles === 1 ? 'title' : 'titles'}
-          </p>
+          </Note>
         </div>
       )}
 
@@ -161,9 +162,9 @@ function Summary({
       </dl>
 
       {summary.busiestDay && (
-        <p className="px-1 text-s14 text-ink-secondary">
+        <Note className="px-1">
           {COPY.stats.busiestDay(formatDay(summary.busiestDay.date), summary.busiestDay.episodes)}
-        </p>
+        </Note>
       )}
 
       <section>
@@ -177,7 +178,7 @@ function Summary({
             <li key={t.titleId} className="rounded-plate bg-ground-raised p-3">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="truncate text-s14">{t.name}</span>
-                <span className="shrink-0 text-s14 text-ink-secondary">{formatDuration(t.minutes)}</span>
+                <Note as="span" className="shrink-0">{formatDuration(t.minutes)}</Note>
               </div>
               {/* Bar length is time, not episode count — the whole point of
                   runtime weighting. */}
@@ -187,9 +188,9 @@ function Summary({
                   style={{ width: `${Math.max(4, (t.minutes / maxMinutes) * 100)}%` }}
                 />
               </div>
-              <p className="mt-1 text-s12 text-ink-secondary">
+              <Note level="footnote" className="mt-1">
                 {t.episodes} {t.episodes === 1 ? 'episode' : 'episodes'}
-              </p>
+              </Note>
             </li>
           ))}
         </ul>
@@ -201,7 +202,7 @@ function Summary({
 function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-plate bg-ground-raised px-3 py-3">
-      <dt className="text-s12 text-ink-secondary">{label}</dt>
+      <Note level="footnote" as="dt">{label}</Note>
       <dd>
         <Data value={value} size="s20" />
       </dd>

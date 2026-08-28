@@ -21,7 +21,7 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  color, label, space, size, radius, text, weight, track, type,
+  color, label, space, size, radius, text, weight, track, leading, type,
   border, duration, reduced, stagger, reducedStagger, linger, easing, z,
 } from '../core/src/tokens.ts';
 
@@ -84,6 +84,7 @@ w('');
 for (const [name, px] of Object.entries(text)) w(`  --text-${name}: ${px}px;`);
 for (const [name, value] of Object.entries(weight)) w(`  --font-weight-${name}: ${value};`);
 for (const [name, em] of Object.entries(track)) w(`  --tracking-${name}: ${em}em;`);
+for (const [name, ratio] of Object.entries(leading)) w(`  --leading-${name}: ${ratio};`);
 w('');
 for (const [name, px] of Object.entries(radius)) w(`  --radius-${name}: ${px}px;`);
 w('');

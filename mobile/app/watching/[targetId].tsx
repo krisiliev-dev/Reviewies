@@ -34,6 +34,7 @@ import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from '../../src/ui/Data';
+import { Note } from '../../src/ui/Note';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -185,9 +186,9 @@ export default function WatchingScreen() {
 
         {!clock.running && clock.positionMs === 0 ? (
           <View style={styles.startBlock}>
-            <Text style={styles.startBlurb}>
+            <Note>
               Tap the moment you press play. You can nudge the timing at any point.
-            </Text>
+            </Note>
             <Button
               onPress={() => clock.start()}
               tone="primary"
@@ -336,7 +337,6 @@ const styles = StyleSheet.create({
   clock: { color: theme.ink },
 
   startBlock: { padding: 16, gap: 12 },
-  startBlurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
   // Wraps. Five controls and a density picker fit a phone once and not at twice the
   // text size, where the row measured 690px in a 390px viewport and pushed all three

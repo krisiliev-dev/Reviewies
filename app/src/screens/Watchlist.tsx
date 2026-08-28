@@ -6,6 +6,7 @@ import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo
 import { Poster } from '../ui/Poster';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 
 /**
  * Uncapped, deliberately. Trakt limiting free watchlists and doubling its price is
@@ -22,13 +23,13 @@ export function Watchlist() {
     undefined,
   );
 
-  if (items === undefined) return <p className="p-6 text-ink-secondary">Loading…</p>;
+  if (items === undefined) return <Note className="p-6">Loading…</Note>;
 
   if (items.length === 0) {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-s30 font-display font-bold">Watchlist</h1>
-        <p className="text-ink-secondary">{COPY.watchlist.empty}</p>
+        <Note>{COPY.watchlist.empty}</Note>
         <Button
           to="/search"
           tone="primary"

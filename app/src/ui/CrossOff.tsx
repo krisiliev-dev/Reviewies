@@ -59,7 +59,7 @@ export function CrossOff({
             row's ink step carry it independently, which is what makes the pencil stroke
             safe to be decorative. The ring is a fixed 44 square either way. */}
         {watched ? (
-          <span aria-hidden="true" className="text-s20 leading-none font-title font-semibold">
+          <span aria-hidden="true" className="text-s20 leading-l100 font-title font-semibold">
             ✓
           </span>
         ) : null}

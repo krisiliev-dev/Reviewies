@@ -4,6 +4,7 @@ import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metad
 import type { CachedProviders } from '@reviewies/core/domain/types';
 import { COPY } from '@reviewies/core/copy';
 import { Section } from './Section';
+import { Note } from './Note';
 
 /**
  * Where a title can be watched right now.
@@ -97,10 +98,10 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </div>
       )}
 
-      {providers === undefined && <p className="mt-2 text-s14 text-ink-secondary">Checking…</p>}
+      {providers === undefined && <Note className="mt-2">Checking…</Note>}
 
       {unmatched && (
-        <p className="mt-2 text-s14 text-ink-secondary">{COPY.whereToWatch.unmatched}</p>
+        <Note className="mt-2">{COPY.whereToWatch.unmatched}</Note>
       )}
 
       {failed && (
@@ -110,10 +111,10 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
       )}
 
       {!failed && !unmatched && nothing && (
-        <p className="mt-2 text-s14 text-ink-secondary">
+        <Note className="mt-2">
           Not on any service in {regionName(region)} that we can see. Try another country
           above.
-        </p>
+        </Note>
       )}
 
       {providers && !nothing && (
@@ -134,7 +135,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           )}
 
           {/* Licence condition, not a courtesy. */}
-          <p className="mt-2 text-s12 text-ink-secondary">{JUSTWATCH_ATTRIBUTION}</p>
+          <Note level="footnote" className="mt-2">{JUSTWATCH_ATTRIBUTION}</Note>
         </>
       )}
     </section>
@@ -145,7 +146,7 @@ function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
     <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-      <span className="text-s12 text-ink-secondary">{label}</span>
+      <Note level="footnote" as="span">{label}</Note>
       {names.map((name) => (
         <span key={name} className="rounded-plate bg-ground-well px-3 py-1 text-s14">
           {name}

@@ -6,6 +6,7 @@ import type { MediaKind } from '@reviewies/core/domain/types';
 import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { text, type } from '@reviewies/core/tokens';
+import { Note } from '../ui/Note';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -60,9 +61,9 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
       {open && (
         <View style={styles.panel}>
-          {lists === undefined && <Text style={styles.muted}>Loading…</Text>}
+          {lists === undefined && <Note level="footnote">Loading…</Note>}
           {lists?.length === 0 && (
-            <Text style={styles.muted}>No lists yet — make one below.</Text>
+            <Note level="footnote">No lists yet — make one below.</Note>
           )}
 
           {lists?.map((list) => (
@@ -102,7 +103,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         </View>
       )}
 
-      {note && <Text style={styles.note}>{note}</Text>}
+      {note && <Note level="footnote">{note}</Note>}
     </View>
   );
 }
@@ -116,7 +117,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.groundWell,
     gap: 6,
   },
-  muted: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   listRow: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -136,5 +136,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontFamily: type.family.body.name,
   },
-  note: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 });

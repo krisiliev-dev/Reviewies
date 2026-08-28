@@ -21,11 +21,12 @@ import {
   type ListSummary,
 } from '@reviewies/core/social/lists';
 import { db } from '@reviewies/core/data/db';
-import { radius, theme } from '../src/ui/theme';
+import { leadingOf, radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
-import { text, type } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from '../src/ui/Note';
 
 /**
  * Lists, mixing film and television freely.
@@ -84,7 +85,7 @@ export default function ListsScreen() {
       <>
         <Stack.Screen options={{ title: 'Lists' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>{COPY.lists.needsAccount}</Text>
+          <Note>{COPY.lists.needsAccount}</Note>
         </View>
       </>
     );
@@ -97,7 +98,7 @@ export default function ListsScreen() {
       <>
         <Stack.Screen options={{ title: 'Lists' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>{COPY.lists.signInToMake('Account')}</Text>
+          <Note>{COPY.lists.signInToMake('Account')}</Note>
         </View>
       </>
     );
@@ -140,7 +141,7 @@ export default function ListsScreen() {
           </Text>
         )}
         {!failed && lists?.length === 0 && (
-          <Text style={styles.blurb}>{COPY.lists.empty}</Text>
+          <Note>{COPY.lists.empty}</Note>
         )}
 
         {lists?.map((list) => (
@@ -225,7 +226,7 @@ function ListCard({
             </Text>
           )}
           {!itemsFailed && items?.length === 0 && (
-            <Text style={styles.blurb}>{COPY.lists.listEmpty}</Text>
+            <Note>{COPY.lists.listEmpty}</Note>
           )}
           {/* Saying the mix out loud is the point — a list that is half films should
               say so rather than looking like a broken TV list. */}
@@ -301,10 +302,9 @@ function ListCard({
 }
 
 const styles = StyleSheet.create({
-  listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
+  listsFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
   newRow: { flexDirection: 'row', gap: 8 },
   input: {

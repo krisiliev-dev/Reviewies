@@ -44,6 +44,7 @@ export {
   size,
   ratio,
   track,
+  leading,
   border,
   elevation,
   duration,
@@ -80,4 +81,18 @@ export const tap = { minHeight: 24, justifyContent: 'center' } as const;
  */
 export function tracking(size: number, em: number): number {
   return size * em;
+}
+
+/**
+ * Line height, in points, from a ratio.
+ *
+ * The pair to `tracking()`, for the same reason: React Native's `lineHeight` is points, so a
+ * stored 20 holds while the glyphs double at 200% Dynamic Type and the lines run into each
+ * other. Rounded, because a fractional line height on a device is a fractional baseline.
+ *
+ * Always `leadingOf(text.sNN, leading.lNNN)` at the site — the pair is what makes it
+ * derivable, and a lone product is a literal again.
+ */
+export function leadingOf(size: number, ratio: number): number {
+  return Math.round(size * ratio);
 }

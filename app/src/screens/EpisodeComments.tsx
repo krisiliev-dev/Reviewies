@@ -17,6 +17,7 @@ import {
 } from '@reviewies/core/social/comments';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -95,23 +96,23 @@ export function EpisodeComments() {
 
       <h1 className="text-s20 font-title font-semibold">{series?.name ?? 'Comments'}</h1>
       {episode && (
-        <p className="text-s14 text-ink-secondary">
+        <Note>
           S{episode.season}E{episode.number} · {episode.name}
-        </p>
+        </Note>
       )}
 
       {!syncConfigured() ? (
-        <p className="mt-6 text-s14 text-ink-secondary">
+        <Note className="mt-6">
           Comments need an account. Sync is not configured on this build.
-        </p>
+        </Note>
       ) : !watched ? (
         // The gate is enforced by the database; this only explains it.
         <div className="mt-6 rounded-plate bg-ground-raised p-4">
           <p className="text-s14 font-title font-semibold">Hidden until you watch it</p>
-          <p className="mt-1 text-s14 text-ink-secondary">
+          <Note className="mt-1">
             Comments on this episode stay sealed until you have seen it. Nothing here can
             spoil you, because the server will not send them.
-          </p>
+          </Note>
         </div>
       ) : (
         <>
@@ -128,7 +129,7 @@ export function EpisodeComments() {
               value={effort}
               onChange={(next) => setEffort(Number(next))}
             />
-            {hidden > 0 && <span className="text-s12 text-ink-secondary">{hidden} hidden</span>}
+            {hidden > 0 && <Note level="footnote" as="span">{hidden} hidden</Note>}
           </div>
 
           <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
@@ -188,22 +189,22 @@ export function EpisodeComments() {
             {error && <p className="text-s14 text-trouble">{error}</p>}
           </form>
 
-          {loading && <p className="mt-4 text-s14 text-ink-secondary">Loading…</p>}
+          {loading && <Note className="mt-4">Loading…</Note>}
 
           {!loading && visible.length === 0 && (
-            <p className="mt-6 text-s14 text-ink-secondary">
+            <Note className="mt-6">
               {comments.length > 0
                 ? 'Everything is filtered out at this level.'
                 : gated
                   ? COPY.comments.sealed
                   : COPY.comments.empty}
-            </p>
+            </Note>
           )}
 
           <ul className="mt-4 flex flex-col gap-2">
             {visible.map((c) => (
               <li key={c.id} className="rounded-plate bg-ground-raised p-3">
-                <p className="flex items-center gap-2 text-s12 text-ink-secondary">
+                <Note level="footnote" className="flex items-center gap-2">
                   <span className="min-w-0 flex-1">
                     {c.handle ?? 'someone'} · {new Date(c.createdAt).toLocaleDateString()}
                     {c.mine && ' · you'}
@@ -228,7 +229,7 @@ export function EpisodeComments() {
                       Delete
                     </button>
                   )}
-                </p>
+                </Note>
                 <p className="mt-1 text-s14 whitespace-pre-wrap">{c.body}</p>
                 {c.imageUrl && (
                   <img

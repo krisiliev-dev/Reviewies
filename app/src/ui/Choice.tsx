@@ -1,4 +1,5 @@
 import { announce, type ChoiceContract } from '@reviewies/core/ui/choice';
+import { Note } from './Note';
 
 /**
  * The DOM renderer of `core/src/ui/choice.ts`. The decisions are there.
@@ -59,7 +60,7 @@ export function Choice<T extends string | number>({
             <span className={rows ? 'flex-1' : undefined}>
               <span className="block">{option.label}</span>
               {rows && option.hint ? (
-                <span className="block text-s12 text-ink-secondary">{option.hint}</span>
+                <Note level="footnote" as="span" className="block">{option.hint}</Note>
               ) : null}
             </span>
             {/* The state is already in `aria-checked`; a readable tick would announce it

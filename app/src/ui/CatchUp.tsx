@@ -3,6 +3,7 @@ import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 import { useDialog } from './useDialog';
 import { Section } from './Section';
 import { Data } from './Data';
+import { Note } from './Note';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -82,15 +83,15 @@ export function CatchUp({
               : `Marked ${marked} episode${marked === 1 ? '' : 's'} as watched.`}
           </p>
         ) : seasons === undefined ? (
-          <p className="text-s14 text-ink-secondary">Loading…</p>
+          <Note>Loading…</Note>
         ) : seasons.length === 0 ? (
-          <p className="text-s14 text-ink-secondary">No episodes have aired yet.</p>
+          <Note>No episodes have aired yet.</Note>
         ) : (
           <>
-            <p className="mb-3 text-s14 text-ink-secondary">
+            <Note className="mb-3">
               How far have you got? Nothing here shows episode names, so you cannot be
               spoiled by catching up.
-            </p>
+            </Note>
 
             {season === undefined ? (
               <Grid
@@ -113,11 +114,11 @@ export function CatchUp({
                     Pick a different season
                   </button>
                 )}
-                <p className="mt-3 text-s12 text-ink-secondary">
+                <Note level="footnote" className="mt-3">
                   {/* Said plainly: the app cannot know when these were really watched,
                       and inventing plausible past dates would be worse. */}
                   Everything up to and including that episode is logged as watched today.
-                </p>
+                </Note>
               </>
             )}
           </>

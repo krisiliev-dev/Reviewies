@@ -3,6 +3,7 @@ import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { useListenSync } from '../fingerprint/listen';
 import { text, type } from '@reviewies/core/tokens';
+import { Note } from '../ui/Note';
 
 /**
  * The two microphone controls.
@@ -94,9 +95,9 @@ export function ListenSync({
         )}
       </View>
 
-      {listen.note && <Text style={styles.note}>{listen.note}</Text>}
+      {listen.note && <Note level="footnote">{listen.note}</Note>}
 
-      <Text style={styles.blurb}>
+      <Note level="footnote">
         {mapping
           ? 'Recording the whole episode is best. Audio is turned into landmarks as it arrives and discarded — what gets sent cannot be turned back into sound.'
           : listening
@@ -104,7 +105,7 @@ export function ListenSync({
               // matters and the moment someone is most likely to want reassurance.
               'The microphone is on, including while this screen is in the background. Audio is analysed here and thrown away — nothing is recorded or sent.'
             : 'Listening keeps the clock right through pauses and skips. Mapping is how an episode becomes listenable for everyone else. Audio never leaves this device.'}
-      </Text>
+      </Note>
     </View>
   );
 }
@@ -125,6 +126,4 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   status: { color: theme.inkSecondary, fontSize: text.s12, flexShrink: 1, fontFamily: type.family.body.name },
-  note: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 15, fontFamily: type.family.body.name },
 });

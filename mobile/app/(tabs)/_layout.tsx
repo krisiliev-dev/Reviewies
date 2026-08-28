@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Text, View, type ColorValue } from 'react-native';
-import { border, size, space, theme } from '../../src/ui/theme';
-import { text, type } from '@reviewies/core/tokens';
+import { border, leadingOf, size, space, theme } from '../../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 
 /**
  * Five tabs, and no more.
@@ -15,6 +15,9 @@ import { text, type } from '@reviewies/core/tokens';
  * requirement in the whole research was that the app opens straight onto the episodes
  * you can mark.
  */
+/** The label's line box, which the bar's height is measured from. */
+const LABEL_LINE = leadingOf(text.s12, leading.l143);
+
 /**
  * The bar's own height, from the parts it holds rather than from a number.
  *
@@ -22,7 +25,7 @@ import { text, type } from '@reviewies/core/tokens';
  * top and bottom. React Navigation's default is sized for a 10pt label; `s12` needs more,
  * and a literal here would be the same unowned number one layer up.
  */
-const TAB_BAR_HEIGHT = space.s8 + size.tap + space.s4 + text.s16 + space.s8;
+const TAB_BAR_HEIGHT = space.s8 + size.tap + space.s4 + LABEL_LINE + space.s8;
 
 export default function TabLayout() {
   return (
@@ -47,7 +50,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: text.s12,
-          lineHeight: text.s16,
+          lineHeight: LABEL_LINE,
           fontFamily: type.family.title.name,
         },
         sceneStyle: { backgroundColor: theme.ground },
@@ -95,7 +98,7 @@ function icon(glyph: string) {
           backgroundColor: focused ? theme.ink : 'transparent',
         }}
       />
-      <Text style={{ color, fontSize: text.s20, lineHeight: 22 }}>{glyph}</Text>
+      <Text style={{ color, fontSize: text.s20, lineHeight: leadingOf(text.s20, leading.l120) }}>{glyph}</Text>
     </View>
   );
 }

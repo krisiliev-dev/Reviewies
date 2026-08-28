@@ -16,6 +16,7 @@ import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../src/ui/Choice';
 import { Section } from '../src/ui/Section';
 import { Data } from '../src/ui/Data';
+import { Note } from '../src/ui/Note';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -121,7 +122,7 @@ export default function StatsScreen() {
          */}
         {summary && summary.episodes === 0 ? (
           <View style={styles.emptyBlock}>
-            <Text style={styles.note}>{COPY.stats.empty}</Text>
+            <Note>{COPY.stats.empty}</Note>
             {/* The web's copy of this, for the same reason: nine year-buttons above
                 an empty period is not an answer somebody reads as one. §6.54. */}
             {years.length > 0 && (window !== 'all' || year !== undefined) && (
@@ -153,12 +154,12 @@ export default function StatsScreen() {
             </View>
 
             {summary.busiestDay && (
-              <Text style={styles.note}>
+              <Note>
                 {COPY.stats.busiestDay(
                   formatDay(summary.busiestDay.date),
                   summary.busiestDay.episodes,
                 )}
-              </Text>
+              </Note>
             )}
 
             {summary.topTitles.length > 0 && (
@@ -241,7 +242,6 @@ const styles = StyleSheet.create({
   },
   allTimeText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   // 13 against the web's 14. 13 is one of the two the scale killed.
-  note: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 
   section: { gap: 12, marginTop: 6 },
   // A card, like the web's. It was bare text on the page background with a hairline

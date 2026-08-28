@@ -14,6 +14,7 @@ import { text, type } from '@reviewies/core/tokens';
 import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
+import { Note } from '../../src/ui/Note';
 
 /**
  * Suggestions that exclude what you have already seen.
@@ -48,12 +49,12 @@ export default function DiscoverScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text accessibilityRole="header" style={styles.heading}>Discover</Text>
-        <Text style={styles.blurb}>{COPY.discover.blurb}</Text>
+        <Note>{COPY.discover.blurb}</Note>
 
         {items === undefined && !error && <ActivityIndicator color={theme.workingFill} />}
         {error && <Text style={styles.error}>{error}</Text>}
         {items?.length === 0 && (
-          <Text style={styles.blurb}>{COPY.discover.empty}</Text>
+          <Note>{COPY.discover.empty}</Note>
         )}
 
         {items?.map((item) => <Row key={item.id} item={item} onActed={() => setRound((n) => n + 1)} />)}
@@ -150,7 +151,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
   heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, marginBottom: 4, fontFamily: type.family.body.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   attribution: { color: theme.inkSecondary, fontSize: text.s12, marginTop: 12, fontFamily: type.family.body.name },
 });

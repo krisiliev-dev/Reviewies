@@ -5,8 +5,9 @@ import {
   announce,
   type ChoiceContract,
 } from '@reviewies/core/ui/choice';
-import { border, radius, theme } from './theme';
-import { type } from '@reviewies/core/tokens';
+import { border, leadingOf, radius, theme } from './theme';
+import { type, leading } from '@reviewies/core/tokens';
+import { Note } from './Note';
 
 /**
  * The React Native renderer of `core/src/ui/choice.ts`. The decisions are there.
@@ -91,7 +92,7 @@ export function Choice<T extends string | number>({
               >
                 {option.label}
               </Text>
-              {rows && option.hint ? <Text style={styles.hint}>{option.hint}</Text> : null}
+              {rows && option.hint ? <Note level="footnote">{option.hint}</Note> : null}
             </View>
             {/* A mono tick, on rows only, and aria-hidden: the state is already in
                 `accessibilityState`, and announcing it twice is how a reader ends up
@@ -116,6 +117,5 @@ const styles = StyleSheet.create({
   // From `CHOICE_SIZE` in the core, which is where the web reads them too — the two were
   // 14 here and an inherited 16 there.
   label: { fontSize: CHOICE_SIZE.chips.label, fontFamily: type.family.title.name },
-  hint: { color: theme.inkSecondary, fontSize: CHOICE_SIZE.chips.hint, lineHeight: 17, fontFamily: type.family.body.name },
   tick: { color: theme.workingMark, fontSize: CHOICE_SIZE.chips.label, fontFamily: type.family.title.name },
 });

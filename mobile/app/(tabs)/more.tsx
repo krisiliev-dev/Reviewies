@@ -9,11 +9,12 @@ import {
   TMDB_ATTRIBUTION,
 } from '@reviewies/core/metadata/provider';
 import { usingFixtures } from '@reviewies/core/metadata/index';
-import { radius, theme } from '../../src/ui/theme';
-import { text, type } from '@reviewies/core/tokens';
+import { leadingOf, radius, theme } from '../../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { Data } from '../../src/ui/Data';
+import { Note } from '../../src/ui/Note';
 
 /**
  * Everything not done daily.
@@ -49,10 +50,10 @@ export default function MoreScreen() {
         <Text accessibilityRole="header" style={styles.heading}>More</Text>
 
         <View style={styles.card}>
-          <Text style={styles.cardText}>
+          <Note>
             Everything lives on this device. Nothing here needs an account, and nothing
             is withheld — this is the whole point of the app.
-          </Text>
+          </Note>
           {counts && (
             <View style={styles.stats}>
               <Stat label="Watches" value={counts.watches} />
@@ -61,11 +62,11 @@ export default function MoreScreen() {
             </View>
           )}
           {stats && stats.minutes > 0 && (
-            <Text style={styles.cardText}>
+            <Note>
               {/* formatDuration rather than minutes/60: 90 minutes rendered as
                   "1 hours watched", which is wrong twice over. */}
               {formatDuration(stats.minutes)} watched, counted by actual runtime.
-            </Text>
+            </Note>
           )}
         </View>
 
@@ -90,13 +91,13 @@ export default function MoreScreen() {
 
         <View style={styles.footer}>
           {usingFixtures() ? (
-            <Text style={styles.footerText}>
+            <Note level="footnote">
               Running on sample data. Set a TMDB token to use real metadata.
-            </Text>
+            </Note>
           ) : (
             <>
-              <Text style={styles.footerText}>{TMDB_ATTRIBUTION}</Text>
-              <Text style={styles.footerText}>{JUSTWATCH_ATTRIBUTION}</Text>
+              <Note level="footnote">{TMDB_ATTRIBUTION}</Note>
+              <Note level="footnote">{JUSTWATCH_ATTRIBUTION}</Note>
             </>
           )}
         </View>
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
   heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
 
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
-  cardText: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   stats: { flexDirection: 'row', gap: 12 },
   stat: { flex: 1, backgroundColor: theme.groundWell, borderRadius: radius.plate, padding: 12 },
   statLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
@@ -129,5 +129,4 @@ const styles = StyleSheet.create({
   chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
 
   footer: { marginTop: 16, gap: 4 },
-  footerText: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 15, fontFamily: type.family.body.name },
 });

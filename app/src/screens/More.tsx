@@ -4,6 +4,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 /**
  * The other half of the navigation.
@@ -42,10 +43,10 @@ export function More() {
       <h1 className="text-s30 font-display font-bold">More</h1>
 
       <section className="rounded-plate bg-ground-raised p-4">
-        <p className="text-s14 text-ink-secondary">
+        <Note>
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
-        </p>
+        </Note>
         {counts && (
           <dl className="mt-3 grid grid-cols-3 gap-2 text-s14">
             <Stat label="Watches" value={counts.watches} />
@@ -54,9 +55,9 @@ export function More() {
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-s14 text-ink-secondary">
+          <Note className="mt-3">
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
-          </p>
+          </Note>
         )}
       </section>
 
@@ -74,9 +75,9 @@ export function More() {
               meta={link.detail}
               open={{ name: `${link.label} — ${link.detail}`, to: link.to }}
               trailing={
-                <span aria-hidden="true" className="shrink-0 pl-2 text-ink-secondary">
+                <Note as="span" className="shrink-0 pl-2" aria-hidden="true">
                   ›
-                </span>
+                </Note>
               }
             />
           ))}
@@ -89,7 +90,7 @@ export function More() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
-      <dt className="text-s12 text-ink-secondary">{label}</dt>
+      <Note level="footnote" as="dt">{label}</Note>
       <dd><Data value={value} size="s20" /></dd>
     </div>
   );

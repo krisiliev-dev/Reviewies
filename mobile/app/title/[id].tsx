@@ -27,8 +27,8 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
-import { border, radius, tap, theme, tracking } from '../../src/ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { border, leadingOf, radius, tap, theme, tracking } from '../../src/ui/theme';
+import { text, type, track, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
@@ -36,6 +36,7 @@ import { Row as BaseRow } from '../../src/ui/Row';
 import { Button } from '../../src/ui/Button';
 import { Section } from '../../src/ui/Section';
 import { Data } from '../../src/ui/Data';
+import { Note } from '../../src/ui/Note';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -202,7 +203,10 @@ export default function TitleScreen() {
         <ContentWarnings titleId={titleId} />
 
         {loading && seasons.length === 0 && (
-          <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+          <>
+            <ActivityIndicator color={theme.workingFill} style={styles.loading} />
+            <Note accessibilityLiveRegion="polite">Loading episodes…</Note>
+          </>
         )}
 
         {seasons.map(([season, list]) => (
@@ -356,7 +360,7 @@ const styles = StyleSheet.create({
   retryText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   title: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
   year: { color: theme.inkSecondary },
-  overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: 20, fontFamily: type.family.prose.name },
+  overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: leadingOf(text.s16, leading.l143), fontFamily: type.family.prose.name },
   ratingBlock: { gap: 6 },
   loading: { marginTop: 24 },
 

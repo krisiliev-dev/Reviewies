@@ -13,9 +13,10 @@ import {
 } from '@reviewies/core/sync/auth';
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
-import { radius, theme } from '../src/ui/theme';
+import { leadingOf, radius, theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
-import { text, type } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from '../src/ui/Note';
 
 /**
  * Signing in, framed as optional throughout.
@@ -70,10 +71,10 @@ export default function AccountScreen() {
       <>
         <Stack.Screen options={{ title: 'Account' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>
+          <Note>
             Sync is not configured on this build. Everything else works — your history
             lives on this device either way.
-          </Text>
+          </Note>
         </View>
       </>
     );
@@ -86,18 +87,18 @@ export default function AccountScreen() {
         {session ? (
           <View style={styles.card}>
             <Text style={styles.cardHeading}>Signed in</Text>
-            <Text style={styles.blurb}>{session.user.email}</Text>
+            <Note>{session.user.email}</Note>
             {/* The screen said an account adds sync while nothing on this platform ever
                 pushed a row. Now it does, and it says what it is doing rather than
                 leaving somebody to guess whether their history has gone anywhere. */}
-            <Text style={styles.blurb}>
+            <Note>
               {status.busy
                 ? 'Syncing…'
                 : status.pending > 0
                   ? `${status.pending} change${status.pending === 1 ? '' : 's'} waiting to upload.`
                   : 'Everything is uploaded.'}
               {status.lastError ? ` Last attempt failed: ${status.lastError}` : ''}
-            </Text>
+            </Note>
 
             {/* Writes the server refused, which this device is still holding. Separate
                 from the waiting count because they mean opposite things: pending is "on
@@ -113,7 +114,7 @@ export default function AccountScreen() {
                   label={COPY.sync.retryRejected}
                   name={COPY.sync.retryRejected}
                 />
-                {retryNote ? <Text style={styles.blurb}>{retryNote}</Text> : null}
+                {retryNote ? <Note>{retryNote}</Note> : null}
               </View>
             )}
             <Button onPress={() => void signOut()} tone="secondary" label="Sign out" name="Sign out" />
@@ -121,10 +122,10 @@ export default function AccountScreen() {
         ) : (
           <View style={styles.card}>
             <Text style={styles.cardHeading}>Sync across devices</Text>
-            <Text style={styles.blurb}>
+            <Note>
               Optional. Everything already works on this device — an account adds sync,
               episode comments and shared reactions.
-            </Text>
+            </Note>
 
             <TextInput
               value={email}
@@ -170,7 +171,7 @@ export default function AccountScreen() {
             </Pressable>
 
             {error && <Text style={styles.error}>{error}</Text>}
-            {notice && <Text style={styles.blurb}>{notice}</Text>}
+            {notice && <Note>{notice}</Note>}
           </View>
         )}
       </ScrollView>
@@ -183,9 +184,8 @@ const styles = StyleSheet.create({
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 12 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   rejected: { marginTop: 12, gap: 8 },
-  rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
+  rejectedText: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   input: {
     backgroundColor: theme.groundWell,
     borderRadius: radius.none,

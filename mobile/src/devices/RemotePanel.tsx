@@ -4,10 +4,11 @@ import type { Command } from '@reviewies/core/devices/types';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
-import { radius, tap, theme, tracking } from '../ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { leadingOf, radius, tap, theme, tracking } from '../ui/theme';
+import { text, type, track, leading } from '@reviewies/core/tokens';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 /**
  * The remote's controls, without deciding where they live.
@@ -63,9 +64,9 @@ export function RemotePanel({ remote }: { remote: Remote }) {
           )}
 
           {remote.devices.length === 0 && !remote.scanning && (
-            <Text style={styles.blurb}>
+            <Note>
               No device yet. Scan while the TV is on and on the same Wi-Fi.
-            </Text>
+            </Note>
           )}
 
           {remote.devices.map((found) => (
@@ -132,10 +133,10 @@ export function RemotePanel({ remote }: { remote: Remote }) {
             * All true, and all reasoning about the implementation, in a drawer somebody
             * opens mid-episode to press pause. The reasons live in doc 6 §2 and doc 9
             * §1.2 where they belong. Doc 10, second evening. */}
-        <Text style={styles.footnote}>
+        <Note level="footnote">
           Works with Roku over Wi-Fi, and with a laptop through the companion bridge.
           Chromecast and AirPlay are not supported.
-        </Text>
+        </Note>
     </>
   );
 }
@@ -147,12 +148,11 @@ const styles = StyleSheet.create({
   scan: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   progressTrack: { height: 3, backgroundColor: theme.groundWell, borderRadius: radius.pill },
   progressFill: { height: 3, backgroundColor: theme.workingFill, borderRadius: radius.pill },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
   device: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12 },
   deviceOn: { borderWidth: 1, borderColor: theme.strokeSignal },
   deviceName: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.title.name },
   deviceAddress: { color: theme.inkSecondary },
-  error: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  error: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   nowPlaying: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
 
   transport: { flexDirection: 'row', gap: 8 },
@@ -160,5 +160,4 @@ const styles = StyleSheet.create({
   dpadRow: { flexDirection: 'row', gap: 8 },
   dpadGap: { minWidth: 72 },
 
-  footnote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 16, marginTop: 8, fontFamily: type.family.body.name },
 });

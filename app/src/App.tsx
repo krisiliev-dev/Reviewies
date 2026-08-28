@@ -209,7 +209,7 @@ function TabBar() {
                 // which made them the one piece of text in the app that ignored the
                 // reader's setting entirely — while the icons beside them, sized in em,
                 // doubled. Exactly inverted.
-                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-tight break-words ${
+                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-l120 break-words ${
                   isActive ? 'text-ink' : 'text-ink-secondary'
                 }`
               }

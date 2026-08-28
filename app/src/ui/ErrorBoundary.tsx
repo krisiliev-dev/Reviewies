@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { Note } from './Note';
 
 /**
  * Keep one broken screen from taking the app with it.
@@ -50,10 +51,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
       return (
         <div className="flex flex-col gap-3 p-4">
           <h1 className="text-s24 font-title font-semibold">This screen stopped</h1>
-          <p className="text-ink-secondary">
+          <Note>
             Something on it went wrong. Everything you have tracked is still here — it
             lives on this device and nothing was lost.
-          </p>
+          </Note>
           <a
             href="/"
             className="self-start rounded-pill bg-action-fill px-5 py-3 font-title font-semibold text-action-label"

@@ -8085,6 +8085,68 @@ times. Naming the defect here needed care for the same reason — spelled out, t
 would be the seventh, and the guard cannot tell an example from a use.
 
 
+### 6.115 Six line heights for one role, and none at all on the other side
+
+Stage 3 continued: `Note`, the third component, and the fifth fact a type site has.
+
+Twenty-eight styles on the phone and about seventy class strings on the web were one role
+under eight names — `blurb`, `muted`, `note`, `hint`, `footnote`, `toggleHint`,
+`deliveryNote`, `startBlurb`. The census is what a role with no owner looks like:
+
+- **Six line-heights on the phone for the same thing** — 15, 16, 17, 19, 20, 22 and absent —
+  and nine distinct `(size, line-height)` pairs across four sizes, ratios running from 1.10
+  to 1.57. Nobody chose any of them.
+- **None at all on the web**, which inherited the body's.
+- **Eleven web sites with no size either**, drawing 16 where the phone drew 14. The same shape
+  as the six unsized `<h2>`s: not a decision, an omission that reads as one.
+
+So `leading` is a token now, and — like tracking before it — a **ratio rather than a number**,
+because React Native's `lineHeight` is points: a stored 20 stays 20 while the glyphs double at
+200% Dynamic Type and the lines collide. `l143` is extracted, not invented: 1.43 is the mode,
+held by fifteen sites writing `lineHeight: 20` at `s14`, and it reproduces 20 at 14 and 17 at
+12 — the commonest value at each size — so the layer arrives without moving anything that had
+actually been decided.
+
+`l100` earns its place separately. Five web sites wrote Tailwind's `leading-none` and every one
+is a single glyph — a tick, a play mark, a chevron. A glyph has no line box worth the name and
+giving it one pushes it off the centre of whatever it sits in. Naming it is what stops the next
+one being `leading-tight` instead, which is what three of the other four hand-written ones were.
+
+`Note` itself is two levels separated by **one** channel, which is the opposite of `Section`'s
+four and is deliberate: these are the same voice at two volumes rather than container and
+contents. A footnote that also stepped down in ink would be a third ink step in a palette whose
+tertiary already sits at the system's 4.51 floor.
+
+**What the sweep exposed, which is the reason to do it.**
+
+- **The synopsis was a muted note on the web and Newsreader prose on the phone.** The phone's
+  is the direction's answer — the Letterboxd half of this product — and the web now sets it
+  the same way. Found because converting a `<p>` into a named component made it visible to
+  `shape.test.ts`, which had been blind to it for as long as both were anonymous tags.
+- **Two loading states where the web said the words and the phone spun silently.** Search and
+  the episode list showed a bare `ActivityIndicator` on the phone: it announces nothing to a
+  screen reader and does not say *what* is being waited on. Both now do both, which is §6.104's
+  rule — a state has to be legible as words, not only as motion.
+- **An opacity standing in for a colour.** `text-ink-secondary/70` on the reaction stream's
+  resting label is exactly the defect `docs/design/tokens.md` §3 names: an opacity is invisible
+  to a contrast test forever and a named step is not. It is `ink.tertiary` now, which holds
+  5.09:1 on the ground it actually sits on — and it is deliberately *not* a `Note`, because
+  `Note` owns its ink and a call site overriding that would be two answers rather than one.
+- **`Choice`'s hint was a note the web already drew as one.** The phone had its own copy. A
+  component composing a component is the answer, and it makes the two sides agree by
+  construction rather than by inspection.
+
+**And the build catches the type checker was not running.** `tsc --noEmit -p app/tsconfig.json`
+came back clean on a file with an unused import in it; `npm run build` did not, because the
+build uses `tsc -b` and a different config with `noUnusedLocals`. Six sprints of typechecking
+have been running against the weaker of the two. The build is the check that counts.
+
+Seven plants, seven catches. The clause that mattered most was the one that was too broad
+first: "secondary ink with a line height is a note" flagged the synopsis, which is secondary
+ink with a reading measure and is *not* a note. The **face** is what separates them, and
+narrowing the clause to the body face is what made it true rather than merely passing.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

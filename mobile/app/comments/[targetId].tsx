@@ -23,11 +23,12 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
-import { border, radius, theme } from '../../src/ui/theme';
+import { border, leadingOf, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
 import { Choice } from '../../src/ui/Choice';
-import { text, type } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from '../../src/ui/Note';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -116,17 +117,17 @@ export default function CommentsScreen() {
         {episode && <Text style={styles.episode}>{episode.name}</Text>}
 
         {!syncConfigured() ? (
-          <Text style={styles.blurb}>
+          <Note>
             Comments need an account. Sync is not configured on this build.
-          </Text>
+          </Note>
         ) : !watched ? (
           // The database enforces this; the screen only explains it.
           <View style={styles.card}>
             <Text style={styles.cardHeading}>Hidden until you watch it</Text>
-            <Text style={styles.blurb}>
+            <Note>
               Comments on this episode stay sealed until you have seen it. Nothing here
               can spoil you, because the server will not send them.
-            </Text>
+            </Note>
           </View>
         ) : (
           <>
@@ -192,13 +193,13 @@ export default function CommentsScreen() {
             {loading && <ActivityIndicator color={theme.workingFill} />}
 
             {!loading && visible.length === 0 && (
-              <Text style={styles.blurb}>
+              <Note>
                 {comments.length > 0
                   ? 'Everything is filtered out at this level.'
                   : gated
                     ? COPY.comments.sealed
                     : COPY.comments.empty}
-              </Text>
+              </Note>
             )}
 
             {visible.map((comment) => (
@@ -258,7 +259,6 @@ const styles = StyleSheet.create({
   deleteCommentText: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   content: { padding: 16, gap: 12, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   episode: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 16, gap: 8 },
   cardHeading: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },
 
@@ -279,6 +279,6 @@ const styles = StyleSheet.create({
 
   comment: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 6 },
   handle: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  body: { color: theme.ink, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.prose.name },
+  body: { color: theme.ink, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.prose.name },
   image: { width: '100%', height: 180, borderRadius: radius.plate },
 });

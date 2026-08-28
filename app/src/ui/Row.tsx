@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ROW, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { crossedOffText } from './CrossOff';
+import { Note } from './Note';
 
 /**
  * The DOM renderer of `core/src/ui/row.ts`. The decisions are there.
@@ -84,7 +85,7 @@ export function Row({
       ) : null}
       {/* The row's own words, not a badge — see the contract for what happened when this
           was a `tag`. Same size and ink as the meta line, on a line of its own. */}
-      {count ? <span className="block truncate text-s12 text-ink-secondary">{count}</span> : null}
+      {count ? <Note level="footnote" as="span" className="block truncate">{count}</Note> : null}
       {note ? <span className="block truncate text-s12 font-prose font-regular italic text-ink-secondary">{note}</span> : null}
     </span>
   );

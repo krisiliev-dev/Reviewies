@@ -283,8 +283,18 @@ export function ReactionStream({
         opening the flagship screen saw a gap. This says what the space is for, quietly,
         and gets out of the way the moment anything arrives.
       */}
+      {/*
+        The stream's own resting label, and not a `Note`: it is set in the tertiary ink
+        because it sits over a moving band on the `well` ground, where tertiary holds
+        5.09:1. `Note` owns its ink at secondary, so a call site overriding that would be
+        two answers — this is a different role rather than a note with an exception.
+
+        It was `text-ink-secondary/70` before, which is the defect `docs/design/tokens.md`
+        §3 names: an opacity on a colour is invisible to a contrast test forever, and a
+        named step is not.
+      */}
       {flying.length === 0 && (
-        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-s12 text-ink-secondary/70">
+        <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-s12 text-ink-tertiary">
           {COPY.watching.streamResting}
         </p>
       )}

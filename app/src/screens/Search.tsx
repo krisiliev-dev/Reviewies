@@ -9,6 +9,7 @@ import { Poster } from '../ui/Poster';
 import { AddToList } from '../social/AddToList';
 import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
+import { Note } from '../ui/Note';
 
 export function Search() {
   /*
@@ -93,7 +94,7 @@ export function Search() {
         autoFocus
       />
 
-      {busy && <p className="mt-4 px-1 text-s14 text-ink-secondary">Searching…</p>}
+      {busy && <Note className="mt-4 px-1">Searching…</Note>}
       {error && (
         <div className="mt-4 flex flex-col items-start gap-2 px-1">
           <p className="text-s14 text-trouble" role="status">

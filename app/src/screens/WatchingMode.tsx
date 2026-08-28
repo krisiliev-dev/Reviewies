@@ -18,6 +18,7 @@ import { ListenSync } from '../watching/ListenSync';
 import { COPY } from '@reviewies/core/copy';
 import { Choice } from '../ui/Choice';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
@@ -203,9 +204,9 @@ export function WatchingMode() {
           {/* Two lines before it gives up, rather than one character. */}
           <p className="line-clamp-2 text-s14 font-title font-semibold">{series?.name ?? 'Watching'}</p>
           {episode && (
-            <p className="line-clamp-2 text-s12 text-ink-secondary">
+            <Note level="footnote" className="line-clamp-2">
               S{episode.season}E{episode.number} · {episode.name}
-            </p>
+            </Note>
           )}
         </div>
         <span className="min-w-12 text-right">
@@ -226,9 +227,9 @@ export function WatchingMode() {
       ) : (
         <>
           {autoSynced && (
-            <p className="px-4 pb-1 text-s12 text-ink-secondary">
+            <Note level="footnote" className="px-4 pb-1">
               Synced automatically from your browser.
-            </p>
+            </Note>
           )}
           {/* Drift correction is meaningless when the position is exact. */}
           {!autoSynced && drift !== undefined && (
@@ -275,7 +276,7 @@ export function WatchingMode() {
             aria-label={`React with ${e.label.toLowerCase()}`}
           >
             <span aria-hidden="true">{e.emoji}</span>
-            <span className="text-s12 leading-none text-ink-secondary">{e.label}</span>
+            <Note level="footnote" as="span">{e.label}</Note>
           </button>
         ))}
       </div>
@@ -307,9 +308,9 @@ function StartPanel({ onStart }: { onStart: () => void }) {
         onPress={onStart}
         className="w-full"
       />
-      <p className="mt-2 text-center text-s12 text-ink-secondary">
+      <Note level="footnote" className="mt-2 text-center">
         Tap the moment you press play. You can nudge the timing at any point.
-      </p>
+      </Note>
     </div>
   );
 }
@@ -370,7 +371,7 @@ function SyncBar({
           proportion is not a promise anybody can act on — a quarter of a quiet episode
           is nothing — and the two platforms meant different things by the same word
           until §6.55. */}
-      <div className="ml-auto flex items-center gap-1.5 text-s12 text-ink-secondary">
+      <Note level="footnote" as="div" className="ml-auto flex items-center gap-1.5">
         {COPY.watching.densityLabel}
         {/* `min-h-6` was 24px — WCAG 2.5.8's floor rather than the house standard of 44,
             on the flagship screen. The phone's version of this control was worse still at
@@ -385,7 +386,7 @@ function SyncBar({
             hint: COPY.watching.densityChoice(value),
           }))}
         />
-      </div>
+      </Note>
     </div>
   );
 }
@@ -415,9 +416,9 @@ function DriftHint({
 
   return (
     <div className="mx-3 mb-2 flex items-center gap-2 rounded-plate border border-stroke-signal px-3 py-2 text-s14">
-      <span className="flex-1 text-ink-secondary">
+      <Note as="span" className="flex-1">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
-      </span>
+      </Note>
       <Button
         size="inline"
         tone="primary"

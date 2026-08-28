@@ -8,6 +8,7 @@ import { border, radius, theme } from './theme';
 import { Button } from './Button';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from './Data';
+import { Note } from './Note';
 
 /**
  * Bring a history in from somewhere else.
@@ -184,18 +185,18 @@ export function ImportFiles({
 export function ImportFormats() {
   return (
     <>
-      <Text style={styles.blurb}>
+      <Note>
         A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl
         or Letterboxd — or a recovered DioCache.db straight off your phone. Files are
         recognised by what is in them, not what they are called.
-      </Text>
+      </Note>
       {/* The -wal is the difference between a complete history and one quietly missing
           its most recent months, so it has to be asked for by name. */}
-      <Text style={styles.blurb}>
+      <Note>
         If you have a DioCache.db, pick its DioCache.db-wal at the same time. TV Time
         wrote its most recent months there, and importing the database alone loses them
         without telling you.
-      </Text>
+      </Note>
     </>
   );
 }
@@ -203,7 +204,6 @@ export function ImportFormats() {
 const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: theme.actionFill },
   buttonPrimaryText: { color: theme.actionLabel },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   button: {
     borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
     borderRadius: radius.pill,

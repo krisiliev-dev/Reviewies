@@ -20,6 +20,7 @@ import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -53,16 +54,16 @@ export function Settings() {
       >
         <span>
           <span className="text-s16 font-title font-semibold">People</span>
-          <span className="block text-s14 text-ink-secondary">Your handle, following, blocking</span>
+          <Note as="span" className="block">Your handle, following, blocking</Note>
         </span>
-        <span aria-hidden className="text-ink-secondary">›</span>
+        <Note as="span" aria-hidden>›</Note>
       </Link>
 
       <section className="rounded-plate bg-ground-raised p-4">
-        <p className="text-s14 text-ink-secondary">
+        <Note>
           Everything lives on this device. Nothing here needs an account, and nothing is
           withheld — this is the whole point of the app.
-        </p>
+        </Note>
         {counts && (
           <dl className="mt-3 grid grid-cols-2 gap-2 text-s14">
             <Stat label="Watches" value={counts.watches} />
@@ -72,11 +73,11 @@ export function Settings() {
           </dl>
         )}
         {stats && stats.minutes > 0 && (
-          <p className="mt-3 text-s14 text-ink-secondary">
+          <Note className="mt-3">
             {/* formatDuration rather than minutes/60: 90 minutes was rendering as
                 "1 hours watched", which is wrong twice over. */}
             {formatDuration(stats.minutes)} watched, counted by actual runtime.
-          </p>
+          </Note>
         )}
       </section>
 
@@ -91,7 +92,7 @@ export function Settings() {
 
       <section className="flex flex-col gap-2">
         <Section className="px-1">Export</Section>
-        <p className="px-1 text-s14 text-ink-secondary">{COPY.settings.exportBlurb}</p>
+        <Note className="px-1">{COPY.settings.exportBlurb}</Note>
         <Button
           size="page"
           tone="primary"
@@ -111,10 +112,10 @@ export function Settings() {
           }}
         />
         {exportNote && (
-          <p className="px-1 text-s14 text-ink-secondary" role="status">
+          <Note className="px-1" role="status">
             Saved, but your lists, follows and comments could not be read: {exportNote}. The
             rest of the file is complete.
-          </p>
+          </Note>
         )}
         <button
           onClick={async () =>
@@ -146,7 +147,7 @@ export function Settings() {
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
-            <span className="block text-s14 text-ink-secondary">How TV Time worked. Needs an account.</span>
+            <Note as="span" className="block">How TV Time worked. Needs an account.</Note>
           </span>
           <input
             type="checkbox"
@@ -164,11 +165,11 @@ export function Settings() {
         <Section className="px-1">
           Metadata cache
         </Section>
-        <p className="px-1 text-s14 text-ink-secondary">
+        <Note className="px-1">
           Artwork and episode listings are cached from the metadata provider and expire
           automatically. Clearing them never touches your own history, and shows carried
           over from an import keep their names.
-        </p>
+        </Note>
         <button
           onClick={() => void clearMetadataCache().then((n) => setCleared(n))}
           className="rounded-pill border border-stroke-signal px-4 py-3"
@@ -176,13 +177,13 @@ export function Settings() {
           Clear cached metadata
         </button>
         {cleared !== undefined && (
-          <p className="px-1 text-s14 text-ink-secondary" role="status">
+          <Note className="px-1" role="status">
             {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
-          </p>
+          </Note>
         )}
       </section>
 
-      <footer className="px-1 pb-4 text-s12 leading-relaxed text-ink-secondary">
+      <Note level="footnote" as="footer" className="px-1 pb-4">
         {usingFixtures() ? (
           <p className="mb-2">
             Running on sample data. Set <code>VITE_TMDB_TOKEN</code> to use real metadata.
@@ -193,7 +194,7 @@ export function Settings() {
             <p>{JUSTWATCH_ATTRIBUTION}</p>
           </>
         )}
-      </footer>
+      </Note>
     </div>
   );
 }
@@ -201,7 +202,7 @@ export function Settings() {
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-plate bg-ground-well px-3 py-2">
-      <dt className="text-s12 text-ink-secondary">{label}</dt>
+      <Note level="footnote" as="dt">{label}</Note>
       <dd><Data value={value} size="s20" /></dd>
     </div>
   );

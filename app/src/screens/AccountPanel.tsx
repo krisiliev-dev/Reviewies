@@ -5,6 +5,7 @@ import { COPY } from '@reviewies/core/copy';
 import { retryRejectedWrites } from '@reviewies/core/sync/driver';
 import { Button } from '../ui/Button';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 /**
  * Account and sync controls.
@@ -26,11 +27,11 @@ export function AccountPanel() {
     return (
       <section className="rounded-plate bg-ground-raised p-4">
         <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
-        <p className="text-s14 text-ink-secondary">
+        <Note>
           Not configured. Reviewies works fully offline without it — set
           <code className="mx-1">VITE_SUPABASE_URL</code> and
           <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> to sync across devices.
-        </p>
+        </Note>
       </section>
     );
   }
@@ -55,10 +56,10 @@ export function AccountPanel() {
     return (
       <section className="rounded-plate bg-ground-raised p-4">
         <h2 className="mb-1 text-s16 font-title font-semibold">Sync across devices</h2>
-        <p className="mb-3 text-s14 text-ink-secondary">
+        <Note className="mb-3">
           Optional. Everything already works on this device — an account adds sync and
           shared reactions.
-        </p>
+        </Note>
 
         <form onSubmit={submit} className="flex flex-col gap-2">
           <input
@@ -95,7 +96,7 @@ export function AccountPanel() {
         </button>
 
         {error && <p className="mt-2 text-s14 text-trouble">{error}</p>}
-        {notice && <p className="mt-2 text-s14 text-ink-secondary">{notice}</p>}
+        {notice && <Note className="mt-2">{notice}</Note>}
       </section>
     );
   }
@@ -103,16 +104,16 @@ export function AccountPanel() {
   return (
     <section className="rounded-plate bg-ground-raised p-4">
       <h2 className="mb-1 text-s16 font-title font-semibold">Sync</h2>
-      <p className="text-s14 text-ink-secondary">Signed in as {session.user.email}</p>
+      <Note>Signed in as {session.user.email}</Note>
 
       <dl className="mt-3 flex gap-4 text-s14">
         <div>
-          <dt className="text-s12 text-ink-secondary">Waiting to upload</dt>
+          <Note level="footnote" as="dt">Waiting to upload</Note>
           <dd><Data value={pending} size="s20" /></dd>
         </div>
         {lastRunAt && (
           <div>
-            <dt className="text-s12 text-ink-secondary">Last sync</dt>
+            <Note level="footnote" as="dt">Last sync</Note>
             <dd className="text-s20">{new Date(lastRunAt).toLocaleTimeString()}</dd>
           </div>
         )}
@@ -138,7 +139,7 @@ export function AccountPanel() {
           >
             {COPY.sync.retryRejected}
           </button>
-          {retryNote && <p className="mt-2 text-s12 text-ink-secondary">{retryNote}</p>}
+          {retryNote && <Note level="footnote" className="mt-2">{retryNote}</Note>}
         </div>
       )}
 

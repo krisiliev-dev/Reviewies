@@ -29,6 +29,7 @@ import { Row } from '../src/ui/Row';
 import { Section } from '../src/ui/Section';
 import { ROW } from '@reviewies/core/ui/row';
 import { Choice } from '../src/ui/Choice';
+import { Note } from '../src/ui/Note';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -89,9 +90,9 @@ export default function CalendarScreen() {
         />
 
         {syncNote && (
-          <Text style={styles.deliveryNote} accessibilityLiveRegion="polite">
+          <Note level="footnote" accessibilityLiveRegion="polite">
             {syncNote}
-          </Text>
+          </Note>
         )}
 
         {/* Choosing a granularity used to be the whole of it: the phone offered the
@@ -118,16 +119,16 @@ export default function CalendarScreen() {
                     setDelivery(result.ok ? 'This device will be notified.' : result.reason);
                   }}
                 />
-                {delivery && <Text style={styles.deliveryNote}>{delivery}</Text>}
+                {delivery && <Note level="footnote">{delivery}</Note>}
               </>
             ) : (
               // Said plainly rather than left as a control that does nothing. The
               // reason differs — a simulator, the web build, a build with no project
               // id — and each sends someone looking in a different place.
-              <Text style={styles.deliveryNote}>
+              <Note level="footnote">
                 Nothing can be delivered to this device yet. {whyNotSupported()} Your
                 choice above is saved and will apply once it can.
-              </Text>
+              </Note>
             )}
           </View>
         )}
@@ -143,9 +144,9 @@ export default function CalendarScreen() {
             {/* Which sentence depends on *why* it is empty: an imported show has no air
                 dates until matching gives it a provider ID, so somebody who has just
                 brought in eleven shows was being told to track one. */}
-            <Text style={styles.blurb}>
+            <Note>
               {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
-            </Text>
+            </Note>
             {/* Doc 10 §8 said this of the web's copy: a screen whose job is "what is on"
                 should not answer "nothing" and stop, with Discover one tap away. The web
                 got the button; the phone, whose sentence the web borrowed, did not. */}
@@ -209,11 +210,9 @@ const styles = StyleSheet.create({
   delivery: { marginTop: 12, gap: 8 },
   // 13 against the web's 12, for the same six status lines under the same control.
   // 13 is one of the two the scale killed.
-  deliveryNote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   spaced: { marginTop: 20 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
 
 
   day: { gap: 6, marginTop: 8 },

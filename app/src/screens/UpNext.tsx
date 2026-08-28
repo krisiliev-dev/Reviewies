@@ -21,6 +21,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
 import { CrossOff } from '../ui/CrossOff';
 import { Row as BaseRow } from '../ui/Row';
+import { Note } from '../ui/Note';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -50,7 +51,7 @@ export function UpNext() {
   const importing = useImporting();
 
   if (entries === undefined) {
-    return <p className="p-6 text-ink-secondary">Loading…</p>;
+    return <Note className="p-6">Loading…</Note>;
   }
 
   /**
@@ -84,11 +85,11 @@ export function UpNext() {
             a set of shows with no artwork, no air dates and no episode lists beyond what
             was watched. Matching them is the next thing to do, and it is offered here
             rather than mentioned, because here is where somebody is standing. */}
-        <p className="text-ink-secondary">
+        <Note>
           They are in your library under the names your export carried. Matching them to
           the real shows fills in the artwork, the air dates and everything you have not
           watched yet.
-        </p>
+        </Note>
         {/* Not auto-started here: this panel has just explained what matching is for, and
             starting it underneath that explanation would talk over itself. The Up Next
             screen below runs it without asking. */}
@@ -115,13 +116,13 @@ export function UpNext() {
             is happening (doc 10 §4). §6.80 found the third: while the import is still
             running, both of those are claims about a library that is still being
             written, and the count in them keeps changing. */}
-        <p className="text-ink-secondary">
+        <Note>
           {importing
             ? COPY.upNext.stillImporting(importing)
             : unmatched
               ? COPY.upNext.matchingImport(unmatched)
               : COPY.upNext.allCaughtUp}
-        </p>
+        </Note>
         {/* Run where the gap is felt, not filed under a settings screen — but never
             over a library still being written. Matching what has landed so far leaves
             the rest of the import behind it, unmatched and unoffered. */}
@@ -155,15 +156,15 @@ export function UpNext() {
         <h1 className="text-s30 font-display font-bold">Up Next</h1>
         {/* A heading under the screen's own title — see the note on the arrival state. */}
         <h2 className="text-s20 font-title font-semibold">Bring your history with you</h2>
-        <p className="text-ink-secondary">
+        <Note>
           TV Time is gone. If you got your data out — or pulled it off your phone — this
           reads it and picks up where you left off.
-        </p>
+        </Note>
         <ImportFormats />
         <ImportFiles label="Import from TV Time" onImported={setImported} primary />
-        <p className="mt-2 px-1 text-s14 text-ink-secondary">
+        <Note className="mt-2 px-1">
           Nothing to import? Search for a show and start from there.
-        </p>
+        </Note>
         {/* The secondary of the two. It was the bright one and the import was the muted
             one, which is the opposite of what this screen is for — the migration is the
             offer and searching is the fallback. Nothing but looking at it would have

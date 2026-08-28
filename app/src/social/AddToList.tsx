@@ -3,6 +3,7 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -59,9 +60,9 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
       {open && (
         <div className="mt-2 rounded-plate border border-stroke-signal p-3">
-          {lists === undefined && <p className="text-s12 text-ink-secondary">Loading…</p>}
+          {lists === undefined && <Note level="footnote">Loading…</Note>}
           {lists?.length === 0 && (
-            <p className="mb-2 text-s12 text-ink-secondary">No lists yet — make one below.</p>
+            <Note level="footnote" className="mb-2">No lists yet — make one below.</Note>
           )}
 
           <ul className="flex flex-col gap-1">
@@ -97,7 +98,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         </div>
       )}
 
-      {note && <p className="mt-1 text-s12 text-ink-secondary">{note}</p>}
+      {note && <Note level="footnote" className="mt-1">{note}</Note>}
     </div>
   );
 }

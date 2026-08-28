@@ -16,12 +16,13 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
-import { radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { leadingOf, radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
 import { Row as BaseRow } from '../src/ui/Row';
 import { Section } from '../src/ui/Section';
+import { Note } from '../src/ui/Note';
 
 /**
  * Your handle, who you follow, and who you have blocked.
@@ -76,11 +77,11 @@ export default function PeopleScreen() {
       <>
         <Stack.Screen options={{ title: 'People' }} />
         <View style={styles.centre}>
-          <Text style={styles.blurb}>
+          <Note>
             {syncConfigured()
               ? COPY.people.signInToFollow('Account')
               : COPY.people.withoutAccount}
-          </Text>
+          </Note>
         </View>
       </>
     );
@@ -110,7 +111,7 @@ export default function PeopleScreen() {
           <Text style={styles.cardHeading}>You</Text>
           {handle === undefined ? (
             <>
-              <Text style={styles.blurb}>{me ? `@${me.handle}` : 'Loading…'}</Text>
+              <Note>{me ? `@${me.handle}` : 'Loading…'}</Note>
               <Pressable
                 onPress={() => setHandle(me?.handle ?? '')}
                 disabled={!me}
@@ -247,7 +248,7 @@ function FindPeople({
         </Text>
       )}
       {!searchFailed && searched && results.length === 0 && (
-        <Text style={styles.blurb}>Nobody by that name.</Text>
+        <Note>Nobody by that name.</Note>
       )}
 
       {results.map((person) => {
@@ -335,7 +336,7 @@ function PersonList({
         {heading}
         {people.length > 0 ? ` ${people.length}` : ''}
       </Section>
-      {people.length === 0 && empty ? <Text style={styles.blurb}>{empty}</Text> : null}
+      {people.length === 0 && empty ? <Note>{empty}</Note> : null}
       {failed && (
         <Text style={styles.failed} accessibilityLiveRegion="polite">
           {COPY.people.followFailed}
@@ -382,11 +383,10 @@ function PersonList({
  */
 
 const styles = StyleSheet.create({
-  searchFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
+  searchFailed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   content: { padding: 16, gap: 20, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   centre: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: theme.ground },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
-  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
+  failed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), fontFamily: type.family.body.name },
   link: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },

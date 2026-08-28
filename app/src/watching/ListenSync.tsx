@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Note } from '../ui/Note';
 import {
   captureContribution,
   micSupported,
@@ -127,14 +128,14 @@ export function ListenSync({
         </button>
       </div>
 
-      <p className="mt-1.5 text-s12 leading-snug text-ink-secondary">
+      <Note level="footnote" className="mt-1.5">
         {/* Specific about scope: what is recorded, for how long, and what leaves the
             device. Vague reassurance would be worse than none. */}
         Uses the microphone for a few seconds. Audio never leaves this device — only a
         one-way digest of it is sent, which cannot be turned back into sound.
-      </p>
+      </Note>
 
-      {note && <p className="mt-1 text-s12 text-ink-secondary">{note}</p>}
+      {note && <Note level="footnote" className="mt-1">{note}</Note>}
     </div>
   );
 }

@@ -283,6 +283,34 @@ export const weight = {
 } as const;
 
 /**
+ * Line height, as a ratio of the size.
+ *
+ * The fifth fact about a type site, and the last one nothing owned. A census of the phone
+ * found **nine different (size, line-height) pairs across four sizes** — ratios from 1.10 to
+ * 1.57 for what is mostly one role — while the web set no line-height at all and inherited
+ * whatever the body had. Nobody chose any of it.
+ *
+ * `l143` is extracted, not invented: 1.43 is the mode, held by fifteen sites at `s14` where
+ * `lineHeight: 20` is written out. It reproduces 20 at 14 and 17 at 12 exactly, which is the
+ * most common value at each size. `l120` is the tight setting for a heading or a single-line
+ * label, where a reading measure would look loose.
+ *
+ * A ratio rather than a number, for the same reason tracking is em rather than points: React
+ * Native's `lineHeight` is points, so a stored 20 stays 20 while the glyphs double at 200%
+ * Dynamic Type and the lines collide. The phone multiplies at the call site; the web emits
+ * the ratio and lets CSS do it.
+ */
+export const leading = { l100: 1, l120: 1.2, l143: 1.43 } as const;
+
+/*
+ * Three, and `l100` is not a rounding of the other two. A single glyph — a tick, a play
+ * mark, a chevron — has no line box worth the name, and giving it one pushes it off the
+ * centre of whatever it is sitting in. The build already knew: five sites wrote Tailwind's
+ * `leading-none` and every one of them is a glyph. It is a token now so the *next* one
+ * cannot be `leading-tight` instead, which is what three of the other four were.
+ */
+
+/**
  * Tracking, in thousandths of an em.
  *
  * The fourth fact about a type site, and the last one nothing owned. The phone writes

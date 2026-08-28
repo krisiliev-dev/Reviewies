@@ -15,6 +15,7 @@ import {
   type ListSummary,
 } from '@reviewies/core/social/lists';
 import { COPY } from '@reviewies/core/copy';
+import { Note } from '../ui/Note';
 
 /**
  * Lists, mixing film and television freely — the thing r/Simkl called a "severe
@@ -42,7 +43,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
-        <p className="text-ink-secondary">{COPY.lists.needsAccount}</p>
+        <Note>{COPY.lists.needsAccount}</Note>
       </div>
     );
   }
@@ -58,7 +59,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <h1 className="mb-2 text-s24 font-title font-semibold">Lists</h1>
-        <p className="text-ink-secondary">{COPY.lists.signInToMake('Your data')}</p>
+        <Note>{COPY.lists.signInToMake('Your data')}</Note>
       </div>
     );
   }
@@ -81,7 +82,7 @@ export function Lists() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-s24 font-title font-semibold">Lists</h1>
-      <p className="mb-4 px-1 text-s14 text-ink-secondary">Films and series together, in one list.</p>
+      <Note className="mb-4 px-1">Films and series together, in one list.</Note>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">
         <input
@@ -104,7 +105,7 @@ export function Lists() {
         </p>
       )}
 
-      {lists === undefined && <p className="px-1 text-ink-secondary">Loading…</p>}
+      {lists === undefined && <Note className="px-1">Loading…</Note>}
       {/* "No lists yet" was shown for both having none and failing to ask, which is a
           strange thing to tell somebody about work they did. */}
       {failed && (
@@ -112,7 +113,7 @@ export function Lists() {
           Could not load your lists ({failed}). They are still there — try again.
         </p>
       )}
-      {!failed && lists?.length === 0 && <p className="px-1 text-ink-secondary">{COPY.lists.empty}</p>}
+      {!failed && lists?.length === 0 && <Note className="px-1">{COPY.lists.empty}</Note>}
 
       <ul className="flex flex-col gap-2">
         {lists?.map((list) => (
@@ -176,15 +177,15 @@ function ListCard({
       >
         <span className="min-w-0">
           <span className="block truncate text-s16 font-title font-semibold">{list.name}</span>
-          <span className="text-s12 text-ink-secondary">
+          <Note level="footnote" as="span">
             {items ? describeMix(items) : `${list.itemCount} items`}
             {list.isPublic ? ' · public' : ' · private'}
             {!list.mine && ' · shared with you'}
-          </span>
+          </Note>
         </span>
-        <span aria-hidden="true" className="shrink-0 text-ink-secondary">
+        <Note as="span" className="shrink-0" aria-hidden="true">
           {open ? '▴' : '▾'}
-        </span>
+        </Note>
       </button>
 
       {open && (
@@ -218,7 +219,7 @@ function ListCard({
             </p>
           )}
           {!itemsFailed && items?.length === 0 && (
-            <p className="text-s14 text-ink-secondary">{COPY.lists.listEmpty}</p>
+            <Note>{COPY.lists.listEmpty}</Note>
           )}
 
           <ul className="flex flex-col">

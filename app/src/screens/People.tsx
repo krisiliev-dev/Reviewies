@@ -18,6 +18,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
+import { Note } from '../ui/Note';
 
 /**
  * Your profile, who you follow, and who you have blocked.
@@ -59,7 +60,7 @@ export function People() {
     return (
       <div className="p-4">
         <h1 className="mb-3 px-1 text-s24 font-title font-semibold">People</h1>
-        <p className="px-1 text-s14 text-ink-secondary">{COPY.people.withoutAccount}</p>
+        <Note className="px-1">{COPY.people.withoutAccount}</Note>
       </div>
     );
   }
@@ -70,7 +71,7 @@ export function People() {
         <h1 className="mb-3 px-1 text-s24 font-title font-semibold">People</h1>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
-        <p className="px-1 text-s14 text-ink-secondary">{COPY.people.signInToFollow('Your data')}</p>
+        <Note className="px-1">{COPY.people.signInToFollow('Your data')}</Note>
       </div>
     );
   }
@@ -148,10 +149,10 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
 
       {!editing ? (
         <>
-          <p className="text-s14 text-ink-secondary">
+          <Note>
             {me ? `@${me.handle}` : 'Loading…'}
             {me?.displayName ? ` · ${me.displayName}` : ''}
-          </p>
+          </Note>
           <button
             onClick={() => {
               setHandle(me?.handle ?? '');
@@ -195,7 +196,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
         </div>
       )}
 
-      {note && <p className="mt-2 text-s14 text-ink-secondary">{note}</p>}
+      {note && <Note className="mt-2">{note}</Note>}
     </section>
   );
 }
@@ -263,7 +264,7 @@ function FindPeople({
         </p>
       )}
       {!searchFailed && searched && results.length === 0 && (
-        <p className="px-1 text-s14 text-ink-secondary">Nobody by that name.</p>
+        <Note className="px-1">Nobody by that name.</Note>
       )}
 
       <ul className="flex flex-col gap-1.5">
@@ -352,7 +353,7 @@ function PersonList({
         {people.length > 0 && <span className="ml-1.5 normal-case">{people.length}</span>}
       </Section>
 
-      {people.length === 0 && empty && <p className="px-1 text-s14 text-ink-secondary">{empty}</p>}
+      {people.length === 0 && empty && <Note className="px-1">{empty}</Note>}
       {failed && (
         <p className="px-1 text-s14 text-trouble" role="status">
           {COPY.people.followFailed}

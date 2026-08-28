@@ -3,6 +3,7 @@ import type { ImportReport } from '@reviewies/core/data/transfer';
 import { restoreAccount, type RestoreReport } from '@reviewies/core/social/restoreAccount';
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { Data } from './Data';
+import { Note } from './Note';
 
 /**
  * Bring a history in from somewhere else.
@@ -130,16 +131,16 @@ export function ImportFiles({
           {files && files.length > 0 && (
             <ul className="mt-2 flex flex-col gap-1">
               {files.map((f) => (
-                <li key={f.name} className="text-s12 text-ink-secondary">
+                <Note level="footnote" as="li" key={f.name}>
                   <Data value={f.name} size="s12" /> — {f.outcome}
-                </li>
+                </Note>
               ))}
             </ul>
           )}
           {report.warnings.map((w) => (
-            <p key={w} className="mt-1 text-ink-secondary">
+            <Note className="mt-1" key={w}>
               {w}
-            </p>
+            </Note>
           ))}
 
           {/* The second step, offered where the first one landed. It needs an account
@@ -166,9 +167,9 @@ export function ImportFiles({
                 {restored.follows} follow{restored.follows === 1 ? '' : 's'}.
               </p>
               {restored.skipped.map((s) => (
-                <p key={s} className="mt-1 text-ink-secondary">
+                <Note className="mt-1" key={s}>
                   {s}
-                </p>
+                </Note>
               ))}
             </div>
           )}
@@ -188,19 +189,19 @@ export function ImportFiles({
 export function ImportFormats() {
   return (
     <>
-      <p className="px-1 text-s14 text-ink-secondary">
+      <Note className="px-1">
         A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl
         or Letterboxd — or a recovered <code>DioCache.db</code> straight off your phone.
         Files are recognised by what is in them, not what they are called, and anything we
         cannot read is listed rather than silently dropped.
-      </p>
+      </Note>
       {/* The -wal is the difference between a complete history and one quietly missing
           its most recent months, so it has to be asked for by name. */}
-      <p className="px-1 text-s14 text-ink-secondary">
+      <Note className="px-1">
         If you have a <code>DioCache.db</code>, select its <code>DioCache.db-wal</code> at
         the same time. TV Time wrote its most recent months there, and importing the
         database alone loses them without telling you.
-      </p>
+      </Note>
     </>
   );
 }

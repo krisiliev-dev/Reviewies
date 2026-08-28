@@ -8,6 +8,7 @@ import {
 import { getProvider, type SearchResult } from '@reviewies/core/metadata/index';
 import { Poster } from './Poster';
 import { Row as BaseRow } from './Row';
+import { Note } from './Note';
 
 /**
  * Finishing a migration.
@@ -122,17 +123,17 @@ export function MatchImports({
       )}
 
       {running && (
-        <p className="text-s14 text-ink-secondary" aria-live="polite">
+        <Note aria-live="polite">
           Matching… {progress?.done ?? 0} of {(progress?.done ?? 0) + (progress?.left ?? 0)},{' '}
           {progress?.matched ?? 0} matched so far.
-        </p>
+        </Note>
       )}
 
       {!running && progress && (
-        <p className="text-s14 text-ink-secondary">
+        <Note>
           Matched {progress.matched} of {progress.done}.
           {asks.length > 0 && ` ${asks.length} need a decision.`}
-        </p>
+        </Note>
       )}
 
       {error && <p className="text-s14 text-trouble">{error}</p>}
@@ -149,16 +150,16 @@ export function MatchImports({
               the opposite of the truth and then offers them nothing but giving up.
               Doc 10 §5. */}
           {ask.candidates.length > 0 ? (
-            <p className="mb-2 text-s14 text-ink-secondary">
+            <Note className="mb-2">
               More than one show could be this. Picking the wrong one would move your
               history onto it.
-            </p>
+            </Note>
           ) : (
             <>
-              <p className="mb-2 text-s14 text-ink-secondary">
+              <Note className="mb-2">
                 Nothing came back under that name — it may be listed differently, or be a
                 show the provider has never had. You know what it is; search for it.
-              </p>
+              </Note>
               <FindIt ask={ask} onChosen={(id) => void choose(ask, id)} />
             </>
           )}
@@ -261,10 +262,10 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
       )}
 
       {results?.length === 0 && !failed && (
-        <p className="text-s12 text-ink-secondary">
+        <Note level="footnote">
           Nothing under that name either. Leaving it unmatched keeps your watches — it
           just has no episode list.
-        </p>
+        </Note>
       )}
 
       <ul className="flex flex-col gap-1.5">

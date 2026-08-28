@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
+import { Note } from '../ui/Note';
 
 /**
  * The screen for an address that is not a screen.
@@ -27,10 +28,10 @@ export function NotFound() {
   return (
     <div className="flex flex-col gap-3 p-6">
       <h1 className="text-s24 font-title font-semibold">Nothing at this address</h1>
-      <p className="text-ink-secondary">
+      <Note>
         <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-s14">{pathname}</code> is not
         a screen in this app. It may be an old link, or a typo.
-      </p>
+      </Note>
       <Button size="page" tone="primary" to="/" label="Go to Up Next" name="Go to Up Next" />
       <Link to="/more" className="rounded-pill bg-ground-raised px-4 py-3 text-center">
         See everything else

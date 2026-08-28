@@ -7,6 +7,7 @@ import { useReducedMotion } from './useReducedMotion';
 import { text, type, track } from '@reviewies/core/tokens';
 import { Section } from './Section';
 import { Data } from './Data';
+import { Note } from './Note';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -87,15 +88,15 @@ export function CatchUp({
               : `Marked ${marked} episode${marked === 1 ? '' : 's'} as watched.`}
           </Text>
         ) : seasons === undefined ? (
-          <Text style={styles.muted}>Loading…</Text>
+          <Note>Loading…</Note>
         ) : seasons.length === 0 ? (
-          <Text style={styles.muted}>No episodes have aired yet.</Text>
+          <Note>No episodes have aired yet.</Note>
         ) : (
           <ScrollView contentContainerStyle={styles.body}>
-            <Text style={styles.muted}>
+            <Note>
               How far have you got? Nothing here shows episode names, so you cannot be
               spoiled by catching up.
-            </Text>
+            </Note>
 
             {season === undefined ? (
               <Grid label="Season" values={seasons.map((s) => s.season)} onPick={setSeason} />
@@ -117,9 +118,9 @@ export function CatchUp({
                 )}
                 {/* Said plainly: the app cannot know when these were really watched, and
                     inventing plausible past dates would be worse. */}
-                <Text style={styles.footnote}>
+                <Note level="footnote">
                   Everything up to and including that episode is logged as watched today.
-                </Text>
+                </Note>
               </>
             )}
           </ScrollView>
@@ -178,7 +179,6 @@ const styles = StyleSheet.create({
   title: { color: theme.ink, fontSize: text.s16, flexShrink: 1, fontFamily: type.family.title.name },
   done: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.title.name },
   result: { color: theme.ink, fontSize: text.s14, paddingVertical: 16, fontFamily: type.family.body.name },
-  muted: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 20, fontFamily: type.family.body.name },
   body: { gap: 16, paddingBottom: 8 },
   grid: { gap: 8 },
   gridCells: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -192,5 +192,4 @@ const styles = StyleSheet.create({
   },
   cellText: { color: theme.ink },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
-  footnote: { color: theme.inkSecondary, fontSize: text.s12, lineHeight: 17, fontFamily: type.family.body.name },
 });

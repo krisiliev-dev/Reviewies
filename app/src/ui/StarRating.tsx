@@ -63,7 +63,7 @@ export function StarRating({
             onClick={() => onChange(value === star ? undefined : star)}
             className="absolute inset-y-0 right-0 z-10 w-1/2"
           />
-          <span aria-hidden="true" className={`${text} leading-none`}>
+          <span aria-hidden="true" className={`${text} leading-l100`}>
             {shown >= star ? (
               <span className="text-working-mark">★</span>
             ) : shown >= star - 0.5 ? (

@@ -8,10 +8,11 @@ import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo
 import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { ROW } from '@reviewies/core/ui/row';
-import { radius, tap, theme } from '../../src/ui/theme';
-import { text, type } from '@reviewies/core/tokens';
+import { leadingOf, radius, tap, theme } from '../../src/ui/theme';
+import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
 import { Button } from '../../src/ui/Button';
+import { Note } from '../../src/ui/Note';
 
 /**
  * Things you mean to watch, and why.
@@ -35,7 +36,7 @@ export default function WatchlistScreen() {
 
         {items?.length === 0 && (
           <View style={styles.emptyBlock}>
-            <Text style={styles.empty}>{COPY.watchlist.empty}</Text>
+            <Note>{COPY.watchlist.empty}</Note>
             {/* Naming Search and then not going there is the dead end doc 10 §8 found on
                 the web's Calendar: the screen knows exactly what you should do next and
                 makes you find it yourself. The web's empty watchlist has had this
@@ -162,7 +163,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: 16, gap: 12 },
   heading: { color: theme.ink, fontSize: text.s30, fontFamily: type.family.display.name, marginBottom: 8 },
-  empty: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 22, fontFamily: type.family.body.name },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
   /*
    * `cta`/`ctaText` were here — a filled pill "the same shape as Up Next's", said a

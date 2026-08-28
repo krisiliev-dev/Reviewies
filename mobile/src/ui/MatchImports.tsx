@@ -7,11 +7,12 @@ import {
   type RunProgress,
 } from '@reviewies/core/data/reconcile';
 import { Poster } from './Poster';
-import { radius, tap, theme } from './theme';
+import { leadingOf, radius, tap, theme } from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 import { ROW } from '@reviewies/core/ui/row';
-import { text, type } from '@reviewies/core/tokens';
+import { text, type, leading } from '@reviewies/core/tokens';
+import { Note } from './Note';
 
 /**
  * Finishing a migration.
@@ -108,17 +109,17 @@ export function MatchImports({
       )}
 
       {running && (
-        <Text style={styles.status} accessibilityLiveRegion="polite">
+        <Note accessibilityLiveRegion="polite">
           Matching… {progress?.done ?? 0} of {(progress?.done ?? 0) + (progress?.left ?? 0)},{' '}
           {progress?.matched ?? 0} matched so far.
-        </Text>
+        </Note>
       )}
 
       {!running && progress && (
-        <Text style={styles.status}>
+        <Note>
           Matched {progress.matched} of {progress.done}.
           {asks.length > 0 ? ` ${asks.length} need a decision.` : ''}
-        </Text>
+        </Note>
       )}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -128,10 +129,10 @@ export function MatchImports({
           <Text style={styles.name}>{ask.name}</Text>
           {/* The honest reason to ask is not "we failed" — it is that more than one
               answer looked right, and picking one would be a guess about a history. */}
-          <Text style={styles.status}>
+          <Note>
             More than one show could be this. Picking the wrong one would move your
             history onto it.
-          </Text>
+          </Note>
           {ask.candidates.map((candidate) => (
             <BaseRow
               key={candidate.id}
@@ -175,7 +176,6 @@ export function MatchImports({
 
 const styles = StyleSheet.create({
   block: { gap: 12 },
-  status: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 18, fontFamily: type.family.body.name },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
   card: { backgroundColor: theme.groundRaised, borderRadius: radius.plate, padding: 12, gap: 8 },
   name: { color: theme.ink, fontSize: text.s16, fontFamily: type.family.title.name },

@@ -12,13 +12,14 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
-import { radius, theme, tracking } from '../src/ui/theme';
-import { text, type, track } from '@reviewies/core/tokens';
+import { leadingOf, radius, theme, tracking } from '../src/ui/theme';
+import { text, type, track, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../src/ui/Button';
 import { Section } from '../src/ui/Section';
+import { Note } from '../src/ui/Note';
 
 /**
  * Getting your history in, and getting it back out.
@@ -55,7 +56,7 @@ export default function DataScreen() {
         )}
 
         <Block heading="Export">
-          <Text style={styles.blurb}>{COPY.settings.exportBlurb}</Text>
+          <Note>{COPY.settings.exportBlurb}</Note>
           <Button
             onPress={async () => {
               const bundle = await exportAll();
@@ -73,10 +74,10 @@ export default function DataScreen() {
             name="Export everything (JSON)"
           />
           {exportNote && (
-            <Text style={styles.blurb} accessibilityLiveRegion="polite">
+            <Note accessibilityLiveRegion="polite">
               Saved, but your lists, follows and comments could not be read: {exportNote}. The
               rest of the file is complete.
-            </Text>
+            </Note>
           )}
           <Button
             onPress={async () =>
@@ -121,7 +122,7 @@ export default function DataScreen() {
               <Text style={styles.toggleLabel}>Open the conversation after marking watched</Text>
               {/* Off is offered because anyone working through several episodes wants to
                   stay put. Catching up in bulk has its own control, which never moves. */}
-              <Text style={styles.toggleHint}>How TV Time worked. Needs an account.</Text>
+              <Note>How TV Time worked. Needs an account.</Note>
             </View>
             {/* Presentational: the row above is the control. Hidden from the reading
                 order so it is not announced twice, and from the pointer so a tap on it
@@ -136,11 +137,11 @@ export default function DataScreen() {
             never has, which is the same shape as everything else found in this pass:
             the core could do it and one platform simply never asked. */}
         <Block heading="Metadata cache">
-          <Text style={styles.blurb}>
+          <Note>
             Artwork and episode listings are cached from the metadata provider and expire
             automatically. Clearing them never touches your own history, and shows carried
             over from an import keep their names.
-          </Text>
+          </Note>
           <Button
             onPress={() => void clearMetadataCache().then(setCleared)}
             tone="secondary"
@@ -148,9 +149,9 @@ export default function DataScreen() {
             name="Clear cached metadata"
           />
           {cleared !== undefined && (
-            <Text style={styles.blurb} accessibilityLiveRegion="polite">
+            <Note accessibilityLiveRegion="polite">
               {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
-            </Text>
+            </Note>
           )}
         </Block>
       </ScrollView>
@@ -186,8 +187,6 @@ const styles = StyleSheet.create({
   },
   toggleText: { flex: 1, minWidth: 0, gap: 2 },
   toggleLabel: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
-  toggleHint: { color: theme.inkSecondary, fontSize: text.s14, fontFamily: type.family.body.name },
-  blurb: { color: theme.inkSecondary, fontSize: text.s14, lineHeight: 19, fontFamily: type.family.body.name },
-  clockWarning: { color: theme.trouble, fontSize: text.s14, lineHeight: 19, marginBottom: 4, fontFamily: type.family.body.name },
+  clockWarning: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), marginBottom: 4, fontFamily: type.family.body.name },
 
 });

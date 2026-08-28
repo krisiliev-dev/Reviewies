@@ -7,6 +7,7 @@ import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recomm
 import { Poster } from '../ui/Poster';
 import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
+import { Note } from '../ui/Note';
 
 /**
  * Discovery.
@@ -36,12 +37,12 @@ export function Discover() {
   return (
     <div className="p-4">
       <h1 className="mb-1 px-1 text-s30 font-display font-bold">Discover</h1>
-      <p className="mb-4 px-1 text-s14 text-ink-secondary">{COPY.discover.blurb}</p>
+      <Note className="mb-4 px-1">{COPY.discover.blurb}</Note>
 
       {error && <p className="px-1 text-s14 text-trouble">{error}</p>}
-      {suggestions === undefined && <p className="px-1 text-ink-secondary">Finding something…</p>}
+      {suggestions === undefined && <Note className="px-1">Finding something…</Note>}
       {suggestions?.length === 0 && !error && (
-        <p className="px-1 text-ink-secondary">{COPY.discover.empty}</p>
+        <Note className="px-1">{COPY.discover.empty}</Note>
       )}
 
       <ul className="flex flex-col gap-2">

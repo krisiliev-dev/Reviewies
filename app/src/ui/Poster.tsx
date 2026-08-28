@@ -13,7 +13,7 @@ export function Poster({ url, name, className = '' }: PosterProps) {
   if (!url) {
     return (
       <div
-        className={`flex items-center justify-center bg-ground-well text-center text-s12 font-title font-semibold leading-tight text-ink-secondary ${className}`}
+        className={`flex items-center justify-center bg-ground-well text-center text-s12 font-title font-semibold leading-l120 text-ink-secondary ${className}`}
         aria-hidden="true"
       >
         <span className="line-clamp-4 px-0.5">{name}</span>

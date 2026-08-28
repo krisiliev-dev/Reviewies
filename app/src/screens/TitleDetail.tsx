@@ -24,6 +24,7 @@ import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { COPY } from '@reviewies/core/copy';
 import { Section } from '../ui/Section';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -104,7 +105,9 @@ export function TitleDetail() {
           )}
           {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
           {title?.overview && (
-            <p className="mt-2 line-clamp-3 text-s14 text-ink-secondary">{title.overview}</p>
+            <p className="mt-2 line-clamp-3 text-s16 font-prose font-regular leading-l143 text-ink-secondary">
+              {title.overview}
+            </p>
           )}
 
           {title && <AddToList titleId={titleId} kind={title.kind} />}
@@ -185,7 +188,7 @@ export function TitleDetail() {
           heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
       <ContentWarnings titleId={titleId} />
 
-      {loading && episodes.length === 0 && <p className="text-s14 text-ink-secondary">Loading episodes…</p>}
+      {loading && episodes.length === 0 && <Note>Loading episodes…</Note>}
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">

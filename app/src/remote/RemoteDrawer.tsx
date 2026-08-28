@@ -4,6 +4,7 @@ import { useDialog } from '../ui/useDialog';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import { Data } from '../ui/Data';
+import { Note } from '../ui/Note';
 
 /**
  * The remote, hidden in a drawer to the side.
@@ -72,7 +73,7 @@ export function RemoteDrawer() {
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <span aria-hidden="true" className="block text-s20 leading-none">
+        <span aria-hidden="true" className="block text-s20 leading-l100">
           ⇤
         </span>
       </button>
@@ -146,7 +147,7 @@ export function RemoteDrawer() {
               §6.59 shape, an excuse that outlives what it excuses. Written out, each
               timecode is a figure and `paused` is a word, which is what they are.
             */}
-            <p className="text-s12 text-ink-secondary">
+            <Note level="footnote">
               <Data value={formatTime(bridge.playback.positionSec)} size="s12" />
               {bridge.playback.durationSec ? (
                 <>
@@ -155,7 +156,7 @@ export function RemoteDrawer() {
                 </>
               ) : null}
               {bridge.playback.paused ? ' · paused' : ''}
-            </p>
+            </Note>
           </div>
         )}
 
