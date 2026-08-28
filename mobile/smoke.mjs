@@ -33,6 +33,19 @@ page.on('pageerror', (e) => errors.push(e.message));
 const text = async () => (await page.locator('body').innerText()).replace(/\s+/g, ' ');
 
 /**
+ * The number under a stats label, or 0 if there is not one.
+ *
+ * The checks that read this screen asked `/Watched\\s*\\d/`, which "Watched 0m"
+ * satisfies — so a screen of zeros passed a clause named for runtime weighting. Reading
+ * the figure and comparing it is the difference between "a digit is printed" and "there
+ * is something there". §6.73.
+ */
+const figure = (body, label) => {
+  const m = new RegExp(`${label}\\s+([\\d.]+)`).exec(body);
+  return m ? Number(m[1]) : 0;
+};
+
+/**
  * Every control on a screen has a role and a name, on every screen — not only the one
  * this suite happened to collide with.
  *
@@ -276,6 +289,23 @@ try {
     await page.waitForTimeout(1500);
     const body = await text();
     check(`${path} says what empty means`, expected.test(body), body.slice(0, 120));
+    if (path === 'stats') {
+      /*
+       * And says it *instead of* four zeros, not underneath them.
+       *
+       * Measured on this build through the route a person takes: an empty period drew
+       * "Watched 0m / Episodes 0 / Titles 0 / Longest streak 0 days" at 22px from y=156
+       * and the sentence at 13px at y=320 — the claim in the largest type on the screen
+       * and the correction 165px below it in the smallest. The web has never done this.
+       * The zeros are not information; they are the absence of one, asserted, which is
+       * §6.56's rule about somebody's own data.
+       */
+      check(
+        'stats says nothing rather than printing zeros',
+        !/Watched\s*0\b/.test(body) && !/Episodes\s*0\b/.test(body),
+        body.slice(0, 160),
+      );
+    }
     if (!wayOut) continue;
     const link = page.getByText(wayOut, { exact: true }).first();
     check(`${path} offers a way out of empty`, await link.isVisible().catch(() => false), wayOut);
@@ -602,7 +632,11 @@ try {
   // writes days rather than as the storage key it came from. §6.78.
   check(
     'stats are runtime-weighted',
-    /Watched\s*\d/.test(stats) && /Episodes\s*\d/.test(stats),
+    // A *number*, and not zero. `/Watched\s*\d/` matched "Watched 0m", so this check
+    // was satisfied by the very screen §6.105 is about — a comment on the web's copy of
+    // it had said so for two sprints without the clause being changed. §6.73's class:
+    // a check easier to satisfy than its name suggests.
+    figure(stats, 'Watched') > 0 && figure(stats, 'Episodes') > 0,
     stats.slice(0, 110),
   );
   const busiest = stats.match(/Busiest day was (.+?) with \d+ episodes?\./)?.[1];

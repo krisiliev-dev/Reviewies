@@ -47,6 +47,7 @@
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "test": "vitest run",
+    "export": "expo export --platform web",
     "smoke": "node ../scripts/portFree.mjs 4200 && expo export --platform web && node ../scripts/served.mjs 4200 \"npx serve dist -p 4200 --no-clipboard\" node smoke.mjs",
     "typecheck": "tsc --noEmit"
   },

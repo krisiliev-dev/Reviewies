@@ -7241,6 +7241,112 @@ screen look like* from a route no navigation reaches. Neither reported a limit. 
 declines is a guard you can trust; the dangerous ones are obliging.
 
 
+### 6.105 Four zeros over a hundred and fourteen episodes, and a harness that had never once used the app
+
+The screenshots §6.104 finally made trustworthy were worth looking at, and the first look
+found something. Then looking at *why* nobody had seen it found something bigger.
+
+**The phone printed four zeros; the web never has.** Measured on the same build, same
+library, through the route a person takes:
+
+```
+phone, This year   Watched 0m / Episodes 0 / Titles 0 / Longest streak 0 days   22px, from y=156
+                   "Nothing watched in this period yet."                        13px, at y=320
+                   "Show all time"                                              14px, at y=360
+
+web,   This year   "Nothing watched in this period yet."                        16px, at y=128
+                   "Show all time"                                              beneath it
+```
+
+The library behind both: 114 episodes, 2.4 days, three titles. The web renders the
+sentence *instead of* the summary; the phone rendered the summary and appended the
+sentence below "Most watched" — so the claim arrived in the largest type on the screen and
+the correction 165 pixels below it in the smallest. The zeros are not information. They are
+the absence of one, asserted, which is §6.56's rule about somebody's own data — and the
+phone was already half-agreeing with it, since its busiest-day line and its most-watched
+list both hide themselves when there is nothing to say. Only the four tiles insisted.
+
+The phone now does what the web does. Four plants, four caught.
+
+**And the reason I filed it was wrong, which a date settled.** The task said this is what
+somebody arriving from TV Time sees: import a decade of history, open Stats, be told zero
+of everything. TV Time shut down on **15 July 2026** and today is 28 August 2026, so an
+export imported today ends six weeks ago — inside this year, and Stats fills. The claim
+becomes true on **1 January**, when every TV Time migrant's history is last year's, and
+stays true after that. Right conclusion, wrong reason, and the wrong reason was in the task
+for an hour before a two-minute check on a shutdown date this repository had already
+written down.
+
+**What a design review had actually been shown was the harness.** The seeded library's
+watch dates were `2024-03-nn`, hard-coded when that was recent. Absolute dates in a fixture
+rot: every day the clock moves the library sits further in the past, and by the time
+anybody looked, the whole of it was two calendar years behind a screen that opens on *this
+year*. §6.104's shape exactly — an instrument answering a question it was not in a position
+to answer — one sprint later and in the same file. The dates are relative now, and 08-stats
+has the clause it never had.
+
+**Two suites could not have caught it, and one of them said so in a comment.**
+
+```js
+/Watched\s*\d/.test(statsText)      // "Watched 0m" satisfies this
+```
+
+Both smokes asked whether a digit was printed under a label. The web's copy carried a
+comment reading *"a screen showing every total as zero, or as NaN, passed"* — correct,
+written two sprints ago, and left beside the clause it describes. §6.73's class with the
+diagnosis already attached. Both now read the figure and compare it, and both suites
+assert that an empty period prints no zeros at all.
+
+**Then the design track, which is why any of this was visible.**
+
+It was three commands remembered from a comment at the top of a file. It is `npm run
+design` now: export, serve, drive, and exit non-zero if any screen is missing what makes it
+worth looking at. That matters more than it sounds, because everything below only holds if
+the thing is actually run.
+
+*Every* route now has a `MUST_SHOW` clause, and a route without one is a failure rather
+than a screenshot nobody has decided anything about. Filling them in found two screens that
+had been photographed empty for every review this project has ever had. Search was a text
+box and a tab bar. The watchlist said "Nothing saved yet" — on a library of a hundred and
+fourteen episodes — and its clause was `/Nothing saved yet|Add a note/`, which *accepted*
+that. An alternation that includes the empty state is not a clause about the screen; it is
+a clause about the screen or its absence.
+
+So the harness uses the app now: it types a search, and it saves something to the watchlist
+from a result, the way somebody would. That is the second half of §6.104's lesson. Visiting
+an address is not arriving somewhere, and arriving somewhere is not the same as there being
+anything there.
+
+**And the matching wait had never been telling anybody the truth.** Five consecutive runs of
+one unchanged build reported:
+
+```
+Matching… 1 of 2     Matching… 0 of 0     Matching… 0 of 0     Matching… 1 of 2     Matching… 1 of 2
+```
+
+and the libraries that came out the other side were matched, half-matched and not matched
+at all. The wait watched the progress line and stopped when it went away — and the line
+goes away when the run finishes *and* when it has not begun. Three sprints of design review
+were taken across that spread, and nothing ever said which one a given screenshot was. It
+is §6.98's rule for the third time in this file, after §6.98 wrote it down and §6.102
+recorded me reintroducing it four sections later: **never wait for a working state to
+disappear.** The wait is on the end state now — every imported show tracked, which More
+prints as a count — and it goes back to Up Next and tries again if it is not, because that
+is the screen the work runs on. Then the calendar, alternating the same way, because
+*matched* and *episodes cached* are not the same finish line and the ninety-six-episode
+fixture is the last thing to land.
+
+**The last plant caught a clause I had written an hour earlier.** Breaking the CSV so the
+import could not read it should have tripped the new "the import never landed" check, and
+did not: the screen still said *"Imported 0 watches"*, and `/Imported \d+ watches/` was
+perfectly happy with that. The same defect I had spent the first half of the sprint fixing
+in two other suites, reproduced by me in the fix for it. §6.73 is not a lesson you learn
+once — it is a shape you have to look for every time you write a clause, and the only thing
+that finds it is planting the failure and watching what the guard says.
+
+Seven plants, seven caught.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7606,7 +7712,10 @@ and which single claim in this document could not be checked at all:
   writing an explanation down* and this record has now taken back four. What is missing is
   not the rule — it is that a fix which passes its own unit tests still has to be run
   against the suite that reported the bug **before** the prose is written, and nothing
-  makes that ordering visible.
+  makes that ordering visible. §6.105 adds the cheaper half: the wrong reason in a filed
+  task survived an hour because nobody checked a date this repository had already written
+  down — TV Time shut down on 15 July 2026, which makes the Stats claim false today and
+  true from January.
 - **The bench is part of what gets measured, and was not.** §6.103's probes read a build
   that `npm run verify` had produced with a real TMDB token from `.env`, so the app was
   calling a network this container cannot reach; three runs reported matching failures
@@ -7622,6 +7731,24 @@ and which single claim in this document could not be checked at all:
   still reaches several screens by their own address (§7's device bullet says so for the
   unmatched-route screen), and nothing distinguishes "reached the way a person would" from
   "reached at all". Every screenshot is evidence about a route as much as about a screen.
+- **The design track runs on one command now, and what it cannot do is notice.** §6.105:
+  `npm run design` exports, serves, drives the app and fails if any screen is missing what
+  makes it worth looking at; every route has a clause, a route without one is an error, and
+  the harness types a search and saves to the watchlist rather than only visiting addresses.
+  What none of that supplies is judgement. Both of this sprint's findings came from a person
+  looking at a picture and thinking something was odd — the clauses only made the pictures
+  worth looking at, and then reproduced what the looking found. Nothing enumerates the
+  questions a review should ask, and nothing notices a screen that is *ugly* rather than
+  empty.
+- **Three consecutive waits in one harness were wrong the same way, across four sprints.**
+  §6.98 found a wait that broke on its first sample while the page was booting; §6.102
+  recorded me reintroducing it four sections later; §6.105 found the matching wait treating
+  "the counter is not showing" as "the run has finished", which it also means when the run
+  has not begun — five runs of one build produced "1 of 2", "0 of 0", "0 of 0", "1 of 2",
+  "1 of 2" and three sprints of screenshots were taken across that spread. All three are
+  fixed and all three were the same rule. What is missing is anything that finds the fourth
+  one: a wait is a claim that something has happened, and nothing in this repository reads
+  waits the way the guards read call sites.
 - **The web measures its rendered colour; the phone does not.** §6.92 closed the general
   problem on the web — sixteen screens now have every word measured against what is
   actually behind it, and the plant that reproduces §6.91's invisible tab reports it as

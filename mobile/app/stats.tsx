@@ -90,7 +90,44 @@ export default function StatsScreen() {
 
         {!summary && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
 
-        {summary && (
+        {/*
+         * Four zeros, or the sentence — never both, and never the zeros first.
+         *
+         * Measured on the phone through the route a person takes: an empty period drew
+         * "Watched 0m / Episodes 0 / Titles 0 / Longest streak 0 days" at 22px starting
+         * at y=156, and "Nothing watched in this period yet." at 13px at y=320 — the
+         * claim in the largest type on the screen and the correction 165px below it in
+         * the smallest. The web has never done this: it renders the sentence *instead
+         * of* the summary. Same screen, same core call, two answers to what an empty
+         * period looks like.
+         *
+         * The zeros are not information; they are the absence of one, asserted. §6.56's
+         * rule — an empty state is a claim about somebody's own data — and this screen
+         * was already half-agreeing with it, since "Most watched" and the busiest day
+         * hide themselves when there is nothing to say.
+         */}
+        {summary && summary.episodes === 0 ? (
+          <View style={styles.emptyBlock}>
+            <Text style={styles.note}>{COPY.stats.empty}</Text>
+            {/* The web's copy of this, for the same reason: nine year-buttons above
+                an empty period is not an answer somebody reads as one. §6.54. */}
+            {years.length > 0 && (window !== 'all' || year !== undefined) && (
+              <Pressable
+                onPress={() => {
+                  setYear(undefined);
+                  setWindow('all');
+                }}
+                style={styles.allTime}
+                accessibilityRole="button"
+                accessibilityLabel={COPY.stats.showAllTime}
+              >
+                <Text style={styles.allTimeText}>{COPY.stats.showAllTime}</Text>
+              </Pressable>
+            )}
+          </View>
+        ) : null}
+
+        {summary && summary.episodes > 0 && (
           <>
             <View style={styles.figures}>
               <Figure label="Watched" value={formatDuration(summary.minutes)} />
@@ -144,26 +181,6 @@ export default function StatsScreen() {
               </View>
             )}
 
-            {summary.episodes === 0 && (
-              <View style={styles.emptyBlock}>
-                <Text style={styles.note}>{COPY.stats.empty}</Text>
-                {/* The web's copy of this, for the same reason: nine year-buttons above
-                    an empty period is not an answer somebody reads as one. §6.54. */}
-                {years.length > 0 && (window !== 'all' || year !== undefined) && (
-                  <Pressable
-                    onPress={() => {
-                      setYear(undefined);
-                      setWindow('all');
-                    }}
-                    style={styles.allTime}
-                    accessibilityRole="button"
-                    accessibilityLabel={COPY.stats.showAllTime}
-                  >
-                    <Text style={styles.allTimeText}>{COPY.stats.showAllTime}</Text>
-                  </Pressable>
-                )}
-              </View>
-            )}
           </>
         )}
       </ScrollView>

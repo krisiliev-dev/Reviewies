@@ -90,6 +90,20 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
 };
 
+/**
+ * The number under a stats label, or 0 if there is not one.
+ *
+ * The clause reading this screen asked `/Watched\s*\d/`, which "Watched 0m" satisfies —
+ * so a screen of zeros passed a check named for runtime weighting. The comment beside it
+ * said exactly that and the clause stayed as it was for two sprints, until §6.105 found
+ * the phone rendering that screen. Reading the figure is the difference between "a digit
+ * is printed" and "there is something there". §6.73.
+ */
+const figure = (body, label) => {
+  const m = new RegExp(`${label}\\s+([\\d.]+)`).exec(body);
+  return m ? Number(m[1]) : 0;
+};
+
 // A pinned Chromium when this environment has one, and whatever Playwright downloaded
 // otherwise — see scripts/browser.mjs.
 const browser = await chromium.launch(chromiumOptions());
@@ -824,6 +838,16 @@ try {
       .catch(() => false);
     const took = Date.now() - began;
     const body = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+    if (screen === 'Stats') {
+      // And says it *instead of* four zeros. The web has always done this; the phone
+      // printed the zeros above the sentence until §6.105, so the clause belongs on both
+      // suites rather than only on the one that was broken.
+      check(
+        'Stats says nothing rather than printing zeros',
+        !/Watched\s*0\b/.test(body) && !/Episodes\s*0\b/.test(body),
+        body.slice(Math.max(0, body.length - 160)),
+      );
+    }
     check(
       `${screen} says what empty means`,
       settled && expected.test(body),
@@ -1663,7 +1687,10 @@ try {
    */
   check(
     'stats show runtime-weighted totals',
-    /Watched\s*\d/.test(statsText) && /Episodes\s*\d/.test(statsText),
+    // The comment above said a screen of zeros passed this, and it was right, and the
+    // clause was left as it was for two sprints. §6.105 found the phone printing exactly
+    // that screen. Read the figure rather than asking whether a digit is present.
+    figure(statsText, 'Watched') > 0 && figure(statsText, 'Episodes') > 0,
     statsText.slice(0, 120),
   );
   check('stats list the most-watched title', /The Long Dark/.test(statsText));
