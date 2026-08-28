@@ -7025,6 +7025,61 @@ answerable rather than open: the shows that never matched were **asks**, and the
 never answered them because it had nowhere to answer them from.
 
 
+### 6.102 The empty calendar was two bugs, and the second one is written down four sections above where I reintroduced it
+
+Task #142 is closed. The capture harness passes every screen it declares, for the first
+time since it was given anything to declare — and `design/screens/09-calendar.png` finally
+shows the screen §6.97 rebuilt: ruled rows, dated day headings, posters, *Today · Hollow
+Crown Saga S1E41*. Five sprints of design review have never seen it.
+
+**It was two bugs, and neither was the one every earlier attempt assumed.**
+
+The first is §6.101's: matching stopped after the first show, because `MatchImports` was
+mounted only on an empty Up Next. So the library was never fully matched, and an unmatched
+show has no air dates. Every earlier attempt at #142 — including the three explanations
+§6.98 had to retract — started from the premise that the library *was* matched. It never
+was.
+
+The second was mine, this sprint, in the harness. Measuring first, as the method requires:
+the web build matched all three shows in **14 seconds**, the phone build in **19**, both
+complete, both with 18/12/96 episodes cached, and the phone's calendar full of rows. So
+the app was fine and the harness was not.
+
+The wait I had added the previous hour polled for `Matching…` to disappear and broke out on
+its first sample — while the page was still booting and the body was empty. It then
+navigated on and photographed a half-matched library.
+
+**§6.98 wrote that exact bug down, about this exact file:** *"the first version of this
+polled for 'Matching…' to disappear — and passed on its first sample, while the app was
+still booting and the body was empty. 'Not showing the working state' is not 'finished
+working'."* I read that paragraph while writing §6.99, quoted its lesson in §6.99's own
+closing line — *a lesson recorded is not a lesson applied* — and then reintroduced the bug
+four sections later in the same file. Twice now the fix has been the same: wait for a
+**positive** condition. The harness waits for Up Next to be on screen before it starts
+reading the counter.
+
+**And I misread my own instrument on the way.** A probe printed the calendar truncated at
+300 characters; the notification panel above the list is longer than that, so the output
+stopped before the rows. I recorded "the calendar is still empty" from it and started
+looking for a platform difference in `getUpcoming` that does not exist. §6.99 had already
+found this shape — a 120-character slice showing the top of the page rather than the part
+being judged — and fixed it in the smoke suite. The probe was written fresh, without it.
+
+Both of those are the same failure at one remove: **the record is only worth what gets
+re-read before the next instrument is built, and re-reading it while writing prose is not
+the same as consulting it while writing code.** That is not a lesson a guard can carry.
+
+What the harness reports now is worth keeping: it waits where matching actually runs, it
+gives up when the counter *stops moving* rather than when a clock expires — the app saying
+whether anything is happening is better evidence than elapsed time — and it says which of
+those two happened.
+
+One thing measured and not chased: both builds log a single `ERR_CONNECTION_RESET` during
+matching and complete anyway. The fixture provider is local, so that is the dev server
+rather than the app, and nothing depends on it. Written down because it is the sort of
+thing that gets adopted as an explanation later if it is not.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7349,27 +7404,22 @@ and which single claim in this document could not be checked at all:
   guard is the general case. Nothing compares what a screen *said* before a migration with
   what it says after, so the next slot that does not fit its contents will shorten them
   again and only a check that happens to name that exact sentence will notice.
-- **The calendar's rows have still never been looked at, and §6.97's reason for it was
-  wrong.** It said the fixture episodes "aired in 2024". They do not:
-  `FixtureProvider.getEpisodes` generates weekly air dates counting *back from today*, so the
-  96-episode fixture's later episodes are genuinely in the future and the calendar should have
-  rows. Waiting longer does not fix it either — the capture now waits for the library to stop
-  growing rather than for the first row to appear, and the screen is still empty.
+- **The calendar's rows have now been looked at, and the answer was two bugs, neither of
+  them the one every attempt assumed.** §6.97 said the fixture episodes "aired in 2024" —
+  they do not, they are generated relative to today. §6.98 measured the import and found it
+  fine, and left *why* open. §6.99 added a harness that refused to hand over an empty
+  screenshot quietly. §6.101 found that matching stopped after the first show, so the
+  library was never fully matched — which is the premise every earlier attempt had rested
+  on. And §6.102 found the second: the harness's own wait broke out on its first sample
+  while the page was still booting, a bug §6.98 had written down about this same file and
+  which I reintroduced four sections later.
 
-  §6.98 measured the rest. The import is fine: all three shows match, all three fill their
-  episode caches, every library row says `watching`. Waiting on the calendar, the screen fills.
-  The photograph taken ten navigations later, in the same browser, is empty — and *why* is
-  still open. Three explanations were written down before anything was measured and two of
-  them were wrong, so there is no fourth guess here. What has changed is that the harness now
-  refuses to hand the screenshot over quietly: it fails by name when a screen it photographs
-  is not showing what makes it worth photographing, and it fails today, on this.
+  The harness now passes every screen it declares, and `design/screens/09-calendar.png`
+  shows the row `Row` was written for. What that leaves is not a defect but a habit: the
+  record is worth what gets re-read *while writing the next instrument*, and nothing
+  mechanical enforces that.
 
-  §6.99 added one measured fact that was not there before: the calendar's entries query is
-  the slowest thing on any screen in the app, slow enough that the smoke's flat 400ms wait
-  lost the race once in seventy-seven runs and reported the screen as *wrong* rather than as
-  *not finished*. That is not the same bug as the empty photograph and it is not proof that
-  it is the same bug — but it is the first evidence that this screen's timing is unusual,
-  and it is where the next attempt should start.
+
 - **A partially-matched import had no way to finish, and the guard had pinned the
   arrangement that guaranteed it.** §6.101: `MatchImports` was offered only on an *empty*
   Up Next, so the first show to match unmounted the control that would match the rest.

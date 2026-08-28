@@ -136,6 +136,22 @@ await page.goto('http://localhost:4200/');
  * episodes have landed.
  */
 await page.goto('http://localhost:4200/');
+/*
+ * Arrived, before asking whether it has finished — and this is the second time this file
+ * has needed that sentence.
+ *
+ * §6.98 wrote it down: "the first version of this polled for 'Matching…' to *disappear* —
+ * and passed on its first sample, while the app was still booting and the body was empty".
+ * The wait added below it four sections later did exactly that again, sampled an empty
+ * body, decided matching was done and moved on. "Not showing the working state" is not
+ * "finished working".
+ *
+ * So: wait for Up Next to be a screen with something on it, and only then watch the
+ * counter. `Up Next` is its heading and it is there as soon as the screen renders.
+ */
+await page.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
+await page.waitForTimeout(2000);
+
 let progress = '';
 let stuckFor = 0;
 for (let i = 0; i < 240; i++) {
