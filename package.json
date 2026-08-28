@@ -19,7 +19,7 @@
     "build": "npm run build --workspace app",
     "deploy:web": "node scripts/deploy-web.mjs",
     "whats-live": "node scripts/whats-live.mjs",
-    "design": "VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= VITE_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export --workspace mobile && node scripts/portFree.mjs 4200 && node scripts/served.mjs 4200 \"npx serve mobile/dist -p 4200 --no-clipboard\" node design/capture.mjs",
+    "design": "VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= VITE_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export --workspace mobile && node scripts/portFree.mjs 4200 && node scripts/served.mjs 4200 \"npx serve mobile/dist -p 4200 --no-clipboard\" node design/capture.mjs && VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= EXPO_PUBLIC_SUPABASE_URL=https://design-harness.invalid EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_designharness npm run export:signedin --workspace mobile && node scripts/portFree.mjs 4201 && node scripts/served.mjs 4201 \"npx serve mobile/dist-signedin -p 4201 --no-clipboard\" node design/capture-signedin.mjs",
     "smoke": "npm run smoke --workspace app && npm run smoke --workspace mobile && npm run smoke --workspace extension && npm run smoke --workspace bridge && npm run smoke:failures --workspace app"
   },
   "overrides": {

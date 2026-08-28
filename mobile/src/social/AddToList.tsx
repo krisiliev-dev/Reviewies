@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
-import { radius, theme } from '../ui/theme';
+import { radius, theme, tap } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { text, type } from '@reviewies/core/tokens';
 import { Note } from '../ui/Note';
@@ -52,9 +52,20 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
   return (
     <View style={styles.block}>
+      {/*
+        `tap`, not `hitSlop` alone. This is a line of `text.s12` and it measured **47x16**
+        against the 24-point floor of WCAG 2.5.8 — the same defect §6.60 fixed for "Caught
+        up further?", "Remove" and "Use a different poster", missed here because the
+        control only exists when there is an account and no suite has ever arranged one.
+
+        `hitSlop` stays on top of it: it is real on a device and invisible to layout, so it
+        cannot be the thing that makes a target measurable. `theme.ts` says so where `tap`
+        is defined.
+      */}
       <Pressable
         onPress={() => setOpen(!open)}
         hitSlop={8}
+        style={tap}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >

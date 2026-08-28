@@ -203,6 +203,27 @@ cd ../bridge && npm run smoke          # app → relay → bridge → a fake Rok
 cd ../app && npm run smoke:failures    # the same web app, with the provider failing
 ```
 
+### Screenshots
+
+```sh
+npm run design                        # photographs every screen, twice over
+```
+
+Two passes, because a screen behind an account is a screen nobody reviews. The first
+builds with every credential blanked, so the metadata provider is the fixture provider by
+construction rather than by whether you happen to have a `.env` — §6.125 found that the
+phone's suite had been reaching the live TMDB API on every run it ever made, and failing
+like a regression whenever the network did.
+
+The second builds again into `mobile/dist-signedin` (`npm run export:signedin --workspace
+mobile`) against a Supabase host that does not exist, signs in with a fabricated session
+and answers PostgREST from `design/signedIn.mjs`. No network, no account, the same pixels
+every run. It exists because four of the twelve routes used to photograph a gate rather
+than a screen, and three sprints of design work landed behind it unseen.
+
+Both passes measure as well as photograph: rule reach against the viewport edge, what a
+press repaints to, and the target size of controls only an account can reach.
+
 That last one is the odd member of the family: it builds *with* the TMDB token — the
 others blank it on purpose — and then makes every request to the provider fail three
 ways: refused, answered with a 500, and left hanging with no answer at all. The third is

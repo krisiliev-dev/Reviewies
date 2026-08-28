@@ -8820,6 +8820,61 @@ deterministic and also makes that control unreachable again — which is #164's 
 the honest way to put it is that the phone's suite now covers the signed-out half properly
 and the signed-in half not at all. The target-size failure is filed rather than lost.
 
+### 6.126 A control nothing could reach, and the half of the app nothing had photographed
+
+Two halves of one omission. `AddToList`'s trigger measured **47x16** against WCAG 2.5.8's
+24-point floor — a line of `text.s12` with `hitSlop`, which is exactly the defect §6.60
+swept for and fixed in "Caught up further?", "Remove" and "Use a different poster". It was
+missed there and stayed missed for eleven sprints, because **the control does not exist
+without an account** and nothing in this build had ever arranged one.
+
+The same absence hid the screens. Four of the twelve photographed routes showed a gate:
+`10-lists` said "Lists need an account", `11-people` and `12-account` said sync was not
+configured. Sprints 34 to 36 landed full-bleed rows, `Block` and the press direction in
+those screens, and §6.123 had to admit in its own commit message that its change appeared
+in no photograph.
+
+## The second export, and why it has to be a second export
+
+`npm run design` now runs twice. The first pass is §6.125's build with every credential
+blanked — deterministic, and signed out by construction. The second is a *separate* export
+into `mobile/dist-signedin`, carrying a stub Supabase host, photographed in its own context
+with a fabricated session and PostgREST intercepted.
+
+It has to be a second export rather than a second browser context because the provider and
+the client are chosen from **build-time** configuration: a signed-in screen is a different
+build, not a different browser state. That costs one more `expo export` and buys six screens
+nobody had ever looked at.
+
+Three things had to be right and each was wrong first:
+
+- **the session's shape.** supabase-js v2 stores the session object directly under the
+  storage key; v1's `{ currentSession, expiresAt }` wrapper is handed to `_isValidSession`,
+  silently rejected, and the app stays signed out — which failed by taking three
+  screenshots of a sign-in form rather than by erroring.
+- **the fixtures' shape, which is the query's and not the table's.** `lists` needs
+  `user_id`, `deleted` and an embedded `list_items: [{ count }]`; `follows` needs the
+  embedded `profiles`, because `fetchEdge` selects
+  `profiles!follows_followee_id_fkey (...)` and reads `row.profiles`. A row with only the
+  two ids renders "Nobody yet" while looking like data.
+- **the needle.** The People shot's first `want` was `/@you|Ana|Following/`, and `Following`
+  is the *heading*. A screen with no people in it satisfied a clause named for people, and
+  it passed while the follows fixture was wrong. Every needle is content now.
+
+## What the photographs immediately showed
+
+`18-lists-in.png` is the argument #160 has been making in prose: the lists are **inset
+raised cards**, on a screen where every row rule now runs to the paper's edge. The remaining
+card-fill work stopped needing a paragraph the moment it could be seen.
+
+`16-account-in.png` is an eyebrow, an email, a sentence, a button, and then twelve hundred
+pixels of nothing — OBSERVED.md's "mostly empty below the fold" in its purest form, on a
+screen nobody had ever looked at.
+
+And the target-size clause is measured on the screen where it failed, not asserted in
+source: `hitSlop` is real on a device and invisible to layout, so only the box counts. The
+plant removes `tap` and the harness prints `Add to list 47x16`.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

@@ -14,3 +14,4 @@ coverage/
 
 # `tsc -b` writes these beside each tsconfig; they are a build cache.
 *.tsbuildinfo
+mobile/dist-signedin
