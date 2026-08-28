@@ -91,17 +91,11 @@ export function Lists() {
           maxLength={120}
           className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-3 outline-none placeholder:text-ink-secondary"
         />
-        <button
-          type="submit"
-          disabled={!name.trim()}
-          // `disabled:opacity-40` on an accent fill gave a maroon block with unreadable
-          // dark red lettering — it read as broken rather than as waiting. Disabled
-          // controls are exempt from the contrast rules, which is a reason they are
-          // allowed to be quiet and not a reason to make them illegible.
-          className="rounded-pill bg-action-fill px-4 font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-        >
-          Create
-        </button>
+        {/* The disabled treatment used to be spelled here, with the reason beside it:
+            `disabled:opacity-40` on an accent fill gave a maroon block with unreadable
+            dark red lettering, which read as broken rather than as waiting. The component
+            owns that now and `button.test.ts` holds it to it. */}
+        <Button submit tone="primary" label="Create" name="Create this list" disabled={!name.trim()} />
       </form>
 
       {createFailed && (

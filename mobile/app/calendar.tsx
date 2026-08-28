@@ -97,24 +97,23 @@ export default function CalendarScreen() {
           <View style={styles.delivery}>
             {pushSupported() ? (
               <>
-                <Pressable
+                <Button
+                  label={registered ? 'Notifications on' : 'Notify this device'}
+                  // It had `accessibilityState={{ selected }}` and no name at all, so a
+                  // reader got the state and the printed words and nothing saying which
+                  // device. `selected` is drawn as well as announced now.
+                  name={
+                    registered
+                      ? 'Notifications are on for this device'
+                      : 'Notify this device about what is airing'
+                  }
+                  selected={registered}
                   onPress={async () => {
                     const result = await registerForPush();
                     setRegistered(result.ok);
-                    setDelivery(
-                      result.ok
-                        ? 'This device will be notified.'
-                        : result.reason,
-                    );
+                    setDelivery(result.ok ? 'This device will be notified.' : result.reason);
                   }}
-                  style={[styles.enable, registered && styles.enableOn]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: registered }}
-                >
-                  <Text style={[styles.enableText, registered && styles.enableTextOn]}>
-                    {registered ? 'Notifications on' : 'Notify this device'}
-                  </Text>
-                </Pressable>
+                />
                 {delivery && <Text style={styles.deliveryNote}>{delivery}</Text>}
               </>
             ) : (
@@ -195,16 +194,6 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   delivery: { marginTop: 12, gap: 8 },
-  enable: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-    backgroundColor: theme.groundRaised,
-  },
-  enableOn: { backgroundColor: theme.actionFill },
-  enableText: { color: theme.ink, fontSize: 14 },
-  enableTextOn: { color: theme.actionLabel, fontWeight: '600' },
   deliveryNote: { color: theme.inkSecondary, fontSize: 13, lineHeight: 19 },
   content: { padding: 16, gap: 8, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   sectionHeading: {

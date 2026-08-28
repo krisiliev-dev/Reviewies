@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { Button } from '../ui/Button';
 import {
   CONTENT_WARNINGS,
   clearContentWarningVote,
@@ -90,10 +91,15 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             <ul className="mb-3 flex flex-col gap-1.5">
               {summaries.map((s) => (
                 <li key={s.warning} className="flex items-center gap-2">
+                  {/* `working-mark` rather than the accent fill. This dot is not a
+                      control and never was: the accent is the app's one filled shape and
+                      it means "the thing on this screen worth pressing", which a verdict
+                      is not. `working-mark` is what the rest of the app already uses for
+                      "affirmed" — it is `CHOSEN.colour` and the cross-off's pen. */}
                   <span
                     className={`h-1.5 w-1.5 shrink-0 rounded-pill ${
                       s.verdict === 'yes'
-                        ? 'bg-action-fill'
+                        ? 'bg-working-mark'
                         : s.verdict === 'contested'
                           ? 'bg-stroke-signal'
                           : 'border border-stroke-signal'
@@ -129,31 +135,28 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                 return (
                   <li key={w.id} className="flex items-center gap-2">
                     <span className="min-w-0 flex-1 truncate text-sm">{w.label}</span>
-                    <button
-                      onClick={() => vote(w.id, true)}
-                      aria-pressed={own === true}
+                    <Button
+                      size="inline"
+                      label="Yes"
                       // Twelve warnings, twelve pairs of these. Read aloud in order,
                       // "Yes button, No button, Yes button" says nothing about what is
                       // being voted on.
-                      aria-label={`Yes, this has ${w.label.toLowerCase()}`}
-                      className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
-                        own === true ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
-                      }`}
-                    >
-                      Yes
-                    </button>
+                      name={`Yes, this has ${w.label.toLowerCase()}`}
+                      // Not a `Choice`: a warning has three states — yes, no, and not
+                      // voted on — and a radio group has no way to say the third. Two
+                      // toggles that can both be off is what this actually is.
+                      selected={own === true}
+                      onPress={() => vote(w.id, true)}
+                    />
                     {/* A "no" vote is what lets a wrong flag be argued down, instead of
                         warnings only ever accumulating. */}
-                    <button
-                      onClick={() => vote(w.id, false)}
-                      aria-pressed={own === false}
-                      aria-label={`No, this does not have ${w.label.toLowerCase()}`}
-                      className={`shrink-0 rounded-pill px-3 py-1 text-xs ${
-                        own === false ? 'bg-action-fill font-medium text-action-label' : 'border border-stroke-signal text-ink-secondary'
-                      }`}
-                    >
-                      No
-                    </button>
+                    <Button
+                      size="inline"
+                      label="No"
+                      name={`No, this does not have ${w.label.toLowerCase()}`}
+                      selected={own === false}
+                      onPress={() => vote(w.id, false)}
+                    />
                   </li>
                 );
               })}

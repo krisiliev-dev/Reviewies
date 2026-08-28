@@ -12,6 +12,7 @@ import {
 import { border, radius, theme } from '../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
+import { Choice } from '../src/ui/Choice';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -57,35 +58,35 @@ export default function StatsScreen() {
     <>
       <Stack.Screen options={{ title: 'Stats' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View
-          style={styles.chips}
-          accessibilityRole="radiogroup"
-          accessibilityLabel="Which stretch of time these figures cover"
-        >
-          {WINDOWS.map((option) => (
-            <Chip
-              key={option.key}
-              label={option.label}
-              active={window === option.key && year === undefined}
-              onPress={() => {
-                setWindow(option.key);
-                setYear(undefined);
-              }}
-            />
-          ))}
-          {/* TV Time's REWIND was among its most-loved features; this is that. */}
-          {years.map((value) => (
-            <Chip
-              key={value}
-              label={String(value)}
-              active={year === value}
-              onPress={() => {
-                setWindow('year');
-                setYear(value);
-              }}
-            />
-          ))}
-        </View>
+        {/* One group, which is what it always was: a single radiogroup with two hand-built
+            chip lists inside it. `Choice` draws being chosen as a rule and a weight step
+            rather than the accent fill — the app's one filled shape belongs to the thing
+            worth pressing, not the thing already chosen — and it is 44 tall, where these
+            chips were not.
+
+            TV Time's REWIND was among its most-loved features; the years are that. */}
+        <Choice
+          name="Which stretch of time these figures cover"
+          options={[
+            ...WINDOWS.map((option) => ({ key: option.key as string, label: option.label })),
+            ...years.map((value) => ({
+              key: String(value),
+              label: String(value),
+              hint: `your ${value}`,
+            })),
+          ]}
+          value={year === undefined ? window : String(year)}
+          onChange={(next) => {
+            const asYear = Number(next);
+            if (Number.isNaN(asYear)) {
+              setWindow(next as Window);
+              setYear(undefined);
+            } else {
+              setWindow('year');
+              setYear(asYear);
+            }
+          }}
+        />
 
         {!summary && <ActivityIndicator color={theme.workingFill} style={styles.loading} />}
 
@@ -170,26 +171,11 @@ export default function StatsScreen() {
   );
 }
 
-function Chip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.chip, active && styles.chipOn]}
-      accessibilityRole="radio"
-      accessibilityState={{ selected: active, checked: active }}
-    >
-      <Text style={[styles.chipText, active && styles.chipTextOn]}>{label}</Text>
-    </Pressable>
-  );
-}
+/*
+ * `Chip` was here — a local radio with its own fill, its own text colours and its own box.
+ * `Choice` is that control for both platforms; keeping a second one beside it is how the
+ * density chips and the calendar's options ended up disagreeing about what a radio is.
+ */
 
 function Figure({ label, value }: { label: string; value: string }) {
   return (
@@ -202,16 +188,6 @@ function Figure({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.plate,
-  },
-  chipOn: { backgroundColor: theme.actionFill },
-  chipText: { color: theme.inkSecondary, fontSize: 12 },
-  chipTextOn: { color: theme.actionLabel, fontWeight: '600' },
   loading: { marginTop: 32 },
 
   figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

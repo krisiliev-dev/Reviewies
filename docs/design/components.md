@@ -87,6 +87,12 @@ interface ButtonProps {
 
 **Accessibility contract.** Role `button` or `link` (`as`). Name = `name`, always non-empty. Target ≥44×44 in every size including `quiet`. `accessibilityState` carries `{ disabled, busy, selected }` and never invents `checked` — `title/[id].tsx:293` sets `checked` on a `button` role today; that control becomes `CrossOff`.
 
+**Built, and the accent fill now belongs to it alone (§6.93, §6.94, §6.100).** `TONE.primary` is the only thing in the product with `fill: 'actionFill'`, and `accentFill.test.ts` says so as a rule rather than as an observation: no screen on either platform writes that fill or the ink that reads on it, with no exemption list. Twenty-six call sites did until sprint 15, and half of them were not actions at all — a chip that is on, a toggle that is held, a verdict dot — using the loudest shape in the app to say "already chosen".
+
+Which is how it came out that **`selected` had been announced since sprint 7 and never drawn.** Both renderers set `aria-pressed` / `accessibilityState.selected`; neither painted anything, so Watching Mode's Hold, the calendar's notify toggle and ListenSync's two microphone controls looked identical on and off for four sprints. It is drawn now, and in `Choice`'s spelling rather than a second one — `SELECTED` *is* `CHOSEN`, re-exported — so a toggle and a radio cannot come to disagree about what "on" means. Boxed tones only: `quiet` has no box, so it has no box's rule to thicken, and nothing asks for a quiet toggle today.
+
+`SIZE` also carries `label`, because it did not and the phone printed every size at 15pt where the web has three (§6.99).
+
 **Replaces:** `index.tsx` `cta`/`ctaQuiet`/`undo`; `watchlist.tsx` `cta`; `calendar.tsx` `cta`/`enable`; `search.tsx` `primary`/`secondary`/`retry`; `discover.tsx` `primary`/`secondary`; `title/[id].tsx` `mark`/`react`/`retry`/`posterSave`/`posterToggle`/`posterCancel`; `stats.tsx` `allTime`; `lists.tsx` `primary`/`remove`; `people.tsx` `primary`/`small`/`link`; `account.tsx` `primary`/`secondary`/`toggle`; `data.tsx` `primary`/`secondary`; `comments/[targetId].tsx` `primary`/`secondary`/`deleteComment`/`removeAttached`; `+not-found.tsx` `cta`/`ctaQuiet`; `_layout.tsx` `retry`/`retryQuiet`; `MatchImports` `primary`/`skip`; `ImportFiles` `button`/`buttonPrimary`/`restore`; `AddToList` `add`/`toggle`; `ContentWarnings` `toggle`/`vote`/`link`; `WhereToWatch` `link`/`region`; `ListenSync` `button`/`quiet`; `CatchUp` `done`/`link`; `FailureBanner` `dismiss`. **45 styles → 4 tones × 3 sizes.**
 
 ---

@@ -110,15 +110,13 @@ function Row({
               onSubmitEditing={save}
               accessibilityLabel={`Note for ${name}`}
             />
-            <Pressable
+            <Button
+              size="inline"
+              tone="primary"
+              label="Save"
+              name={`Save note for ${name}`}
               onPress={save}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`Save note for ${name}`}
-              style={tap}
-            >
-              <Text style={styles.save}>Save</Text>
-            </Pressable>
+            />
           </View>
         ) : (
           // Tappable whether or not there is a note yet. The reason for saving
@@ -161,15 +159,13 @@ const styles = StyleSheet.create({
   heading: { color: theme.ink, fontSize: 30, fontWeight: '700', marginBottom: 8 },
   empty: { color: theme.inkSecondary, fontSize: 15, lineHeight: 22 },
   emptyBlock: { gap: 16, alignItems: 'flex-start' },
-  // The same shape as Up Next's, which is the other empty state somebody meets first.
-  cta: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.actionFill,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-  },
-  ctaText: { color: theme.actionLabel, fontWeight: '600', fontSize: 16 },
+  /*
+   * `cta`/`ctaText` were here — a filled pill "the same shape as Up Next's", said a
+   * comment, for an empty-state button this screen stopped rendering when it moved to
+   * `Button`. Nothing referenced either. A dead style is invisible until something greps
+   * for what it contains, which is how these two survived the migration that replaced
+   * them and turned up in the sprint that swept the accent fill.
+   */
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
   note: { color: theme.ink, fontSize: 13, fontStyle: 'italic' },
   addNote: { color: theme.inkSecondary, fontSize: 13, textDecorationLine: 'underline' },
@@ -183,6 +179,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 44,
   },
-  save: { color: theme.ink, fontSize: 13, fontWeight: '600' },
   remove: { color: theme.inkSecondary, fontSize: 12, textDecorationLine: 'underline', marginTop: 2 },
 });

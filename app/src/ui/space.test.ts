@@ -83,7 +83,13 @@ describe('the space scale, on the phone', () => {
       });
     }
     // A scan that stopped matching would report nothing and look like success.
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(250);
+    //
+    // 250 exactly, after sprint 15 deleted a dozen phone stylesheets' worth of padding
+    // along with the hand-built controls that carried it. Lowered to 240 rather than to
+    // the new count: a floor set to today's number fails on the next legitimate deletion
+    // and gets nudged again, which is a ratchet nobody reads. It is here to catch a scan
+    // that has stopped matching, and a hundred-site drop is what that looks like.
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(240);
     expect(off).toEqual([]);
   });
 });

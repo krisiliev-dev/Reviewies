@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radius, theme } from '../ui/theme';
+import { Button } from '../ui/Button';
 import { useListenSync } from '../fingerprint/listen';
 
 /**
@@ -41,17 +42,15 @@ export function ListenSync({
   return (
     <View style={styles.block}>
       <View style={styles.row}>
-        <Pressable
-          onPress={() => (listening ? listen.stop() : void listen.startListening())}
+        <Button
+          label={listening ? 'Stop listening' : 'Keep in sync by listening'}
+          // It announced `selected` and no name at all, so a reader got a state and the
+          // printed words and nothing about what was being listened to.
+          name={listening ? 'Stop listening to this episode' : 'Keep in sync by listening to this episode'}
+          selected={listening}
           disabled={mapping || uploading}
-          style={[styles.button, listening && styles.buttonOn, mapping && styles.buttonOff]}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: mapping || uploading, selected: listening }}
-        >
-          <Text style={[styles.buttonText, listening && styles.buttonTextOn]}>
-            {listening ? 'Stop listening' : 'Keep in sync by listening'}
-          </Text>
-        </Pressable>
+          onPress={() => (listening ? listen.stop() : void listen.startListening())}
+        />
 
         {listening && (
           <Text style={styles.status}>
@@ -65,25 +64,19 @@ export function ListenSync({
       </View>
 
       <View style={styles.row}>
-        <Pressable
-          onPress={() => (mapping ? listen.stop() : void listen.startMapping())}
+        <Button
+          size="inline"
+          label={mapping ? 'Finish and contribute' : uploading ? 'Sending…' : 'Help map this episode'}
+          name={
+            mapping
+              ? 'Finish mapping and contribute what was heard'
+              : 'Help map this episode by listening to it'
+          }
+          selected={mapping}
+          busy={uploading}
           disabled={listening || uploading || (!mapping && !clockRunning)}
-          style={[
-            styles.quiet,
-            mapping && styles.buttonOn,
-            (listening || uploading || (!mapping && !clockRunning)) && styles.buttonOff,
-          ]}
-          accessibilityRole="button"
-          accessibilityState={{
-            disabled: listening || uploading || (!mapping && !clockRunning),
-            selected: mapping,
-            busy: uploading,
-          }}
-        >
-          <Text style={[styles.quietText, mapping && styles.buttonTextOn]}>
-            {mapping ? 'Finish and contribute' : uploading ? 'Sending…' : 'Help map this episode'}
-          </Text>
-        </Pressable>
+          onPress={() => (mapping ? listen.stop() : void listen.startMapping())}
+        />
 
         {mapping && listen.mapping && (
           <Text style={styles.status}>
@@ -130,24 +123,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  button: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-    backgroundColor: theme.groundRaised,
-  },
-  buttonOn: { backgroundColor: theme.actionFill },
-  buttonOff: { borderColor: theme.strokeHairline },
-  buttonText: { color: theme.ink, fontSize: 13 },
-  buttonTextOn: { color: theme.actionLabel, fontWeight: '600' },
-  quiet: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: theme.strokeHairline,
-  },
-  quietText: { color: theme.inkSecondary, fontSize: 12 },
   status: { color: theme.inkSecondary, fontSize: 12, flexShrink: 1 },
   note: { color: theme.inkSecondary, fontSize: 12 },
   blurb: { color: theme.inkSecondary, fontSize: 11, lineHeight: 15 },

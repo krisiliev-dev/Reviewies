@@ -139,7 +139,18 @@ describe('every colour a class names', () => {
         off.push(`${relative(ROOT, path)}:${index + 1}  ${line.trim().slice(0, 70)}`);
       });
     }
-    expect(seen, 'nothing writes the action label at all').toBeGreaterThan(10);
+    /*
+     * The floor was 10 and is 7, because sprint 15 removed the accent fill from every
+     * screen and `text-action-label` went with it — the remaining seven are inside the
+     * component set, which is where they belong.
+     *
+     * Lowered deliberately rather than deleted. The floor is what stops this clause
+     * passing because the scan found nothing, and it should keep falling only when
+     * something is genuinely migrated: `accentFill.test.ts` now says outright that *no
+     * screen* writes this ink, so if this number ever goes to zero that guard has been
+     * broken too and both will say so.
+     */
+    expect(seen, 'nothing writes the action label at all').toBeGreaterThan(6);
     expect(off, 'action.label is near-black and only legible on the action fill').toEqual([]);
   });
 

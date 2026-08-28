@@ -129,6 +129,7 @@ const LOPSIDED: Record<string, string> = {
    */
   'mobile only: ui/button#BOX_RADIUS': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#PRESSED': 'Tailwind needs a literal class; button.test.ts couples the two.',
+  'mobile only: ui/button#SELECTED': 'Tailwind needs a literal class; button.test.ts couples the two.',
 
   'app only: data/adapters/dexie#createDexieDatabase':
     'IndexedDB is the browser store. The phone binds the SQLite adapter instead.',

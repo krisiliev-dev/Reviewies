@@ -26,6 +26,7 @@ import { pickCommentImage } from '../../src/comments/pickImage';
 import { border, radius, theme } from '../../src/ui/theme';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../../src/ui/Button';
+import { Choice } from '../../src/ui/Choice';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -128,30 +129,19 @@ export default function CommentsScreen() {
           </View>
         ) : (
           <>
-            <View
-              style={styles.chips}
-              accessibilityRole="radiogroup"
-              accessibilityLabel="How much effort a comment has to show"
-            >
-              {EFFORT_LEVELS.map((level) => (
-                <Pressable
-                  key={level.label}
-                  onPress={() => setEffort(level.minLength)}
-                  style={[styles.chip, effort === level.minLength && styles.chipOn]}
-                  accessibilityRole="radio"
-                  accessibilityState={{
-                    selected: effort === level.minLength,
-                    checked: effort === level.minLength,
-                  }}
-                  accessibilityLabel={`Show ${level.label.toLowerCase()} comments`}
-                >
-                  <Text
-                    style={[styles.chipText, effort === level.minLength && styles.chipTextOn]}
-                  >
-                    {level.label}
-                  </Text>
-                </Pressable>
-              ))}
+            <View style={styles.chips}>
+              <Choice
+                name="How much effort a comment has to show"
+                options={EFFORT_LEVELS.map((level) => ({
+                  key: level.minLength,
+                  label: level.label,
+                  // Was the whole label; as a hint it becomes the second half of the
+                  // announced name, which is what `announce()` is for.
+                  hint: `show ${level.label.toLowerCase()} comments`,
+                }))}
+                value={effort}
+                onChange={(next) => setEffort(Number(next))}
+              />
               {hidden > 0 && <Text style={styles.hidden}>{hidden} hidden</Text>}
             </View>
 
@@ -272,15 +262,6 @@ const styles = StyleSheet.create({
   cardHeading: { color: theme.ink, fontSize: 16, fontWeight: '700' },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  chip: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.plate,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  chipOn: { backgroundColor: theme.actionFill },
-  chipText: { color: theme.inkSecondary, fontSize: 12 },
-  chipTextOn: { color: theme.actionLabel, fontWeight: '600' },
   hidden: { color: theme.inkSecondary, fontSize: 11 },
 
   input: {

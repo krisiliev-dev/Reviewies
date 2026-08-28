@@ -179,13 +179,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
           <div className="flex gap-2">
-            <button
-              onClick={save}
-              aria-label="Save how you appear"
-              className="rounded-pill bg-action-fill px-4 py-2 font-medium text-action-label"
-            >
-              Save
-            </button>
+            <Button tone="primary" label="Save" name="Save how you appear" onPress={save} />
             <button
               onClick={() => {
                 setHandle(undefined);

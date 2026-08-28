@@ -106,13 +106,7 @@ function Row({
               className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
               autoFocus
             />
-            <button
-              onClick={save}
-              aria-label={`Save note for ${name}`}
-              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
-            >
-              Save
-            </button>
+            <Button tone="primary" label="Save" name={`Save note for ${name}`} onPress={save} />
           </div>
         ) : (
           <button

@@ -16,6 +16,7 @@ import {
 import { ListenSync } from '../watching/ListenSync';
 import { COPY } from '@reviewies/core/copy';
 import { Choice } from '../ui/Choice';
+import { Button } from '../ui/Button';
 import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
@@ -294,12 +295,17 @@ export function WatchingMode() {
 function StartPanel({ onStart }: { onStart: () => void }) {
   return (
     <div className="px-4 pb-3">
-      <button
-        onClick={onStart}
-        className="w-full rounded-pill bg-action-fill py-4 text-lg font-semibold text-action-label active:scale-[0.98]"
-      >
-        Start watching
-      </button>
+      {/* `active:scale-[0.98]` was here and is not: the component's press feedback is a
+          thickening and a ground step at 0ms, which is identical with Reduce Motion on.
+          A scale is a transform and needs a `reduced ?` branch to be honest. */}
+      <Button
+        size="page"
+        tone="primary"
+        label="Start watching"
+        name="Start watching"
+        onPress={onStart}
+        className="w-full"
+      />
       <p className="mt-2 text-center text-xs text-ink-secondary">
         Tap the moment you press play. You can nudge the timing at any point.
       </p>
@@ -348,18 +354,17 @@ function SyncBar({
       >
         +5s
       </button>
-      <button
-        onClick={() => onStreamPaused(!streamPaused)}
-        aria-pressed={streamPaused}
-        aria-label={
+      {/* A toggle, and `selected` draws it now — it announced `aria-pressed` and painted
+          the accent fill, which is the app's one filled shape and means "worth pressing"
+          rather than "already on". */}
+      <Button
+        label={streamPaused ? 'Held' : 'Hold'}
+        name={
           streamPaused ? 'Let other people’s reactions move again' : 'Hold other people’s reactions still'
         }
-        className={`rounded-plate px-3 py-2 text-sm ${
-          streamPaused ? 'bg-action-fill text-action-label' : 'bg-ground-well'
-        }`}
-      >
-        {streamPaused ? 'Held' : 'Hold'}
-      </button>
+        selected={streamPaused}
+        onPress={() => onStreamPaused(!streamPaused)}
+      />
       {/* Three choices, the phone's, rather than a slider from a quarter to all. A
           proportion is not a promise anybody can act on — a quarter of a quiet episode
           is nothing — and the two platforms meant different things by the same word
@@ -412,20 +417,20 @@ function DriftHint({
       <span className="flex-1 text-ink-secondary">
         Looks like you&rsquo;re {seconds}s {behind ? 'behind' : 'ahead of'} everyone else.
       </span>
-      <button
-        onClick={onApply}
-        aria-label={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
-        className="rounded-pill bg-action-fill px-3 py-1.5 text-xs font-semibold text-action-label"
-      >
-        Fix
-      </button>
-      <button
-        onClick={onDismiss}
-        aria-label="Ignore the drift correction"
-        className="px-2 py-1.5 text-xs text-ink-secondary"
-      >
-        Ignore
-      </button>
+      <Button
+        size="inline"
+        tone="primary"
+        label="Fix"
+        name={`Move the clock ${seconds} seconds ${behind ? 'forward' : 'back'}`}
+        onPress={onApply}
+      />
+      <Button
+        size="inline"
+        tone="quiet"
+        label="Ignore"
+        name="Ignore the drift correction"
+        onPress={onDismiss}
+      />
     </div>
   );
 }

@@ -196,8 +196,12 @@ export default function WatchingScreen() {
           </View>
         ) : (
           <View style={styles.controls}>
-            <Control label={clock.running ? 'Pause' : 'Resume'} onPress={clock.toggle} />
-            <Control
+            <Button
+              label={clock.running ? 'Pause' : 'Resume'}
+              name={clock.running ? 'Pause the clock' : 'Resume the clock'}
+              onPress={clock.toggle}
+            />
+            <Button
               label={streamHeld ? 'Held' : 'Hold'}
               name={
                 streamHeld
@@ -209,12 +213,12 @@ export default function WatchingScreen() {
             />
             {/* "−5s" is a minus sign, a digit and a letter. Named, because what it does
                 is a sentence and what it shows is three characters. */}
-            <Control
+            <Button
               label="−5s"
               name="Move the clock back 5 seconds"
               onPress={() => clock.nudge(-5000)}
             />
-            <Control
+            <Button
               label="+5s"
               name="Move the clock forward 5 seconds"
               onPress={() => clock.nudge(5000)}
@@ -309,29 +313,12 @@ export default function WatchingScreen() {
   );
 }
 
-function Control({
-  label,
-  name,
-  selected,
-  onPress,
-}: {
-  label: string;
-  name?: string;
-  selected?: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.control, selected && styles.controlOn]}
-      accessibilityRole="button"
-      accessibilityState={selected === undefined ? undefined : { selected }}
-      accessibilityLabel={name ?? label}
-    >
-      <Text style={[styles.controlText, selected && styles.controlTextOn]}>{label}</Text>
-    </Pressable>
-  );
-}
+/*
+ * `Control` was here — a local button with a `selected` state, its own box, and the accent
+ * fill for on. `Button` is that control: `selected` is drawn now rather than only
+ * announced, in `Choice`'s spelling (a rule and a weight step), so the app's one filled
+ * shape keeps meaning "worth pressing" instead of "already on".
+ */
 
 const styles = StyleSheet.create({
   // Clips. The remote drawer is 300 wide, absolute against this, and parked at
@@ -360,15 +347,6 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 16,
   },
-  control: {
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-    borderRadius: radius.plate,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  controlOn: { backgroundColor: theme.actionFill },
-  controlText: { color: theme.ink, fontSize: 14 },
-  controlTextOn: { color: theme.actionLabel, fontWeight: '600' },
   // `marginLeft: 'auto'` pushes this to the far end of the row, which is right on one
   // line and is what carried it past the edge once the row wrapped.
   densityBlock: { alignItems: 'flex-end', gap: 4 },

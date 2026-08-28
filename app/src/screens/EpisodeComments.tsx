@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Choice } from '../ui/Choice';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
@@ -114,25 +115,19 @@ export function EpisodeComments() {
         </div>
       ) : (
         <>
-          <div
-            role="radiogroup"
-            aria-label="How much effort a comment has to show"
-            className="mt-4 flex flex-wrap items-center gap-1.5"
-          >
-            {EFFORT_LEVELS.map((level) => (
-              <button
-                key={level.label}
-                onClick={() => setEffort(level.minLength)}
-                role="radio"
-                aria-checked={effort === level.minLength}
-                aria-label={`Show ${level.label.toLowerCase()} comments`}
-                className={`rounded-plate px-3 py-1.5 text-xs ${
-                  effort === level.minLength ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
-                }`}
-              >
-                {level.label}
-              </button>
-            ))}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Choice
+              name="How much effort a comment has to show"
+              options={EFFORT_LEVELS.map((level) => ({
+                key: level.minLength,
+                label: level.label,
+                // Was the whole `aria-label`; as a hint it becomes the second half of the
+                // announced name, which is what `announce()` is for.
+                hint: `show ${level.label.toLowerCase()} comments`,
+              }))}
+              value={effort}
+              onChange={(next) => setEffort(Number(next))}
+            />
             {hidden > 0 && <span className="text-xs text-ink-secondary">{hidden} hidden</span>}
           </div>
 

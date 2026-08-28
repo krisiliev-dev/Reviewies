@@ -17,6 +17,7 @@ import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/co
 import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
+import { Button } from '../ui/Button';
 
 export function Settings() {
   const [openComments, setOpenComments] = useState(openCommentsAfterWatch);
@@ -89,8 +90,12 @@ export function Settings() {
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-sm font-semibold tracking-wide text-ink-secondary uppercase">Export</h2>
         <p className="px-1 text-sm text-ink-secondary">{COPY.settings.exportBlurb}</p>
-        <button
-          onClick={async () => {
+        <Button
+          size="page"
+          tone="primary"
+          label="Export everything (JSON)"
+          name="Export everything as JSON"
+          onPress={async () => {
             const bundle = await exportAll();
             // The file is written either way — the local half never depends on a server
             // — but a person with an account would otherwise get something that looks
@@ -102,10 +107,7 @@ export function Settings() {
               'application/json',
             );
           }}
-          className="rounded-pill bg-action-fill px-4 py-3 font-medium text-action-label"
-        >
-          Export everything (JSON)
-        </button>
+        />
         {exportNote && (
           <p className="px-1 text-sm text-ink-secondary" role="status">
             Saved, but your lists, follows and comments could not be read: {exportNote}. The

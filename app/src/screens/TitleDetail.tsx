@@ -156,16 +156,15 @@ export function TitleDetail() {
                 className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
-              <button
-                onClick={async () => {
+              <Button
+                tone="primary"
+                label="Save"
+                name="Save this poster"
+                onPress={async () => {
                   await setPosterOverride(titleId, posterDraft.trim() || undefined);
                   setPosterDraft(undefined);
                 }}
-                aria-label="Save this poster"
-                className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
-              >
-                Save
-              </button>
+              />
               <button
                 onClick={() => setPosterDraft(undefined)}
                 aria-label="Cancel changing the poster"

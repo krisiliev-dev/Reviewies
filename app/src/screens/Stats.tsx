@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Choice } from '../ui/Choice';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   availableYears,
@@ -37,45 +38,41 @@ export function Stats() {
     undefined,
   );
 
+  /*
+   * The windows and the years as one list of options, because they are one choice: picking
+   * a year clears the window and vice versa, which is what a radio group *is*. The year
+   * keys are strings so the whole group has one key type; `Your 2024` stays the announced
+   * name rather than a bare number beside three phrases.
+   */
+  const PERIODS = [
+    ...WINDOWS.map((w) => ({ key: w.key as string, label: w.label })),
+    ...years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` })),
+  ];
+
   return (
     <div className="p-4">
       <h1 className="mb-4 px-1 text-2xl font-semibold">Stats</h1>
 
-      <div
-        role="radiogroup"
-        aria-label="Which stretch of time these figures cover"
-        className="mb-5 flex flex-wrap gap-1.5"
-      >
-        {WINDOWS.map((w) => (
-          <button
-            key={w.key}
-            onClick={() => {
-              setWindow(w.key);
+      {/* One group, which is what it always was — a single `radiogroup` holding both the
+          windows and the years, hand-built twice inside it. `Choice` draws being chosen as
+          a rule and a weight step rather than the accent fill, which is the app's one
+          filled shape and belongs to the thing worth pressing rather than the thing
+          already chosen. */}
+      <div className="mb-5">
+        <Choice
+          name="Which stretch of time these figures cover"
+          options={PERIODS}
+          value={year ? String(year) : window}
+          onChange={(next) => {
+            const asYear = Number(next);
+            if (Number.isNaN(asYear)) {
+              setWindow(next as Window);
               setYear(undefined);
-            }}
-            role="radio"
-            aria-checked={!year && window === w.key}
-            className={`rounded-plate px-4 py-1.5 text-sm ${
-              !year && window === w.key ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
-            }`}
-          >
-            {w.label}
-          </button>
-        ))}
-        {years.map((y) => (
-          <button
-            key={y}
-            onClick={() => setYear(y)}
-            role="radio"
-            aria-checked={year === y}
-            aria-label={`Your ${y}`}
-            className={`rounded-plate px-4 py-1.5 text-sm ${
-              year === y ? 'bg-action-fill text-action-label' : 'bg-ground-well text-ink-secondary'
-            }`}
-          >
-            {y}
-          </button>
-        ))}
+            } else {
+              setYear(asYear);
+            }
+          }}
+        />
       </div>
 
       {summary === undefined ? (

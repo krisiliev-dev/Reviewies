@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
+import { Button } from '../ui/Button';
 
 /**
  * Add a title to a list from wherever you happen to be looking at it.
@@ -85,14 +86,13 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               maxLength={120}
               className="min-w-0 flex-1 rounded-none bg-ground-raised px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
             />
-            <button
-              type="submit"
+            <Button
+              submit
+              tone="primary"
+              label="Add"
+              name="Make this list and add the title to it"
               disabled={!newName.trim()}
-              aria-label="Make this list and add the title to it"
-              className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-            >
-              Add
-            </button>
+            />
           </form>
         </div>
       )}

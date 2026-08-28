@@ -6839,6 +6839,82 @@ quoted prop, as a braced template, and as an object key — so there is nothing 
 unevenly. That is the actual fix; teaching it one more spelling was not.
 
 
+### 6.100 The accent fill, and a state that was announced for four sprints and never drawn
+
+The guard blocked since sprint 10 lands, scoped to the part that was complete: **the accent
+fill belongs to `Button`'s primary tone and nothing else paints it.** Twenty-six call sites
+outside the component set did; none do. No allowlist, no exemption map, no budget — a budget
+is an allowlist that counts.
+
+It is narrow on purpose. §6.99 measured the wider rule at fifty-seven violations, and the
+remainder are surfaces with no component yet — Watching Mode's emoji pad, the remote's device
+list, `data.tsx`'s switch row. A component has to exist before a guard can point at it, and a
+guard whose name is wider than its reach is the shape this codebase keeps finding in its own
+instruments.
+
+**Half of the twenty-six were not actions.** They were selected states: a chip that is on, a
+toggle that is held, a verdict dot. §6.90 spent 822 sites turning fills into rules so a shape
+would mean something, and what the accent fill was left meaning is *the thing on this screen
+worth pressing*. Using it for "already chosen" is the opposite, and it puts the loudest shape
+in the product on the thing you have finished with.
+
+**Which is when `Button.selected` turned out never to have been drawn.** It has been in the
+contract since sprint 7. Both renderers announced it — `aria-pressed`, then
+`accessibilityState.selected` — and neither painted anything. Watching Mode's Hold button, the
+calendar's notify toggle, both of ListenSync's microphone controls: identical held and unheld,
+for four sprints, in a suite of guards that reads what the source says and found nothing to
+object to because the source said it consistently. It took needing somewhere to put the fills
+to notice that the somewhere did not exist.
+
+It is drawn now, and in `Choice`'s spelling rather than a second one: `SELECTED` *is*
+`CHOSEN`, re-exported, so a toggle and a radio cannot come to disagree about what "on" looks
+like. `choice.ts` already argued the case — a rule and a weight step, never a fill; two
+channels rather than colour alone, so it survives a reader who cannot separate the two greys —
+and none of that argument changes for a toggle. §6.95 is what two spellings of one state cost
+the last time.
+
+**Three local components deleted, because each was one of these wearing a different name.**
+`stats.tsx`'s `Chip`, `watching/[targetId].tsx`'s `Control`, and the web's two hand-built
+radiogroups: a chip list and a year list inside a single `role="radiogroup"`, built twice
+within it. Stats is now one `Choice` holding both, which is what it always was — picking a year
+clears the window and vice versa, which is the definition of a radio group.
+
+Two judgement calls worth recording. ContentWarnings' Yes/No vote pair is *not* a `Choice`: a
+warning has three states — yes, no, and not voted on — and a radio group has no way to say the
+third, so it is two toggles that can both be off. And its verdict dot is not a control at all;
+it moved to `working-mark`, the colour the rest of the app already uses for "affirmed".
+
+**Five other guards fired, and every one of them was right.**
+
+Two were *floors* — the `toBeGreaterThan(N)` that stops a clause passing because its scan
+found nothing, which is §6.56's rule applied to the instrument. Removing the fills removed
+`text-action-label` from every screen and a hundred `rounded-pill`s with the hand-built pills
+that carried them, so both floors tripped. They are lowered, and lowered *past* the new count
+rather than to it: a floor trimmed to today's number fails on the next honest deletion and
+gets nudged again, which is a ratchet nobody reads. It is there to catch a scan that stopped
+matching, not to hold a total.
+
+`coreWiring` reported `SELECTED` as phone-only — correct, and the same documented lopsidedness
+as `BOX_RADIUS` and `PRESSED`: Tailwind compiles from source text, so the web writes the class
+out and `button.test.ts` holds the two spellings together.
+
+And `shape.test.ts` earned its keep in a way it was not written for. It reported `/watchlist`
+as two different screens, because the web's note Save had become a `Button` and the phone's was
+still a bare `Pressable` — which the shape scan does not count, `Pressable` being layout. A
+guard written to catch *"these two screens are not the same screen"* turns out to also catch
+*"you migrated one platform and not the other"*, which is the failure mode of every sprint in
+this design track. The phone's Save is a `Button` now.
+
+Eleven plants, eleven caught: a screen painting the fill again on each platform, a screen
+writing the label ink on each platform, a second tone starting to fill, `Choice` drawing chosen
+in the accent, both renderers dropping `selected`, both drawing it as a fill, and the two
+spellings of "on" coming apart.
+
+`*.tsbuildinfo` is gitignored now. `tsc -b` — which §6.99 established is the only honest way
+to typecheck this workspace — writes a build cache beside each tsconfig, and nothing had told
+git to leave it alone.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -7127,22 +7203,32 @@ and which single claim in this document could not be checked at all:
   specified and not built**: 222 `fontSize` literals, nine font faces nobody has shipped,
   and four guards (G6, G7, G8, G12) that cannot land until the sites do. Every other token
   in `core/src/tokens.ts` is now read by product code rather than only by a guard.
-- **Five of sixteen components exist, `Row` is finished, and the call-site guard is not
-  blocked on it any more — it is blocked on being three times the size anybody thought.**
-  `Button` (§6.93, §6.94), `Choice` (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row`
-  (§6.97, §6.99) is built, guarded and migrated at all ten implementations on both
-  platforms — twenty entries in `MIGRATED`, every screen's hand-built row styles deleted.
-  What blocks the guard now is arithmetic: the probe that reported eighteen bare controls
-  carrying their own box was truncating every element head at the first `>`, which every
-  arrow-function handler supplies, so it never reached the prop that decides. Properly
-  parsed, there are **fifty-seven**. Twenty-six of those paint the accent fill themselves
-  and are all `Button`'s primary tone or `Choice`'s selected state — a complete rule with
-  no exemptions, and the next sprint. The rest are surfaces with no component yet (the
-  emoji pad, the remote's device list, the drift banner, a switch row), and a component has
-  to exist before a guard can point at it. Two dismiss surfaces (RemoteDrawer's scrim,
-  CatchUp's backdrop) are not controls and have to be excluded by shape rather than by an
-  allowlist when the guard does land. The poster is the one holding `ratio` in
-  `coreWiring`'s exemption list.
+- **Five of sixteen components exist, `Row` is finished, and the guard that lands is the
+  narrow one that is actually complete.** `Button` (§6.93, §6.94, §6.100), `Choice`
+  (§6.95), `CrossOff` and `Key` (§6.96) are done; `Row` (§6.97, §6.99) is built, guarded
+  and migrated at all ten implementations on both platforms. §6.100 lands **the accent
+  fill belongs to `Button`'s primary tone and no screen paints it** — twenty-six call
+  sites migrated, zero exemptions, eleven plants caught.
+
+  The *wider* rule — no bare control carrying its own background, border or padding — is
+  still not landed, and the number is why. §6.99's probe truncated every element head at
+  the first `>`, which every arrow-function handler supplies; parsed properly there are
+  **fifty-seven**. The twenty-six that painted the fill are gone; what remains are
+  surfaces with no component yet — Watching Mode's emoji pad, the remote's device list,
+  the drift banner, `data.tsx`'s switch row — and a component has to exist before a guard
+  can point at it. Two dismiss surfaces (RemoteDrawer's scrim, CatchUp's backdrop) are not
+  controls and have to be excluded by shape rather than by an allowlist when it does land.
+  The poster is the one holding `ratio` in `coreWiring`'s exemption list.
+- **A contract field can be announced and never drawn, and nothing in this suite notices.**
+  `Button.selected` shipped in sprint 7. Both renderers set `aria-pressed` and
+  `accessibilityState.selected`; neither painted anything, for four sprints, across
+  Watching Mode's Hold, the calendar's notify toggle and both of ListenSync's microphone
+  controls. Every guard here reads what the source *says*, and the source said it
+  consistently. It was found by needing somewhere to put twenty-six accent fills and
+  discovering the somewhere did not exist. Nothing checks the general case: a prop that is
+  accepted, typed, forwarded to an accessibility attribute and never reaches a style is
+  invisible to source guards and to both smoke suites, which read names and sizes rather
+  than whether two states look different.
 - **Moving a control into a slot is a design change, and twice this sprint it was made
   without being decided.** Up Next's remaining count went into `tag` and had to shorten to
   `17 MORE` to fit — the unit dropped, the count turned back into the vague badge it was

@@ -156,5 +156,24 @@ export interface ButtonContract {
   selected?: boolean;
 }
 
+/**
+ * On, when a button is a toggle — and it is the same "on" a `Choice` draws.
+ *
+ * `selected` was in this contract from the start and both renderers announced it —
+ * `aria-pressed`, `accessibilityState.selected` — and neither *drew* it. A control whose
+ * state is spoken and not shown is a control that looks identical held and unheld, which
+ * is how Watching Mode's Hold button worked until sprint 15 came to migrate it.
+ *
+ * It reuses `CHOSEN` rather than inventing a second spelling. `choice.ts` argues the case
+ * at length and the argument does not change for a toggle: selection is a rule and a
+ * weight step, never a fill — two channels rather than colour alone, so it survives being
+ * read by somebody who cannot separate the two greys, and it keeps the app's one filled
+ * shape meaning "the thing on this screen worth pressing".
+ *
+ * Which is also why this is the sprint that could delete the accent fill from twenty-six
+ * call sites: half of them were fills standing in for exactly this.
+ */
+export { CHOSEN as SELECTED } from './choice.ts';
+
 /** Boxed tones are pills; `quiet` has no box, so this does not reach it. */
 export const BOX_RADIUS = radius.pill;

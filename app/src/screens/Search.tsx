@@ -196,13 +196,12 @@ function ResultRow({ result }: { result: SearchResult }) {
                 className="min-w-0 flex-1 rounded-none border border-stroke-signal px-3 py-1.5 text-sm outline-none placeholder:text-ink-secondary"
                 autoFocus
               />
-              <button
-                onClick={saveToWatchlist}
-                aria-label={`Save ${result.name} to your watchlist`}
-                className="rounded-pill bg-action-fill px-3 text-sm font-medium text-action-label"
-              >
-                Save
-              </button>
+              <Button
+                tone="primary"
+                label="Save"
+                name={`Save ${result.name} to your watchlist`}
+                onPress={saveToWatchlist}
+              />
             </div>
           ) : (
             /* Three actions, each naming its own row. The direction's "one action" is a

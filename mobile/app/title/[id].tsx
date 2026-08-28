@@ -168,17 +168,15 @@ export default function TitleScreen() {
                   style={styles.posterInput}
                   accessibilityLabel="Poster image URL"
                 />
-                <Pressable
+                <Button
+                  tone="primary"
+                  label="Save"
+                  name="Save this poster"
                   onPress={async () => {
                     await setPosterOverride(titleId, posterDraft.trim() || undefined);
                     setPosterDraft(undefined);
                   }}
-                  style={styles.posterSave}
-                  accessibilityRole="button"
-                  accessibilityLabel="Save this poster"
-                >
-                  <Text style={styles.posterSaveText}>Save</Text>
-                </Pressable>
+                />
                 <Pressable
                   onPress={() => setPosterDraft(undefined)}
                   hitSlop={8}
@@ -339,13 +337,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  posterSave: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-    backgroundColor: theme.actionFill,
-  },
-  posterSaveText: { color: theme.actionLabel, fontSize: 14, fontWeight: '600' },
   posterCancel: { color: theme.inkSecondary, fontSize: 14 },
   content: { padding: 16, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },

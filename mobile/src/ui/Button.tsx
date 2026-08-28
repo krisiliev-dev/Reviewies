@@ -1,7 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { BOX_RADIUS, BUSY, PRESSED, SIZE, TONE, type ButtonContract } from '@reviewies/core/ui/button';
+import {
+  BOX_RADIUS,
+  BUSY,
+  PRESSED,
+  SELECTED,
+  SIZE,
+  TONE,
+  type ButtonContract,
+} from '@reviewies/core/ui/button';
 import { border, radius, theme } from './theme';
 
 /**
@@ -44,6 +52,13 @@ export function Button({
   const fill = disabled ? shape.disabledFill : shape.fill;
   const stroke = disabled ? shape.disabledStroke : shape.stroke;
   const label_ = disabled ? shape.disabledLabel : shape.label;
+  // On is drawn, not only announced. `SELECTED` is `choice.ts`'s `CHOSEN`: a rule and a
+  // weight step, never a fill — the same "on" a radio draws, so the two controls do not
+  // spell the same state two ways, and so the one filled shape in the app keeps meaning
+  // "the thing worth pressing" rather than "the thing already chosen".
+  // Boxed tones only: `quiet` has no box, so it has no box's rule to thicken. Nothing asks
+  // for a quiet toggle today and the branch would be one nothing runs.
+  const on = !!selected && !disabled && tone !== 'quiet';
 
   return (
     <Pressable
@@ -60,8 +75,8 @@ export function Button({
           paddingVertical: metrics.paddingY,
           borderRadius: tone === 'quiet' ? radius.none : BOX_RADIUS,
           backgroundColor: fill ? theme[fill] : 'transparent',
-          borderWidth: stroke ? border.hairline : 0,
-          borderColor: stroke ? theme[stroke] : 'transparent',
+          borderWidth: on ? SELECTED.rule : stroke ? border.hairline : 0,
+          borderColor: on ? theme[SELECTED.colour] : stroke ? theme[stroke] : 'transparent',
         },
         // Instant, and therefore identical with Reduce Motion on. A thickening plus a
         // ground step, which is press feedback rather than animation.
@@ -76,7 +91,9 @@ export function Button({
           // From the table, not from this file. A single size here printed `inline` at
           // fifteen points where the web printed twelve, so a quiet control under a row
           // came out louder than the row's own words.
-          { fontSize: metrics.label, color: theme[label_] },
+          { fontSize: metrics.label, color: theme[on ? SELECTED.label.on : label_] },
+          // The second channel: the label steps up as well as the box gaining its rule.
+          on ? styles.on : null,
           shape.underline ? styles.underlined : null,
         ]}
       >
@@ -103,5 +120,6 @@ export function Button({
 const styles = StyleSheet.create({
   base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   label: { fontWeight: '600' },
+  on: { fontWeight: '700' },
   underlined: { textDecorationLine: 'underline' },
 });

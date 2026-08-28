@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
-import { BOX_RADIUS, BUSY, PRESSED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { BOX_RADIUS, BUSY, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { CHOSEN } from '@reviewies/core/ui/choice';
 import { border, color, radius, size } from '@reviewies/core/tokens';
 
 /**
@@ -130,6 +131,41 @@ describe('the button contract', () => {
     expect(PHONE, 'a font size hard-coded beside the one in the table').not.toMatch(
       /label: \{ fontSize:/,
     );
+  });
+
+  it('draws being on, rather than only announcing it', () => {
+    /*
+     * `selected` was in the contract from the start and both renderers announced it —
+     * `aria-pressed` on the web, `accessibilityState.selected` on the phone — and neither
+     * drew anything. A control whose state is spoken and not shown looks identical held
+     * and unheld, which is how Watching Mode's Hold button worked until the sprint that
+     * came to migrate it. Sprint 15 found it by needing somewhere to put twenty-six
+     * accent fills, half of which were fills standing in for exactly this.
+     *
+     * And it is `Choice`'s "on", not a second one. `choice.ts` argues it: a rule and a
+     * weight step, never a fill — two channels rather than colour alone, and the app's one
+     * filled shape keeps meaning "worth pressing" rather than "already chosen". §6.95 is
+     * what two spellings of one state costs.
+     */
+    expect(SELECTED).toBe(CHOSEN);
+    expect(SELECTED.colour).toBe('workingMark');
+    expect(SELECTED.label.on).toBe('ink');
+
+    // The phone reads the table. The web writes the classes out, for Tailwind's scanner,
+    // so this is the seam and it is checked rather than trusted.
+    expect(PHONE).toContain('SELECTED.rule');
+    expect(PHONE).toContain('theme[SELECTED.colour]');
+    expect(PHONE).toContain('SELECTED.label.on');
+    expect(WEB).toContain('border-working-mark');
+    expect(WEB).toContain('text-ink');
+    expect(WEB, 'a fill standing in for being on').not.toMatch(
+      /SELECTED_CLASS = '[^']*bg-/,
+    );
+
+    // And both apply it. A table read into a variable nothing renders is the shape this
+    // clause exists to catch.
+    expect(WEB).toMatch(/on \? SELECTED_CLASS : ''/);
+    expect(PHONE).toMatch(/borderWidth: on \?/);
   });
 
   it('never fades a disabled action, on either platform', () => {

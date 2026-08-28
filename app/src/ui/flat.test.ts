@@ -127,7 +127,12 @@ describe('the flat rule', () => {
       });
     }
     // A scan that matched nothing at all would report no offenders and look like success.
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(100);
+    //
+    // 99 after sprint 15, because every `rounded-pill` that was a hand-built accent
+    // button went into `Button`, which writes one. Set to 80 rather than 95: a floor
+    // trimmed to today's count fails on the next honest deletion and gets nudged again,
+    // and this is here to notice a scan that has stopped matching, not to hold a total.
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(80);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

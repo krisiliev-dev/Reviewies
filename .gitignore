@@ -11,3 +11,6 @@ coverage/
 
 # A mutation run that was killed outright leaves one of these behind.
 *.mutant-backup
+
+# `tsc -b` writes these beside each tsconfig; they are a build cache.
+*.tsbuildinfo

@@ -3,6 +3,7 @@ import { signIn, signOut, signUp } from '@reviewies/core/sync/auth';
 import { useSync } from '../sync/useSync';
 import { COPY } from '@reviewies/core/copy';
 import { retryRejectedWrites } from '@reviewies/core/sync/driver';
+import { Button } from '../ui/Button';
 
 /**
  * Account and sync controls.
@@ -76,9 +77,13 @@ export function AccountPanel() {
             placeholder="Password (8+ characters)"
             className="rounded-none border border-stroke-signal px-3 py-3 outline-none placeholder:text-ink-secondary"
           />
-          <button type="submit" className="rounded-pill bg-action-fill px-4 py-3 font-medium text-action-label">
-            {mode === 'in' ? 'Sign in' : 'Create account'}
-          </button>
+          <Button
+            submit
+            size="page"
+            tone="primary"
+            label={mode === 'in' ? 'Sign in' : 'Create account'}
+            name={mode === 'in' ? 'Sign in' : 'Create account'}
+          />
         </form>
 
         <button
@@ -137,15 +142,16 @@ export function AccountPanel() {
       )}
 
       <div className="mt-3 flex gap-2">
-        <button
-          onClick={() => void sync()}
+        <Button
+          tone="primary"
+          label={busy ? 'Syncing…' : 'Sync now'}
+          name="Sync now"
+          // The rule under the label rather than a spinner in place of it: `busy` keeps
+          // the word readable, which is what this call site worked around by hand.
+          busy={busy}
           disabled={busy}
-          aria-label="Sync now"
-          aria-busy={busy}
-          className="rounded-pill bg-action-fill px-4 py-2 font-medium text-action-label disabled:bg-ground-well disabled:text-ink-secondary"
-        >
-          {busy ? 'Syncing…' : 'Sync now'}
-        </button>
+          onPress={() => void sync()}
+        />
         <button
           onClick={() => void signOut()}
           aria-label="Sign out of your account"

@@ -42,6 +42,9 @@ const TONE_CLASS = {
  */
 const DISABLED_CLASS = 'border border-stroke-hairline bg-transparent text-ink-tertiary';
 
+/** `SELECTED.rule` in `border-tally`, `SELECTED.colour` in `working-mark`, and the weight. */
+const SELECTED_CLASS = 'border-tally border-working-mark font-semibold text-ink';
+
 const SIZE_CLASS = {
   page: 'min-h-12 px-5 py-3 text-base',
   row: 'min-h-11 px-4 py-2 text-sm',
@@ -63,11 +66,25 @@ export function Button({
   children,
 }: Props) {
   const boxed = tone !== 'quiet';
+  // On is drawn, not only announced. `aria-pressed` was here from the start and nothing
+  // ever painted it, so a toggle looked identical held and unheld. The spelling is
+  // `Choice`'s — `SELECTED` is its `CHOSEN` — because a rule and a weight step is how this
+  // app says "this one is on", and saying it twice two ways is how the density chips and
+  // the calendar's options ended up disagreeing (§6.95).
+  //
+  // Written out rather than interpolated from the table, for the reason at the top of this
+  // file: Tailwind's scanner reads source text — so `SELECTED` is not imported here, and
+  // `button.test.ts` holds the written form and the table to each other instead.
+  //
+  // Boxed tones only. `quiet` has no box, so it has no box's rule to thicken; nothing asks
+  // for a quiet toggle today and writing the branch anyway would be a branch nothing runs.
+  const on = selected && !disabled && boxed;
   const classes = [
     'inline-flex items-center justify-center gap-2 text-center font-medium',
     boxed ? 'rounded-pill' : '',
     SIZE_CLASS[size],
     disabled ? DISABLED_CLASS : TONE_CLASS[tone],
+    on ? SELECTED_CLASS : '',
     // Press is a thickening and a ground step, at 0ms. Never a transition, so the app is
     // identical with motion reduced and `motion.test.ts` has no ternary to find.
     disabled ? '' : 'active:border-2 active:bg-ground-raised',
