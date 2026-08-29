@@ -10311,6 +10311,91 @@ Three plants: the row opening on the five, a screen seeding its reveal from a li
 `false` instead of the rule, and the stars going resident behind a revealed offer. All
 three fail; all three restores pass.
 
+### 6.146 The screen could not have looked like anything else
+
+**#175, retracted as stated.** §6.138's read of the phone called the calendar *five
+identical rows of one show*: nine dates, nine rows, *Hollow Crown Saga* nine times, 540
+points of scroll to say "one show, weekly". That is what the photograph shows. It is not a
+design.
+
+## What the instrument could produce, measured
+
+`FixtureProvider.getEpisodes` generated every show's episodes weekly from **one** start
+shared by all of them — `Date.now() - 40 weeks`, written once for all four fixtures. A show
+therefore reached the future only by having more than forty episodes. One of four does.
+
+Run rather than reasoned, which is §6.142's rule:
+
+```
+UPCOMING WINDOW 60d: 9 rows across 9 dates
+distinct shows: 1
+dates carrying more than one row: 0
+kinds: {"regular":9}
+```
+
+So the calendar could not have shown two shows, could not have shown a date with two rows,
+and could not have shown a premiere or a finale — on the screen whose notification default
+is called **Premieres & finales**, whose data model has classified episodes into four kinds
+since it shipped, and whose `KIND_LABEL` draws a chip for three of them. **No design review
+has ever seen that chip.** The design track photographed this screen every sprint since the
+harness existed and judged the fixture.
+
+## Two files described one library and nothing compared them
+
+`core/src/metadata/fixtures.ts` knew when every episode aired. `design/library.mjs` knew how
+many were watched — `episodes - 3` per season, and nothing else. Neither knew the other
+existed, so the seed marked **93 episodes of Hollow Crown Saga watched when 41 had aired**:
+fifty-two watch records for episodes that do not exist yet, and those same episodes were the
+entire visible content of the calendar. The screen was listing as *upcoming* the episodes the
+seed said you had already watched.
+
+That is the drift `library.mjs`'s own header warns about — "a fixture copied is a fixture
+that drifts" — arriving by a door the header does not cover. It was not copied. It was
+*halved*, and the halves were never held against each other.
+
+## What the library is now
+
+A per-show `startedDaysAgo`, and a `watchedThrough` that cannot exceed what has aired. Three
+shows: one seventeen weeks in and part-way through its **third** season — the third winter
+its own synopsis has always claimed — one ninety-two weeks in with three episodes left, one
+long ended. Watch dates derived from air dates, so the history is a history rather than a
+spread of numbers.
+
+The calendar it produces, measured rather than asserted:
+
+```
+rows 11, dates 7, two-up 4, single 3
+{"finale":1,"premiere":1,"series-finale":2,"regular":7}
+```
+
+Two shows, four dates carrying two rows and three carrying one, and **every kind
+`classify` knows**. `app/src/wiring/designLibrary.test.ts` holds all of it, nine clauses,
+each named for a thing the screen is *for* rather than a number that happens to be true.
+Eight plants; the first — restoring the shared start date — fails five of the nine at once,
+which is the state that was shipping.
+
+## And then the screen, judged with an instrument that could answer
+
+The repeated show name was the fixture. With two shows interleaved the name is the thing
+that varies, and dropping it would be the bug. **Retracted.**
+
+What survived is the other half of the row, and it is not a fixture artefact at all:
+`S1E8 · Episode 8`. TMDB's name for an episode nobody has named is `Episode {n}` — most
+anime, every unaired episode, every show whose contributors have not reached it — so six
+screens printed the number, a separator, and the number again. The title page's spoken name
+said it three times: *"season 1 episode 8, Episode 8"*. A calendar is made **entirely** of
+unaired episodes, so this is the screen where it is always true.
+
+`core/src/ui/episode.ts` owns it: `episodeName` returns nothing when the name is only the
+number, `episodeCode` spells `S1E8` once for the six screens that each built it, and
+`episodeHeading` falls back to *Episode 8* rather than a bare `8.` — a row that lost its
+noun. `episode.test.ts` sweeps every screen for both halves and **found a tenth site on its
+first run**: the web's Up Next spoken name, which the by-hand pass had missed.
+
+**A fixture that cannot produce the case is a fixture that has an opinion about the
+screen.** Not a gap — an opinion, and one nobody wrote down or could see, because the
+instrument answered every time it was asked.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10494,6 +10579,20 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
+  calendar could not show two shows — and the way it was found was a screenshot that looked
+  wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the
+  calendar's: no fixture anywhere produces a **binge drop**, a whole season landing on one
+  date, which is how most of what people track is released now and a case the calendar's
+  grouping exists for. Nor a show on a break, nor two episodes of one show in a week. Every
+  one of those is a screen state the design track will keep judging as though it were a
+  design.
+- **The seed's coincidences are a choice nobody made.** The two airing shows share a weekday
+  because 49 and 644 are both multiples of seven, which is why three dates carry two rows. It
+  is realistic and it is an accident: shift either start by a day and the case disappears
+  from every screenshot, silently, and the only thing that would say so is the clause written
+  in §6.146. A fixture whose properties depend on arithmetic nobody stated is a fixture that
+  will lose them.
 - **§6.129's rule has three screens and nobody has swept for a fourth.** It was written
   for the comments composer, reached the calendar in §6.134 and the title page in §6.145 —
   each time because a *screenshot* showed the form beating the content, never because

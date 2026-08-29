@@ -412,10 +412,11 @@ const MUST_SHOW = {
   /*
    * **Both** rows, not one of them.
    *
-   * The seed has three shows. Hollow Crown Saga is legitimately not here — its next
-   * unwatched episode has not aired, which is the fact the settle test above is built
-   * around — so Up Next holds exactly two, deterministically: the air dates are weekly
-   * counting back from today and the CSV leaves each show a tail.
+   * The seed has three shows. Hollow Crown Saga is legitimately not here — every episode
+   * of it that has aired is watched, which is the fact the settle test above is built
+   * around — so Up Next holds exactly two, deterministically: `design/library.mjs` says
+   * which episodes each show has watched and `designLibrary.test.ts` holds that against
+   * when the provider says they aired.
    *
    * It has not been showing two. §6.137's design pass photographed this screen with only
    * The Long Dark on it, and the two runs either side of it had both — the harness waits
@@ -462,7 +463,21 @@ const MUST_SHOW = {
    * pass if a row exists, was saved through the app, and kept what was said about it.
    */
   '06-watchlist': /Ana recommended/,
-  '09-calendar': /Hollow Crown Saga/,
+  /*
+   * **Both** shows, for the reason `03-upnext` gives above and for one more.
+   *
+   * A clause naming one show passed for every design review there has ever been on a
+   * calendar that could only ever contain one show. Every fixture started on the same day,
+   * forty weeks back, so a show reached the future only by having more than forty episodes
+   * — one of four did. Nine dates, nine rows, one title repeated nine times, and not a
+   * premiere or a finale anywhere on the screen whose notification default is called
+   * *Premieres & finales*.
+   *
+   * The numbers are held in `app/src/wiring/designLibrary.test.ts`, which is where a
+   * property belongs. This is the part only the photograph can say: that the second show
+   * reached the screen. §6.146.
+   */
+  '09-calendar': /(?=[\s\S]*Hollow Crown Saga)(?=[\s\S]*The Long Dark)/,
 };
 
 /**

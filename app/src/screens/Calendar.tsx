@@ -26,6 +26,7 @@ import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
 import { Button } from '../ui/Button';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -223,15 +224,16 @@ export function Calendar() {
  * possible to write the next one the same way.
  */
 function Row({ entry }: { entry: UpcomingEntry }) {
-  const code = `S${entry.episode.season}E${entry.episode.number}`;
+  const code = episodeCode(entry.episode.season, entry.episode.number);
+  const named = episodeName(entry.episode.name, entry.episode.number);
   return (
     <BaseRow
       title={entry.seriesName}
       code={code}
-      meta={entry.episode.name}
+      meta={named}
       tag={KIND_LABEL[entry.kind]}
       open={{
-        name: `Open ${entry.seriesName}, ${code}, ${entry.episode.name}`,
+        name: [`Open ${entry.seriesName}`, code, named].filter(Boolean).join(', '),
         to: `/title/${encodeURIComponent(entry.seriesId)}`,
       }}
       lead={

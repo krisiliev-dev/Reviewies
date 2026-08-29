@@ -28,6 +28,7 @@ import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
+import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -234,11 +235,14 @@ function EpisodeRow({
   // shape `compose.ts` gave the comments composer and the calendar's panel.
   const [ratingOpen, setRating] = useState(RATING_OPEN);
 
-  const which = `season ${episode.season} episode ${episode.number}, ${episode.name}`;
+  const named = episodeName(episode.name, episode.number);
+  const which = [`season ${episode.season} episode ${episode.number}`, named]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <BaseRow
-      title={`${episode.number}. ${episode.name}`}
+      title={episodeHeading(episode.number, episode.name)}
       // The ink step and the stroke both come from `struck`, which the component takes
       // from `CrossOff` — this row spelled out its own `crossedOffText` before, and a row
       // free to spell its own is a row free to pick a different colour.

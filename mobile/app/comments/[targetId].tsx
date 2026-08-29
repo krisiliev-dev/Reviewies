@@ -25,6 +25,7 @@ import { Choice } from '../../src/ui/Choice';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 /**
  * Episode comments, sealed until you have watched the episode.
@@ -112,9 +113,13 @@ export default function CommentsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: episode ? `S${episode.season}E${episode.number}` : 'Talk' }} />
+      <Stack.Screen
+        options={{ title: episode ? episodeCode(episode.season, episode.number) : 'Talk' }}
+      />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {episode && <Text style={styles.episode}>{episode.name}</Text>}
+        {episode && episodeName(episode.name, episode.number) && (
+          <Text style={styles.episode}>{episodeName(episode.name, episode.number)}</Text>
+        )}
 
         {!syncConfigured() ? (
           <Note>

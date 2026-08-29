@@ -32,6 +32,7 @@ import { Section } from '../../src/ui/Section';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
+import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -251,11 +252,14 @@ function EpisodeRow({
     }
   }
 
-  const which = `season ${episode.season} episode ${episode.number}, ${episode.name}`;
+  const named = episodeName(episode.name, episode.number);
+  const which = [`season ${episode.season} episode ${episode.number}`, named]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <BaseRow
-      title={`${episode.number}. ${episode.name}`}
+      title={episodeHeading(episode.number, episode.name)}
       // The ink step and the stroke both come from `struck`, which the component takes
       // from `CrossOff` — this row spelled out its own `crossedOff` before, and a row free
       // to spell its own is a row free to pick a different colour.

@@ -30,6 +30,7 @@ import { text, type } from '@reviewies/core/tokens';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 /**
  * Watching Mode. The reason this app exists rather than another tracker.
@@ -164,7 +165,12 @@ export default function WatchingScreen() {
             </Text>
             {episode && (
               <Text numberOfLines={1} style={styles.episode}>
-                S{episode.season}E{episode.number} · {episode.name}
+                {[
+                  episodeCode(episode.season, episode.number),
+                  episodeName(episode.name, episode.number),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </Text>
             )}
           </View>

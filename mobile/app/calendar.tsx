@@ -32,6 +32,7 @@ import { Section } from '../src/ui/Section';
 import { Choice } from '../src/ui/Choice';
 import { Note } from '../src/ui/Note';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -217,8 +218,8 @@ export default function CalendarScreen() {
               <Row
                 key={entry.episode.id}
                 title={entry.seriesName}
-                code={`S${entry.episode.season}E${entry.episode.number}`}
-                meta={entry.episode.name}
+                code={episodeCode(entry.episode.season, entry.episode.number)}
+                meta={episodeName(entry.episode.name, entry.episode.number)}
                 tag={KIND_LABEL[entry.kind]}
                 lead={
                   <Poster
@@ -227,7 +228,13 @@ export default function CalendarScreen() {
                   />
                 }
                 open={{
-                  name: `Open ${entry.seriesName}, S${entry.episode.season}E${entry.episode.number}, ${entry.episode.name}`,
+                  name: [
+                    `Open ${entry.seriesName}`,
+                    episodeCode(entry.episode.season, entry.episode.number),
+                    episodeName(entry.episode.name, entry.episode.number),
+                  ]
+                    .filter(Boolean)
+                    .join(', '),
                   to: `/title/${encodeURIComponent(entry.seriesId)}`,
                 }}
               />

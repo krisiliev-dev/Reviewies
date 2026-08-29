@@ -19,12 +19,62 @@
  * review looking at the empty state, which is exactly the failure this file's header warns
  * about arriving by a different door. An import only fills a library if the provider it is
  * matched against has heard of what is in it.
- *
- * Two seasons of the two multi-season fixtures and a run of the long one: enough rows that
- * a list is judged as a list, and enough left unwatched that Up Next has something in it.
  */
+
 /**
- * When this library was watched, relative to today rather than fixed in 2024.
+ * The schedule, mirrored from `core/src/metadata/fixtures.ts`.
+ *
+ * This file used to say only how *many* episodes of each show were watched — `episodes - 3`
+ * — and knew nothing about when any of them aired. The provider knew when they aired and
+ * nothing about what was watched. Two descriptions of one library, in two files, and
+ * nothing compared them: the seed marked ninety-three episodes of Hollow Crown Saga watched
+ * when forty-one had aired, so fifty-two watch records were for episodes that do not exist
+ * yet, and the calendar's whole visible content was those same unaired-but-watched
+ * episodes. §6.146.
+ *
+ * `app/src/wiring/designLibrary.test.ts` holds this against the provider — the numbers
+ * below are a mirror, and a mirror nothing checks is the drift this file's own header
+ * warns about.
+ */
+export const SCHEDULE = [
+  {
+    name: 'The Long Dark',
+    seasons: [8, 10, 6],
+    startedDaysAgo: 119,
+    /**
+     * All of season 1 and four of season 2, of the eighteen episodes that have aired.
+     *
+     * Six aired episodes left unwatched is what puts this show in Up Next, and it puts
+     * the row mid-season rather than on a premiere. It cannot exceed eighteen without
+     * claiming to have watched something unaired.
+     */
+    watchedThrough: 12,
+  },
+  {
+    name: 'Kitchen Nightshift',
+    seasons: [12],
+    startedDaysAgo: 280,
+    /** Over long ago and three episodes behind: the other Up Next row. */
+    watchedThrough: 9,
+  },
+  {
+    name: 'Hollow Crown Saga',
+    seasons: [96],
+    startedDaysAgo: 644,
+    /**
+     * Every episode that has aired, which is what keeps this show *out* of Up Next — the
+     * fact `capture.mjs`'s settle test is built around. Its last three episodes are the
+     * calendar's, ending in a series finale three weeks out.
+     */
+    watchedThrough: 93,
+  },
+];
+
+/** Weekly from the show's start, the same arithmetic `FixtureProvider.getEpisodes` does. */
+export const airedDaysAgo = (show, index) => show.startedDaysAgo - (index - 1) * 7;
+
+/**
+ * When an episode was watched: after it aired, not before.
  *
  * The dates used to be a hard-coded `2024-03-nn`, written when that was recent. Absolute
  * dates in a fixture rot: every day the clock moves, the seeded history sits further in
@@ -34,14 +84,13 @@
  * §6.104's shape again: an instrument answering a question it was not in a position to
  * answer.
  *
- * What it should represent is a real migrant. TV Time shut down on 15 July 2026, so
- * somebody importing has history that ends a few weeks before today and runs back over
- * years. `TAIL_DAYS` is that gap; the per-show offsets spread the three shows across
- * about eighteen months, so more than one year chip exists and Year in Review has
- * something to review. Episodes inside a season are consecutive days, which is what
- * gives the screen a streak to name.
+ * Then they were spread by hand — a per-show offset in days, unrelated to when anything
+ * aired — which fixed the rot and left the incoherence. Derived from the air date now, so
+ * a migrant's history is a history: episodes watched a day or two after they went out,
+ * running back over the twenty-one months the oldest show has been on.
  */
-export const TAIL_DAYS = 44;
+const LAG = (index) => index % 3;
+
 const dayString = (daysAgo) => {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
@@ -50,22 +99,16 @@ const dayString = (daysAgo) => {
 
 const CSV = (() => {
   const rows = ['show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id'];
-  // Season lengths as `core/src/metadata/fixtures.ts` declares them, so nothing is
-  // imported that the provider will then say does not exist.
-  const shows = [
-    { name: 'The Long Dark', seasons: [8, 10] },
-    { name: 'Kitchen Nightshift', seasons: [12] },
-    { name: 'Hollow Crown Saga', seasons: [96] },
-  ];
-  shows.forEach((show, i) => {
+  SCHEDULE.forEach((show, i) => {
+    let index = 0;
     show.seasons.forEach((episodes, s) => {
-      // Not the whole season: leaving the tail unwatched is what gives Up Next a row and
-      // the title page something to cross off.
-      const watched = Math.max(1, episodes - 3);
-      for (let n = 1; n <= watched; n++) {
-        const d = dayString(TAIL_DAYS + i * 200 + s * 60 + (watched - n));
+      for (let n = 1; n <= episodes; n++) {
+        index++;
+        if (index > show.watchedThrough) continue;
+        const aired = airedDaysAgo(show, index);
+        const seen = dayString(Math.max(0, aired - LAG(index)));
         rows.push(
-          `${show.name},${s + 1},${n},Episode ${n},True,${d} 20:00:00,1,${d},${100 + i},${1000 + i * 200 + s * 100 + n}`,
+          `${show.name},${s + 1},${n},Episode ${n},True,${seen} 20:00:00,1,${dayString(aired)},${100 + i},${1000 + i * 200 + s * 100 + n}`,
         );
       }
     });

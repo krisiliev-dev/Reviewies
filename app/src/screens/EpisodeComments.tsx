@@ -21,6 +21,7 @@ import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 export function EpisodeComments() {
   const { targetId = '' } = useParams();
@@ -104,7 +105,9 @@ export function EpisodeComments() {
       <Masthead level="sub">{series?.name ?? 'Comments'}</Masthead>
       {episode && (
         <Note>
-          S{episode.season}E{episode.number} · {episode.name}
+          {[episodeCode(episode.season, episode.number), episodeName(episode.name, episode.number)]
+            .filter(Boolean)
+            .join(' · ')}
         </Note>
       )}
 

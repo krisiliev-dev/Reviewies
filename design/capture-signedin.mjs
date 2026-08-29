@@ -117,7 +117,13 @@ await open.click();
 
 // A `link`, and the mark below is a `checkbox` — the roles `Row`'s `open` and
 // `CrossOff` actually render, rather than the ones a reader would guess.
-const talkTo = page.getByRole('link', { name: /^Comments on season 1 episode 1, /i });
+//
+// Anchored at both ends. It used to require a comma and something after it, which was the
+// episode's name — and the fixture's name for episode 1 is `Episode 1`, so the clause was
+// pinned to the number being said twice. §6.146 stopped saying it and this clause is what
+// noticed, which is the right way round: a harness that fails when the product improves is
+// a harness naming the accident.
+const talkTo = page.getByRole('link', { name: /^Comments on season 1 episode 1$/i });
 await talkTo.waitFor({ timeout: 20000 });
 await talkTo.click();
 await page.waitForTimeout(2000);
@@ -127,7 +133,7 @@ if (!/Hidden until you watch it/i.test(await page.locator('body').innerText())) 
 }
 
 await page.goBack();
-const mark = page.getByRole('checkbox', { name: /^Mark season 1 episode 1, /i });
+const mark = page.getByRole('checkbox', { name: /^Mark season 1 episode 1 watched$/i });
 await mark.waitFor({ timeout: 20000 });
 await mark.click();
 // The server's side of the gate opens because the journey watched it, not because a
@@ -135,7 +141,7 @@ await mark.click();
 serverAdmits(EPISODE_ID);
 await page.waitForTimeout(1000);
 
-await page.getByRole('link', { name: /^Comments on season 1 episode 1, /i }).click();
+await page.getByRole('link', { name: /^Comments on season 1 episode 1$/i }).click();
 await page.waitForTimeout(2500);
 await shot('20-comments-in');
 /*

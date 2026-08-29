@@ -22,6 +22,20 @@ interface FixtureShow {
   runtime?: number;
   /** Ended shows exercise the auto-complete path; the others must not trigger it. */
   ended?: boolean;
+  /**
+   * When episode 1 aired, in days before now. Weekly from there, across seasons.
+   *
+   * Every show used to start on the same day — `Date.now() - 40 weeks`, written once for
+   * all of them — with the consequence that a show only reached the future if it had more
+   * than forty episodes. One of these four does, so the calendar could only ever show one
+   * show, one row per date, and not a single premiere or finale: the screen whose default
+   * notification setting is called *Premieres & finales* had never been photographed with
+   * either on it. §6.146.
+   *
+   * Per show, so the library is a library: one show finishing in three weeks, one airing
+   * now with a season boundary just ahead, one long since ended.
+   */
+  startedDaysAgo: number;
 }
 
 const FIXTURES: FixtureShow[] = [
@@ -34,7 +48,15 @@ const FIXTURES: FixtureShow[] = [
     seasons: [
       { episodes: 8, runtime: 52 },
       { episodes: 10, runtime: 55 },
+      // Three winters, as the line above has always said. The third is the one still
+      // going out: two seasons behind it are fully aired, which is what a catch-up sheet
+      // needs to have a season step at all, and the boundary between them is inside the
+      // calendar's sixty days — today's season finale, next week's premiere, a series
+      // finale six weeks out. All four kinds `classify` knows, on the screen that draws
+      // a chip for three of them.
+      { episodes: 6, runtime: 55 },
     ],
+    startedDaysAgo: 119,
   },
   {
     id: 2,
@@ -44,6 +66,9 @@ const FIXTURES: FixtureShow[] = [
     overview: 'A half-hour comedy about the staff of an all-night diner.',
     seasons: [{ episodes: 12, runtime: 22 }],
     ended: true,
+    // Long over. An ended show has nothing upcoming, which is a case the calendar has to
+    // be right about too — it must not appear.
+    startedDaysAgo: 280,
   },
   {
     id: 3,
@@ -53,6 +78,11 @@ const FIXTURES: FixtureShow[] = [
     // One long season on purpose: this is how TMDB renders many long-running anime.
     overview: 'A long-running animated epic with continuous episode numbering.',
     seasons: [{ episodes: 96, runtime: 24 }],
+    // Ninety-two weeks in, three episodes left. The last of them is a series finale inside
+    // the window, and its weekday matches The Long Dark's, so three dates carry two rows —
+    // which is the whole reason the calendar groups by day and had never once been shown
+    // doing it.
+    startedDaysAgo: 644,
   },
   {
     id: 4,
@@ -61,6 +91,9 @@ const FIXTURES: FixtureShow[] = [
     year: 2024,
     overview: 'Two estranged siblings return to their father’s fishing village.',
     runtime: 118,
+    // A film has no episodes, so this is never read. Required rather than optional so the
+    // next fixture cannot be added without deciding when it aired.
+    startedDaysAgo: 280,
   },
 ];
 
@@ -102,9 +135,10 @@ export class FixtureProvider implements MetadataProvider {
     if (!f?.seasons) return [];
 
     const out: CachedEpisode[] = [];
-    // Weekly episodes counting back from today, so most have aired and the tail has not.
-    // That exercises the "don't offer unaired episodes" rule in Up Next.
-    const start = Date.now() - 40 * 7 * 24 * 60 * 60 * 1000;
+    // Weekly from the show's own start date, so most have aired and the tail has not. That
+    // exercises the "don't offer unaired episodes" rule in Up Next — and, since the start
+    // is per show rather than shared, it is what lets more than one show be airing at once.
+    const start = Date.now() - f.startedDaysAgo * 24 * 60 * 60 * 1000;
     let n = 0;
 
     f.seasons.forEach((season, si) => {

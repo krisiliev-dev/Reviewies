@@ -54,6 +54,35 @@ describe('catching up without being spoiled', () => {
     );
   });
 
+  it('offers a season step only when more than one season has aired', async () => {
+    /*
+     * `airedSeasonSizes`, not `seasons`. A show whose next season has been announced but
+     * not broadcast has one season to catch up on, and a step asking which of two is a
+     * step with one answer.
+     *
+     * Nothing asserted this until the fixture changed. `app/smoke.mjs` drove the season
+     * step and it worked because every fixture show was fully aired — so the suite was
+     * covering "this show happens to have two aired seasons", not the rule. §6.146.
+     */
+    await db.episodes.bulkPut([
+      {
+        id: 'tmdb:ep:3',
+        seriesId: 'tmdb:tv:1',
+        season: 2,
+        number: 1,
+        name: 'Next Year',
+        airDate: '2999-01-01',
+        fetchedAt: Date.now(),
+      },
+    ]);
+    render(<CatchUp seriesId="tmdb:tv:1" seriesName="A Show" onDone={() => {}} />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Last episode you watched in season 1: 2/)).toBeTruthy(),
+    );
+    expect(screen.queryByLabelText(/Season: 2/)).toBeNull();
+  });
+
   it('shows no episode name, synopsis or air date anywhere on it', async () => {
     const { container } = render(
       <CatchUp seriesId="tmdb:tv:1" seriesName="A Show" onDone={() => {}} />,

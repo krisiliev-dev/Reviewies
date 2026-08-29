@@ -23,6 +23,7 @@ import { CrossOff } from '../ui/CrossOff';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -276,13 +277,14 @@ function UpNextRow({
     setMarkedId(undefined);
   }
 
-  const code = `S${episode.season}E${episode.number}`;
+  const code = episodeCode(episode.season, episode.number);
+  const named = episodeName(episode.name, episode.number);
 
   return (
     <BaseRow
       title={entry.seriesName}
       code={code}
-      meta={episode.name}
+      meta={named}
       // A count, not a vague "NEW" badge — the most repeated complaint on Trakt's roadmap.
       // In `count` rather than `tag`: this was `17 MORE` for one sprint, and a number
       // whose unit has been shortened away to fit a pill is the badge it was replacing.
@@ -293,7 +295,7 @@ function UpNextRow({
       }
       open={{
         // The poster used to be the only target and the words beside it were not one.
-        name: `Open ${entry.seriesName}, ${code}, ${episode.name}`,
+        name: [`Open ${entry.seriesName}`, code, named].filter(Boolean).join(', '),
         to: `/title/${encodeURIComponent(entry.seriesId)}`,
       }}
       lead={

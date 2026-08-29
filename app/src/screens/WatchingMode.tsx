@@ -26,6 +26,7 @@ import {
   DEFAULT_REACTION_DENSITY,
   REACTION_DENSITY_CHOICES,
 } from '@reviewies/core/watching/reactions';
+import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
 
 /**
  * Watching Mode — timestamped reactions to moments, on a second screen.
@@ -216,7 +217,9 @@ export function WatchingMode() {
           <p className="line-clamp-2 text-s14 font-title font-semibold">{series?.name ?? 'Watching'}</p>
           {episode && (
             <Note level="footnote" className="line-clamp-2">
-              S{episode.season}E{episode.number} · {episode.name}
+              {[episodeCode(episode.season, episode.number), episodeName(episode.name, episode.number)]
+                .filter(Boolean)
+                .join(' · ')}
             </Note>
           )}
         </div>
