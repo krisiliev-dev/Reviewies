@@ -494,6 +494,21 @@ export const COPY = {
      * stayed that way until somebody read the excuse back. §6.59.
      */
     listFailed: 'Could not load these just now. Nothing has changed — try again.',
+    /**
+     * The two empty social graphs, which were four literals until §6.162.
+     *
+     * `<PersonList empty="Nobody yet. Search above to find someone." />` was typed into
+     * `app/src/screens/People.tsx` and again into `mobile/app/people.tsx`, and `empty="Nobody
+     * yet."` twice more beside it. §6.98 gave the words one owner and `copy.test.ts` compares
+     * what the two platforms say — which is why these never showed up: the four literals
+     * agreed, by hand, for as long as nobody edited one of them. Found by enumerating the
+     * empty states rather than by the guard, which is the point of enumerating them.
+     *
+     * Two sentences rather than one because they are two claims. Following is empty and there
+     * is something you can do about it; followers is empty and there is not.
+     */
+    followingEmpty: 'Nobody yet. Search above to find someone.',
+    followersEmpty: 'Nobody yet.',
     signInToFollow: (where: string) =>
       `Sign in under ${where} to follow people. Your history stays on this device either way.`,
   },

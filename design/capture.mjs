@@ -98,10 +98,81 @@ await page.goto('http://localhost:4200/');
 await page.waitForTimeout(2500);
 await shot('01-first-run');
 
+/*
+ * The empty app, before anything is put in it. §6.162.
+ *
+ * This pass imports a full library on its second screen and never comes back, and so does
+ * every other pass in this directory — so thirty-odd sprints of design review have looked at
+ * a populated app and nothing else. `core/src/ui/emptyStates.ts` is the register of what that
+ * missed; these four are the ones reachable by simply looking before the import.
+ *
+ * They are numbered `00-` rather than appended, because they come **before** `01-first-run`
+ * in the life of the app and the numbers in this directory are read as an order. That breaks
+ * the rule §6.130 wrote about the Watching Mode shots — "the numbers are identity, not order"
+ * — in the one direction it can be broken safely: nothing in the record cites a `00-` name,
+ * because none existed until now.
+ *
+ * Waited on by their own sentence rather than by a clock, which is the rule §6.98, §6.102 and
+ * §6.161 have each paid for separately. An empty screen and a screen that has not loaded look
+ * identical, and this is the pass whose whole job is telling those apart.
+ */
+/*
+ * Objects rather than tuples, and that is not a style choice.
+ *
+ * `everyWorkspaceRuns.test.ts` ratchets this file's `routes` table by counting lines that
+ * start `  ['<digit>` — and a three-tuple here starting `'00-…'` counts as a route. Two
+ * different lists under one floor means deleting three routes can be hidden by adding three
+ * of these. Written this way the two are countable apart, and both are counted.
+ */
+const EMPTY_FIRST = [
+  { name: '00-watchlist-empty', path: '/watchlist', want: 'Nothing saved yet' },
+  { name: '00-calendar-empty', path: '/calendar', want: 'Nothing airing in the next two months' },
+  { name: '00-stats-empty', path: '/stats', want: 'Nothing watched in this period yet' },
+];
+for (const { name, path, want } of EMPTY_FIRST) {
+  await page.goto(`http://localhost:4200${path}`);
+  for (let i = 0; i < 20; i++) {
+    if ((await page.locator('body').innerText()).includes(want)) break;
+    await page.waitForTimeout(400);
+  }
+  await shoot(page, { out: OUT, name, mustContain: want, problems: unshot, scrolls, settle: 1200 });
+}
+await page.goto('http://localhost:4200/');
+await page.waitForTimeout(1500);
+
 // Seed a real library the way somebody actually would.
 page.on('filechooser', (c) =>
   c.setFiles({ name: 'episodes.csv', mimeType: 'text/csv', buffer: Buffer.from(CSV) }).catch(() => {}));
 await page.getByRole('button', { name: /Import from TV Time/i }).click();
+
+/*
+ * The import while it is running — the sentence §6.161 spent a sprint on and nobody had seen.
+ *
+ * `stillImporting` is up for about four seconds on this fixture, which is long enough to
+ * photograph and short enough that a fixed wait would be a coin toss. So this waits on the
+ * sentence and gives up saying which one it wanted, rather than filing whatever was on screen.
+ * §6.161's own lesson, applied from the other side: a shot of a transient state is a race
+ * unless the condition is the state itself.
+ */
+let reading = false;
+for (let i = 0; i < 40 && !reading; i++) {
+  reading = (await page.locator('body').innerText()).includes('Still reading');
+  if (!reading) await page.waitForTimeout(150);
+}
+if (reading) {
+  await shoot(page, {
+    out: OUT,
+    name: '02a-import-reading',
+    mustContain: 'Still reading',
+    problems: unshot,
+    scrolls,
+  });
+} else {
+  unshot.push(
+    `02a-import-reading: the import never said "Still reading", so the state is unphotographed — it said: ${(await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 140)}`,
+  );
+}
+
 for (let i = 0; i < 30; i++) {
   await page.waitForTimeout(500);
   const b = await page.locator('body').innerText();

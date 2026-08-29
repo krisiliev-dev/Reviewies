@@ -83,7 +83,14 @@ export async function shoot(page, { out, name, mustContain, problems, scrolls, s
 
   if (mustContain) {
     const body = await page.locator('body').innerText();
-    if (!body.includes(mustContain)) problems.push(`${name}: nothing on it says "${mustContain}"`);
+    // What it said instead, not only what it did not say. §6.162: the first run of the
+    // empty-state shots reported `00-discover-empty: nothing on it says "Nothing new to
+    // suggest yet"` and left the next question — *then what is on it?* — to a second run.
+    if (!body.includes(mustContain)) {
+      problems.push(
+        `${name}: nothing on it says "${mustContain}" — it says: ${body.replace(/\s+/g, ' ').slice(0, 140)}`,
+      );
+    }
   }
 
   const overflow = await overflowOf(page);

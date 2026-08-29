@@ -95,7 +95,7 @@ export function People() {
       <PersonList
         heading="Following"
         people={following}
-        empty="Nobody yet. Search above to find someone."
+        empty={COPY.people.followingEmpty}
         action={(p) => ({ label: 'Unfollow', run: () => unfollow(p.id) })}
         onChanged={load}
       />
@@ -105,7 +105,7 @@ export function People() {
       <PersonList
         heading="Followers"
         people={followers}
-        empty="Nobody yet."
+        empty={COPY.people.followersEmpty}
         action={(p) =>
           following.some((f) => f.id === p.id)
             ? undefined

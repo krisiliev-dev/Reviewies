@@ -86,8 +86,8 @@ describe('the real-data pass', () => {
     expect(source, 'the pass gives its shots nothing to look for').toMatch(
       /shoot\(page, \{[^)]*mustContain/,
     );
-    expect(read('design/shoot.mjs'), 'the shot does not check it reached anything').toContain(
-      'nothing on it says',
+    expect(read('design/shoot.mjs'), 'the shot does not check it reached anything').toMatch(
+      /problems\.push\(\s*`\$\{name\}: nothing on it says/,
     );
     expect(source, 'the pass cannot fail').toContain('process.exitCode = 1');
     // And the server says which answer was missing, rather than 404ing silently.

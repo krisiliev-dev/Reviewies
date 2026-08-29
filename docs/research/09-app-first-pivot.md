@@ -11628,6 +11628,98 @@ there is no upper edge to fall off — but its lower edge is a constant of the s
 six milliseconds above, and nothing says so if the debounce ever outgrows it. Left as it is
 and written down here rather than changed on suspicion.
 
+### 6.162 The empty app, which nobody had ever looked at
+
+**#198.** §6.161 spent a whole sprint arguing about two sentences and finished without
+noticing that **no photograph in this repository shows either of them**.
+`design/screens/02-import-done.png` is the panel *after* the import lands. Up Next has three
+empty states and the design record held none.
+
+That is the other half of §6.157's hole. `reveals.ts` registers the states behind a control,
+because the product deliberately made them. The states behind *data* are the ones nobody
+makes on purpose — a screen is empty because the person is new, or has watched everything, or
+picked a period with nothing in it — and every capture pass in `design/` imports a full
+library on its second screen and never comes back. Thirty-odd sprints of design review have
+looked at a populated app and nothing else.
+
+## The register, and what enumerating found before any photograph was taken
+
+`core/src/ui/emptyStates.ts` lists fourteen: the `COPY` path that owns the sentence, the two
+screens that render it, what it tells somebody, and the shot — **or `null` with a reason**,
+because "no shot exists" and "no shot is possible" look identical in a directory listing and
+§6.146 is the rule that they must not.
+
+Writing it down found a defect the guards could not see. `<PersonList empty="Nobody yet.
+Search above to find someone." />` was typed into `app/src/screens/People.tsx` and again into
+`mobile/app/people.tsx`, with `empty="Nobody yet."` twice more beside it — **four literal
+sentences outside `copy.ts`**, five sprints after §6.98 gave the words one owner.
+`copy.test.ts` could not see them because it compares what the two platforms *say*, and four
+literals that agree by hand say the same thing. They are `people.followingEmpty` and
+`people.followersEmpty` now.
+
+## Four states photographed for the first time
+
+`00-watchlist-empty`, `00-calendar-empty`, `00-stats-empty` — taken before the import rather
+than after it, which is the whole trick — and `02a-import-reading`, the §6.127 working state,
+waited on **by its sentence** rather than by a clock. §6.161 had just paid for that rule from
+the other side.
+
+Numbered `00-` rather than appended. That breaks §6.130's *"the numbers are identity, not
+order"* in the one direction it can be broken safely: nothing in the record cites a `00-`
+name, because none existed.
+
+## And what the first photograph showed
+
+`02a-import-reading.png` is one sentence — *"Still reading your TV Time export. Your shows
+appear as they land."* — under a **filled primary button reading "Find something to watch"**.
+The app is carrying somebody's history across and the loudest thing on the screen invites
+them to leave.
+
+First run gets this right: there, searching is explicitly the alternative to importing and is
+drawn as the secondary. Here one `Button` served all three empty states and the loudest tone
+won by default. It is `tone={importing ? 'secondary' : 'primary'}` on both platforms now —
+not removed, because the screen would be a dead end without it, but no longer the offer.
+
+That is what the sprint was for. A state nobody photographs is a state nobody judges.
+
+## Two states the fixture cannot produce, measured rather than assumed
+
+Both were attempted, and both taught something:
+
+- **`discover.empty` is not reachable by an empty library.** The pass photographed
+  `Popular right now` instead — Discover falls back to the provider's popular list, so the
+  sentence needs `recommend()` to return *nothing*, which means a library where everything
+  suggestable is already watched. The assumption in the register's first draft was simply
+  wrong, and the shot said so by name.
+- **`upNext.matchingImport` is over before a navigation can reach it.** Arriving at Up Next
+  after the import, the screen already read *"Matching… 0 of 0"* over a full list: the fixture
+  provider answers instantly, so three imported shows match before the pass can get there.
+  §6.146 — a fixture that cannot produce the case has an opinion about the screen.
+
+Both were caught because `shoot`'s needle now reports **what the screen said instead**, not
+only what it failed to say. The first run reported `nothing on it says "Nothing new to
+suggest yet"` and left the next question to a second run; it now carries 140 characters of
+the body, and one run answered both.
+
+## The clause
+
+`app/src/ui/emptyStates.test.ts`, shaped like `reveals.test.ts` — five cases, five plants,
+needle counted before and after:
+
+| plant | red |
+|---|---|
+| a new `searchEmpty` in `copy.ts` that nobody registered | *has no empty state in copy.ts that the register has never heard of* |
+| `empty="Nobody yet."` put back into `People.tsx` | *is registered with the words it says* · *has no empty state written into a screen* |
+| a registered shot renamed out of `capture.mjs` | *says who has looked at it, or what stands in the way* |
+| an unphotographed state whose reason is `'not sure'` | the same |
+| an excuse for a `COPY` path that no longer exists | *keeps no excuse for a sentence that no longer exists* |
+
+The third case is the one that matters, as it was for reveals: a register somebody has to
+remember to add to goes stale the first sprint anybody is busy. It sweeps `copy.ts` for keys
+shaped like an absence — twelve of them — and fails on anything neither registered nor
+excused. The fourth case is the §6.146 requirement written as a type: `shot: null` needs a
+`why`, and a `why` under sixty characters is not one.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12437,17 +12529,20 @@ and which single claim in this document could not be checked at all:
   it the clause fails saying the app went quiet. Left alone rather than changed on suspicion,
   which is the same judgement §6.161 recorded for it.
 
-- **What is *not* a second state anywhere.** §6.158 enumerated ten reveals and §6.160 gave
-  them one implementation, so the states behind a control are photographed and guarded. The
-  states behind *data* are not enumerated at all: an empty list against a full one, a form
-  mid-entry, a failed write outside `app/failures.mjs`. `core/src/ui/reveals.ts` is a list of
-  what a press opens; nothing is a list of what a screen looks like with nothing in it.
+- ~~**What is *not* a second state anywhere.**~~ **Enumerated in §6.162** —
+  `core/src/ui/emptyStates.ts` holds fourteen, `emptyStates.test.ts` sweeps `copy.ts` for
+  anything unregistered, and four of them are photographed for the first time. What remains
+  open is narrower and is written into the register itself: **nine of the fourteen have no
+  photograph**, each with the reason beside it. Two of those reasons were measured this sprint
+  and are the interesting kind — Discover is not empty on an empty library, and the matching
+  state is over before a navigation can reach it against the fixture provider. Both need a
+  second seeded library rather than a second walk, and until one exists nine states of this
+  product have never been looked at.
 
-  §6.161 walked into the sharpest instance of this by accident. Up Next has **three** empty
-  states — `stillImporting`, `matchingImport` and `allCaughtUp` — and the design record holds
-  a photograph of none of them. `02-import-done.png` is the *landed* panel, taken after all
-  three have passed. A whole sprint was spent on checks about two sentences nobody has ever
-  seen rendered, and the only reason their wording is trusted is that `copy.ts` owns it.
+  Still entirely unregistered: a form mid-entry, and a failed write outside
+  `app/failures.mjs`. The register is about absence; those are about states of a *control*,
+  and `reveals.ts`'s `NOT_A_REVEAL` names them as in-flight without claiming anybody has seen
+  them.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column

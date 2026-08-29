@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 922, app: 615, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 922, app: 620, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -238,6 +238,17 @@ describe('every workspace', () => {
      * control that opens something no photograph had ever shown.
      */
     'design/capture.mjs#reveals': { pattern: /reveal\(page, \{/g, least: 5 },
+    /*
+     * And the empty app, which is neither a route nor a reveal. §6.162.
+     *
+     * These three are shot **before** the import, on a library with nothing in it — the
+     * states thirty sprints of design review never saw, because every pass fills the app on
+     * its second screen and never goes back. They are counted separately from the routes
+     * above on purpose: the routes pattern matches a line starting `  ['<digit>`, which a
+     * `['00-…']` tuple satisfies, so one floor over two lists would let three deleted routes
+     * hide behind three added empties. `EMPTY_FIRST` is objects for exactly that reason.
+     */
+    'design/capture.mjs#empty': { pattern: /name: '00-/g, least: 3 },
     'design/capture-signedin.mjs#reveals': { pattern: /^\s*await press\(/gm, least: 3 },
     /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
