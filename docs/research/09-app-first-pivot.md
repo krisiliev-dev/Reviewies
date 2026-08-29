@@ -10963,6 +10963,96 @@ representative of closing the app.
   committed green, which means it was committed without the app's test typecheck being run
   after the last edit to it.
 
+### 6.155 The pair that comes apart
+
+**#192.** §6.154 found a torn write by accident. §6.152 found the window it lives in by
+accident before that. Two accidents in three sprints is a hole in the method, so this
+sprint went looking on purpose for the shape: **more than one write, started by a person,
+not awaited by the screen that started it, and read back by something that cannot tell a
+prefix from a whole.**
+
+## What the shape actually is here
+
+Every syncable change in this product is a pair. Put the row where the screen reads it,
+then queue it for upload:
+
+```ts
+await db.watches.add(event);
+await enqueue('watches', event);
+```
+
+Thirteen sites, all written that way, none of them holding the two together. And the
+*order* is deliberate and correct — the local write goes first so the interface never
+waits on the queue, which is the whole premise of a local-first app.
+
+That ordering is what makes losing the second half dangerous rather than annoying:
+
+- Lose **both** and nothing happened. The episode is unmarked, the person can see that,
+  and they tap again.
+- Lose **only the second** and the change is on this device and no other, permanently,
+  **with nothing in the product that could notice**. The outbox is the only record that a
+  row still needs sending. A row missing from it is a row already sent, as far as anything
+  here can tell.
+
+## Measured, not reasoned
+
+A real browser, the real web build, marking an episode watched and taking the tab away
+after a delay. Eighteen runs at 1–6 ms:
+
+```
+                    torn      whole     lost entirely
+before                 9          7                 2
+after                  0          9                 9
+```
+
+`torn` is `watches +1, outbox +0`. **Half the runs inside the window.** A/B on the same
+build pipeline, the only difference being the fix — the first attempt compared against a
+build made a different way, which is the §6.154 trap and would have been the third
+instrument error in four sprints.
+
+The `after` column is worth reading properly: the fix moved nine runs from *torn* to *lost
+entirely*, because a transaction takes marginally longer to commit than a bare write. That
+is the trade, and it is the right one. A lost mark is a mark the person can see is missing.
+
+## The fix
+
+`queued(table, body)` beside `enqueue` in the sync engine, opening one transaction over
+that table and the outbox. Thirteen call sites use it: eleven in `repo.ts`, `addReaction`
+— the fastest tap in the product — and the CSV import path, which turned out to be the
+same import as `importBundleNow` through a different door, and the only one of the four
+importers not already wrapped.
+
+A helper rather than thirteen transactions, because thirteen call sites are thirteen
+chances to decide it differently and the fourteenth is the one that will. §6.139.
+
+## What the sweep found about itself
+
+The four bulk importers were **already correct** — every one wraps its writes and its
+`enqueueAll` in a transaction naming `db.outbox`. The paths that write thousands of rows
+were safe. The single tap was not. Whoever wrote the importers thought about atomicity
+because writing three thousand rows *looks* like something that could be interrupted; one
+row does not look like anything at all.
+
+## And the guard, which is the point of the task
+
+§7's standing complaint is that a probe is written, run once, believed and deleted.
+Three clauses, no probe left behind:
+
+- **`app/smoke.mjs`** does the interruption in a browser — six runs across the measured
+  window, asserting nothing tears, plus a non-vacuity clause counting how many actually
+  reached the write. Without it the first clause would pass on a slow machine having
+  observed nothing (§6.121). Planted: 4 torn of 6 against the old code.
+- **`core/src/sync/queued.test.ts`** breaks the outbox and asserts the local write does
+  not survive it, on both stores. It needs no race to reproduce.
+- **`core/src/sync/writes.test.ts`** gains a source clause: a block that writes a synced
+  table and queues must hold both inside `queued(` or `db.transaction(`. It found the two
+  `transfer.ts` sites the manual sweep had missed.
+
+The source clause also caught a mistake of mine mid-sprint: I moved the tombstone reasoning
+out of `unwatchLatest` into its own function so the comment would not sit inside a
+transaction body, and `writes.test.ts` immediately reported the write as unqueued — because
+it was, as far as anything reading one function at a time could tell. The comment went back.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -11197,15 +11287,23 @@ and which single claim in this document could not be checked at all:
   Nothing checks that either, and it is the harder of the two — a guard can be written for an
   instrument that cannot fail, and no guard can be written for a scope somebody did not
   notice they were assuming.
-- **Nothing else takes the document away mid-write.** §6.152 filed this as "leaving the
-  screen loses the fetch" and §6.153 retracted that; §6.154 found the true version, which is
-  narrower and worse. An in-app navigation keeps the promise running. A **reload** does not —
-  and until §6.154 that left a *prefix* of the write in the table, fresh enough that nothing
-  would ever ask again. `bulkPut` is atomic now and Up Next fills what is missing, so the two
-  known paths are closed. What is not known is the rest: every other suite here waits on a
-  selector or a fixed timeout, both instant against the fixture, so **no suite has ever been
-  inside the window where a write is still running** except by accident. Which other
-  multi-row write a person can walk out of, and what it leaves behind, has not been asked.
+
+  §6.155 is the first sprint that left no probe behind: the browser measurement went into
+  `app/smoke.mjs` as two clauses and the throwaway script was deleted. One sprint is not a
+  practice, and the thing that made it happen was the task saying so in advance rather than
+  anything in the repository insisting.
+- ~~**Nothing else takes the document away mid-write.**~~ **Asked in §6.155** (#192), and
+  the answer was thirteen sites: every syncable write in the product was a local row and an
+  outbox entry with nothing holding them together, and half the runs inside the window left
+  the row without its entry. `queued()` holds them now, `app/smoke.mjs` interrupts a write on
+  purpose, and `writes.test.ts` refuses a fourteenth site that does it the old way.
+
+  What the sweep did **not** cover, and is the honest remainder: **the phone.** The clause
+  lives in the web suite because it reads IndexedDB directly, and the phone's store is
+  wa-sqlite in OPFS, which `mobile/smoke.mjs` cannot query. The code is shared, so the fix
+  is the phone's too; the *measurement* is not, and the reason it cannot be taken through
+  the interface is the finding itself — a torn write is invisible on screen. That is the
+  same gap `docs/design/on-a-device.md` already holds for `onSettled`.
 - **Two of the real pass's five findings are still unjudged, and three passes are still on
   the fixture.** §6.152 measured the five §6.151 listed. Up Next's counts *were* the harness
   (§6.153), the thirty-second Track is fixed (§6.153, §6.154), and the 198-viewport title
@@ -11217,8 +11315,9 @@ and which single claim in this document could not be checked at all:
   and the fixture's missing binge drop were all closed by §6.147–§6.150 and all four were
   still sitting here as open questions. What the sweep does not fix is the reason they
   accumulated — closing a task and striking its §7 entry are two actions and only one of them
-  is on the checklist. The sweep is part of the sprint close-out now; whether that survives a
-  sprint that runs late is the open half.
+  is on the checklist. The sweep is part of the sprint close-out now, and §6.155 is the first
+  sprint to run it as one: three entries amended, none left stale. Two sprints is still not a
+  habit, and the sprint that runs late is still the test.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, and §6.149

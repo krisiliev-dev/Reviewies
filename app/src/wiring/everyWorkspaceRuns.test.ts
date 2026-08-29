@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 917, app: 606, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 921, app: 606, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -185,7 +185,7 @@ describe('every workspace', () => {
    * existing. A count would guard the wrong property.
    */
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
-    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 147 },
+    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 149 },
     'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 78 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },

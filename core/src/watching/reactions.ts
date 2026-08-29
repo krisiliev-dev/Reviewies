@@ -1,5 +1,5 @@
 import { db } from '../data/db.ts';
-import { enqueue } from '../sync/engine.ts';
+import { enqueue, queued } from '../sync/engine.ts';
 import { getClient, getSession } from '../sync/auth.ts';
 import type { Reaction } from '../domain/types.ts';
 
@@ -57,9 +57,13 @@ export async function addReaction(targetId: string, tMs: number, emoji: string):
     mine: true,
   };
 
-  await db.reactions.add(reaction);
-  // Queued rather than sent: tapping an emoji must never wait on the network.
-  await enqueue('reactions', reaction as unknown as Record<string, unknown>);
+  // Queued rather than sent: tapping an emoji must never wait on the network — and
+  // `queued` is what keeps the queue entry attached to the row when the tab goes between
+  // them. This is the fastest tap in the product; §6.155.
+  await queued(db.reactions, async () => {
+    await db.reactions.add(reaction);
+    await enqueue('reactions', reaction as unknown as Record<string, unknown>);
+  });
   return reaction;
 }
 

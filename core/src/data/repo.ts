@@ -1,5 +1,5 @@
 import { db } from './db.ts';
-import { enqueue } from '../sync/engine.ts';
+import { enqueue, queued } from '../sync/engine.ts';
 import type {
   CachedEpisode,
   InternalId,
@@ -37,10 +37,19 @@ export async function markWatched(opts: {
     runtimeMin: opts.runtimeMin,
     source: opts.source ?? 'manual',
   };
-  await db.watches.add(event);
-  // Queued, not sent. The write above has already succeeded locally, so the UI
-  // updates whether or not there is a network.
-  await enqueue('watches', event as unknown as Record<string, unknown>);
+  // Queued, not sent. The local write succeeds first so the UI updates whether or not
+  // there is a network — and `queued` is what stops that ordering costing the queue
+  // entry when the tab goes between the two. §6.155 measured the window at a few
+  // milliseconds per tap, and what it leaves behind is an episode watched on this device
+  // and no other, for ever, with nothing that could notice.
+  await queued(db.watches, async () => {
+    await db.watches.add(event);
+    await enqueue('watches', event as unknown as Record<string, unknown>);
+  });
+  // Outside the pair on purpose: this is housekeeping that re-derives from the rows
+  // above, so a run that never happens is corrected by the next mark or the next
+  // calendar refresh. It is not part of what the watch *is*.
+  //
   // Checked here rather than in the UI so every path that records a watch — Up Next,
   // the title page, an import — gets the same housekeeping.
   if (opts.seriesId && !opts.skipStatusSync) await syncSeriesStatus(opts.seriesId);
@@ -156,13 +165,17 @@ export async function syncSeriesStatus(seriesId: InternalId, now = Date.now()): 
   const allWatched = aired.length > 0 && aired.every((e) => watched.has(e.id));
 
   if (item.status === 'watching' && allWatched && title?.ended) {
-    await db.library.update(seriesId, { status: 'completed' });
-    await queueLibrary(seriesId);
+    await queued(db.library, async () => {
+      await db.library.update(seriesId, { status: 'completed' });
+      await queueLibrary(seriesId);
+    });
     return true;
   }
   if (item.status === 'completed' && !allWatched) {
-    await db.library.update(seriesId, { status: 'watching' });
-    await queueLibrary(seriesId);
+    await queued(db.library, async () => {
+      await db.library.update(seriesId, { status: 'watching' });
+      await queueLibrary(seriesId);
+    });
     return true;
   }
   return false;
@@ -173,9 +186,9 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
   const events = await db.watches.where('targetId').equals(targetId).sortBy('watchedAt');
   const latest = events.at(-1);
   if (!latest) return false;
-  await db.watches.delete(latest.id);
   /**
-   * The whole row, not just its key.
+   * The delete and its tombstone, together. The tombstone carries the **whole row**, not
+   * just its key.
    *
    * Deletes replicate as tombstones — otherwise the row returns on the next pull. A
    * tombstone is an *upsert* with `deleted: true`, though, and the outbox coalesces on
@@ -188,8 +201,15 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
    * failure, so **every later write is stuck behind it, for ever**. Undo a watch before
    * your next sync and sync stops working. Proved against real Postgres in
    * `app/src/backend/schema.test.ts`. §6.70.
+   *
+   * Which is also why the pair must not come apart. A delete that lands without its
+   * tombstone is a row this device has forgotten and the server still holds, and the next
+   * pull puts it back — the undo silently undoing itself. §6.155.
    */
-  await enqueue('watches', latest as unknown as Record<string, unknown>, { deleted: true });
+  await queued(db.watches, async () => {
+    await db.watches.delete(latest.id);
+    await enqueue('watches', latest as unknown as Record<string, unknown>, { deleted: true });
+  });
   if (latest.seriesId) await syncSeriesStatus(latest.seriesId);
   return true;
 }
@@ -309,13 +329,17 @@ export async function addToLibrary(
 ): Promise<void> {
   const existing = await db.library.get(titleId);
   if (existing) {
-    await db.library.update(titleId, { status });
-    await queueLibrary(titleId);
+    await queued(db.library, async () => {
+      await db.library.update(titleId, { status });
+      await queueLibrary(titleId);
+    });
     return;
   }
   const item = { titleId, kind, status, addedAt: Date.now() };
-  await db.library.add(item);
-  await enqueue('library', item);
+  await queued(db.library, async () => {
+    await db.library.add(item);
+    await enqueue('library', item);
+  });
 }
 
 /**
@@ -333,8 +357,10 @@ async function queueLibrary(titleId: InternalId): Promise<void> {
 }
 
 export async function setPosterOverride(titleId: InternalId, url?: string): Promise<void> {
-  await db.library.update(titleId, { posterOverride: url });
-  await queueLibrary(titleId);
+  await queued(db.library, async () => {
+    await db.library.update(titleId, { posterOverride: url });
+    await queueLibrary(titleId);
+  });
 }
 
 /**
@@ -349,9 +375,11 @@ export async function clearRating(targetId: InternalId): Promise<void> {
   // Read before deleting: a tombstone is an upsert, and one carrying only the key cannot
   // be inserted for a row the server never received. See `unwatchLatest`. §6.70.
   const existing = await db.ratings.get(targetId);
-  await db.ratings.delete(targetId);
-  await enqueue('ratings', (existing ?? { targetId }) as unknown as Record<string, unknown>, {
-    deleted: true,
+  await queued(db.ratings, async () => {
+    await db.ratings.delete(targetId);
+    await enqueue('ratings', (existing ?? { targetId }) as unknown as Record<string, unknown>, {
+      deleted: true,
+    });
   });
 }
 
@@ -361,28 +389,36 @@ export async function addToWatchlist(
   note?: string,
 ): Promise<void> {
   const item = { titleId, kind, addedAt: Date.now(), note };
-  await db.watchlist.put(item);
-  await enqueue('watchlist', item);
+  await queued(db.watchlist, async () => {
+    await db.watchlist.put(item);
+    await enqueue('watchlist', item);
+  });
 }
 
 export async function setWatchlistNote(titleId: InternalId, note: string): Promise<void> {
-  await db.watchlist.update(titleId, { note });
-  const updated = await db.watchlist.get(titleId);
-  if (updated) await enqueue('watchlist', updated as unknown as Record<string, unknown>);
+  await queued(db.watchlist, async () => {
+    await db.watchlist.update(titleId, { note });
+    const updated = await db.watchlist.get(titleId);
+    if (updated) await enqueue('watchlist', updated as unknown as Record<string, unknown>);
+  });
 }
 
 export async function removeFromWatchlist(titleId: InternalId): Promise<void> {
   const existing = await db.watchlist.get(titleId);
-  await db.watchlist.delete(titleId);
-  await enqueue('watchlist', (existing ?? { titleId }) as unknown as Record<string, unknown>, {
-    deleted: true,
+  await queued(db.watchlist, async () => {
+    await db.watchlist.delete(titleId);
+    await enqueue('watchlist', (existing ?? { titleId }) as unknown as Record<string, unknown>, {
+      deleted: true,
+    });
   });
 }
 
 export async function rate(targetId: InternalId, value: number): Promise<void> {
   const rating = { targetId, value, ratedAt: Date.now() };
-  await db.ratings.put(rating);
-  await enqueue('ratings', rating);
+  await queued(db.ratings, async () => {
+    await db.ratings.put(rating);
+    await enqueue('ratings', rating);
+  });
 }
 
 // ---------------------------------------------------------------------------

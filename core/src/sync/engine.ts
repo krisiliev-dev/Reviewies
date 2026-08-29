@@ -77,6 +77,37 @@ export function primaryKeyOf(table: SyncTable, row: Record<string, unknown>): st
 }
 
 /**
+ * A local write and the outbox entry that will send it, together or not at all.
+ *
+ * Every syncable write in the product is a pair: put the row where the screen reads it,
+ * then queue it for upload. They were ten separate pairs of `await`s with nothing holding
+ * them together — and the *order* is what makes that dangerous. The local write goes
+ * first, deliberately, so the interface never waits on the queue. Lose the pair and
+ * nothing happened. Lose the second half and the change is **on this device and no
+ * other, permanently, with nothing in the product that could notice**: the outbox is the
+ * only record that a row needs sending, and a row missing from it is a row that has
+ * already been sent, as far as anything here can tell.
+ *
+ * §6.155 measured the window in a real browser rather than reasoning about it. Marking an
+ * episode watched and taking the tab away 1 ms later left `watches +1, outbox +0`; at
+ * 4 ms the same; at 8 ms and beyond both landed; at 0 ms neither did, which is the
+ * harmless outcome. So it is a few milliseconds wide per tap, on the tap the whole
+ * product is built around, and it is silent.
+ *
+ * A helper rather than ten transactions, because ten call sites are ten chances to decide
+ * it differently and an eleventh site is the one that will. §6.139.
+ *
+ * The four importers already did this correctly — every one of them wraps its bulk writes
+ * and its `enqueueAll` in a transaction naming `db.outbox`. The paths that write thousands
+ * of rows were safe; the single tap was not.
+ */
+export function queued<T>(table: unknown, body: () => Promise<T>): Promise<T> {
+  // Dexie needs the stores named to lock them; the SQLite adapter accepts and ignores
+  // them, because it locks the connection. `store.ts` says so at the transaction type.
+  return db.transaction('rw', table, db.outbox, body) as Promise<T>;
+}
+
+/**
  * Queue a local change for upload.
  *
  * Coalescing on `table:pk` means a row edited five times offline uploads once, with

@@ -106,6 +106,48 @@ describe('writes to a synced table', () => {
     expect(unqueued).toEqual([]);
   });
 
+  it('hold the write and the queue entry together, in one transaction', () => {
+    /*
+     * The pair, not just the presence of both halves.
+     *
+     * The clause above asks whether a block queues at all. It passed for eleven sites
+     * that did it as two bare `await`s — the local write first, so the interface never
+     * waits on the queue, and then the outbox entry. §6.155 took the tab away in between,
+     * in a real browser, and **9 of 18 runs left the watch with no queue entry**: an
+     * episode marked on one device for ever, invisible to every screen in the product,
+     * because the outbox is the only record that a row still needs sending.
+     *
+     * `queued()` is the wrapper for a single write; the four importers use `db.transaction`
+     * directly because they scope several tables at once. Either satisfies this. What does
+     * not is a block that writes and queues with nothing holding the two together.
+     *
+     * A source scan, with the same crudeness the file's header admits to: it cannot see
+     * through a helper. `app/smoke.mjs` holds the behavioural half, in a browser, by
+     * actually interrupting the write.
+     */
+    const HOLDS = /\b(queued|db\.transaction)\(/;
+    const loose: string[] = [];
+
+    for (const { where, source } of scan()) {
+      for (const block of blocks(source)) {
+        const matches = [...block.body.matchAll(WRITES)];
+        if (matches.length === 0) continue;
+        const site = `${where}:${block.name}`;
+        if (ALLOWED.has(site)) continue;
+        // Only the blocks that queue: one that does not is the clause above's business.
+        if (!QUEUEING.test(block.body)) continue;
+
+        const held = block.body.search(HOLDS);
+        const wrote = matches[0].index ?? 0;
+        if (held === -1 || held > wrote) {
+          loose.push(`${site} writes ${[...new Set(matches.map((m) => m[1]))].join(', ')}`);
+        }
+      }
+    }
+
+    expect(loose).toEqual([]);
+  });
+
   it('names a reason for each write that is exempt', () => {
     // An allowlist without reasons is a rule with silent exceptions.
     for (const [site, reason] of ALLOWED) {

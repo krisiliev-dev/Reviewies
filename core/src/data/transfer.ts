@@ -1,6 +1,6 @@
 import { db } from './db.ts';
 import { whileImporting } from './importing.ts';
-import { enqueueAll } from '../sync/engine.ts';
+import { enqueueAll, queued } from '../sync/engine.ts';
 import { makeId } from '../domain/types.ts';
 import { fetchAccountExport, type AccountExport } from '../social/exportAccount.ts';
 import type { MediaKind, WatchEvent } from '../domain/types.ts';
@@ -341,8 +341,12 @@ async function importWatchHistoryCsvNow(text: string): Promise<ImportReport> {
   }
 
   if (events.length) {
-    await db.watches.bulkPut(events);
-    await enqueueAll('watches', events as unknown as Array<Record<string, unknown>>);
+    // The rows and their queue entries together. `importBundleNow` above has always done
+    // this; the CSV path is the same import through a different door and did not. §6.155.
+    await queued(db.watches, async () => {
+      await db.watches.bulkPut(events);
+      await enqueueAll('watches', events as unknown as Array<Record<string, unknown>>);
+    });
   }
   report.watches = events.length;
 
@@ -396,8 +400,10 @@ export async function addWatchlistFromTitles(
     addedAt: Date.now(),
     note: t.note,
   }));
-  await db.watchlist.bulkPut(rows);
-  await enqueueAll('watchlist', rows as unknown as Array<Record<string, unknown>>);
+  await queued(db.watchlist, async () => {
+    await db.watchlist.bulkPut(rows);
+    await enqueueAll('watchlist', rows as unknown as Array<Record<string, unknown>>);
+  });
   return titles.length;
 }
 

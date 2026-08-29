@@ -2734,6 +2734,90 @@ try {
   } finally {
     await shared.close();
   }
+
+  // --- A write interrupted by the tab going away -------------------------------
+  /*
+   * Marking an episode watched is two writes: the row the screen reads, and the outbox
+   * entry that will send it. The local one goes first on purpose, so the interface never
+   * waits on the queue — and that ordering is exactly what makes losing the second half
+   * dangerous. **A watch with no outbox entry is a watch that has already been sent, as
+   * far as anything in this product can tell.** It stays on one device for ever, and no
+   * screen anywhere can show you that it happened.
+   *
+   * §6.154 found the same shape in `bulkPut` by accident, and §6.152 found the window it
+   * lives in by accident before that. Two accidents in three sprints is a hole in the
+   * method, not luck: **every suite here waits on a selector or a fixed timeout, and
+   * against the fixture both are instant**, so nothing has ever deliberately been inside
+   * the window where a write is still running. This is the clause that is.
+   *
+   * Measured before it was fixed, on this build: **9 of 18 runs torn** — the watch
+   * landed, the queue entry did not. After: 0 of 18, and the runs that lose the race now
+   * lose the *whole* pair, which is the harmless outcome — the episode is simply not
+   * marked, and the person can see that and tap again.
+   */
+  // Nothing may drain the queue while this is being counted, or a drained entry would
+  // read exactly like a lost one. The build has no reachable server anyway; this makes
+  // that a property of the clause rather than of the container.
+  await page.route('**://*.supabase.co/**', (route) => route.abort('failed'));
+
+  const rows = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const open = indexedDB.open('reviewies');
+          open.onsuccess = () => {
+            const db = open.result;
+            const tx = db.transaction(['watches', 'outbox'], 'readonly');
+            const w = tx.objectStore('watches').count();
+            const o = tx.objectStore('outbox').count();
+            tx.oncomplete = () => {
+              db.close();
+              resolve({ watches: w.result, outbox: o.result });
+            };
+          };
+          open.onerror = () => resolve({ watches: -1, outbox: -1 });
+        }),
+    );
+
+  let torn = 0;
+  let whole = 0;
+  // The window measured in §6.155. Below it the click has not reached the first write;
+  // above it both have landed.
+  for (const delay of [1, 2, 3, 4, 5, 6]) {
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    const mark = page.getByRole('checkbox', { name: /^Mark .* watched$/ }).first();
+    if (!(await mark.count())) continue;
+
+    const before = await rows();
+    await mark.click({ noWaitAfter: true });
+    await page.waitForTimeout(delay);
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1200);
+
+    const after = await rows();
+    if (after.watches > before.watches && after.outbox === before.outbox) torn++;
+    else if (after.watches > before.watches) whole++;
+  }
+
+  check(
+    'a mark interrupted by the tab closing does not land without its queue entry',
+    torn === 0,
+    `${torn} torn of 6`,
+  );
+  /*
+   * Non-vacuity, and it is not decoration. If every run lost the whole pair — a slower
+   * machine, a longer first paint — the clause above would pass having observed nothing
+   * at all, which is §6.121's failure exactly.
+   *
+   * It counts every run that reached the local write, torn or whole. Counting only the
+   * whole ones would make this fail *because* the clause above did, saying "never reached
+   * the write" about a run that reached it six times and tore four.
+   */
+  check(
+    'and the interrupted-write clause actually reached the write',
+    torn + whole > 0,
+    `${whole} whole, ${torn} torn, ${6 - torn - whole} lost before the write`,
+  );
 } catch (err) {
   check(
     'smoke run completed',
