@@ -1,7 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { splitIntoSeasons, type AniListSeason } from './anilist.ts';
-import { clearMappingCache, lookupAnimeIds, resolveFromTmdb } from './animeMapping.ts';
-import { db } from '../data/db.ts';
 
 const season = (episodes?: number, title = 'S'): AniListSeason => ({
   anilistId: Math.random(),
@@ -50,48 +48,4 @@ describe('splitting a flat episode run into real seasons', () => {
     const split = splitIntoSeasons([1, 2, 3, 4], [season(0), season(2), season(-5)]);
     expect(split.map((s) => s.length)).toEqual([2, 2]);
   });
-});
-
-describe('anime ID mapping (live)', () => {
-  // ARM is a free community service; these are a handful of cached lookups, not a
-  // sweep. They skip cleanly when offline.
-  beforeEach(async () => {
-    clearMappingCache();
-    await db.table('animeIds').clear();
-  });
-
-  it('maps AniList to TMDB', async () => {
-    const ids = await lookupAnimeIds('anilist', 154587);
-    if (!ids) return; // offline
-    expect(ids.themoviedb).toBe(209867);
-    expect(ids.myanimelist).toBe(52991);
-  }, 20_000);
-
-  it('resolves TMDB to AniList by title, verified through the forward mapping', async () => {
-    // ARM refuses a TMDB source, so this goes via AniList search and confirms the
-    // candidate maps back to the TMDB ID we started from.
-    const ids = await resolveFromTmdb(209867, 'Frieren: Beyond Journey\u2019s End');
-    if (!ids) return; // offline
-    expect(ids.anilist).toBeGreaterThan(0);
-    expect(ids.themoviedb).toBe(209867);
-  }, 30_000);
-
-  it('caches a lookup so the service is not asked twice', async () => {
-    const first = await lookupAnimeIds('anilist', 154587);
-    if (!first) return;
-    const rows = await db.table('animeIds').toArray();
-    expect(rows.length).toBeGreaterThan(0);
-  }, 20_000);
-
-  it('reports live-action television as not anime', async () => {
-    // Breaking Bad. A miss is the common case and must not be an error.
-    expect(await resolveFromTmdb(1396, 'Breaking Bad')).toBeUndefined();
-  }, 30_000);
-
-  it('rejects a similarly-named show that does not map back', async () => {
-    // Verification is the point: a title search alone would happily return
-    // something else, and re-cutting from the wrong source is worse than leaving
-    // TMDB's structure alone.
-    expect(await resolveFromTmdb(999999999, 'Frieren')).toBeUndefined();
-  }, 30_000);
 });

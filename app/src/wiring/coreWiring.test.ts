@@ -110,6 +110,18 @@ const UNREACHED: Record<string, string> = {
  */
 const LOPSIDED: Record<string, string> = {
   /**
+   * The one entry here that is a **platform difference by definition** rather than an
+   * unfinished migration. §6.159.
+   *
+   * `WIDE` answers what to do with a window wider than the column of rows, and the phone
+   * has no such window: its window is the device. Every other line in this table describes
+   * something that will stop being true when a migration lands, and this one will not — so
+   * the stale-reason check above cannot expire it, and the honest thing is to say why
+   * rather than to let it read as work outstanding.
+   */
+  'app only: ui/screen#WIDE':
+    'What the web does with a window wider than its column: one column, and the navigation takes the column\'s measure. The phone has no wider window — its window is the device — so this is a difference by definition rather than a migration nobody has finished.',
+  /**
    * The phone's remote drawer is the only thing in either app that animates from a
    * table yet, so it is the only caller of the motion tokens.
    *

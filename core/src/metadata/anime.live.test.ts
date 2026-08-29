@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getConfig } from '../config.ts';
 import { getSeasonChain } from './anilist.ts';
-import { resolveFromTmdb } from './animeMapping.ts';
+import { clearMappingCache, lookupAnimeIds, resolveFromTmdb } from './animeMapping.ts';
 import { TmdbProvider } from './tmdb.ts';
 import { getEpisodesCached } from './index.ts';
 import { db } from '../data/db.ts';
@@ -51,4 +51,59 @@ live('anime season correction (live)', () => {
     // Breaking Bad genuinely has five seasons; nothing should be re-cut.
     expect(seasons.size).toBe(5);
   }, 120_000);
+});
+
+/*
+ * Moved here from `anime.test.ts`. §6.159.
+ *
+ * §6.158 took the live suites out of `verify` **by filename**, and this block was a live
+ * `describe` inside an offline file — announcing itself as `(live)` in its own name while
+ * sitting where the exclusion could not see it. The convention was the filename and one
+ * suite was not keeping it, which is only visible the moment the filename starts to mean
+ * something.
+ *
+ * It skips cleanly when offline: every case returns early on a miss rather than failing.
+ */
+describe('anime ID mapping (live)', () => {
+  // ARM is a free community service; these are a handful of cached lookups, not a
+  // sweep. They skip cleanly when offline.
+  beforeEach(async () => {
+    clearMappingCache();
+    await db.table('animeIds').clear();
+  });
+
+  it('maps AniList to TMDB', async () => {
+    const ids = await lookupAnimeIds('anilist', 154587);
+    if (!ids) return; // offline
+    expect(ids.themoviedb).toBe(209867);
+    expect(ids.myanimelist).toBe(52991);
+  }, 20_000);
+
+  it('resolves TMDB to AniList by title, verified through the forward mapping', async () => {
+    // ARM refuses a TMDB source, so this goes via AniList search and confirms the
+    // candidate maps back to the TMDB ID we started from.
+    const ids = await resolveFromTmdb(209867, 'Frieren: Beyond Journey\u2019s End');
+    if (!ids) return; // offline
+    expect(ids.anilist).toBeGreaterThan(0);
+    expect(ids.themoviedb).toBe(209867);
+  }, 30_000);
+
+  it('caches a lookup so the service is not asked twice', async () => {
+    const first = await lookupAnimeIds('anilist', 154587);
+    if (!first) return;
+    const rows = await db.table('animeIds').toArray();
+    expect(rows.length).toBeGreaterThan(0);
+  }, 20_000);
+
+  it('reports live-action television as not anime', async () => {
+    // Breaking Bad. A miss is the common case and must not be an error.
+    expect(await resolveFromTmdb(1396, 'Breaking Bad')).toBeUndefined();
+  }, 30_000);
+
+  it('rejects a similarly-named show that does not map back', async () => {
+    // Verification is the point: a title search alone would happily return
+    // something else, and re-cutting from the wrong source is worse than leaving
+    // TMDB's structure alone.
+    expect(await resolveFromTmdb(999999999, 'Frieren')).toBeUndefined();
+  }, 30_000);
 });

@@ -11311,6 +11311,58 @@ it as undecided after the first; two is a pattern.
 These cannot be fixed that way — reaching the real service is the whole of what they are for
 — so they moved: `npm run test:live --workspace core`, run on purpose, out of `verify`.
 
+### 6.159 Declining the width, on purpose
+
+**#194.** §6.157 measured that the web app scrolls exactly as far at 1280 as at 420 —
+discover 2179 against 2162, calendar 1002 against 1002, The Bear 1248 against 1213 — and
+capped the column at 720 so a row's two ends stopped being 1,100 points apart. What it did
+not do was decide what the width is *for*. This sprint decides it, from the photographs
+rather than from taste.
+
+## One column, and why the screens refuse a second
+
+A second column was the obvious candidate. The screens say no, and the count is the
+argument: **nine of the ten web routes are a single sequence** — Up Next, Search, Watchlist,
+Discover, the calendar, the lists, the people, the two settings pages. A sequence split into
+two columns is read in the wrong order or not read at all.
+
+Exactly **one** screen has two genuinely separate things: the title page, with its metadata
+block and its episode list. Reshaping the grammar of ten screens to improve one is not a
+trade this design makes, and `docs/design/direction.md`'s choice is a printed artefact you
+mark up — a column of ruled rows — rather than a dashboard.
+
+So the width is declined deliberately, `WIDE` in the core carries the reasoning, and what
+the window gains is margin. The value of writing it down is that the *absence* of a decision
+and a decision to decline look identical in a screenshot; only one of them survives somebody
+asking why.
+
+## What was actually wrong
+
+Three widths on one screen, measured off `wide-title-the-bear.png`:
+
+```
+the tab bar's rule      1280pt   (the window)
+the content column       720pt   (SCREEN.measure, §6.157)
+the tab bar's items     ~460pt   (max-w-lg, off Tailwind's default scale)
+```
+
+**The navigation was narrower than the thing it navigates**, and nobody chose that — it is
+`max-w-lg` from before the column had a measure at all. It is `WIDE.navMeasure` now, which
+`screen.test.ts` holds equal to `SCREEN.measure`, so the two cannot drift apart again.
+
+The rule stays full-bleed. That half is not a mistake: `direction.md`'s first named property
+is a rule that runs to the paper's edge, and a bar fixed to the bottom of the window has the
+window for paper.
+
+## What 720 measures against
+
+Recorded rather than re-derived next time. The longest line the real library produces is The
+Bear's overview, which sets to about **80 characters** at 720. That is at the upper edge of
+a comfortable reading measure and not over it, and the overview is the only prose block in
+the product — everything else is rows, which want the width. A second, narrower measure for
+prose alone would be a third number describing the same column, which is what `SCREEN`'s own
+header was written about.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -11533,6 +11585,12 @@ and which single claim in this document could not be checked at all:
   as `npm run test:live --workspace core`. They are still gated on credentials and still
   reach the real services, which is the whole of what they are for; what changed is that the
   arbiter of green no longer depends on somebody else's server being up.
+- **The web declines its width, and one screen might have wanted it.** §6.159 chose one
+  column because nine of the ten routes are a single sequence. The tenth — the title page,
+  with a metadata block above an episode list — is the case a second column would suit, and
+  it is now the only screen whose layout is decided by a rule written for the other nine.
+  Whether that costs anything is a question a photograph can answer and none has been taken
+  of the alternative, which is the shape §6.132 built `design:web` for.
 - **The design track has three shot instruments and now two implementations of one of
   them.** §6.157 wrote `design/shoot.mjs` — find whatever scrolls, shoot it, file a foot —
   and pointed the two web passes at it. `capture.mjs` still carries its own inline copy of

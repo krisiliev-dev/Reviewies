@@ -70,6 +70,50 @@ export const SCREEN = {
 } as const;
 
 /**
+ * What the web does with a window wider than the column. §6.159, #194.
+ *
+ * ## The measurement
+ *
+ * §6.157 gave the web a real-data pass at 420 **and** 1280, and the two scroll the same
+ * distance: discover 2179 against 2162, calendar 1002 against 1002, The Bear's title page
+ * 1248 against 1213. The extra 860 points of width buy nothing, because there is one column
+ * at every size. `SCREEN.measure` stopped that column being stretched; it did not decide
+ * what the width is *for*.
+ *
+ * ## One column, on purpose
+ *
+ * A second column was the obvious candidate and the screens refuse it. Nine of the ten web
+ * routes are a single sequence — Up Next, Search, Watchlist, Discover, the calendar, the
+ * lists, the people, the two settings screens — and a sequence split into two columns is
+ * read in the wrong order or not read at all. The **one** screen with two genuinely
+ * separate things is the title page: its metadata block and its episode list. Reshaping the
+ * grammar of ten screens to improve one is not a trade this design makes, and
+ * `docs/design/direction.md`'s choice is a printed artefact you mark up — a column of ruled
+ * rows — rather than a dashboard.
+ *
+ * So the width is declined, deliberately, and the reason is written down rather than left
+ * as the absence of a decision. What the window gains is margin.
+ *
+ * ## And the navigation takes the column's measure
+ *
+ * That left one thing genuinely wrong rather than merely undecided. The tab bar's items sat
+ * in `max-w-lg` — **about 460 points, measured off `wide-title-the-bear.png`** — while the
+ * content column is 720 and the bar's rule spans the whole window. Three widths on one
+ * screen, none of them matching: the navigation was narrower than the thing it navigates,
+ * for no reason anybody chose.
+ *
+ * The rule stays full-bleed, because the direction's first named property is a rule that
+ * runs to the paper's edge. The items take `SCREEN.measure`, because they belong to the
+ * column.
+ */
+export const WIDE = {
+  /** One column at every width. A second is refused; the reasoning is above. */
+  columns: 1,
+  /** The navigation is as wide as what it navigates. */
+  navMeasure: 720,
+} as const;
+
+/**
  * Where a screen's message goes when the screen has nothing else in it.
  *
  * Three screens centred theirs — `lists.tsx`, `people.tsx` and `account.tsx` — in a

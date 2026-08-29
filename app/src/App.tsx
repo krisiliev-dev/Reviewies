@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
-import { SCREEN } from '@reviewies/core/ui/screen';
+import { SCREEN, WIDE } from '@reviewies/core/ui/screen';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { startScrobbleListener } from '@reviewies/core/watching/scrobble';
@@ -222,7 +222,17 @@ function TabBar() {
           1.4.4 and puts half the navigation somewhere nobody knows to look. The smoke
           suite's own 200% check said so, by finding four tabs off the right-hand edge.
           Wrapping keeps every one of them on screen and visible. */}
-      <ul className="mx-auto flex max-w-lg flex-wrap justify-center">
+      {/* `WIDE.navMeasure`, not `max-w-lg`. §6.159.
+
+          The items sat in 32rem — about 460 points measured off `wide-title-the-bear.png`
+          — while the content column is 720 and this bar's rule spans the whole window.
+          Three widths on one screen, and the navigation was the narrowest of them, which is
+          the one relationship that had no reason at all. The rule stays full-bleed: the
+          direction's first named property is a rule that runs to the paper's edge. */}
+      <ul
+        className="mx-auto flex w-full flex-wrap justify-center"
+        style={{ maxWidth: WIDE.navMeasure }}
+      >
         {TABS.map((tab) => (
           <li key={tab.to} className="flex-1">
             <NavLink

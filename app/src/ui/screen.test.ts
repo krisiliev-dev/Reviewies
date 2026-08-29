@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EDGE_EXEMPT, EMPTY_ALIGN, FULL_SCREEN, SCREEN } from '@reviewies/core/ui/screen';
+import { EDGE_EXEMPT, EMPTY_ALIGN, FULL_SCREEN, SCREEN, WIDE } from '@reviewies/core/ui/screen';
 import { space } from '@reviewies/core/tokens';
 
 /**
@@ -174,6 +174,36 @@ describe('the screen edge', () => {
       /immersive \? undefined : \{ maxWidth: SCREEN\.measure \}/,
     );
     expect(Object.keys(EDGE_EXEMPT)).toContain('WatchingMode');
+  });
+
+  it('gives the navigation the same measure as what it navigates', () => {
+    /*
+     * §6.159, #194. The web at 1280 scrolls exactly as far as at 420 — the width buys
+     * nothing, because there is one column at every size. That is a decision now rather
+     * than an absence of one, and `WIDE` carries the reasoning: nine of the ten routes are
+     * a single sequence, and a sequence in two columns is read in the wrong order.
+     *
+     * What was genuinely wrong rather than merely undecided: three widths on one screen.
+     * The rule spanned the window, the content column was 720, and the tab items sat in
+     * `max-w-lg` — about 460 points, measured off `wide-title-the-bear.png`. The navigation
+     * was narrower than the thing it navigates, for no reason anybody chose.
+     */
+    expect(WIDE.columns, 'a second column landed without the reasoning being rewritten').toBe(1);
+    expect(WIDE.navMeasure, 'the navigation and the column disagree').toBe(SCREEN.measure);
+
+    const app = withoutProse(read('app/src/App.tsx'));
+    expect(app, 'the tab bar picks its own width off Tailwind\'s scale').not.toMatch(
+      /<ul[^>]*max-w-/,
+    );
+    expect(app, 'the tab bar does not read the measure from the table').toMatch(
+      /maxWidth: WIDE\.navMeasure/,
+    );
+    /*
+     * And the rule still crosses the whole window, which is the half that is *not* a
+     * mistake: `direction.md`'s first named property is a rule that runs to the paper's
+     * edge, and a bar fixed to the bottom of the window has the window for paper.
+     */
+    expect(app, 'the bar stopped spanning the window').toMatch(/<nav[\s\S]{0,600}inset-x-0/);
   });
 
   it('is capped in one place, with no screen deciding its own width', () => {
