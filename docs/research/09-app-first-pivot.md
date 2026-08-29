@@ -11363,6 +11363,109 @@ the product — everything else is rows, which want the width. A second, narrowe
 prose alone would be a third number describing the same column, which is what `SCREEN`'s own
 header was written about.
 
+### 6.160 One camera
+
+**#196.** Two sprints running, the design harness grew a helper and gave it to two of the
+five passes. §6.157 wrote `design/shoot.mjs` and pointed the *web* passes at it. §6.158
+added an `open`/`reveal` walk and wrote it into `capture.mjs` and `capture-signedin.mjs`
+separately. The sprint brief that opened this one said either answer was defensible and a
+third sprint of leaving it open was not.
+
+The answer is that the **act** is shared and the **channel** is not.
+
+## Four implementations of one act, and what they had stopped agreeing about
+
+The shot is: settle, find what scrolls, photograph it, photograph its foot if it has one,
+put the page back. Four files had written that out, and by the time anyone counted them
+side by side they no longer said the same thing.
+
+| | which element is scrolling | put the page back | listed as "the top of a longer screen" |
+|---|---|---|---|
+| `capture.mjs` | tallest, `clientHeight > 200` | yes | `overflow > 0` |
+| `capture-signedin.mjs` | tallest, `clientHeight > 200` | yes | `overflow > 0` |
+| `capture-real.mjs` | **first in document order**, no floor | no | `overflow > FOOT` |
+| `shoot.mjs` (the web's) | tallest, not `overflow: visible` | no | `overflow > FOOT` |
+
+`capture-real.mjs`'s comment read *"the same shot-and-measure `capture.mjs` does"*. It was
+the furthest from it of the four. Nobody chose any of this; it is what four copies of twenty
+lines do while nobody is reading all four.
+
+## What the differences were worth, measured
+
+The element-selection change is exactly the kind that alters an instrument's answers
+silently, so it was measured rather than assumed. The old and new `capture-real.mjs` were
+run **against the same `dist-real` build**, back to back:
+
+```
+old  shot r6-title-one-piece (scrolls 10631pt, foot on file)
+new  shot r6-title-one-piece (scrolls 10631pt, foot on file)
+```
+
+All ten numbers identical. The three heuristics disagree in principle and agreed on every
+screen this project currently photographs — which is the state a thing is in the day before
+it is not.
+
+Two answers did change, and both are the instrument getting more honest:
+
+- **`23-watching-live` and `24-watching-remote` stopped reporting `2pt`.** Two points of
+  sub-pixel rounding on an `overflow: visible` element is not a screen with more underneath,
+  and the old phone heuristic had no way to say so.
+- **`design:real`'s summary gained `r3-upnext +10pt`.** The two passes that print one
+  summary line listed only shots with a *foot* on file — `overflow > FOOT` — under a heading
+  that says "the top of a longer screen". Anything scrolling by less than a fold was
+  reported as whole. `longerScreens()` is `overflow > 0` and there is now one of it.
+
+That last one is §6.153's rule arriving a third time. It is not that the metric was hard to
+read; it is that two files had a threshold and two had a different one, and the heading over
+both said the same thing.
+
+## Why the reporting stayed with the caller
+
+`shoot` and `reveal` take a `problems` array rather than owning a message. `capture.mjs`
+prints six separate lists under six headings — `hollow`, `inset`, `floating`, `invisible`,
+`unseen`, and now `unshot` — each beside the block that fills it; the web passes print one.
+A shared act that owned its reporting would have flattened all of that into a single
+message, which is worse than four copies of twenty lines. The sprint brief guessed the
+reporting channels were "the real reason it resists sharing", and it was half right: they
+are the reason the *act* could be shared without a fight.
+
+Two things fell out of the collapse that were not the point of it. `capture-signedin.mjs`'s
+walk did not catch a click that times out — the §6.158 lesson that cost four unrelated shots
+in the fixture pass, learned once and applied to one of the two files that needed it. And
+`capture-real.mjs` never restored the scroll after a foot shot, which is #172's retraction
+waiting to happen a second time.
+
+## The guard
+
+A floor cannot hold this. The failure mode is a pass *growing* its own copy back, not
+shrinking, so `everyWorkspaceRuns.test.ts` gained a ceiling: **no capture script contains
+`page.screenshot(`, and every one imports `./shoot.mjs`** — with comments stripped first,
+because `capture-web.mjs` cites the old `fullPage: true` call by name in its own
+explanation of what it did wrong.
+
+The floors moved with the code they were counting. `#folds` used to count `scrolls.push(`
+inside each pass; that machinery is in `shoot.mjs` now, so `design/shoot.mjs#folds` counts
+the two screenshots — the screen and its foot — and each pass's `#folds` counts the shots it
+takes through them. `#reveals` is new and counts the walks, which are the second state of a
+screen and which no route count or fold count can see: deleting one leaves the arriving shot
+in place and takes nothing else with it.
+
+Five plants, each with the needle counted before and after:
+
+| plant | guard | result |
+|---|---|---|
+| `capture-real.mjs` takes its own `page.screenshot` | one camera | red |
+| `capture-web.mjs` stops importing the shot | one camera | red |
+| `capture-real.mjs` loses one `await shot(` | `#folds` 6 → 5 | red |
+| `capture.mjs` loses one `reveal(page, {` | `#reveals` 5 → 4 | red |
+| `shoot.mjs` stops filing the foot shot | `shoot.mjs#folds` 2 → 1 | red |
+
+`snapshotPass.test.ts` failed on this change and was right to: it read `capture-real.mjs`
+for the words "nothing on it says", which had moved. The property is in two halves now and
+both are asserted — the pass supplies the needle, the shot refuses the photograph without
+it — because reading only one half would pass a pass that had stopped handing its shots
+anything to look for.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12149,11 +12252,35 @@ and which single claim in this document could not be checked at all:
   unchanged, and does not. The platform this product pivoted to *be* has no measurement of
   what its words land on, which is the same asymmetry §6.38 found for text scaling and
   §6.85 found for the palette itself.
-- **One browser check is flaky.** `two tabs racing do not record the same episode twice`
-  failed once during §6.91 and passed on the next run against the same build. It races two
-  contexts against one IndexedDB on purpose, so a flake is plausible rather than
-  mysterious — but a check that is sometimes red is a check nobody will believe when it
-  matters. It needs to be made deterministic or made to report what it could not observe.
+- **Two browser checks are flaky, and the second is new.** `two tabs racing do not record
+  the same episode twice` failed once during §6.91 and passed on the next run against the
+  same build. It races two contexts against one IndexedDB on purpose, so a flake is
+  plausible rather than mysterious — but a check that is sometimes red is a check nobody
+  will believe when it matters. It needs to be made deterministic or made to report what it
+  could not observe.
+
+  The second was found by §6.160's close-out, in a run that had nothing to do with it.
+  `mobile/smoke.mjs` came back **199/202**, the three failures all about the import's
+  mid-flight state — *"never describes a settled library mid-import"*, *"never offers to
+  match a library still being written"*, *"says it is still reading, and names what"* — and
+  the next run against the same build was 202/202. That is the §6.127 progress banner, and
+  the three checks are racing the import they are watching: the export finished before the
+  harness could photograph the state it exists to assert. Same shape as the first, and the
+  same answer required — a positive wait on the state, or a check that says it could not
+  observe rather than that the state was wrong.
+
+- **What is *not* a second state anywhere.** §6.158 enumerated ten reveals and §6.160 gave
+  them one implementation, so the states behind a control are photographed and guarded. The
+  states behind *data* are not enumerated at all: an empty list against a full one, a form
+  mid-entry, a failed write outside `app/failures.mjs`. `core/src/ui/reveals.ts` is a list of
+  what a press opens; nothing is a list of what a screen looks like with nothing in it.
+
+- **The title page is the only screen whose layout is decided by a rule written for the
+  other nine, and nobody has photographed the alternative.** §6.159 declined a second column
+  because nine of ten web routes are a single sequence. The tenth — the title page, with its
+  metadata block and its episode list — is the one screen the argument does not fit, and the
+  decision was made from a count rather than from a picture of it at 1280 in two columns.
+  §6.154 built the alternative before choosing, for the Stats period control. This did not.
 - **Stats' period control is settled, and what it cost is one thing nobody has seen.**
   §6.109 built all three arrangements and photographed them: the one the task proposed —
   labelled, still wrapping — came to 140px and pushed the figures *lower* than the 148px it

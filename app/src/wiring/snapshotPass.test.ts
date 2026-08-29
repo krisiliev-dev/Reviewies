@@ -74,7 +74,21 @@ describe('the real-data pass', () => {
      * of a search box with no results.
      */
     const source = read('design/capture-real.mjs');
-    expect(source, 'the pass does not check it reached anything').toContain('nothing on it says');
+    /*
+     * In two halves since §6.160, and both are asserted.
+     *
+     * The needle-check used to be written out inside this pass's own `shot`; it moved into
+     * `design/shoot.mjs` with the shot itself, so reading only this file for the words
+     * "nothing on it says" would now pass a pass that had stopped handing its shots
+     * anything to look for. What each half owns: this file supplies the needle, the shot
+     * refuses the photograph without it, and this file is the one that can fail the run.
+     */
+    expect(source, 'the pass gives its shots nothing to look for').toMatch(
+      /shoot\(page, \{[^)]*mustContain/,
+    );
+    expect(read('design/shoot.mjs'), 'the shot does not check it reached anything').toContain(
+      'nothing on it says',
+    );
     expect(source, 'the pass cannot fail').toContain('process.exitCode = 1');
     // And the server says which answer was missing, rather than 404ing silently.
     expect(read('design/serveSnapshot.mjs')).toContain('snapshot has no answer for');

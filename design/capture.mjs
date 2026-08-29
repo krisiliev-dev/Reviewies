@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { longerScreens, reveal, shoot } from './shoot.mjs';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 
@@ -60,38 +61,38 @@ page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
  * A second shot at the foot for anything that overflows by more than a fold's worth,
  * because at that point the top is not a fair likeness of the screen at all.
  */
-const FOOT = 120;
 const scrolls = [];
 
-const shot = async (name) => {
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}${name}.png` });
-  const overflow = await page.evaluate(() => {
-    let most = 0;
-    for (const el of document.querySelectorAll('*')) {
-      if (el.scrollHeight - el.clientHeight > most && el.clientHeight > 200) {
-        most = el.scrollHeight - el.clientHeight;
-      }
-    }
-    return Math.round(most);
-  });
-  scrolls.push({ name, overflow });
-  if (overflow > FOOT) {
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('*')) {
-        if (el.scrollHeight - el.clientHeight > 0 && el.clientHeight > 200) {
-          el.scrollTop = el.scrollHeight;
-        }
-      }
-    });
-    await page.waitForTimeout(600);
-    await page.screenshot({ path: `${OUT}${name}-foot.png` });
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
-    });
-  }
-  console.log('shot', name, overflow ? `(scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''})` : '');
-};
+/*
+ * Where this pass's shots and walks report their failures. §6.160.
+ *
+ * The act is shared; the channel is not, and that is the answer to the question #196 asked.
+ * The four copies of the shot differed in three ways nobody had chosen, but they also
+ * differed in one way somebody had: `capture.mjs` prints five separate lists under five
+ * headings — `hollow`, `inset`, `floating`, `invisible`, `unseen` — each next to the block
+ * that fills it, while the web passes print one. A shared act that owned its reporting
+ * would have flattened all of that into one message, which is worse than four copies of
+ * twenty lines. So `shoot`/`reveal` take the list and this file decides what to call it.
+ *
+ * `unshot` is this pass's list for the shot itself: a screen that never loaded, a reveal
+ * whose control was not on the page, a press that timed out. Printed at the very end,
+ * because the walks are now the last thing that runs.
+ */
+const unshot = [];
+
+/*
+ * The shot, from `design/shoot.mjs`. §6.160.
+ *
+ * This was its own copy of the same act, and so were `capture-signedin.mjs`'s and the two
+ * web passes'. Collapsing them found three differences nobody had chosen — which element
+ * counts as scrolling, whether the page is put back afterwards, and where the settle lives
+ * — and that file's header has them.
+ *
+ * `settle: 1200` is the one real difference and it stays a parameter: how long a screen
+ * needs before the shutter is the caller's knowledge, and every shot below was written
+ * against that wait.
+ */
+const shot = (name) => shoot(page, { out: OUT, name, problems: unshot, scrolls, settle: 1200 });
 
 await page.goto('http://localhost:4200/');
 await page.waitForTimeout(2500);
@@ -856,7 +857,7 @@ if (await link.count()) {
       .click();
     await page.waitForTimeout(1800);
   };
-  await open('15-title-country', /Change country/i, undefined, arrive);
+  await reveal(page, { out: OUT, name: '15-title-country', control: /Change country/i, arrive, problems: unshot, scrolls });
   /*
    * `15-title-warnings` is **not** here. `ContentWarnings` opens with
    * `if (!syncConfigured()) return null`, so on the fixture build the control does not
@@ -873,45 +874,16 @@ if (await link.count()) {
    * took the four remaining shots with it. The row's name carries the season and episode,
    * which is `row.ts`'s rule and what tells the two apart.
    */
-  await open('15-title-rating', /^(Rate|Change your rating of) season \d+ episode/i, undefined, arrive);
+  await reveal(page, {
+    out: OUT,
+    name: '15-title-rating',
+    control: /^(Rate|Change your rating of) season \d+ episode/i,
+    arrive,
+    problems: unshot,
+    scrolls,
+  });
 }
 
-/**
- * Press a control that reveals something, and photograph what it revealed.
- *
- * Not a `click()` and a `shot()` inline at eight call sites: the thing worth having in one
- * place is what happens when the control is not there. A missing reveal has to say which
- * one, because "the shot is missing" and "the shot is of the closed state" look identical
- * on disk, and the second is what §6.157 spent a sprint on.
- */
-async function open(name, control, path, before) {
-  if (path) {
-    await page.goto(path, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1800);
-  }
-  if (before) await before();
-  const button = page.getByRole('button', { name: control }).first();
-  if (!(await button.count())) {
-    console.error(`${name}: nothing on the screen matches ${control}, so the state is unphotographed.`);
-    process.exitCode = 1;
-    return;
-  }
-  /*
-   * Caught, because the comment above says this reports rather than throws and the first
-   * version did not do that: a click that timed out on the wrong element ended the run and
-   * cost four unrelated shots. A harness that loses seven pictures to one bad needle is
-   * worse than one that says which needle was bad.
-   */
-  try {
-    await button.click({ timeout: 8000 });
-  } catch (e) {
-    console.error(`${name}: could not press it — ${e.message.split('\n')[0].slice(0, 90)}`);
-    process.exitCode = 1;
-    return;
-  }
-  await page.waitForTimeout(900);
-  await shot(name);
-}
 
 
 
@@ -1006,11 +978,9 @@ if (await drawer.count()) {
  * from the top of a long one, and §6.141 is what happens when nobody can: a defect filed
  * from the fold of a screen that was simply scrolling.
  */
-const partial = scrolls.filter((s) => s.overflow > 0);
+const longer = longerScreens(scrolls);
 console.log(
-  partial.length
-    ? `shots that are the top of a longer screen: ${partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ')}`
-    : 'every shot is a whole screen',
+  longer ? `shots that are the top of a longer screen: ${longer}` : 'every shot is a whole screen',
 );
 
 /*
@@ -1032,29 +1002,56 @@ console.log(
  * the app has to leave the app in a state the next screen is still worth photographing
  * in."* The cheapest way to obey it is to be the step that has nothing after it.
  */
-await open('09-calendar-tuning', /Tell me about/i, 'http://localhost:4200/calendar');
+await reveal(page, {
+  out: OUT,
+  name: '09-calendar-tuning',
+  control: /Tell me about/i,
+  arrive: 'http://localhost:4200/calendar',
+  problems: unshot,
+  scrolls,
+});
 
 // The control that opens the note is the one that saves: on this screen, saving and
 // saying why are one act. §6.148's finding was an empty state asking for a note the phone
 // had no way to write; this is the shot of the way it writes one.
-await open('04-search-noting', /to (your )?watchlist/i, 'http://localhost:4200/search', async () => {
-  const box = page.getByPlaceholder(/Shows, films/i).first();
-  await box.click();
-  /*
-   * Salt Flats, not Quiet Harbour. `05-discover`'s hook puts Quiet Harbour on the watchlist
-   * so that `06-watchlist` has something on it, which leaves its control reading *On
-   * watchlist* and disabled — and a disabled control cannot open the note. The harness
-   * using the app has to notice what its own earlier steps did, which is the same lesson
-   * that hook's own comment records from the other direction.
-   */
-  await box.fill('Salt');
-  await page.waitForTimeout(1800);
+await reveal(page, {
+  out: OUT,
+  name: '04-search-noting',
+  control: /to (your )?watchlist/i,
+  problems: unshot,
+  scrolls,
+  arrive: async () => {
+    await page.goto('http://localhost:4200/search', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1800);
+    const box = page.getByPlaceholder(/Shows, films/i).first();
+    await box.click();
+    /*
+     * Salt Flats, not Quiet Harbour. `05-discover`'s hook puts Quiet Harbour on the
+     * watchlist so that `06-watchlist` has something on it, which leaves its control
+     * reading *On watchlist* and disabled — and a disabled control cannot open the note.
+     * The harness using the app has to notice what its own earlier steps did, which is the
+     * same lesson that hook's own comment records from the other direction.
+     */
+    await box.fill('Salt');
+    await page.waitForTimeout(1800);
+  },
 });
 
-await open('06-watchlist-editing', /note|Why you saved/i, 'http://localhost:4200/watchlist');
+await reveal(page, {
+  out: OUT,
+  name: '06-watchlist-editing',
+  control: /note|Why you saved/i,
+  arrive: 'http://localhost:4200/watchlist',
+  problems: unshot,
+  scrolls,
+});
 
 await browser.close();
 if (unseen.length) {
   console.error(`Watching Mode shots that do not show what makes them worth taking:\n  ${unseen.join('\n  ')}`);
+  process.exitCode = 1;
+}
+if (unshot.length) {
+  console.error(`States that were never photographed, so the pair proves nothing:\n  ${unshot.join('\n  ')}`);
   process.exitCode = 1;
 }

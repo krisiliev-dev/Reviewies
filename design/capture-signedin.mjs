@@ -16,6 +16,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { EPISODE_ID, HARNESS_SUPABASE_URL, serverAdmits, signIn, stubBackend } from './signedIn.mjs';
+import { longerScreens, reveal, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4201';
 const OUT = new URL('./screens/', import.meta.url).pathname;
@@ -49,37 +50,22 @@ const SHOTS = [
  * unfalsifiable by looking — which is exactly how §6.138 filed a defect (#172) about a
  * screen that was simply scrolling.
  */
-const FOOT = 120;
 const scrolls = [];
 
-const shot = async (name) => {
-  await page.screenshot({ path: `${OUT}${name}.png` });
-  const overflow = await page.evaluate(() => {
-    let most = 0;
-    for (const el of document.querySelectorAll('*')) {
-      if (el.scrollHeight - el.clientHeight > most && el.clientHeight > 200) {
-        most = el.scrollHeight - el.clientHeight;
-      }
-    }
-    return Math.round(most);
-  });
-  scrolls.push({ name, overflow });
-  if (overflow > FOOT) {
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('*')) {
-        if (el.scrollHeight - el.clientHeight > 0 && el.clientHeight > 200) el.scrollTop = el.scrollHeight;
-      }
-    });
-    await page.waitForTimeout(600);
-    await page.screenshot({ path: `${OUT}${name}-foot.png` });
-    await page.evaluate(() => {
-      for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
-    });
-  }
-  console.log('shot', name, overflow ? `(scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''})` : '');
-};
-
+/** Where this pass's shots and walks report what they could not photograph. */
 const hollow = [];
+
+/*
+ * The shot and the walk, from `design/shoot.mjs`. §6.160.
+ *
+ * This file's copies were the two the collapse cost most to reconcile. Its `shot` took no
+ * settle at all — every caller waits before calling it, which is why it works — and its
+ * `reveal` did **not** catch a click that times out, so one bad needle here would still end
+ * the run and cost the shots after it. That is the fixture pass's own §6.158 lesson, learned
+ * once and applied to one of the two files that needed it.
+ */
+const shot = (name) => shoot(page, { out: OUT, name, problems: hollow, scrolls });
+
 for (const [name, path, want] of SHOTS) {
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
   for (let i = 0; i < 20; i++) {
@@ -230,20 +216,15 @@ else console.log('signed-in Search: every control is big enough to hit');
  * to offer, and its closed state is a 47x16 link that §6.166 already had to widen once
  * without anybody seeing what it opens.
  */
-async function reveal(name, control, path) {
-  if (path) {
-    await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1500);
-  }
-  const button = page.getByRole('button', { name: control }).first();
-  if (!(await button.count())) {
-    hollow.push(`${name}: nothing matches ${control}, so the state is unphotographed`);
-    return;
-  }
-  await button.click();
-  await page.waitForTimeout(900);
-  await shot(name);
-}
+const press = (name, control, path) =>
+  reveal(page, {
+    out: OUT,
+    name,
+    control,
+    arrive: path && `${BASE}${path}`,
+    problems: hollow,
+    scrolls,
+  });
 
 /*
  * What `18-lists-open` is a shot of, and what it is not.
@@ -259,7 +240,7 @@ async function reveal(name, control, path) {
  * nothing — `fill('The Long Dark')` and `fill('Long')` — and a third guess is the thing
  * §6.132 says to stop and measure instead of making. Filed.
  */
-await reveal('18-lists-open', /Sunday nights|Ana recommends/i, '/lists');
+await press('18-lists-open', /Sunday nights|Ana recommends/i, '/lists');
 
 /*
  * The two title-page reveals that need an account, reached the way the file's own header
@@ -282,14 +263,14 @@ const toTitle = async () => {
 };
 
 await toTitle();
-await reveal('15-title-addtolist', /Add to list/i);
+await press('15-title-addtolist', /Add to list/i);
 await toTitle();
-await reveal('15-title-warnings', /content warnings/i);
+await press('15-title-warnings', /content warnings/i);
 
-const partial = scrolls.filter((s) => s.overflow > 0);
+const longer = longerScreens(scrolls);
 console.log(
-  partial.length
-    ? `signed-in shots that are the top of a longer screen: ${partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ')}`
+  longer
+    ? `signed-in shots that are the top of a longer screen: ${longer}`
     : 'every signed-in shot is a whole screen',
 );
 

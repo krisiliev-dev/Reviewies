@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
-import { shoot } from './shoot.mjs';
+import { longerScreens, shoot } from './shoot.mjs';
 
 /**
  * The **web** app, photographed against a snapshot of real TMDB.
@@ -154,7 +154,8 @@ function slug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24);
 }
 
-if (scrolls.length) console.log(`\nshots that are the top of a longer screen: ${scrolls.join(', ')}`);
+const longer = longerScreens(scrolls);
+if (longer) console.log(`\nshots that are the top of a longer screen: ${longer}`);
 
 if (offOrigin.size) {
   problems.push(`the build reached hosts nothing accounts for: ${[...offOrigin].join(', ')}`);

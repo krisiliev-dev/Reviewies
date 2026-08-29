@@ -35,7 +35,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { CSV } from './library.mjs';
-import { shoot } from './shoot.mjs';
+import { longerScreens, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4202';
 const OUT = new URL('./web/', import.meta.url).pathname;
@@ -239,9 +239,10 @@ async function pass(theme) {
    * may be much longer — and the list below is which of them have more underneath, with a
    * `-foot` shot on file for each. §6.141's retracted defect came from not knowing which.
    */
+  const longer = longerScreens(scrolls);
   console.log(
-    scrolls.length
-      ? `${name ?? 'dark'} shots that are the top of a longer screen: ${scrolls.join(', ')}`
+    longer
+      ? `${name ?? 'dark'} shots that are the top of a longer screen: ${longer}`
       : `${name ?? 'dark'}: every shot is a whole screen`,
   );
 

@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 922, app: 614, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 922, app: 615, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -207,24 +207,38 @@ describe('every workspace', () => {
      * the fold, which is what §6.138 did. The reporting is one expression; deleting it would
      * take nothing else with it and no route count would notice.
      */
-    'design/capture.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
+    'design/shoot.mjs#folds': { pattern: /page\.screenshot\(/g, least: 2 },
     /*
-     * The same for the other two passes, which §6.142 brought level — and §6.157 found were
-     * still not level at all.
+     * Two: the screen, and its foot.
+     *
+     * This clause used to read `scrolls.push(` and sit in `capture.mjs`, with a copy of it
+     * in `capture-signedin.mjs`, because the fold machinery was written out once per pass.
+     * §6.160 collapsed all five copies into `design/shoot.mjs`, so the thing that could
+     * vanish quietly moved with it — and the count below moved from *the machinery* to *the
+     * shots each pass takes through it*, which is the property each file still owns.
      *
      * The web pass photographed with `fullPage: true` and measured
      * `documentElement.scrollHeight / innerHeight`, which §6.142 wrote down as "its twenty
      * shots are whole documents". They were not: `App.tsx` scrolls a `<main>`, so the
      * document never scrolls, `fullPage` captures one window, and the metric could only ever
      * return `1.0x`. All twenty shots were exactly 1800px tall and the pass said "every shot
-     * fits one screen" about every route of both themes, for sprints.
-     *
-     * All three passes now shoot a viewport and file a `-foot` shot, through the same
-     * `design/shoot.mjs`, so what is counted here is the same act in each.
+     * fits one screen" about every route of both themes, for sprints. §6.153.
      */
-    'design/capture-signedin.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
+    'design/capture.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 7 },
+    'design/capture-signedin.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 4 },
+    'design/capture-real.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 6 },
     'design/capture-web.mjs#folds': { pattern: /shoot\(page, \{/g, least: 1 },
     'design/capture-web-real.mjs#folds': { pattern: /shoot\(page, \{/g, least: 2 },
+    /*
+     * The walks, which are the *second* state of a screen and the whole of §6.158.
+     *
+     * A route's shot and its reveal look identical on disk; deleting a reveal leaves the
+     * arriving shot in place and takes nothing else with it, so no route count and no fold
+     * count would notice. Eight of them across the two phone passes, each pressing a
+     * control that opens something no photograph had ever shown.
+     */
+    'design/capture.mjs#reveals': { pattern: /reveal\(page, \{/g, least: 5 },
+    'design/capture-signedin.mjs#reveals': { pattern: /^\s*await press\(/gm, least: 3 },
     /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *
@@ -253,6 +267,44 @@ describe('every workspace', () => {
       if (found < least) shrunk.push(`${key}: ${found}, below the ${least} it had`);
     }
     expect(shrunk).toEqual([]);
+  });
+
+  /**
+   * One camera. §6.160.
+   *
+   * Five passes performed the same act — settle, measure what scrolls, shoot, shoot the
+   * foot, put the page back — and each had written it out for itself. They agreed only
+   * because one person had read all five in the same fortnight, and by the time anyone
+   * counted they no longer did: three different answers to *which element is scrolling*
+   * (the tallest over 200pt; the tallest that is not `overflow: visible`; the first one in
+   * document order with no floor at all), two answers to *whether the page is put back*, two
+   * to *what counts as a screen with more underneath*, and one pass whose walk did not catch
+   * a click that times out while the pass it was copied from did. Every one of those was a
+   * silent difference in an instrument whose entire job is telling this project the truth
+   * about how it looks.
+   *
+   * A floor cannot hold this — the failure is a pass *growing* its own copy back, not
+   * shrinking. So: the shutter lives in `design/shoot.mjs` and nowhere else, and every pass
+   * that photographs anything imports it.
+   */
+  it('takes every design screenshot through the one shot', () => {
+    const passes = [
+      'design/capture.mjs',
+      'design/capture-real.mjs',
+      'design/capture-signedin.mjs',
+      'design/capture-web.mjs',
+      'design/capture-web-real.mjs',
+    ];
+    const own: string[] = [];
+    for (const file of passes) {
+      const source = readFileSync(resolve(ROOT, file), 'utf8');
+      // Comments cite the old call by name — `capture-web.mjs` explains what `fullPage: true`
+      // did wrong — so the needle is the call, not the words.
+      const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      if (/page\.screenshot\(/.test(code)) own.push(`${file} takes its own screenshot`);
+      if (!/from '\.\/shoot\.mjs'/.test(code)) own.push(`${file} does not import the shot`);
+    }
+    expect(own).toEqual([]);
   });
 
   it('does not pass itself when its tests disappear', () => {

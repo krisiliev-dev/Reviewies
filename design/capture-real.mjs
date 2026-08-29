@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
+import { longerScreens, shoot } from './shoot.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
 
@@ -42,32 +43,21 @@ page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 const problems = [];
 const scrolls = [];
 
-/** The same shot-and-measure `capture.mjs` does: a screen that scrolls is part of a screen. */
-const FOOT = 120;
-async function shot(name, mustContain) {
-  await page.waitForTimeout(700);
-  const body = await page.locator('body').innerText();
-  if (mustContain && !body.includes(mustContain)) {
-    problems.push(`${name}: nothing on it says "${mustContain}"`);
-  }
-  const overflow = await page.evaluate(() => {
-    const el = [...document.querySelectorAll('*')].find((n) => n.scrollHeight > n.clientHeight + 4);
-    return el ? el.scrollHeight - el.clientHeight : 0;
-  });
-  await page.screenshot({ path: `${OUT}${name}.png` });
-  if (overflow > FOOT) {
-    await page.evaluate(() => {
-      const el = [...document.querySelectorAll('*')].find((n) => n.scrollHeight > n.clientHeight + 4);
-      if (el) el.scrollTop = el.scrollHeight;
-    });
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: `${OUT}${name}-foot.png` });
-    scrolls.push(`${name} +${overflow}pt`);
-    console.log(`shot ${name} (scrolls ${overflow}pt, foot on file)`);
-  } else {
-    console.log(`shot ${name}${overflow ? ` (scrolls ${overflow}pt)` : ''}`);
-  }
-}
+/*
+ * The shot, from `design/shoot.mjs`. §6.160.
+ *
+ * Its comment used to read *"the same shot-and-measure `capture.mjs` does"* and it was the
+ * furthest of the five from that: where the others took the **tallest** overflowing element,
+ * this took the **first** one in document order, with no floor on its height at all. On a
+ * screen whose first scroller is a chip row, that reports the chip row — and this is the pass
+ * that photographs 1,220-episode title pages, where the number is the whole point (#191).
+ * Nobody chose that; it is what four copies of one act do while nobody is reading all four.
+ *
+ * `settle: 700`, which is this pass's own wait and shorter than the fixture pass's 1200
+ * because it runs against a local snapshot rather than a build that is still deciding.
+ */
+const shot = (name, mustContain) =>
+  shoot(page, { out: OUT, name, mustContain, problems, scrolls, settle: 700 });
 
 console.log(`Photographing against a snapshot of real TMDB — ${manifest.titles.length} titles.`);
 
@@ -119,7 +109,8 @@ for (const show of SHOWS) {
   }
 }
 
-if (scrolls.length) console.log(`\nshots that are the top of a longer screen: ${scrolls.join(', ')}`);
+const longer = longerScreens(scrolls);
+if (longer) console.log(`\nshots that are the top of a longer screen: ${longer}`);
 if (problems.length) {
   console.error(`\nreal pass could not photograph what it went for:\n  ${problems.join('\n  ')}`);
   process.exitCode = 1;
