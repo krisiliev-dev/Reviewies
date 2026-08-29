@@ -11133,6 +11133,95 @@ can match something other than what it claims — and the only reason it was cau
 every guard here gets planted against. It is positions now, the way `compose.test.ts` holds
 the composer: the reveal must exist, and `<EpisodeRow` must come after it.
 
+### 6.157 The web pass has been photographing the top of every screen
+
+**#193.** §6.156 made the argument: all five of the real-data pass's findings were invisible
+until real data arrived, and three of the four design passes had still never seen any. This
+sprint pointed the web at it. What it found first was the harness.
+
+## The instrument could only return one answer
+
+`capture-web.mjs` photographed with `fullPage: true` and measured
+`documentElement.scrollHeight / window.innerHeight`. It printed **"every shot fits one
+screen"** for every route of both themes, every run, since it was written. §6.142 believed
+it and wrote the belief into this document as a *correction*:
+
+> *"`capture-web.mjs` has always passed `fullPage: true`, so its twenty shots are whole
+> documents and were never scroll positions."*
+
+That is wrong, and reading the files says so in one line: **all twenty are exactly 1800px
+tall** at `deviceScaleFactor: 2` — one 900pt window, every one. `app/src/App.tsx` puts
+`overflow-y-auto` on `<main>`, so the *document* never scrolls; an element inside it does.
+`fullPage` captures the document, `scrollHeight` equals `innerHeight`, and the ratio was
+`1.0x` by construction.
+
+§6.153's rule, in the harness whose predecessor produced it: **an instrument that can only
+return one answer is not returning an answer.** And the tell was there in the output the
+whole time — a metric that has never once disagreed with itself is not measuring.
+
+Fixed by finding whatever actually scrolls, which is what the phone's two passes have always
+done, and `design/shoot.mjs` now holds one copy of that for all three. The fixture web pass
+immediately reported two screens it had never shown a foot of: `05-calendar +723pt` and
+`10-settings +288pt`.
+
+## What the web looks like with real data in it
+
+`design:web:real` builds into `app/dist-real`, points `VITE_TMDB_BASE`/`VITE_TMDB_IMAGE` at
+the snapshot server, and tracks the same six titles the phone's pass does. The two fields
+turned out to be wired on the web already (`app/src/data/platform.ts`) and to have never
+executed; the five settle counts match the phone's exactly — 179, 1174, 18, 45, 9 — which is
+the check that the snapshot is really answering.
+
+It shoots at **420 and 1280**, and the second is the finding. Everything else in the design
+track shoots at 390 or 420, so nobody had ever photographed the window a desktop visitor
+gets.
+
+```
+                    420      1280
+discover           2179      2162
+calendar           1002      1002
+title (The Bear)   1248      1213
+```
+
+**Identical.** The extra 860 points of width buy nothing: the app is the phone layout
+stretched, one column at any size. In the photograph that put One Piece's title at the far
+left of Up Next and its own checkbox at the far right — **about 1,100 points apart** — with
+an empty middle. #169 was filed as a defect over the same failure at 390pt, seven hundred
+points apart, so this is that defect with half a window again between the halves.
+
+`SCREEN.measure` caps the column at 720 and the shell centres it, once, on `<main>` — not
+per screen, which is fifteen chances to pick a different number, and not inside `<main>`,
+which would centre the content and leave the scrollbar at the window's edge. 720 is measured
+rather than picked: the longest line the real library produces is One Piece's `S1E1 · I'm
+Luffy! The Man Who Will Become the Pirate King!`, about 600 points beside a 72-point poster.
+
+What that does **not** do is give the web a desktop layout. It stops the phone layout being
+stretched. A second column, or anything that uses the width rather than declining it, is a
+design question and is filed rather than guessed at.
+
+## The pass that is not in this sprint, and why
+
+The task said three passes. The signed-in pass is not one of them, and that was decided by
+looking rather than by assuming: its three routes are `/account` (an email), `/people` (a
+handle) and `/lists` (two list names and their counts). **There is no TMDB content on any of
+them**, so pointing it at the snapshot would change nothing.
+
+What looking did turn up is worth more than the pass would have been: `18-lists-in` shows two
+*collapsed* list rows, and the pass has never opened one. The row that shows a list's actual
+titles has never been photographed, on either platform.
+
+## A guard caught the mistake §6.156 had to plant for
+
+The first version of the new clause read `expect(app).toContain('SCREEN.measure')`, and
+`clauses.test.ts` refused it: the file carries that name twice, once in the comment above the
+cap. That is exactly the fourth plant of §6.156 — a needle matching the label instead of the
+thing — caught this time by a guard that already existed rather than by planting. It names
+the construct now.
+
+Two other guards fired for the right reason: `coreWiring.test.ts` deleted the expired
+`mobile only: ui/screen#SCREEN` exemption the moment the web imported `SCREEN`, and
+`docs.test.ts` refused two undocumented npm scripts.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -11349,6 +11438,25 @@ and which single claim in this document could not be checked at all:
   because the first plant against it passed on a seed that was not ending. The parenthetical
   in the original entry — "both fixtures happen to be ending" — was itself wrong when
   written and was corrected in §6.150 by counting: it was one of two.
+- **`npm run verify` depends on a third party, and found out by failing.** §6.157's
+  close-out ran verify three times; the middle one failed with
+  `anime.live.test.ts > reconstructs Frieren seasons that TMDB merged`, **60,005 ms** — an
+  AniList request that never came back. It passes alone and it passed on the re-run, so
+  nothing in this sprint caused it.
+  
+  That is §6.125's finding one layer up. §6.125 caught the phone's *smoke* suite reaching
+  live TMDB on every run and "failing like a regression whenever the network did", and fixed
+  it by blanking the credentials. `verify` still has a live test in it, so the command this
+  whole method treats as the arbiter of green can go red because somebody else's server was
+  slow — and the failure looks exactly like a real one until you read the name. Whether a
+  live test belongs in `verify` at all, or belongs behind its own script the way
+  `reconcile.live.test.ts` and the backend round-trip do, has not been decided.
+- **The design track has three shot instruments and now two implementations of one of
+  them.** §6.157 wrote `design/shoot.mjs` — find whatever scrolls, shoot it, file a foot —
+  and pointed the two web passes at it. `capture.mjs` still carries its own inline copy of
+  the same act, and `capture-signedin.mjs` a third. They agree today because §6.157 read all
+  three; nothing holds them to it, and the drift this exists to prevent is exactly the one
+  that produced the bug: an instrument whose answer nobody re-derived.
 - **Nothing re-reads a screenshot for what it *claims*.** §6.150's defect was on three rows
   of the design record, photographed and looked at approvingly one sprint earlier: the chips
   were drawn correctly, said the right words in the right place, and were false. The design
@@ -11384,14 +11492,17 @@ and which single claim in this document could not be checked at all:
   is the phone's too; the *measurement* is not, and the reason it cannot be taken through
   the interface is the finding itself — a torn write is invisible on screen. That is the
   same gap `docs/design/on-a-device.md` already holds for `onSettled`.
-- **All five of the real pass's findings are judged, and three passes are still on the
-  fixture.** §6.152 measured the five §6.151 listed; Up Next's counts *were* the harness
-  (§6.153), the thirty-second Track is fixed (§6.153, §6.154), and the 198-viewport title
-  page is 12 viewports (§6.156). What has not changed is the reason they were found at all:
-  the other three design passes have **still** never seen real data, so the web app and
-  every signed-in screen are judged entirely on four invented titles with no artwork. Every
-  one of the five was invisible until real data arrived, which is the argument for pointing
-  the other three at it and nobody has.
+- ~~**Three passes are still on the fixture.**~~ **Answered in §6.157** (#193), and not the
+  way the entry expected. The web has its own real pass now, at two widths, and the first
+  thing it found was that the web's *fixture* pass had been photographing the top of every
+  screen for sprints while printing "every shot fits one screen".
+
+  The signed-in pass stays on the fixture, measured rather than assumed: its three routes are
+  an email, a handle and two list names, and there is no TMDB content on any of them. What
+  that looking did find is the replacement entry — **the pass photographs three collapsed
+  list rows and has never opened one**, so the row that shows a list's titles has never been
+  photographed on either platform. A route in a design pass is not the same as a *state* of
+  that route, and nothing in the track distinguishes them.
 - ~~**§7 has never been swept for entries that stopped being true.**~~ **Done in §6.154**,
   four sprints after it was filed: `classify`, the component sweep, the attribution condition
   and the fixture's missing binge drop were all closed by §6.147–§6.150 and all four were

@@ -164,7 +164,7 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/note#NOTE_INK': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',
   'mobile only: ui/field#FIELD_BOX': 'Tailwind needs a literal class; field.test.ts couples the two.',
-  'mobile only: ui/screen#SCREEN': 'Tailwind needs a literal class; screen.test.ts couples the two.',
+
   'mobile only: ui/block#BLOCK': 'Tailwind needs a literal class; block.test.ts couples the two.',
   'mobile only: ui/surface#PRESS': 'Tailwind needs a literal class; surface.test.ts couples the two.',
   'mobile only: ui/surface#SURFACE': 'Tailwind needs a literal class; surface.test.ts couples the two.',

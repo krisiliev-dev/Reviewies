@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { startScrobbleListener } from '@reviewies/core/watching/scrobble';
@@ -86,7 +87,33 @@ function Shell() {
         </a>
       )}
       <FailureBanner />
-      <main className={immersive ? 'flex-1 overflow-hidden' : 'safe-top flex-1 overflow-y-auto pb-[calc(var(--tabbar,5rem)+1rem)]'}>
+      {/*
+        The column is capped and centred here, once, rather than by each screen. §6.157.
+
+        Every screen was full-bleed at every width, which is right on a phone and is what
+        the web app had been reviewed as — no design pass had ever photographed it above
+        420pt. At 1280 it made a row's two ends about 1,100 points apart: One Piece's title
+        at the far left of Up Next and its own checkbox at the far right. `SCREEN.measure`
+        carries the number and the reasoning.
+
+        On `<main>` rather than inside it, because the scroll belongs to `<main>` and a cap
+        applied further in would centre the content and leave the scrollbar at the window's
+        edge — and because a per-screen cap is fifteen chances to pick a different one.
+
+        Not on the immersive route: Watching Mode is the frame given over to the stream, and
+        `EDGE_EXEMPT` already says so about the other measurement it does not take.
+      */}
+      <main
+        className={
+          immersive
+            ? 'flex-1 overflow-hidden'
+            : 'safe-top flex-1 overflow-y-auto pb-[calc(var(--tabbar,5rem)+1rem)]'
+        }
+      >
+        <div
+          className={immersive ? 'contents' : 'mx-auto w-full'}
+          style={immersive ? undefined : { maxWidth: SCREEN.measure }}
+        >
         <ErrorBoundary>
           <Routes>
             {ROUTES.map(({ path, screen: Screen }) => (
@@ -106,6 +133,7 @@ function Shell() {
             ))}
           </Routes>
         </ErrorBoundary>
+        </div>
       </main>
       {!immersive && <TabBar />}
       <RemoteDrawer />

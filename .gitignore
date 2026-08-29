@@ -19,3 +19,8 @@ mobile/dist-signedin
 # The real pass's own export. It had shared `mobile/dist` with the fixture pass, so
 # whichever ran last decided which provider the other was photographing. §6.153.
 mobile/dist-real
+
+# The web real pass's own export, for the reason §6.153 gives about `mobile/dist-real`:
+# two passes sharing one build directory means whichever ran last decides which provider
+# the other was photographing. §6.157.
+app/dist-real

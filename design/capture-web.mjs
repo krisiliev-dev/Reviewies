@@ -35,6 +35,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { CSV } from './library.mjs';
+import { shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4202';
 const OUT = new URL('./web/', import.meta.url).pathname;
@@ -182,7 +183,7 @@ async function pass(theme) {
    * A needle per route, for `capture.mjs`'s reason: a screenshot of a screen that did not
    * load is a photograph of a spinner, and a design review of it reviews nothing.
    */
-  const tallest = [];
+  const scrolls = [];
   const ROUTES = [
     ['01-upnext', '/', /The Long Dark|Kitchen Nightshift/],
     ['02-search', '/search', /Search/],
@@ -204,43 +205,44 @@ async function pass(theme) {
     }
     await page.waitForTimeout(900);
     /*
-     * `fullPage`, which is a **different kind of picture** from the phone's — and until
-     * §6.142 nothing said so, in a design track whose method (§6.138) is putting the two
-     * passes side by side.
+     * The **scrolling element**, not `fullPage`.
      *
-     * `capture.mjs` photographs a viewport: what a person sees at once. This photographs
-     * the document: the whole layout, however many screens tall. Both are worth having and
-     * they answer different questions — one is "what does somebody meet", the other is
-     * "does the layout hold" — but a review that compares them without knowing which is
-     * which is comparing a screen to a document. §6.141 retracted a defect filed from
-     * exactly that confusion on the other harness.
+     * This was `page.screenshot({ fullPage: true })` and a metric reading
+     * `documentElement.scrollHeight / window.innerHeight`, and it reported *"every shot
+     * fits one screen"* for every route of both themes from the day it was written.
+     * §6.142 believed it and wrote the belief into the record as a correction: "its
+     * twenty shots are whole documents and were never scroll positions".
      *
-     * So the shot says how tall the document is against the viewport. One screenful reads
-     * as `1.0x` and is a fair likeness; anything above that is a picture no person sees.
+     * §6.157 read the files. All twenty are **exactly 1800px tall** at
+     * `deviceScaleFactor: 2` — one 900pt window, every one. `App.tsx` puts
+     * `overflow-y-auto` on `<main>`, so the document never scrolls, `fullPage` captures
+     * the window, and the metric could only ever return `1.0x`. The web design track has
+     * been reviewing the top of every screen while saying it was reviewing whole ones.
+     *
+     * `shoot` finds whatever actually scrolls and files a foot shot, which is what the
+     * phone's two passes have always done. §6.153: an instrument that can only return one
+     * answer is not returning an answer.
      */
-    await page.screenshot({ path: `${OUT}${name}-${shot}.png`, fullPage: true });
-    const tall = await page.evaluate(
-      () => Math.round((document.documentElement.scrollHeight / window.innerHeight) * 10) / 10,
-    );
-    tallest.push({ shot: `${name}-${shot}`, tall });
-    console.log('shot', `${name}-${shot}`, tall > 1 ? `(${tall}x a viewport)` : '');
+    await shoot(page, {
+      out: OUT,
+      name: `${name}-${shot}`,
+      problems,
+      scrolls,
+    });
     if (!want.test(await page.locator('body').innerText())) {
       problems.push(`${name}-${shot} (${path}) does not show ${want}`);
     }
   }
 
   /*
-   * What the reader is holding. `1.0x` is a fair likeness of a screen; the rest are
-   * documents, and knowing which is the difference between a design review and §6.141's
-   * retracted defect.
+   * What the reader is holding. Every shot is a **screen** now — one window of a page that
+   * may be much longer — and the list below is which of them have more underneath, with a
+   * `-foot` shot on file for each. §6.141's retracted defect came from not knowing which.
    */
-  const documents = tallest.filter((t) => t.tall > 1);
   console.log(
-    documents.length
-      ? `${name ?? 'dark'} shots that are documents rather than screens: ${documents
-          .map((t) => `${t.shot} ${t.tall}x`)
-          .join(', ')}`
-      : `${name ?? 'dark'}: every shot fits one screen`,
+    scrolls.length
+      ? `${name ?? 'dark'} shots that are the top of a longer screen: ${scrolls.join(', ')}`
+      : `${name ?? 'dark'}: every shot is a whole screen`,
   );
 
   await context.close();

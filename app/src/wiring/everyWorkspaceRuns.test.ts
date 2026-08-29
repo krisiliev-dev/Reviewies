@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 921, app: 607, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 921, app: 609, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -209,14 +209,22 @@ describe('every workspace', () => {
      */
     'design/capture.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
     /*
-     * The same for the other two passes, which §6.142 brought level. The signed-in pass
-     * photographs a viewport like the phone's and now says what is below it; the web pass
-     * photographs the whole *document*, which is a different kind of picture, and now says
-     * how many screens tall each one is. Three harnesses had three answers and none of them
-     * said which — in a design track whose method is comparing them side by side.
+     * The same for the other two passes, which §6.142 brought level — and §6.157 found were
+     * still not level at all.
+     *
+     * The web pass photographed with `fullPage: true` and measured
+     * `documentElement.scrollHeight / innerHeight`, which §6.142 wrote down as "its twenty
+     * shots are whole documents". They were not: `App.tsx` scrolls a `<main>`, so the
+     * document never scrolls, `fullPage` captures one window, and the metric could only ever
+     * return `1.0x`. All twenty shots were exactly 1800px tall and the pass said "every shot
+     * fits one screen" about every route of both themes, for sprints.
+     *
+     * All three passes now shoot a viewport and file a `-foot` shot, through the same
+     * `design/shoot.mjs`, so what is counted here is the same act in each.
      */
     'design/capture-signedin.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
-    'design/capture-web.mjs#folds': { pattern: /tallest\.push\(/g, least: 1 },
+    'design/capture-web.mjs#folds': { pattern: /shoot\(page, \{/g, least: 1 },
+    'design/capture-web-real.mjs#folds': { pattern: /shoot\(page, \{/g, least: 2 },
     /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *

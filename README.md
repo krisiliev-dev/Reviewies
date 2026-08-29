@@ -209,10 +209,11 @@ cd ../app && npm run smoke:failures    # the same web app, with the provider fai
 npm run design                        # all three passes, whatever the others do
 npm run design:phone                  # the phone, viewport shots and their feet
 npm run design:signedin               # the six screens behind an account
-npm run design:web                    # the web app, both themes, whole documents
+npm run design:web                    # the web app, both themes
 
 npm run design:snapshot               # take a snapshot of real TMDB (needs a token)
 npm run design:real                   # the phone, photographed against that snapshot
+npm run design:web:real               # the web app against it, at 420 and 1280
 ```
 
 The three run independently and `design` reports a failure at the end rather than stopping
@@ -245,8 +246,26 @@ them.
 
 ```sh
 npm run design:snapshot   # once, or whenever the library should change
-npm run design:real
+npm run design:real       # the phone
+npm run design:web:real   # the web app, at 420 and at 1280
 ```
+
+`design:web:real` builds the web app into `app/dist-real` (`npm run build:real --workspace
+app`) so it cannot share a directory with the fixture build — §6.153 lost a sprint to two
+passes writing the same `mobile/dist`, which meant whichever ran last decided which provider
+the other had been photographing.
+
+It shoots at **two widths**. Everything else in the design track shoots at 390 or 420, so
+the window an ordinary desktop visitor gets had never been photographed by anything, and
+§6.157 found the app was the phone layout stretched across it — a row's title at the far
+left of a 1280-wide window and its own checkbox at the far right.
+
+The signed-in pass is deliberately **not** in this list. Its three routes are an email, a
+handle and two list names; there is no TMDB content on any of them, so pointing it at the
+snapshot would change nothing. That was measured by looking at the shots rather than
+assumed, and what it did turn up is filed instead: the pass photographs three *collapsed*
+list rows and has never opened one, so the row that shows a list's titles has never been
+photographed at all.
 
 `design/snapshot.mjs` fetches six real titles with node — chosen for what they stress: the
 longest title anybody tracks, an anime with 1,220 episodes, a show airing now with real

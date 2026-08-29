@@ -42,6 +42,31 @@ import { space } from '../tokens.ts';
 export const SCREEN = {
   edge: space.s16,
   bleed: -space.s16,
+  /**
+   * The widest a column of rows may become. §6.157.
+   *
+   * The phone cannot need this — its window is the device — and the web had never been
+   * photographed above 420pt wide by anything, so nothing had ever asked. At 1280, which is
+   * what an ordinary desktop visitor gets, the app is the phone layout stretched: rows span
+   * the whole window, so on Up Next **One Piece's title sits at the far left and its own
+   * checkbox at the far right, about 1,100 points apart**. Marking an episode watched means
+   * reading one edge of the window and clicking the other, and the row stops reading as one
+   * thing at all.
+   *
+   * That is a defect by this product's own standard. #169 was filed over a state announced
+   * at both ends of a **390**-point row, seven hundred points apart in the photograph; this
+   * is the same failure with half the window again between the two halves.
+   *
+   * 720, measured rather than picked: the longest line the real library produces is One
+   * Piece's `S1E1 · I'm Luffy! The Man Who Will Become the Pirate King!`, which sets in
+   * roughly 600 points beside a 72-point poster. 720 holds the worst case the snapshot has
+   * with room to spare, and keeps a row's two ends close enough to belong to each other.
+   *
+   * What this does **not** do is give the web a desktop layout. It stops the phone layout
+   * being stretched; a second column, or anything that uses the width rather than declining
+   * it, is a design question and is filed rather than guessed at.
+   */
+  measure: 720,
 } as const;
 
 /**

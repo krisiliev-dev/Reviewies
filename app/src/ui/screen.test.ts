@@ -133,6 +133,65 @@ describe('the screen edge', () => {
       .not.toMatch(/<Stack\.Screen options=\{\{ title/);
   });
 
+  it('caps the column once, in the shell, and not on the immersive route', () => {
+    /*
+     * §6.157, and the reason it took this long: **nothing had ever photographed the web app
+     * above 420pt wide.** `capture-web.mjs` shoots at 420 and the phone's passes at 390, so
+     * the window an ordinary desktop visitor gets had never been looked at by anything.
+     *
+     * At 1280 the app was the phone layout stretched — rows spanning the whole window, so
+     * Up Next put One Piece's title at the far left and its own checkbox at the far right,
+     * about 1,100 points apart. #169 was filed over the same failure at 390.
+     *
+     * The cap lives on `<main>` in the shell. Not per screen, which is fifteen chances to
+     * pick a different number, and not inside `<main>`, because the scroll belongs to
+     * `<main>` and a cap further in would centre the content while leaving the scrollbar at
+     * the window's edge.
+     */
+    expect(SCREEN.measure, 'the column has no cap').toBeGreaterThan(SCREEN.edge);
+
+    const app = withoutProse(read('app/src/App.tsx'));
+    /*
+     * The **construct**, not the name. `clauses.test.ts` refused the first version of this
+     * for reading a whole file for a needle the file carries twice — `SCREEN.measure` is
+     * also in the comment above the cap — which is §6.156's fourth plant caught by a guard
+     * instead of by a plant this time.
+     *
+     * And positions, not presence: the cap has to be applied where the routes render, so it
+     * comes after `<main` and before `<Routes`.
+     */
+    const capped = app.search(/maxWidth: SCREEN\.measure/);
+    expect(capped, 'the shell does not read the cap from the table').toBeGreaterThan(-1);
+    expect(capped, 'the cap is not applied in the shell').toBeGreaterThan(app.indexOf('<main'));
+    expect(app.indexOf('<Routes'), 'the routes render outside the capped column')
+      .toBeGreaterThan(capped);
+
+    /*
+     * And Watching Mode does not take it, for the same reason `EDGE_EXEMPT` already gives
+     * about the other measurement it declines: the frame is given over to the stream.
+     */
+    expect(app, 'the cap is applied to the immersive route too').toMatch(
+      /immersive \? undefined : \{ maxWidth: SCREEN\.measure \}/,
+    );
+    expect(Object.keys(EDGE_EXEMPT)).toContain('WatchingMode');
+  });
+
+  it('is capped in one place, with no screen deciding its own width', () => {
+    // The drift this exists to prevent is the one the edge itself had: fifteen screens
+    // each picking a number off Tailwind's default scale, in the one direction nothing
+    // photographs side by side.
+    const deciding = routedScreens()
+      .map((name) => `app/src/screens/${name}.tsx`)
+      .filter((path) => {
+        try {
+          return /\bmax-w-(?!full|none)|maxWidth:/.test(withoutProse(read(path)));
+        } catch {
+          return false;
+        }
+      });
+    expect(deciding, 'a screen caps its own width instead of the shell').toEqual([]);
+  });
+
   it('keeps no exemption for a full-screen state that no longer exists', () => {
     for (const [name, why] of Object.entries(FULL_SCREEN)) {
       expect(() => read(`mobile/app/${name}.tsx`), `${name} is gone; drop its exemption`)
