@@ -1084,20 +1084,50 @@ try {
 
     // Sample the whole run rather than one moment: the bug §6.80 fixed was a five-second
     // window, and a single well-timed look is how it survived two evenings.
-    const midFlight = [];
+    const samples = [];
     let landed = false;
     for (let i = 0; i < 25 && !landed; i++) {
       await fresh.waitForTimeout(400);
       const body = (await fresh.locator('body').innerText()).replace(/\s+/g, ' ');
       if (/Your history is in/.test(body)) landed = true;
-      else if (/Still reading|came from an import|Bringing in/.test(body)) midFlight.push(body);
+      else if (/Still reading|came from an import|Bringing in/.test(body)) samples.push(body);
     }
+
+    /**
+     * Two states, not one list. §6.161.
+     *
+     * `Still reading your TV Time export` and `Bringing in N shows from your import` occupy
+     * the **same slot** on Up Next and are mutually exclusive — the screen renders the first
+     * while `activeImports()` is non-empty and the second only once it is empty:
+     *
+     *     importing ? stillImporting(importing) : unmatched ? matchingImport(unmatched) : …
+     *
+     * So the second is not a mid-import state at all; it is the post-import one, and the
+     * `Match imported shows` button beside it is offered over a library that has finished
+     * being written. Collecting both into one list called `midFlight` and then asserting the
+     * second never appears made three checks that could only ever fire on the harmless one.
+     * They did, once, during §6.160's close-out: 199/202, and 202/202 on the next run
+     * against the same build.
+     *
+     * The window is narrower than anything here can see. A probe sampling this screen every
+     * **25ms** — forty times the rate below — never caught the matching state in 17 runs,
+     * loaded and idle, with and without a front tab holding focus; five full runs of this
+     * suite against the same build were green. So the mechanism is unknown and is *not*
+     * guessed at (§6.132). What is fixed is the shape: the three assertions are about what
+     * the screen says **while the import is running**, and they now read only those samples.
+     */
+    const during = samples.filter((b) => /Still reading your TV Time export/.test(b));
+    const after = samples.filter(
+      (b) => !/Still reading/.test(b) && /Bringing in \d+ shows? from your import/.test(b),
+    );
+    /** Neither sentence: the screen said something else about an import it is inside. */
+    const between = samples.filter((b) => !during.includes(b) && !after.includes(b));
 
     check('the phone can import a TV Time export at all', landed);
     check(
       'the import is visibly under way rather than silent',
-      midFlight.length > 0,
-      `${midFlight.length} samples`,
+      during.length > 0,
+      `${during.length} samples during, ${after.length} after it landed`,
     );
 
     /**
@@ -1105,18 +1135,29 @@ try {
      * A settled sentence, a growing count, or a repair button — any of them appearing
      * once during the run is the bug.
      */
-    const settled = midFlight.find((b) => /came from an import|Bringing in \d+ show/.test(b));
+    const settled = during.find((b) => /came from an import|Bringing in \d+ show/.test(b));
     check('never describes a settled library mid-import', !settled, (settled ?? '').slice(0, 120));
 
-    const offered = midFlight.find((b) => /Match imported shows/.test(b));
+    const offered = during.find((b) => /Match imported shows/.test(b));
     check(
       'never offers to match a library still being written',
       !offered,
       (offered ?? '').slice(0, 120),
     );
 
-    const said = midFlight.every((b) => /Still reading your TV Time export/.test(b));
-    check('says it is still reading, and names what', said, midFlight[0]?.slice(0, 120) ?? '');
+    /**
+     * Every sample taken while the import was running says so, and names what.
+     *
+     * `during` is selected by that sentence, so this cannot fail as written — which would
+     * make it §6.153's instrument that can only return one answer. What it asserts instead
+     * is that no sample fell **between** the two states: an in-flight screen that says
+     * neither is the third possibility, and it is the one nobody would notice.
+     */
+    check(
+      'says it is still reading, and names what',
+      during.length > 0 && between.length === 0,
+      between[0]?.slice(0, 120) ?? `${during.length} during, ${after.length} after`,
+    );
   } finally {
     await migrant.close();
   }

@@ -11466,6 +11466,168 @@ both are asserted — the pass supplies the needle, the shot refuses the photogr
 it — because reading only one half would pass a pass that had stopped handing its shots
 anything to look for.
 
+### 6.161 Four checks that could not answer
+
+**#197.** §6.160's close-out ran `mobile/smoke.mjs` and got **199/202**, then 202/202 on the
+next run against the same build. Three checks about the import's mid-flight state had gone
+red and green with nothing changed between them. §6.91 had already recorded one flaky check
+and left it on the §7 list; that made two, and by the end of this sprint it was four.
+
+A check that is sometimes red is worse than a wrong one. It teaches everybody to press
+re-run, which is the habit that makes the next real red invisible.
+
+## Reproducing first, and failing to
+
+§6.132 says two guesses from unsupporting evidence means stop and probe, so nothing was
+touched until the screen had been watched. A probe drove the same import against the same
+`dist` and sampled Up Next's text every **25ms** — forty times the suite's own 400ms rate —
+recording a timeline of states:
+
+```
+--- run 1 ---
+      81..   555ms  (  474ms)  first run
+     583..  4445ms  ( 3862ms)  importing (Still reading)
+    4476..  4476ms  (    0ms)  landed (Your history is in)
+```
+
+Seventeen runs of that: idle, under six CPU burners on four cores, and with a decoy page
+held in front to reproduce the background-tab throttling the suite has and the probe did
+not. Then five full runs of the suite itself, all green. **The state the failing run saw
+never appeared once.** Two theories — a render gap between the import ending and the panel
+mounting, and timer throttling in a background tab — and the evidence supports neither.
+
+So the mechanism is still unknown, and this entry does not guess at it. What could be read
+off the source without any run is that the checks were wrong anyway.
+
+## The three checks were about a state that is not the state they name
+
+Up Next renders one sentence in one slot:
+
+```
+importing ? stillImporting(importing) : unmatched ? matchingImport(unmatched) : allCaughtUp
+```
+
+`Still reading your TV Time export` and `Bringing in 12 shows from your import` are the first
+two branches of that ternary. They are **mutually exclusive**, and the second can only render
+once `activeImports()` is empty — it is the *post*-import state, and `copy.ts`'s own docstring
+says so: *"What Up Next says once an import has landed and matching is under way. The count
+is real by then."* The `Match imported shows` button beside it is gated on `!importing` in
+the same JSX.
+
+The suite collected both sentences into one list called `midFlight` and then asserted the
+second never appeared in it. Two of the collector's three alternatives were, three lines
+later, defects. So the only way those checks could ever fire was on the harmless state —
+which is what happened.
+
+The fix is the shape. `samples` is now split into `during`, `after` and `between`, and the
+three assertions read `during` alone. `between` — a sample that says neither sentence while
+an import is in flight — is the case nobody had a name for and is what the third check now
+asserts is empty, because `during` is *selected* by the sentence the third check used to
+assert, and a check that selects its own evidence is §6.153 wearing a different hat.
+
+Three plants against the rebuilt export, needle counted before and after:
+
+| plant | red |
+|---|---|
+| the ternary reordered so `matchingImport` wins while importing | *visibly under way* · *says it is still reading* |
+| `!importing` dropped from the `MatchImports` gate | *never offers to match a library still being written* |
+| §6.79's `N shows came from an import` restored beside the working sentence | *never describes a settled library mid-import* |
+
+The first plant leaves `during` empty, so two of the three checks go vacuous — and the
+non-vacuity check directly above them is what fails instead. That is the pattern this file
+already used for the interrupted write, and it is why these three sit under it rather than
+beside it.
+
+## The race that was not always a race
+
+`two tabs racing do not record the same episode twice` opens two tabs, presses Mark in both
+at once, and asserts no episode was recorded twice. If the two tabs happen to be offering
+**different** episodes, two different marks land, there is no duplicate, and it passes having
+tested nothing — which is the ordinary outcome of a race the harness does not control. The
+flake §6.91 recorded was the smaller half of the problem; the larger half was that the usual
+green said only "no duplicate", which is also what a run that never raced says.
+
+Both tabs' accessible names are read immediately before the press now, and a companion check
+says whether this run was in a position to observe anything:
+
+```
+PASS  two tabs racing do not record the same episode twice — tmdb:ep:55:1, tmdb:ep:55:2,
+      tmdb:ep:55:3 — both pressed the same episode
+PASS  and both tabs were offering the same episode, so the race is a race —
+      Mark Two Tabs Show S1E2 watched / Mark Two Tabs Show S1E2 watched
+```
+
+Planting the divergence needed the harness rather than the product: leaving the second tab
+un-reloaded before the race did **not** make it stale, because the live query moves it on
+without one — which is what the neighbouring check *"a watch in one tab moves the other on,
+with no reload"* already asserts. The plant that works is two unequal labels, and it turns
+the main clause's detail to *"the tabs were not on the same episode"*.
+
+## A third: six milliseconds measured on a different machine
+
+Running the app suite for the two-tab work turned up a check already red:
+
+```
+FAIL  and the interrupted-write clause actually reached the write — 0 whole, 0 torn,
+      6 lost before the write
+```
+
+Three runs of the same build in one afternoon, on an idle container:
+
+```
+4 whole, 2 lost      →      2 whole, 4 lost      →      0 whole, 6 lost
+```
+
+The delays were the literal list `[1, 2, 3, 4, 5, 6]` milliseconds — the window as §6.155
+measured it on the machine that ran §6.155. The machine got slower and the write moved out
+from under six constants. The companion check caught it, which is what a companion is for.
+
+A calibration run was tried and rejected on its own evidence: polling `rows()` until the
+write lands puts the first answer at **55ms** on a write that had already landed by 8, because
+an `indexedDB.open` per poll is coarser than the thing being measured. An instrument whose
+resolution is worse than its subject cannot site a window.
+
+The samples double instead — `1, 2, 4, 8, 16, 32` — and the companion asserts the run
+**straddled** the transition rather than merely reaching the write:
+
+```
+PASS  and the interrupted-write clause straddled the window it is about — 3 whole, 0 torn,
+      3 lost before the write, 0 with nothing to mark, across 1/2/4/8/16/32ms
+```
+
+`torn + whole > 0` was the old condition, and six samples that all land *after* both writes
+satisfy it while never being inside the window between them. Planted both ways — all delays
+at 500ms, and all at 0 — and it goes red on each.
+
+## And a fourth, found by sweeping for the shape
+
+The sweep the brief asked for — what else asserts about something temporary — found the undo
+chip. `linger.undo` is 6000ms, a WCAG 2.2.1 timing; the smoke waited up to 5000 for the chip
+and then up to 5000 more for the ring beside it, as two bare `waitFor`s that **throw** rather
+than name a check. Ten seconds of budget against a six-second affordance, on the machine that
+had just been measured drifting.
+
+It now takes one budget from `linger.undo` itself — imported from `core/src/tokens.ts`, the
+way `scripts/tokens-to-css.mjs` already reads that file — reads both counts at one instant,
+and reports the elapsed time:
+
+```
+PASS  the way back appears beside the ring, not instead of it — Mark season 2 episode 5
+      watched: 1 undo, 1 rings after 33ms
+PASS  and the undo window was still open while it was looked at — 33ms of 6000ms
+```
+
+Planted by stalling the harness past the window: both go red, and the pair is what separates
+*"the way back was never there"* from *"the harness arrived late"*.
+
+## What this sprint did not close
+
+`a hanging search says it is working` in `app/failures.mjs` samples at a flat 3000ms after
+typing. It is one-sided — a hung provider leaves "Searching…" on screen indefinitely, so
+there is no upper edge to fall off — but its lower edge is a constant of the same kind as the
+six milliseconds above, and nothing says so if the debounce ever outgrows it. Left as it is
+and written down here rather than changed on suspicion.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12252,28 +12414,40 @@ and which single claim in this document could not be checked at all:
   unchanged, and does not. The platform this product pivoted to *be* has no measurement of
   what its words land on, which is the same asymmetry §6.38 found for text scaling and
   §6.85 found for the palette itself.
-- **Two browser checks are flaky, and the second is new.** `two tabs racing do not record
-  the same episode twice` failed once during §6.91 and passed on the next run against the
-  same build. It races two contexts against one IndexedDB on purpose, so a flake is
-  plausible rather than mysterious — but a check that is sometimes red is a check nobody
-  will believe when it matters. It needs to be made deterministic or made to report what it
-  could not observe.
+- ~~**Two browser checks are flaky.**~~ **Closed in §6.161** — and the count was four, not
+  two. `two tabs racing do not record the same episode twice` now reads both tabs' offered
+  episode before the press and has a companion saying whether the run raced at all; the
+  three import-progress checks read only the samples taken while an import was actually
+  running; the interrupted-write clause samples across doubling delays rather than six
+  milliseconds measured on another machine, and its companion asserts the samples straddled
+  the transition rather than merely reached the write; and the undo clause takes its budget
+  from `linger.undo` instead of guessing 5000 twice against a 6000ms window.
 
-  The second was found by §6.160's close-out, in a run that had nothing to do with it.
-  `mobile/smoke.mjs` came back **199/202**, the three failures all about the import's
-  mid-flight state — *"never describes a settled library mid-import"*, *"never offers to
-  match a library still being written"*, *"says it is still reading, and names what"* — and
-  the next run against the same build was 202/202. That is the §6.127 progress banner, and
-  the three checks are racing the import they are watching: the export finished before the
-  harness could photograph the state it exists to assert. Same shape as the first, and the
-  same answer required — a positive wait on the state, or a check that says it could not
-  observe rather than that the state was wrong.
+  **What is still open is the mechanism of the first one.** The import state that failed on
+  §6.160's close-out could not be reproduced: 17 probe runs sampling that screen every 25ms
+  — idle, under load, and with a decoy tab holding focus — and five full runs of the suite,
+  none of them caught it. The checks can no longer fire on it, which is right because it was
+  never the defect they name; but a state the product reached once and a probe cannot reach
+  at all is a thing nobody understands, and it is written here rather than closed.
+
+- **One clause still samples a transient at a flat constant.** `a hanging search says it is
+  working` in `app/failures.mjs` reads the screen 3000ms after typing. A hung provider leaves
+  "Searching…" up indefinitely, so there is no upper edge to fall off — but 3000 is a
+  constant of exactly the kind §6.161 replaced elsewhere, and if the debounce ever outgrows
+  it the clause fails saying the app went quiet. Left alone rather than changed on suspicion,
+  which is the same judgement §6.161 recorded for it.
 
 - **What is *not* a second state anywhere.** §6.158 enumerated ten reveals and §6.160 gave
   them one implementation, so the states behind a control are photographed and guarded. The
   states behind *data* are not enumerated at all: an empty list against a full one, a form
   mid-entry, a failed write outside `app/failures.mjs`. `core/src/ui/reveals.ts` is a list of
   what a press opens; nothing is a list of what a screen looks like with nothing in it.
+
+  §6.161 walked into the sharpest instance of this by accident. Up Next has **three** empty
+  states — `stillImporting`, `matchingImport` and `allCaughtUp` — and the design record holds
+  a photograph of none of them. `02-import-done.png` is the *landed* panel, taken after all
+  three have passed. A whole sprint was spent on checks about two sentences nobody has ever
+  seen rendered, and the only reason their wording is trusted is that `copy.ts` owns it.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column

@@ -185,7 +185,7 @@ describe('every workspace', () => {
    * existing. A count would guard the wrong property.
    */
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
-    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 149 },
+    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 151 },
     'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 78 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },

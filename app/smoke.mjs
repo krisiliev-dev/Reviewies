@@ -25,6 +25,16 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+/*
+ * The undo window, from the product rather than from a guess. §6.161.
+ *
+ * Straight from the token file, the way `scripts/tokens-to-css.mjs` already reads it. That
+ * matters because the block below waits for an affordance that **expires**: it waited up to
+ * 5000ms for a chip that lives 6000, twice in a row, on a machine already measured drifting
+ * slower within one afternoon. A harness that spends longer than the window looking for
+ * something inside it reports a product defect about its own lateness.
+ */
+import { linger } from '../core/src/tokens.ts';
 
 const BASE = process.env.BASE ?? 'http://localhost:4173';
 const OUT = new URL('./screenshots/', import.meta.url).pathname;
@@ -1925,16 +1935,50 @@ try {
   const undo = page
     .getByRole('button', { name: `Undo marking ${markName.replace(/^Mark /, '')}` })
     .first();
-  await undo.waitFor({ timeout: 5000 });
+  /*
+   * Inside the window, and said so. §6.161.
+   *
+   * Two `waitFor`s of 5000ms each, for a chip that lives `linger.undo` — 6000 — and a bare
+   * throw if either ran out, which ends the whole run rather than naming a check. On a slow
+   * enough machine the chip expires between the two waits and the clause reports "the way
+   * back did not appear beside the ring" about a run that was simply late.
+   *
+   * So: one budget, taken from the product's own number, and the elapsed time is part of
+   * the answer. A run that overruns does still fail the clause — the chip really is gone by
+   * then — but it fails the companion below too, and that pair is what tells a reader the
+   * difference between "the way back was never there" and "the harness arrived late". The
+   * same shape as the interrupted-write clause and its straddle check.
+   */
+  const began = Date.now();
+  const appeared = await undo
+    .waitFor({ timeout: linger.undo })
+    .then(() => true)
+    .catch(() => false);
   // Waited for, not sampled. The undo chip appears in the click's own render and the
   // ring's filled state arrives when the live query re-runs a moment later, so counting
   // immediately after the chip caught the ring mid-flight and called it missing.
   const struck = page.getByRole('checkbox', { name: unmarkName, exact: true });
-  await struck.first().waitFor({ timeout: 5000 });
+  await struck
+    .first()
+    .waitFor({ timeout: Math.max(500, linger.undo - (Date.now() - began)) })
+    .catch(() => {});
+  // Both counts at one instant, because the chip is on a clock and the ring is not.
+  const [undoCount, ringCount] = await Promise.all([undo.count(), struck.count()]);
+  const elapsed = Date.now() - began;
   check(
     'the way back appears beside the ring, not instead of it',
-    (await struck.count()) === 1,
-    `${markName}: ${await undo.count()} undo, ${await struck.count()} rings`,
+    ringCount === 1 && undoCount === 1,
+    `${markName}: ${undoCount} undo, ${ringCount} rings after ${elapsed}ms`,
+  );
+  /*
+   * And that the looking happened while there was something to see. `linger.undo` is a
+   * WCAG 2.2.1 timing (see `tokens.ts`), so a run that takes longer than it has watched the
+   * chip expire on schedule — correct behaviour, and no evidence about the clause above.
+   */
+  check(
+    'and the undo window was still open while it was looked at',
+    appeared && elapsed < linger.undo,
+    `${elapsed}ms of ${linger.undo}ms${appeared ? '' : ', the chip never appeared'}`,
   );
   check(
     'and the ring it sits beside is filled',
@@ -2706,6 +2750,29 @@ try {
     await first.waitForTimeout(1200);
     await other.goto(BASE, { waitUntil: 'networkidle' });
     await other.waitForTimeout(1200);
+
+    /**
+     * What each tab is about to press, read before pressing it. §6.161.
+     *
+     * This clause is the one §6.91 recorded as flaky, and the flake is the smaller half of
+     * its problem. It races two tabs at the same Mark button and then asserts no episode was
+     * recorded twice — but if the two tabs happen to be offering **different** episodes, two
+     * different marks land, there is no duplicate, and the check passes having tested
+     * nothing. That is the ordinary outcome of a race the harness cannot control, so the
+     * usual green says only "no duplicate", which is also what a run that never raced says.
+     *
+     * §6.153: an instrument that returns the same answer whether or not the thing happened
+     * is not measuring it. So the names are read first and the companion check below says
+     * whether this run was in a position to observe anything — the same shape as
+     * "and the interrupted-write clause straddled the window it is about", at the end of this file.
+     */
+    const offering = async (page) =>
+      (await page
+        .getByRole('checkbox', { name: /^Mark Two Tabs Show/ })
+        .first()
+        .getAttribute('aria-label')) ?? '';
+    const [firstOffered, otherOffered] = await Promise.all([offering(first), offering(other)]);
+
     await Promise.all([
       first.getByRole('checkbox', { name: /^Mark Two Tabs Show/ }).first().click(),
       other.getByRole('checkbox', { name: /^Mark Two Tabs Show/ }).first().click(),
@@ -2725,10 +2792,24 @@ try {
       db.close();
       return all.map((w) => w.targetId);
     });
+    const raced = firstOffered !== '' && firstOffered === otherOffered;
     check(
       'two tabs racing do not record the same episode twice',
       new Set(watched).size === watched.length,
-      watched.join(', '),
+      `${watched.join(', ')} — ${raced ? 'both pressed the same episode' : 'the tabs were not on the same episode'}`,
+    );
+    /*
+     * And that there was a race to observe.
+     *
+     * Failing here is not "the product is wrong"; it is "this run could not ask the
+     * question", which is a different thing and has to look different. Both tabs are
+     * reloaded from the same database a second before the press, so they disagreeing means
+     * one of them is rendering stale — worth knowing on its own.
+     */
+    check(
+      'and both tabs were offering the same episode, so the race is a race',
+      raced,
+      `${firstOffered || '(nothing)'} / ${otherOffered || '(nothing)'}`,
     );
     await other.screenshot({ path: OUT + '23-second-tab.png' });
   } finally {
@@ -2779,14 +2860,43 @@ try {
         }),
     );
 
+  /**
+   * A sweep across orders of magnitude, not six milliseconds. §6.161.
+   *
+   * The delays used to be the literal list `[1, 2, 3, 4, 5, 6]` — the window as §6.155
+   * measured it on the container that ran it. Three runs of this suite in one afternoon,
+   * with no change to the app, reported `4 whole, 2 lost`, then `2 whole, 4 lost`, then
+   * `0 whole, 6 lost`: the machine got slower, the write moved out from under six
+   * constants, and the clause stopped being inside the window it exists to be inside. Its
+   * companion caught that, which is what a companion is for.
+   *
+   * The fix is not a bigger constant — that is the same mistake with more slack — and it is
+   * not a calibration run either. Calibrating by polling `rows()` was tried and measured the
+   * **harness**: an `indexedDB.open` per poll puts the first answer at ~55ms on a write that
+   * had already landed by 8. An instrument whose resolution is coarser than the thing it
+   * measures cannot site the window.
+   *
+   * So the samples double. 1 to 32ms is five doublings, and wherever the transition sits in
+   * that span the run has samples on both sides of it — which is precisely what the
+   * companion check below asserts, and why that check is the one that has to be believed.
+   * If the machine ever slows past 32ms this fails and says so with the tally, rather than
+   * passing having looked at nothing.
+   */
   let torn = 0;
   let whole = 0;
-  // The window measured in §6.155. Below it the click has not reached the first write;
-  // above it both have landed.
-  for (const delay of [1, 2, 3, 4, 5, 6]) {
+  let lost = 0;
+  /** Iterations where Up Next had nothing to mark, which are not samples of anything. */
+  let unmarkable = 0;
+  const delays = [1, 2, 4, 8, 16, 32];
+  for (const delay of delays) {
     await page.goto(BASE, { waitUntil: 'networkidle' });
     const mark = page.getByRole('checkbox', { name: /^Mark .* watched$/ }).first();
-    if (!(await mark.count())) continue;
+    if (!(await mark.count())) {
+      // Not a sample. Counted, because six iterations quietly becoming two is the same
+      // shape as the clause below being outside its window and nothing saying so.
+      unmarkable++;
+      continue;
+    }
 
     const before = await rows();
     await mark.click({ noWaitAfter: true });
@@ -2797,6 +2907,7 @@ try {
     const after = await rows();
     if (after.watches > before.watches && after.outbox === before.outbox) torn++;
     else if (after.watches > before.watches) whole++;
+    else lost++;
   }
 
   check(
@@ -2809,14 +2920,17 @@ try {
    * machine, a longer first paint — the clause above would pass having observed nothing
    * at all, which is §6.121's failure exactly.
    *
-   * It counts every run that reached the local write, torn or whole. Counting only the
-   * whole ones would make this fail *because* the clause above did, saying "never reached
-   * the write" about a run that reached it six times and tore four.
+   * **Straddled**, not merely reached. §6.161. The old condition was `torn + whole > 0` —
+   * one run getting as far as the local write — and six runs that all land *after* both
+   * writes satisfy it while never being inside the window between them. Samples that are
+   * sometimes early and sometimes late bracket the transition, and only then does "0 torn"
+   * mean the tear was looked for. A torn run counts as straddling too: it is by definition
+   * inside the window.
    */
   check(
-    'and the interrupted-write clause actually reached the write',
-    torn + whole > 0,
-    `${whole} whole, ${torn} torn, ${6 - torn - whole} lost before the write`,
+    'and the interrupted-write clause straddled the window it is about',
+    lost > 0 && torn + whole > 0,
+    `${whole} whole, ${torn} torn, ${lost} lost before the write, ${unmarkable} with nothing to mark, across ${delays.join('/')}ms`,
   );
 } catch (err) {
   check(
