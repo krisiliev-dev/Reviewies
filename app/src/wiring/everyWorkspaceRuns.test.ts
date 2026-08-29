@@ -209,6 +209,15 @@ describe('every workspace', () => {
      */
     'design/capture.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
     /*
+     * The same for the other two passes, which §6.142 brought level. The signed-in pass
+     * photographs a viewport like the phone's and now says what is below it; the web pass
+     * photographs the whole *document*, which is a different kind of picture, and now says
+     * how many screens tall each one is. Three harnesses had three answers and none of them
+     * said which — in a design track whose method is comparing them side by side.
+     */
+    'design/capture-signedin.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
+    'design/capture-web.mjs#folds': { pattern: /tallest\.push\(/g, least: 1 },
+    /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *
      * `capture.mjs` is ratcheted by routes because a route with no `MUST_SHOW` already

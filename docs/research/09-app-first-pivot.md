@@ -9998,6 +9998,49 @@ else with it — no route count would notice.
 The rule, which is new and general: **a shot of a screen that scrolls is a shot of part of
 a screen.** Every harness that photographs anything owes its reader the difference.
 
+### 6.142 Three harnesses, three answers to what a screenshot is
+
+§6.141 taught `design/capture.mjs` to say what is below its folds, and §7 recorded the gap
+it left: *"`capture-web.mjs` and `capture-signedin.mjs` did not get it, so twenty-six of the
+forty-four screenshots are still scroll positions."*
+
+**The number was six.** `capture-web.mjs` has passed `fullPage: true` since it was written,
+so its twenty shots are whole documents and were never scroll positions at all. Only
+`capture-signedin.mjs`'s six were.
+
+That entry was written from which files had been *edited* rather than from what they do —
+one sprint after §6.139 wrote down that a claim about the product has to be proved against
+the product, in the same document, by the same hand. §6.133's rule earns its third outing:
+an excuse that was never true is worse than one that has expired. So is a gap that was never
+that wide, because somebody will size the next sprint by it.
+
+## And the wrong count was hiding something bigger
+
+Going to fix twenty-six shots and finding six is what surfaced the actual state of the
+instrument:
+
+| harness | shots | what a picture is |
+| --- | --- | --- |
+| `capture.mjs` | 24 | a **viewport** at scroll 0 — what a person meets |
+| `capture-web.mjs` | 20 | the whole **document**, however many screens tall |
+| `capture-signedin.mjs` | 6 | a viewport, silently |
+
+Three answers, none of them stated, in a design track **whose method is putting them side by
+side**. §6.138 read all forty-four in one pass and compared `05-discover.png` against
+`dark-04-discover.png` — a screen against a document. They happened to agree because that
+screen is short. §6.141's retracted defect came out of the same confusion on the other
+harness.
+
+Both are worth having and they answer different questions: *what does somebody meet* and
+*does the layout hold*. What is not defensible is not saying which you are holding.
+
+So all three say. The signed-in pass measures overflow, writes a `-foot` shot past a fold's
+worth and prints its manifest, exactly as the phone's does. The web pass keeps `fullPage` —
+it is the right picture for judging a layout — and now prints how many viewports tall each
+document is, so `1.0x` reads as a fair likeness of a screen and anything above it reads as a
+picture no person sees. `SUITE_FLOOR` ratchets all three, because each is one expression
+whose deletion would take nothing else with it.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10171,11 +10214,16 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
-- **The web's design pass still does not say what is below its folds.** §6.141 gave
-  `design/capture.mjs` overflow reporting and foot shots; `capture-web.mjs` and
-  `capture-signedin.mjs` did not get it, so twenty-six of the forty-four screenshots are
-  still scroll positions nobody can tell from whole screens. The phone's four were found
-  the moment it was asked; the web's count is unknown rather than zero.
+- ~~**The web's design pass still does not say what is below its folds** — twenty-six of
+  the forty-four shots are scroll positions nobody can tell from whole screens.~~
+  **Corrected in §6.142: the number was six, not twenty-six.** `capture-web.mjs` has always
+  passed `fullPage: true`, so its twenty shots are whole documents and were never scroll
+  positions; only `capture-signedin.mjs`'s six were. The entry was written from which files
+  had been *edited* rather than from what they do — one sprint after §6.139 wrote down that
+  a claim about the product has to be proved against the product, and in the same document.
+  All three are level now, and what the wrong count was hiding is larger than the count:
+  **three harnesses had three answers to what a screenshot is**, and none of them said
+  which, in a design track whose method is putting them side by side.
 - **The tab bar's drawings have never been rasterised by anything but a browser.**
   §6.140 gave the phone `react-native-svg`, pinned to what this Expo SDK asks for, and both
   design harnesses photograph the result — but the phone's harness serves the

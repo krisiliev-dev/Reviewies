@@ -40,6 +40,45 @@ const SHOTS = [
   ['18-lists-in', '/lists', /Sunday nights|Ana recommends/i],
 ];
 
+/**
+ * What each shot is a shot *of*, which §6.141 taught `capture.mjs` and this file did not
+ * get until §6.142.
+ *
+ * Every screenshot here is a viewport at scroll 0. A reader of `design/screens/` cannot
+ * tell a whole screen from the top of a long one, so a defect at a shot's bottom edge is
+ * unfalsifiable by looking — which is exactly how §6.138 filed a defect (#172) about a
+ * screen that was simply scrolling.
+ */
+const FOOT = 120;
+const scrolls = [];
+
+const shot = async (name) => {
+  await page.screenshot({ path: `${OUT}${name}.png` });
+  const overflow = await page.evaluate(() => {
+    let most = 0;
+    for (const el of document.querySelectorAll('*')) {
+      if (el.scrollHeight - el.clientHeight > most && el.clientHeight > 200) {
+        most = el.scrollHeight - el.clientHeight;
+      }
+    }
+    return Math.round(most);
+  });
+  scrolls.push({ name, overflow });
+  if (overflow > FOOT) {
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) {
+        if (el.scrollHeight - el.clientHeight > 0 && el.clientHeight > 200) el.scrollTop = el.scrollHeight;
+      }
+    });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${OUT}${name}-foot.png` });
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
+    });
+  }
+  console.log('shot', name, overflow ? `(scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''})` : '');
+};
+
 const hollow = [];
 for (const [name, path, want] of SHOTS) {
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
@@ -48,8 +87,7 @@ for (const [name, path, want] of SHOTS) {
     await page.waitForTimeout(500);
   }
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}${name}.png` });
-  console.log('shot', name);
+  await shot(name);
   if (!want.test(await page.locator('body').innerText())) {
     hollow.push(`${name} (${path}) does not show ${want}`);
   }
@@ -83,8 +121,7 @@ const talkTo = page.getByRole('link', { name: /^Comments on season 1 episode 1, 
 await talkTo.waitFor({ timeout: 20000 });
 await talkTo.click();
 await page.waitForTimeout(2000);
-await page.screenshot({ path: `${OUT}19-comments-sealed.png` });
-console.log('shot', '19-comments-sealed');
+await shot('19-comments-sealed');
 if (!/Hidden until you watch it/i.test(await page.locator('body').innerText())) {
   hollow.push('19-comments-sealed does not show the spoiler gate');
 }
@@ -100,8 +137,7 @@ await page.waitForTimeout(1000);
 
 await page.getByRole('link', { name: /^Comments on season 1 episode 1, /i }).click();
 await page.waitForTimeout(2500);
-await page.screenshot({ path: `${OUT}20-comments-in.png` });
-console.log('shot', '20-comments-in');
+await shot('20-comments-in');
 /*
  * A needle from a comment body, not from the composer.
  *
@@ -148,8 +184,7 @@ if (await page.getByRole('textbox').count()) {
 const opener = page.getByRole('button', { name: /^Say something$/i });
 if (await opener.count()) await opener.click();
 await page.waitForTimeout(1200);
-await page.screenshot({ path: `${OUT}21-comments-writing.png` });
-console.log('shot', '21-comments-writing');
+await shot('21-comments-writing');
 if (!(await page.getByRole('textbox').count())) {
   hollow.push('21-comments-writing does not show the composer');
 }
@@ -176,6 +211,13 @@ const small = await page.evaluate(() => {
 });
 if (small.length) hollow.push(`signed-in Search has controls under the 24pt floor: ${small.join(', ')}`);
 else console.log('signed-in Search: every control is big enough to hit');
+
+const partial = scrolls.filter((s) => s.overflow > 0);
+console.log(
+  partial.length
+    ? `signed-in shots that are the top of a longer screen: ${partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ')}`
+    : 'every signed-in shot is a whole screen',
+);
 
 await browser.close();
 if (hollow.length) {

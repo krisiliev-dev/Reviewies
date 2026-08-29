@@ -182,6 +182,7 @@ async function pass(theme) {
    * A needle per route, for `capture.mjs`'s reason: a screenshot of a screen that did not
    * load is a photograph of a spinner, and a design review of it reviews nothing.
    */
+  const tallest = [];
   const ROUTES = [
     ['01-upnext', '/', /The Long Dark|Kitchen Nightshift/],
     ['02-search', '/search', /Search/],
@@ -202,12 +203,45 @@ async function pass(theme) {
       await page.waitForTimeout(400);
     }
     await page.waitForTimeout(900);
+    /*
+     * `fullPage`, which is a **different kind of picture** from the phone's — and until
+     * §6.142 nothing said so, in a design track whose method (§6.138) is putting the two
+     * passes side by side.
+     *
+     * `capture.mjs` photographs a viewport: what a person sees at once. This photographs
+     * the document: the whole layout, however many screens tall. Both are worth having and
+     * they answer different questions — one is "what does somebody meet", the other is
+     * "does the layout hold" — but a review that compares them without knowing which is
+     * which is comparing a screen to a document. §6.141 retracted a defect filed from
+     * exactly that confusion on the other harness.
+     *
+     * So the shot says how tall the document is against the viewport. One screenful reads
+     * as `1.0x` and is a fair likeness; anything above that is a picture no person sees.
+     */
     await page.screenshot({ path: `${OUT}${name}-${shot}.png`, fullPage: true });
-    console.log('shot', `${name}-${shot}`);
+    const tall = await page.evaluate(
+      () => Math.round((document.documentElement.scrollHeight / window.innerHeight) * 10) / 10,
+    );
+    tallest.push({ shot: `${name}-${shot}`, tall });
+    console.log('shot', `${name}-${shot}`, tall > 1 ? `(${tall}x a viewport)` : '');
     if (!want.test(await page.locator('body').innerText())) {
       problems.push(`${name}-${shot} (${path}) does not show ${want}`);
     }
   }
+
+  /*
+   * What the reader is holding. `1.0x` is a fair likeness of a screen; the rest are
+   * documents, and knowing which is the difference between a design review and §6.141's
+   * retracted defect.
+   */
+  const documents = tallest.filter((t) => t.tall > 1);
+  console.log(
+    documents.length
+      ? `${name ?? 'dark'} shots that are documents rather than screens: ${documents
+          .map((t) => `${t.shot} ${t.tall}x`)
+          .join(', ')}`
+      : `${name ?? 'dark'}: every shot fits one screen`,
+  );
 
   await context.close();
 }
