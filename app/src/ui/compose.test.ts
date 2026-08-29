@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { COMPOSE, COMPOSE_OPEN, SETTINGS_OPEN } from '@reviewies/core/ui/compose';
+import { RATING_OPEN, ratingAction, ratingLabel } from '@reviewies/core/ui/rating';
 
 /**
  * Composing is revealed, not resident — the rule `core/src/ui/compose.ts` states, held on
@@ -143,6 +144,47 @@ describe('a composer on a reading screen', () => {
         expect(source, `${file} hand-writes "${word}"`).not.toContain(`"${word}"`);
         expect(source, `${file} hand-writes '${word}'`).not.toContain(`'${word}'`);
       }
+    }
+  });
+
+  it('reveals a rating on a list row too, by the same rule and the same default', () => {
+    /*
+     * §6.129 wrote the rule and `compose.ts`'s own header says why it exists: "so the third
+     * and fourth screens do not each decide it again". It had been applied to the comments
+     * composer (§6.129) and the calendar's notification panel (§6.134), and to nothing else
+     * in four sprints.
+     *
+     * The title page is the case it was written for, and the numbers there are worse than
+     * either. `StarRating` is 240 points wide — ten targets at WCAG 2.5.8's 24 — and its
+     * own doc says "its callers give it a line of its own rather than putting it beside
+     * something". One of its two call sites honoured that and one put it beside *React* and
+     * *Talk* in a row about 350 wide, once per **watched** episode: §6.141's first foot shot
+     * of `15-title` is sixty empty star outlines down one screen.
+     */
+    expect(RATING_OPEN, 'a row opens on the five stars').toBe(false);
+    expect(RATING_OPEN, 'the two reveals disagree about their default').toBe(COMPOSE_OPEN);
+
+    /*
+     * A rating you have shows the number; a rating you have not shows the offer. One
+     * control either way, which is why the contract is a function rather than two
+     * constants — the two states differ in what they say, not in what they do.
+     */
+    expect(ratingLabel(undefined)).toBe('Rate');
+    expect(ratingLabel(3.5)).toBe('3.5');
+    expect(ratingAction(undefined)).toBe('Rate');
+    expect(ratingAction(4), 'a rating already given still says Rate').not.toBe('Rate');
+
+    for (const path of ['app/src/screens/TitleDetail.tsx', 'mobile/app/title/[id].tsx']) {
+      const source = read(path);
+      expect(source, `${path} seeds its reveal from a literal`).toContain('useState(RATING_OPEN)');
+      expect(source, `${path} spells the offer's words by hand`).toContain('ratingLabel(');
+      /*
+       * And the five are still behind it. A screen that revealed the offer and left the
+       * stars resident would pass every clause above.
+       */
+      expect(source, `${path} leaves the stars resident`).toMatch(
+        /ratingOpen[\s\S]{0,200}<StarRating/,
+      );
     }
   });
 });

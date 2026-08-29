@@ -10262,6 +10262,55 @@ the hole to prove it.
 `tick` and `chevron` styles named a face because they were drawing glyphs, and a path has no
 face to name. The population shrinks as the drawings take over.
 
+### 6.145 A rule written four sprints ago, on the screen it was written for
+
+**#178.** §6.141's first foot shot of `15-title` showed an episode row carrying eight
+controls — a cross-off, *React*, *Talk*, and five rating stars — and sixty empty star
+outlines down a twelve-episode season. The star became a drawing in §6.143; the density is
+what was left.
+
+## The rule already existed, and had been applied twice in four sprints
+
+`compose.ts` states it: *on a screen whose purpose is reading, composing is revealed, not
+resident.* Its own header says why it exists — **"so the third and fourth screens do not
+each decide it again"** — and it had reached the comments composer (§6.129) and the
+calendar's notification panel (§6.134) and nowhere else since.
+
+The title page is the third screen. A season's episode list is something you read down;
+rating an episode is composing. And the numbers there are worse than either case the rule
+has already been applied to:
+
+- `StarRating` is **240 points wide** — ten touch targets at the 24 WCAG 2.5.8 asks for;
+- the episode row put it beside *React* and *Talk* in a row about 350 wide;
+- once per **watched** episode, so a season is sixty outlines that say nothing.
+
+## Its own doc said so, and one of its two call sites obeyed
+
+`StarRating`'s header: *"which is why its callers give it a line of its own rather than
+putting it beside something."* The title's own rating gets a captioned block. The episode
+row did not.
+
+§6.133 asks whether a sentence like that is a rule or an excuse that expired. The
+measurement answers it — 240 into 350 does not go, and the sentence is a rule that one call
+site was quietly breaking. **An excuse expires; a rule gets broken. Telling them apart is
+measuring, not reading.**
+
+## What a row shows now
+
+`core/src/ui/rating.ts`, mirroring `compose.ts`: `RATING_OPEN` is `false`, the same `false`
+and for the same reason. A watched row shows **one** control where the five were —
+`ratingLabel` returns the number if there is a rating and *Rate* if there is not — and
+pressing it reveals the five on a line of their own.
+
+What deliberately stays: an unwatched row offers no rating at all, so **the control's
+presence is itself a state signal**. That was right and is untouched. What changed is only
+what the offer looks like before it is taken — and a rating you have given now reads down a
+season as a number, which ten outlines never did.
+
+Three plants: the row opening on the five, a screen seeding its reveal from a literal
+`false` instead of the rule, and the stars going resident behind a revealed offer. All
+three fail; all three restores pass.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10445,6 +10494,12 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **§6.129's rule has three screens and nobody has swept for a fourth.** It was written
+  for the comments composer, reached the calendar in §6.134 and the title page in §6.145 —
+  each time because a *screenshot* showed the form beating the content, never because
+  anything looked. `compose.test.ts` names the three screens it knows about; what it cannot
+  do is find the next screen that opens on a form, which is the same shape as every
+  exemption list in this repo before something swept for it.
 - **Nothing in the product types a mark now, and the sweep's boundary is a judgement.**
   §6.144 closed the last eight sites and wrote down where its character range stops — but
   the range is a list of Unicode blocks chosen by hand, not a property. `›` was outside it

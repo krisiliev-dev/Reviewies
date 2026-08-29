@@ -17,6 +17,7 @@ import { Button } from '../ui/Button';
 import { CrossOff } from '../ui/CrossOff';
 import { Row as BaseRow } from '../ui/Row';
 import { StarRating } from '../ui/StarRating';
+import { RATING_OPEN, ratingAction, ratingLabel } from '@reviewies/core/ui/rating';
 import { AddToList } from '../social/AddToList';
 import { ContentWarnings } from '../social/ContentWarnings';
 import { WhereToWatch } from '../ui/WhereToWatch';
@@ -229,6 +230,9 @@ function EpisodeRow({
 }) {
   const aired = hasAired(episode);
   const rating = useLiveQuery(() => db.ratings.get(episode.id), [episode.id]);
+  // §6.145, and `RATING_OPEN` is the rule rather than a literal `false` here — the same
+  // shape `compose.ts` gave the comments composer and the calendar's panel.
+  const [ratingOpen, setRating] = useState(RATING_OPEN);
 
   const which = `season ${episode.season} episode ${episode.number}, ${episode.name}`;
 
@@ -293,15 +297,32 @@ function EpisodeRow({
           />
           {/* "A series of 8 television episodes is really just a series of 8 films"
               (r/Letterboxd), and a film's rating does not get the leftovers. Only offered
-              once watched. */}
+              once watched, so the offer's presence is a state. Revealed rather than
+              resident since §6.145: `StarRating` is 240 wide in a row that has not got it,
+              and sixty empty outlines down a season said nothing. */}
           {watched && (
-            <StarRating
-              of={which}
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? clearRating(episode.id) : rate(episode.id, value)
-              }
+            <Button
+              size="inline"
+              tone="quiet"
+              label={ratingLabel(rating?.value)}
+              name={`${ratingAction(rating?.value)} ${which}`}
+              onPress={() => setRating((open) => !open)}
             />
+          )}
+          {/* The five, on a line of their own — what `StarRating`'s own doc asks its
+              callers for, and what the title's own rating already got. */}
+          {watched && ratingOpen && (
+            <div className="w-full">
+              <StarRating
+                of={which}
+                value={rating?.value}
+                onChange={(value) => {
+                  if (value === undefined) clearRating(episode.id);
+                  else rate(episode.id, value);
+                  setRating(false);
+                }}
+              />
+            </div>
           )}
         </div>
       }

@@ -19,6 +19,7 @@ import { ContentWarnings } from '../../src/ui/ContentWarnings';
 import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
+import { RATING_OPEN, ratingAction, ratingLabel } from '@reviewies/core/ui/rating';
 import { leadingOf, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
@@ -233,6 +234,9 @@ function EpisodeRow({
 }) {
   const aired = hasAired(episode);
   const rating = useLive(() => db.ratings.get(episode.id), [episode.id]);
+  // §6.145, and `RATING_OPEN` is the rule rather than a literal `false` here — the same
+  // shape `compose.ts` gave the comments composer and the calendar's panel.
+  const [ratingOpen, setRating] = useState(RATING_OPEN);
 
   async function toggle() {
     if (watched) {
@@ -305,16 +309,33 @@ function EpisodeRow({
           />
           {/* "A series of 8 television episodes is really just a series of 8 films"
               — r/Letterboxd. A film's rating does not get whatever space the controls
-              leave over. Only offered once watched. */}
+              leave over. Only offered once watched, so the offer's presence is a state.
+              Revealed rather than resident since §6.145: `StarRating` is 240 wide in a
+              350-wide row, and sixty empty outlines down a season said nothing. */}
           {watched && (
-            <StarRating
-              of={which}
-              value={rating?.value}
-              onChange={(value) =>
-                value === undefined ? clearRating(episode.id) : rate(episode.id, value)
-              }
+            <Button
+              size="inline"
+              tone="quiet"
+              label={ratingLabel(rating?.value)}
+              name={`${ratingAction(rating?.value)} ${which}`}
+              onPress={() => setRating((open) => !open)}
             />
           )}
+          {/* The five, on a line of their own — which is what `StarRating`'s own doc asks
+              its callers for, and what the title's own rating already got. */}
+          {ratingOpen ? (
+            <View style={styles.episodeStars}>
+              <StarRating
+                of={which}
+                value={rating?.value}
+                onChange={(value) => {
+                  if (value === undefined) void clearRating(episode.id);
+                  else void rate(episode.id, value);
+                  setRating(false);
+                }}
+              />
+            </View>
+          ) : null}
         </View>
       }
     />
@@ -339,6 +360,8 @@ const styles = StyleSheet.create({
 
   season: { gap: 6 },
 
+  /** The five, when revealed: its own line, never beside the buttons. */
+  episodeStars: { width: '100%' },
   episodeUnder: { flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap' },
 
 });
