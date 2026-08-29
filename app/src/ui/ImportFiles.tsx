@@ -4,6 +4,7 @@ import { restoreAccount, type RestoreReport } from '@reviewies/core/social/resto
 import { importArchive, importArchiveEntry, pairWal } from '@reviewies/core/data/archiveImport';
 import { Data } from './Data';
 import { Note } from './Note';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Bring a history in from somewhere else.
@@ -189,19 +190,9 @@ export function ImportFiles({
 export function ImportFormats() {
   return (
     <>
-      <Note className="px-1">
-        A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl
-        or Letterboxd — or a recovered <code>DioCache.db</code> straight off your phone.
-        Files are recognised by what is in them, not what they are called, and anything we
-        cannot read is listed rather than silently dropped.
-      </Note>
-      {/* The -wal is the difference between a complete history and one quietly missing
-          its most recent months, so it has to be asked for by name. */}
-      <Note className="px-1">
-        If you have a <code>DioCache.db</code>, select its <code>DioCache.db-wal</code> at
-        the same time. TV Time wrote its most recent months there, and importing the
-        database alone loses them without telling you.
-      </Note>
+      <Note className="px-1">{COPY.import.formats}</Note>
+      {/* A footnote: it applies to one of the seven sources named above. §6.147. */}
+      <Note level="footnote" className="px-1">{COPY.import.wal}</Note>
     </>
   );
 }

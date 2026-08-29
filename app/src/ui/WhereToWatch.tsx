@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
+import { getProvidersCached } from '@reviewies/core/metadata/index';
+import { Attribution } from './Attribution';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
 import { COPY } from '@reviewies/core/copy';
@@ -135,7 +136,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           )}
 
           {/* Licence condition, not a courtesy. */}
-          <Note level="footnote" className="mt-2">{JUSTWATCH_ATTRIBUTION}</Note>
+          <Attribution of={['justwatch']} />
         </>
       )}
     </section>

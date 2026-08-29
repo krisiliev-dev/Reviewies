@@ -32,6 +32,29 @@ export const PAIRS: Record<string, { web: string; phone: string[] }> = {
   '/more': { web: 'More.tsx', phone: ['(tabs)/more.tsx'] },
 };
 
+/**
+ * And the components, which `PAIRS` never covered.
+ *
+ * `PAIRS` maps `app/src/screens` to `mobile/app` — routes. Both platforms also carry
+ * same-named files under `ui/`, and nothing had ever compared a word in them: the import
+ * blurb promised "anything we cannot read is listed rather than silently dropped" on the
+ * web and not on the phone, on a screen where both list every file and its outcome, and
+ * the catch-up sheet's way out was named on one platform and not the other.
+ *
+ * Derived rather than listed, so a component added to both platforms is compared without
+ * anybody remembering to add it — which is the failure this file's own header names.
+ * §6.147.
+ */
+export function componentPairs(): string[] {
+  const ui = (dir: string) =>
+    new Set(
+      readdirSync(resolve(ROOT, dir))
+        .filter((f) => f.endsWith('.tsx') && !f.includes('.test.')),
+    );
+  const phone = ui('mobile/src/ui');
+  return [...ui('app/src/ui')].filter((f) => phone.has(f)).sort();
+}
+
 /** Files that are not one half of a pair, and why. */
 export const UNPAIRED_WEB: Record<string, string> = {
   'NotFound.tsx': 'the phone’s +not-found is expo-router’s own; nothing to compare',

@@ -8,6 +8,7 @@ import { Poster } from '../ui/Poster';
 import { Button } from '../ui/Button';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
+import { Attribution } from '../ui/Attribution';
 import { Masthead } from '../ui/Masthead';
 
 /**
@@ -51,6 +52,10 @@ export function Discover() {
           <SuggestionRow key={s.id} suggestion={s} onActed={load} />
         ))}
       </ul>
+
+      {/* The phone credited TMDB under its suggestions and this screen did not — the same
+          screen, the same data, one platform meeting a licence condition. §6.147. */}
+      <Attribution of={['tmdb']} />
     </div>
   );
 }

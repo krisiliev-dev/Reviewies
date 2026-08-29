@@ -10,6 +10,7 @@ import { Button } from './Button';
 import { text, type } from '@reviewies/core/tokens';
 import { Data } from './Data';
 import { Note } from './Note';
+import { COPY } from '@reviewies/core/copy';
 
 /**
  * Bring a history in from somewhere else.
@@ -186,18 +187,9 @@ export function ImportFiles({
 export function ImportFormats() {
   return (
     <>
-      <Note>
-        A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl
-        or Letterboxd — or a recovered DioCache.db straight off your phone. Files are
-        recognised by what is in them, not what they are called.
-      </Note>
-      {/* The -wal is the difference between a complete history and one quietly missing
-          its most recent months, so it has to be asked for by name. */}
-      <Note>
-        If you have a DioCache.db, pick its DioCache.db-wal at the same time. TV Time
-        wrote its most recent months there, and importing the database alone loses them
-        without telling you.
-      </Note>
+      <Note>{COPY.import.formats}</Note>
+      {/* A footnote: it applies to one of the seven sources named above. §6.147. */}
+      <Note level="footnote">{COPY.import.wal}</Note>
     </>
   );
 }

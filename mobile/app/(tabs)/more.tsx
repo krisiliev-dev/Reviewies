@@ -5,10 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 import { db } from '@reviewies/core/data/db';
-import {
-  JUSTWATCH_ATTRIBUTION,
-  TMDB_ATTRIBUTION,
-} from '@reviewies/core/metadata/provider';
+import { ATTRIBUTION_ORDER, attributionLines } from '@reviewies/core/ui/attribution';
 import { usingFixtures } from '@reviewies/core/metadata/index';
 import { radius, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
@@ -97,10 +94,12 @@ export default function MoreScreen() {
               Running on sample data. Set a TMDB token to use real metadata.
             </Note>
           ) : (
-            <>
-              <Note level="footnote">{TMDB_ATTRIBUTION}</Note>
-              <Note level="footnote">{JUSTWATCH_ATTRIBUTION}</Note>
-            </>
+            /* The words and their order from the rule; the placement is this screen's. */
+            attributionLines(ATTRIBUTION_ORDER).map((line) => (
+              <Note key={line} level="footnote">
+                {line}
+              </Note>
+            ))
           )}
         </View>
       </ScrollView>

@@ -494,4 +494,51 @@ export const COPY = {
     exportBlurb:
       'Everything, in full, with no account and no upsell. It is yours. Signed in, the file carries your lists, the people you follow and your comments too.',
   },
+  catchUp: {
+    /**
+     * The sheet's way out, named the same on both platforms.
+     *
+     * The web announced *"Cancel catching up"* / *"Done catching up"*; the phone's header
+     * button carried no name at all, so a reader got the printed word — *"Done"* — in a
+     * sheet where that is every dialog's word. Doc 6 §5: every name carries what tells it
+     * from its neighbours.
+     *
+     * Found by extending `copy.test.ts` past the screens to the **components**, which is
+     * where it had never looked: `PAIRS` maps `app/src/screens` to `mobile/app`, and both
+     * platforms have twenty-three same-named files under `ui/` that nothing compared.
+     * §6.147.
+     */
+    cancel: 'Cancel catching up',
+    done: 'Done catching up',
+  },
+  import: {
+    /**
+     * What we can read, and the one caveat — owned here because the two platforms had
+     * written them separately and had already drifted.
+     *
+     * The web promised "anything we cannot read is listed rather than silently dropped"
+     * and the phone did not, on a screen where **both** list every file and its outcome.
+     * A promise true of both platforms, made by one. §6.98's finding again, on the screen
+     * a migrant meets first.
+     *
+     * The filenames lose the web's `<code>` in the move, which is the trade `COPY` exists
+     * to make: a shared sentence that reads plainly on both beats a marked-up one that
+     * only one platform has and that nothing holds the other to.
+     */
+    formats:
+      'A TV Time GDPR zip, a Reviewies export, a CSV from the rescue tool, Trakt, Simkl or Letterboxd — or a recovered DioCache.db straight off your phone. Files are recognised by what is in them, not what they are called, and anything we cannot read is listed rather than silently dropped.',
+    /**
+     * The -wal, which is the difference between a complete history and one quietly
+     * missing its most recent months, so it has to be asked for by name.
+     *
+     * A **footnote**, not a note. §6.138 filed it as a caveat above the fold; measured,
+     * the first-run screen scrolls zero and its content ends around 560 points of 844, so
+     * it costs nothing anybody needs. What it was doing was standing at the same weight as
+     * the paragraph above it while applying to one of the seven sources this screen names.
+     * The warning stays — it cannot move to the picker, which imports on selection with no
+     * step in between, and the importer's own warning arrives only after the slow run that
+     * already lost the months. §6.147.
+     */
+    wal: 'If you have a DioCache.db, pick its DioCache.db-wal at the same time. TV Time wrote its most recent months there, and importing the database alone loses them without telling you.',
+  },
 } as const;

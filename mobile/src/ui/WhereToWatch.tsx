@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { getProvidersCached, JUSTWATCH_ATTRIBUTION } from '@reviewies/core/metadata/index';
+import { getProvidersCached } from '@reviewies/core/metadata/index';
+import { Attribution } from './Attribution';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
 import { border, leadingOf, radius, tap, theme } from './theme';
@@ -136,7 +137,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           )}
 
           {/* Licence condition, not a courtesy. */}
-          <Text style={styles.attribution}>{JUSTWATCH_ATTRIBUTION}</Text>
+          <Attribution of={['justwatch']} />
         </>
       )}
     </View>
@@ -188,5 +189,4 @@ const styles = StyleSheet.create({
   },
   serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
-  attribution: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
 });

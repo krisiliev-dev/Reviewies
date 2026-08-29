@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/transfer';
-import {
-  clearMetadataCache,
-  JUSTWATCH_ATTRIBUTION,
-  TMDB_ATTRIBUTION,
-  usingFixtures,
-} from '@reviewies/core/metadata/index';
+import { clearMetadataCache, usingFixtures } from '@reviewies/core/metadata/index';
+import { ATTRIBUTION_ORDER, attributionLines } from '@reviewies/core/ui/attribution';
 import { AccountPanel } from './AccountPanel';
 import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
@@ -158,10 +154,13 @@ export function Settings() {
             Running on sample data. Set <code>VITE_TMDB_TOKEN</code> to use real metadata.
           </p>
         ) : (
-          <>
-            <p>{TMDB_ATTRIBUTION}</p>
-            <p>{JUSTWATCH_ATTRIBUTION}</p>
-          </>
+          /*
+           * The words and their order from the rule; the placement is this screen's own.
+           * `Attribution` is for small print *under the data it is about* — here the two
+           * lines are part of a build-state footer that already has its spacing, so the
+           * component's separation would be wrong and only the list is shared. §6.147.
+           */
+          attributionLines(ATTRIBUTION_ORDER).map((line) => <p key={line}>{line}</p>)
         )}
       </Note>
     </div>

@@ -155,6 +155,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/button#SELECTED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#LABEL_FACE': 'Tailwind needs a literal class; type.test.ts couples the two.',
   'mobile only: ui/section#SECTION_FACE': 'Tailwind needs a literal class; section.test.ts couples the two.',
+  'mobile only: ui/attribution#ATTRIBUTION_SEPARATION':
+    'Tailwind needs a literal class; attribution.test.ts couples the two.',
   'mobile only: ui/section#SECTION_RULE': 'A CSS rule is a border utility; section.test.ts couples the two.',
   'mobile only: ui/data#DATA_FACE': 'Tailwind needs a literal class; data.test.ts couples the two.',
   'mobile only: ui/data#DATA_UNIT_FACE': 'The web unit inherits the body face; data.test.ts couples the two.',

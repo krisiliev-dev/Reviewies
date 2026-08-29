@@ -6,7 +6,6 @@ import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { db } from '@reviewies/core/data/db';
 import { COPY } from '@reviewies/core/copy';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
-import { TMDB_ATTRIBUTION } from '@reviewies/core/metadata/provider';
 import { Poster } from '../../src/ui/Poster';
 import { theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
@@ -15,6 +14,7 @@ import { Button } from '../../src/ui/Button';
 import { Row as BaseRow } from '../../src/ui/Row';
 
 import { Note } from '../../src/ui/Note';
+import { Attribution } from '../../src/ui/Attribution';
 import { Masthead } from '../../src/ui/Masthead';
 
 /**
@@ -60,7 +60,7 @@ export default function DiscoverScreen() {
 
         {items?.map((item) => <Row key={item.id} item={item} onActed={() => setRound((n) => n + 1)} />)}
 
-        <Text style={styles.attribution}>{TMDB_ATTRIBUTION}</Text>
+        <Attribution of={['tmdb']} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -151,5 +151,4 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: SCREEN.edge, gap: 12 },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },
-  attribution: { color: theme.inkSecondary, fontSize: text.s12, marginTop: 12, fontFamily: type.family.body.name },
 });

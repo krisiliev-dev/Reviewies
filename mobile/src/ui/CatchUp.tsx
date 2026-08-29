@@ -65,19 +65,32 @@ export function CatchUp({
       animationType={reduced ? 'none' : 'slide'}
       onRequestClose={onDone}
     >
-      {/* Tapping the dimmed area closes it, which is what a sheet on a phone does. */}
+      {/*
+        Tapping the dimmed area closes it, which is what a sheet on a phone does — and it
+        is a gesture, not a control. It was a named `button` covering the whole screen, so
+        a reader met "Close catching up" as a full-screen target sitting in front of the
+        sheet, a second name for what Cancel already does. Hidden, as the web's backdrop
+        is: there it is a bare `div` with an `onClick`, which is in no accessibility tree
+        at all. The route out without a pointer is the header's Cancel. §6.147.
+      */}
       <Pressable
         style={styles.backdrop}
         onPress={onDone}
-        accessibilityRole="button"
-        accessibilityLabel="Close catching up"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
       />
       <View style={styles.sheet}>
         <View style={styles.header}>
           <Text numberOfLines={1} style={styles.title}>
             {seriesName}
           </Text>
-          <Pressable onPress={onDone} hitSlop={8} accessibilityRole="button" style={tap}>
+          <Pressable
+            onPress={onDone}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={marked === undefined ? COPY.catchUp.cancel : COPY.catchUp.done}
+            style={tap}
+          >
             <Text style={styles.done}>{marked === undefined ? 'Cancel' : COPY.controls.done}</Text>
           </Pressable>
         </View>

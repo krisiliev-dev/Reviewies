@@ -125,8 +125,13 @@ describe('the space scale, on the phone', () => {
      * 182, down eleven: §6.131's call-site migration took `paddingHorizontal`/`Vertical`
      * off nine phone controls with the styles that carried them, and `AddToList`'s list
      * row and Stats' all-time pill lost their whole style objects.
+     *
+     * 181, down one: `Attribution` absorbed two hand-rolled `styles.attribution` objects,
+     * one of which carried the `marginTop: 12` that was the whole of what #173 was about.
+     * The space did not vanish — it is `ATTRIBUTION_SEPARATION` now, held by
+     * `attribution.test.ts` on both platforms at once. §6.147.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(182);
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(181);
     expect(off).toEqual([]);
   });
 });

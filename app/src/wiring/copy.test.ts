@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { NOTIFY_OPTIONS, UPCOMING_DAYS } from '@reviewies/core/calendar/upcoming';
-import { PAIRS, ROOT } from './pairs';
+import { componentPairs, PAIRS, ROOT } from './pairs';
 import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -179,6 +179,31 @@ function drifted(route: string): Array<{ key: string; web: string; phone: string
   return out;
 }
 
+/** The same comparison between two same-named components. §6.147. */
+function driftedComponent(name: string): Array<{ key: string; phone: string; score: number }> {
+  const webText = sentences(read(`app/src/ui/${name}`));
+  const phoneText = sentences(read(`mobile/src/ui/${name}`));
+  const out: Array<{ key: string; phone: string; score: number }> = [];
+  const claimed = new Set<string>();
+  for (const a of webText) {
+    if (phoneText.includes(a)) continue;
+    let best: string | undefined;
+    let score = 0;
+    for (const b of phoneText) {
+      const s = similarity(a, b);
+      if (s > score) {
+        score = s;
+        best = b;
+      }
+    }
+    if (best && score >= NEARLY && !claimed.has(best)) {
+      claimed.add(best);
+      out.push({ key: `ui/${name} · ${a}`, phone: best, score });
+    }
+  }
+  return out;
+}
+
 /**
  * Sentences nothing reads, and why that is allowed.
  *
@@ -210,8 +235,25 @@ describe('the words, on both platforms', () => {
     expect(unexplained).toEqual([]);
   });
 
+  it('does not say it two ways in a component either', () => {
+    /*
+     * The guard compared routes and stopped there, and the two platforms carry
+     * twenty-three same-named components. Two divergences were sitting in them. §6.147.
+     */
+    const names = componentPairs();
+    expect(names.length, 'no components are being compared at all').toBeGreaterThan(10);
+    const unexplained = names
+      .flatMap(driftedComponent)
+      .filter((d) => !EXEMPT[d.key])
+      .map((d) => `${d.key}\n     phone: ${d.phone}`);
+    expect(unexplained).toEqual([]);
+  });
+
   it('keeps no exemption that no longer describes a difference', () => {
-    const live = new Set(Object.keys(PAIRS).flatMap(drifted).map((d) => d.key));
+    const live = new Set([
+      ...Object.keys(PAIRS).flatMap(drifted).map((d) => d.key),
+      ...componentPairs().flatMap(driftedComponent).map((d) => d.key),
+    ]);
     expect(Object.keys(EXEMPT).filter((key) => !live.has(key))).toEqual([]);
   });
 

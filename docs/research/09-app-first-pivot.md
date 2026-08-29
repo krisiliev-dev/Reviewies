@@ -10396,6 +10396,75 @@ first run**: the web's Up Next spoken name, which the by-hand pass had missed.
 screen.** Not a gap — an opinion, and one nobody wrote down or could see, because the
 instrument answered every time it was asked.
 
+### 6.147 Two small findings, and the guard that could not see either
+
+**#173 and #174.** Both from §6.138's full read, both filed as one screen's problem, and
+both turned out to be the same thing: a decision made in a *component*, where nothing was
+comparing the two platforms at all.
+
+## #173 — five sites, four treatments, and a hole
+
+The photograph showed the phone's Discover crediting TMDB in a line that sits at the list's
+inset, in the list's ink, under the last row's hairline: on a one-result screen it reads as
+a second suggestion with no poster. Looking for the second site found four more:
+
+| site                                | drawn as                                      |
+| ----------------------------------- | --------------------------------------------- |
+| `app/src/ui/WhereToWatch.tsx`       | `Note level="footnote"` + `mt-2`              |
+| `app/src/screens/Settings.tsx`      | a bare `<p>` inside a footnote block          |
+| `mobile/app/(tabs)/more.tsx`        | `Note level="footnote"`                       |
+| `mobile/src/ui/WhereToWatch.tsx`    | a hand-rolled `styles.attribution`            |
+| `mobile/app/(tabs)/discover.tsx`    | a **second** hand-rolled `styles.attribution` |
+
+— and on the web's Discover it had not been decided at all. **The phone credits TMDB under
+its suggestions and the web does not.** The same screen, the same data, one platform meeting
+a licence condition.
+
+`core/src/ui/attribution.ts` owns the order and the separation; `Attribution` renders it on
+both platforms. `ATTRIBUTION_SEPARATION` is 24 against the 12 the phone spent, because the
+gap has to be larger than any gap *inside* the list or the last hairline reads as this
+line's own top border — the ink and the size are a footnote's already and the inset is the
+screen's, so space is the only signal left. Five plants.
+
+## #174 — the claim was wrong and the screen was fine
+
+"Puts a conditional caveat above the fold." Measured: `01-first-run` scrolls **zero**, and
+its content ends around 560 points of 844. Nothing is below any fold. **Retracted.**
+
+The caveat itself cannot move. The picker imports on selection with no step in between, so
+there is nowhere to say it at the moment a `.db` is chosen without its `-wal`; and
+`diocache.ts` already says it afterwards, which is after the slow run that lost the months.
+So it stays — demoted to a **footnote**, because it applies to one of the seven sources the
+paragraph above it names and had been standing at the same weight as it.
+
+What the measurement did find is that the two platforms' import blurbs had drifted: the web
+promised *"anything we cannot read is listed rather than silently dropped"* and the phone did
+not — **on a screen where both list every file and its outcome.** A promise true of both
+platforms, made by one.
+
+## And the guard that should have caught that, four sprints ago
+
+`copy.test.ts` exists for exactly this and has since §6.98. It compares `PAIRS` — and
+`PAIRS` maps `app/src/screens` to `mobile/app`. **Routes.** Both platforms also carry
+twenty-three same-named files under `ui/`, and not one word in any of them had ever been
+compared.
+
+Extended to components, it found the import blurb and one more: the catch-up sheet's way
+out. The web announced *"Cancel catching up"* / *"Done catching up"*; the phone's header
+button carried **no name at all**, so a reader got the printed word — *"Done"* — in a sheet
+where that is every dialog's word. Its backdrop, meanwhile, was a named `button` covering
+the whole screen: *"Close catching up"*, a second name for what Cancel does, in front of the
+content. Hidden now, as the web's backdrop is — there it is a bare `div` with an `onClick`,
+in no accessibility tree at all.
+
+`componentPairs()` derives the list rather than holding one, so a component added to both
+platforms is compared without anybody remembering to add it — which is the failure
+`pairs.ts`'s own header names about itself. Three plants, including emptying the list, which
+is the way this kind of guard usually dies.
+
+**A guard scoped to a folder is a guard with an opinion about where drift happens.** §6.146
+said the same thing about a fixture. Neither opinion was written down.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10579,6 +10648,19 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **Attribution is shown on a build that is not using the API.** `usingFixtures()` makes
+  Settings and More say "Running on sample data" *instead of* the two attributions; Discover
+  and *Where to watch* show them regardless, so every screenshot in this document credits
+  TMDB and JustWatch for data neither supplied. Two screens answer "is this real?" one way
+  and two answer it the other, and §6.147 fixed the drawing without touching the condition —
+  because changing it costs the two smoke clauses that assert the attribution appears, on the
+  only builds the suites ever run. Which way it should go is a decision nobody has made.
+- **The component sweep compares words and nothing else.** §6.147 gave `copy.test.ts` the
+  twenty-three shared components and it found two divergences in prose. `offers.test.ts` —
+  what you can *do* on each platform — still reads only `PAIRS`, so a component that offers a
+  control on one platform and not the other is exactly as invisible as the words were. The
+  catch-up sheet was one: a backdrop that was a button on the phone and nothing on the web,
+  found by the copy guard by accident, because the two names happened to look alike.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the

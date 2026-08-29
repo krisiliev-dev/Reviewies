@@ -70,7 +70,7 @@ export function CatchUp({
           <h2 className="min-w-0 truncate text-s16 font-title font-semibold">{seriesName}</h2>
           <button
             onClick={onDone}
-            aria-label={marked === undefined ? 'Cancel catching up' : 'Done catching up'}
+            aria-label={marked === undefined ? COPY.catchUp.cancel : COPY.catchUp.done}
             className="tap shrink-0 text-s14 text-ink-secondary"
           >
             {marked === undefined ? 'Cancel' : COPY.controls.done}
