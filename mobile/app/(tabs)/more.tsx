@@ -1,6 +1,5 @@
 import { SURFACE } from '@reviewies/core/ui/surface';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
@@ -36,7 +35,6 @@ const LINKS = [
 ] as const;
 
 export default function MoreScreen() {
-  const router = useRouter();
   const counts = useLive(
     async () => ({
       watches: await db.watches.count(),
@@ -86,7 +84,7 @@ export default function MoreScreen() {
               // a separate Text node — read on its own, "Upcoming" and "›" is all a
               // screen reader gets.
               name: `${link.label} — ${link.detail}`,
-              run: () => router.push(link.href),
+              to: link.href,
             }}
             trailing={<Text style={styles.chevron}>›</Text>}
           />

@@ -286,7 +286,7 @@ function Row({
       open={{
         // The poster used to be the only target and the words beside it were not one.
         name: `Open ${entry.seriesName}, ${code}, ${episode.name}`,
-        run: () => router.push(`/title/${encodeURIComponent(entry.seriesId)}`),
+        to: `/title/${encodeURIComponent(entry.seriesId)}`,
       }}
       trailing={
         /* Was a filled "Watched" pill that disabled itself for the length of a local

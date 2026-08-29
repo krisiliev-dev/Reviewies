@@ -141,9 +141,8 @@ export function MatchImports({
               title={candidate.name}
               meta={candidate.year ? String(candidate.year) : 'Year unknown'}
               open={{
-                // Pressing this *is* the answer — nothing opens — so the row says so and
-                // this announces a button rather than a link.
-                does: 'act',
+                // Pressing this *is* the answer — nothing opens — so there is no `to`
+                // and both platforms announce a button rather than a link.
                 name: `${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`,
                 run: () => choose(ask, candidate.id),
               }}

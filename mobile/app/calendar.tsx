@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import {
   getPreference,
   getUpcoming,
@@ -52,7 +52,6 @@ export default function CalendarScreen() {
   const [tuning, setTuning] = useState(SETTINGS_OPEN);
   // Why the screen is empty, not only that it is.
   const [unmatched, setUnmatched] = useState(0);
-  const router = useRouter();
 
   useEffect(() => {
     void getUpcoming().then(setEntries);
@@ -84,11 +83,11 @@ export default function CalendarScreen() {
               name: `${COPY.calendar.tellMeAbout} — ${
                 NOTIFY_OPTIONS.find((o) => o.key === preference)?.label ?? ''
               }`,
-              // It acts rather than navigates — it opens the panel it names, in place.
-              // Without this the phone announces the row as a link (`Row`'s default), and
-              // the smoke suite's `getByRole('button', …)` found nothing, which is how it
-              // was noticed. The web's `Row` reads the same thing off `to` versus `run`.
-              does: 'act',
+              // `run` and no `to`: it opens the panel it names, in place, so both
+              // platforms call it a button. This used to need a `does: 'act'` flag that
+              // only the phone read — the phone announced the row as a link without it,
+              // and the smoke suite's `getByRole('button', …)` found nothing, which is how
+              // it was noticed (§6.134). #170 deleted the flag; the union says it now.
               run: () => setTuning(true),
             }}
             trailing={<Text style={styles.chevron}>›</Text>}
@@ -229,7 +228,7 @@ export default function CalendarScreen() {
                 }
                 open={{
                   name: `Open ${entry.seriesName}, S${entry.episode.season}E${entry.episode.number}, ${entry.episode.name}`,
-                  run: () => router.push(`/title/${encodeURIComponent(entry.seriesId)}`),
+                  to: `/title/${encodeURIComponent(entry.seriesId)}`,
                 }}
               />
             ))}

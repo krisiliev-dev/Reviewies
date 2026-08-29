@@ -1,8 +1,9 @@
 import { PRESS } from '@reviewies/core/ui/surface';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { SCREEN } from '@reviewies/core/ui/screen';
-import { ROW, ROW_INK, type RowContract } from '@reviewies/core/ui/row';
+import { ROW, ROW_INK, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { border, radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
 import { text, type, track } from '@reviewies/core/tokens';
@@ -29,8 +30,8 @@ export function Row({
   trailing,
   under,
 }: RowContract & {
-  /** A route to push. The phone has no `href` to give. */
-  open?: { name: string; run(): void };
+  /** Straight from the contract — `to` is pushed here, `run` is called. */
+  open?: RowOpen;
   /** `<Poster/>` at row size, a time, or nothing. */
   lead?: ReactNode;
   /** `<CrossOff/>` | `<Button size="row"/>` | a chevron. Names itself. */
@@ -92,11 +93,13 @@ export function Row({
       <View style={[styles.row, density === 'index' && styles.index]}>
         {open ? (
           <Pressable
-            onPress={open.run}
-            // From the contract, not from the shape of the callback: a row that chooses
-            // an import candidate is not a link, and inferring that from what `run` does
-            // would be a check easier to satisfy than its name suggests.
-            accessibilityRole={open.does === 'act' ? 'button' : 'link'}
+            // `to` is a destination and `run` is a callback, so the row's role is the
+            // field it was given — the same rule the web has always used, rather than a
+            // second flag saying the same thing that the two platforms read differently
+            // (#170). The route is pushed here so that a destination stays data in the
+            // contract instead of hiding inside a closure at eight call sites.
+            onPress={open.to === undefined ? open.run : () => router.push(open.to as never)}
+            accessibilityRole={open.to === undefined ? 'button' : 'link'}
             // Required by the contract, and it carries what tells this row from its
             // neighbours: a screen of rows is the same two words down the page, and a
             // screen reader reads the control rather than what is above it.

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
@@ -68,7 +67,6 @@ export default function DiscoverScreen() {
 }
 
 function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
-  const router = useRouter();
   const [added, setAdded] = useState<'library' | 'watchlist'>();
 
   /**
@@ -116,7 +114,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
         // §6.96: the poster and the title were separate links to the same route under the
         // same name, so the card announced "Open Quiet Harbour" twice.
         name: `Open ${item.name}`,
-        run: () => router.push(`/title/${encodeURIComponent(item.id)}`),
+        to: `/title/${encodeURIComponent(item.id)}`,
       }}
       under={
         /* Doc 10, second evening: a suggestion here was a link and nothing else, so the

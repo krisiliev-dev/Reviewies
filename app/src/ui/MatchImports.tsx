@@ -172,9 +172,8 @@ export function MatchImports({
                 title={candidate.name}
                 meta={candidate.year ? String(candidate.year) : 'Year unknown'}
                 open={{
-                  // Pressing this *is* the answer — nothing opens — so the row says so
-                  // and the phone announces a button rather than a link.
-                  does: 'act',
+                  // Pressing this *is* the answer — nothing opens — so there is no `to`
+                  // and both platforms announce a button rather than a link.
                   name: `${ask.name} is ${candidate.name}${candidate.year ? `, ${candidate.year}` : ''}`,
                   run: () => choose(ask, candidate.id),
                 }}
@@ -278,7 +277,7 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
             title={result.name}
             meta={result.year ? String(result.year) : 'Year unknown'}
             open={{
-              does: 'act',
+              // No `to`: choosing is the answer, not a destination.
               name: `${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`,
               run: () => onChosen(result.id),
             }}

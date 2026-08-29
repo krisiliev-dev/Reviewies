@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { COPY } from '@reviewies/core/copy';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
@@ -76,7 +75,6 @@ function Row({
   posterUrl?: string;
   note?: string;
 }) {
-  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note ?? '');
 
@@ -97,7 +95,7 @@ function Row({
         // beside it were not a target at all and the role said "does something" rather
         // than "goes somewhere".
         name: `Open ${name}`,
-        run: () => router.push(`/title/${encodeURIComponent(titleId)}`),
+        to: `/title/${encodeURIComponent(titleId)}`,
       }}
       trailing={
         /* The web's slot for a row-level action, which this screen was not using: Remove

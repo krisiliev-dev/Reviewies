@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
 import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
@@ -149,7 +148,6 @@ export default function SearchScreen() {
 }
 
 function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
-  const router = useRouter();
   const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
   const [note, setNote] = useState('');
   const [noting, setNoting] = useState(false);
@@ -246,7 +244,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
       open={{
         // The poster was the only target and the words beside it were not one.
         name: `Open ${result.name}`,
-        run: () => router.push(`/title/${encodeURIComponent(result.id)}`),
+        to: `/title/${encodeURIComponent(result.id)}`,
       }}
       under={
         noting ? (

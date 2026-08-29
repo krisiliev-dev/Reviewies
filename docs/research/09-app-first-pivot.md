@@ -9581,6 +9581,57 @@ suite green and silenced a screen. Neither was caught by reasoning harder about 
 measurement; both were caught by running something that watches the product instead — a
 probe on the other store, and a smoke suite driving a real import.
 
+### 6.136 A row said what it does twice, and the two platforms read different halves
+
+**#170**, filed by §6.134 an hour after it worked around the symptom. `Row`'s contract
+carried a `does?: 'navigate' | 'act'` flag, defaulting to `navigate`. The web ignored it
+entirely and derived the role from its own union — `to` renders an `<a href>`, `run`
+renders a `<button>`. The phone read the flag, because its `open` only ever carried `run`.
+
+So **a row with `run` and no `does` was a button on the web and a link on the phone**. Not
+a hypothetical: §6.134 hit it on the calendar, where the notification row opens a panel in
+place and the phone announced somewhere to go. Adding `does: 'act'` fixed that one row and
+left the shape untouched.
+
+## The answer was in the eight call sites
+
+The brief asked whether any call site uses `run` and means navigation. On the phone, eight
+do — `run: () => router.push(\`/title/${encodeURIComponent(id)}\`)` on Up Next, Search,
+Discover, Watchlist, Lists, Calendar and More. That is why the phone needed a flag: **a
+route pushed inside a closure is a destination hidden in a callback**, and no renderer can
+see into one.
+
+Hand the route to the contract as data and the flag has nothing left to say. `RowOpen` is
+now the union the web always had —
+
+```ts
+export type RowOpen = { name: string } & (
+  | { to: string; run?: never }
+  | { run(): void; to?: never }
+);
+```
+
+— the phone pushes `to` itself and reads its role off which field is set, exactly as the
+web does. Eight call sites lost a closure and gained a string; six lost a now-unused
+`useRouter()`. Three rows keep `run` and are buttons on both platforms for the same
+reason: MatchImports' candidates, where pressing *is* the answer, the calendar's panel, and
+a list that expands in place.
+
+One fact, one field, read the same way by both renderers.
+
+## And the guard was easier to satisfy than its name
+
+The first version of the clause asserted that each renderer *mentions* `open.to`. Planting
+`accessibilityRole="link"` on the phone left `onPress` still branching on `open.to`, so the
+file matched and the row lied — §6.120's shape, found by planting rather than by reading,
+which is the only way it is ever found. It now matches the role expression itself on the
+phone and the element choice on the web, and a second clause fails if a `router.push` ever
+reappears inside a row's `open`. Both plants fail; both restores pass.
+
+`design/capture-signedin.mjs` is what proves it end to end rather than in source: it walks
+search → a title → the episode's Talk control using `getByRole('link', …)` on phone rows,
+and it still finds them.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9754,6 +9805,13 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **Every row's role is now derived, and nobody has heard one.** §6.136 made `Row`'s role
+  follow from `to` versus `run` on both platforms instead of a flag only the phone read.
+  What proves it is a Playwright `getByRole('link', …)` against **react-native-web**, where
+  `accessibilityRole` becomes an ARIA attribute in a DOM. On an actual phone it becomes a
+  UIAccessibilityTraits / TalkBack role, and no check in this repo can observe that
+  translation. The rule is right by the framework's documented mapping; it has not been
+  *heard* being right, by VoiceOver or by anything else.
 - **A poster with no artwork breaks its title mid-word.** Looking at the design pass this
   sprint: Up Next's placeholder tiles read *"Kitchen Nightshi / ft"* and *"The Long Dark"*
   — the second fits, the first is hyphen-free wrapping inside a 90-point square. That is

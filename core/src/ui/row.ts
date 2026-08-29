@@ -71,36 +71,42 @@ export const ROW_INK = {
 } as const;
 
 /**
- * That the row goes somewhere, and what to call it.
+ * Where the row goes, or what it does — and what to call it.
  *
- * The *name* is the shared rule and it is required: a navigation target with no name is
- * the `calendar.tsx` defect, and a name without what distinguishes the row is the §6.96
- * collision — "Open Andor" twice on one screen, once for the poster and once for the
- * words.
+ * The *name* is required: a navigation target with no name is the `calendar.tsx` defect,
+ * and a name without what distinguishes the row is the §6.96 collision — "Open Andor"
+ * twice on one screen, once for the poster and once for the words.
  *
- * *How* it navigates is not shared, and pretending otherwise put a no-op `run` in the
- * first web call site to satisfy a field the renderer never called. React Native pushes a
- * route; the DOM wants a real `<a href>` so that middle-click, copy-link and
+ * **`to` or `run`, never both and never neither.** That union is the whole of it: `to` is
+ * a destination and the row is a link; `run` is a callback and the row is a button. Both
+ * renderers read the role off which field is set, so the same row is announced the same
+ * way on both platforms, and a row that goes nowhere and does nothing is a compile error
+ * rather than a dead row.
+ *
+ * ## This replaced a second way of saying it, which disagreed with the first
+ *
+ * The union lived in `app/src/ui/Row.tsx` and the phone had a separate `does?: 'navigate'
+ * | 'act'` here, defaulting to `navigate`. The phone's `open` only ever carried `run`, for
+ * both meanings — eight call sites passed `run: () => router.push(…)` — so it could not
+ * tell them apart and needed the flag; the web could, and ignored it.
+ *
+ * Two fields for one fact, read by different halves of the product: **a row with `run`
+ * and no `does` was a button on the web and a link on the phone**, and §6.134 hit exactly
+ * that on the calendar, where the phone announced the notification panel as somewhere to
+ * go. Adding the flag fixed that row. #170 asked whether the flag should exist, and the
+ * answer was in the eight call sites: a route pushed inside a closure is a **destination
+ * hidden in a callback**. Handing the route to the contract as data lets the shared type
+ * carry the distinction the way the web always did, and the flag has nothing left to say.
+ *
+ * What each platform does with `to` is still the platform's own: React Native pushes the
+ * route, the DOM renders a real `<a href>` so that middle-click, copy-link and
  * open-in-new-tab keep working — a router push behind an `onClick` silently takes all
- * three away. So each renderer extends this with its own, and the type makes leaving it
- * out a compile error rather than a dead row.
+ * three away.
  */
-export interface RowOpen {
-  name: string;
-  /**
-   * Whether pressing the row goes to that thing or does something to it.
-   *
-   * Almost every row navigates, so that is the default. `act` is for the row that is a
-   * choice: MatchImports offers three candidate posters for an imported show and pressing
-   * one *is* the answer — nothing is opened. The web already told these apart by accident,
-   * because a row with no URL is a `<button>` there either way; the phone did not, and
-   * would have announced "link" for the control that resolves an import.
-   *
-   * It lives in the shared contract rather than in each renderer because it is a fact
-   * about the row, not about a platform: the same press means the same thing on both.
-   */
-  does?: 'navigate' | 'act';
-}
+export type RowOpen = { name: string } & (
+  | { to: string; run?: never }
+  | { run(): void; to?: never }
+);
 
 export interface RowContract {
   title: string;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { getSession, syncConfigured } from '@reviewies/core/sync/auth';
 import {
   createList,
@@ -163,7 +163,6 @@ function ListCard({
   onToggle: () => void;
   onChanged: () => void;
 }) {
-  const router = useRouter();
   const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
   const [itemsFailed, setItemsFailed] = useState<string>();
   const [changeFailed, setChangeFailed] = useState(false);
@@ -206,7 +205,8 @@ function ListCard({
       density="index"
       open={{
         name: `${expanded ? 'Collapse' : 'Expand'} ${list.name}`,
-        does: 'act',
+        // `run` and no `to`, so both platforms announce a button: this opens the list in
+        // place rather than going anywhere.
         run: onToggle,
       }}
       trailing={<Text style={styles.chevron}>{expanded ? '⌄' : '›'}</Text>}
@@ -247,7 +247,7 @@ function ListCard({
                 // otherwise announces the same title three times with nothing to tell
                 // the copies apart — the collision §6.96 measures.
                 name: `Open ${item.name ?? item.titleId}, on ${list.name}`,
-                run: () => router.push(`/title/${encodeURIComponent(item.titleId)}`),
+                to: `/title/${encodeURIComponent(item.titleId)}`,
               }}
               trailing={
                 list.mine ? (

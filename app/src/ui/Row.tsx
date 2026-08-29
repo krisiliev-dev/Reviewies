@@ -47,11 +47,14 @@ const TAG =
 
 interface Props extends RowContract {
   /**
-   * A real `href` wherever there is one, so middle-click, copy-link and open-in-new-tab
-   * keep working; `run` only for a target that has no URL. Either, not neither: the union
-   * is what makes a row that goes nowhere a compile error rather than a dead card.
+   * Straight from the contract, which is where the `to` | `run` union now lives.
+   *
+   * It was declared here and the phone had a `does` flag instead, so the same row could be
+   * a button on one platform and a link on the other — #170, and `core/src/ui/row.ts` has
+   * the whole of why. A real `href` wherever there is one, so middle-click, copy-link and
+   * open-in-new-tab keep working; `run` only for a target that has no URL.
    */
-  open?: RowOpen & ({ to: string; run?: never } | { run(): void; to?: never });
+  open?: RowOpen;
   /** `<Poster/>` at row size, a time, or nothing. */
   lead?: ReactNode;
   /** `<CrossOff/>` | `<Button size="row"/>` | a chevron. Names itself. */

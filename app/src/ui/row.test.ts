@@ -102,11 +102,12 @@ describe('the listing row', () => {
      * pressable when `open` is given: a card that navigates without announcing it is
      * worse than a card that does not navigate.
      */
-    // The required field, not the whole interface: `RowOpen` grew `does` when
-    // MatchImports needed to say that pressing a row answers a question rather than
-    // opening one, and a clause pinned to the interface's exact text would have failed
-    // for a reason that has nothing to do with what it is named for.
-    expect(read('core/src/ui/row.ts')).toMatch(/interface RowOpen \{\s*name: string;/);
+    // The required field, not the whole type: `RowOpen` has changed shape twice — it grew
+    // a `does` flag for MatchImports and #170 replaced that with a `to` | `run` union,
+    // which also turned it from an `interface` into a `type`. A clause pinned to the
+    // declaration's exact text would have failed both times for a reason that has nothing
+    // to do with what it is named for.
+    expect(read('core/src/ui/row.ts')).toMatch(/RowOpen = \{ name: string \}/);
     expect(RENDERERS.phone).toContain('accessibilityLabel={open.name}');
     expect(RENDERERS.web).toContain('aria-label={open.name}');
     for (const [platform, source] of BOTH) {
@@ -117,33 +118,75 @@ describe('the listing row', () => {
   it('says whether pressing a row opens something or answers something', () => {
     /*
      * MatchImports is the row that is a choice: three candidate posters for an imported
-     * show, and pressing one *is* the answer — nothing opens. The web told these apart by
-     * accident, because a row with no URL is a `<button>` there either way; the phone
-     * announced "link" for both, which is a promise to take you somewhere.
+     * show, and pressing one *is* the answer — nothing opens.
      *
-     * So the contract carries it, both renderers read it from the contract rather than
-     * from the shape of the callback, and the two screens that choose say so.
+     * The contract used to say this twice. The web derived the role from `to` versus
+     * `run`; the phone's `open` only ever carried `run` — eight call sites passed
+     * `run: () => router.push(…)` — so it could not tell a destination from an action and
+     * read a separate `does?: 'navigate' | 'act'` flag instead, defaulting to `navigate`.
+     * A row with `run` and no `does` was therefore a **button on the web and a link on the
+     * phone**, which is what §6.134 hit on the calendar.
+     *
+     * #170: the flag is gone and the route is data. `to` or `run`, in the shared contract,
+     * and both renderers read the role off which field is set.
      */
-    expect(read('core/src/ui/row.ts')).toMatch(/does\?: 'navigate' \| 'act';/);
-    expect(RENDERERS.phone).toContain("open.does === 'act' ? 'button' : 'link'");
+    expect(read('core/src/ui/row.ts')).toMatch(/\{ to: string; run\?: never \}/);
+    expect(read('core/src/ui/row.ts')).toMatch(/\{ run\(\): void; to\?: never \}/);
+    expect(read('core/src/ui/row.ts'), 'the flag is back').not.toMatch(/does\?:/);
+    /*
+     * The *role*, on each platform, not merely that the union is mentioned somewhere in
+     * the file. The first version of this was the loose version and a plant walked through
+     * it: hard-coding `accessibilityRole="link"` on the phone left `onPress` still
+     * branching on `open.to`, so the file matched and the row lied. §6.120's shape again —
+     * a clause easier to satisfy than its name.
+     */
+    expect(RENDERERS.phone, 'the phone hard-codes a role').toMatch(
+      /accessibilityRole=\{open\.to (===|!==) undefined \?/,
+    );
+    // The web has no role attribute: an `<a href>` and a `<button>` carry their own, which
+    // is the reason it renders two different elements instead of one with a prop.
+    expect(RENDERERS.web, 'the web stopped choosing its element').toMatch(
+      /open\.to (===|!==) undefined \?[\s\S]{0,120}<Link/,
+    );
+    expect(RENDERERS.web, 'the web target is not a button when there is no URL').toMatch(
+      /<button type="button" onClick=\{open\.run\}/,
+    );
+
     /*
      * *Every* row on that screen, not one of them. The first version of this was a
-     * `toContain`, and the web file has two candidate lists — so deleting `does` from one
-     * of them left the clause green, which is the check-easier-than-its-name shape this
-     * codebase keeps finding in its own instruments. Both files have exactly one screen's
-     * worth of rows and all of them choose, so the rule is: on MatchImports, every row
-     * says it acts.
+     * `toContain`, and the web file has two candidate lists — so deleting the marker from
+     * one of them left the clause green, which is the check-easier-than-its-name shape
+     * this codebase keeps finding in its own instruments. Both files have exactly one
+     * screen's worth of rows and all of them choose, so the rule is: on MatchImports,
+     * every row acts — no `to` anywhere.
      */
     for (const path of ['mobile/src/ui/MatchImports.tsx', 'app/src/ui/MatchImports.tsx']) {
       const opens = read(path).split('open={{').slice(1);
       expect(opens.length, `${path}: no rows found to check`).toBeGreaterThan(0);
       for (const [i, body] of opens.entries()) {
-        expect(
-          body.slice(0, body.indexOf('}}')),
-          `${path} row ${i + 1} presses to choose and calls it navigation`,
-        ).toContain("does: 'act'");
+        const open = body.slice(0, body.indexOf('}}'));
+        expect(open, `${path} row ${i + 1} presses to choose and calls it navigation`).toMatch(
+          /\brun:/,
+        );
+        expect(open, `${path} row ${i + 1} presses to choose and calls it navigation`).not.toMatch(
+          /\bto:/,
+        );
       }
     }
+
+    /*
+     * And no phone call site may hide a route in a callback again, which is the thing that
+     * made the flag necessary. A `router.push` inside a `Row`'s `open` is a destination the
+     * contract cannot see.
+     */
+    const hiding = [];
+    for (const path of Object.keys(MIGRATED).filter((p) => MIGRATED[p as keyof typeof MIGRATED] === 'phone')) {
+      for (const open of read(path).split('open={{').slice(1)) {
+        const body = open.slice(0, open.indexOf('}}'));
+        if (/router\.push/.test(body)) hiding.push(path);
+      }
+    }
+    expect(hiding, 'a route hidden inside a row callback').toEqual([]);
   });
 
   it('keeps the target one control, with the rest outside it', () => {
