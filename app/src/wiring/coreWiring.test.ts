@@ -29,6 +29,10 @@ const UNREACHED: Record<string, string> = {
     'Where a screen puts its message when it has nothing else in it. A rule about alignment rather than a value a renderer reads — the three screens it governs simply stopped centring — so screen.test.ts is what holds them to it, and design/capture.mjs measures where the words actually land.',
   'ui/screen#FULL_SCREEN':
     'The one place a centred, full-height state is correct, and why: _layout.tsx replaces the whole app before the router mounts. A design decision beside the decision it qualifies; screen.test.ts reads it and fails when the entry outlives the file.',
+  'ui/reveals#REVEALS':
+    'Every place the product hides content behind a control, and the shot that proves somebody has looked at it open. §6.158. A design decision beside the decisions it qualifies, in the same way EDGE_EXEMPT and FULL_SCREEN are: no renderer reads it, because a screen already knows its own reveal — what nothing knew was which reveals exist. reveals.test.ts reads it, checks each named state is really in the screen it names, and fails when a reveal has no walk in a capture script.',
+  'ui/reveals#NOT_A_REVEAL':
+    'The boolean states that are conditions rather than reveals — in flight, failed, gated — each named with why it is not a container for anything. The allowlist is the honest half: reveals.test.ts sweeps the screens for the shape and fails on anything neither registered nor excused, which is what caught two reveals the register\'s own author had missed by reading.',
   'ui/screen#EDGE_EXEMPT':
     'The screens that do not take the standard edge, and why. It is a design decision rather than a test fixture — Watching Mode is immersive and has no rows to bleed — so it lives beside the decision it qualifies; screen.test.ts is what reads it, and what fails when an entry outlives its screen.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',

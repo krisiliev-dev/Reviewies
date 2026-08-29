@@ -218,6 +218,74 @@ const small = await page.evaluate(() => {
 if (small.length) hollow.push(`signed-in Search has controls under the 24pt floor: ${small.join(', ')}`);
 else console.log('signed-in Search: every control is big enough to hit');
 
+/*
+ * The two reveals that need an account. §6.158.
+ *
+ * `18-lists-in` is the shot §6.157 read and found wanting: two **collapsed** list rows,
+ * with a chevron on each, and the pass had never pressed one. The row that shows a list's
+ * *titles* — which is what a list is — had never been photographed on either platform in
+ * thirty-odd sprints of design review.
+ *
+ * `AddToList` is the other: it lives on the title page, needs an account to have any lists
+ * to offer, and its closed state is a 47x16 link that §6.166 already had to widen once
+ * without anybody seeing what it opens.
+ */
+async function reveal(name, control, path) {
+  if (path) {
+    await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+  }
+  const button = page.getByRole('button', { name: control }).first();
+  if (!(await button.count())) {
+    hollow.push(`${name}: nothing matches ${control}, so the state is unphotographed`);
+    return;
+  }
+  await button.click();
+  await page.waitForTimeout(900);
+  await shot(name);
+}
+
+/*
+ * What `18-lists-open` is a shot of, and what it is not.
+ *
+ * A list row shows `item.name ?? item.titleId`, and the name comes from the **local title
+ * cache** — so this pass, which has only ever opened Kitchen Nightshift, photographs
+ * `tmdb:tv:1` in the title's own weight. That is the fallback working, and it is a real
+ * state: a list can hold a title this device has never opened, which is exactly what a
+ * list somebody else shared is.
+ *
+ * It is not the *common* state, and the attempt to reach that one is backed out rather
+ * than left half-working. Two goes at the search result's accessible name both found
+ * nothing — `fill('The Long Dark')` and `fill('Long')` — and a third guess is the thing
+ * §6.132 says to stop and measure instead of making. Filed.
+ */
+await reveal('18-lists-open', /Sunday nights|Ana recommends/i, '/lists');
+
+/*
+ * The two title-page reveals that need an account, reached the way the file's own header
+ * says a title page must be — **through the control that pushes to it**, not by a URL. A
+ * `/title/tmdb:tv:501` deep link found neither control, which is that header's rule
+ * restated by a failure. §6.158.
+ *
+ * Content warnings are here rather than in the fixture pass at all: the component opens
+ * with `if (!syncConfigured()) return null`, so on a build with no account the control does
+ * not exist. The fixture pass said so by name rather than filing a title page without it.
+ */
+const toTitle = async () => {
+  await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(2000);
+  await page.getByPlaceholder('Shows, films, anime…').fill('Kitchen');
+  const link = page.getByRole('link', { name: /^Open Kitchen Nightshift$/i });
+  await link.waitFor({ timeout: 20000 });
+  await link.click();
+  await page.waitForTimeout(2000);
+};
+
+await toTitle();
+await reveal('15-title-addtolist', /Add to list/i);
+await toTitle();
+await reveal('15-title-warnings', /content warnings/i);
+
 const partial = scrolls.filter((s) => s.overflow > 0);
 console.log(
   partial.length

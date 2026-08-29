@@ -11222,6 +11222,95 @@ Two other guards fired for the right reason: `coreWiring.test.ts` deleted the ex
 `mobile only: ui/screen#SCREEN` exemption the moment the web imported `SCREEN`, and
 `docs.test.ts` refused two undocumented npm scripts.
 
+### 6.158 A route is not a state
+
+**#195.** §6.157 read `18-lists-in.png` and found two **collapsed** list rows: the signed-in
+pass had never pressed one, so the row that shows a list's titles — which is what a list *is*
+— had never been photographed on either platform.
+
+## The shape, which is worse than the instance
+
+Every capture script walks to a **route** and shoots it as it arrives. §6.129's rule —
+composing is revealed, not resident — has been applied five times (§6.129, §6.134, §6.141,
+§6.156, and four sites that predate the rule), and **every application moves content out of
+the arriving shot**. The design track's coverage got worse each time the product got better,
+once per sprint, with nothing connecting the two.
+
+`core/src/ui/reveals.ts` is the register: ten reveals, what each shows, and the shot that
+proves somebody looked. `reveals.test.ts` holds both directions — a reveal with no walk in a
+capture script fails, and a **revealed state in a screen that the register has never heard of**
+fails.
+
+The second half is the one that matters, and it earned its place on its first run against its
+own author: I wrote the register by reading the source, and the sweep immediately found two I
+had missed — the watchlist's note editor (`editing`) and *Where to watch*'s country picker
+(`picking`). A register somebody has to remember to add to is a register that goes stale the
+first sprint anybody is busy, which is exactly how five reveals accumulated unphotographed.
+
+The sweep also had to be told what a reveal is not: twenty-two of the twenty-nine `useState`
+booleans in the screens are conditions — in flight, failed, gated — and `NOT_A_REVEAL` names
+each with a reason, the way `writes.test.ts` names every write that legitimately does not
+queue.
+
+## The walks, and the three things they found by failing
+
+Eleven shots, and getting them took four runs. Each failure was information:
+
+1. **The three title-page reveals ran in sequence on one page**, and the second found nothing
+   because the first had opened a country list over it. A shot of a reveal on top of another
+   reveal is not a shot of either. They re-arrive between shots now.
+2. **Re-arriving by URL found nothing at all.** §6.130 had already written it down —
+   *"a dynamic route cannot be deep-linked in the phone's web export"* — and I hit the same
+   wall from the other side. They arrive by clicking, as a person does.
+3. **`15-title-warnings` had no control to press**, because `ContentWarnings` opens with
+   `if (!syncConfigured()) return null`. It is not a fixture-pass reveal at all; it moved to
+   the signed-in pass with `15-title-addtolist`. The walk said so **by name** rather than
+   filing a photograph of a title page without it, which is the whole reason the helper
+   reports instead of throwing.
+
+## And the first shot of the state found a defect
+
+`18-lists-open`, the state nothing had ever photographed, rendered **`undefined`** as the
+title of both rows, in the title's own weight.
+
+Two causes, one in the harness and one in the product:
+
+- `design/signedIn.mjs` served `target_id` and `position`; `fetchListItems` selects
+  `title_id` and `rank`. That file's own header states the rule it broke — *"§6.43's rule at
+  the wire: a fixture that does not match the query proves the screen renders nothing"* —
+  and it went unnoticed because nothing had ever opened the row it fed.
+- `String(row.title_id)` on a missing column produces the **string** `'undefined'`, which is
+  truthy, so it survived `item.name ?? item.titleId` on both platforms. **The fallback was
+  there, was correct, and could never fire.** §6.104's rule is that a screen tells "nothing"
+  apart from "I could not look"; a coercion is how that gets broken without anybody writing a
+  wrong sentence.
+
+The row is dropped now rather than shown with a placeholder: an item with no title is not an
+item, and offering *Remove* against a row nothing can identify is worse than a count being
+one short. Planting proved nothing guarded it, so `lists.test.ts` has the clause.
+
+## What the shot is, and what it is not
+
+With both fixed, `18-lists-open` shows the counts right and the rows as raw ids —
+`tmdb:tv:1` — because that pass has only ever opened one title and the name comes from the
+local cache. That is the fallback working, and it is a real state: a list somebody shared
+holds titles this device has never seen.
+
+It is not the *common* state. Two attempts to reach that one — searching the full title, then
+one word — both found nothing, and a third guess is the thing §6.132 says to stop and measure
+instead of making. The attempt is backed out rather than left half-working, and the limitation
+is written into the capture script beside the shot.
+
+## The live test, twice
+
+`npm run verify` went red twice in two sprints on `anime.live.test.ts` — an AniList request
+timing out at 60,005 ms, for a reason with nothing to do with the change under test. §7 filed
+it as undecided after the first; two is a pattern.
+
+§6.125 found the same shape in the phone's smoke suite and fixed it by blanking credentials.
+These cannot be fixed that way — reaching the real service is the whole of what they are for
+— so they moved: `npm run test:live --workspace core`, run on purpose, out of `verify`.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -11438,25 +11527,29 @@ and which single claim in this document could not be checked at all:
   because the first plant against it passed on a seed that was not ending. The parenthetical
   in the original entry — "both fixtures happen to be ending" — was itself wrong when
   written and was corrected in §6.150 by counting: it was one of two.
-- **`npm run verify` depends on a third party, and found out by failing.** §6.157's
-  close-out ran verify three times; the middle one failed with
-  `anime.live.test.ts > reconstructs Frieren seasons that TMDB merged`, **60,005 ms** — an
-  AniList request that never came back. It passes alone and it passed on the re-run, so
-  nothing in this sprint caused it.
-  
-  That is §6.125's finding one layer up. §6.125 caught the phone's *smoke* suite reaching
-  live TMDB on every run and "failing like a regression whenever the network did", and fixed
-  it by blanking the credentials. `verify` still has a live test in it, so the command this
-  whole method treats as the arbiter of green can go red because somebody else's server was
-  slow — and the failure looks exactly like a real one until you read the name. Whether a
-  live test belongs in `verify` at all, or belongs behind its own script the way
-  `reconcile.live.test.ts` and the backend round-trip do, has not been decided.
+- ~~**`npm run verify` depends on a third party, and found out by failing.**~~ **Decided in
+  §6.158**, after it happened a second time in the next sprint's close-out. The nine
+  `*.live.test.ts` suites are out of `test`, `test:sqlite` and `test:tz`, and run on purpose
+  as `npm run test:live --workspace core`. They are still gated on credentials and still
+  reach the real services, which is the whole of what they are for; what changed is that the
+  arbiter of green no longer depends on somebody else's server being up.
 - **The design track has three shot instruments and now two implementations of one of
   them.** §6.157 wrote `design/shoot.mjs` — find whatever scrolls, shoot it, file a foot —
   and pointed the two web passes at it. `capture.mjs` still carries its own inline copy of
   the same act, and `capture-signedin.mjs` a third. They agree today because §6.157 read all
   three; nothing holds them to it, and the drift this exists to prevent is exactly the one
   that produced the bug: an instrument whose answer nobody re-derived.
+
+  §6.158 added an `open`/`reveal` helper to **each** of those two scripts rather than a
+  shared one, for the same reason the routes stay separate — the walks differ per platform —
+  and that is now a second act duplicated three ways. Whether the shared piece is the shot,
+  the walk, or neither has not been worked out.
+- **The register covers reveals, and a reveal is not the only state a route has.** §6.158
+  photographs ten of them, which is ten more than before. What it does not cover is every
+  other second state: an empty list versus a full one, a failed write, a form mid-entry, the
+  same screen at 200% text. `app/failures.mjs` photographs the failures and the 200% pass
+  exists; nothing enumerates the rest, and the register's own shape — a table plus a source
+  sweep for the pattern — is the obvious way to find out how many there are.
 - **Nothing re-reads a screenshot for what it *claims*.** §6.150's defect was on three rows
   of the design record, photographed and looked at approvingly one sprint earlier: the chips
   were drawn correctly, said the right words in the right place, and were false. The design

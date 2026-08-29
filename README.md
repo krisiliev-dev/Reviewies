@@ -203,6 +203,24 @@ cd ../bridge && npm run smoke          # app → relay → bridge → a fake Rok
 cd ../app && npm run smoke:failures    # the same web app, with the provider failing
 ```
 
+### The suites that need somebody else's server
+
+```sh
+npm run test:live --workspace core    # TMDB, AniList and Supabase, for real
+```
+
+`verify` does **not** run these, and §6.158 is why. `anime.live.test.ts` asks AniList to
+reconstruct Frieren's seasons, and twice in two sprints it timed out at 60,005 ms and turned
+the command this whole method treats as the arbiter of green into a red one — for a reason
+that had nothing to do with the change under test, and that looks exactly like a real
+failure until you read the name.
+
+§6.125 found the same shape in the phone's smoke suite ("failing like a regression whenever
+the network did") and fixed it by blanking the credentials. These tests cannot be fixed that
+way, because reaching the real service is the whole of what they are for. So they moved
+instead: still here, still gated on having credentials, run on purpose rather than on every
+`verify`.
+
 ### Screenshots
 
 ```sh

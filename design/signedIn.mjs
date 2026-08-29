@@ -68,10 +68,22 @@ const ROWS = {
     { id: 'list-1', user_id: USER_ID, name: 'Sunday nights', description: null, is_public: true, deleted: false, list_items: [{ count: 2 }] },
     { id: 'list-2', user_id: ANA_ID, name: 'Ana recommends', description: null, is_public: true, deleted: false, list_items: [{ count: 1 }] },
   ],
+  /*
+   * `title_id` and `rank`, which is what `fetchListItems` selects.
+   *
+   * These were `target_id` and `position` — columns nothing asks for — and this file's own
+   * header states the rule they broke: *"§6.43's rule at the wire: a fixture that does not
+   * match the query proves the screen renders nothing."* It went unnoticed because the
+   * opened list had never been photographed, which is the whole of §6.158.
+   *
+   * The ids are the fixture provider's own — `1` is The Long Dark, `4` is Quiet Harbour —
+   * so the rows resolve against the local title cache to names a reader recognises, which
+   * is what `item.name ?? item.titleId` is for.
+   */
   list_items: [
-    { list_id: 'list-1', target_id: 'tmdb:tv:1', position: 0 },
-    { list_id: 'list-1', target_id: 'tmdb:movie:2', position: 1 },
-    { list_id: 'list-2', target_id: 'tmdb:tv:3', position: 0 },
+    { list_id: 'list-1', title_id: 'tmdb:tv:1', kind: 'show', note: null, rank: 0 },
+    { list_id: 'list-1', title_id: 'tmdb:movie:4', kind: 'film', note: null, rank: 1 },
+    { list_id: 'list-2', title_id: 'tmdb:tv:2', kind: 'show', note: null, rank: 0 },
   ],
   comments: [
     {

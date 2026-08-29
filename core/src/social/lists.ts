@@ -127,12 +127,26 @@ export async function fetchListItems(listId: string): Promise<ListItemsResult> {
   if (!data) return { items: [] };
 
   return {
-    items: data.map((row) => ({
-      titleId: String(row.title_id),
-      kind: row.kind as MediaKind,
-      note: row.note ? String(row.note) : undefined,
-      rank: Number(row.rank),
-    })),
+    /*
+     * A row with no `title_id` is dropped, not coerced. §6.158.
+     *
+     * `String(row.title_id)` on a missing column produces the **string** `'undefined'`,
+     * which is truthy — so it survives every `item.name ?? item.titleId` fallback both
+     * screens have, and the row renders the word *undefined* in the title's own weight.
+     * That is what the first photograph of an opened list showed, twice, in bold.
+     *
+     * §6.104's rule is that a screen tells "nothing" apart from "I could not look", and a
+     * coercion is how that rule gets broken without anybody writing a wrong sentence: the
+     * fallback was there, correct, on both platforms, and could never fire.
+     */
+    items: data
+      .filter((row) => row.title_id !== null && row.title_id !== undefined)
+      .map((row) => ({
+        titleId: String(row.title_id),
+        kind: row.kind as MediaKind,
+        note: row.note ? String(row.note) : undefined,
+        rank: Number(row.rank),
+      })),
   };
 }
 

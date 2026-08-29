@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 921, app: 609, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 922, app: 613, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

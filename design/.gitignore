@@ -8,3 +8,8 @@ web/
 # screenshots it produces — the same convention as `screens/` above. §6.151.
 real/
 real-screens/
+
+# The web's real pass, same convention — and it was committed by mistake in §6.157's
+# close-out, 38 files and 6.3 MB, because this list was written before the directory
+# existed and `git add -A` does not know what a convention is. §6.158.
+web-real/

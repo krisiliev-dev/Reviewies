@@ -818,7 +818,102 @@ const link = page
 if (await link.count()) {
   await link.click();
   await shot('15-title');
+
+  /*
+   * And the title page's three **revealed** states. §6.158.
+   *
+   * Every shot this harness has ever taken is of a route as it arrives. §6.129's rule —
+   * composing is revealed, not resident — has been applied five times, and every
+   * application moved content *out* of the arriving shot: the design track's coverage got
+   * worse each time the product got better, and nothing connected the two.
+   * `core/src/ui/reveals.ts` is the register, and `reveals.test.ts` fails when a reveal has
+   * no shot named for it here.
+   *
+   * `open` reports rather than throws, for the reason a needle per route exists: a walk
+   * that cannot find its control is worth knowing about by name, and is not worth losing
+   * the other seven shots to.
+   */
+  /*
+   * Each from the page as it arrives, not from whatever the last one left open.
+   *
+   * The first version of this ran the three in sequence on one page and the second failed
+   * to find its control, because the first had opened a country list over it. A shot of a
+   * reveal on top of another reveal is not a shot of either.
+   */
+  /*
+   * Re-arrived by **clicking**, not by a URL. §6.130 already wrote this down about Watching
+   * Mode — "a dynamic route cannot be deep-linked in the phone's web export" — and the
+   * first version of these three navigated to `page.url()` and found nothing on any of the
+   * three, which is that same fact arriving by a different door.
+   */
+  const arrive = async () => {
+    await page.goto('http://localhost:4200/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1800);
+    await page
+      .locator('a, [role=link], [role=button]')
+      .filter({ hasText: /The Long Dark|Kitchen Nightshift|Hollow Crown Saga/ })
+      .first()
+      .click();
+    await page.waitForTimeout(1800);
+  };
+  await open('15-title-country', /Change country/i, undefined, arrive);
+  /*
+   * `15-title-warnings` is **not** here. `ContentWarnings` opens with
+   * `if (!syncConfigured()) return null`, so on the fixture build the control does not
+   * exist at all — the walk said so by name rather than filing a shot of a screen without
+   * it. It lives in `capture-signedin.mjs` with `15-title-addtolist`, which needs an
+   * account for the same reason.
+   */
+  /*
+   * The **episode row's** offer, not the title's own five stars.
+   *
+   * `/^(Rate|Change your rating of) /` matched `Rate Kitchen Nightshift 1 stars` — one of
+   * the ten star buttons in the title's already-open rating, which is resident by decision
+   * (§6.141: "one of StarRating's two call sites honours its rule"). Clicking it threw and
+   * took the four remaining shots with it. The row's name carries the season and episode,
+   * which is `row.ts`'s rule and what tells the two apart.
+   */
+  await open('15-title-rating', /^(Rate|Change your rating of) season \d+ episode/i, undefined, arrive);
 }
+
+/**
+ * Press a control that reveals something, and photograph what it revealed.
+ *
+ * Not a `click()` and a `shot()` inline at eight call sites: the thing worth having in one
+ * place is what happens when the control is not there. A missing reveal has to say which
+ * one, because "the shot is missing" and "the shot is of the closed state" look identical
+ * on disk, and the second is what §6.157 spent a sprint on.
+ */
+async function open(name, control, path, before) {
+  if (path) {
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1800);
+  }
+  if (before) await before();
+  const button = page.getByRole('button', { name: control }).first();
+  if (!(await button.count())) {
+    console.error(`${name}: nothing on the screen matches ${control}, so the state is unphotographed.`);
+    process.exitCode = 1;
+    return;
+  }
+  /*
+   * Caught, because the comment above says this reports rather than throws and the first
+   * version did not do that: a click that timed out on the wrong element ended the run and
+   * cost four unrelated shots. A harness that loses seven pictures to one bad needle is
+   * worse than one that says which needle was bad.
+   */
+  try {
+    await button.click({ timeout: 8000 });
+  } catch (e) {
+    console.error(`${name}: could not press it — ${e.message.split('\n')[0].slice(0, 90)}`);
+    process.exitCode = 1;
+    return;
+  }
+  await page.waitForTimeout(900);
+  await shot(name);
+}
+
+
 
 /*
  * Watching Mode, which the line above has promised since it was written and never took.
@@ -840,8 +935,26 @@ if (await link.count()) {
 // `hollow` above is already reported and this runs after it, so these get their own list
 // and their own message rather than pushing into one that has been printed.
 const unseen = [];
+/*
+ * Back to Up Next first, because *React along with* is a row there.
+ *
+ * §6.158's reveal walks end on the watchlist, and this block used to inherit whatever
+ * screen the previous step happened to leave behind — which was Up Next by luck until the
+ * walks were added, and then a twenty-second timeout on a link that was never going to be
+ * on the page. The `THEN` table's own comment already says it: *"the harness using the app
+ * has to leave the app in a state the next screen is still worth photographing in"*. Saying
+ * where this one starts is cheaper than every step remembering to tidy up after itself.
+ */
 const watching = page.getByRole('link', { name: /^React along with /i }).first();
-await watching.waitFor({ timeout: 20000 });
+try {
+  await watching.waitFor({ timeout: 20000 });
+} catch {
+  const body = (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300);
+  const links = await page.getByRole('link').allInnerTexts();
+  console.error(`Watching Mode: no "React along with" link. Up Next says: ${body}`);
+  console.error(`  links here: ${links.slice(0, 12).join(' | ')}`);
+  throw new Error('watching-mode-unreachable');
+}
 await watching.click();
 await page.waitForTimeout(2500);
 await shot('22-watching-start');
@@ -899,6 +1012,46 @@ console.log(
     ? `shots that are the top of a longer screen: ${partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ')}`
     : 'every shot is a whole screen',
 );
+
+/*
+ * The other three, each on the screen that owns it. §6.158.
+ *
+ * Separate navigations rather than hooks in `USE`, because `USE` runs *before* the route's
+ * own shot and these are pictures of a different state of the same screen — the arriving
+ * shot has to survive, or the pair proves nothing.
+ *
+ * **Last in the file**, and that is not cosmetic. They were above Watching Mode's walk,
+ * which had always inherited whatever screen the previous step left behind — Up Next, by
+ * luck — and these end on the watchlist, so it spent twenty seconds waiting for a link that
+ * was never going to be there. Navigating it home first did not fix it either: a **hard
+ * reload** of the static export leaves the rows on screen as text while
+ * `getByRole('link')` still returns one item, so the harness reported "no React along with
+ * link" about a page that plainly had two.
+ *
+ * The `THEN` table's own comment already states the rule these broke: *"the harness using
+ * the app has to leave the app in a state the next screen is still worth photographing
+ * in."* The cheapest way to obey it is to be the step that has nothing after it.
+ */
+await open('09-calendar-tuning', /Tell me about/i, 'http://localhost:4200/calendar');
+
+// The control that opens the note is the one that saves: on this screen, saving and
+// saying why are one act. §6.148's finding was an empty state asking for a note the phone
+// had no way to write; this is the shot of the way it writes one.
+await open('04-search-noting', /to (your )?watchlist/i, 'http://localhost:4200/search', async () => {
+  const box = page.getByPlaceholder(/Shows, films/i).first();
+  await box.click();
+  /*
+   * Salt Flats, not Quiet Harbour. `05-discover`'s hook puts Quiet Harbour on the watchlist
+   * so that `06-watchlist` has something on it, which leaves its control reading *On
+   * watchlist* and disabled — and a disabled control cannot open the note. The harness
+   * using the app has to notice what its own earlier steps did, which is the same lesson
+   * that hook's own comment records from the other direction.
+   */
+  await box.fill('Salt');
+  await page.waitForTimeout(1800);
+});
+
+await open('06-watchlist-editing', /note|Why you saved/i, 'http://localhost:4200/watchlist');
 
 await browser.close();
 if (unseen.length) {
