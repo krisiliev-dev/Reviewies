@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { Chevron } from '../src/ui/Mark';
+import { disclosure } from '@reviewies/core/ui/mark';
 import { getSession, syncConfigured } from '@reviewies/core/sync/auth';
 import {
   createList,
@@ -209,7 +211,9 @@ function ListCard({
         // place rather than going anywhere.
         run: onToggle,
       }}
-      trailing={<Text style={styles.chevron}>{expanded ? '⌄' : '›'}</Text>}
+      /* One chevron, rotated, and `disclosure` owns which way: this ran right/down while
+         the web ran down/up — two conventions for one control. §6.144. */
+      trailing={<Chevron points={disclosure(expanded)} color={theme.inkSecondary} size={20} />}
       under={
         expanded ? (
           <View style={styles.cardItems}>
@@ -315,7 +319,6 @@ const styles = StyleSheet.create({
 
   newRow: { flexDirection: 'row', gap: 8 },
 
-  chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
   /* No inset and no fill: `Row` owns the band now, and `under` sits inside it. */
   cardItems: { gap: 8 },
   mix: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },

@@ -10199,6 +10199,69 @@ And the run that did fire it is the first evidence that sprint 54's pipeline cha
 all three passes still ran, all three printed their manifests, and the signed-in and web
 screenshots were taken. Before it, that failure took them with it.
 
+### 6.144 One chevron, and the sweep that had a hole in it
+
+§6.143 left a queue: six files still typing a mark, each named in the sweep and each failing
+it the day it stopped. All six are closed here, because they turned out to be **one job**.
+
+## The drawer's handle and a list's disclosure are the same drawing
+
+| control | web | phone |
+| --- | --- | --- |
+| the remote drawer's handle | `⇤` — an arrow | `⌇` — a drag grip |
+| a list, collapsed | `▾` (down) | `›` (**right**) |
+| a list, expanded | `▴` (up) | `⌄` (down) |
+| a cross-off's tick | `✓` | `✓` |
+
+The drawer is the clearest: an arrow is a *direction*, a wavy line is *drag me*, and the
+drawer opens on a tap. One of those two marks describes a gesture the control does not have.
+
+The lists are subtler and worse. Both platforms use a pair and **the pairs run opposite
+ways** — the web's collapsed chevron points down and its expanded one up; the phone's
+collapsed points right and its expanded down. Neither convention is wrong alone. They are
+just not the same product.
+
+So `core/src/ui/mark.ts` holds **one chevron, pointing right**, and a direction is a
+rotation of it. That is the decision rather than a convenience: four chevron glyphs are four
+things to keep in step and one path is none, and it is what let the handle and the
+disclosure stop being separate questions. `disclosure(open)` owns which way, because a call
+site free to spell out a direction is a call site free to spell out a different one — which
+is exactly what had happened. It settles on the web's: collapsed points at what is below,
+expanded points back at what you came from, which reads as a hinge rather than a signpost.
+
+## And then the sweep found four more, because its boundary had never been stated
+
+The brief flagged it as an aside: `›` is U+203A, General Punctuation, **outside every block
+the sweep scanned**. So the sweep that found five typed marks had walked past the sixth —
+and widening it turned up four more, the row chevrons on the calendar and More screens on
+both platforms. All eight sites are drawings now.
+
+The range is written down now, and so is where it stops: arrows, technical, geometry,
+dingbats, supplemental arrows, emoji, and the two guillemets that turned out to be a
+chevron. Deliberately **not** Latin, Greek or letterlike symbols — a build that bans `×`
+bans multiplication in prose, and this clause is about marks a control draws. *A sweep whose
+boundary nobody has stated is §6.139's shape waiting to happen*, and this one already had
+the hole to prove it.
+
+## Four guards corrected, two of them one sprint old and one of them the same hour
+
+- **`tabIcon.test.ts` was holding a product-wide sweep under a name about the tab bar** —
+  §6.139's shape, in the file written to close §6.139. Split: `mark.test.ts` owns marks in
+  general, `tabIcon.test.ts` owns the bar.
+- **Nothing guarded the disclosure convention.** A plant reversing `disclosure` back to the
+  phone's old right/down found no test at all. It has one now.
+- **`strokes its marks rather than filling them` used `toContain('fill="none"')`**, and a
+  plant walked through it: filling the chevron left the tick's `fill="none"` in the file, so
+  the string was present and one of the two marks was a blob. **The identical shape §6.143
+  caught in `TAB_ICON_SIZE` one sprint earlier, back within the hour.** It counts paths now.
+- **`crossOff.test.ts`'s "three channels" clause asserted the character `✓`.** The channel
+  is the mark being there, not which codepoint draws it — and that clause reads colours, so
+  it could never have seen a thin one. It reads `<Tick` now.
+
+`type.test.ts`'s face-and-weight ratchet went 24 → 23, with the reason beside it: the
+`tick` and `chevron` styles named a face because they were drawing glyphs, and a path has no
+face to name. The population shrinks as the drawings take over.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10382,7 +10445,14 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
-- **§6.137's Up Next race did not reproduce once in this sprint, and is not fixed.** A
+- **Nothing in the product types a mark now, and the sweep's boundary is a judgement.**
+  §6.144 closed the last eight sites and wrote down where its character range stops — but
+  the range is a list of Unicode blocks chosen by hand, not a property. `›` was outside it
+  until this sprint and four sites hid behind that; the honest position is that the next
+  mark somebody types in a block nobody thought of is invisible to it again. What would
+  settle it is rendering the screens and comparing glyph coverage, which is a device
+  question (`docs/design/on-a-device.md`).
+- **§6.137's Up Next race did not reproduce once in the previous sprint, and is not fixed.** A
   probe reproducing the whole seed-and-match sequence passed on its first attempt with all
   three shows cached, five `design:phone` runs passed, and one full `npm run design` fired
   it — one in seven, against the "three of four" §6.142 recorded from the runs that happened

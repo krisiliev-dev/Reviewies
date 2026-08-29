@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RING, STRUCK, UNDO_MS, type CrossOffContract } from '@reviewies/core/ui/crossOff';
 import { radius, space, theme } from './theme';
+import { Tick } from './Mark';
 import { text, type } from '@reviewies/core/tokens';
 
 /**
@@ -60,11 +61,9 @@ export function CrossOff({
         {/* The tick is one of three channels, not the signal. The ring's fill and the row's
             ink step carry it independently, which is what makes the pencil stroke safe to
             be decorative. */}
-        {watched ? (
-          <Text accessible={false} style={styles.tick}>
-            ✓
-          </Text>
-        ) : null}
+        {/* A stroke, not a glyph: `✓` was drawn by whatever font resolved it, at whatever
+            weight, inside a filled disc where weight is what makes it legible. §6.144. */}
+        {watched ? <Tick color={theme[RING.tick]} size={20} /> : null}
       </Pressable>
 
       {/*
@@ -119,7 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tick: { color: theme[RING.tick], fontSize: text.s20, fontFamily: type.family.title.name },
   undo: {
     height: RING.size,
     paddingHorizontal: space.s12,

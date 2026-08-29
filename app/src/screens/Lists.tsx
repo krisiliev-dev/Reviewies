@@ -3,6 +3,8 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
+import { Chevron } from '../ui/Mark';
+import { disclosure } from '@reviewies/core/ui/mark';
 import { useSync } from '../sync/useSync';
 import {
   createList,
@@ -186,9 +188,9 @@ function ListCard({
             {!list.mine && ' · shared with you'}
           </Note>
         </span>
-        <Note as="span" className="shrink-0" aria-hidden="true">
-          {open ? '▴' : '▾'}
-        </Note>
+        {/* One chevron, rotated. `disclosure` owns which way, because the two platforms
+            had run opposite conventions: down/up here, right/down there. §6.144. */}
+        <Chevron points={disclosure(open)} className="shrink-0 text-s16 text-ink-secondary" />
       </button>
 
       {open && (

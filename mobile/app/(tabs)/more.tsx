@@ -1,4 +1,5 @@
 import { SURFACE } from '@reviewies/core/ui/surface';
+import { Chevron } from '../../src/ui/Mark';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getStats } from '@reviewies/core/data/repo';
@@ -86,7 +87,7 @@ export default function MoreScreen() {
               name: `${link.label} — ${link.detail}`,
               to: link.href,
             }}
-            trailing={<Text style={styles.chevron}>›</Text>}
+            trailing={<Chevron points="right" color={theme.inkSecondary} size={16} />}
           />
         ))}
 
@@ -126,7 +127,6 @@ const styles = StyleSheet.create({
   statLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   statValue: { color: theme.ink },
 
-  chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
 
   footer: { marginTop: 16, gap: 4 },
 });

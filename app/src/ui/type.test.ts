@@ -169,8 +169,13 @@ describe('the type scale', () => {
     /*
      * 24, down from 25: §6.131's call-site migration. `Button` carries `font-title` for
      * every one of the nineteen controls that used to state it themselves.
+     *
+     * 23, down from 24: §6.144. `CrossOff`'s `tick` and two `chevron` styles named a face
+     * because they were drawing glyphs; the marks are paths now and a path has no face to
+     * name. The population shrinks as the drawings take over, which is the same direction
+     * the note above records and a different reason for it.
      */
-    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(24);
+    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(23);
     expect(offenders).toEqual([]);
   });
 

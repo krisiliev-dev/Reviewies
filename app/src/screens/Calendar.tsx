@@ -20,6 +20,7 @@ import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
 import { Choice } from '../ui/Choice';
 import { Row as BaseRow } from '../ui/Row';
+import { Chevron } from '../ui/Mark';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
@@ -97,9 +98,7 @@ export function Calendar() {
               run: () => setTuning(true),
             }}
             trailing={
-              <Note as="span" className="shrink-0 pl-2" aria-hidden="true">
-                ›
-              </Note>
+              <Chevron points="right" className="ml-2 text-s16 text-ink-secondary" />
             }
           />
         </ul>

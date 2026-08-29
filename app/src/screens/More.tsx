@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
+import { Chevron } from '../ui/Mark';
 import { getStats } from '@reviewies/core/data/repo';
 import { formatDuration } from '@reviewies/core/stats/compute';
 import { Data } from '../ui/Data';
@@ -82,9 +83,7 @@ export function More() {
               meta={link.detail}
               open={{ name: `${link.label} — ${link.detail}`, to: link.to }}
               trailing={
-                <Note as="span" className="shrink-0 pl-2" aria-hidden="true">
-                  ›
-                </Note>
+                <Chevron points="right" className="ml-2 text-s16 text-ink-secondary" />
               }
             />
           ))}

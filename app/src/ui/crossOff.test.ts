@@ -95,7 +95,14 @@ describe('the cross-off', () => {
     expect(STRUCK.text.off).toBe('ink');
     expect(STRUCK.text.on).toBe('inkSecondary');
     expect(RING.fill).toBe('workingFill');
-    for (const [platform, source] of BOTH) expect(source, platform).toContain('✓');
+    /*
+     * The tick, as a **drawing** since §6.144. This asked for the character `✓`, and the
+     * channel is the mark being there rather than which codepoint draws it: `✓` was
+     * rendered by whatever font resolved it, at whatever weight, inside a filled disc where
+     * weight is the whole of what makes it legible — and this clause reads colours, so it
+     * could not have seen a thin one. `mark.test.ts` holds the stroke.
+     */
+    for (const [platform, source] of BOTH) expect(source, platform).toContain('<Tick');
 
     /*
      * And the ink step is spelled once, in the component, rather than at each row. Both

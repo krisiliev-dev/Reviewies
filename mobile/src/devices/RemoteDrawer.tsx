@@ -4,6 +4,7 @@ import { ScrollView } from 'react-native';
 import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
 import { radius, tap, theme } from '../ui/theme';
+import { Chevron } from '../ui/Mark';
 import { useReducedMotion } from '../ui/useReducedMotion';
 import { color, duration, reduced as reducedMotion, z, text, type } from '@reviewies/core/tokens';
 
@@ -55,7 +56,9 @@ export function RemoteDrawer() {
           accessibilityRole="button"
           accessibilityLabel="Open remote"
         >
-          <Text style={styles.tabGlyph}>⌇</Text>
+          {/* Left, the way the panel arrives. It was `⌇` — a drag grip, on a control that
+              opens with a tap — against the web's `⇤`. §6.144. */}
+          <Chevron points="left" color={color.dark.ground} size={20} />
         </Pressable>
       )}
 
@@ -134,7 +137,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.none,
     zIndex: z.drawerHandle,
   },
-  tabGlyph: { color: color.dark.ground, fontSize: text.s20, fontFamily: type.family.body.name },
   scrim: {
     position: 'absolute',
     top: 0,

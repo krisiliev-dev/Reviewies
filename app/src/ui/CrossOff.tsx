@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { UNDO_MS, type CrossOffContract } from '@reviewies/core/ui/crossOff';
+import { Tick } from './Mark';
 
 /**
  * The DOM renderer of `core/src/ui/crossOff.ts`. The decisions are there.
@@ -58,11 +59,9 @@ export function CrossOff({
         {/* The tick is one of three channels, not the signal. The ring's fill and the
             row's ink step carry it independently, which is what makes the pencil stroke
             safe to be decorative. The ring is a fixed 44 square either way. */}
-        {watched ? (
-          <span aria-hidden="true" className="text-s20 leading-l100 font-title font-semibold">
-            ✓
-          </span>
-        ) : null}
+        {/* A stroke, not a glyph: `✓` was drawn by whatever font resolved it, at whatever
+            weight, inside a filled disc where weight is what makes it legible. §6.144. */}
+        {watched ? <Tick className="text-s20" /> : null}
       </button>
 
       {/*

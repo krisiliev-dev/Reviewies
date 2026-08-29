@@ -4,6 +4,7 @@ import { useDialog } from '../ui/useDialog';
 import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import { Data } from '../ui/Data';
+import { Chevron } from '../ui/Mark';
 import { Note } from '../ui/Note';
 
 /**
@@ -73,9 +74,9 @@ export function RemoteDrawer() {
           open ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <span aria-hidden="true" className="block text-s20 leading-l100">
-          ⇤
-        </span>
+        {/* Left, the way the panel arrives. It was `⇤` here and `⌇` on the phone — an
+            arrow against a drag grip, for a drawer that opens on a tap. §6.144. */}
+        <Chevron points="left" className="block text-s20" />
       </button>
 
       {open && (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { Chevron } from '../src/ui/Mark';
 import {
   getPreference,
   getUpcoming,
@@ -14,7 +15,6 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { theme } from '../src/ui/theme';
-import { text, type } from '@reviewies/core/tokens';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import {
   pushSupported,
@@ -90,7 +90,7 @@ export default function CalendarScreen() {
               // it was noticed (§6.134). #170 deleted the flag; the union says it now.
               run: () => setTuning(true),
             }}
-            trailing={<Text style={styles.chevron}>›</Text>}
+            trailing={<Chevron points="right" color={theme.inkSecondary} size={16} />}
           />
         ) : (
           <>
@@ -243,7 +243,6 @@ const styles = StyleSheet.create({
   // The same chevron `more.tsx` draws on its destination rows: this row goes somewhere
   // in the same sense — it opens the panel it names. The web's copy had one from the
   // start and this did not, which is the drift a pair of screenshots catches.
-  chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
   delivery: { marginTop: 12, gap: 8 },
   // 13 against the web's 12, for the same six status lines under the same control.
   // 13 is one of the two the scale killed.
