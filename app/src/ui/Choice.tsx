@@ -27,12 +27,15 @@ export function Choice<T extends string | number>({
   onChange,
   density = 'chips',
   scroll = false,
+  continues = false,
 }: ChoiceContract<T>) {
   const rows = density === 'rows';
   return (
     <div
-      role="radiogroup"
-      aria-label={name}
+      /* The rest of a group declared around this one, so it names nothing and is not a
+         group. The core's contract has why. */
+      role={continues ? undefined : 'radiogroup'}
+      aria-label={continues ? undefined : name}
       /* Written out rather than assembled, for the reason at the top of this file:
          Tailwind's scanner reads source text, so a class built at runtime never compiles. */
       className={

@@ -9699,6 +9699,82 @@ It is §6.109's rule turned on the instrument for the third time, and the patter
 to miss: **every clause that names one example of a thing that comes in several passes on a
 screen showing one of them.**
 
+### 6.138 Forty-four screenshots read in one pass, and the contradiction one of them was drawn from
+
+No filed task this sprint, deliberately. §6.137's two findings both came from *looking* — one
+at a PNG, one at the same PNG three times — and no review had ever read the whole set: the
+passes so far each looked at the two or three screens the sprint happened to touch. So this
+one read all forty-four, phone and web, both themes, before deciding what to fix.
+
+## What the read turned up
+
+Written down first, decided after, which is the order the brief asked for.
+
+1. **Stats offers one question as two radio groups, and one of them always announces
+   nothing selected.** Fixed below. This is the sprint.
+2. **More's last row is clipped by the tab bar.** "Your data" ends under the bar with its
+   rule hidden, and it is the last row, so nothing signals there is anything to scroll to.
+3. **Discover's TMDB attribution is drawn as a list row** — below a rule, in the row rhythm,
+   taking as much height as the one suggestion above it. It is a footer wearing a row.
+4. **The first-run screen puts a conditional caveat above the fold.** Three paragraphs before
+   the button, and the third is *"If you have a DioCache.db, pick its DioCache.db-wal at the
+   same time"* — a rule for one import path, shown to everyone, on the first screen anybody
+   sees. §6.134's shape on the screen that can least afford it.
+5. **The calendar is five identical rows.** A weekly show gets one full listing row with a
+   poster per week: 780 points to say *episodes 41–45 of one show, weekly*. `direction.md`'s
+   fifth argument is density as an information-design problem, and this is the case the row
+   was not designed for.
+6. **A headline figure with a decimal has a hole in it.** `6.0h` at `s30` reads `6 . 0h`,
+   because a monospace period takes a full character cell — the same argument `data.ts`
+   already makes about a *word* in mono, one glyph down. Not a bug: it is what tabular
+   figures cost, and the question is whether a year's viewing needs a decimal at all.
+7. **The two platforms draw the tab bar with different kinds of mark.** The phone uses
+   typographic characters — `⌕ ✦ ☰ ⋯` — and the web uses drawn vector icons. Discover's ✦
+   matches by luck; Search and Watchlist plainly do not. `key.ts` settled exactly this for
+   the remote fascia ("mono marks, not colour emoji") and the tab bar never got the pass.
+
+2 through 7 are filed. 1 is fixed.
+
+## One question, drawn as two, and the file said both
+
+`Stats.tsx` carries two comments **nine lines apart**:
+
+> the windows and the years as **one list of options**, because they are **one choice**:
+> picking a year clears the window and vice versa, which is what a radio group *is*
+
+> **Two groups** since §6.109, because they are **two questions**.
+
+The state model follows the first — `getSummary` takes a window *or* a year, never both. The
+render follows the second. So whichever row did not hold the answer was handed `value=''`:
+
+- landing on Stats, the period row marks *This year* and the year row marks nothing;
+- pick 2026, and the year row marks it while the period row marks nothing.
+
+**Exactly one of the two radiogroups is unanswered at all times, permanently, on every
+visit.** A screen reader arriving at "Which year to review, radio group" is told a question
+is outstanding that the screen has already answered above it.
+
+§6.109 was right to split the *drawing*, and the measurements stand: one wrapping group on a
+ten-year library was 148px of control with the first figure at y=236 of an 844px screen,
+against 88 and 222 with the years scrolling. What it split by accident was the meaning.
+
+So: one `radiogroup`, two rows inside it, one `chosen` value feeding both, and one name —
+`COPY.stats.period`, because the two rows had been naming themselves separately too. `Choice`
+gained `continues`, which says *this row is the rest of a group declared around it*: it draws
+identically and declares nothing.
+
+**The picture does not change**, and that is worth saying plainly rather than leaving a
+reader to discover it. The chips looked the same before and after; what was wrong was what
+the screen *claimed*, and the fix is measured where it lives — one named group in the source,
+two rows that continue it, one value expression. Three plants: a row declaring its own group,
+a row blanking itself with the old expression, and a renderer ignoring `continues`. All three
+fail; all three restores pass.
+
+The clause that covered this was named **"is two questions on Stats, on both platforms"** and
+asserted exactly the arrangement that was wrong. It had been green for twenty-nine sprints. A
+guard can hold a defect in place as firmly as it holds a fix — which is the third distinct
+way this build has now found a clause agreeing with the thing it was supposed to catch.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9872,6 +9948,15 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **A guard can hold a defect in place, and this build has now found three.** §6.138's
+  clause was named "is two questions on Stats, on both platforms" and asserted exactly the
+  arrangement that was wrong — green for twenty-nine sprints. §6.109 found a clause that
+  passed on a screen showing one of several things; §6.137 found the same shape a third
+  time in `MUST_SHOW`. What is *not* known is how many more there are: every clause in
+  this repo was written by the same hand that wrote the thing it checks, and planting finds
+  the ones that do not fail, not the ones that fail for a reason nobody meant. Nothing has
+  ever re-read the guards against what their names claim since §6.120, which was thirty
+  sections ago.
 - **Up Next's second row arrives on a tail nobody has measured.** §6.137 found the design
   harness photographing Up Next with one of its two rows, tightened the clause to name
   both, and then had to add a wait because naming it was not enough: caching does not land

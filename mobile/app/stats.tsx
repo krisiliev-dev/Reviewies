@@ -60,50 +60,56 @@ export default function StatsScreen() {
   }, [window, year]);
 
   const longest = summary?.topTitles[0]?.minutes ?? 1;
+  /** The one answer, for the one group: a window key or a year, never both. */
+  const chosen = year === undefined ? (window as string) : String(year);
 
   return (
     <>
       <Stack.Screen options={{ title: 'Stats' }} />
       <ScrollView contentContainerStyle={styles.content}>
         {/*
-         * Two groups since §6.109, because they are two questions — see the web's copy of
-         * this screen for the measurements the arrangement was chosen on. "How far back"
-         * has three fixed answers; "which year" has as many as the person has history,
-         * and a decade of imported TV Time put ten more chips in the same unlabelled
-         * group carrying the same weight as the three that matter most.
+         * One question, drawn on two rows — see the web's copy of this screen for the
+         * measurements §6.109 chose the arrangement on. It split the drawing, and split
+         * the meaning by accident: whichever row did not hold the answer was handed
+         * `value=''`, so one radiogroup announced nothing selected on every visit. §6.138.
          *
-         * TV Time's REWIND was among its most-loved features; the years are that, and
-         * they now say so.
+         * One group, two rows, one answer. TV Time's REWIND was among its most-loved
+         * features; the years are that, and they say so without being a second question.
+         *
+         * The phone also used to `setWindow('year')` here and the web did not — invisible
+         * either way, because `chosen` reads the year when there is one, and now that they
+         * share one value it would be a third state nothing reads.
          */}
-        <Choice
-          name="Which stretch of time these figures cover"
-          options={WINDOWS.map((option) => ({ key: option.key as string, label: option.label }))}
-          value={year === undefined ? window : ''}
-          onChange={(next) => {
-            setWindow(next as Window);
-            setYear(undefined);
-          }}
-        />
+        <View accessibilityRole="radiogroup" accessibilityLabel={COPY.stats.period}>
+          <Choice
+            continues
+            name={COPY.stats.period}
+            options={WINDOWS.map((option) => ({ key: option.key as string, label: option.label }))}
+            value={chosen}
+            onChange={(next) => {
+              setWindow(next as Window);
+              setYear(undefined);
+            }}
+          />
 
-        {years.length > 0 && (
-          <View style={styles.section}>
-            <Section>Year in review</Section>
-            <Choice
-              name="Which year to review"
-              scroll
-              options={years.map((value) => ({
-                key: String(value),
-                label: String(value),
-                hint: `your ${value}`,
-              }))}
-              value={year === undefined ? '' : String(year)}
-              onChange={(next) => {
-                setWindow('year');
-                setYear(Number(next));
-              }}
-            />
-          </View>
-        )}
+          {years.length > 0 && (
+            <View style={styles.section}>
+              <Section>Year in review</Section>
+              <Choice
+                continues
+                name={COPY.stats.period}
+                scroll
+                options={years.map((value) => ({
+                  key: String(value),
+                  label: String(value),
+                  hint: `your ${value}`,
+                }))}
+                value={chosen}
+                onChange={(next) => setYear(Number(next))}
+              />
+            </View>
+          )}
+        </View>
 
         {!summary && <ActivityIndicator color={theme.workingMark} style={styles.loading} />}
 

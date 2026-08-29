@@ -51,6 +51,11 @@ export function Stats() {
    * name rather than a bare number beside three phrases.
    */
   const PERIODS = WINDOWS.map((w) => ({ key: w.key as string, label: w.label }));
+  /**
+   * The one answer, for the one group. A window key or a year, never both and never
+   * neither — which is exactly what `getSummary` takes below.
+   */
+  const chosen = year === undefined ? (window as string) : String(year);
   const YEARS = years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` }));
 
   return (
@@ -58,48 +63,62 @@ export function Stats() {
       <Masthead level="page" className="px-1">Stats</Masthead>
 
       {/*
-       * Two groups since §6.109, because they are two questions.
+       * One question, drawn on two rows.
        *
-       * "How far back" has three fixed answers; "which year" has as many as the person has
-       * history, and on a decade of imported TV Time that was ten more chips in the same
-       * radiogroup, unlabelled, carrying the same weight as the three that matter most.
-       * Measured at 148px of control with the first figure at y=236 of an 844px screen.
-       * Two groups with the years scrolling: 88px, figures at 222, and Year in Review —
-       * the thing TV Time's REWIND made people love — finally says its own name.
+       * §6.109 split the drawing for a measured reason: "how far back" has three fixed
+       * answers and "which year" has as many as the person has history, so on a decade of
+       * imported TV Time the single group was thirteen chips in three rows — 148px of
+       * control with the first figure at y=236 of an 844px screen. Two rows with the years
+       * scrolling: 88px, figures at 222, and Year in Review — the thing TV Time's REWIND
+       * made people love — says its own name.
        *
-       * `Choice` draws being chosen as a rule and a weight step rather than the accent
-       * fill, which is the app's one filled shape and belongs to the thing worth pressing.
+       * It split the *meaning* by accident, and this file said so in two comments nine
+       * lines apart: "one list of options, because they are one choice … which is what a
+       * radio group *is*", then "two groups … because they are two questions". The render
+       * followed the second and the state followed the first, so whichever row did not
+       * hold the answer got `value=''` — **a radiogroup announcing nothing selected, on
+       * every visit, permanently**. §6.138.
+       *
+       * One `radiogroup` now, two rows inside it, one answer: `chosen`. `continues` is
+       * what lets the second row draw the same and declare nothing.
+       *
+       * `Choice` draws being chosen as a rule and an ink step rather than the accent fill,
+       * which is the app's one filled shape and belongs to the thing worth pressing.
        */}
-      <div className="mb-5">
-        <Choice
-          name="Which stretch of time these figures cover"
-          options={PERIODS}
-          value={year === undefined ? window : ''}
-          onChange={(next) => {
-            setWindow(next as Window);
-            setYear(undefined);
-          }}
-        />
-      </div>
-
-      {YEARS.length > 0 && (
+      <div role="radiogroup" aria-label={COPY.stats.period}>
         <div className="mb-5">
-          <Section className="px-1">
-            Year in review
-          </Section>
-          {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
-              scroller that stops short of the margin reads as a clipped list. */}
-          <div className="-mx-4 px-4">
-            <Choice
-              name="Which year to review"
-              options={YEARS}
-              scroll
-              value={year === undefined ? '' : String(year)}
-              onChange={(next) => setYear(Number(next))}
-            />
-          </div>
+          <Choice
+            continues
+            name={COPY.stats.period}
+            options={PERIODS}
+            value={chosen}
+            onChange={(next) => {
+              setWindow(next as Window);
+              setYear(undefined);
+            }}
+          />
         </div>
-      )}
+
+        {YEARS.length > 0 && (
+          <div className="mb-5">
+            <Section className="px-1">
+              Year in review
+            </Section>
+            {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
+                scroller that stops short of the margin reads as a clipped list. */}
+            <div className="-mx-4 px-4">
+              <Choice
+                continues
+                name={COPY.stats.period}
+                options={YEARS}
+                scroll
+                value={chosen}
+                onChange={(next) => setYear(Number(next))}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {summary === undefined ? (
         <Note>Loading…</Note>

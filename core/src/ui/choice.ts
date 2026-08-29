@@ -93,8 +93,35 @@ export function announce<T extends string | number>(option: ChoiceOption<T>): st
 }
 
 export interface ChoiceContract<T extends string | number> {
-  /** The group's own name. Required: a radiogroup with no name is a list of unknowns. */
+  /**
+   * The group's own name. Required: a radiogroup with no name is a list of unknowns.
+   *
+   * Ignored when `continues` is set, because then the name belongs to the group this row
+   * is part of rather than to this row.
+   */
   name: string;
+  /**
+   * This row is the rest of a group declared around it, not a group of its own.
+   *
+   * Stats asks one question — *which stretch of time* — whose answers are three fixed
+   * windows and one chip per year the person has history in. §6.109 split the rendering in
+   * two, for a measured reason: on ten years of imported TV Time the single group was
+   * thirteen chips in three rows, 148px of control with the first figure a third of the way
+   * down the screen.
+   *
+   * The split was of the *drawing*. It became a split of the meaning by accident, and
+   * `Stats.tsx` said so out loud in two comments nine lines apart — "the windows and the
+   * years as **one list of options**, because they are **one choice** … which is what a
+   * radio group *is*", then "**two groups** … because they are **two questions**". The
+   * render followed the second and the state followed the first, so `value` was `''` on
+   * whichever row did not hold the answer: **one of the two radiogroups always announced
+   * with nothing selected**, permanently, on every visit. §6.138.
+   *
+   * With this set the row draws exactly as before and declares no group, so the caller can
+   * wrap both rows in one named `radiogroup` that has one answer. It is a property of *how
+   * a question is laid out*, which is why it lives here rather than being spelled twice.
+   */
+  continues?: boolean;
   options: readonly ChoiceOption<T>[];
   value: T;
   onChange(next: T): void;

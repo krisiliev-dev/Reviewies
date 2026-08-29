@@ -24,6 +24,7 @@ export function Choice<T extends string | number>({
   onChange,
   density = 'chips',
   scroll = false,
+  continues = false,
 }: ChoiceContract<T>) {
   const metrics = CHOICE_SIZE[density];
   const rows = density === 'rows';
@@ -39,8 +40,10 @@ export function Choice<T extends string | number>({
 
   return (
     <Group
-      accessibilityRole="radiogroup"
-      accessibilityLabel={name}
+      /* The rest of a group declared around this one, so it names nothing and is not a
+         group. The core's contract has why. */
+      accessibilityRole={continues ? 'none' : 'radiogroup'}
+      accessibilityLabel={continues ? undefined : name}
       {...groupProps}
       contentContainerStyle={scroll ? styles.scrolling : undefined}
       style={

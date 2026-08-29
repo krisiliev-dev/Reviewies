@@ -288,6 +288,15 @@ export const COPY = {
 
   stats: {
     /**
+     * What the whole period control is called — one name, because it is one question.
+     *
+     * The two rows named themselves separately, "Which stretch of time these figures cover"
+     * and "Which year to review", which is how the screen came to hold two radiogroups for
+     * one answer and leave one of them announcing nothing selected (§6.138). One group, one
+     * name, and it has to be true of a year as well as of *All time*.
+     */
+    period: 'Which stretch of time these figures cover',
+    /**
      * The way out of an empty period.
      *
      * A person with ten years of history opening Stats in January is told "Nothing

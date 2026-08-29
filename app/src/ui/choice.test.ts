@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { COPY } from '@reviewies/core/copy';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
@@ -56,7 +57,12 @@ describe('the choice contract', () => {
   });
 
   it('says radio, and says it in the renderer too', () => {
-    expect(RENDERER).toContain('accessibilityRole="radiogroup"');
+    /*
+     * `'radiogroup'` in an expression rather than as a literal attribute since §6.138: a
+     * row that `continues` a group declared around it must not declare a second one, so
+     * the role is chosen rather than typed. The clause reads the value, not the spelling.
+     */
+    expect(RENDERER).toMatch(/accessibilityRole=\{continues \? 'none' : 'radiogroup'\}/);
     expect(RENDERER).toContain('accessibilityRole="radio"');
     // The hint belongs to the name. A second text node is a thing to arrow past.
     expect(RENDERER).toContain('announce(option)');
@@ -121,21 +127,58 @@ describe('the choice contract', () => {
     expect(phone).toContain("scroll = false");
   });
 
-  it('is two questions on Stats, on both platforms', () => {
+  it('is one question on Stats, drawn on two rows, on both platforms', () => {
     /*
-     * The windows and the years were one radiogroup, which reads as one question with
-     * thirteen answers. Measured on a ten-year library at 390px: 148px of control and the
-     * first figure at y=236 of an 844px viewport, against 88 and 222 for two groups with
-     * the years scrolling. The alternative that keeps the years wrapping came to 140 and
-     * pushed the figures to 274 — recorded because it was built and photographed, not
-     * because it was imagined.
+     * Two **rows**, for a measured reason. The windows and the years as one wrapping
+     * radiogroup read as one question with thirteen answers: on a ten-year library at
+     * 390px, 148px of control and the first figure at y=236 of an 844px viewport, against
+     * 88 and 222 with the years scrolling on their own line. The alternative that keeps
+     * them wrapping came to 140 and pushed the figures to 274 — recorded because it was
+     * built and photographed, not because it was imagined.
+     *
+     * And **one question**, which is what this clause used to have backwards. The name it
+     * carried was "is two questions on Stats", and `Stats.tsx` said the same in a comment
+     * nine lines below one saying the opposite — "one list of options, because they are
+     * one choice … which is what a radio group *is*". The render followed *two* and the
+     * state followed *one*, so the row that did not hold the answer got `value=''` and
+     * announced a radiogroup with nothing selected, on every visit. §6.138.
+     *
+     * A screenshot cannot show this — the chips draw the same either way — so it is
+     * measured where it lives: one named group in the source, two rows that `continue` it,
+     * and one `value` expression feeding both.
      */
     for (const path of ['app/src/screens/Stats.tsx', 'mobile/app/stats.tsx']) {
       const source = inRepo(path);
-      const groups = source.match(/<Choice\b/g) ?? [];
-      expect(groups.length, `${path} does not offer two groups`).toBe(2);
+      const rows = source.match(/<Choice\b/g) ?? [];
+      expect(rows.length, `${path} does not draw the question on two rows`).toBe(2);
       expect(source, `${path} does not name Year in review`).toContain('Year in review');
       expect(source, `${path}'s years do not scroll`).toMatch(/\bscroll\b/);
+
+      // Both rows continue a group rather than declaring one.
+      const continues = source.match(/^\s*continues$/gm) ?? [];
+      expect(continues.length, `${path} has a row that declares its own group`).toBe(2);
+
+      // And there is exactly one group, named once, around them.
+      const declared = source.match(/(?:accessibilityRole="radiogroup"|role="radiogroup")/g) ?? [];
+      expect(declared.length, `${path} declares ${declared.length} groups for one question`).toBe(1);
+
+      /*
+       * One answer, read by both rows. This is the half that actually broke: two `value`
+       * expressions, each blanking itself when the other held the answer.
+       */
+      const values = source.match(/value=\{[^}]*\}/g) ?? [];
+      expect(values.filter((v) => v === '{chosen}'.replace('{', 'value={')).length, `${path} does not feed both rows one answer`).toBe(2);
+      expect(source, `${path} blanks a row instead of sharing the answer`).not.toMatch(
+        /value=\{year === undefined \? '' :/,
+      );
+    }
+
+    // The group's name is the one both platforms use, so it cannot drift into two.
+    expect(COPY.stats.period.length, 'the group has no name').toBeGreaterThan(10);
+    for (const path of ['app/src/screens/Stats.tsx', 'mobile/app/stats.tsx']) {
+      expect(inRepo(path), `${path} spells the group's name by hand`).toContain(
+        'COPY.stats.period',
+      );
     }
   });
 
