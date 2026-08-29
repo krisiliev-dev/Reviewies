@@ -83,6 +83,17 @@ describe('a day the whole season lands on', () => {
     expect(runCode(2, [1, 8])).not.toContain('-');
   });
 
+  it('does not let a run invent a series finale', () => {
+    /*
+     * `RUN_KIND_ORDER` picks the strongest kind in the run, and `series-finale` is the
+     * strongest. §6.150 made that kind require the show to be *known* over, so a run can
+     * only carry one if `classify` was told — and a run of season finales must stay a
+     * season finale however many of them there are.
+     */
+    const run = runsOf([entry('salt', 2, 1, 'premiere'), entry('salt', 2, 8, 'finale')])[0];
+    expect(run.kind).toBe('finale');
+  });
+
   it('is what both calendars draw', () => {
     for (const [name, file] of [
       ['web', 'app/src/screens/Calendar.tsx'],

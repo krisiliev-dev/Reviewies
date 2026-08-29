@@ -28,10 +28,31 @@ export interface UpcomingEntry {
 /**
  * Classify an episode within its show.
  *
- * `allEpisodes` must be the whole series, not one season: telling a season finale
- * from a series finale needs to know whether any later season exists.
+ * `allEpisodes` must be the whole series, not one season: telling a *season* finale from a
+ * regular episode needs to know where the season ends.
+ *
+ * `ended` is whether the show is over, and it is the difference between a season finale and
+ * a **series** finale. Without it this asked whether a later season existed *in the data it
+ * was handed* — which for any show still running is always false, because the next season
+ * has not been announced. So the last known episode of every airing show was announced as
+ * the end of the series, on the screen whose whole job is telling you what is coming, and
+ * in a notification if the preference is *Premieres & finales*.
+ *
+ * The doc that used to stand here said the requirement — *"telling a season finale from a
+ * series finale needs to know whether any later season exists"* — and then answered it from
+ * the only source that cannot know. §6.133's shape: a sentence stating a condition it does
+ * not meet. §6.150.
+ *
+ * `CachedTitle.ended` already carried the answer and nothing here read it. Its own doc has
+ * always said what the unknown case means: *"Undefined means unknown, which is treated as
+ * 'still running'"*. So does this — absence gives `finale`, which is true either way and
+ * costs nothing when wrong; `series-finale` needs to be told.
  */
-export function classify(episode: CachedEpisode, allEpisodes: CachedEpisode[]): EpisodeKind {
+export function classify(
+  episode: CachedEpisode,
+  allEpisodes: CachedEpisode[],
+  ended?: boolean,
+): EpisodeKind {
   // Specials are never milestones; a Christmas special is not a premiere.
   if (episode.season === 0) return 'regular';
 
@@ -43,7 +64,8 @@ export function classify(episode: CachedEpisode, allEpisodes: CachedEpisode[]): 
 
   if (isLast) {
     const laterSeasonExists = allEpisodes.some((e) => e.season > episode.season);
-    return laterSeasonExists ? 'finale' : 'series-finale';
+    if (laterSeasonExists) return 'finale';
+    return ended ? 'series-finale' : 'finale';
   }
   // A one-episode season is a finale rather than a premiere: ending beats starting.
   if (isFirst) return 'premiere';
@@ -103,7 +125,8 @@ export async function getUpcoming(days = UPCOMING_DAYS, now = Date.now()): Promi
         seriesId: item.titleId,
         seriesName: title?.name ?? 'Unknown',
         posterUrl: item.posterOverride ?? title?.posterUrl,
-        kind: classify(episode, all),
+        // `title?.ended`, which is what makes a series finale a claim rather than a guess.
+        kind: classify(episode, all, title?.ended),
         day: episode.airDate.slice(0, 10),
       });
     }

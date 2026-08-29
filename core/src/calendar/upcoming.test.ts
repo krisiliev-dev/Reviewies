@@ -35,9 +35,28 @@ describe('classification', () => {
     expect(classify(ep(1, 3), twoSeasons)).toBe('finale');
   });
 
-  it('marks the last episode of the last season a series finale', () => {
-    // Needs whole-series context, not just the season.
-    expect(classify(ep(2, 2), twoSeasons)).toBe('series-finale');
+  it('marks the last episode of the last season a series finale, when told the show is over', () => {
+    // Needs whole-series context, not just the season — and it needs to be *told*.
+    expect(classify(ep(2, 2), twoSeasons, true)).toBe('series-finale');
+  });
+
+  it('calls it a season finale when nobody has said the show is over', () => {
+    /*
+     * The whole of §6.150. This asked whether a later season existed *in the data it was
+     * handed*, which for any show still running is always false, because the next season
+     * has not been announced — so the last known episode of every airing show was announced
+     * as the end of the series, on the calendar and in a notification.
+     *
+     * A season finale is true either way and costs nothing when it turns out there is
+     * more; the other direction tells somebody a show they are watching has finished.
+     */
+    expect(classify(ep(2, 2), twoSeasons)).toBe('finale');
+    expect(classify(ep(2, 2), twoSeasons, false)).toBe('finale');
+    expect(classify(ep(2, 2), twoSeasons, undefined)).toBe('finale');
+    // And the season *before* the last is a season finale either way, which is what makes
+    // the two answers safe to collapse when the show's state is unknown.
+    expect(classify(ep(1, 3), twoSeasons)).toBe('finale');
+    expect(classify(ep(1, 3), twoSeasons, true)).toBe('finale');
   });
 
   it('treats middle episodes as regular', () => {
@@ -51,14 +70,16 @@ describe('classification', () => {
   });
 
   it('calls a single-episode season a finale rather than a premiere', () => {
+    // Ending beats starting. Which *kind* of finale still depends on being told.
     const oneOff = [ep(1, 1)];
-    expect(classify(ep(1, 1), oneOff)).toBe('series-finale');
+    expect(classify(ep(1, 1), oneOff)).toBe('finale');
+    expect(classify(ep(1, 1), oneOff, true)).toBe('series-finale');
   });
 
   it('handles non-contiguous episode numbers', () => {
     const odd = [ep(1, 3), ep(1, 7), ep(1, 11)];
     expect(classify(ep(1, 3), odd)).toBe('premiere');
-    expect(classify(ep(1, 11), odd)).toBe('series-finale');
+    expect(classify(ep(1, 11), odd, true)).toBe('series-finale');
   });
 
   it('falls back to regular with no context', () => {
@@ -203,6 +224,21 @@ describe('upcoming feed', () => {
     const upcoming = await getUpcoming(30, now);
     expect(upcoming[0].kind).toBe('premiere');
     expect(upcoming[0].seriesName).toBe('The Long Dark');
+    // `The Long Dark` in this suite's seed is not marked ended, so its last known episode
+    // is a season finale rather than the end of anything. §6.150.
+    expect(upcoming[1].kind).toBe('finale');
+  });
+
+  it('reads the title to tell a series finale from a season one', async () => {
+    /*
+     * The clause that was missing. Deleting `title?.ended` from the call above left every
+     * other check green: this suite's show is not marked ended, so both the old rule and
+     * the new one return `finale` for it, and the *only* thing that separates them is a
+     * show that **is** over. §6.150.
+     */
+    await db.episodes.bulkPut([ep(1, 1, { airDate: dateAt(2) }), ep(1, 2, { airDate: dateAt(9) })]);
+    await db.titles.update('tmdb:tv:1', { ended: true });
+    const upcoming = await getUpcoming(30, now);
     expect(upcoming[1].kind).toBe('series-finale');
   });
 });

@@ -21,15 +21,15 @@ import { dayKey, startOfDay } from '@reviewies/core/time';
 const provider = new FixtureProvider();
 
 /** Every fixture show, by name, with the episodes the provider will actually serve. */
-const served = await (async () => {
-  const out = new Map<string, Awaited<ReturnType<typeof provider.getEpisodes>>>();
-  for (const show of SCHEDULE) {
-    const [match] = await provider.search(show.name);
-    expect(match, `the provider has never heard of "${show.name}"`).toBeDefined();
-    out.set(show.name, await provider.getEpisodes(match.id));
-  }
-  return out;
-})();
+const served = new Map<string, Awaited<ReturnType<typeof provider.getEpisodes>>>();
+/** The provider's own record of each show, which is where `ended` lives. */
+const titles = new Map<string, Awaited<ReturnType<typeof provider.getTitle>>>();
+for (const show of SCHEDULE) {
+  const [match] = await provider.search(show.name);
+  expect(match, `the provider has never heard of "${show.name}"`).toBeDefined();
+  served.set(show.name, await provider.getEpisodes(match.id));
+  titles.set(show.name, await provider.getTitle(match.id));
+}
 
 describe('the seeded library', () => {
   it('describes the same shows the provider serves', () => {
@@ -119,7 +119,7 @@ describe('the calendar the seed produces', () => {
         rows.push({
           show: show.name,
           day: episode.airDate!,
-          kind: classify(episode, episodes),
+          kind: classify(episode, episodes, show.ended),
           number: episode.number,
         });
       }
@@ -167,6 +167,34 @@ describe('the calendar the seed produces', () => {
     for (const kind of ['premiere', 'finale', 'series-finale', 'regular'] as const) {
       expect(kinds.has(kind), `nothing upcoming is a ${kind}`).toBe(true);
     }
+  });
+
+  it('agrees with the provider about which shows are over', () => {
+    /*
+     * The mirror's third field. `CachedTitle.ended` is what makes a series finale a claim
+     * rather than a guess (§6.150), and a schedule that said one thing while the provider
+     * said another would put the chip on the wrong row with every clause still green.
+     */
+    for (const show of SCHEDULE) {
+      const details = titles.get(show.name);
+      expect(details?.ended, `${show.name}`).toBe(show.ended);
+    }
+  });
+
+  it('carries a show that is over and a show that is not', () => {
+    /*
+     * §6.146's discipline, on the field rather than the schedule: a fixture whose every
+     * show is ending cannot show what the screen says about one that is not, and the wrong
+     * answer was on three rows of the design record before anything asked.
+     */
+    expect(new Set(SCHEDULE.map((s) => s.ended))).toEqual(new Set([true, false]));
+
+    // And both answers reach the window: a series finale from the show that is over, and a
+    // plain season finale from a last known episode that is not the end of anything.
+    const running = upcoming.filter((r) => !SCHEDULE.find((s) => s.name === r.show)!.ended);
+    expect(running.some((r) => r.kind === 'series-finale'), 'a running show is called over')
+      .toBe(false);
+    expect(upcoming.some((r) => r.kind === 'series-finale'), 'nothing is over').toBe(true);
   });
 
   it('leaves the ended show off it', () => {

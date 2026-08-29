@@ -104,6 +104,12 @@ const FIXTURES: FixtureShow[] = [
     // the window, and its weekday matches The Long Dark's, so three dates carry two rows —
     // which is the whole reason the calendar groups by day and had never once been shown
     // doing it.
+    //
+    // `ended` because it is: TMDB marks a show `Ended` once the last season is the last one,
+    // which is often before the finale has aired. It is the **only** airing fixture that is
+    // over, so the other two are the case §6.150 is about — a last known episode that is a
+    // season finale and not the end of anything.
+    ended: true,
     startedDaysAgo: 644,
     cadence: 'weekly',
   },

@@ -10614,6 +10614,60 @@ produce a case has an opinion about the screen; this sprint is what happens when
 is removed — the screen turns out to have been wrong in the direction a retracted finding
 had guessed at, for a reason that finding could not have known.
 
+### 6.150 A series finale is a claim, and it was a guess
+
+**#187.** `classify` decided `series-finale` by asking whether any later season exists **in
+the episodes it was handed**. For a show still running whose next season has not been
+announced, that is always false. So the last known episode of every airing show was
+announced as the end of the series — on the screen whose whole job is telling you what is
+coming, and in a push notification if the preference is *Premieres & finales*, which is the
+default.
+
+## The brief was wrong about how bad it was
+
+I wrote the brief for this sprint saying "both current fixtures happen to be ending, which
+is the only reason no screenshot has been wrong". Measured: **`ended: true` appears once in
+`fixtures.ts`, on Kitchen Nightshift, which has nothing upcoming.** The Long Dark, Hollow
+Crown Saga and Salt Flats carry no such flag — so all three of the `SERIES FINALE` chips in
+the design record, photographed one sprint ago and looked at approvingly, are false
+statements about shows nobody said were over.
+
+The screenshots did not hide the defect. They showed it three times and I read them as
+evidence the chip worked. §6.142 again, from the other side: the instrument answered
+correctly and the reader did not ask what the answer meant.
+
+## The answer was already in the client
+
+`CachedTitle.ended` is populated from TMDB's `status === 'Ended' || 'Canceled'`, the fixture
+provider sets it, and `repo.ts` reads it to auto-complete a finished show. `classify` did
+not, and `getUpcoming` had the title in hand at the call site the whole time — the fix is
+one argument.
+
+Better: `CachedTitle.ended`'s own doc already states the default this needed — *"Undefined
+means unknown, which is treated as 'still running' — a show wrongly marked finished silently
+stops asking for new episodes, which is worse than one that keeps asking."* The judgement was
+written down, in the right words, one file away.
+
+And `classify`'s own doc stated the requirement it could not meet: *"telling a season finale
+from a series finale needs to know whether any later season exists"* — then answered it from
+the only source that cannot know. §6.133's shape: **a sentence that names its condition and
+then satisfies it with whatever is to hand.**
+
+## The rule
+
+`series-finale` must be **told**; absence gives `finale`. A season finale is true either way
+and costs nothing when there turns out to be more; the other direction tells somebody a show
+they are watching has finished.
+
+Hollow Crown Saga is `ended` now — TMDB marks a show `Ended` once its last season is known
+to be the last, often before the finale airs — so the fixture carries a show that is over
+*and* two that are not, which is §6.146's discipline applied to a field rather than a
+schedule. `designLibrary.test.ts` mirrors `ended` and asserts both answers reach the window;
+a clause holds that **no running show is called over**.
+
+`RUN_KIND_ORDER` reads the kind, so a dropped season of a running show now says `SEASON
+FINALE` rather than `SERIES FINALE`, which is the correct claim about Salt Flats.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10824,6 +10878,13 @@ and which single claim in this document could not be checked at all:
   read it; neither does anything read TMDB's `status`. So a show on hiatus is announced as
   over, on the screen whose whole job is telling you what is coming, and the only reason it
   has never been wrong in a screenshot is that both fixtures happen to be ending.
+- **Nothing re-reads a screenshot for what it *claims*.** §6.150's defect was on three rows
+  of the design record, photographed and looked at approvingly one sprint earlier: the chips
+  were drawn correctly, said the right words in the right place, and were false. The design
+  track's method is "look, then measure" and it measures **layout** — sizes, folds, scroll,
+  contrast. Nothing in it asks whether a sentence on the screen is *true*, and the two times
+  that has been caught (§6.104's Stats, §6.150's chip) it was caught by somebody happening to
+  wonder.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the

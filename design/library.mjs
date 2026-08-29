@@ -42,6 +42,8 @@ export const SCHEDULE = [
     seasons: [8, 10, 6],
     startedDaysAgo: 119,
     cadence: 'weekly',
+    /** Still running, so its last known episode is a season finale and not the end. */
+    ended: false,
     /**
      * All of season 1 and four of season 2, of the eighteen episodes that have aired.
      *
@@ -56,6 +58,7 @@ export const SCHEDULE = [
     seasons: [12],
     startedDaysAgo: 280,
     cadence: 'weekly',
+    ended: true,
     /** Over long ago and three episodes behind: the other Up Next row. */
     watchedThrough: 9,
   },
@@ -64,6 +67,8 @@ export const SCHEDULE = [
     seasons: [96],
     startedDaysAgo: 644,
     cadence: 'weekly',
+    /** Over: its last season is its last, which is what makes S1E96 a series finale. */
+    ended: true,
     /**
      * Every episode that has aired, which is what keeps this show *out* of Up Next — the
      * fact `capture.mjs`'s settle test is built around. Its last three episodes are the
@@ -76,6 +81,8 @@ export const SCHEDULE = [
     seasons: [8, 8],
     startedDaysAgo: 341,
     cadence: 'drop',
+    /** Still running. A dropped season is not a dropped *last* season. */
+    ended: false,
     /**
      * All of season 1, which is what keeps this out of Up Next.
      *
