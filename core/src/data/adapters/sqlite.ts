@@ -251,6 +251,8 @@ export class SqliteDatabase implements Database {
   private readonly tables = new Map<string, SqliteTable<never>>();
   /** SQLite has no nested BEGIN, and the repository does nest. */
   private depth = 0;
+  /** Told once a write settles, so an observer can wait for the truth. See §6.135. */
+  private readonly settled = new Set<() => void>();
 
   private readonly driver: SqlDriver;
 
@@ -320,6 +322,25 @@ export class SqliteDatabase implements Database {
    * nests — `catchUpTo` writes inside a transaction and each write enqueues — and
    * SQLite has no nested BEGIN. The outermost call owns the commit.
    */
+  /**
+   * Every read here goes through one connection, so a read taken while a transaction is
+   * open sees the transaction's own uncommitted rows. Measured in §6.135: an outside read
+   * during a ten-row write sees 1, and if that write then fails it has been handed a row
+   * the store throws away. Dexie's reader sees 10 or 0 and never anything between.
+   *
+   * The adapter cannot fix that — there is one connection — so it says when the truth has
+   * settled and lets an observer come back. It does **not** offer a flag for "a write is
+   * open now": `store.ts` records why, and `mobile/smoke.mjs` is what decided it.
+   */
+  onSettled(listener: () => void): () => void {
+    this.settled.add(listener);
+    return () => this.settled.delete(listener);
+  }
+
+  private announceSettled(): void {
+    for (const listener of this.settled) listener();
+  }
+
   async transaction(_mode: 'r' | 'rw', ...args: unknown[]): Promise<unknown> {
     const body = args[args.length - 1];
     if (typeof body !== 'function') throw new Error('transaction() needs a function');
@@ -344,6 +365,9 @@ export class SqliteDatabase implements Database {
       throw error;
     } finally {
       this.depth = 0;
+      // After the commit *or* the rollback: a reader that waited out a failed write has to
+      // be told, and a rollback is not a row change so nothing else would tell it.
+      this.announceSettled();
     }
   }
 

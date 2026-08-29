@@ -121,6 +121,35 @@ export interface Database {
   transaction(mode: 'r' | 'rw', ...args: unknown[]): Promise<unknown>;
 
   /**
+   * Be told once a write has settled, so an observer can correct what it drew.
+   *
+   * The two stores do not promise a reader the same thing during a write, and §6.135
+   * measured it rather than assuming: an outside read during a ten-row write sees **10**
+   * on Dexie, which queues it behind the commit, and **1** on SQLite, which answers it
+   * through the connection holding the open transaction. When the write then fails, the
+   * SQLite reader has been handed a row the store throws away.
+   *
+   * That is not academic on the phone. `mobile/src/useLive.ts` re-runs its query on
+   * expo-sqlite's `addDatabaseChangeListener`, which fires **per statement** — so an
+   * import writing hundreds of rows wakes the observer hundreds of times, every wake
+   * reading uncommitted state. A **rollback is not a row change**, so nothing woke the
+   * observer afterwards and the screen kept whatever it had drawn. This is what wakes it.
+   *
+   * There is deliberately no companion "is a write open" flag, and there was one for an
+   * hour. An observer that skips a wake while a write is open draws **nothing at all**
+   * during an import — the import is one long transaction, and §6.127's whole subject is
+   * that a long import must be visibly under way. `mobile/smoke.mjs` said so: 202/202
+   * without the flag, 201/202 with it, on "the import is visibly under way rather than
+   * silent". Showing progress that a failure then takes back is a better screen than
+   * showing nothing and snapping to the answer.
+   *
+   * Optional because Dexie needs it: IndexedDB already gives a reader all of a write or
+   * none of it, and a failed write it never showed needs no correction. `DexieDatabase`
+   * implements nothing and an observer on it behaves as it always has.
+   */
+  onSettled?(listener: () => void): () => void;
+
+  /**
    * Reach a table by name.
    *
    * Only for the two places that genuinely do not know it at compile time: the sync

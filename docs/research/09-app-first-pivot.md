@@ -9482,6 +9482,105 @@ there was one, and it is what a reveal costs a suite: the audit floors moved 9 �
 for the screen a person arrives at, with a second audit at 11 for the screen they get after
 a tap.
 
+### 6.135 What the two stores promise a reader mid-write, and the proxy that made the answer moot
+
+**#128** has been open since the design track began. It was never asked, only assumed: the
+web sits on IndexedDB through Dexie, the phone runs `BEGIN`/`COMMIT` on **one** wa-sqlite
+connection, and every read in the app goes through that same connection. Nobody had put a
+number on what that difference does to a reader.
+
+`core/src/data/midWrite.test.ts` puts one on it. The reader has to be a **sibling task** —
+the first version issued its `count()` inside the transaction callback, which joins the
+transaction on Dexie and runs on the open connection under SQLite, so both answered 5 and
+the measurement could not have distinguished them. §6.132's rule one sprint on: a
+measurement that gives the same answer on two things you believe differ is usually
+measuring something else.
+
+| during a ten-row write | Dexie | SQLite |
+| --- | --- | --- |
+| an outside read sees | 10 | **1** |
+| after a write that then fails, that reader saw | 0 | **1** |
+| and the store holds | 0 | 0 |
+
+So on the phone a reader is handed a row the store then throws away. That is not academic:
+`mobile/src/useLive.ts` re-runs its query on `addDatabaseChangeListener`, which expo-sqlite
+fires **per statement** — an import writing hundreds of rows inside one transaction wakes
+the observer hundreds of times, each wake reading through the connection holding the open
+transaction.
+
+The adapter cannot fix it — there is one connection — so it **reports** it. `Database`
+gained one optional method, `onSettled()`, which SQLite implements and Dexie does not; the
+fourth clause asserts that absence rather than exempting it, because a store that isolates
+its readers has nothing to correct. It fires after the COMMIT **and** after the ROLLBACK,
+since a rollback is not a row change and nothing else would tell anyone. `useLive`
+subscribes, so a screen that drew rows a failure took back is told to look again.
+
+## The obvious reading of the measurement was wrong, and a suite said so
+
+It gained a **second** method first: `writeInFlight()`, with `useLive` skipping any wake
+that landed inside an open write. That is what the numbers appear to ask for — do not draw
+uncommitted state — and `npm run verify` was green on both stores.
+
+`mobile/smoke.mjs` went **201/202**, on *"the import is visibly under way rather than
+silent"*, with **0 samples**. An import is one long transaction. Skipping every wake inside
+one means the import screen draws nothing at all while it runs — which is precisely the
+state §6.127 built that screen around, deleted by a guard reasoned from a table of numbers.
+Confirmed by reverting the one file: 202/202 without it, 201/202 with it.
+
+So the flag is gone and the wakes are back. Progress that a failure later takes back is a
+better screen than no progress and a snap to the answer, and the correction after a
+rollback — the actual defect — is what `onSettled` was for. `midWrite.test.ts` now holds
+the **absence** of the flag with the reason beside it, so it cannot come back by reflex.
+
+## The proxy underneath, which made all of that unreachable
+
+The fourth clause failed on SQLite with `writeInFlight was false inside a transaction`, and
+the cause is a defect the product has shipped since `db.ts` was written.
+
+`db` is a `Proxy` in front of whichever database the app bound. **A method reached through
+a proxy runs with `this` set to the proxy, not to the object behind it** — and both
+adapters depend on `this` being the real thing:
+
+- `SqliteDatabase.transaction` counts nesting in a field. `this.depth = 1` went through the
+  proxy, which had only a `get` trap, so the default assignment landed on the empty target
+  `{}` while `this.depth` read the adapter's untouched `0`. The counter never counted, the
+  nested call took the outermost branch, issued a second `BEGIN`, and threw **cannot start
+  a transaction within a transaction**.
+- Dexie compares **identity**: a nested `transaction()` is treated as a sub-transaction only
+  when the parent's `db` *is* `this`. `this` was the proxy, so the inner call opened a
+  second top-level transaction, which Dexie queued behind the parent while the parent
+  awaited it — **PrematureCommitError**.
+
+`sqlite.ts` states in its own comment that "the repository legitimately nests — `catchUpTo`
+writes inside a transaction and each write enqueues". Nesting has been broken on both
+stores, in two different ways, for as long as there has been a proxy.
+
+## And the first fix was half right, which is the part worth keeping
+
+Adding `set`, `has` and `deleteProperty` traps made SQLite pass. It was written up, and the
+write-up was wrong: the story it told — *the missing `set` trap* — explained the half that
+had been measured and nothing else. A probe on Dexie, run only because the new clause was
+about to claim both stores, printed `PrematureCommitError` through the proxy and `ok`
+against the raw adapter.
+
+No trap can make a proxy identical to what it wraps. The fix is to **bind**: the `get` trap
+returns methods bound to the bound database, cached per database so `db.transaction ===
+db.transaction` holds. The other three traps stay — a forwarding proxy that reads through
+and writes to an empty object it never shows anyone is exactly the landmine this section is
+about — and the `probeMarker` clause holds them there.
+
+Both halves are planted (§6.109). Unbinding the methods fails the nesting clause on Dexie;
+removing the `set` trap fails the forwarding clause on both; removing **both** reproduces
+the original phone error verbatim, `cannot start a transaction within a transaction`, in
+the suite.
+
+Both halves of this sprint are the same shape, and it is worth naming: **a fix that makes
+the failing test pass is not the same as a fix that is right.** The `set` trap made SQLite
+green and its explanation was about half a bug. The `writeInFlight` guard made every vitest
+suite green and silenced a screen. Neither was caught by reasoning harder about the
+measurement; both were caught by running something that watches the product instead — a
+probe on the other store, and a smoke suite driving a real import.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9645,6 +9744,23 @@ and which single claim in this document could not be checked at all:
   could not look"; this is the third case, "still working", and no screen but the importer
   knows about it. The honest fix is a signal the other screens can read, which is more
   than an evening.
+- **Nested transactions and the settle signal have only ever run on sql.js.** §6.135 found
+  that `db`'s proxy broke nesting on both stores — `cannot start a transaction within a
+  transaction` on SQLite, `PrematureCommitError` on Dexie — and the fix is proved by
+  clauses that plant the violation. But the SQLite half of those clauses runs against
+  `sql.js` in Node, and the phone runs **wa-sqlite through expo-sqlite**. The nesting
+  arithmetic is the adapter's own and is driver-agnostic, so it should carry; what cannot
+  be seen here is expo-sqlite's `addDatabaseChangeListener` firing per statement, which is
+  the whole reason `onSettled` exists. The correction it performs — a screen redrawing
+  after a rollback took back rows it had already shown — has never been watched happening.
+  `docs/design/on-a-device.md` is where that belongs.
+- **A poster with no artwork breaks its title mid-word.** Looking at the design pass this
+  sprint: Up Next's placeholder tiles read *"Kitchen Nightshi / ft"* and *"The Long Dark"*
+  — the second fits, the first is hyphen-free wrapping inside a 90-point square. That is
+  not a fixture artefact; it is what **every** row looks like for someone who has just
+  imported from TV Time and has not matched yet, which is the first screen this product
+  shows a migrant. Filed rather than fixed, because the answer is a design decision about
+  what a title-less tile should show, not a CSS property.
 - **Three green screens were wrong, and an evening found all three.** §6.78 opened the app
   on a realistic library for the first time since §6.49 and found a sentence pointing at a
   tab deleted in §6.79, a date written three ways including the wrong day west of

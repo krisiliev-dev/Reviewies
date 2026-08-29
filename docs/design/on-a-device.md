@@ -210,3 +210,22 @@ It is not a test plan for the product's behaviour — the suites cover that, and
 `npm run verify`, `npm run smoke` and `npm run design` are the things to run first. It is
 the set of claims where **the instrument and the subject disagree**, and where a green suite
 means only that nothing contradicted itself in an environment the product does not ship to.
+
+## 10. A live query redrawing after a rollback
+
+§6.135 gave `Database` an `onSettled()` that fires after a transaction commits **or** rolls
+back, because expo-sqlite fires `addDatabaseChangeListener` per *statement* and every read
+goes through the connection holding the open transaction — so a live query draws
+uncommitted rows, and a rollback is not a row change, so nothing tells it to look again.
+
+What is proved: the adapter announces on both paths, `useLive` subscribes, and the clauses
+plant against both. What is not: any of it running on **wa-sqlite through expo-sqlite**.
+The suite's SQLite driver is `sql.js` in Node, which has no change listener at all, so the
+per-statement wake — the thing the whole mechanism exists to correct — has never fired in
+any test.
+
+**How to settle it.** On a device, start a TV Time import large enough to take a few
+seconds and kill it mid-flight (airplane mode mid-fetch will do it, or a malformed row near
+the end of the CSV). Watch Up Next while it runs. It should count up as rows land, and then
+**go back down** to what actually committed, without a navigation or a pull-to-refresh. If
+it counts up and stays there, `onSettled` is not reaching the phone.

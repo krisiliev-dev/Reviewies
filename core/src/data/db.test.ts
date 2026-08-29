@@ -45,3 +45,62 @@ describe('using the core before binding a database', () => {
     expect(await db.watches.count()).toBe(0);
   });
 });
+
+/**
+ * The traps beyond `get`, and the shipped defect that was hiding behind their absence.
+ *
+ * A method reached through a proxy runs with `this` bound to **the proxy**, so every
+ * assignment an adapter makes to itself goes through a `set` trap. There was none, and
+ * the default landed those writes on the empty target `{}` while the matching reads came
+ * back through `get` from the untouched adapter.
+ *
+ * `SqliteDatabase` counts transaction depth in a field, for a reason its own comment
+ * states: "the repository legitimately nests — `catchUpTo` writes inside a transaction
+ * and each write enqueues — and SQLite has no nested BEGIN." The counter never counted,
+ * so the nested call took the outermost branch, issued a second `BEGIN`, and the phone
+ * threw **cannot start a transaction within a transaction**. On Dexie nesting is legal
+ * and the same code path was fine, which is why the suite never saw it.
+ *
+ * These clauses run on both stores because the proxy is the same proxy; the second one
+ * is the one a SQLite run would have failed.
+ */
+describe('the proxy in front of the bound database', () => {
+  it('forwards a write to the bound object rather than keeping it', async () => {
+    await rebind();
+    // Not a field any adapter has: the question is only whether the assignment travels.
+    (db as unknown as Record<string, unknown>).probeMarker = 'landed';
+    expect('probeMarker' in db, 'has() does not reach the bound object').toBe(true);
+    expect((db as unknown as Record<string, unknown>).probeMarker).toBe('landed');
+    delete (db as unknown as Record<string, unknown>).probeMarker;
+    expect('probeMarker' in db, 'deleteProperty does not reach the bound object').toBe(false);
+  });
+
+  it('lets a transaction nest, which the repository does', async () => {
+    await rebind();
+    await db.watches.clear();
+    await db.transaction('rw', db.watches, async () => {
+      await db.watches.put({
+        id: 'nest-outer',
+        targetId: 'tmdb:ep:nest-1',
+        seriesId: 'tmdb:tv:nest',
+        watchedAt: 1_700_000_000_001,
+        source: 'manual',
+      } as never);
+      // The inner call is what `catchUpTo` does: a write inside a transaction that
+      // enqueues, and the enqueue opens one of its own.
+      await db.transaction('rw', db.watches, async () => {
+        await db.watches.put({
+          id: 'nest-inner',
+          targetId: 'tmdb:ep:nest-2',
+          seriesId: 'tmdb:tv:nest',
+          watchedAt: 1_700_000_000_002,
+          source: 'manual',
+        } as never);
+      });
+    });
+    // Both rows, and one commit: an inner transaction that committed on its own would
+    // have taken the outer one's rows with it if the outer then failed.
+    expect(await db.watches.count(), 'a nested transaction lost rows').toBe(2);
+    await db.watches.clear();
+  });
+});
