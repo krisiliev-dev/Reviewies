@@ -9,6 +9,8 @@ import { COPY } from '@reviewies/core/copy';
 import { todayKey } from '@reviewies/core/time';
 import { clockWarning } from '@reviewies/core/sync/clock';
 import { Button } from '../ui/Button';
+import { Toggle } from '../ui/Toggle';
+import { toggleState } from '@reviewies/core/ui/toggle';
 import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
@@ -107,23 +109,38 @@ export function Settings() {
         <Section className="px-1">
           Watching
         </Section>
-        <label className="flex items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4">
+        {/*
+          The whole row is the control. §6.166.
+
+          It was a `<label>` around a 20px `<input type="checkbox">` — two nodes in the
+          reading order and a target a quarter the size of the row. The phone had already
+          reasoned its way to this shape and said so at its own call site; this is the web
+          catching up, which is the same direction §6.97 found the parity gaps running in.
+
+          `aria-label` rather than the visible text, because the hint under it is not part of
+          the name — and `aria-description` is where a hint belongs.
+        */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={toggleState(openComments).checked}
+          aria-label="Open the conversation after marking watched"
+          aria-description="How TV Time worked. Needs an account."
+          onClick={() => {
+            const on = !openComments;
+            setOpenComments(on);
+            setOpenCommentsAfterWatch(on);
+          }}
+          className="flex w-full items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4 text-left"
+        >
           <span className="min-w-0">
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
             <Note as="span" className="block">How TV Time worked. Needs an account.</Note>
           </span>
-          <input
-            type="checkbox"
-            checked={openComments}
-            onChange={(e) => {
-              setOpenComments(e.target.checked);
-              setOpenCommentsAfterWatch(e.target.checked);
-            }}
-            className="size-5 shrink-0 accent-action-fill"
-          />
-        </label>
+          <Toggle value={openComments} />
+        </button>
       </section>
 
       <section className="flex flex-col gap-2">

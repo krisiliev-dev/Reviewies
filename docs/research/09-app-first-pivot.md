@@ -12047,6 +12047,89 @@ is what stops it coming back.** Neither substitutes for the other, and four spri
 instruments without reading their output is how a live backend got into a pass that had a
 comment saying it could not be there.
 
+### 6.166 The one control the platform was drawing
+
+**#202.** §6.165 filed six findings and this sprint took the largest. It is one control —
+*Open the conversation after marking watched*, the only on/off setting in the product — and
+until now neither platform drew it:
+
+| | what it was | what it looked like |
+| --- | --- | --- |
+| phone | `<Switch value={openComments} />`, no `trackColor`, no `thumbColor` | a **teal** sliding switch |
+| web | `<input type="checkbox" class="size-5 accent-action-fill">` | a **white square with a black tick**, 20px |
+
+Teal appears nowhere else in this product; the accent is amber. The white square was the only
+white-filled square in the entire design record, and `accent-color` is why: it is a *hint*, so
+the browser draws its own control and takes the colour if it chooses to. `size-5` is 20px
+against a 44pt target floor — §6.95's finding about the density chips, on a control nothing
+had measured because nothing owned it.
+
+Every other control in this build goes through `Button`, `Row`, `Choice`, `CrossOff` or `Key`,
+which §6.159 built so that this could not happen. These two were what the platform paints when
+nothing asks it not to, which is §6.111's Expo-scaffold-navy and §6.138's seventh finding
+wearing a third costume.
+
+## Why it is a mark and not a switch
+
+A sliding switch is a fill with a knob travelling in it. §6.90 spent 822 sites turning fills
+into rules because `direction.md` asks for a printed artefact you mark up, and `choice.ts`
+states the rule this build settled on: *selection is a rule and a step in the ink, never a
+fill and never a third mark*. A switch is the one shape that cannot obey it.
+
+So a toggle is the mark this product already makes — the same `size.target` box, the same
+`TICK_PATH`, the same `working` amber that fills a watched episode's ring. Not `CrossOff`,
+which says *watched* and a preference is not an episode; the same alphabet, which is the point
+of having one.
+
+## The row is the control, and the phone already knew
+
+The phone had reasoned its way to the better shape and said so at its own call site: the whole
+settings row is the `Pressable`, and the switch beside it is `aria-hidden` and
+`pointerEvents="none"` — one control in the reading order rather than a label and a separate
+unlabelled switch, and a target the size of the row. The web had a `<label>` around a 20px
+input: two nodes, and a target a quarter the size.
+
+So `Toggle` is the **mark**, presentational on both platforms, and the row carries the role,
+the name, the hint and the press. `toggleState` is the one thing they must agree about and it
+has one owner. The web catching up to the phone is the same direction §6.97's parity gaps ran
+in, and it is worth noticing that the platform this project pivoted *to* was the one that had
+it right.
+
+## What the existing guards said about it
+
+Two of them objected, and both were correct:
+
+- **`bareControl.test.ts`** flagged the web's new row. Its exemption for the phone read *"the
+  one control kind this design has never drawn"* — which stopped being true in this entry, so
+  §6.41 applies to the excuse as much as to the code. Both rows are exempt now with the reason
+  that remains: the **mark** is drawn, the **row** — heading, hint, control at the far end — is
+  the surface `accentFill.test.ts` named in §6.99 and nothing has built.
+- **`coreWiring.test.ts`** flagged `ui/toggle#TOGGLE` as mobile-only, which it is, for exactly
+  the reason `SIZE`, `CHOSEN` and `RING` are: React Native reads the table at runtime and the
+  DOM writes Tailwind literals, because Tailwind's scanner reads source text.
+
+`toggle.test.ts` is what holds the web's written-out classes to the table — and its second
+half is the one that matters: **no screen anywhere may draw a `<Switch>` or an
+`<input type="checkbox">` again.** A component nobody uses is not the failure mode; the
+platform control coming back is. Two plants, both red.
+
+## And the proof is the photograph
+
+`13-data.png` and `dark-10-settings-foot.png`, re-taken: the same amber square with the same
+drawn tick, on both platforms, in the same alphabet as every other mark in the product.
+
+## What is not done, and why it is said here
+
+Five of §6.165's six findings are still open, and this entry claims nothing about them. The
+watchlist row whose only drawn control is *Remove*, the provider chip darker than its card,
+the drawer handle over the emoji pad, Stats' two chip rows in one visual language, and the two
+small ones — *"Caught up further?"* as a question, and tracking separating a figure's decimal
+point. Each needs a decision rather than a line, and taking a decision badly at the end of a
+sprint is how the design record gets a shot of something nobody chose.
+
+The other **109 unread shots** are also still unread. §6.165's rate — six findings in the
+first eight pictures — has not been tested against them.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12893,13 +12976,17 @@ and which single claim in this document could not be checked at all:
   was written from a listing of one directory. Six of the nine findings came out of the first
   eight shots, which is a rate worth taking seriously about the remaining hundred and nine.
 
-- **Six findings are filed and unfixed**, each with its shot named: the watchlist row whose
+- **Five findings are filed and unfixed**, each with its shot named: the watchlist row whose
   only drawn control is *Remove*; *Caught up further?* as a question where every control is a
-  verb; Stats' two chip rows in one visual language with two meanings; the preference toggle
-  that is a teal platform switch on the phone and a browser checkbox on the web; the provider
-  chip darker than the card it sits in; and the drawer handle sitting on top of the emoji pad.
-  The switch is the largest — it is a component that does not exist, in the sense §6.159 built
-  the other eleven.
+  verb; Stats' two chip rows in one visual language with two meanings; the provider chip darker
+  than the card it sits in; and the drawer handle sitting on top of the emoji pad. The sixth —
+  the preference toggle drawn by two platform defaults — is closed in §6.166. Each of the five
+  needs a decision rather than a line.
+
+- **The settings *row* is still a surface with no component.** §6.166 drew the mark and left
+  the row, on both platforms, in `bareControl.test.ts`'s exemption table with that as its
+  reason. It is the second of the three surfaces §6.99 named and did not build; the other two
+  are the remote's device list and Watching Mode's drift banner.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column

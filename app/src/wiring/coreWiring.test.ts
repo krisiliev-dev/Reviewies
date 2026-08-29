@@ -213,6 +213,7 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/choice#CHOICE_SIZE': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/choice#CHOSEN': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/crossOff#RING': 'The same divergence as `ui/button#SIZE`.',
+  'mobile only: ui/toggle#TOGGLE': 'The same divergence as `ui/button#SIZE`; `toggle.test.ts` holds the web\u2019s written-out classes to the table.',
   'mobile only: ui/crossOff#STRUCK': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/surface#SURFACE_OFF': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/row#ROW_INK': 'The same divergence as `ui/button#SIZE`.',

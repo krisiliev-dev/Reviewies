@@ -87,9 +87,26 @@ const EXEMPT: Record<string, string> = {
     'and `Row` on the phone carries a title, a lead and an `under`, none of which a bare ' +
     'device name needs. Named by `accentFill.test.ts` since §6.99 as a surface with no ' +
     'component; it still has none.',
+  /*
+   * The two settings rows, and the reason is narrower than it was.
+   *
+   * It read "the one control kind this design has never drawn", which stopped being true in
+   * §6.166: the **mark** is `Toggle` now, on both platforms, and the teal switch and the
+   * browser checkbox are gone. What is still undrawn is the **row** — a heading, a hint and a
+   * control at the far end — and there is one of them on each platform, which is a component
+   * with two call sites and the reason §6.99 left it unbuilt in the first place.
+   *
+   * §6.41: an excuse that outlives its condition is the next thing to mislead somebody, so
+   * this one is rewritten to the condition that remains rather than left standing.
+   */
   'mobile/app/data.tsx':
-    'The switch row — `accessibilityRole="switch"`, the one control kind this design has ' +
-    'never drawn. The second surface `accentFill.test.ts` named in §6.99, still unbuilt.',
+    'The settings row. Its mark is `Toggle` since §6.166; the row around it — heading, hint, ' +
+    'control at the far end — is the surface `accentFill.test.ts` named in §6.99 and nothing ' +
+    'has built yet.',
+  'app/src/screens/Settings.tsx':
+    'The same row on the web. It was a `<label>` around a browser checkbox until §6.166 made ' +
+    'the row the control, which is the shape the phone already had; both now wait on the same ' +
+    'unbuilt component.',
   'mobile/app/watching/[targetId].tsx':
     'The drift banner: a whole pressable sentence offering to correct the clock, which is ' +
     'not a button, a row or a note but something of its own. The third of §6.99\'s three.',

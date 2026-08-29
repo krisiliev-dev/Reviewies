@@ -3,7 +3,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -12,6 +11,8 @@ import { downloadFile, exportAll, exportWatchesCsv } from '@reviewies/core/data/
 import { openCommentsAfterWatch, setOpenCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { clearMetadataCache } from '@reviewies/core/metadata/index';
 import { ImportFiles, ImportFormats } from '../src/ui/ImportFiles';
+import { Toggle } from '../src/ui/Toggle';
+import { toggleState } from '@reviewies/core/ui/toggle';
 import { leadingOf, radius, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
@@ -110,7 +111,7 @@ export default function DataScreen() {
           <Pressable
             style={styles.toggleRow}
             accessibilityRole="switch"
-            accessibilityState={{ checked: openComments }}
+            accessibilityState={toggleState(openComments)}
             accessibilityLabel="Open the conversation after marking watched"
             accessibilityHint="How TV Time worked. Needs an account."
             onPress={() => {
@@ -125,12 +126,11 @@ export default function DataScreen() {
                   stay put. Catching up in bulk has its own control, which never moves. */}
               <Note>How TV Time worked. Needs an account.</Note>
             </View>
-            {/* Presentational: the row above is the control. Hidden from the reading
-                order so it is not announced twice, and from the pointer so a tap on it
-                is a tap on the row. */}
-            <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-              <Switch value={openComments} />
-            </View>
+            {/* Presentational: the row above is the control, and `Toggle` hides itself for
+                the reason this comment used to give — announced once, and a tap on it is a
+                tap on the row. §6.166 moved the hiding into the component so the next call
+                site cannot forget it. */}
+            <Toggle value={openComments} />
           </Pressable>
         </Block>
 
