@@ -256,7 +256,7 @@ function EpisodeRow({
       }`}
       // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
       // the ink rather than fading it: "not yet" has to read differently from "broken".
-      tag={!aired && !watched ? 'NOT YET' : undefined}
+      tag={!aired && !watched ? 'Not yet' : undefined}
       trailing={
         /* Was a pill reading "Mark" or "Watched", announcing `aria-pressed` and fading to
            30% when unaired — three separate things the component settles. */

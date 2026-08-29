@@ -273,7 +273,7 @@ function EpisodeRow({
       }`}
       // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
       // the ink rather than fading it: "not yet" has to read differently from "broken".
-      tag={!aired && !watched ? 'NOT YET' : undefined}
+      tag={!aired && !watched ? 'Not yet' : undefined}
       trailing={
         /* The `checked` this used to carry sat on `accessibilityRole="button"`, which has
            no way to announce it — §6.95's defect on the control it matters most on. */

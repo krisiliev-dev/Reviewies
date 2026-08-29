@@ -10465,6 +10465,90 @@ is the way this kind of guard usually dies.
 **A guard scoped to a folder is a guard with an opinion about where drift happens.** §6.146
 said the same thing about a fixture. Neither opinion was written down.
 
+### 6.148 The chip nobody had ever seen
+
+**#183.** §6.138's read of the phone is three sprints old and four screens have changed
+under it, so this is a fresh one. It found one thing, and the thing was only findable
+because §6.146 fixed the fixture.
+
+## `Section`'s type without `Section`'s case rule
+
+`core/src/ui/section.ts` states the rule in a table, and states why the two channels travel
+together — *"a single-channel difference is the one that gets flattened again by the next
+person tuning a value"*:
+
+| | `section` | `group` |
+|---|---|---|
+| case | uppercase | as written |
+| tracking | `t83` | none |
+
+`Row`'s `tag` takes `t83` on both platforms and left the case to whoever called it. Six call
+sites, and they disagree:
+
+- `Lists.tsx` and `lists.tsx` type `'SERIES'` / `'FILM'`;
+- both title pages type `'NOT YET'`;
+- both calendars pass `KIND_LABEL[kind]`, which is `Premiere` / `Season finale` / `Series
+  finale` — sentence case, correctly, because the same words are a sentence in a
+  notification.
+
+So the chip read **SERIES** on one screen and **Season finale** on another: tracked sentence
+case, the pairing that table rules out. And `RowContract`'s own doc gives its examples as
+`` `AIRS FRI`, `SEASON FINALE` `` — the case was *stated in an example* and enforced
+nowhere, which is §6.139's shape.
+
+**Nobody had ever seen it.** Every fixture show started on the same day and only one reached
+the future, so `KIND_LABEL` resolved to the empty string on every calendar row of every
+screenshot ever taken. The chip's first appearance in this project's history is §6.146's
+screenshot, one sprint ago. `rowTag()` shouts in the component now, the way `Section` does;
+the four hand-typed sites read as they are drawn. Five plants.
+
+## What was looked at and is not a defect
+
+- **`1.0 days` reads as `1 . 0` on Stats.** `Data` adds no tracking — `font-data
+  font-medium tabular-nums` — so the gap is IBM Plex Mono's own advance for a period, which
+  is inherent to a monospaced face and is the price of the tabular alignment
+  `direction.md` asks for. Considered, measured, kept.
+- **The calendar's day grouping.** Four dates carry two rows and three carry one, and a
+  two-row day does read as one day: the heading sits closer to its own rows than the rows
+  sit to the next heading. It earns its rule.
+
+## And a restore that did not restore
+
+Halfway through, five plants against `Row` were run with backups named by *basename* —
+and both platforms have a `Row.tsx`, so the second `cp` overwrote the first. The web's
+file was replaced by the phone's, and two plants after that reported failures that were
+the backup's, not the plant's. The **guard caught it**: the run after the last restore was
+still red. §6.135 again — a restore that leaves the file wrong is not a restore, and the
+only reason it was not committed is that the method runs the suite after putting things
+back.
+
+## #184, and the excuse whose condition expired
+
+`offers.test.ts` said of itself: *"Deliberately shallow: it reads each screen's own file and
+does not follow imports into shared components… the differences that have mattered were all
+in the screen itself."* True when written. §6.147 found two divergences inside `ui/` — and
+found them with the **copy** guard, by accident, because two control names happened to look
+alike.
+
+The objection it raises is about *following imports*, which is a different thing from
+comparing the twenty-three same-named component files against each other. It compares them
+now, on both its dimensions, and the ratchet **starts at zero** — every shared component
+already agrees, so the first disagreement is the finding.
+
+What it deliberately does not compare is controls, and the two probes that settled that are
+the record:
+
+- counting **roles** reports 13 of 23 pairs different, because a `<button>` carries its role
+  implicitly and a `Pressable` must be told;
+- counting accessible **names** reports 6 pairs different — every one by exactly one,
+  because the web writes the same name in two branches where the phone writes it once.
+
+Both numbers are the instrument's, not the product's, which this file's own comments name as
+the failure it has already hit twice. §6.142.
+
+**A shallow guard is a guard with a boundary, and a boundary is a claim.** Neither this one
+nor §6.147's was ever measured against the thing it excluded.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10648,6 +10732,14 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **No guard compares what a control is called into being.** §6.148 measured two ways of
+  comparing controls across the platforms and rejected both, because a DOM tree carries roles
+  implicitly and a React Native tree does not. That leaves the thing §6.147 found *by
+  accident* — a full-screen named button on one platform and nothing on the other —
+  uncovered by anything except the copy guard noticing two names looked alike. The smoke
+  suites audit named controls **per screen** on each platform separately; nothing compares
+  the two counts, and nothing could without an instrument that reads both trees as trees
+  rather than as source text.
 - **Attribution is shown on a build that is not using the API.** `usingFixtures()` makes
   Settings and More say "Running on sample data" *instead of* the two attributions; Discover
   and *Where to watch* show them regardless, so every screenshot in this document credits

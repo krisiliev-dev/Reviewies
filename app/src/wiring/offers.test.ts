@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { PAIRS, ROOT, UNPAIRED_PHONE, UNPAIRED_WEB, phoneScreenFiles, webScreenFiles } from './pairs';
+import {
+  componentPairs,
+  PAIRS,
+  ROOT,
+  UNPAIRED_PHONE,
+  UNPAIRED_WEB,
+  phoneScreenFiles,
+  webScreenFiles,
+} from './pairs';
 import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -32,10 +40,17 @@ const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
  * failure this guard exists to prevent is the silent kind — a screen that quietly
  * offers less on one side than the other and passes every check that counts screens.
  *
- * Deliberately shallow: it reads each screen's own file and does not follow imports into
- * shared components. Following them would make the two sides incomparable (the web's
- * `AddToList` has no phone twin as a file), and the differences that have mattered were
- * all in the screen itself.
+ * It reads each screen's own file and does not *follow imports* into shared components —
+ * that would make the two sides incomparable, since the web's `AddToList` has no phone twin
+ * as a file. What it does now do is compare the shared components **against each other**,
+ * which sidesteps that objection entirely: `Row.tsx` has a phone twin, and so do the other
+ * twenty-two.
+ *
+ * The sentence that used to stand here — "the differences that have mattered were all in
+ * the screen itself" — was true when it was written and stopped being true in §6.147, which
+ * found two divergences inside `ui/` and found them with the *copy* guard, by accident,
+ * because two control names happened to look alike. §6.133: an excuse expires; the way to
+ * tell is to measure. §6.148.
  */
 
 /**
@@ -151,8 +166,14 @@ export function routesOffered(source: string, platform: 'web' | 'phone'): Set<st
 
 /**
  * Verb-shaped, because a writer's name is the only thing available at this level.
- * A reader that happens to start with one of these would be a false positive; none does
- * today, and a false positive costs one line in EXEMPT rather than a wrong pass.
+ * A reader that happens to start with one of these would be a false positive; a false
+ * positive costs one line in EXEMPT rather than a wrong pass.
+ *
+ * There is one, found when this began reading components: `posterInitials` starts with
+ * `post`. It is a pure formatter and it is called on both platforms, so it pairs with
+ * itself and costs nothing — which is the point worth keeping. The sentence here used to
+ * say "none does today", and a claim in the present tense about a set that grows is a
+ * claim that goes stale without anybody editing the line. §6.148.
  */
 const WRITER =
   /^(add|remove|set|mark|create|delete|update|save|log|toggle|rate|follow|unfollow|import|clear|record|put|hide|unhide|join|leave|send|post|publish|contribute|promote|migrate|restore|reset|apply|start|stop|enqueue)/;
@@ -194,6 +215,26 @@ function differences(route: string): string[] {
   ].sort();
 }
 
+/** The same comparison between two same-named components. §6.148. */
+function componentDifferences(name: string): string[] {
+  const webSrc = read(`app/src/ui/${name}`);
+  const phoneSrc = read(`mobile/src/ui/${name}`);
+  const onlyIn = (a: Set<string>, b: Set<string>) => [...a].filter((x) => !b.has(x));
+  const key = `ui/${name}`;
+
+  const webRoutes = routesOffered(webSrc, 'web');
+  const phoneRoutes = routesOffered(phoneSrc, 'phone');
+  const webWrites = writersCalled(webSrc);
+  const phoneWrites = writersCalled(phoneSrc);
+
+  return [
+    ...onlyIn(webRoutes, phoneRoutes).map((r) => `${key} web-only →${r}`),
+    ...onlyIn(phoneRoutes, webRoutes).map((r) => `${key} phone-only →${r}`),
+    ...onlyIn(webWrites, phoneWrites).map((w) => `${key} web-only ${w}()`),
+    ...onlyIn(phoneWrites, webWrites).map((w) => `${key} phone-only ${w}()`),
+  ].sort();
+}
+
 describe('what each platform offers', () => {
   it('offers the same places and the same writes on both sides', () => {
     const unexplained = Object.keys(PAIRS)
@@ -205,8 +246,31 @@ describe('what each platform offers', () => {
     expect(unexplained).toEqual([]);
   });
 
+  it('offers the same places and the same writes from a shared component, too', () => {
+    /*
+     * A ratchet that starts at zero, which is the strongest state one can start in: every
+     * shared component already agrees, so the first disagreement is the finding.
+     *
+     * What this deliberately does **not** compare is controls, and the two probes that
+     * settled that are worth the space. Counting roles reports thirteen of the
+     * twenty-three pairs as different, because a `<button>` carries its role implicitly
+     * and a `Pressable` must be told: the scanner would be reading one tree more closely
+     * than the other, which this file's own comments name as the failure it has hit twice.
+     * Counting accessible *names* reports six pairs different — every one of them by
+     * exactly one, because the web writes the same name in two branches where the phone
+     * writes it once. Both numbers are the instrument's, not the product's. §6.142.
+     */
+    const names = componentPairs();
+    expect(names.length, 'no components are being compared at all').toBeGreaterThan(10);
+    const unexplained = names.flatMap(componentDifferences).filter((d) => !EXEMPT[d]);
+    expect(unexplained).toEqual([]);
+  });
+
   it('keeps no exemption that no longer describes a difference', () => {
-    const live = new Set(Object.keys(PAIRS).flatMap(differences));
+    const live = new Set([
+      ...Object.keys(PAIRS).flatMap(differences),
+      ...componentPairs().flatMap(componentDifferences),
+    ]);
     // A stale exemption is worse than none: it is a written claim that a difference
     // exists on purpose, sitting beside a difference that has since been closed.
     expect(Object.keys(EXEMPT).filter((key) => !live.has(key))).toEqual([]);
@@ -237,6 +301,19 @@ describe('what each platform offers', () => {
     const search = read('app/src/screens/Search.tsx');
     expect(routesOffered(search, 'web')).toContain('/title');
     expect(writersCalled(search)).toContain('markWatched');
+
+    // And on the component side, where the sets are smaller and a silent empty one would
+    // look exactly like agreement. `ImportFiles` calls three core writers on both.
+    for (const [platform, file] of [
+      ['web', 'app/src/ui/ImportFiles.tsx'],
+      ['phone', 'mobile/src/ui/ImportFiles.tsx'],
+    ] as const) {
+      expect([...writersCalled(read(file))].sort(), platform).toEqual([
+        'importArchive',
+        'importArchiveEntry',
+        'restoreAccount',
+      ]);
+    }
 
     const phoneSearch = read('mobile/app/(tabs)/search.tsx');
     expect(routesOffered(phoneSearch, 'phone')).toContain('/title');

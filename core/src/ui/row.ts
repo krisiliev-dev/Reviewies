@@ -108,6 +108,24 @@ export type RowOpen = { name: string } & (
   | { run(): void; to?: never }
 );
 
+/**
+ * How a tag is drawn, which is `Section`'s rule and was not being applied here.
+ *
+ * `section.ts` states it in a table — *case: uppercase, tracking: `t83`* against *case: as
+ * written, tracking: none* — and gives the reason: "a single-channel difference is the one
+ * that gets flattened again by the next person tuning a value". The two go together.
+ *
+ * `Row`'s tag takes `t83` on both platforms and left the case to the caller, so the
+ * calendar's chips were tracked sentence case: the exact pairing that table rules out,
+ * photographed for the first time in §6.146 when a milestone finally reached the screen.
+ *
+ * Applied in the component rather than asked of the caller, because "shout it yourself"
+ * is what the four hand-typed sites were already doing and the fifth and sixth did not.
+ */
+export function rowTag(value: string | undefined): string | undefined {
+  return value ? value.toUpperCase() : undefined;
+}
+
 export interface RowContract {
   title: string;
   /** `S02·E07`, or a year. Set through `Data` once that exists. */
@@ -125,7 +143,16 @@ export interface RowContract {
    * the slot for it, and a migration is not licence to rewrite what a screen says.
    */
   count?: string;
-  /** `AIRS FRI`, `SEASON FINALE`. Two words at most, and never a shortened sentence. */
+  /**
+   * `Airs Fri`, `Season finale`. Two words at most, and never a shortened sentence.
+   *
+   * Written as it reads and **drawn** in upper case — `rowTag` below, applied by the
+   * component. Six call sites decided the case for themselves before that: four typed
+   * `'SERIES'`, `'FILM'`, `'NOT YET'` by hand and the two calendars passed
+   * `KIND_LABEL[kind]`, which is sentence case because those words are also a sentence
+   * elsewhere. So the chip read *Season finale* on one screen and *SERIES* on another.
+   * §6.148.
+   */
   tag?: string;
   /** The watchlist's "why you saved it" — somebody's own words, and set in italic to say so. */
   note?: string;

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ROW, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
+import { ROW, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { crossedOffText } from './CrossOff';
 import { Note } from './Note';
 
@@ -121,7 +121,7 @@ export function Row({
       {words}
       {/* A word about the row, not a control. `AIRS FRI` is what an unaired episode gets
           instead of a ring, which is the whole reason `disabled` is not a fade. */}
-      {tag ? <span className={TAG}>{tag}</span> : null}
+      {rowTag(tag) ? <span className={TAG}>{rowTag(tag)}</span> : null}
     </>
   );
 

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SCREEN } from '@reviewies/core/ui/screen';
-import { ROW, ROW_INK, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
+import { ROW, ROW_INK, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { border, radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
 import { text, type, track } from '@reviewies/core/tokens';
@@ -84,7 +84,7 @@ export function Row({
       {words}
       {/* A word about the row, not a control. `AIRS FRI` is what an unaired episode gets
           instead of a ring, which is the whole reason `disabled` is not a fade. */}
-      {tag ? <Text style={styles.tag}>{tag}</Text> : null}
+      {rowTag(tag) ? <Text style={styles.tag}>{rowTag(tag)}</Text> : null}
     </>
   );
 

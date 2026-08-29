@@ -245,7 +245,7 @@ function ListCard({
               title={item.name ?? item.titleId}
               // No poster on a list item, so the shorter of the two heights.
               density="index"
-              tag={item.kind === 'show' ? 'SERIES' : 'FILM'}
+              tag={item.kind === 'show' ? 'Series' : 'Film'}
               open={{
                 // The list's name, because a screen with three lists open at once
                 // otherwise announces the same title three times with nothing to tell
