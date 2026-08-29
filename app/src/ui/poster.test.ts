@@ -111,8 +111,15 @@ describe('a poster', () => {
     expect(phone).toContain('borderBottomWidth: POSTER_PLATE.band');
   });
 
-  it('says the title when there is no artwork, in the face that fits it', () => {
+  it('draws the empty plate in the condensed face, and hides it from the reader', () => {
     /*
+     * This was called "says the title when there is no artwork" until §6.139, and §6.137
+     * had stopped that being true one sprint earlier: the plate prints a monogram now,
+     * because every call site already prints the title beside it. The clause stayed green
+     * throughout, because its body never read the plate's *content* — only its face and
+     * that it is decoration. Both of those are still right, and they are what it is named
+     * for now. The content is the clause below, which §6.137 added.
+     *
      * A missing poster is normal — imported history is full of titles that never matched a
      * provider. §6.113: at `s12` in Archivo the plate broke inside the word, and there is no
      * step below 12 to retreat to, so it is the condensed face.

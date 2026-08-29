@@ -68,12 +68,20 @@ describe('the choice contract', () => {
     expect(RENDERER).toContain('announce(option)');
   });
 
-  it('marks the chosen one with a rule and a weight, never a fill', () => {
+  it('marks the chosen one with a rule and a step in the ink, never a fill', () => {
     /*
      * §6.90 spent 822 sites turning fills into rules; a selected chip is the one control
-     * that would have quietly kept one. A rule plus a weight step is two channels rather
+     * that would have quietly kept one. A rule plus an ink step is two channels rather
      * than colour alone — §6.91's argument for the tab bar, one control down — so it
      * survives being read by somebody who cannot separate the two greys.
+     *
+     * **An ink step, not a weight step**, and this clause was called "a rule and a weight"
+     * until §6.139. §6.113 took weights out — the phone cannot thicken a named family, so a
+     * state carried by weight is a state the phone loses — and §6.134 corrected the same
+     * sentence where it appears in `choice.ts`. The clause's *name* and the comment under
+     * it were not corrected, so a guard went on announcing a mechanism the product had
+     * deliberately dropped, over assertions that had always read the ink. The assertions
+     * below are the ones that were right all along.
      */
     expect(CHOSEN.rule).toBe(border.tally);
     expect(CHOSEN.label.off).toBe('inkSecondary');

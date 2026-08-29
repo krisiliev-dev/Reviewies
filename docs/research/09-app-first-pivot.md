@@ -9775,6 +9775,80 @@ asserted exactly the arrangement that was wrong. It had been green for twenty-ni
 guard can hold a defect in place as firmly as it holds a fix — which is the third distinct
 way this build has now found a clause agreeing with the thing it was supposed to catch.
 
+### 6.139 Three guards whose names were not descriptions of what they proved
+
+§6.138 found a clause named *"is two questions on Stats, on both platforms"* asserting
+exactly the arrangement that was wrong, green for twenty-nine sprints — the third guard
+found holding a defect in place. §7 recorded that nothing had re-read the guards against
+their own names since §6.120, thirty sections earlier. This is that sweep.
+
+**Planting cannot find these.** A plant proves a guard fails when the thing it checks
+breaks. It says nothing about whether the thing it checks is the thing its name claims. All
+three below pass their plants and always did.
+
+1478 clauses is too many to read whole, so the filter was the shape that failed: a name
+asserting a **design decision** — a count, an arrangement, a mechanism — rather than a
+behaviour. A behavioural name breaks when the behaviour changes. A decision name survives
+the decision being reversed.
+
+## A rule and a *weight* step, said by the guard for the last twenty-six sections
+
+`choice.test.ts`: **"marks the chosen one with a rule and a weight, never a fill"**. The
+body asserts `CHOSEN.label.off === 'inkSecondary'` and `.on === 'ink'` — a rule and an **ink**
+step. §6.113 took weights out of the product, for the reason `LABEL_FACE` gives: the phone
+cannot thicken a named family, so a state carried by weight is a state the phone loses.
+§6.134 corrected that same sentence where it appears in `choice.ts` and did not look in the
+test.
+
+So a guard went on announcing a mechanism the product had deliberately dropped, over
+assertions that had always read the ink. The assertions were right the whole time; only the
+label on them was wrong — which is the least visible way for this to go wrong and the
+easiest to copy into the next clause.
+
+## A clause outlived by one sprint the decision it was named for
+
+`poster.test.ts`: **"says the title when there is no artwork, in the face that fits it"**.
+§6.137, *the sprint before this one*, stopped the plate saying the title — it prints a
+monogram, because every call site already prints the title twelve points to its right. The
+clause stayed green because its body only ever read the plate's **face** and that it is
+`aria-hidden`; it never read the content.
+
+That is this sprint's own finding turned on itself: §6.137 added a new clause for the new
+behaviour and left the old one, whose name now asserts the opposite, sitting above it. Both
+are correct clauses. One was lying in its title. It is named for what it proves — the face
+and the hiding — and the content clause below it is the one that owns the words.
+
+## And a product-wide claim proved on one file of one platform
+
+`appearance.test.ts`: **"draws its icons rather than typing them"**, in a file whose header
+talks about "the app" and "the tab icons", proved by reading `app/src/App.tsx`. The whole
+file globs `app/src/**` and has never seen the phone.
+
+The phone does exactly what the old name forbids. `mobile/app/(tabs)/_layout.tsx` passes
+`icon('⌕')`, `icon('✦')`, `icon('☰')`, `icon('⋯')` — typographic characters, drawn by
+whatever font resolves them at whatever weight and optical size it gives, which is the
+precise argument `key.ts` settled for the remote fascia ("prints mono marks, not colour
+emoji"). §6.138 found it by putting the two design passes side by side. **The guard that
+should have caught it was scoped to the half of the product that was already right.**
+
+The clause is now named for what it proves, and the gap is written into it rather than left
+invisible: it reads the phone's bar, expects every icon to still be a glyph, and fails —
+with a message naming the count and pointing at **#176** — the day one of them becomes a
+name. An exemption that cannot outlive its defect, which is the idiom this codebase already
+uses everywhere else and had not applied to itself.
+
+## What the sweep says about the rest
+
+The wiring guards came out clean, and the reason is worth naming: their names are
+**procedural** — *"finds the source rather than passing on an empty list"*, *"keeps no
+exemption that no longer describes a difference"*. A procedural name describes the check,
+so it cannot drift away from the check. Every one of the three failures above has a name
+describing the **product**.
+
+That is a rule, not an observation: **a clause named for a decision is a clause that can be
+left behind by the decision.** Where a name must state a design fact, the body has to prove
+that fact and not a proxy for it — the ink step, the plate's content, both platforms.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9948,6 +10022,12 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **The guard sweep read names, not bodies, and 1478 clauses is more than one sprint.**
+  §6.139 filtered for names asserting a *design decision* rather than a behaviour and found
+  three, one of them a sprint old. What it did not do is read all 1478 bodies against all
+  1478 names, so the estimate of how many remain is not zero and is not measured. The
+  wiring guards came out clean because their names are procedural; the exposure is
+  concentrated in `app/src/ui/*.test.ts`, where a name states a product fact by design.
 - **A guard can hold a defect in place, and this build has now found three.** §6.138's
   clause was named "is two questions on Stats, on both platforms" and asserted exactly the
   arrangement that was wrong — green for twenty-nine sprints. §6.109 found a clause that

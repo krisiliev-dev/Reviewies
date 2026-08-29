@@ -43,11 +43,28 @@ describe('what the app looks like, checked by its causes', () => {
     expect(fixed).toEqual([]);
   });
 
-  it('draws its icons rather than typing them', () => {
-    // A glyph's appearance belongs to whatever font the device has. `▶` and `⚙` have
-    // emoji presentation variants and came out in full colour; `❏` came out as an empty
-    // square, which is what a missing glyph looks like. Checked at the tab bar, which is
-    // where it mattered and where a regression would be most visible.
+  it('draws the web tab bar’s icons rather than typing them, and says the phone types its own', () => {
+    /*
+     * A glyph's appearance belongs to whatever font the device has. `▶` and `⚙` have emoji
+     * presentation variants and came out in full colour; `❏` came out as an empty square,
+     * which is what a missing glyph looks like. Checked at the tab bar, which is where it
+     * mattered and where a regression would be most visible.
+     *
+     * **This was called "draws its icons rather than typing them" until §6.139** — a claim
+     * about the product, in a file whose header talks about "the app", proved by reading
+     * `app/src/App.tsx`. This whole file globs `app/src/**` and has never seen the phone.
+     *
+     * And the phone does the thing the old name forbade: `mobile/app/(tabs)/_layout.tsx`
+     * passes `icon('⌕')`, `icon('✦')`, `icon('☰')`, `icon('⋯')` — typographic characters,
+     * drawn by whatever font resolves them at whatever weight and optical size it gives. It
+     * was found by putting the two design passes side by side (§6.138), not by this guard,
+     * because this guard was scoped to the half of the product that was already right.
+     *
+     * So the clause is named for what it proves and the gap is written down rather than
+     * left invisible. #176 is the design decision — one kind of mark and one table for both
+     * platforms, the way `key.ts` settled it for the remote fascia — and the clause below
+     * fails the day the phone stops typing them, so the exemption cannot outlive the defect.
+     */
     const app = readFileSync(resolve(ROOT, 'app/src/App.tsx'), 'utf8');
     const tabs = app.slice(app.indexOf('const TABS'), app.indexOf('function TabBar'));
 
@@ -59,6 +76,21 @@ describe('what the app looks like, checked by its causes', () => {
     for (const [, value] of tabs.matchAll(/icon: '([^']*)'/g)) {
       expect(value, `${value} is not an icon name`).toMatch(/^[a-z]+$/);
     }
+
+    /*
+     * The phone, named as the open gap. `toBeGreaterThan(0)` rather than a count, so
+     * closing it one tab at a time does not have to edit a number — but the moment the last
+     * one goes this fails, and whoever did the work deletes the exemption and renames the
+     * clause to the product-wide claim it was pretending to be.
+     */
+    const phoneBar = readFileSync(resolve(ROOT, 'mobile/app/(tabs)/_layout.tsx'), 'utf8');
+    const typed = [...phoneBar.matchAll(/tabBarIcon: icon\('([^']*)'\)/g)].map((m) => m[1]);
+    expect(typed.length, 'the phone declares no tab icons at all').toBeGreaterThan(0);
+    expect(
+      typed.filter((glyph) => /^[a-z]+$/.test(glyph)).length,
+      `the phone now names ${typed.length - typed.filter((g) => !/^[a-z]+$/.test(g)).length} of its tab icons — ` +
+        'close #176 and make this clause the product-wide claim its old name already was',
+    ).toBe(0);
   });
 
   it('never disables a filled button by fading it', () => {
