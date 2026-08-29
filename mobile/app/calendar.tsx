@@ -6,10 +6,12 @@ import {
   getPreference,
   getUpcoming,
   groupByDay,
+  runsOf,
   KIND_LABEL,
   NOTIFY_OPTIONS,
   type NotifyPreference,
   type UpcomingEntry,
+  type UpcomingRun,
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
@@ -32,7 +34,7 @@ import { Section } from '../src/ui/Section';
 import { Choice } from '../src/ui/Choice';
 import { Note } from '../src/ui/Note';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
-import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
+import { episodeName, runCode } from '@reviewies/core/ui/episode';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -204,7 +206,7 @@ export default function CalendarScreen() {
             {/* `group`: this sits inside "Next two months", and the two styles were
                 byte-identical before `Section` had to give them different values. task #156. */}
             <Section level="group">{formatDay(day)}</Section>
-            {list.map((entry) => (
+            {runsOf(list).map((run) => (
               /* Doc 6 §5 named this row as the one that still got the naming wrong: the
                  whole entry was a single `Pressable` labelled `Open {name}`, so the
                  episode code and the episode name were announced twice or not at all —
@@ -214,35 +216,41 @@ export default function CalendarScreen() {
                  Artwork stays, as the web's copy has had since Calendar shipped: a list
                  of upcoming episodes with no posters is a list of sentences, and
                  recognising a show by its artwork is most of what these screens are
-                 for. §6.63. */
-              <Row
-                key={entry.episode.id}
-                title={entry.seriesName}
-                code={episodeCode(entry.episode.season, entry.episode.number)}
-                meta={episodeName(entry.episode.name, entry.episode.number)}
-                tag={KIND_LABEL[entry.kind]}
-                lead={
-                  <Poster
-                    url={entry.posterUrl}
-                    name={entry.seriesName}
-                  />
-                }
-                open={{
-                  name: [
-                    `Open ${entry.seriesName}`,
-                    episodeCode(entry.episode.season, entry.episode.number),
-                    episodeName(entry.episode.name, entry.episode.number),
-                  ]
-                    .filter(Boolean)
-                    .join(', '),
-                  to: `/title/${encodeURIComponent(entry.seriesId)}`,
-                }}
-              />
+                 for. §6.63.
+
+                 One row per *run*, not per episode: a season that drops at once is one
+                 event. §6.149. */
+              <CalendarRow key={run.episodes[0].id} run={run} />
             ))}
           </View>
         ))}
       </ScrollView>
     </>
+  );
+}
+
+/** One run — a single episode, or a whole season landing at once. §6.149. */
+function CalendarRow({ run }: { run: UpcomingRun }) {
+  const first = run.episodes[0];
+  const code = runCode(first.season, run.episodes.map((e) => e.number));
+  // A run has no single name, and a count is what the row is about. One episode keeps the
+  // name it always had.
+  const named =
+    run.episodes.length > 1
+      ? `${run.episodes.length} episodes`
+      : episodeName(first.name, first.number);
+  return (
+    <Row
+      title={run.seriesName}
+      code={code}
+      meta={named}
+      tag={KIND_LABEL[run.kind]}
+      lead={<Poster url={run.posterUrl} name={run.seriesName} />}
+      open={{
+        name: [`Open ${run.seriesName}`, code, named].filter(Boolean).join(', '),
+        to: `/title/${encodeURIComponent(run.seriesId)}`,
+      }}
+    />
   );
 }
 

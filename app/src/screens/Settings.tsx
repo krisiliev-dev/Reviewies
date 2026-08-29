@@ -160,7 +160,7 @@ export function Settings() {
            * lines are part of a build-state footer that already has its spacing, so the
            * component's separation would be wrong and only the list is shared. §6.147.
            */
-          attributionLines(ATTRIBUTION_ORDER).map((line) => <p key={line}>{line}</p>)
+          attributionLines(ATTRIBUTION_ORDER, usingFixtures()).map((line) => <p key={line}>{line}</p>)
         )}
       </Note>
     </div>

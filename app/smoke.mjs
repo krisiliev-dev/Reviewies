@@ -1857,8 +1857,17 @@ try {
   await page.waitForSelector('text=Where to watch', { timeout: 5000 });
   const wtw = await page.locator('section', { hasText: 'Where to watch' }).first().innerText();
   check('where-to-watch lists a service', /Example Streaming/.test(wtw), wtw.replace(/\s+/g, ' ').slice(0, 120));
-  // TMDB requires this wherever availability data appears; it is a licence condition.
-  check('JustWatch attribution appears with the data', /JustWatch/.test(wtw));
+  /*
+   * The credit is owed by a build that used the API, and this one did not — no token, so
+   * the fixture provider invented "Example Streaming". Crediting JustWatch for that is a
+   * false statement rather than a licence being met, which is the position Settings and
+   * More already took and Discover and this block did not. §6.149.
+   *
+   * So the clause is the other way round now: on a fixtures build the credit must be
+   * **absent**. The branch that draws it is asserted in `app/src/ui/attribution.test.ts`,
+   * which can pass the flag both ways; a suite that only ever runs one provider cannot.
+   */
+  check('no JustWatch credit for data JustWatch did not supply', !/JustWatch/.test(wtw), wtw.replace(/\s+/g, ' ').slice(0, 120));
 
   // Availability is per country, so answering for one silently would be confidently
   // wrong for most of the world.

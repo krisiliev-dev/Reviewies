@@ -36,7 +36,27 @@ interface FixtureShow {
    * now with a season boundary just ahead, one long since ended.
    */
   startedDaysAgo: number;
+  /**
+   * How the episodes come out.
+   *
+   * `weekly` is one a week from `startedDaysAgo`, counting across seasons. `drop` is a
+   * whole season at once — a streaming original — with `DROP_GAP` between seasons.
+   *
+   * Every fixture was weekly, so the calendar's day grouping had never had more than two
+   * rows to group: the case it exists **for** — eight episodes under one heading — could
+   * not be produced. §6.146's finding, one layer down. Required rather than optional, so
+   * the next fixture cannot be added without deciding. §6.149.
+   */
+  cadence: 'weekly' | 'drop';
 }
+
+/**
+ * A year between dropped seasons, which is what the streamers do.
+ *
+ * A number rather than a per-season field: the point of the fixture is the *shape* — a
+ * whole season on one date — and a second knob would be a second thing to get wrong.
+ */
+const DROP_GAP = 365;
 
 const FIXTURES: FixtureShow[] = [
   {
@@ -57,6 +77,7 @@ const FIXTURES: FixtureShow[] = [
       { episodes: 6, runtime: 55 },
     ],
     startedDaysAgo: 119,
+    cadence: 'weekly',
   },
   {
     id: 2,
@@ -69,6 +90,7 @@ const FIXTURES: FixtureShow[] = [
     // Long over. An ended show has nothing upcoming, which is a case the calendar has to
     // be right about too — it must not appear.
     startedDaysAgo: 280,
+    cadence: 'weekly',
   },
   {
     id: 3,
@@ -83,6 +105,7 @@ const FIXTURES: FixtureShow[] = [
     // which is the whole reason the calendar groups by day and had never once been shown
     // doing it.
     startedDaysAgo: 644,
+    cadence: 'weekly',
   },
   {
     id: 4,
@@ -91,9 +114,35 @@ const FIXTURES: FixtureShow[] = [
     year: 2024,
     overview: 'Two estranged siblings return to their father’s fishing village.',
     runtime: 118,
-    // A film has no episodes, so this is never read. Required rather than optional so the
-    // next fixture cannot be added without deciding when it aired.
+    // A film has no episodes, so neither of these is ever read. Required rather than
+    // optional so the next fixture cannot be added without deciding.
     startedDaysAgo: 280,
+    cadence: 'weekly',
+  },
+  {
+    id: 5,
+    kind: 'show',
+    name: 'Salt Flats',
+    year: 2024,
+    overview: 'A border-town crime series released a season at a time.',
+    seasons: [
+      { episodes: 8, runtime: 47 },
+      { episodes: 8, runtime: 47 },
+    ],
+    /*
+     * The case no fixture could produce: a whole season on one date.
+     *
+     * Season 1 dropped 341 days ago and is watched through; season 2 drops in 24 days,
+     * eight episodes at once, on a date no other show is using — 341 is not a multiple of
+     * seven, and every other fixture is weekly from a multiple of seven, so the drop gets
+     * a heading to itself. That is the shape the calendar groups by day *for*, and it had
+     * never been rendered.
+     *
+     * Nothing of it has aired unwatched, so it stays out of Up Next — a show you finished
+     * and are waiting on, which is also the state a person in this position is actually in.
+     */
+    startedDaysAgo: 341,
+    cadence: 'drop',
   },
 ];
 
@@ -139,11 +188,15 @@ export class FixtureProvider implements MetadataProvider {
     // exercises the "don't offer unaired episodes" rule in Up Next — and, since the start
     // is per show rather than shared, it is what lets more than one show be airing at once.
     const start = Date.now() - f.startedDaysAgo * 24 * 60 * 60 * 1000;
+    const DAY = 24 * 60 * 60 * 1000;
     let n = 0;
 
     f.seasons.forEach((season, si) => {
       for (let e = 1; e <= season.episodes; e++) {
-        const airedAt = start + n * 7 * 24 * 60 * 60 * 1000;
+        // Weekly counts across seasons, so a season boundary is just the next week; a drop
+        // puts every episode of a season on one date and moves a year for the next.
+        const airedAt =
+          f.cadence === 'drop' ? start + si * DROP_GAP * DAY : start + n * 7 * DAY;
         out.push({
           id: makeId('tmdb', 'ep', `${f.id}-${si + 1}-${e}`),
           seriesId,

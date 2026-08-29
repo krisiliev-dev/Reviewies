@@ -50,7 +50,25 @@ const WORDS: Record<AttributedSource, string> = {
  */
 export const ATTRIBUTION_SEPARATION = 24;
 
-/** The lines a slot owes, in the fixed order, whatever order the caller names them in. */
-export function attributionLines(sources: readonly AttributedSource[]): string[] {
+/**
+ * The lines a slot owes, in the fixed order, whatever order the caller names them in.
+ *
+ * `fixtures` is whether this build is running on the offline provider, and it makes the
+ * answer **nothing**. The licence text in `provider.ts` says why: the disclaimer is owed
+ * *"this product uses the TMDB API"* — a build with no token does not, and crediting a
+ * source that supplied nothing is a false statement rather than a courtesy.
+ *
+ * The product already held that position on two screens and not the other two: `usingFixtures()`
+ * made Settings and More say "Running on sample data" **instead of** the attributions,
+ * while Discover and *Where to watch* printed them regardless. So every screenshot in this
+ * project's design record credits TMDB and JustWatch for data neither supplied, and the
+ * four screens answered "is this real?" two ways. §6.147 fixed the drawing and left the
+ * condition; this is the condition. §6.149.
+ */
+export function attributionLines(
+  sources: readonly AttributedSource[],
+  fixtures: boolean,
+): string[] {
+  if (fixtures) return [];
   return ATTRIBUTION_ORDER.filter((source) => sources.includes(source)).map((s) => WORDS[s]);
 }

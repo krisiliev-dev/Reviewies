@@ -749,10 +749,16 @@ try {
   // Availability is why people open a tracker once they have decided what to watch and
   // not how, and the phone had none of it until the parity audit.
   check('where to watch lists a service', /Where to watch/i.test(title) && /Stream/.test(title));
+  /*
+   * Absent, not present: this build has no TMDB token, so "Example Streaming" came from
+   * the fixture provider and crediting JustWatch for it would be a false statement. The
+   * present branch is asserted in `app/src/ui/attribution.test.ts`, which can pass the
+   * flag both ways. §6.149.
+   */
   check(
-    'JustWatch attribution appears with the data',
-    /JustWatch/.test(title),
-    'licence condition, not a courtesy',
+    'no JustWatch credit for data JustWatch did not supply',
+    !/JustWatch/.test(title),
+    'a build with no token owes nothing',
   );
 
   // The override lives on the library row, so it only appears for something tracked.

@@ -57,7 +57,7 @@ describe('the seeded library', () => {
     for (const show of SCHEDULE) {
       const episodes = served.get(show.name)!;
       for (const [i, episode] of episodes.entries()) {
-        const expected = dayKey(today - airedDaysAgo(show, i + 1) * 86_400_000);
+        const expected = dayKey(today - airedDaysAgo(show, i + 1, episode.season) * 86_400_000);
         expect(episode.airDate, `${show.name} episode ${i + 1}`).toBe(expected);
       }
     }
@@ -110,13 +110,18 @@ describe('the calendar the seed produces', () => {
   const upcoming = (() => {
     const from = startOfDay(dayKey(Date.now()));
     const until = from + UPCOMING_DAYS * 86_400_000;
-    const rows: Array<{ show: string; day: string; kind: EpisodeKind }> = [];
+    const rows: Array<{ show: string; day: string; kind: EpisodeKind; number: number }> = [];
     for (const show of SCHEDULE) {
       const episodes = served.get(show.name)!;
       for (const episode of episodes) {
         const airs = startOfDay(episode.airDate!);
         if (airs < from || airs > until) continue;
-        rows.push({ show: show.name, day: episode.airDate!, kind: classify(episode, episodes) });
+        rows.push({
+          show: show.name,
+          day: episode.airDate!,
+          kind: classify(episode, episodes),
+          number: episode.number,
+        });
       }
     }
     return rows;
@@ -166,5 +171,50 @@ describe('the calendar the seed produces', () => {
 
   it('leaves the ended show off it', () => {
     expect(upcoming.some((r) => r.show === 'Kitchen Nightshift')).toBe(false);
+  });
+
+  it('drops a whole season on one date, which is how streaming releases', () => {
+    /*
+     * The case the day grouping exists **for**, and the one no fixture could produce: every
+     * show was weekly, so a heading had never had more than two rows under it. §6.146 said
+     * a fixture that cannot produce a case has an opinion about the screen; this is the
+     * next one down. §6.149.
+     *
+     * Six at least, not "more than two": a drop that came out as three would satisfy a
+     * loose bound and would not be a season.
+     */
+    const byDay = new Map<string, typeof upcoming>();
+    for (const row of upcoming) byDay.set(row.day, [...(byDay.get(row.day) ?? []), row]);
+    const biggest = [...byDay.entries()].sort((a, b) => b[1].length - a[1].length)[0];
+    expect(biggest[1].length, 'no date carries a season').toBeGreaterThanOrEqual(6);
+
+    // One show, so the heading is a *drop* rather than a busy Friday — which is a
+    // different screen and a different question.
+    expect(new Set(biggest[1].map((r) => r.show)).size).toBe(1);
+
+    // And the whole season, in order, so the within-day sequence is visible at all.
+    const numbers = biggest[1].map((r) => r.number);
+    expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    expect(numbers[0]).toBe(1);
+  });
+
+  it('gives the drop a heading of its own', () => {
+    /*
+     * Every weekly fixture starts a multiple of seven days back, so they share weekdays;
+     * the drop's start is not, so its date belongs to it. Without this the eight rows would
+     * be photographed mixed in with two weekly shows, and the case would be a busy day
+     * rather than a season landing.
+     */
+    const dropped = SCHEDULE.find((s) => s.cadence === 'drop');
+    expect(dropped, 'nothing in the schedule drops').toBeDefined();
+    const day = upcoming.find((r) => r.show === dropped!.name)!.day;
+    expect(upcoming.filter((r) => r.day === day).every((r) => r.show === dropped!.name)).toBe(true);
+  });
+
+  it('has both cadences in it', () => {
+    // Non-vacuity for the pair of clauses above: a schedule that dropped everything would
+    // satisfy them and would be a different fixture with the same name.
+    const cadences = new Set(SCHEDULE.map((s) => s.cadence));
+    expect([...cadences].sort()).toEqual(['drop', 'weekly']);
   });
 });

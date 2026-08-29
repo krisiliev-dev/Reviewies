@@ -4,13 +4,14 @@ import {
   getPreference,
   getUpcoming,
   groupByDay,
+  runsOf,
   KIND_LABEL,
   NOTIFY_OPTIONS,
   notificationsSupported,
   requestPermission,
   setPreference,
   type NotifyPreference,
-  type UpcomingEntry,
+  type UpcomingRun,
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
@@ -26,7 +27,7 @@ import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
 import { Button } from '../ui/Button';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
-import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
+import { episodeName, runCode } from '@reviewies/core/ui/episode';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -203,8 +204,8 @@ export function Calendar() {
               {formatDay(day)}
             </Section>
             <ul className="flex flex-col gap-1.5">
-              {dayEntries.map((entry) => (
-                <Row key={entry.episode.id} entry={entry} />
+              {runsOf(dayEntries).map((run) => (
+                <Row key={run.episodes[0].id} run={run} />
               ))}
             </ul>
           </section>
@@ -223,23 +224,29 @@ export function Calendar() {
  * Doc 6 §5 named this row specifically; §6.96's collision clause is what stopped it being
  * possible to write the next one the same way.
  */
-function Row({ entry }: { entry: UpcomingEntry }) {
-  const code = episodeCode(entry.episode.season, entry.episode.number);
-  const named = episodeName(entry.episode.name, entry.episode.number);
+function Row({ run }: { run: UpcomingRun }) {
+  const first = run.episodes[0];
+  const code = runCode(first.season, run.episodes.map((e) => e.number));
+  // A run has no single name, and a count is what the row is about. One episode keeps the
+  // name it always had.
+  const named =
+    run.episodes.length > 1
+      ? `${run.episodes.length} episodes`
+      : episodeName(first.name, first.number);
   return (
     <BaseRow
-      title={entry.seriesName}
+      title={run.seriesName}
       code={code}
       meta={named}
-      tag={KIND_LABEL[entry.kind]}
+      tag={KIND_LABEL[run.kind]}
       open={{
-        name: [`Open ${entry.seriesName}`, code, named].filter(Boolean).join(', '),
-        to: `/title/${encodeURIComponent(entry.seriesId)}`,
+        name: [`Open ${run.seriesName}`, code, named].filter(Boolean).join(', '),
+        to: `/title/${encodeURIComponent(run.seriesId)}`,
       }}
       lead={
         <Poster
-          url={entry.posterUrl}
-          name={entry.seriesName}
+          url={run.posterUrl}
+          name={run.seriesName}
          
         />
       }

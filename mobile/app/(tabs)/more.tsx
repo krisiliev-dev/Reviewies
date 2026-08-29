@@ -95,7 +95,7 @@ export default function MoreScreen() {
             </Note>
           ) : (
             /* The words and their order from the rule; the placement is this screen's. */
-            attributionLines(ATTRIBUTION_ORDER).map((line) => (
+            attributionLines(ATTRIBUTION_ORDER, usingFixtures()).map((line) => (
               <Note key={line} level="footnote">
                 {line}
               </Note>

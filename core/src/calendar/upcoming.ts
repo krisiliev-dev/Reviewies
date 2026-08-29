@@ -124,6 +124,75 @@ export function groupByDay(entries: UpcomingEntry[]): Array<[string, UpcomingEnt
   return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
+/**
+ * Episodes of one show landing on one day: a season drop, or a single episode.
+ *
+ * A calendar's unit is the *event*, and when a streamer puts eight episodes out at once the
+ * event is "season 2 is here", not eight things that happened. Before this, a drop was
+ * eight full-width rows carrying the same poster and the same title, with `S2E1` … `S2E8`
+ * the only thing that varied — 1420 points of screen for one sentence.
+ *
+ * This is the finding #175 *claimed* and did not have. §6.146 retracted the repeated show
+ * name on the grounds that with two shows interleaved the name is what varies — and that
+ * reasoning is exactly what condemns it here, where it does not. The retraction was right
+ * and so is this; they are the same rule read on two different days. §6.149.
+ */
+export interface UpcomingRun {
+  seriesId: string;
+  seriesName: string;
+  posterUrl?: string;
+  day: string;
+  /** In episode order, which is the order they will be watched in. */
+  episodes: CachedEpisode[];
+  /** The strongest milestone in the run — see `RUN_KIND_ORDER`. */
+  kind: EpisodeKind;
+}
+
+/**
+ * Which milestone a run is named for, strongest first.
+ *
+ * A dropped final season contains both a premiere and a series finale, and a row has one
+ * chip. Ending beats starting, for the reason `classify` already gives about a one-episode
+ * season: *"a one-episode season is a finale rather than a premiere: ending beats
+ * starting"*. The same judgement, applied to a run rather than to an episode.
+ */
+export const RUN_KIND_ORDER: readonly EpisodeKind[] = [
+  'series-finale',
+  'finale',
+  'premiere',
+  'regular',
+];
+
+/**
+ * One day's entries, collapsed into runs of the same show.
+ *
+ * Consecutive rather than gathered: entries arrive in the order `getUpcoming` built them,
+ * which is episode order within a show, and two separate blocks of the same show on one day
+ * would be a data oddity worth seeing rather than hiding.
+ */
+export function runsOf(entries: UpcomingEntry[]): UpcomingRun[] {
+  const runs: UpcomingRun[] = [];
+  for (const entry of entries) {
+    const last = runs.at(-1);
+    if (last && last.seriesId === entry.seriesId) {
+      last.episodes.push(entry.episode);
+      if (RUN_KIND_ORDER.indexOf(entry.kind) < RUN_KIND_ORDER.indexOf(last.kind)) {
+        last.kind = entry.kind;
+      }
+      continue;
+    }
+    runs.push({
+      seriesId: entry.seriesId,
+      seriesName: entry.seriesName,
+      posterUrl: entry.posterUrl,
+      day: entry.day,
+      episodes: [entry.episode],
+      kind: entry.kind,
+    });
+  }
+  return runs;
+}
+
 export const KIND_LABEL: Record<EpisodeKind, string> = {
   premiere: 'Premiere',
   finale: 'Season finale',

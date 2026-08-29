@@ -44,12 +44,12 @@ const PAIRS = [
 describe('attribution', () => {
   it('is TMDB first, whatever order a caller names them in', () => {
     expect(ATTRIBUTION_ORDER).toEqual(['tmdb', 'justwatch']);
-    expect(attributionLines(['justwatch', 'tmdb'])).toEqual([
+    expect(attributionLines(['justwatch', 'tmdb'], false)).toEqual([
       TMDB_ATTRIBUTION,
       JUSTWATCH_ATTRIBUTION,
     ]);
-    expect(attributionLines(['tmdb'])).toEqual([TMDB_ATTRIBUTION]);
-    expect(attributionLines([])).toEqual([]);
+    expect(attributionLines(['tmdb'], false)).toEqual([TMDB_ATTRIBUTION]);
+    expect(attributionLines([], false)).toEqual([]);
   });
 
   it('sits further from the list than the list sits from itself', () => {
@@ -64,6 +64,34 @@ describe('attribution', () => {
     expect(withoutProse(read('app/src/ui/Attribution.tsx'))).toContain(
       `mt-${ATTRIBUTION_SEPARATION / 4}`,
     );
+  });
+
+  it('is owed only by a build that used the API', () => {
+    /*
+     * `provider.ts`: the disclaimer says *"this product uses the TMDB API"*. A build with
+     * no token does not, and crediting a source that supplied nothing is a false statement,
+     * not a courtesy.
+     *
+     * The product already held this on two screens: `usingFixtures()` made Settings and
+     * More say "Running on sample data" **instead of** the attributions, while Discover and
+     * *Where to watch* printed them regardless — so every screenshot in this project's
+     * design record credited TMDB and JustWatch for data neither supplied. §6.149.
+     *
+     * Both branches asserted here, because the suites only ever run the fixtures one: the
+     * real branch is `§6.115`'s shape otherwise — code that ships and never executes.
+     */
+    expect(attributionLines(ATTRIBUTION_ORDER, true)).toEqual([]);
+    expect(attributionLines(ATTRIBUTION_ORDER, false)).toHaveLength(2);
+
+    // And the components ask, rather than each screen deciding again.
+    for (const [name, file] of [
+      ['web', 'app/src/ui/Attribution.tsx'],
+      ['phone', 'mobile/src/ui/Attribution.tsx'],
+    ] as const) {
+      const source = withoutProse(read(file));
+      expect(source, `${name}'s Attribution does not ask`).toContain('usingFixtures()');
+      expect(source, `${name}'s Attribution draws an empty block`).toContain('length === 0');
+    }
   });
 
   it('is the only thing that spells the licensed words', () => {

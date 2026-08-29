@@ -10549,6 +10549,71 @@ the failure it has already hit twice. §6.142.
 **A shallow guard is a guard with a boundary, and a boundary is a claim.** Neither this one
 nor §6.147's was ever measured against the thing it excluded.
 
+### 6.149 A season is one event
+
+**#185 and #186.**
+
+## The case no fixture could produce
+
+A whole season landing on one date is how most of what people track is released, and it is
+the case the calendar's day grouping exists **for**. Every fixture was weekly, so a heading
+had never had more than two rows under it. `cadence: 'weekly' | 'drop'` is required on a
+`FixtureShow` now, and *Salt Flats* — a border-town crime series, season 1 watched, season 2
+dropping in twenty-four days — is the fifth fixture.
+
+Measured, in that order: add the case, photograph it, **then** judge.
+
+```
+rows 19, dates 8, biggest day 8
+```
+
+## And what the photograph showed
+
+Eight full-width rows carrying the same poster and the same title, `S2E1` … `S2E8` the only
+thing that varied. **1420 points of screen for one sentence.**
+
+This is the finding #175 *claimed* and did not have. §6.146 retracted "the show's name is
+repeated" on the grounds that with two shows interleaved the name is what varies — and that
+reasoning is exactly what condemns it here, where it does not. The retraction was right and
+so is this; they are the same rule read on two different days.
+
+`runsOf()` collapses consecutive entries of one show on one day into an `UpcomingRun`, and
+the row says the span and the count: **`Salt Flats · S2E1–8 · 8 episodes · SERIES FINALE`**.
+The calendar went from 1392 points of scroll to 769.
+
+Two decisions the run needed, both stated rather than left to whoever renders it:
+
+- **`RUN_KIND_ORDER`.** A dropped final season holds a premiere *and* a series finale and a
+  row has one chip. Ending beats starting — the judgement `classify` already makes about a
+  one-episode season, applied to a run. Asserted with the finale arriving second *and*
+  first, because an order-dependent maximum is not a maximum.
+- **`runCode`.** `S2E1–8`, an en dash because it is a range, and the second half drops the
+  `E` because the season is already said — `S2E1–E8` reads as two codes rather than one
+  span.
+
+## #186 — crediting a source that supplied nothing
+
+`provider.ts` says the disclaimer is owed because *"this product uses the TMDB API"*. A
+build with no token does not. The product already held that position on **two** screens:
+`usingFixtures()` made Settings and More say "Running on sample data" *instead of* the
+attributions, while Discover and *Where to watch* printed them regardless — so every
+screenshot in this document credits TMDB and JustWatch for data neither supplied, and the
+four screens answered "is this real?" two ways.
+
+`attributionLines(sources, fixtures)` takes the flag and both `Attribution` components ask
+it, drawing **nothing** rather than an empty block still spending its separation. §6.147
+fixed the drawing and left the condition; this is the condition.
+
+The two smoke clauses that asserted the credit *appears* are turned round — on a fixtures
+build it must be **absent** — and the branch that draws it is asserted in
+`attribution.test.ts`, which can pass the flag both ways. A suite that only ever runs one
+provider cannot, and §6.115's shape is a branch that ships and never executes.
+
+**A fixture is a claim about what the product will meet.** §6.146 said one that cannot
+produce a case has an opinion about the screen; this sprint is what happens when the opinion
+is removed — the screen turns out to have been wrong in the direction a retracted finding
+had guessed at, for a reason that finding could not have known.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10753,6 +10818,12 @@ and which single claim in this document could not be checked at all:
   control on one platform and not the other is exactly as invisible as the words were. The
   catch-up sheet was one: a backdrop that was a button on the phone and nothing on the web,
   found by the copy guard by accident, because the two names happened to look alike.
+- **`classify` calls a show finished because the data stops.** *Salt Flats* season 2 is
+  labelled a **series finale** because no season 3 exists in the fixture — and the same is
+  true of The Long Dark's S3E6. `FixtureShow` has an `ended` flag and `classify` does not
+  read it; neither does anything read TMDB's `status`. So a show on hiatus is announced as
+  over, on the screen whose whole job is telling you what is coming, and the only reason it
+  has never been wrong in a screenshot is that both fixtures happen to be ending.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the

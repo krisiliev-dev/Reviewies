@@ -41,6 +41,7 @@ export const SCHEDULE = [
     name: 'The Long Dark',
     seasons: [8, 10, 6],
     startedDaysAgo: 119,
+    cadence: 'weekly',
     /**
      * All of season 1 and four of season 2, of the eighteen episodes that have aired.
      *
@@ -54,6 +55,7 @@ export const SCHEDULE = [
     name: 'Kitchen Nightshift',
     seasons: [12],
     startedDaysAgo: 280,
+    cadence: 'weekly',
     /** Over long ago and three episodes behind: the other Up Next row. */
     watchedThrough: 9,
   },
@@ -61,6 +63,7 @@ export const SCHEDULE = [
     name: 'Hollow Crown Saga',
     seasons: [96],
     startedDaysAgo: 644,
+    cadence: 'weekly',
     /**
      * Every episode that has aired, which is what keeps this show *out* of Up Next — the
      * fact `capture.mjs`'s settle test is built around. Its last three episodes are the
@@ -68,10 +71,35 @@ export const SCHEDULE = [
      */
     watchedThrough: 93,
   },
+  {
+    name: 'Salt Flats',
+    seasons: [8, 8],
+    startedDaysAgo: 341,
+    cadence: 'drop',
+    /**
+     * All of season 1, which is what keeps this out of Up Next.
+     *
+     * A season you finished, waiting on the next — and the next is eight episodes on one
+     * date, twenty-four days out, which is the shape the calendar's day grouping exists
+     * for and had never once been given. §6.149.
+     */
+    watchedThrough: 8,
+  },
 ];
 
-/** Weekly from the show's start, the same arithmetic `FixtureProvider.getEpisodes` does. */
-export const airedDaysAgo = (show, index) => show.startedDaysAgo - (index - 1) * 7;
+/** A year between dropped seasons, mirroring `DROP_GAP` in the provider. */
+const DROP_GAP = 365;
+
+/**
+ * When an episode aired, the same arithmetic `FixtureProvider.getEpisodes` does.
+ *
+ * `index` is 1-based across the whole show; `season` is 1-based. Weekly ignores the season
+ * and counts episodes; a drop ignores the episode and counts seasons.
+ */
+export const airedDaysAgo = (show, index, season) =>
+  show.cadence === 'drop'
+    ? show.startedDaysAgo - (season - 1) * DROP_GAP
+    : show.startedDaysAgo - (index - 1) * 7;
 
 /**
  * When an episode was watched: after it aired, not before.
@@ -105,7 +133,7 @@ const CSV = (() => {
       for (let n = 1; n <= episodes; n++) {
         index++;
         if (index > show.watchedThrough) continue;
-        const aired = airedDaysAgo(show, index);
+        const aired = airedDaysAgo(show, index, s + 1);
         const seen = dayString(Math.max(0, aired - LAG(index)));
         rows.push(
           `${show.name},${s + 1},${n},Episode ${n},True,${seen} 20:00:00,1,${dayString(aired)},${100 + i},${1000 + i * 200 + s * 100 + n}`,

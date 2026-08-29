@@ -40,3 +40,15 @@ export function episodeHeading(number: number, name: string | undefined): string
   const named = episodeName(name, number);
   return named ? `${number}. ${named}` : `Episode ${number}`;
 }
+
+/**
+ * What a run of episodes is called on a row: `S2E1` alone, or `S2E1–8` for a whole season.
+ *
+ * An en dash, not a hyphen: it is a range. The second half drops the `E` because the season
+ * is already said — `S2E1–E8` reads as two codes rather than one span.
+ */
+export function runCode(season: number, numbers: number[]): string {
+  const first = Math.min(...numbers);
+  const last = Math.max(...numbers);
+  return first === last ? episodeCode(season, first) : `${episodeCode(season, first)}–${last}`;
+}
