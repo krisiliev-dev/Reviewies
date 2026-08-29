@@ -1,6 +1,12 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
-import { POSTER_PLATE, POSTER_SIZE, type PosterSize } from '@reviewies/core/ui/poster';
-import { text, type } from '@reviewies/core/tokens';
+import {
+  POSTER_GLYPH,
+  POSTER_PLATE,
+  POSTER_SIZE,
+  posterInitials,
+  type PosterSize,
+} from '@reviewies/core/ui/poster';
+import { type } from '@reviewies/core/tokens';
 import { theme } from './theme';
 
 /**
@@ -22,8 +28,17 @@ export function Poster({
   if (!url) {
     return (
       <View style={[styles.plate, styles.fallback, box]}>
-        <Text numberOfLines={4} style={styles.fallbackText}>
-          {name}
+        {/*
+          Hidden, as the web's has always been: the row beside it is already named, and a
+          monogram read aloud is two letters with no meaning. The two platforms disagreed
+          about this until §6.137 put the same content in both.
+        */}
+        <Text
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.fallbackText, { fontSize: POSTER_GLYPH[size] }]}
+        >
+          {posterInitials(name)}
         </Text>
       </View>
     );
@@ -54,10 +69,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 2,
   },
-  /** The condensed face: a 44pt plate at `s12` in Archivo broke inside the word. §6.113. */
+  /**
+   * The condensed face, and a size that comes from the plate rather than from the body
+   * scale. §6.113 moved this to Archivo Narrow because "a 44pt plate at `s12` in Archivo
+   * broke inside the word" — a third more characters per line is not the difference
+   * between ten letters and five, and §6.137 photographed it still breaking. It prints a
+   * monogram now, so the size is the mark's, from `POSTER_GLYPH`.
+   */
   fallbackText: {
     color: theme.inkSecondary,
-    fontSize: text.s12,
     textAlign: 'center',
     fontFamily: type.family.title.name,
   },

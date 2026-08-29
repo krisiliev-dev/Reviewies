@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { POSTER_PLATE, POSTER_SIZE } from '@reviewies/core/ui/poster';
+import { POSTER_GLYPH, POSTER_PLATE, POSTER_SIZE, posterInitials } from '@reviewies/core/ui/poster';
 import { ROW } from '@reviewies/core/ui/row';
-import { radius, ratio, space } from '@reviewies/core/tokens';
+import { radius, ratio, space, text } from '@reviewies/core/tokens';
 
 /**
  * `Poster`, and the token that had no consumers.
@@ -125,5 +125,68 @@ describe('a poster', () => {
     expect(webFallback).toContain('font-title');
     // And it is decoration, not content: the row beside it already says the name.
     expect(read('app/src/ui/Poster.tsx')).toContain('aria-hidden="true"');
+  });
+
+  it('shows a mark rather than the title it is standing in for', () => {
+    /*
+     * §6.135's design pass photographed Up Next and the plate read **"Kitchen Nightshi /
+     * ft"** — a title broken inside the word, in a 44pt plate that holds one short one.
+     * "The Long Dark" fits, which is why nothing had caught it: the defect is invisible
+     * until a title is long, and it is *every* row for somebody who has imported from TV
+     * Time and matched nothing.
+     *
+     * The plate prints a monogram now, because the words were never the plate's job —
+     * every one of the seventeen call sites already prints the title beside it.
+     */
+    expect(posterInitials('Kitchen Nightshift')).toBe('KN');
+
+    // The article goes, or an English library is a column of `T`s.
+    expect(posterInitials('The Long Dark')).toBe('LD');
+    expect(posterInitials('A Quiet Place')).toBe('QP');
+
+    /*
+     * Two glyphs, never one. The first cut took one letter per word and a probe on real
+     * titles rejected it: *Andor* was `A` and *The 100* was `1`, a mark thin enough to
+     * read as a rendering fault. A single-word title takes two characters of the word,
+     * which is also the right answer for a script with no spaces in it.
+     */
+    for (const name of ['Andor', 'The 100', 'Star Trek: Discovery', '9-1-1', 'Mr. Robot']) {
+      expect([...posterInitials(name)].length, `${name} is not two glyphs`).toBe(2);
+    }
+    expect(posterInitials('攻殻機動隊')).toBe('攻殻');
+    // And a title that has not loaded yet gets an empty plate, not a stray letter.
+    expect(posterInitials('')).toBe('');
+    expect(posterInitials('   ')).toBe('');
+
+    /*
+     * Both renderers print the monogram and neither prints the name. `name` is still the
+     * prop — the function needs it — so this reads the *rendered* expression rather than
+     * the file, which is the shape §6.136's plant caught: a file that mentions the right
+     * thing is not a file that renders it.
+     */
+    for (const [platform, path] of [
+      ['phone', 'mobile/src/ui/Poster.tsx'],
+      ['web', 'app/src/ui/Poster.tsx'],
+    ] as const) {
+      const source = read(path);
+      expect(source, `${platform} does not print the monogram`).toMatch(
+        /\{posterInitials\(name\)\}/,
+      );
+      expect(source, `${platform} prints the raw title in the plate again`).not.toMatch(
+        /\{name\}/,
+      );
+      expect(source, `${platform} sizes the mark by hand`).toContain('POSTER_GLYPH[size]');
+    }
+
+    /*
+     * And the mark is off the type scale at both sizes. A number invented for one
+     * component is the thing §6.113 spent a sprint removing; `s30` is the top of the
+     * scale, which is what the detail plate takes rather than the 44 its width implies.
+     */
+    const scale = new Set<number>(Object.values(text));
+    for (const size of ['row', 'detail'] as const) {
+      expect(scale.has(POSTER_GLYPH[size]), `${size}'s mark is off the scale`).toBe(true);
+    }
+    expect(POSTER_GLYPH.detail).toBeGreaterThan(POSTER_GLYPH.row);
   });
 });

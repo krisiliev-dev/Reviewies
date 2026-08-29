@@ -9632,6 +9632,73 @@ reappears inside a row's `open`. Both plants fail; both restores pass.
 search → a title → the episode's Talk control using `getByRole('link', …)` on phone rows,
 and it still finds them.
 
+### 6.137 The plate printed the title, badly, and the harness never saw it drop a row
+
+**#171**, filed from looking at one PNG. Up Next's poster placeholder read **"Kitchen
+Nightshi / ft"** — a title broken inside the word, in a 44pt plate that after padding holds
+about 40pt of line. *The Long Dark* fits, which is why nothing had ever caught it: the
+defect is invisible until a title is long, and it is **every** row for somebody who has
+just imported from TV Time and matched nothing, which is the first screen this product
+shows a migrant.
+
+§6.113 had already tried to fix it, and its comment is still in both renderers: the face
+was moved to Archivo Narrow because "a 44pt plate at `s12` in Archivo broke inside the
+word". A third more characters per line is not the difference between ten letters and five.
+The change bought less than the sentence claimed and the sentence stayed — §6.120's shape,
+a comment describing a fix the screen does not show.
+
+## The words were never the plate's job
+
+Seventeen call sites, and every one of them puts the poster **beside the title it repeats**
+— as a `Row`'s `lead`, or next to the heading on a title page. The web's fallback is
+`aria-hidden`, so the text in the plate was decoration duplicating readable text twelve
+points to its right, and duplicating it broken.
+
+So it prints a monogram. `posterInitials` drops a leading article, because *The Long Dark*
+as `TL` makes an English library a column of `T`s, and takes the first letter of each of the
+first two words. **Always two glyphs, never one** — that was the second cut, and a probe on
+real titles is what forced it: the first version took one letter per word, so *Andor* became
+`A` and *The 100* became `1`, a mark thin enough to read as a rendering fault rather than a
+stand-in. A single-word title takes two characters of the word instead — `AN`, `10` — which
+is also the right answer for a script that does not put spaces between words: 攻殻機動隊 is 攻殻.
+
+The size comes from `POSTER_GLYPH`, off the type scale at both plate sizes, and the phone's
+plate is hidden from the reading order now as the web's always was — a monogram read aloud
+is two letters with no meaning, and the row beside it is already named.
+
+## And looking again found the harness dropping a row
+
+Photographing the fix meant looking at `03-upnext` three times, and it had **one** row in
+one run and **two** in the others. The seed has three shows; Hollow Crown Saga is
+legitimately absent, because its next unwatched episode has not aired — that is the fact the
+settle test is built around. So Up Next holds exactly two, deterministically: the fixture's
+air dates are weekly counting back from today and the CSV leaves each show a tail.
+
+`MUST_SHOW['03-upnext']` was `/The Long Dark/`. One name, out of two, so a screen missing
+half its content passed. The wait above it waits for the **slowest** show's episodes to land
+on the *calendar*, and nothing said the other shows' caches had finished before the shutter.
+
+It names both now, as two lookaheads rather than an alternation — the reason `06-watchlist`
+records four lines below: a clause that accepts either is a clause about the screen *or* its
+absence. Planted by marking Kitchen Nightshift fully watched in the seed, so it drops off Up
+Next legitimately; the harness fails by name.
+
+**And naming it was not enough.** The first full pipeline run after the clause landed failed
+on it — the same race, now visible instead of silent. `MUST_SHOW` drives a ten-second wait
+before each shot, and ten seconds is not the tail of this one. So the settle block gained a
+third wait, on Up Next, for Up Next's own two rows: the rule this file keeps rediscovering
+(§6.98, §6.102, §6.135) is *wait on the screen that can see the thing, for the thing
+itself*, and the two waits above it watch More's tracked count and the calendar. Two full
+runs since are clean.
+
+The give-up branch prints what Up Next actually said, because the first version printed only
+the complaint and that cost a probe to answer the obvious next question — §6.130's rule
+about a harness that fails without saying why, applied to a wait rather than to a locator.
+
+It is §6.109's rule turned on the instrument for the third time, and the pattern is now hard
+to miss: **every clause that names one example of a thing that comes in several passes on a
+screen showing one of them.**
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -9805,6 +9872,14 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **Up Next's second row arrives on a tail nobody has measured.** §6.137 found the design
+  harness photographing Up Next with one of its two rows, tightened the clause to name
+  both, and then had to add a wait because naming it was not enough: caching does not land
+  in episode-count order, so "the 96-episode fixture is in" says nothing about the
+  12-episode one. Three waits now cover it and three full runs are clean. What is *not*
+  known is how long that tail actually is or what sets it — the fix is a retry loop with a
+  ceiling, which is a wait that works rather than a number somebody understands. If it
+  fails again, the give-up branch now prints what the screen said.
 - **Every row's role is now derived, and nobody has heard one.** §6.136 made `Row`'s role
   follow from `to` versus `run` on both platforms instead of a flag only the phone read.
   What proves it is a Playwright `getByRole('link', …)` against **react-native-web**, where
@@ -9812,13 +9887,12 @@ and which single claim in this document could not be checked at all:
   UIAccessibilityTraits / TalkBack role, and no check in this repo can observe that
   translation. The rule is right by the framework's documented mapping; it has not been
   *heard* being right, by VoiceOver or by anything else.
-- **A poster with no artwork breaks its title mid-word.** Looking at the design pass this
-  sprint: Up Next's placeholder tiles read *"Kitchen Nightshi / ft"* and *"The Long Dark"*
-  — the second fits, the first is hyphen-free wrapping inside a 90-point square. That is
-  not a fixture artefact; it is what **every** row looks like for someone who has just
-  imported from TV Time and has not matched yet, which is the first screen this product
-  shows a migrant. Filed rather than fixed, because the answer is a design decision about
-  what a title-less tile should show, not a CSS property.
+- ~~**A poster with no artwork breaks its title mid-word.**~~ **Closed in §6.137**: the
+  plate prints a monogram, because the words were never its job — every call site already
+  prints the title beside it. What is *not* closed is the monogram in a script this build
+  has no font for: `posterInitials('攻殻機動隊')` is 攻殻, and Japanese falls to the platform
+  face by decision (the second warning under the faces entry above), so nobody has seen two
+  CJK glyphs at `s20` in a 44pt plate on either platform.
 - **Three green screens were wrong, and an evening found all three.** §6.78 opened the app
   on a realistic library for the first time since §6.49 and found a sentence pointing at a
   tab deleted in §6.79, a date written three ways including the wrong day west of

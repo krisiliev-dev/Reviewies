@@ -1,4 +1,10 @@
-import { POSTER_PLATE, POSTER_SIZE, type PosterSize } from '@reviewies/core/ui/poster';
+import {
+  POSTER_GLYPH,
+  POSTER_PLATE,
+  POSTER_SIZE,
+  posterInitials,
+  type PosterSize,
+} from '@reviewies/core/ui/poster';
 
 /**
  * The Tailwind renderer of `core/src/ui/poster.ts`. The decisions are there.
@@ -47,16 +53,17 @@ export function Poster({
   if (!url) {
     return (
       <div
-        style={BAND}
-        className={`${box} flex items-center justify-center bg-ground-well text-center text-s12 font-title font-semibold leading-l120 text-ink-secondary`}
+        style={{ ...BAND, fontSize: POSTER_GLYPH[size] }}
+        className={`${box} flex items-center justify-center bg-ground-well text-center font-title font-semibold leading-l120 text-ink-secondary`}
         aria-hidden="true"
       >
         {/*
-          The title face, which is the condensed one. A 44pt plate at `s12` in Archivo broke
-          inside the word; Archivo Narrow fits about a third more per line at the same size,
-          which is what a spine label on a shelf has always done. §6.113.
+          A monogram, not the title. The plate used to print `name`, which every call site
+          already prints twelve points to the right — and printed it broken: "Kitchen
+          Nightshi / ft" on Up Next, in a 44pt plate that holds one short word. §6.137, and
+          `core/ui/poster.ts` has the rule. Two glyphs never break, so no clamp is needed.
         */}
-        <span className="line-clamp-4 px-0.5">{name}</span>
+        {posterInitials(name)}
       </div>
     );
   }

@@ -243,6 +243,48 @@ if (!filled) {
   process.exitCode = 1;
 }
 
+/*
+ * And then Up Next itself, which the two waits above do not cover.
+ *
+ * The calendar wait proves the **96-episode** fixture is cached, and the sprint that
+ * tightened `MUST_SHOW['03-upnext']` found that is not the same as proving the 12-episode
+ * one is: the first full run after the clause named both shows failed on Kitchen
+ * Nightshift, and two isolated runs before it had shown both. Caching does not land in
+ * episode-count order, so "the slowest data is in" says nothing about a show that is not
+ * the slowest.
+ *
+ * The rule this file keeps rediscovering (§6.98, §6.102, §6.135): wait on the screen that
+ * can see the thing, for the thing itself. Up Next can see both of its own rows, so it is
+ * asked for them. `MUST_SHOW` still checks it afterwards — this is the wait, that is the
+ * verdict, and the verdict is what fails by name if the wait runs out.
+ */
+let bothRows = false;
+for (let attempt = 0; attempt < 8 && !bothRows; attempt++) {
+  await page.goto('http://localhost:4200/');
+  await page.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
+  for (let i = 0; i < 30; i++) {
+    const body = await page.locator('body').innerText();
+    if (/The Long Dark/.test(body) && /Kitchen Nightshift/.test(body)) {
+      bothRows = true;
+      break;
+    }
+    await page.waitForTimeout(1000);
+  }
+}
+if (!bothRows) {
+  /*
+   * What it actually said, not only that it was wrong. The first version of this printed
+   * the complaint alone and cost a probe to answer the obvious next question — which is
+   * §6.130's rule about a harness that fails without saying why, applied to a wait rather
+   * than to a locator.
+   */
+  console.error(
+    'Up Next never held both of the two shows that belong on it, so the caching for one of ' +
+      'them never finished. What it showed:\n  ' +
+      (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300),
+  );
+}
+
 /**
  * Where each screen is, and — for the ones behind More — what to press to get there.
  *
@@ -283,7 +325,25 @@ const routes = [
  * screenshot of the screen: a shot of the thing not being there is not a shot of the thing.
  */
 const MUST_SHOW = {
-  '03-upnext': /The Long Dark/,
+  /*
+   * **Both** rows, not one of them.
+   *
+   * The seed has three shows. Hollow Crown Saga is legitimately not here — its next
+   * unwatched episode has not aired, which is the fact the settle test above is built
+   * around — so Up Next holds exactly two, deterministically: the air dates are weekly
+   * counting back from today and the CSV leaves each show a tail.
+   *
+   * It has not been showing two. §6.137's design pass photographed this screen with only
+   * The Long Dark on it, and the two runs either side of it had both — the harness waits
+   * for the *slowest* show's episodes to land on the calendar, and nothing says the other
+   * shows' caches finished before the shutter. A clause naming one of the two passes on a
+   * screen missing half its content, which is §6.109's rule turned on the instrument
+   * again: it is not a shot of Up Next if Up Next is half empty.
+   *
+   * Two lookaheads rather than an alternation, for the reason `06-watchlist` records right
+   * below: a clause that accepts either is a clause about the screen *or* its absence.
+   */
+  '03-upnext': /(?=[\s\S]*The Long Dark)(?=[\s\S]*Kitchen Nightshift)/,
   '04-search': /Quiet Harbour/,
   '05-discover': /Because you watched/,
   '07-more': /Watches\s+[1-9]/,
