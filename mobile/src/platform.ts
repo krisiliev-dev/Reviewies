@@ -79,7 +79,9 @@ class HydratedStore implements KeyValueStore {
  * key read here to be one the build-time config actually produces.
  */
 function readConfig() {
-  // Three keys, and only three. This also read `vapidPublicKey`, `bridgeRelay` and
+  // Five keys now: the three below and the two endpoints, which are unset in every build
+  // but the design harness's snapshot pass (§6.151). This also read `vapidPublicKey`,
+  // `bridgeRelay` and
   // `bridgeToken` — none of which app.json's `extra` has ever contained, and none of
   // which anything on the phone consumes: web push is a browser mechanism and this app
   // uses Expo's, and the phone reaches a television directly rather than through the
@@ -88,6 +90,8 @@ function readConfig() {
   const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string | undefined>;
   return {
     tmdbToken: extra.tmdbToken,
+    tmdbBase: extra.tmdbBase,
+    tmdbImage: extra.tmdbImage,
     supabaseUrl: extra.supabaseUrl,
     supabaseAnonKey: extra.supabaseAnonKey,
   };

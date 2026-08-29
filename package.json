@@ -23,7 +23,9 @@
     "design:signedin": "VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= EXPO_PUBLIC_SUPABASE_URL=https://design-harness.invalid EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_designharness npm run export:signedin --workspace mobile && node scripts/portFree.mjs 4201 && node scripts/served.mjs 4201 \"npx serve mobile/dist-signedin -p 4201 --no-clipboard\" node design/capture-signedin.mjs",
     "design:web": "VITE_TMDB_TOKEN= VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= npm run build --workspace app && node scripts/portFree.mjs 4202 && node scripts/served.mjs 4202 \"cd app && npx vite preview --port 4202 --strictPort\" node design/capture-web.mjs",
     "design": "p=0; npm run design:phone || p=1; npm run design:signedin || p=1; npm run design:web || p=1; exit $p",
-    "smoke": "npm run smoke --workspace app && npm run smoke --workspace mobile && npm run smoke --workspace extension && npm run smoke --workspace bridge && npm run smoke:failures --workspace app"
+    "smoke": "npm run smoke --workspace app && npm run smoke --workspace mobile && npm run smoke --workspace extension && npm run smoke --workspace bridge && npm run smoke:failures --workspace app",
+    "design:snapshot": "node design/snapshot.mjs",
+    "design:real": "EXPO_PUBLIC_TMDB_TOKEN=snapshot EXPO_PUBLIC_TMDB_BASE=http://localhost:4203/3 EXPO_PUBLIC_TMDB_IMAGE=http://localhost:4203/t/p EXPO_PUBLIC_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export --workspace mobile && node scripts/portFree.mjs 4203 && node scripts/portFree.mjs 4204 && node scripts/served.mjs 4203 \"node design/serveSnapshot.mjs 4203\" node scripts/served.mjs 4204 \"npx serve mobile/dist -p 4204 --no-clipboard\" node design/capture-real.mjs"
   },
   "overrides": {
     "react-native-reanimated": "4.5.1",

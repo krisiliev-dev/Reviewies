@@ -94,6 +94,9 @@ const config: ExpoConfig = {
   extra: {
     ...base.expo.extra,
     tmdbToken: env('EXPO_PUBLIC_TMDB_TOKEN', 'VITE_TMDB_TOKEN'),
+    // Unset in every build but the design harness's snapshot pass. §6.151.
+    tmdbBase: env('EXPO_PUBLIC_TMDB_BASE', 'VITE_TMDB_BASE'),
+    tmdbImage: env('EXPO_PUBLIC_TMDB_IMAGE', 'VITE_TMDB_IMAGE'),
     supabaseUrl: env('EXPO_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL'),
     supabaseAnonKey,
   },

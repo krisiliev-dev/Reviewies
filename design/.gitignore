@@ -3,3 +3,8 @@
 # the capture script exists to prevent.
 screens/
 web/
+
+# A 534 MB snapshot of real TMDB, re-taken with `npm run design:snapshot`, and the
+# screenshots it produces — the same convention as `screens/` above. §6.151.
+real/
+real-screens/

@@ -210,6 +210,9 @@ npm run design                        # all three passes, whatever the others do
 npm run design:phone                  # the phone, viewport shots and their feet
 npm run design:signedin               # the six screens behind an account
 npm run design:web                    # the web app, both themes, whole documents
+
+npm run design:snapshot               # take a snapshot of real TMDB (needs a token)
+npm run design:real                   # the phone, photographed against that snapshot
 ```
 
 The three run independently and `design` reports a failure at the end rather than stopping
@@ -231,6 +234,31 @@ than a screen, and three sprints of design work landed behind it unseen.
 
 Both passes measure as well as photograph: rule reach against the viewport edge, what a
 press repaints to, and the target size of controls only an account can reach.
+
+### And a fourth, against data nobody invented
+
+The three above photograph `FixtureProvider`: five titles of two or three short words,
+`Episode 8` for every episode name, one-sentence overviews, and **no artwork at all** — it
+supplies no `posterUrl`, so every poster in the design record is the two-letter fallback.
+Thirty sprints of review judged screens whose content resembles nothing anybody will put in
+them.
+
+```sh
+npm run design:snapshot   # once, or whenever the library should change
+npm run design:real
+```
+
+`design/snapshot.mjs` fetches six real titles with node — chosen for what they stress: the
+longest title anybody tracks, an anime with 1,220 episodes, a show airing now with real
+episode names, one that drops a season at a time, a diacritic, and a film — and keeps the
+API responses and every image they mention. `design/serveSnapshot.mjs` answers those from
+`http://localhost:4203`, and the build points `tmdbBase`/`tmdbImage` there, so
+`TmdbProvider` runs unmodified and **no real token goes into the build**.
+
+A snapshot rather than a live pass because Chromium in this container has no outbound
+network at all — `example.com` fails exactly as TMDB does. It is also the better shape: a
+snapshot is deterministic, which is the property the other three passes blank the token
+for. Re-take it to change what is photographed; `design/real/` is not committed (534 MB).
 
 That last one is the odd member of the family: it builds *with* the TMDB token — the
 others blank it on purpose — and then makes every request to the provider fail three

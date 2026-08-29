@@ -12,6 +12,24 @@
  */
 export interface Config {
   tmdbToken?: string;
+  /**
+   * Where the metadata provider sends its requests, and where it looks for artwork.
+   *
+   * Both default to TMDB's own hosts and exist for one reason: the design harness. Its
+   * browser has no outbound network at all — `example.com` fails the same way TMDB does —
+   * so the *only* way to judge the design against real titles, real episode names, real
+   * overviews and real artwork is to fetch them with node, keep them, and serve them from
+   * localhost. Every screenshot this project has ever taken is of invented data: five
+   * titles of two or three short words, `Episode N` for every name, one-sentence
+   * overviews, and **no artwork at all** — the fixture provider supplies no `posterUrl`,
+   * so every poster in the design record is the two-letter fallback. §6.151.
+   *
+   * A pointer at a different host is not a test seam bolted on: it is the same
+   * substitution `setProvider` makes one layer up, at the layer where the *data* is
+   * real and only the address is not.
+   */
+  tmdbBase?: string;
+  tmdbImage?: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   vapidPublicKey?: string;

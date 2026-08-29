@@ -10668,6 +10668,82 @@ a clause holds that **no running show is called over**.
 `RUN_KIND_ORDER` reads the kind, so a dropped season of a running show now says `SEASON
 FINALE` rather than `SERIES FINALE`, which is the correct claim about Salt Flats.
 
+### 6.151 Thirty sprints of design review, on data nobody will ever have
+
+**#188.** Asked why the design had never been judged against real TMDB data. The answer was
+that there is no reason, and that it is worse than it sounds.
+
+## What the fixture actually is
+
+`FixtureProvider` supplies **no `posterUrl` at all** — zero occurrences in the file. So
+*every poster in every screenshot this project has ever taken is the two-letter fallback*,
+on screens whose own comments say "recognising a show by its artwork is most of what these
+screens are for". Beyond that: every title is two or three short words, every episode is
+named `Episode {n}`, and every overview is one sentence.
+
+The token has been in `.env` the whole time, and all three design scripts blank it:
+`VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN=`. That was a real decision — the fixture pass
+asserts specific titles and live data changes under it — and it justified **keeping** that
+pass. It never justified having only it.
+
+## Measured before building
+
+- The token works: `HTTP 200`, *Severance*, a poster path, a 231-character overview.
+- **Chromium in this container has no outbound network at all.** `example.com` and
+  `registry.npmjs.org` fail with `ERR_CONNECTION_RESET` exactly as TMDB does — through the
+  proxy, without it, with certificate errors ignored. Node reaches all three.
+
+So a live pass is impossible and a **snapshot** is not: fetch with node, keep it, serve it
+from localhost. That is also the better shape, because a snapshot is *deterministic* —
+which is the property the token was being blanked for.
+
+## The pass
+
+`config.tmdbBase` / `config.tmdbImage` replace two hardcoded constants, defaulting to TMDB's
+own hosts. `design/snapshot.mjs` takes six titles chosen for what they stress; the build
+points at `localhost:4203`, so `TmdbProvider` runs unmodified and **no real token goes into
+the build**. 534 MB, not committed.
+
+Three things went wrong, and each is the same lesson at a different layer:
+
+1. **Importing the script ran it.** `serveSnapshot.mjs` imported `queryKey` from
+   `snapshot.mjs` and took a hundred-megabyte snapshot as a side effect of starting a
+   server. *A script is not a library, and the shared part of one is.*
+2. **The preflight.** `Authorization: Bearer …` makes every request non-simple, so the
+   browser asks `OPTIONS` first; a 404 to that turned every call into "Failed to fetch" and
+   every screen into its network-failure state.
+3. **The snapshot asked a better question than the provider.** It fetched
+   `append_to_response=external_ids,content_ratings,release_dates` — what a thorough person
+   fetches — and the provider asks for `external_ids` alone. Different key, 404, empty
+   screen. **A snapshot is a copy of the questions, not of the data.**
+
+All three produced a screen with nothing on it, and all three were caught by the one thing
+the pass does assert: §6.146's rule, that **a shot of the thing not being there is not a
+shot of the thing.** It refused five times rather than filing the screenshots.
+
+## And then the first run, which is the point
+
+Five findings, on screens that have been judged clean for thirty sprints:
+
+- **The title page opens on `SEASON 0`.** TMDB's season zero is specials; the list sorts
+  numerically and puts it first. The first thing under a real show is a season nobody meant.
+  No fixture has a season 0.
+- **"Because you watched Trending now"** on every Discover row — the fallback seed is being
+  spliced into a sentence as though it were a show you watch.
+- **Up Next's counts are wrong for long shows.** One Piece reads *59 more episodes* against
+  1,220; It's Always Sunny reads *33* against 255. The Bear, Severance and Shōgun are right.
+  Needs measuring before it is called a defect — an incomplete cache at shutter time looks
+  the same.
+- **A long title truncates to one line with an ellipsis** on the search row while everything
+  around it wraps.
+- **Real provider names nearly overflow the *Where to watch* row**: "Apple TV" beside "Apple
+  TV Amazon Channel".
+
+**A fixture is a claim about what the product will meet**, and §6.146 said one that cannot
+produce a case has an opinion about the screen. This is the same sentence with the scope
+widened as far as it goes: for thirty sprints the design track has been judging an opinion
+about *everything*.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10885,6 +10961,15 @@ and which single claim in this document could not be checked at all:
   contrast. Nothing in it asks whether a sentence on the screen is *true*, and the two times
   that has been caught (§6.104's Stats, §6.150's chip) it was caught by somebody happening to
   wonder.
+- **The real pass has been run once and nothing in it has been judged.** §6.151 built the
+  instrument and listed five things visible in the first five screenshots; none has been
+  measured, and one of them (Up Next's counts) may be the harness photographing a cache that
+  had not finished filling. The other three passes are also still on the fixture, so the web
+  app and every signed-in screen have never seen real data at all.
+- **§7 has never been swept for entries that stopped being true.** Three of the items in
+  this list were closed by §6.147–§6.150 and are still sitting in it. That is the failure
+  this document lectures the code about — a written claim outliving its condition — in the
+  document itself.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the

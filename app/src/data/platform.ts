@@ -18,6 +18,9 @@ export function bindWebPlatform(): void {
   // because that is a Vite invention and Metro does not provide it.
   setConfig({
     tmdbToken: import.meta.env?.VITE_TMDB_TOKEN,
+    // Unset in every build but the design harness's snapshot pass. §6.151.
+    tmdbBase: import.meta.env?.VITE_TMDB_BASE,
+    tmdbImage: import.meta.env?.VITE_TMDB_IMAGE,
     supabaseUrl: import.meta.env?.VITE_SUPABASE_URL,
     supabaseAnonKey: import.meta.env?.VITE_SUPABASE_ANON_KEY,
     vapidPublicKey: import.meta.env?.VITE_VAPID_PUBLIC_KEY,

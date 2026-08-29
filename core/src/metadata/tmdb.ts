@@ -1,14 +1,36 @@
 import { makeId } from '../domain/types.ts';
 import type { CachedEpisode, CachedProviders, CachedTitle } from '../domain/types.ts';
 import type { MetadataProvider, SearchResult } from './provider.ts';
+import { getConfig } from '../config.ts';
 
-const BASE = 'https://api.themoviedb.org/3';
-const IMG = 'https://image.tmdb.org/t/p';
+/**
+ * TMDB's own hosts, and what `config.tmdbBase` / `config.tmdbImage` replace.
+ *
+ * Read through a function rather than captured in a module constant: the config is bound
+ * lazily — §6.47 found this module resolving against an empty one at import time — and a
+ * constant would be the same mistake at a different address.
+ */
+export const TMDB_BASE = 'https://api.themoviedb.org/3';
+export const TMDB_IMAGE = 'https://image.tmdb.org/t/p';
+
+/*
+ * Function declarations, not `const` arrows. `injection.test.ts` refuses a module-scope
+ * `const` whose initialiser names an injected getter and exempts a `function` — and its
+ * comment says why: "a `const` initialiser is not exempt — that is the shape the bug had".
+ * These are not called at evaluation either way, and the guard is right not to try to tell
+ * the difference from a line of text. §6.47, §6.151.
+ */
+function base() {
+  return getConfig().tmdbBase ?? TMDB_BASE;
+}
+function image() {
+  return getConfig().tmdbImage ?? TMDB_IMAGE;
+}
 
 /** Posters are streamed from TMDB's CDN rather than cached — iOS caps the Cache API at ~50 MB. */
-const poster = (path?: string | null) => (path ? `${IMG}/w342${path}` : undefined);
-const backdrop = (path?: string | null) => (path ? `${IMG}/w780${path}` : undefined);
-const still = (path?: string | null) => (path ? `${IMG}/w300${path}` : undefined);
+const poster = (path?: string | null) => (path ? `${image()}/w342${path}` : undefined);
+const backdrop = (path?: string | null) => (path ? `${image()}/w780${path}` : undefined);
+const still = (path?: string | null) => (path ? `${image()}/w300${path}` : undefined);
 const year = (date?: string | null) => (date ? Number(date.slice(0, 4)) || undefined : undefined);
 
 /**
@@ -28,7 +50,7 @@ export class TmdbProvider implements MetadataProvider {
   }
 
   private async get<T>(path: string, params: Record<string, string> = {}, signal?: AbortSignal) {
-    const url = new URL(BASE + path);
+    const url = new URL(base() + path);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 
     const res = await fetch(url, {
