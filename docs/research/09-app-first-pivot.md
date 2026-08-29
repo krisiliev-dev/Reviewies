@@ -10026,20 +10026,82 @@ instrument:
 | `capture-signedin.mjs` | 6 | a viewport, silently |
 
 Three answers, none of them stated, in a design track **whose method is putting them side by
-side**. §6.138 read all forty-four in one pass and compared `05-discover.png` against
-`dark-04-discover.png` — a screen against a document. They happened to agree because that
-screen is short. §6.141's retracted defect came out of the same confusion on the other
-harness.
+side** — §6.138 read all forty-four in one pass and compared `05-discover.png` against
+`dark-04-discover.png`, a screen against a document.
+
+And then the measurement corrected *that* too, which is the third time in one sprint. With
+the reporting in, both web passes print **"every shot fits one screen"**: all twenty web
+documents are currently one viewport or less, so §6.138's comparison was fair after all. It
+was fair by accident — nothing was holding those pages to a screenful, and the luck ends the
+first time a web screen gets longer than one. The phone's did: `15-title` is 2339 points.
 
 Both are worth having and they answer different questions: *what does somebody meet* and
 *does the layout hold*. What is not defensible is not saying which you are holding.
 
 So all three say. The signed-in pass measures overflow, writes a `-foot` shot past a fold's
-worth and prints its manifest, exactly as the phone's does. The web pass keeps `fullPage` —
+worth and prints its manifest, exactly as the phone's does — and its first run says that of
+its six viewport shots exactly **one** has anything below the fold, `21-comments-writing` at
++92 points, under the threshold. So the six that "were scroll positions" are one small one.
+That is the fourth number this section has had to correct, all in the same direction. The web pass keeps `fullPage` —
 it is the right picture for judging a layout — and now prints how many viewports tall each
 document is, so `1.0x` reads as a fair likeness of a screen and anything above it reads as a
 picture no person sees. `SUITE_FLOOR` ratchets all three, because each is one expression
 whose deletion would take nothing else with it.
+
+## And the two passes I had just edited had never run
+
+Making that change and re-running is what showed the third thing. `npm run design` chained
+its three passes with `&&`, so the phone's pass failing took the other two with it — and the
+phone's pass carries §6.137's Up Next race, which fired on **three of the last four full
+runs**. The signed-in and web harnesses had not executed once since the edits above were
+written.
+
+That is worse than a flaky test. The design track loses two thirds of its output to one
+intermittent, and it loses it *silently*: the run ends non-zero, the last thing printed is
+the phone's complaint, and nothing says that twenty-six screenshots were never taken. Every
+"the design pass is clean" in the last few sections was a claim about whichever passes
+happened to run that time.
+
+Three named scripts now — `design:phone`, `design:signedin`, `design:web` — and `design`
+runs all three whatever the others did, failing at the end if any of them did:
+
+```
+p=0; npm run design:phone || p=1; npm run design:signedin || p=1; npm run design:web || p=1; exit $p
+```
+
+**A pipeline that stops at the first failure is the wrong shape for a pass whose parts are
+independent.** They share no state; all `&&` bought was a shorter line.
+
+## A correction inside the correction
+
+The first reading of that failing run said the diagnostic §6.141 added had printed nothing —
+that Up Next's body was empty. It printed fine; the grep filtering the log dropped the
+continuation line. What it actually said was
+
+```
+Up Next  LD  The Long Dark  S1E6 · Episode 6  5 more episodes  Caught up further?  Watch along
+```
+
+— Kitchen Nightshift genuinely absent, which is §6.137's diagnosis exactly. The diagnostic
+did its job and the reader of it did not.
+
+## What this section is actually about
+
+Four claims in one sprint, every one about an instrument, every one wrong until something
+was run:
+
+| claimed | measured |
+| --- | --- |
+| twenty-six shots are scroll positions | six |
+| a screen was compared against a document | every web document fits one screen |
+| six signed-in shots hide something | one, by 92 points |
+| the fold diagnostic printed nothing | it printed; the grep dropped the line |
+
+Each was written from what the *code looked like* rather than from what it *did*, and each
+took under a minute to check. §6.139 found three guards whose names were not descriptions of
+what they proved and drew the rule for tests; this is the same rule for prose. **A claim
+about an instrument has to come from the instrument's output**, and the cost of not doing
+that is not the wrong number — it is the sprint somebody sizes by it.
 
 ## 7. What is still not known
 
@@ -10224,6 +10286,13 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **`npm run design` had been running one pass of three, silently, for several sprints.**
+  §6.142 found the three chained with `&&`, so §6.137's Up Next race — which fires on
+  roughly half of full runs — took the signed-in and web passes with it every time. They
+  are three named scripts now and `design` runs all of them regardless. What is *not* known
+  is how many of this document's "the design pass is clean" lines were written from a run
+  that photographed only the phone; the sprints are named in git, but nothing recorded which
+  passes executed, so the answer is not recoverable.
 - **The tab bar's drawings have never been rasterised by anything but a browser.**
   §6.140 gave the phone `react-native-svg`, pinned to what this Expo SDK asks for, and both
   design harnesses photograph the result — but the phone's harness serves the

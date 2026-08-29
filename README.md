@@ -206,8 +206,16 @@ cd ../app && npm run smoke:failures    # the same web app, with the provider fai
 ### Screenshots
 
 ```sh
-npm run design                        # photographs every screen, twice over
+npm run design                        # all three passes, whatever the others do
+npm run design:phone                  # the phone, viewport shots and their feet
+npm run design:signedin               # the six screens behind an account
+npm run design:web                    # the web app, both themes, whole documents
 ```
+
+The three run independently and `design` reports a failure at the end rather than stopping
+at the first: they share no state, and chaining them with `&&` meant one intermittent in
+the phone's pass silently cost the other two entirely — §6.142 found twenty-six screenshots
+that had not been taken for several sprints.
 
 Two passes, because a screen behind an account is a screen nobody reviews. The first
 builds with every credential blanked, so the metadata provider is the fixture provider by
