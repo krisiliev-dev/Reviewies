@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { TAB_ICON_PATHS } from '@reviewies/core/ui/tabIcon';
 
 /**
  * Three things that were only ever going to be found by looking.
@@ -43,54 +44,58 @@ describe('what the app looks like, checked by its causes', () => {
     expect(fixed).toEqual([]);
   });
 
-  it('draws the web tab bar’s icons rather than typing them, and says the phone types its own', () => {
+  it('draws its icons rather than typing them, on both platforms', () => {
     /*
      * A glyph's appearance belongs to whatever font the device has. `▶` and `⚙` have emoji
      * presentation variants and came out in full colour; `❏` came out as an empty square,
      * which is what a missing glyph looks like. Checked at the tab bar, which is where it
      * mattered and where a regression would be most visible.
      *
-     * **This was called "draws its icons rather than typing them" until §6.139** — a claim
-     * about the product, in a file whose header talks about "the app", proved by reading
-     * `app/src/App.tsx`. This whole file globs `app/src/**` and has never seen the phone.
+     * The name is a product claim again, and it is one for the first time. §6.139 found it
+     * making that claim over a body that read `app/src/App.tsx` — this whole file globs
+     * `app/src/**` and had never seen the phone, which was passing `icon('⌕')`,
+     * `icon('✦')`, `icon('☰')`, `icon('⋯')` throughout. It was renamed to what it proved
+     * and given an exemption that failed the day the phone stopped typing them.
      *
-     * And the phone does the thing the old name forbade: `mobile/app/(tabs)/_layout.tsx`
-     * passes `icon('⌕')`, `icon('✦')`, `icon('☰')`, `icon('⋯')` — typographic characters,
-     * drawn by whatever font resolves them at whatever weight and optical size it gives. It
-     * was found by putting the two design passes side by side (§6.138), not by this guard,
-     * because this guard was scoped to the half of the product that was already right.
-     *
-     * So the clause is named for what it proves and the gap is written down rather than
-     * left invisible. #176 is the design decision — one kind of mark and one table for both
-     * platforms, the way `key.ts` settled it for the remote fascia — and the clause below
-     * fails the day the phone stops typing them, so the exemption cannot outlive the defect.
+     * §6.140 closed it, and the exemption fired on cue rather than being noticed and
+     * deleted — which is the whole of what it was for. The drawings live in
+     * `core/src/ui/tabIcon.ts` now and `tabIcon.test.ts` holds both renderers to them; what
+     * stays here is the web's half, at the level this file works at.
      */
-    const app = readFileSync(resolve(ROOT, 'app/src/App.tsx'), 'utf8');
-    const tabs = app.slice(app.indexOf('const TABS'), app.indexOf('function TabBar'));
-
-    expect(tabs).toContain('icon:');
-    // Icon names, not characters. Anything outside this range is a glyph again.
-    expect(tabs.match(/icon: '([^']*)'/g)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/icon: '[a-z]+'/)]),
-    );
-    for (const [, value] of tabs.matchAll(/icon: '([^']*)'/g)) {
-      expect(value, `${value} is not an icon name`).toMatch(/^[a-z]+$/);
-    }
-
     /*
-     * The phone, named as the open gap. `toBeGreaterThan(0)` rather than a count, so
-     * closing it one tab at a time does not have to edit a number — but the moment the last
-     * one goes this fails, and whoever did the work deletes the exemption and renames the
-     * clause to the product-wide claim it was pretending to be.
+     * Both bars, read for the thing the old version could not see. It used to slice
+     * `const TABS` out of `App.tsx` and check the strings in it, which stopped meaning
+     * anything the moment §6.140 moved that list to `core/src/ui/tabIcon.ts` — the clause
+     * failed on `const TABS = TAB_BAR;`, correctly, for having been pinned to a spelling
+     * rather than to the claim. What it is named for is that neither bar hands a mark to a
+     * font, and that is what it reads.
      */
-    const phoneBar = readFileSync(resolve(ROOT, 'mobile/app/(tabs)/_layout.tsx'), 'utf8');
-    const typed = [...phoneBar.matchAll(/tabBarIcon: icon\('([^']*)'\)/g)].map((m) => m[1]);
-    expect(typed.length, 'the phone declares no tab icons at all').toBeGreaterThan(0);
-    expect(
-      typed.filter((glyph) => /^[a-z]+$/.test(glyph)).length,
-      `the phone now names ${typed.length - typed.filter((g) => !/^[a-z]+$/.test(g)).length} of its tab icons — ` +
-        'close #176 and make this clause the product-wide claim its old name already was',
-    ).toBe(0);
+    const bars = {
+      web: readFileSync(resolve(ROOT, 'app/src/App.tsx'), 'utf8'),
+      phone: readFileSync(resolve(ROOT, 'mobile/app/(tabs)/_layout.tsx'), 'utf8'),
+    };
+    for (const [platform, source] of Object.entries(bars)) {
+      expect(source, `${platform}'s bar does not read the drawings`).toContain(
+        '@reviewies/core/ui/tabIcon',
+      );
+      /*
+       * A tab whose mark is a literal outside the Latin range is a glyph again. The range
+       * is deliberately wide: `▶ ⌕ ✦ ☰ ⋯` are geometric shapes, `⚙` is a dingbat, and the
+       * two that rendered worst had emoji presentation variants — no single block covers
+       * what a font may decide to draw in colour.
+       */
+      const marks = [...source.matchAll(/tabBarIcon: icon\(([^)]*)\)|icon: '([^']*)'/g)];
+      for (const [whole, a, b] of marks) {
+        const mark = a ?? b ?? '';
+        expect(mark, `${platform} types ${whole} rather than naming a drawing`).toMatch(
+          /^[a-zA-Z.]+$/,
+        );
+      }
+    }
+    // And the drawings the table holds are paths, not characters somebody could type.
+    for (const [name, path] of Object.entries(TAB_ICON_PATHS)) {
+      expect(path, `${name} is not path data`).toMatch(/^[Mm][\s\d.-]/);
+    }
   });
 
   it('never disables a filled button by fading it', () => {

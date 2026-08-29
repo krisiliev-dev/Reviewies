@@ -229,3 +229,25 @@ seconds and kill it mid-flight (airplane mode mid-fetch will do it, or a malform
 the end of the CSV). Watch Up Next while it runs. It should count up as rows land, and then
 **go back down** to what actually committed, without a navigation or a pull-to-refresh. If
 it counts up and stays there, `onSettled` is not reaching the phone.
+
+## 11. Whether the tab bar's icons draw at all
+
+§6.140 replaced the phone's typed glyphs — `▶ ⌕ ✦ ☰ ⋯` — with the same path table the web
+draws, rendered through `react-native-svg` at the version this Expo SDK pins.
+
+What is proved: both platforms read one table, no bar types a mark, every path fits its
+declared box, and both design harnesses photograph the bar. What is not: **any of it drawn
+by a native renderer.** `design/capture.mjs` serves the react-native-web export, where
+`react-native-svg` becomes the same DOM `<svg>` the web app was already using — so the two
+passes agreeing proves the table is shared and proves nothing about iOS or Android, where
+Core Graphics and Skia take the same `d` strings.
+
+This is also the first native dependency this build has added with no device to check it on,
+which is a second thing to look at rather than the same one.
+
+**How to settle it.** Open the app on a device and look at the bar. Five marks, all the same
+weight and size, all the ink colour, the active one tinted — and none of them missing. A path
+that fails to parse in `react-native-svg` renders as nothing, not as an error, so an empty
+tab is the failure to watch for. Then double the system text size: the labels must grow and
+the drawings must not, which is the property `TAB_ICON_SIZE` exists to hold and which the
+phone's old text glyphs did not have.

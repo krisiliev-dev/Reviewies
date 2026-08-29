@@ -4,6 +4,7 @@ import { requestSync, startSyncDriver } from '@reviewies/core/sync/driver';
 import { startCalendarRefresh } from '@reviewies/core/calendar/refresh';
 import { startScrobbleListener } from '@reviewies/core/watching/scrobble';
 import { TabIcon } from './ui/TabIcon';
+import { TAB_BAR } from '@reviewies/core/ui/tabIcon';
 import { More } from './screens/More';
 import { NotFound } from './screens/NotFound';
 import { ErrorBoundary } from './ui/ErrorBoundary';
@@ -113,20 +114,15 @@ function Shell() {
 }
 
 /**
- * Five, the same five the phone has, with everything else behind More.
+ * Five, the same five the phone has — literally the same five since §6.140, from
+ * `core/src/ui/tabIcon.ts`, because "the same five" had been two lists agreeing by hand.
  *
  * It was eight, which only fitted a phone-width bar because the labels were ten pixels —
  * and once §6.30 let them respond to the reader's text setting, the bar wrapped to two
  * rows and took 183 of 844 pixels at 200%. Eight was always too many; the phone knew it
  * and the web never followed. Nothing moved URL, only what this bar offers.
  */
-const TABS = [
-  { to: '/', label: 'Up Next', icon: 'upnext' },
-  { to: '/search', label: 'Search', icon: 'search' },
-  { to: '/discover', label: 'Discover', icon: 'discover' },
-  { to: '/watchlist', label: 'Watchlist', icon: 'watchlist' },
-  { to: '/more', label: 'More', icon: 'more' },
-];
+const TABS = TAB_BAR;
 
 /**
  * The routes, as data.

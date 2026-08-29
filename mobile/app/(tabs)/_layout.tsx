@@ -1,5 +1,7 @@
 import { Tabs } from 'expo-router';
-import { Text, View, type ColorValue } from 'react-native';
+import { TabIcon } from '../../src/ui/TabIcon';
+import { TAB_BAR, type TabIconName } from '@reviewies/core/ui/tabIcon';
+import { View, type ColorValue } from 'react-native';
 import { border, leadingOf, size, space, theme } from '../../src/ui/theme';
 import { text, type, leading } from '@reviewies/core/tokens';
 
@@ -66,23 +68,38 @@ export default function TabLayout() {
         carrying the most important piece of wayfinding in the app, which is also what
         makes it survive being read by somebody who cannot separate those two greys.
       */}
-      <Tabs.Screen name="index" options={{ title: 'Up Next', tabBarIcon: icon('▶') }} />
-      <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: icon('⌕') }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover', tabBarIcon: icon('✦') }} />
-      <Tabs.Screen name="watchlist" options={{ title: 'Watchlist', tabBarIcon: icon('☰') }} />
-      <Tabs.Screen name="more" options={{ title: 'More', tabBarIcon: icon('⋯') }} />
+      {/*
+        From the table, not five hand-written lines. "The same five the web has" was two
+        lists agreeing by hand, which is how they came to agree about *which* five and
+        disagree about what each one is drawn with (§6.140).
+      */}
+      {TAB_BAR.map((tab) => (
+        <Tabs.Screen
+          key={tab.route}
+          name={tab.route}
+          options={{ title: tab.label, tabBarIcon: icon(tab.icon) }}
+        />
+      ))}
     </Tabs>
   );
 }
 
 /**
- * Glyphs rather than an icon library.
+ * Drawings, from the table both platforms read.
  *
- * A vector icon pack is a dependency and a build step for five symbols that a font
- * already has. If the set grows or these render badly on a real device, that is the
- * point to reach for one.
+ * This said "Glyphs rather than an icon library — a vector icon pack is a dependency and a
+ * build step for five symbols that a font already has. If the set grows or these render
+ * badly on a real device, that is the point to reach for one."
+ *
+ * Both halves were wrong, and §6.140 has the whole of it. A font does **not** already have
+ * them: `app/src/ui/TabIcon.tsx` measured, in a browser, four sprints before that sentence
+ * was still standing, that `▶` draws in full colour, `❏` as an empty square and `◔` as a
+ * two-pixel sliver — a glyph's appearance belongs to whatever font the device happens to
+ * have. And the trigger could never fire, because nothing in this build has ever run on a
+ * real device, so "if these render badly on a real device" is a condition nobody is in a
+ * position to observe.
  */
-function icon(glyph: string) {
+function icon(name: TabIconName) {
   return ({ color, focused }: { color: ColorValue; focused: boolean }) => (
     <View style={{ alignItems: 'center' }}>
       {/*
@@ -98,7 +115,7 @@ function icon(glyph: string) {
           backgroundColor: focused ? theme.ink : 'transparent',
         }}
       />
-      <Text style={{ color, fontSize: text.s20, lineHeight: leadingOf(text.s20, leading.l120) }}>{glyph}</Text>
+      <TabIcon name={name} color={color} />
     </View>
   );
 }

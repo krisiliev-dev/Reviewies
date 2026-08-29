@@ -9849,6 +9849,89 @@ That is a rule, not an observation: **a clause named for a decision is a clause 
 left behind by the decision.** Where a name must state a design fact, the body has to prove
 that fact and not a proxy for it — the ink step, the plate's content, both platforms.
 
+### 6.140 The most-seen control in the product, drawn two different ways
+
+**#176**, and §6.139 made the case for it twice: once by putting the two design passes side
+by side, and once by finding that the guard which should have caught it was scoped to the
+half of the product that was already right.
+
+The web stopped typing its icons four sprints ago, and the reason is in `TabIcon.tsx`'s own
+header — a finding that no check could have measured, because every property a check can
+read was fine. The icons were the right size, `aria-hidden` beside a real label, nothing to
+do with contrast. What they actually looked like in the browser:
+
+- `▶` and `⚙` have emoji presentation variants, so Chromium drew them in **full colour** —
+  an orange play button and a blue gear beside five flat grey glyphs;
+- `❏` rendered as an **empty square**, which is indistinguishable from a missing glyph;
+- `◔` came out as a sliver a couple of pixels tall. In practice, invisible.
+
+**A glyph's appearance belongs to whatever font the device happens to have**, which is a
+strange thing to hand your navigation to.
+
+That finding stayed on the web, because the table it produced lived in a `.tsx` file under
+`app/`. The phone went on passing `icon('▶')`, `icon('⌕')`, `icon('✦')`, `icon('☰')`,
+`icon('⋯')` — the same class of thing, on the same control, for four more sprints. It is
+`key.ts`'s finding one control over: *one table, not one per surface*.
+
+## The excuse could never have expired
+
+`_layout.tsx` said it plainly: *"A vector icon pack is a dependency and a build step for
+five symbols that a font already has. If the set grows or these render badly on a real
+device, that is the point to reach for one."*
+
+Both halves fail, and the second is the interesting one.
+
+A font does **not** already have them — that is exactly what the web measured, in a
+browser, four sprints before this sentence was still standing. And the trigger cannot fire:
+nothing in this build has ever run on a real device, and §7 has said so since §6.111. *"If
+these render badly on a real device"* is a condition nobody is in a position to observe, so
+the sentence reads as a plan and functions as a permanent exemption. §6.133's shape, with a
+new edge on it: **an excuse whose condition is unobservable never expires, however
+reasonable it sounds.**
+
+The dependency is `react-native-svg`, pinned to the 15.15.4 this Expo SDK asks for rather
+than the `^15.15.5` npm installs by default — `npx expo install --check` is what said so.
+
+## What landed
+
+`core/src/ui/tabIcon.ts` holds the paths, the box they are drawn in, the size, and the five
+tabs in order. Both renderers read it: the web into `<svg>`, the phone into
+`react-native-svg`, both inheriting the colour their bar hands down so the active tab still
+tints.
+
+`TAB_BAR` was nearly the sprint's own §6.118 — an export that looked like a decision and had
+no consumers. `coreWiring.test.ts` caught it within the hour. The two bars had been *two
+lists agreeing by hand* about which five tabs there are, which is precisely how they came to
+agree about the five and disagree about what each one is drawn with. Both read the list now,
+with two route fields — a URL for the web, a file name for expo-router — because the routers
+genuinely address differently and one field meaning different things to different readers is
+the defect §6.136 spent a sprint removing from `Row`.
+
+`tabIcon.test.ts` holds it the way `key.test.ts` holds the fascia. One clause is new in kind:
+every coordinate in every path has to fit the declared box, because a path drawn for a
+different viewBox is a mark at the wrong scale beside four right ones and nothing in the
+file would say so.
+
+## The exemption fired on cue, which is the whole of what it was for
+
+§6.139 renamed `appearance.test.ts`'s clause to what it proved and wrote the gap into it:
+read the phone's bar, expect every icon to still be a glyph, fail the day one becomes a name,
+with a message naming the count and pointing at #176. It failed this sprint, on cue, saying
+*"the phone now names 5 of its tab icons — close #176 and make this clause the product-wide
+claim its old name already was"*. That is done. **An exemption that cannot outlive its defect
+is worth more than one somebody has to remember to delete.**
+
+Two of this sprint's own guards then failed their plants, both the §6.139 shape inside an
+hour of writing it down:
+
+- the size clause used `toContain('TAB_ICON_SIZE')`, and replacing `width` with a literal
+  left `height` still reading the token, so the file contained the string. It names both
+  dimensions now.
+- the `appearance` clause sliced `const TABS` out of `App.tsx` and read the strings in it,
+  which stopped meaning anything the moment the list moved to the core — it failed on
+  `const TABS = TAB_BAR;`. It was pinned to a spelling rather than to its claim; it reads
+  both bars for typed marks now.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10022,6 +10105,14 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **The tab bar's drawings have never been rasterised by anything but a browser.**
+  §6.140 gave the phone `react-native-svg`, pinned to what this Expo SDK asks for, and both
+  design harnesses photograph the result — but the phone's harness serves the
+  **react-native-web** export, where `react-native-svg` renders to the same DOM `<svg>` the
+  web app already used. So the two passes agreeing proves the table is shared; it does not
+  prove the paths draw on iOS or Android, where a real Skia/Core Graphics renderer takes
+  them. It is the first native dependency this build has added without a device to check
+  it on. `docs/design/on-a-device.md` carries it.
 - **The guard sweep read names, not bodies, and 1478 clauses is more than one sprint.**
   §6.139 filtered for names asserting a *design decision* rather than a behaviour and found
   three, one of them a sprint old. What it did not do is read all 1478 bodies against all
