@@ -27,13 +27,19 @@ import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
+import { Chevron } from '../../src/ui/Mark';
+import { disclosure } from '@reviewies/core/ui/mark';
 import { Button } from '../../src/ui/Button';
 import { Section } from '../../src/ui/Section';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
 import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
-import { bySeason as seasonOrder, seasonLabel } from '@reviewies/core/ui/season';
+import {
+  bySeason as seasonOrder,
+  openSeason,
+  summariseSeasons,
+} from '@reviewies/core/ui/season';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -94,6 +100,17 @@ export default function TitleScreen() {
     }
     return [...bySeason.entries()];
   }, [episodes]);
+
+  /*
+   * One season open, the rest as rows. §6.156.
+   *
+   * `undefined` means "follow the rule" — the first season you have not finished, which is
+   * where the episode Up Next is offering lives. `null` means you closed it. Anything else
+   * is the season you opened, and the rule stops applying the moment you make a choice.
+   */
+  const [chosen, setChosen] = useState<number | null>();
+  const summaries = useMemo(() => summariseSeasons(seasons, watched ?? new Set()), [seasons, watched]);
+  const open = chosen === undefined ? openSeason(summaries) : chosen;
 
   return (
     <>
@@ -206,20 +223,38 @@ export default function TitleScreen() {
           </>
         )}
 
-        {seasons.map(([season, list]) => (
-          <View key={season} style={styles.season}>
-            <Section>{seasonLabel(season)}</Section>
-            {list.map((episode) => (
-              <EpisodeRow
-                key={episode.id}
-                episode={episode}
-                seriesId={titleId}
-                watched={watched?.has(episode.id) ?? false}
-                rewatches={counts?.get(episode.id) ?? 0}
+        {seasons.map(([season, list], index) => {
+          const summary = summaries[index];
+          const expanded = open === season;
+          return (
+            <View key={season} style={styles.season}>
+              {/* The heading is the control. A `Section` above a button would be the same
+                  words twice, and the row already says everything the heading did. */}
+              <BaseRow
+                density="index"
+                title={summary.label}
+                meta={summary.progress}
+                open={{
+                  name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
+                  run: () => setChosen(expanded ? null : season),
+                }}
+                trailing={
+                  <Chevron points={disclosure(expanded)} color={theme.inkSecondary} size={16} />
+                }
               />
-            ))}
-          </View>
-        ))}
+              {expanded &&
+                list.map((episode) => (
+                  <EpisodeRow
+                    key={episode.id}
+                    episode={episode}
+                    seriesId={titleId}
+                    watched={watched?.has(episode.id) ?? false}
+                    rewatches={counts?.get(episode.id) ?? 0}
+                  />
+                ))}
+            </View>
+          );
+        })}
       </ScrollView>
     </>
   );

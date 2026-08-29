@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { bySeason, SPECIALS, seasonLabel } from '@reviewies/core/ui/season';
+import {
+  bySeason,
+  SPECIALS,
+  openSeason,
+  seasonLabel,
+  summariseSeasons,
+} from '@reviewies/core/ui/season';
 import { COPY } from '@reviewies/core/copy';
 import { mergeSuggestions } from '@reviewies/core/discover/recommend';
 
@@ -57,7 +63,83 @@ describe('specials', () => {
       const source = withoutProse(read(file));
       expect(source, `${file} sorts seasons by number`).not.toMatch(/a\.season - b\.season/);
       expect(source, `${file} orders seasons itself`).toContain('seasonOrder(');
-      expect(source, `${file} writes the heading itself`).toContain('seasonLabel(');
+      /*
+       * `seasonLabel` or the summary that calls it. §6.156 moved the heading into
+       * `summariseSeasons`, which returns the label alongside the progress line, because a
+       * collapsed row says both and a page assembling them from two places is a page that
+       * can disagree with itself. The clause below is what keeps this from being a
+       * loosening: interpolating `Season {n}` is still refused everywhere.
+       */
+      expect(source, `${file} writes the heading itself`).toMatch(
+        /\b(seasonLabel|summariseSeasons)\(/,
+      );
+    }
+  });
+
+  it('open on the season you are in, and say so on every collapsed row', () => {
+    /*
+     * §6.156, #191. The page rendered every episode of every season at once: One Piece is
+     * 1,220 rows and **170,844 points of scroll**, two hundred viewports, with no
+     * pagination, no collapsing and no jump. The fixture's longest show is 1,443 points, so
+     * nothing in thirty sprints of design review could have shown it.
+     *
+     * The rule is the interesting half. Opening on season 1 is right exactly once per show;
+     * opening on the last puts somebody watching season 3 of five at the end of season 5.
+     * The first season you have not finished is where Up Next's episode lives, reached from
+     * the other direction.
+     */
+    const groups = (...sizes: Array<[number, number]>) =>
+      sizes.map(
+        ([season, n]) =>
+          [season, Array.from({ length: n }, (_, i) => ({ id: `s${season}e${i + 1}` }))] as const,
+      );
+
+    const three = groups([1, 8], [2, 10], [3, 6]);
+    const seen = new Set(['s1e1', 's1e2', 's1e3', 's1e4', 's1e5', 's1e6', 's1e7', 's1e8', 's2e1']);
+    const summaries = summariseSeasons(three, seen);
+
+    expect(summaries.map((s) => s.progress)).toEqual([
+      'All 8 watched',
+      '1 of 10 watched',
+      '6 episodes',
+    ]);
+    expect(openSeason(summaries), 'opens on a season already finished').toBe(2);
+
+    // Nothing watched: the first season, by the same rule and no special case.
+    expect(openSeason(summariseSeasons(three, new Set()))).toBe(1);
+    // Everything watched: the last, so a finished show does not open on its first season.
+    const all = new Set(summaries.flatMap((s) => three[s.season === 0 ? 0 : s.season - 1][1].map((e) => e.id)));
+    expect(openSeason(summariseSeasons(three, all))).toBe(3);
+    // One season, always open — collapsing must cost nothing on a show that does not need it.
+    expect(openSeason(summariseSeasons(groups([1, 6]), new Set()))).toBe(1);
+
+    /*
+     * And specials never take the opening slot from a run you are part-way through, which
+     * `bySeason` decides and this is the first thing to depend on it.
+     */
+    const withSpecials = groups([1, 8], [2, 10], [0, 4]);
+    expect(openSeason(summariseSeasons(withSpecials, seen))).toBe(2);
+
+    for (const file of TITLES) {
+      const source = withoutProse(read(file));
+      expect(source, `${file} decides for itself which season opens`).toContain('openSeason(');
+      /*
+       * The episodes are **behind** the reveal, not merely below a control that toggles —
+       * positions, the way `compose.test.ts` holds the composer.
+       *
+       * This was `toMatch(/expanded &&|expanded \? /)` and the plant walked straight
+       * through it: both pages also write `expanded ? 'showing' : 'hidden'` in the row's
+       * announced name, so the alternation matched the *label* while the episode list
+       * rendered unconditionally. §6.153's shape again — a needle that can match something
+       * other than what it claims — and the only reason it was caught is that every guard
+       * here is planted against.
+       */
+      const reveal = source.indexOf('expanded &&');
+      const rendered = source.search(/<EpisodeRow/);
+      expect(reveal, `${file} has no reveal guarding its episodes`).toBeGreaterThan(-1);
+      expect(rendered, `${file} renders every season's episodes regardless`).toBeGreaterThan(
+        reveal,
+      );
     }
   });
 

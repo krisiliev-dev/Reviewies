@@ -16,6 +16,8 @@ import { Poster } from '../ui/Poster';
 import { Button } from '../ui/Button';
 import { CrossOff } from '../ui/CrossOff';
 import { Row as BaseRow } from '../ui/Row';
+import { Chevron } from '../ui/Mark';
+import { disclosure } from '@reviewies/core/ui/mark';
 import { StarRating } from '../ui/StarRating';
 import { RATING_OPEN, ratingAction, ratingLabel } from '@reviewies/core/ui/rating';
 import { AddToList } from '../social/AddToList';
@@ -29,7 +31,11 @@ import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
 import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
-import { bySeason as seasonOrder, seasonLabel } from '@reviewies/core/ui/season';
+import {
+  bySeason as seasonOrder,
+  openSeason,
+  summariseSeasons,
+} from '@reviewies/core/ui/season';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -47,6 +53,8 @@ export function TitleDetail() {
   const rating = useLiveQuery(() => db.ratings.get(titleId), [titleId]);
   const libraryItem = useLiveQuery(() => db.library.get(titleId), [titleId]);
   const [posterDraft, setPosterDraft] = useState<string>();
+  /** Which season is open: `undefined` follows the rule, `null` is closed. §6.156. */
+  const [chosen, setChosen] = useState<number | null>();
   const counts = useLiveQuery(async () => {
     const events = await db.watches.where('seriesId').equals(titleId).toArray();
     const map = new Map<string, number>();
@@ -87,6 +95,17 @@ export function TitleDetail() {
     if (!bySeason.has(e.season)) bySeason.set(e.season, []);
     bySeason.get(e.season)!.push(e);
   }
+  const seasons = [...bySeason.entries()];
+
+  /*
+   * One season open, the rest as rows. §6.156.
+   *
+   * `undefined` means "follow the rule" — the first season you have not finished, which is
+   * where the episode Up Next is offering lives. `null` means you closed it. Anything else
+   * is the season you opened, and the rule stops applying the moment you make a choice.
+   */
+  const summaries = summariseSeasons(seasons, watched);
+  const open = chosen === undefined ? openSeason(summaries) : chosen;
 
   return (
     <div className="p-s16">
@@ -201,22 +220,41 @@ export function TitleDetail() {
 
       {loading && episodes.length === 0 && <Note>Loading episodes…</Note>}
 
-      {[...bySeason.entries()].map(([season, eps]) => (
-        <section key={season} className="mb-6">
-          <Section className="px-1">{seasonLabel(season)}</Section>
-          <ul className="flex flex-col gap-1.5">
-            {eps.map((e) => (
-              <EpisodeRow
-                key={e.id}
-                episode={e}
-                seriesId={titleId}
-                watched={watched.has(e.id)}
-                rewatches={counts.get(e.id) ?? 0}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
+      {seasons.map(([season, eps], index) => {
+        const summary = summaries[index];
+        const expanded = open === season;
+        return (
+          <section key={season} className="mb-6">
+            {/* The heading is the control. A `Section` above a button would be the same
+                words twice, and the row already says everything the heading did. */}
+            <BaseRow
+              density="index"
+              title={summary.label}
+              meta={summary.progress}
+              open={{
+                name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
+                run: () => setChosen(expanded ? null : season),
+              }}
+              trailing={
+                <Chevron points={disclosure(expanded)} className="shrink-0 text-s16 text-ink-secondary" />
+              }
+            />
+            {expanded && (
+              <ul className="flex flex-col gap-1.5">
+                {eps.map((e) => (
+                  <EpisodeRow
+                    key={e.id}
+                    episode={e}
+                    seriesId={titleId}
+                    watched={watched.has(e.id)}
+                    rewatches={counts.get(e.id) ?? 0}
+                  />
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }

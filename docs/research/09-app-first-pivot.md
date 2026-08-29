@@ -11053,6 +11053,86 @@ out of `unwatchLatest` into its own function so the comment would not sit inside
 transaction body, and `writes.test.ts` immediately reported the write as unqueued — because
 it was, as far as anything reading one function at a time could tell. The comment went back.
 
+### 6.156 Two hundred viewports of episode list
+
+**#191**, the last of the five things §6.151's real-data pass found and the only one still
+open.
+
+## The number
+
+`r6-title-one-piece` scrolled **170,844 points** at 390pt wide. Two hundred viewports of
+episode rows, with no pagination, no collapsing and no way to jump. It's Always Sunny was
+36,325; The Bear 6,600. The fixture's longest show is 1,443, which is the whole reason
+thirty sprints of design review never saw it — and the reason §6.146's rule keeps earning
+its place: **a fixture that cannot produce the case is a fixture with an opinion about the
+screen.**
+
+It is a rendering cost as well as a scrolling one. Every episode of every season was
+mounted at once, each with a checkbox, a React and a Talk.
+
+## What was already there, and what was not
+
+§6.152 put `SPECIALS`, `bySeason` and `seasonLabel` in `core/src/ui/season.ts` and both
+title pages use all three — for **ordering and headings**. What no file had was a
+*decision*: which season a show opens on, and what a season says about itself when it is
+not open. That is the seam this sprint fills, in the core, rendered twice, held by a clause.
+
+## The rule
+
+**The first season you have not finished**, in `bySeason` order.
+
+It is worth stating why not the obvious alternatives. Season 1 is right exactly once per
+show and wrong every time after. The last season puts somebody watching season 3 of five at
+the end of season 5. The first unfinished season is where the episode Up Next is offering
+lives — the same answer, reached from the other direction, which is what makes it a rule
+rather than a preference.
+
+Two cases fall out of it rather than needing their own branch: a show with nothing watched
+opens on its first season, and a show entirely watched opens on its last. And a
+single-season show is always open, which is the point — **collapsing is for the shows that
+need it and must cost nothing on the shows that do not.**
+
+Specials never take the slot, because `bySeason` sorts them last. That decision was made in
+§6.152 and this is the first thing that depends on it.
+
+A collapsed row says the label and a count: *62 episodes*, *1 of 10 watched*, *All 8
+watched*. A count rather than a bar, for the reason `RowContract.count` already gives about
+Up Next's *17 more episodes* — somebody scanning twenty-one rows for where they are needs
+the number, and a percentage is not a place.
+
+## Measured
+
+The same pass, the same six titles, after:
+
+```
+                                   before        after
+One Piece                         170,844       10,631
+It's Always Sunny in Phila.        36,325        2,556
+The Bear                            6,600        1,503
+Severance                           2,873        1,455
+Shōgun                              1,403        1,440
+```
+
+Shōgun going *up* by 37 points is the rule working: one season, so it stays open, and it
+gains one collapsed-row's worth of heading. The cost of the mechanism on a show that does
+not need it is one row.
+
+## The plant that walked through the guard
+
+Four plants, three landed immediately, and the fourth is the interesting one. The clause
+asserting the episodes are behind the reveal was:
+
+```ts
+expect(source).toMatch(/expanded &&|expanded \? /);
+```
+
+Removing `{expanded &&` from the phone's episode list **passed**. Both pages also write
+`expanded ? 'showing' : 'hidden'` in the row's announced name, so the alternation matched
+the *label* while the list rendered unconditionally. §6.153's shape exactly — a needle that
+can match something other than what it claims — and the only reason it was caught is that
+every guard here gets planted against. It is positions now, the way `compose.test.ts` holds
+the composer: the reveal must exist, and `<EpisodeRow` must come after it.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -11304,12 +11384,14 @@ and which single claim in this document could not be checked at all:
   is the phone's too; the *measurement* is not, and the reason it cannot be taken through
   the interface is the finding itself — a torn write is invisible on screen. That is the
   same gap `docs/design/on-a-device.md` already holds for `onSettled`.
-- **Two of the real pass's five findings are still unjudged, and three passes are still on
-  the fixture.** §6.152 measured the five §6.151 listed. Up Next's counts *were* the harness
+- **All five of the real pass's findings are judged, and three passes are still on the
+  fixture.** §6.152 measured the five §6.151 listed; Up Next's counts *were* the harness
   (§6.153), the thirty-second Track is fixed (§6.153, §6.154), and the 198-viewport title
-  page is filed as #191 and not started. The other three design passes have still never seen
-  real data, so the web app and every signed-in screen are judged entirely on four invented
-  titles with no artwork.
+  page is 12 viewports (§6.156). What has not changed is the reason they were found at all:
+  the other three design passes have **still** never seen real data, so the web app and
+  every signed-in screen are judged entirely on four invented titles with no artwork. Every
+  one of the five was invisible until real data arrived, which is the argument for pointing
+  the other three at it and nobody has.
 - ~~**§7 has never been swept for entries that stopped being true.**~~ **Done in §6.154**,
   four sprints after it was filed: `classify`, the component sweep, the attribution condition
   and the fixture's missing binge drop were all closed by §6.147–§6.150 and all four were
@@ -11325,6 +11407,12 @@ and which single claim in this document could not be checked at all:
   land on one date and the calendar's day grouping is finally exercised by the thing it was
   built for. Two remain — a show on a break, and two episodes of one show in a week — and
   both are screen states the design track will keep judging as though they were designs.
+
+  §6.156 adds the dimension nobody had thought of as a case at all: **size**. The fixture's
+  longest show is 24 episodes across 3 seasons; the product's real subject is 1,220 across
+  23. Not a state the fixture is missing — a *scale* it is missing, and the failure it hid
+  was two hundred viewports long. What else the fixture is small about has not been asked
+  since §6.43, which asked it of the provider's fixtures and not of the design library.
 - **The seed's coincidences are a choice nobody made.** The two airing shows share a weekday
   because 49 and 644 are both multiples of seven, which is why three dates carry two rows. It
   is realistic and it is an accident: shift either start by a day and the case disappears

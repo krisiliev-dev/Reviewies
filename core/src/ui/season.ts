@@ -40,3 +40,71 @@ export function bySeason(a: number, b: number): number {
 export function seasonLabel(season: number): string {
   return season === SPECIALS ? 'Specials' : `Season ${season}`;
 }
+
+/**
+ * One season, as a collapsed row says it.
+ *
+ * §6.156. A title page rendered every episode of every season at once, which for One Piece
+ * is 1,220 rows — **170,844 points of scroll, two hundred viewports**, with no pagination,
+ * no collapsing and no way to jump. The fixture's longest show is 1,443 points, so thirty
+ * sprints of design review had never seen the case. §6.151's real-data pass put it on
+ * screen in its first run.
+ */
+export interface SeasonSummary {
+  season: number;
+  /** How many episodes the season has, aired or not. */
+  episodes: number;
+  watched: number;
+  /** `Specials`, `Season 3`. */
+  label: string;
+  /** The row's second line: what is left of the season, in words. */
+  progress: string;
+}
+
+/**
+ * What a collapsed season row says about itself.
+ *
+ * A count, not a bar and not a percentage: the same argument `RowContract.count` makes for
+ * Up Next's *17 more episodes*, and the same complaint it answers. Somebody scanning
+ * twenty-one collapsed rows for where they are needs the number.
+ */
+export function summariseSeasons(
+  groups: ReadonlyArray<readonly [number, ReadonlyArray<{ id: string }>]>,
+  watched: ReadonlySet<string>,
+): SeasonSummary[] {
+  return groups.map(([season, list]) => {
+    const seen = list.filter((e) => watched.has(e.id)).length;
+    return {
+      season,
+      episodes: list.length,
+      watched: seen,
+      label: seasonLabel(season),
+      progress:
+        seen === 0
+          ? `${list.length} episode${list.length === 1 ? '' : 's'}`
+          : seen === list.length
+            ? `All ${list.length} watched`
+            : `${seen} of ${list.length} watched`,
+    };
+  });
+}
+
+/**
+ * Which season a show opens on.
+ *
+ * **The first one you have not finished**, in `bySeason` order — which is the season the
+ * episode Up Next is offering lives in, arrived at from the other direction. Opening on
+ * season 1 would be right exactly once per show and wrong every time after; opening on the
+ * last would put a person watching season 3 of five at the end of season 5.
+ *
+ * Specials sort last, so a viewer part-way through the run never lands on them — the same
+ * decision `bySeason` makes and the three call sites that exclude specials already make.
+ *
+ * A show with nothing watched opens on its first season, and a show entirely watched opens
+ * on its last, both by the same rule rather than by a special case. A single-season show is
+ * therefore always open, which is the point: collapsing is for the shows that need it and
+ * must cost nothing on the shows that do not.
+ */
+export function openSeason(summaries: ReadonlyArray<SeasonSummary>): number | undefined {
+  return (summaries.find((s) => s.watched < s.episodes) ?? summaries.at(-1))?.season;
+}
