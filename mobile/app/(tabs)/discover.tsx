@@ -108,7 +108,9 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       meta={`${item.kind === 'show' ? 'Series' : 'Film'}${item.year ? ` · ${item.year}` : ''}`}
       // Saying why is what separates a recommendation from an advert. In `note` because
       // that is the slot for a sentence about the row rather than a fact about it.
-      note={COPY.discover.because(item.because)}
+      // A trending row is not *because* of anything you watched, and saying it was is a
+      // false sentence on the one line of the card a person actually reads. §6.152.
+      note={item.trending ? COPY.discover.trending : COPY.discover.because(item.because)}
       lead={<Poster url={item.posterUrl} name={item.name} />}
       open={{
         // §6.96: the poster and the title were separate links to the same route under the

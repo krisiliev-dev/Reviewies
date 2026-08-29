@@ -226,10 +226,16 @@ describe('seeding', () => {
 
 describe('feed', () => {
   it('falls back to trending for a new user rather than showing nothing', async () => {
-    // No watches at all, so there is nothing to recommend from.
+    /*
+     * No watches at all, so there is nothing to recommend from — and the row says so by
+     * carrying **no seed**, rather than the literal `'Trending now'` in the slot where a
+     * title goes. That string reached the card as *"Because you watched Trending now"* on
+     * every row, and this clause asserted it. §6.152.
+     */
     const suggestions = await getSuggestions();
     expect(suggestions.length).toBeGreaterThan(0);
-    expect(suggestions[0].because).toEqual(['Trending now']);
+    expect(suggestions[0].trending).toBe(true);
+    expect(suggestions[0].because).toEqual([]);
   });
 
   it('still filters the trending fallback against what you have added', async () => {

@@ -10744,6 +10744,73 @@ produce a case has an opinion about the screen. This is the same sentence with t
 widened as far as it goes: for thirty sprints the design track has been judging an opinion
 about *everything*.
 
+### 6.152 What the fixture could not have shown
+
+**#189.** §6.151's pass listed five things from its first run. Judged, two fixed, one
+retracted, two filed — and the retraction turned into the largest finding of the sprint.
+
+## The title page opened on `SEASON 0`
+
+TMDB numbers specials — OVAs, recaps, Christmas episodes — as season zero, so a numeric
+sort puts them at the top of every real show. `repo.ts` already knows they are not part of
+the run and says so **three times**, one of them naming the case exactly:
+
+> *"Season 0 is specials … They sort before season 1, so including them would make 'Up Next'
+> for One Piece a recap special rather than episode 1. **They remain visible on the show
+> page.**"*
+
+Up Next excludes them, the catch-up sheet excludes them, `airedSeasonSizes` excludes them,
+`classify` refuses to call one a premiere — and the one place that sentence says they
+*should* appear sorted them first and headed them `Season 0`, which is a database row number
+rather than a thing anybody says. `core/src/ui/season.ts` owns both now: specials last,
+called **Specials**.
+
+My brief for this sprint said "`classify` already knows season 0 is never a milestone — the
+list does not". That was right by accident and wrong in scope: it is not one function
+knowing, it is **three call sites acting on it and two screens not**.
+
+## "Because you watched Trending now"
+
+The last-resort feed passed the literal string `'Trending now'` as a `seedName`, so it
+arrived in `because` and both screens rendered that sentence on every row — on the one line
+of the card whose whole job is separating a recommendation from an advert.
+
+It needs a library with nothing **watched** in it: seeds come from watch history, so
+tracking five shows and watching none is exactly the state that reaches it, and no fixture
+pass has ever been in that state. A trending row carries no seed at all now, and
+`COPY.discover.trending` is not a "because".
+
+## And the one that retracted, into something worse
+
+Up Next read *59 more episodes* for One Piece against 1,220 and *33* for It's Always Sunny
+against 255. §6.151 refused to call it a defect without measuring, and measuring took three
+attempts, each wrong in an instructive way:
+
+1. **Re-navigating on every poll** reported `-1` for all five shows — a full app boot per
+   second is slower than the boot, so the row was never on screen when it looked. The app is
+   a live query; the instrument is to arrive once and watch.
+2. **Going to Up Next the instant Track was pressed** emptied the library completely. Which
+   is the finding.
+3. Waiting for the row to say *Tracking* first: **179** for It's Always Sunny, 18 for
+   Severance, 45 for The Bear, 9 for Shōgun — all correct — and **One Piece could not be
+   tracked at all**, the label failing to appear inside thirty seconds.
+
+So the counts were the harness. What replaced them:
+
+- **`track()` is `addToLibrary` then `getEpisodesCached`, and the row says nothing until
+  both finish** — twenty-four sequential season requests for One Piece, over thirty seconds,
+  with the button still reading *Track*.
+- **Navigating away in that window abandons the continuation**, leaving a show tracked with
+  no episodes and an Up Next that is silently empty for it. `search.tsx`'s own header
+  describes that exact state as a bug it fixed — for a *different* cause, a live query
+  re-rendering — and never asked what else could interrupt the same continuation.
+
+Filed as #190 and #191; #191 because `r6-title-one-piece` scrolls **166,912 points**, a
+hundred and ninety-eight viewports of episode list, against the fixture's 1,443.
+
+**A fixture that answers instantly cannot show you that waiting is a state.** Every one of
+these was reachable only with data somebody else made.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10961,6 +11028,12 @@ and which single claim in this document could not be checked at all:
   contrast. Nothing in it asks whether a sentence on the screen is *true*, and the two times
   that has been caught (§6.104's Stats, §6.150's chip) it was caught by somebody happening to
   wonder.
+- **Nothing else waits like a person.** §6.152 found that pressing Track and leaving the
+  screen loses the episode fetch, because the harness did it by accident. Every other suite
+  in this repo waits on a *selector* or a fixed timeout, and against the fixture both are
+  instant — so no suite anywhere has ever been in the window where a write is still running.
+  What else has a continuation somebody can walk out of is not known, and the two screens
+  that showed it are the two that were pointed at real data.
 - **The real pass has been run once and nothing in it has been judged.** §6.151 built the
   instrument and listed five things visible in the first five screenshots; none has been
   measured, and one of them (Up Next's counts) may be the harness photographing a cache that

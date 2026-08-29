@@ -29,6 +29,7 @@ import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
 import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
+import { bySeason as seasonOrder, seasonLabel } from '@reviewies/core/ui/season';
 
 export function TitleDetail() {
   const { id = '' } = useParams();
@@ -77,8 +78,12 @@ export function TitleDetail() {
     };
   }, [titleId, attempt]);
 
+  // `bySeason`, not `a.season - b.season`: specials are season 0 and belong at the end.
+  // The core says why, and three call sites in `repo.ts` already act on it. §6.152.
   const bySeason = new Map<number, CachedEpisode[]>();
-  for (const e of [...episodes].sort((a, b) => a.season - b.season || a.number - b.number)) {
+  for (const e of [...episodes].sort(
+    (a, b) => seasonOrder(a.season, b.season) || a.number - b.number,
+  )) {
     if (!bySeason.has(e.season)) bySeason.set(e.season, []);
     bySeason.get(e.season)!.push(e);
   }
@@ -198,9 +203,7 @@ export function TitleDetail() {
 
       {[...bySeason.entries()].map(([season, eps]) => (
         <section key={season} className="mb-6">
-          <Section className="px-1">
-            Season {season}
-          </Section>
+          <Section className="px-1">{seasonLabel(season)}</Section>
           <ul className="flex flex-col gap-1.5">
             {eps.map((e) => (
               <EpisodeRow

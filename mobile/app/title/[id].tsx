@@ -33,6 +33,7 @@ import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
 import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
+import { bySeason as seasonOrder, seasonLabel } from '@reviewies/core/ui/season';
 
 export default function TitleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -82,9 +83,11 @@ export default function TitleScreen() {
   }, [titleId, attempt]);
 
   const seasons = useMemo(() => {
+    // `bySeason`, not `a.season - b.season`: specials are season 0 and belong at the end.
+    // The core says why, and three call sites in `repo.ts` already act on it. §6.152.
     const bySeason = new Map<number, CachedEpisode[]>();
     for (const episode of [...(episodes ?? [])].sort(
-      (a, b) => a.season - b.season || a.number - b.number,
+      (a, b) => seasonOrder(a.season, b.season) || a.number - b.number,
     )) {
       if (!bySeason.has(episode.season)) bySeason.set(episode.season, []);
       bySeason.get(episode.season)!.push(episode);
@@ -205,7 +208,7 @@ export default function TitleScreen() {
 
         {seasons.map(([season, list]) => (
           <View key={season} style={styles.season}>
-            <Section>Season {season}</Section>
+            <Section>{seasonLabel(season)}</Section>
             {list.map((episode) => (
               <EpisodeRow
                 key={episode.id}

@@ -245,6 +245,18 @@ export const COPY = {
      */
     because: (titles: string[]) =>
       `Because you watched ${titles.slice(0, 2).join(' and ')}`,
+    /**
+     * What the last-resort feed says instead.
+     *
+     * The fallback passed the literal `'Trending now'` as a seed, so `because` above
+     * rendered **"Because you watched Trending now"** on every row — a false sentence on
+     * the screen whose whole claim is that saying *why* separates a recommendation from an
+     * advert. Nothing had seen it because reaching the fallback needs a library with
+     * nothing **watched** in it, and no fixture pass is ever in that state. §6.152.
+     *
+     * Not a "because" at all, so it does not pretend to be one.
+     */
+    trending: 'Popular right now',
   },
 
   lists: {

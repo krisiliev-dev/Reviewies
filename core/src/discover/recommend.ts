@@ -19,6 +19,19 @@ export interface Suggestion extends SearchResult {
   /** Titles from your library that led here, for "because you watched…". */
   because: string[];
   score: number;
+  /**
+   * Nothing in the library led here — this is the last-resort trending feed.
+   *
+   * The fallback used to pass the literal string `'Trending now'` as a `seedName`, so it
+   * arrived in `because` and both screens rendered **"Because you watched Trending now"** on
+   * every row. A false sentence, and a slightly absurd one, on the screen whose whole claim
+   * is that saying *why* is what separates a recommendation from an advert.
+   *
+   * It had never been seen because it needs a library with nothing *watched* in it — seeds
+   * come from watch history, so tracking five shows and watching none of them is exactly
+   * the state that reaches it, and no fixture pass has ever been in that state. §6.152.
+   */
+  trending?: boolean;
 }
 
 /** Everything the user has already seen, is tracking, or has deliberately parked. */
@@ -107,7 +120,7 @@ export async function seedTitles(limit = 5): Promise<Array<{ titleId: string; na
  * different seeds is a stronger signal than one long list.
  */
 export function mergeSuggestions(
-  lists: Array<{ seedName: string; results: SearchResult[] }>,
+  lists: Array<{ seedName: string; results: SearchResult[]; trending?: boolean }>,
   excluded: Set<string>,
   limit = 30,
   /** Names of library rows that have no provider ID yet — see `excludedNames`. */
@@ -115,7 +128,7 @@ export function mergeSuggestions(
 ): Suggestion[] {
   const merged = new Map<string, Suggestion>();
 
-  for (const { seedName, results } of lists) {
+  for (const { seedName, results, trending } of lists) {
     // Position matters: the top of each list is a stronger signal than the tail.
     results.forEach((result, index) => {
       if (excluded.has(result.id)) return;
@@ -129,7 +142,14 @@ export function mergeSuggestions(
         existing.score += weight;
         if (!existing.because.includes(seedName)) existing.because.push(seedName);
       } else {
-        merged.set(result.id, { ...result, because: [seedName], score: weight });
+        merged.set(result.id, {
+          ...result,
+          // A trending row is not *because* of anything, so it carries no seed at all
+          // rather than a seed that is not a title.
+          because: trending ? [] : [seedName],
+          score: weight,
+          ...(trending ? { trending: true } : {}),
+        });
       }
     });
   }
@@ -169,7 +189,7 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
   try {
     const trending = await getProvider().getTrending();
     return mergeSuggestions(
-      [{ seedName: 'Trending now', results: trending }],
+      [{ seedName: '', results: trending, trending: true }],
       excluded,
       limit,
       names,

@@ -103,7 +103,9 @@ function SuggestionRow({
       meta={`${suggestion.kind === 'show' ? 'Series' : 'Film'}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
       // Saying why is what separates a recommendation from an advert. In `note` because
       // that is the slot for a sentence about the row rather than a fact about it.
-      note={COPY.discover.because(suggestion.because)}
+      // A trending row is not *because* of anything you watched, and saying it was is a
+      // false sentence on the one line of the card a person actually reads. §6.152.
+      note={suggestion.trending ? COPY.discover.trending : COPY.discover.because(suggestion.because)}
       open={{ name: `Open ${suggestion.name}`, to: `/title/${encodeURIComponent(suggestion.id)}` }}
       lead={
         <Poster
