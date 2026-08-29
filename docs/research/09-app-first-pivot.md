@@ -11720,6 +11720,129 @@ shaped like an absence — twelve of them — and fails on anything neither regi
 excused. The fourth case is the §6.146 requirement written as a type: `shot: null` needs a
 `why`, and a `why` under sixty characters is not one.
 
+### 6.163 One library and one stub, not nine walks
+
+**#199.** §6.162 registered fourteen empty states and photographed four. Nine had no
+photograph, and reading their reasons showed they were not nine problems. They were two: a
+library where everything is caught up, and a backend that answers with nothing.
+
+**Twelve of the fourteen are photographed now**, and the two that are not share one measured
+reason rather than two guesses.
+
+## The second library
+
+`design/library.mjs` exported one CSV, and every pass in the directory has used it. §6.142
+seeded it deliberately half-finished so the calendar and Up Next have rows — which is exactly
+why `upNext.allCaughtUp` could never be reached. `exportCsv(watched)` takes the rule now, and
+`CAUGHT_UP_CSV` is the same four shows with every episode that has **aired** marked watched:
+131 rows against 122.
+
+`aired >= 0`, not a count. A rule expressed as "everything so far" cannot make by hand the
+defect §6.146 spent a sprint on — a watch record for an episode that has not gone out yet —
+the way a per-show number can.
+
+It runs in a **context of its own** at the end of `capture.mjs`: same build, same server,
+fresh IndexedDB. A second library, not a second pass.
+
+`discover.empty` needed one more act on top of it, and that is the part §6.162 got wrong. An
+empty library does not empty Discover — it falls back to trending, and an empty library
+excludes nothing from trending. A *caught-up* library excludes the four series; the film,
+Quiet Harbour, is not in a TV Time export and is correctly still offered. So the walk parks
+it on the watchlist, which is what a person does with a film they are not watching tonight
+and which `excludedTitleIds` counts.
+
+## The stub that answers with nothing
+
+`stubBackend(page, baseUrl, rows = ROWS)` takes its answers as an argument, and `NO_ROWS` and
+`ONE_EMPTY_LIST` are the two variants. Re-pointing it at the end of `capture-signedin.mjs` —
+after everything that needs the seeded answers — produced four shots and needed no second
+walk: the session, the watched episode and the server's spoiler gate are all still open from
+the journey above.
+
+`ONE_EMPTY_LIST` exists because `lists.listEmpty` is a third answer rather than a shade of the
+second. *"Nothing on this list yet"* is a claim about somebody's own work, and §6.57 rewrote it
+after it was being said about a request that had failed. No photograph had ever shown it said
+truthfully.
+
+`people.followingEmpty` and `people.followersEmpty` point at **one shot**, on purpose: they are
+drawn one above the other on the same screen, and photographing them apart would be
+photographing a screen that does not exist.
+
+## What the caught-up screen says, and what it does not
+
+`00-caughtup-upnext.png` — the settled state of the screen this product opens on, seen for
+the first time:
+
+> **All caught up — nothing has aired that you have not seen.**
+> `[ Find something to watch ]`
+
+The sentence is true and the offer is wrong. This person is caught up on four shows, **two of
+which are still running** — The Long Dark's next episode and Salt Flats' eight-episode drop
+are both in the calendar this same run photographs. What they are is *waiting*, and the screen
+they will open every day between episodes has nothing to say about the thing they are waiting
+for. It sends them to search for something else instead.
+
+Not fixed here, and that is a scope judgement rather than an oversight: §6.162's finding was a
+tone on an existing control and cost two lines, while this needs a sentence made of upcoming
+data on a screen that currently reads none. It is filed with the photograph as its evidence.
+
+## And what the empty list said
+
+`00-list-empty.png` is the same shape, one screen over and small enough to fix here.
+
+> **Saturday matinees** · 0 titles · private
+> Nothing on this list yet.
+> *Make public*
+
+One sentence, and the only control offers to **publish a list with nothing on it**. The way to
+put something on a list is `AddToList`, which lives on a title page and which this screen never
+mentions. Its two neighbours both name the way out — `lists.empty` says *"Make one above"*,
+`watchlist.empty` says *"Add something from Search"* — and this was the odd one of the three.
+It says *"Nothing on this list yet. Open a title and use Add to list."* now.
+
+Two findings from twelve photographs, both the same shape: a true sentence over an offer that
+answers a different question. Neither was visible from the source, and both took ten seconds
+of looking.
+
+## The two that are declined
+
+`upNext.matchingImport` and `calendar.emptyUnmatched` both need a library that has landed and
+not yet been matched. Both were attempted:
+
+- Arriving at Up Next after the import, the screen already says *"Matching… 0 of 0"* over a
+  full list.
+- Walking straight to the calendar — bypassing Up Next, the only screen `MatchImports` mounts
+  on, which should have left the shows unmatched — found *"The Long Dark S2E10 · SEASON
+  FINALE"*. A full calendar.
+
+One cause: against `FixtureProvider` the import resolves every name as it reads it, so
+**nothing is ever unmatched in this build**. The one way in is a provider that answers slowly,
+and that knob would live in `core/src/metadata/fixtures.ts` — which is what a build with no
+TMDB token actually uses. Product code added for a harness. Declined rather than deferred, and
+written once in the register and cited twice, so the measurement cannot drift into two
+accounts of itself.
+
+## What the plants found
+
+Five, and two of them found gaps rather than confirming guards:
+
+| plant | result |
+|---|---|
+| a signed-in empty shot renamed out of the capture script | red — *says who has looked at it* |
+| a register entry pointed at a shot nobody takes | red — the same |
+| `00-caughtup-upnext` renamed out of `capture.mjs` | red — the same |
+| `CAUGHT_UP_CSV` pointed back at `watchedThrough` | **green.** Nothing held it |
+| `CAUGHT_UP_CSV` marking every episode, aired or not | **green.** Nothing held it |
+
+The design pass catches both at run time — the shot fails by name on `mustContain` — but no
+clause did, and a fixture that silently stops meaning what it is named is how §6.142 lost three
+sprints. `designLibrary.test.ts` now holds it in two halves: every aired episode watched, and
+nothing unaired watched. Both plants go red against it.
+
+The first plant of the sprint also did not apply — the indentation in the edit was wrong — and
+the needle count said so before the run did. That is the third time counting the needle first
+has caught a plant that would otherwise have been read as a guard working.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12529,20 +12652,29 @@ and which single claim in this document could not be checked at all:
   it the clause fails saying the app went quiet. Left alone rather than changed on suspicion,
   which is the same judgement §6.161 recorded for it.
 
-- ~~**What is *not* a second state anywhere.**~~ **Enumerated in §6.162** —
+- ~~**What is *not* a second state anywhere.**~~ **Closed in §6.162 and §6.163.**
   `core/src/ui/emptyStates.ts` holds fourteen, `emptyStates.test.ts` sweeps `copy.ts` for
-  anything unregistered, and four of them are photographed for the first time. What remains
-  open is narrower and is written into the register itself: **nine of the fourteen have no
-  photograph**, each with the reason beside it. Two of those reasons were measured this sprint
-  and are the interesting kind — Discover is not empty on an empty library, and the matching
-  state is over before a navigation can reach it against the fixture provider. Both need a
-  second seeded library rather than a second walk, and until one exists nine states of this
-  product have never been looked at.
+  anything unregistered, and **twelve are photographed**. The remaining two —
+  `upNext.matchingImport` and `calendar.emptyUnmatched` — are declined rather than open: both
+  need a library that has landed and not been matched, and against `FixtureProvider` the
+  import resolves every name as it reads it, so no such moment exists. The one way in is a
+  provider that answers slowly, and that knob would live in the provider a token-less build
+  actually uses.
 
   Still entirely unregistered: a form mid-entry, and a failed write outside
   `app/failures.mjs`. The register is about absence; those are about states of a *control*,
   and `reveals.ts`'s `NOT_A_REVEAL` names them as in-flight without claiming anybody has seen
   them.
+
+- **Up Next has nothing to say to somebody who is waiting.** §6.163 photographed
+  `00-caughtup-upnext.png` for the first time: *"All caught up — nothing has aired that you
+  have not seen"* over a filled **Find something to watch**. The person is caught up on four
+  shows, two of which are still running, and the calendar in the same run holds The Long
+  Dark's next episode and Salt Flats' eight-episode drop. The screen they will open every day
+  between episodes says nothing about the thing they are waiting for and sends them to search
+  for something else. The sentence is true; the offer answers a different question. Not fixed
+  in §6.163 because it needs a sentence made of upcoming data on a screen that reads none —
+  which is a task, not a tail-end edit.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column

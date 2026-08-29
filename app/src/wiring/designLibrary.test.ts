@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCHEDULE, airedDaysAgo, CSV } from '../../../design/library.mjs';
+import { SCHEDULE, airedDaysAgo, CAUGHT_UP_CSV, CSV } from '../../../design/library.mjs';
 import { FixtureProvider } from '@reviewies/core/metadata/fixtures';
 import { classify, UPCOMING_DAYS, type EpisodeKind } from '@reviewies/core/calendar/upcoming';
 import { dayKey, startOfDay } from '@reviewies/core/time';
@@ -244,5 +244,41 @@ describe('the calendar the seed produces', () => {
     // satisfy them and would be a different fixture with the same name.
     const cadences = new Set(SCHEDULE.map((s) => s.cadence));
     expect([...cadences].sort()).toEqual(['drop', 'weekly']);
+  });
+
+  it('has a second library that is actually caught up, and only up to today', () => {
+    /*
+     * `CAUGHT_UP_CSV` is what §6.163 photographed `upNext.allCaughtUp` and `discover.empty`
+     * from, and its whole meaning is a comparison: every episode that has **aired** is
+     * watched, and nothing that has not. Planted by pointing it back at `watchedThrough`,
+     * and nothing failed — the design pass caught it at run time, by name, and no clause did.
+     *
+     * Two halves, and the second is the one that matters. A library claiming to have watched
+     * something unaired is the exact defect §6.146 spent a sprint on, arriving here by the
+     * door marked "make it more complete".
+     */
+    const rows = CAUGHT_UP_CSV.split('\n').slice(1).map((line) => line.split(','));
+    const seen = new Set(rows.map((r) => `${r[0]}|${r[1]}|${r[2]}`));
+
+    const missing: string[] = [];
+    const unaired: string[] = [];
+    for (const show of SCHEDULE) {
+      let index = 0;
+      show.seasons.forEach((episodes: number, s: number) => {
+        for (let n = 1; n <= episodes; n++) {
+          index++;
+          const aired = airedDaysAgo(show, index, s + 1) >= 0;
+          const has = seen.has(`${show.name}|${s + 1}|${n}`);
+          if (aired && !has) missing.push(`${show.name} S${s + 1}E${n}`);
+          if (!aired && has) unaired.push(`${show.name} S${s + 1}E${n}`);
+        }
+      });
+    }
+    expect(missing, 'the caught-up library has aired episodes it has not watched').toEqual([]);
+    expect(unaired, 'the caught-up library claims to have watched something unaired').toEqual([]);
+
+    // And that it is a *different* library from the one every other pass uses, or the two
+    // shots taken from it are shots of the same thing under another name.
+    expect(CAUGHT_UP_CSV.length).toBeGreaterThan(CSV.length);
   });
 });

@@ -15,7 +15,15 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
-import { EPISODE_ID, HARNESS_SUPABASE_URL, serverAdmits, signIn, stubBackend } from './signedIn.mjs';
+import {
+  EPISODE_ID,
+  HARNESS_SUPABASE_URL,
+  NO_ROWS,
+  ONE_EMPTY_LIST,
+  serverAdmits,
+  signIn,
+  stubBackend,
+} from './signedIn.mjs';
 import { longerScreens, reveal, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4201';
@@ -266,6 +274,82 @@ await toTitle();
 await press('15-title-addtolist', /Add to list/i);
 await toTitle();
 await press('15-title-warnings', /content warnings/i);
+
+/*
+ * The same account with nothing in it. §6.163.
+ *
+ * Five of `core/src/ui/emptyStates.ts`'s entries are behind an account and every one was
+ * unphotographed for one reason: this pass seeds two lists, a conversation and a follow, so
+ * that the shots above have something to show. Re-pointing the stub at `NO_ROWS` is five
+ * first photographs and no second walk — the session, the watched episode and the server's
+ * spoiler gate are all still open from the journey above.
+ *
+ * **Last in the file**, because everything above needs the seeded answers. The same reason
+ * the reveals are last in `capture.mjs`.
+ */
+await stubBackend(page, HARNESS_SUPABASE_URL, NO_ROWS);
+
+/*
+ * An empty conversation, walked to rather than deep-linked — `comments/[targetId]` is a
+ * dynamic route and this file's own header records what a deep link to one does.
+ *
+ * Not the same screen as `19-comments-sealed`, and that is the point of having both: sealed
+ * is *withheld*, empty is *an invitation*. §6.57's distinction, on one route.
+ */
+await toTitle();
+const reopen = page.getByRole('link', { name: /^Comments on season 1 episode 1$/i });
+if (await reopen.count()) {
+  await reopen.click();
+  await page.waitForTimeout(2500);
+  await shoot(page, {
+    out: OUT,
+    name: '00-comments-empty',
+    mustContain: 'Be the first',
+    problems: hollow,
+    scrolls,
+  });
+} else {
+  hollow.push('00-comments-empty: no way through to the conversation, so the empty state is unphotographed');
+}
+
+// No lists at all, over the box that makes one.
+await page.goto(`${BASE}/lists`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1800);
+await shoot(page, {
+  out: OUT,
+  name: '00-lists-empty',
+  mustContain: 'No lists yet',
+  problems: hollow,
+  scrolls,
+});
+
+/*
+ * Both halves of People at once, which is why this is one shot and not two.
+ *
+ * `followingEmpty` and `followersEmpty` are separate sentences — one names what to do about
+ * it and the other cannot — and they are drawn one above the other on the same screen. The
+ * register points both entries at this shot on purpose: photographing them apart would be
+ * photographing a screen that does not exist.
+ */
+await page.goto(`${BASE}/people`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(2500);
+await shoot(page, {
+  out: OUT,
+  name: '00-people-empty',
+  mustContain: 'Nobody yet',
+  problems: hollow,
+  scrolls,
+});
+
+/*
+ * And a list that exists with nothing on it, which is a third answer rather than a shade of
+ * the second. §6.57 rewrote this sentence after it was being said about a request that had
+ * failed, and no photograph has ever shown it being said truthfully.
+ */
+await stubBackend(page, HARNESS_SUPABASE_URL, ONE_EMPTY_LIST);
+await page.goto(`${BASE}/lists`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1800);
+await press('00-list-empty', /Saturday matinees/i);
 
 const longer = longerScreens(scrolls);
 console.log(

@@ -180,7 +180,49 @@ export function serverAdmits(targetId) {
   admitted.add(targetId);
 }
 
-export async function stubBackend(page, baseUrl) {
+/**
+ * The same account with nothing in it. §6.163.
+ *
+ * Five of the register's empty states are behind an account, and every one of them was
+ * unphotographed for the same reason: `ROWS` seeds two lists, a conversation and a follow —
+ * seeded *precisely* so `18-lists-in`, `20-comments-in` and `17-people-in` have something to
+ * show. One stub answering nothing is five shots, not five walks.
+ *
+ * `profiles` keeps you in it. An account screen with no profile row is a different state
+ * again — a failure, not an absence — and photographing it under this name would be the §6.57
+ * confusion this register exists to keep apart.
+ */
+export const NO_ROWS = { profiles: ROWS.profiles, follows: [], lists: [], list_items: [], comments: [] };
+
+/**
+ * One list, with nothing on it — which is a different sentence from having no lists.
+ *
+ * `lists.listEmpty` is the §6.57 case: *"Nothing on this list yet"* is a claim about somebody's
+ * own work, and it was being said about a request that had failed. It needs a list that exists
+ * and is empty, so `NO_ROWS` cannot produce it and neither can the seeded set.
+ */
+export const ONE_EMPTY_LIST = {
+  ...NO_ROWS,
+  lists: [
+    {
+      id: 'list-3',
+      user_id: USER_ID,
+      name: 'Saturday matinees',
+      description: null,
+      is_public: false,
+      deleted: false,
+      list_items: [{ count: 0 }],
+    },
+  ],
+};
+
+/**
+ * @param rows Which table of answers to serve. Defaults to the seeded library above; the two
+ *   exports over this one are the empty variants, and they are the whole of §6.163's
+ *   signed-in half.
+ */
+export async function stubBackend(page, baseUrl, rows = ROWS) {
+  await page.unroute(`${baseUrl}/**`).catch(() => {});
   await page.route(`${baseUrl}/**`, async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname;
@@ -192,24 +234,24 @@ export async function stubBackend(page, baseUrl) {
     const table = /^\/rest\/v1\/([a-z_]+)/.exec(path)?.[1];
     if (!table) return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
 
-    let rows = ROWS[table] ?? [];
+    let out = rows[table] ?? [];
     // The policy first, then the query — which is the order Postgres applies them in.
-    if (table === 'comments') rows = rows.filter((r) => admitted.has(r.target_id));
+    if (table === 'comments') out = out.filter((r) => admitted.has(r.target_id));
     for (const [param, value] of url.searchParams) {
       if (['select', 'order', 'limit', 'offset'].includes(param)) continue;
       const [op, ...rest] = value.split('.');
       const wanted = rest.join('.');
-      if (op === 'eq') rows = rows.filter((r) => String(r[param]) === wanted);
+      if (op === 'eq') out = out.filter((r) => String(r[param]) === wanted);
       else if (op === 'in') {
         const set = new Set(wanted.replace(/^\(|\)$/g, '').split(',').map((s) => s.replace(/^"|"$/g, '')));
-        rows = rows.filter((r) => set.has(String(r[param])));
+        out = out.filter((r) => set.has(String(r[param])));
       }
     }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      headers: { 'content-range': `0-${Math.max(rows.length - 1, 0)}/${rows.length}` },
-      body: JSON.stringify(rows),
+      headers: { 'content-range': `0-${Math.max(out.length - 1, 0)}/${out.length}` },
+      body: JSON.stringify(out),
     });
   });
 }

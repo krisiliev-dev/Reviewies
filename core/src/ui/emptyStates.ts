@@ -60,6 +60,15 @@ export interface EmptyState {
  * must reference it, every non-null `shot` must be filed by a capture script, and every
  * empty-looking key in `copy.ts` must be here or in `NOT_AN_EMPTY_STATE`.
  */
+/**
+ * Why the two import states have no photograph, said once. §6.163.
+ *
+ * They were attempted separately and failed for one cause, so the cause is written once and
+ * cited twice rather than drifting into two accounts of the same measurement.
+ */
+const reason =
+  'Both this and its neighbour need a library that has landed and not yet been matched, and §6.163 measured that no such moment exists in this build: against `FixtureProvider` the import resolves every name as it reads it. Walking straight to the calendar — bypassing Up Next, the only screen `MatchImports` mounts on — still found a full calendar. The one way in is a provider that answers slowly, and that knob would live in `core/src/metadata/fixtures.ts`, which is what a build with no TMDB token actually uses. Product code added for a harness, so it is declined rather than deferred.';
+
 export const EMPTY_STATES: readonly EmptyState[] = [
   {
     copy: 'upNext.stillImporting',
@@ -72,14 +81,15 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     screens: ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx'],
     says: 'the import landed and matching is filling in what it could not carry',
     shot: null,
-    why: 'Attempted and measured. Arriving at Up Next after the import, the screen already says "Matching… 0 of 0" over a full list: the fixture provider answers instantly, so the three imported shows are matched before the pass can navigate. §6.146 — a fixture that cannot produce the case has an opinion about the screen. Reaching it needs either a provider that is slow on purpose or an import large enough to outlast a navigation.',
+    why:
+      'Attempted twice. Arriving at Up Next after the import, the screen already says "Matching… 0 of 0" over a full list. ' +
+      reason,
   },
   {
     copy: 'upNext.allCaughtUp',
     screens: ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx'],
     says: 'nothing has aired that you have not seen — the settled empty state',
-    shot: null,
-    why: 'Needs a library where every aired episode is watched and nothing is unmatched. The design fixture is built the other way on purpose — §6.142 spent a sprint making sure the calendar and Up Next have rows — so reaching this means a second seeded library, not a second walk.',
+    shot: '00-caughtup-upnext',
   },
   {
     copy: 'watchlist.empty',
@@ -91,8 +101,7 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     copy: 'discover.empty',
     screens: ['app/src/screens/Discover.tsx', 'mobile/app/(tabs)/discover.tsx'],
     says: 'nothing to suggest until something is tracked',
-    shot: null,
-    why: 'Attempted, and the assumption behind it was wrong. An empty library does *not* empty Discover: the screen renders `Popular right now` from the provider and the pass photographed that instead. `discover.empty` needs `recommend()` to return **nothing** — a library where everything suggestable is already watched or tracked — which is the same seeded library `upNext.allCaughtUp` needs. §6.146.',
+    shot: '00-discover-empty',
   },
   {
     copy: 'calendar.empty',
@@ -105,7 +114,9 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     screens: ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx'],
     says: 'nothing airing *because* imported shows still need matching — §6.56',
     shot: null,
-    why: 'Needs an imported library that is still unmatched, which the fixture pass deliberately waits out: `capture.mjs` polls until matching finishes before photographing anything, because §6.142 found it reviewing half-filled screens. The state is real and lasts about a minute on a real import; catching it means a pass that does not wait.',
+    why:
+      'Attempted by walking to the calendar without visiting Up Next, and the calendar was full. ' +
+      reason,
   },
   {
     copy: 'stats.empty',
@@ -117,22 +128,19 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     copy: 'lists.empty',
     screens: ['app/src/screens/Lists.tsx', 'mobile/app/lists.tsx'],
     says: 'no lists yet, and that one can be made above',
-    shot: null,
-    why: 'Lists need an account, so this is the signed-in pass — and `signedIn.mjs` seeds two lists precisely so `18-lists-in` and `18-lists-open` have something to show. Reaching this means a second stubbed backend that answers with none.',
+    shot: '00-lists-empty',
   },
   {
     copy: 'lists.listEmpty',
     screens: ['app/src/screens/Lists.tsx', 'mobile/app/lists.tsx'],
     says: 'this list has nothing on it — a claim about somebody’s own work, so §6.57 applies',
-    shot: null,
-    why: 'The same stubbed backend, one level down: it would need a list with no `list_items`. Worth having, because this is the sentence §6.57 rewrote after it was being said about a request that had failed.',
+    shot: '00-list-empty',
   },
   {
     copy: 'comments.empty',
     screens: ['app/src/screens/EpisodeComments.tsx', 'mobile/app/comments/[targetId].tsx'],
     says: 'nobody has said anything about this episode yet — an invitation, not a status',
-    shot: null,
-    why: 'Needs an account and an episode with no comments. `signedIn.mjs` stubs comments so `20-comments-in` has a conversation to show; the empty half is one more stub away and has never been asked for.',
+    shot: '00-comments-empty',
   },
   {
     copy: 'comments.sealed',
@@ -144,15 +152,14 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     copy: 'people.followingEmpty',
     screens: ['app/src/screens/People.tsx', 'mobile/app/people.tsx'],
     says: 'you follow nobody yet, and the search above is how that changes',
-    shot: null,
-    why: 'The signed-in pass seeds a follow so `17-people-in` shows a person. Both halves of this screen are empty on a new account and neither has been photographed.',
+    /** One shot for both halves: they are drawn one above the other on the same screen. */
+    shot: '00-people-empty',
   },
   {
     copy: 'people.followersEmpty',
     screens: ['app/src/screens/People.tsx', 'mobile/app/people.tsx'],
     says: 'nobody follows you — the one empty state with nothing to offer about it',
-    shot: null,
-    why: 'As above, and this one cannot be fixed by the person reading it, which is why it says less. Worth a photograph for exactly that reason.',
+    shot: '00-people-empty',
   },
 ];
 

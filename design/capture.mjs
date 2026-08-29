@@ -36,7 +36,7 @@ mkdirSync(OUT, { recursive: true });
  * Two seasons of the two multi-season fixtures and a run of the long one: enough rows that
  * a list is judged as a list, and enough left unwatched that Up Next has something in it.
  */
-import { CSV } from './library.mjs';
+import { CAUGHT_UP_CSV, CSV } from './library.mjs';
 
 const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -1116,6 +1116,102 @@ await reveal(page, {
   problems: unshot,
   scrolls,
 });
+
+/*
+ * The caught-up library, in a context of its own. §6.163.
+ *
+ * Two of the states `core/src/ui/emptyStates.ts` registers are not about a screen at all —
+ * they are about a **library**. `upNext.allCaughtUp` needs nothing aired left unwatched, and
+ * `discover.empty` needs the recommender to have nothing left to offer, which §6.162 measured
+ * is *not* the same as an empty library: Discover falls back to trending, and an empty library
+ * excludes nothing from it.
+ *
+ * A second context rather than a second pass: same build, same server, a fresh IndexedDB, and
+ * `CAUGHT_UP_CSV` — the same four shows with every aired episode watched. Nine more rows than
+ * the library above, and a different app.
+ *
+ * Last in the file for the reason the reveals are: it is the step with nothing after it, so it
+ * cannot leave the app in a state the next screen is not worth photographing in.
+ */
+const settled = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const done = await settled.newPage();
+done.on('pageerror', (e) => console.log('PAGEERROR (caught up)', e.message));
+try {
+  await done.goto('http://localhost:4200/');
+  await done.waitForTimeout(2500);
+  done.on('filechooser', (c) =>
+    c.setFiles({ name: 'episodes.csv', mimeType: 'text/csv', buffer: Buffer.from(CAUGHT_UP_CSV) }).catch(() => {}));
+  await done.getByRole('button', { name: /Import from TV Time/i }).click();
+
+  /*
+   * `00-calendar-unmatched` is **not** here, and the attempt is why. §6.163.
+   *
+   * `calendar.emptyUnmatched` needs a landed library that has not been matched, and the walk
+   * for it looked right: matching runs from `MatchImports`, which is mounted on Up Next and
+   * nowhere else, so going straight to the calendar should have found the shows still
+   * unmatched. It found a full calendar — *"The Long Dark S2E10 · SEASON FINALE"* — because
+   * against `FixtureProvider` the import resolves every name as it reads it. Nothing is ever
+   * unmatched in this build. See `emptyStates.ts`, where it and `matchingImport` now share one
+   * measured reason.
+   */
+  for (let i = 0; i < 40; i++) {
+    if (/Your history is in/.test(await done.locator('body').innerText())) break;
+    await done.waitForTimeout(500);
+  }
+
+  // Now Up Next, which starts matching by being mounted, and wait for it to finish.
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await done.goto('http://localhost:4200/');
+    await done.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
+    let quiet = 0;
+    for (let i = 0; i < 60 && quiet < 4; i++) {
+      quiet = /Matching…/.test(await done.locator('body').innerText()) ? 0 : quiet + 1;
+      await done.waitForTimeout(500);
+    }
+    if (/All caught up/.test(await done.locator('body').innerText())) break;
+  }
+  await shoot(done, {
+    out: OUT,
+    name: '00-caughtup-upnext',
+    mustContain: 'All caught up',
+    problems: unshot,
+    scrolls,
+    settle: 1200,
+  });
+
+  /*
+   * And Discover, once the film is parked too.
+   *
+   * The CSV carries episodes, so it tracks the four series and cannot touch Quiet Harbour —
+   * which the recommender then offers, correctly, and which is why an empty Discover needs one
+   * more act rather than one more row. Parking it on the watchlist is what a person does with
+   * a film they are not watching tonight, and `excludedTitleIds` counts the watchlist.
+   */
+  await done.goto('http://localhost:4200/discover');
+  await done.waitForTimeout(2000);
+  const park = done.getByRole('button', { name: /Quiet Harbour to (your )?watchlist/i }).first();
+  if (await park.count()) {
+    await park.click();
+    await done.waitForTimeout(1200);
+  } else {
+    unshot.push('00-discover-empty: nothing on Discover offered to park Quiet Harbour, so the feed cannot be emptied');
+  }
+  await done.goto('http://localhost:4200/discover');
+  for (let i = 0; i < 20; i++) {
+    if (/Nothing new to suggest yet/.test(await done.locator('body').innerText())) break;
+    await done.waitForTimeout(400);
+  }
+  await shoot(done, {
+    out: OUT,
+    name: '00-discover-empty',
+    mustContain: 'Nothing new to suggest yet',
+    problems: unshot,
+    scrolls,
+    settle: 1200,
+  });
+} finally {
+  await settled.close();
+}
 
 await browser.close();
 if (unseen.length) {

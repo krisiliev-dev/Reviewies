@@ -263,8 +263,18 @@ export const COPY = {
     /** The phone's, which says why rather than reciting the build's configuration. */
     needsAccount: 'Lists need an account — they are meaningful mainly when they can be shared.',
     empty: 'No lists yet. Make one above, then add titles to it.',
-    /** The web's: "Empty so far" does not say what the list is empty of. */
-    listEmpty: 'Nothing on this list yet.',
+    /**
+     * The web's: "Empty so far" does not say what the list is empty of — and until §6.163 it
+     * did not say what to do about it either.
+     *
+     * `00-list-empty.png` is the first photograph of this state, and it shows one sentence
+     * over a single control reading **Make public**: an offer to publish a list with nothing
+     * on it. The way to put something on a list is `AddToList`, which lives on a title page
+     * and which this screen never mentions. Its two neighbours both name the way out —
+     * `lists.empty` says "Make one above", `watchlist.empty` says "Add something from Search"
+     * — and this one was the odd one of the three.
+     */
+    listEmpty: 'Nothing on this list yet. Open a title and use Add to list.',
     /**
      * Signed out on a build that *does* have sync configured.
      *

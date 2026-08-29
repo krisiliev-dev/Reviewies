@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 922, app: 620, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 922, app: 621, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -248,8 +248,18 @@ describe('every workspace', () => {
      * `['00-…']` tuple satisfies, so one floor over two lists would let three deleted routes
      * hide behind three added empties. `EMPTY_FIRST` is objects for exactly that reason.
      */
-    'design/capture.mjs#empty': { pattern: /name: '00-/g, least: 3 },
-    'design/capture-signedin.mjs#reveals': { pattern: /^\s*await press\(/gm, least: 3 },
+    'design/capture.mjs#empty': { pattern: /name: '00-/g, least: 5 },
+    /*
+     * And the signed-in half. §6.163.
+     *
+     * Five of the register's entries are behind an account, and one stub answering nothing
+     * reached all five. They are counted here rather than folded into the pass's `hollow`
+     * total because a walk deleted and a clause deleted are different losses: the first
+     * leaves the register pointing at a shot nobody takes, which `emptyStates.test.ts`
+     * catches, and the second leaves the pass photographing whatever it finds.
+     */
+    'design/capture-signedin.mjs#empty': { pattern: /name: '00-/g, least: 3 },
+    'design/capture-signedin.mjs#reveals': { pattern: /^\s*await press\(/gm, least: 4 },
     /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *
@@ -260,7 +270,7 @@ describe('every workspace', () => {
      * seven things it refuses to photograph without, and every one of them was added
      * because a run had already produced a screenshot that showed none of it.
      */
-    'design/capture-signedin.mjs': { pattern: /hollow\.push\(/g, least: 7 },
+    'design/capture-signedin.mjs': { pattern: /hollow\.push\(/g, least: 8 },
     /*
      * And the web's pass, by its clauses for the same reason — it reaches its routes by
      * address rather than by walking, but its ten routes are a table inside a function and
