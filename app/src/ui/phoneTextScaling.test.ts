@@ -73,9 +73,19 @@ describe('text scaling on the phone', () => {
     expect(phone).toMatch(/const MIN_HALF = 24;/);
 
     const web = readFileSync(resolve(ROOT, 'app/src/ui/StarRating.tsx'), 'utf8');
-    // The className attributes only. The comment above them names the mistake it is
-    // remembering, and a test that reads prose would fail on the explanation.
-    const classNames = [...web.matchAll(/className="([^"]*)"/g)].map(([, value]) => value);
+    /*
+     * The className attributes only. The comment above them names the mistake it is
+     * remembering, and a test that reads prose would fail on the explanation.
+     *
+     * Template literals as well as quoted strings, since §6.143: the size class moved onto
+     * this box when the glyph became a drawing, so the attribute became
+     * `` className={`… ${text}`} `` and this clause failed — **with the 48px still in it**.
+     * It was pinned to a quoting style rather than to the property it is named for, which
+     * is the shape §6.139 wrote down, in a guard that had been right for twenty sections.
+     */
+    const classNames = [...web.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)].map(
+      ([, quoted, templated]) => quoted ?? templated,
+    );
     expect(classNames.some((value) => value.includes('min-w-[48px]'))).toBe(true);
     expect(classNames.some((value) => /\bmin-[wh]-\d/.test(value))).toBe(false);
   });

@@ -324,10 +324,48 @@ if (!bothRows) {
    * §6.130's rule about a harness that fails without saying why, applied to a wait rather
    * than to a locator.
    */
+  /*
+   * What the screen said, and then what the store holds — because §6.143 spent a probe
+   * failing to reproduce this and the run that does reproduce it is the only one that can
+   * answer the question.
+   *
+   * The hypothesis worth killing or confirming: `acceptMatch` caches a show's episodes as
+   * part of matching, and `getEpisodesCached` swallows a provider failure with
+   * `catch { return cached; }`. So "Tracked 3" can be true with an empty episode cache,
+   * and the retry loop above cannot help, because matching will not run again for a show
+   * it has already matched. If that is what happens, this prints `0 episode rows` for the
+   * missing show while the other two are full.
+   *
+   * Measured through the app's own screens rather than the store, because the phone's web
+   * export is wa-sqlite and there is no handle to it from here. A title page lists one row
+   * per episode, which is the same fact by a different route.
+   */
+  const showed = (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300);
+  const holdings = [];
+  for (const show of ['The Long Dark', 'Kitchen Nightshift', 'Hollow Crown Saga']) {
+    try {
+      await page.goto('http://localhost:4200/search');
+      await page.waitForTimeout(1500);
+      await page.getByPlaceholder('Shows, films, anime…').fill(show);
+      await page.waitForTimeout(2500);
+      const found = page.locator('a, [role=link], [role=button]').filter({ hasText: new RegExp(show) }).first();
+      if (!(await found.count())) {
+        holdings.push(`${show}: not even in search`);
+        continue;
+      }
+      await found.click();
+      await page.waitForTimeout(3000);
+      const rows = ((await page.locator('body').innerText()).match(/^\s*\d+\.\s/gm) ?? []).length;
+      holdings.push(`${show}: ${rows} episode rows`);
+    } catch (error) {
+      holdings.push(`${show}: could not be reached — ${String(error).slice(0, 80)}`);
+    }
+  }
   console.error(
-    'Up Next never held both of the two shows that belong on it, so the caching for one of ' +
-      'them never finished. What it showed:\n  ' +
-      (await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 300),
+    'Up Next never held both of the two shows that belong on it. What it showed:\n  ' +
+      showed +
+      '\nWhat the store holds:\n  ' +
+      holdings.join('\n  '),
   );
 }
 

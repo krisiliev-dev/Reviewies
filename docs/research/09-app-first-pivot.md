@@ -10103,6 +10103,102 @@ what they proved and drew the rule for tests; this is the same rule for prose. *
 about an instrument has to come from the instrument's output**, and the cost of not doing
 that is not the wrong number — it is the sprint somebody sizes by it.
 
+### 6.143 The star, and every other mark still handed to a font
+
+§6.140 took the tab bar's glyphs away because **a glyph's appearance belongs to whatever
+font the device happens to have** — `▶` and `⚙` drew in full colour, `❏` as an empty
+square, `◔` as a two-pixel sliver, and every property a check can read was fine on all of
+them. This sprint asked what else was still typing, and the answer was: more than the tab
+bar was.
+
+## The star, drawn three different ways for four states
+
+`StarRating` is on the title page beside every watched episode. §6.141's first foot shot
+put sixty of them down one screen.
+
+| | phone | web |
+| --- | --- | --- |
+| full | `★` in the mark colour | `★` in the mark colour |
+| empty | `☆` — a **hollow** glyph | `★` in the stroke colour — a **filled** one |
+| half | `⯪` (U+2BEA) | a full `★` clipped to its left half over an empty one |
+
+So an unrated episode is a hollow outline on the phone and a solid grey star on the web —
+**a different shape, not a different colour** — and a half rating is a character with thin
+font coverage against a composition that always works.
+
+`core/src/ui/star.ts` holds one path and a `starFill(value, star)` returning 0, 0.5 or 1.
+Both renderers draw the outline and clip the fill to that fraction, so **the half-star
+problem stops existing** rather than being solved twice: there is no half glyph, there is a
+clip at 50%. The same mechanism would give quarters if the scale ever changed, which two
+glyph tables could not.
+
+## And then the sweep, which found the tab bar was one of several
+
+`tabIcon.test.ts` gained the clause §6.139 renamed and §6.140 made honest **for tab bars** —
+now reading both trees for a mark in anything a renderer prints. Nine files, and the useful
+part is the split:
+
+- **Content** — Watching Mode's reactions, the `📷` standing in for a picture-only comment.
+  A font substituting one of those is a font substituting a letter. It is their text.
+- **A mark drawn by decision** — `key.ts`, the remote fascia, one table for both platforms
+  with `key.test.ts` behind it. An exemption with a guard is the only kind worth having.
+- **Still to do** — three controls, each with the two platforms disagreeing: the remote
+  drawer's handle is `⇤` on the web and `⌇` on the phone (**unrelated characters for one
+  control**, #180); a list's expand chevron is `▴`/`▾` here and `⌄` there (#181); and
+  `CrossOff`'s tick is `✓` on both, which at least agrees (#182).
+
+Each of the six outstanding files is named in the clause and **fails it the day it stops
+typing**, so the list is a queue rather than a permission.
+
+## Three guards corrected, two of them mine, one within the hour
+
+- The exemption list had `padCell.ts` on it for a minute. The staleness check threw it off
+  immediately: the pad's emoji live in `emoji.ts` and `padCell.ts` decides the grid. An
+  exemption for a file that does not do the thing would have outlived any reason for it.
+- The sweep's first version scanned source text, and a plant walked through it:
+  `<Text>{'\u2606'}</Text>` is a star on the screen and six ASCII characters in the file.
+  Escapes are decoded before matching now. **Both spellings are planted.**
+- `phoneTextScaling.test.ts` failed on the star change **with the 48px still in it**: the
+  size class moved onto the box when the glyph became a drawing, so the attribute became a
+  template literal and the clause's `className="([^"]*)"` stopped matching. Pinned to a
+  quoting style rather than to the property it is named for — §6.139's shape, in a guard
+  that had been right for twenty sections.
+
+## #179, and what a probe is allowed to conclude
+
+The brief for this sprint named §6.137's Up Next race as the thing blocking everything else
+and said to probe rather than guess a third time. So: a probe reproducing the seed, the
+match loop and the wait ran to completion on **attempt 0** — `Tracked 3`, both rows on Up
+Next, all three shows fully cached at 18, 12 and 96 episodes. Then `design:phone` ran four
+times in a row and **passed every time**.
+
+Then the sprint's own close-out `npm run design` fired it once. So across this sprint:
+
+| | fired |
+| --- | --- |
+| the probe (seed, match, wait) | no — `Tracked 3` on attempt 0 |
+| `design:phone`, five runs | no |
+| `npm run design`, one run | **yes** |
+
+The phone's pass is *the same command* either way, so that is intermittency at roughly one
+in seven, not the "three of the last four" §6.142 recorded — a rate written from the runs
+that happened to be in front of me rather than from a count. Correcting it here rather than
+leaving it: the earlier number is what made this the sprint's headline task, and it was too
+high.
+
+That is not a fix and it is not a diagnosis. It is one hypothesis left standing and no
+evidence for it: `acceptMatch` caches a show's episodes as part of matching, and
+`getEpisodesCached` swallows a provider failure with `catch { return cached; }`, so
+*"Tracked 3"* can be true over an empty episode cache and the retry loop cannot help,
+because matching will not run again for a show it has already matched. The give-up branch
+now walks to each seeded show's page and reports its episode-row count, so the next run that
+fails answers the question instead of raising it. **A failure that cannot be reproduced on
+demand is worth an instrument, not a fix.**
+
+And the run that did fire it is the first evidence that sprint 54's pipeline change works:
+all three passes still ran, all three printed their manifests, and the signed-in and web
+screenshots were taken. Before it, that failure took them with it.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10286,6 +10382,14 @@ and which single claim in this document could not be checked at all:
   All three are level now, and what the wrong count was hiding is larger than the count:
   **three harnesses had three answers to what a screenshot is**, and none of them said
   which, in a design track whose method is putting them side by side.
+- **§6.137's Up Next race did not reproduce once in this sprint, and is not fixed.** A
+  probe reproducing the whole seed-and-match sequence passed on its first attempt with all
+  three shows cached, five `design:phone` runs passed, and one full `npm run design` fired
+  it — one in seven, against the "three of four" §6.142 recorded from the runs that happened
+  to be in front of it. The trigger is unidentified: the phone's pass is the same command in
+  both cases, so machine load is the obvious suspect and exactly the kind of guess §6.132
+  forbids acting on. The give-up branch now reports each seeded show's episode count, so the
+  next failure is diagnostic rather than another sighting.
 - **`npm run design` had been running one pass of three, silently, for several sprints.**
   §6.142 found the three chained with `&&`, so §6.137's Up Next race — which fires on
   roughly half of full runs — took the signed-in and web passes with it every time. They

@@ -1,4 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
+import { STAR_BOX, STAR_PATH, starFill } from '@reviewies/core/ui/star';
 import { theme } from './theme';
 import { Data } from './Data';
 
@@ -45,16 +47,12 @@ export function StarRating({
   return (
     <View style={styles.row}>
       {[1, 2, 3, 4, 5].map((star) => {
-        const filled = (value ?? 0) >= star;
-        const half = !filled && (value ?? 0) >= star - 0.5;
         return (
           <View
             key={star}
             style={[styles.star, { width: MIN_HALF * 2, height: Math.max(MIN_HALF, size) }]}
           >
-            <Text style={[{ fontSize: size }, styles.glyph, (filled || half) && styles.on]}>
-              {filled ? '★' : half ? '⯪' : '☆'}
-            </Text>
+            <Star fill={starFill(value, star)} size={size} />
             <Pressable
               style={styles.half}
               onPress={() => set(star - 0.5)}
@@ -78,9 +76,33 @@ export function StarRating({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   star: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  glyph: { color: theme.strokeSignal },
-  on: { color: theme.workingMark },
   half: { position: 'absolute', top: 0, bottom: 0, left: 0, width: MIN_HALF },
   right: { left: undefined, right: 0 },
   value: { color: theme.inkSecondary, marginLeft: 6 },
 });
+
+/**
+ * One path, painted to a fraction — the drawing lives in `core/src/ui/star.ts`.
+ *
+ * The outline underneath and the fill clipped over it, so a half star is a clip at 50%
+ * rather than a second glyph. `⯪` was the second glyph, and U+2BEA has thin font coverage;
+ * §6.143 has the table of what the two platforms were each drawing.
+ */
+function Star({ fill, size }: { fill: number; size: number }) {
+  const id = `star-${Math.round(fill * 100)}`;
+  return (
+    <Svg width={size} height={size} viewBox={`0 0 ${STAR_BOX} ${STAR_BOX}`}>
+      <Path d={STAR_PATH} fill="none" stroke={theme.strokeSignal} strokeWidth={1.5} />
+      {fill > 0 && (
+        <>
+          <Defs>
+            <ClipPath id={id}>
+              <Rect x="0" y="0" width={STAR_BOX * fill} height={STAR_BOX} />
+            </ClipPath>
+          </Defs>
+          <Path d={STAR_PATH} fill={theme.workingMark} clipPath={`url(#${id})`} />
+        </>
+      )}
+    </Svg>
+  );
+}
