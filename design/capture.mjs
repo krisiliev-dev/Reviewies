@@ -41,10 +41,56 @@ const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
 
+/**
+ * Every screenshot is taken at scroll 0, and until §6.141 nothing said so.
+ *
+ * §6.138 read `07-more.png` and filed a defect: the last row ends under the tab bar with
+ * its rule hidden, and nothing signals there is anything to scroll to. Measured, that was
+ * wrong in the part that mattered. React Navigation reserves the bar's space — the scroll
+ * viewport ends at 783 and the bar starts at 783 — and scrolled to the end there are 91
+ * points between the last words and the bar. What the picture showed was a screen whose
+ * content is **42 points taller than the viewport**, photographed at the top, so the last
+ * row's rule sits just below the fold. "Cut off at the bottom" is what that always looks
+ * like.
+ *
+ * So the shot records what is below it. `overflow` is the number a reader of these files
+ * needs and could not have: a shot of a screen that scrolls is a shot of part of a screen,
+ * and the design track has been judging forty-four of them without knowing which.
+ *
+ * A second shot at the foot for anything that overflows by more than a fold's worth,
+ * because at that point the top is not a fair likeness of the screen at all.
+ */
+const FOOT = 120;
+const scrolls = [];
+
 const shot = async (name) => {
   await page.waitForTimeout(1200);
   await page.screenshot({ path: `${OUT}${name}.png` });
-  console.log('shot', name);
+  const overflow = await page.evaluate(() => {
+    let most = 0;
+    for (const el of document.querySelectorAll('*')) {
+      if (el.scrollHeight - el.clientHeight > most && el.clientHeight > 200) {
+        most = el.scrollHeight - el.clientHeight;
+      }
+    }
+    return Math.round(most);
+  });
+  scrolls.push({ name, overflow });
+  if (overflow > FOOT) {
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) {
+        if (el.scrollHeight - el.clientHeight > 0 && el.clientHeight > 200) {
+          el.scrollTop = el.scrollHeight;
+        }
+      }
+    });
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${OUT}${name}-foot.png` });
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('*')) if (el.scrollTop > 0) el.scrollTop = 0;
+    });
+  }
+  console.log('shot', name, overflow ? `(scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''})` : '');
 };
 
 await page.goto('http://localhost:4200/');
@@ -788,6 +834,18 @@ if (await drawer.count()) {
 } else {
   unseen.push('24-watching-remote: nothing on Watching Mode opens the remote drawer');
 }
+
+/*
+ * What each shot is a shot *of*. A reader of `design/screens/` cannot tell a whole screen
+ * from the top of a long one, and §6.141 is what happens when nobody can: a defect filed
+ * from the fold of a screen that was simply scrolling.
+ */
+const partial = scrolls.filter((s) => s.overflow > 0);
+console.log(
+  partial.length
+    ? `shots that are the top of a longer screen: ${partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ')}`
+    : 'every shot is a whole screen',
+);
 
 await browser.close();
 if (unseen.length) {

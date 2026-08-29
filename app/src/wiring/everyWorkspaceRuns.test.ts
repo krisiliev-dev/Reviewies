@@ -199,6 +199,16 @@ describe('every workspace', () => {
      */
     'design/capture.mjs#watching': { pattern: /unseen\.push\(/g, least: 4 },
     /*
+     * And that every shot records what is below its fold, which is not a route either.
+     *
+     * §6.141: every screenshot is taken at scroll 0, and four of the phone's are the top of
+     * a longer screen — `15-title` scrolls 1465 points, nearly three viewports. A design
+     * review that cannot tell a whole screen from the top of a long one files defects about
+     * the fold, which is what §6.138 did. The reporting is one expression; deleting it would
+     * take nothing else with it and no route count would notice.
+     */
+    'design/capture.mjs#folds': { pattern: /scrolls\.push\(/g, least: 1 },
+    /*
      * The signed-in pass, counted by its **clauses** rather than by its routes.
      *
      * `capture.mjs` is ratcheted by routes because a route with no `MUST_SHOW` already

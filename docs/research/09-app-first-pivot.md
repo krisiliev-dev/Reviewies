@@ -9932,6 +9932,72 @@ hour of writing it down:
   `const TABS = TAB_BAR;`. It was pinned to a spelling rather than to its claim; it reads
   both bars for typed marks now.
 
+### 6.141 A screenshot is a scroll position, and four of them are the top of a longer screen
+
+**#172, retracted.** §6.138 read `07-more.png` and filed it: the last row ends under the tab
+bar with its rule hidden, and because it is the last row nothing signals there is anything
+to scroll to. It was the smallest and most concrete of that sprint's seven findings, which
+is why this sprint started with it.
+
+Measured, the premise is wrong in the part that mattered. React Navigation **does** reserve
+the bar's space:
+
+| | |
+| --- | --- |
+| scroll viewport ends at | 783 |
+| tab bar starts at | 783 |
+| last row's words, scrolled to the end | 692 — **91 points of clearance** |
+| content height against viewport | 825 against 783 |
+
+Nothing is clipped, on More or anywhere else. What the picture showed is a screen whose
+content is **42 points taller than the viewport**, photographed at scroll 0, so the last
+row's rule sits just below the fold. *Cut off at the bottom* is what that always looks like.
+
+Two guesses would have been two too many (§6.132), and this took one probe.
+
+## The instrument, which is the actual finding
+
+Every screenshot in `design/screens/` is taken at scroll 0, and **nothing said so**. A
+reader of those files — which is what a design review is — cannot tell a whole screen from
+the top of a long one, so any defect at the bottom edge of a shot is unfalsifiable by
+looking. §6.138 read forty-four of them in one pass and this is the one it got wrong.
+
+`shot()` now measures the overflow, records it, writes a second `-foot` shot for anything
+over a fold's worth, and prints a manifest. The first run says:
+
+```
+shots that are the top of a longer screen:
+  07-more +74pt, 09-calendar +540pt, 13-data +116pt,
+  15-title +1465pt, 22-watching-start +6pt, 23-watching-live +2pt, 24-watching-remote +2pt
+```
+
+**`15-title` scrolls 1465 points** — nearly three viewports. Every design review this
+product has had looked at its top.
+
+## What was under it
+
+`15-title-foot.png` exists for the first time, and it shows an episode row carrying
+**eight controls**: a cross-off, *React*, *Talk*, and five rating stars. Down a
+twelve-episode season that is sixty empty star outlines in a column, and it is the loudest
+thing on the screen.
+
+`row.ts` states the rule in as many words — *"A row is not one control. It exposes at most
+one navigation target and one action"* — and §6.138 recorded that the rule is about naming
+rather than counting. Five stars is not five names; it is one control drawn five times.
+Filed as **#178**, with the screenshot now on file to fix against.
+
+`09-calendar-foot.png` corroborates **#175** harder than the top shot did: nine identical
+*Hollow Crown Saga* rows across two viewports, one per week, each with its own monogram
+plate.
+
+So the retraction cost one probe and bought a screen nobody had seen, a second finding on
+one already filed, and an instrument that cannot make this mistake again. `SUITE_FLOOR`
+ratchets the reporting, because it is one expression and deleting it would take nothing
+else with it — no route count would notice.
+
+The rule, which is new and general: **a shot of a screen that scrolls is a shot of part of
+a screen.** Every harness that photographs anything owes its reader the difference.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -10105,6 +10171,11 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+- **The web's design pass still does not say what is below its folds.** §6.141 gave
+  `design/capture.mjs` overflow reporting and foot shots; `capture-web.mjs` and
+  `capture-signedin.mjs` did not get it, so twenty-six of the forty-four screenshots are
+  still scroll positions nobody can tell from whole screens. The phone's four were found
+  the moment it was asked; the web's count is unknown rather than zero.
 - **The tab bar's drawings have never been rasterised by anything but a browser.**
   §6.140 gave the phone `react-native-svg`, pinned to what this Expo SDK asks for, and both
   design harnesses photograph the result — but the phone's harness serves the
