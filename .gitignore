@@ -15,3 +15,7 @@ coverage/
 # `tsc -b` writes these beside each tsconfig; they are a build cache.
 *.tsbuildinfo
 mobile/dist-signedin
+
+# The real pass's own export. It had shared `mobile/dist` with the fixture pass, so
+# whichever ran last decided which provider the other was photographing. §6.153.
+mobile/dist-real

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { RUN_KIND_ORDER, runsOf, type UpcomingEntry } from '@reviewies/core/calendar/upcoming';
 import { runCode } from '@reviewies/core/ui/episode';
 

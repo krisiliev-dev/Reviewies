@@ -84,10 +84,15 @@ function SuggestionRow({
   async function track() {
     setBusy(true);
     await cache();
+    /*
+     * The feed reloads before the episodes land, for the reason `Search`'s `track` gives:
+     * the show is tracked by the line above, and waiting on twenty-four season requests to
+     * say so is a control that looks untouched for half a minute. §6.153.
+     */
     await addToLibrary(suggestion.id, suggestion.kind);
-    if (suggestion.kind === 'show') await getEpisodesCached(suggestion.id);
     // Reload so the newly tracked title drops out of the feed immediately.
     onActed();
+    if (suggestion.kind === 'show') void getEpisodesCached(suggestion.id).catch(() => {});
   }
 
   async function save() {

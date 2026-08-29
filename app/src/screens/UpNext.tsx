@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,7 @@ import { ImportFiles, ImportFormats } from '../ui/ImportFiles';
 import { MatchImports } from '../ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
+import { requestFill } from '@reviewies/core/calendar/refresh';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
@@ -51,6 +52,16 @@ export function UpNext() {
   const unmatched = useLiveQuery(() => unmatchedImportCount(), [], undefined);
   // Still working is a third thing, distinct from empty and from unreadable. §6.80.
   const importing = useImporting();
+
+  /**
+   * A show can be in the library before its episodes are. §6.154, and `requestFill`
+   * carries the reasoning: the four adding sites report `Tracking` and fetch afterwards,
+   * so the fetch is no longer guaranteed to finish. This is the screen where that shows —
+   * an empty Up Next for a show you just added — and so it is the screen that closes it.
+   */
+  useEffect(() => {
+    void requestFill();
+  }, []);
 
   if (entries === undefined) {
     return <Note className="p-6">Loading…</Note>;

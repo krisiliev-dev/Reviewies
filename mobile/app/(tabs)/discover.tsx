@@ -89,10 +89,15 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
 
   async function track() {
     await cache();
+    /*
+     * The feed reloads before the episodes land, for the reason `Search`'s `track` gives:
+     * the show is tracked by the line above, and waiting on twenty-four season requests to
+     * say so is a control that looks untouched for half a minute. §6.153.
+     */
     await addToLibrary(item.id, item.kind);
-    if (item.kind === 'show') await getEpisodesCached(item.id);
     setAdded('library');
     onActed();
+    if (item.kind === 'show') void getEpisodesCached(item.id).catch(() => {});
   }
 
   async function save() {

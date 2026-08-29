@@ -260,6 +260,12 @@ network at all — `example.com` fails exactly as TMDB does. It is also the bett
 snapshot is deterministic, which is the property the other three passes blank the token
 for. Re-take it to change what is photographed; `design/real/` is not committed (534 MB).
 
+It builds into `mobile/dist-real` (`npm run export:real --workspace mobile`), the way the
+signed-in pass builds into `dist-signedin`. It shared `mobile/dist` with the phone pass for
+one sprint, which meant whichever ran last decided which provider the *other* was serving —
+§6.153 lost half an hour to a probe searching the snapshot's library against the fixture's
+four invented titles.
+
 That last one is the odd member of the family: it builds *with* the TMDB token — the
 others blank it on purpose — and then makes every request to the provider fail three
 ways: refused, answered with a 500, and left hanging with no answer at all. The third is

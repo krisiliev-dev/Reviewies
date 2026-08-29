@@ -10800,16 +10800,168 @@ So the counts were the harness. What replaced them:
 - **`track()` is `addToLibrary` then `getEpisodesCached`, and the row says nothing until
   both finish** — twenty-four sequential season requests for One Piece, over thirty seconds,
   with the button still reading *Track*.
-- **Navigating away in that window abandons the continuation**, leaving a show tracked with
-  no episodes and an Up Next that is silently empty for it. `search.tsx`'s own header
-  describes that exact state as a bug it fixed — for a *different* cause, a live query
-  re-rendering — and never asked what else could interrupt the same continuation.
+- ~~**Navigating away in that window abandons the continuation**~~ — **wrong, and
+  retracted in §6.153.** The evidence was `page.goto`, which is a full reload rather than
+  what tapping a tab does; measured properly, leaving after 150 milliseconds lands exactly
+  the same 45 episodes as staying. `search.tsx`'s header describes a *different* cause and
+  is not evidence of this one.
 
 Filed as #190 and #191; #191 because `r6-title-one-piece` scrolls **166,912 points**, a
 hundred and ninety-eight viewports of episode list, against the fixture's 1,443.
 
 **A fixture that answers instantly cannot show you that waiting is a state.** Every one of
 these was reachable only with data somebody else made.
+
+### 6.153 The instrument was the bug, again
+
+**#190.** §6.152 filed two halves. One is real and is fixed; the other was mine and is
+retracted.
+
+## What was real
+
+`track()` was `addToLibrary` and then `getEpisodesCached` **awaited**, with the state set
+after both. Against the fixture that is one resolved promise. Against a real provider it is
+one request per season — twenty-four for a 1,220-episode show, over thirty seconds — during
+which the button still reads *Track* and nothing on the screen has changed. §6.151's pass
+gave up waiting for the label.
+
+The show **is** tracked by the line above. Reporting it is not a promise about episodes, and
+the four sites that add to the library say so at once now; the fetch is a floating promise
+with a `.catch`. Two title pages still await it, because a title page's whole content *is*
+the episode list — the guard asserts that boundary rather than "never await this call".
+
+## What was not, and why I believed it
+
+§6.152 said navigating away abandoned the fetch and left a show tracked with no episodes.
+The evidence was the harness going to Up Next with `page.goto` — **a full reload**, not what
+tapping a tab bar does. Measured properly, in two contexts side by side:
+
+```
+left after 150ms:       "The Bear S1E1 · System 45 more episodes …"
+stayed until Tracking:  "The Bear S1E1 · System 45 more episodes …"
+```
+
+Identical. Nothing is abandoned.
+
+And the probe *before* that one reported "row present, no count" four times running, which
+is what made the claim look confirmed. Its regex was
+`` /The Bear[^0-9]{0,60}(\d+) more episodes/ `` and the real text is `The Bear S1E1 · System
+45 more episodes` — **`S1E1` contains digits**, so `[^0-9]` could never span it. The pattern
+could not have matched anything, ever.
+
+That is the third instrument error in three sprints (§6.142's four counts, §6.152's settle
+loop, this) and the first where the instrument's *own output* was the false evidence rather
+than a missing one. §6.142 said a claim about an instrument has to come from the
+instrument's output. The corollary this adds: **an instrument that can only return one
+answer is not returning an answer.** Four identical negatives should have been the tell.
+
+## And the two passes were overwriting each other
+
+`design:phone` and `design:real` both exported to `mobile/dist`, so whichever ran last
+decided which provider the *other* was serving — a probe run after a fixture pass searched
+the snapshot's library against the four invented titles and found nothing, which is §6.142's
+shape exactly. The real pass builds to `dist-real` now.
+
+### 6.154 A write that half-lands is an answer, and it is wrong
+
+**#190, continued.** §6.153 shipped and `npm run smoke` went red on the phone — 138 of 141,
+three failures, one of them an exception that killed the run. The changed lines were the
+four adding sites. So either the change was wrong, or something it disturbed was.
+
+## What the number was
+
+```
+FAIL  remaining count decrements — 2 → NaN
+FAIL  the title page: and the screen reports its controls — 23 found, expected at least 30
+FAIL  smoke run completed — locator.click: Timeout 30000ms exceeded
+```
+
+**2.** The Long Dark is twenty-four episodes, eighteen of them aired, so Up Next should read
+*17 more episodes*. It read *2*, which is three episodes — and the title page's 23 controls
+against 30 is the same three, counted a different way.
+
+The reproduction is the smoke's own sequence and nothing else: track the show, wait for the
+row to say *Tracking*, reload. Then it says **3 more episodes for fifteen seconds and does
+not move**. Adding a three-second pause before the reload gives 17, and the same fifteen
+polls all say 17. So the fetch is fine and the reload is the event.
+
+## What it actually was
+
+`SqliteTable.bulkPut` was a bare loop:
+
+```ts
+async bulkPut(values: T[]): Promise<unknown> {
+  for (const value of values) await this.write(value, true);
+  return values.length;
+}
+```
+
+Each row its own implicit transaction. Kill the document part-way and the table keeps the
+prefix — four of The Long Dark's twenty-four episodes, permanently. And the four are
+*fresh*: `fetchedAt` a second old, so `getEpisodesCached`'s test — non-empty and none of it
+stale — reads a complete cache and never asks again. The library was wrong, confidently,
+for the length of the TTL.
+
+Dexie's `bulkPut` is one IndexedDB transaction and has always been all-or-nothing. So the
+two stores promised a reader different things through the same method name, which is exactly
+what §6.128 went looking for one method along, in `db.transaction`, and did not think to ask
+of this one.
+
+**A write that vanishes is re-run by the next reader. A write that half-lands is an answer.**
+That is the whole of it, and it is why "no episodes" is a *better* failure than "four
+episodes" — the first is a hole something can fill, the second is a fact nothing will
+question. `bulkPut` and `bulkAdd` now ask the database for a transaction (the database, not
+the table, because SQLite has no nested `BEGIN` and this repository legitimately nests).
+
+## And the half nothing was doing
+
+With that fixed, an interrupted fetch leaves nothing — and nothing was going to try again.
+The show sits in the library, Up Next has no row for it, and no screen in the product would
+ever look. `refreshTracked` has known how to fix this since it was written; its own comment
+says *"never fetched at all is the stalest thing there is, and it happens"*. Only the
+calendar ever ran it. **The one screen that could not see the hole was the only one closing
+it.** Up Next runs a narrow pass on open now — the shows with nothing behind them, not the
+full twenty-five-show refresh, because the first screen of every launch is not the place to
+sweep a metadata cache.
+
+The phone smoke is 202/202. And the real pass, which is where #190 came from:
+
+```
+Shōgun                            S1E1 · Anjin                        9 more episodes
+Severance                         S1E1 · Good News About Hell        18 more episodes
+The Bear                          S1E1 · System                      45 more episodes
+It's Always Sunny in Philadelphia S1E1 · The Gang Gets Racist       179 more episodes
+One Piece                         S1E1 · I'm Luffy! …              1174 more episodes
+```
+
+Five shows, five right answers. §6.152's run had four and **One Piece could not be tracked
+at all** — thirty seconds and the label never appeared. That row is what #190 was filed
+about and it is on the screen.
+
+## What this does to §6.153
+
+Not a retraction. §6.153 measured that leaving a screen after 150 milliseconds lands the
+same episodes as staying, and that is true: an in-app navigation keeps the document, so the
+promise keeps running. The sentence it was written into was "they land whether or not the
+person stays on the screen", and *that* is false — a reload, a backgrounded app, a killed
+tab all take the document with them.
+
+Twice now (§6.152, and this) the error has been the same shape and not the same mistake: the
+first was a measurement that could not produce its answer, this is a measurement that
+produced a correct answer to a narrower question than the sentence claimed. **The scope of a
+measurement is part of the claim, and it is the part that does not get written down.**
+`page.goto` was the thing §6.153 dismissed as unrepresentative — "a full reload rather than
+what tapping a tab does" — and it was unrepresentative of tab-tapping and exactly
+representative of closing the app.
+
+## Two small ones found on the way
+
+- The smoke's `` /(\d+) more episodes/ `` cannot match *1 more episode*, so a real
+  decrement at the end of a season would have been reported as `NaN` rather than as a number
+  that is wrong. It takes `episodes?` now.
+- `app/src/ui/upcomingRun.test.ts` shipped with two unused imports and fails `tsc`. It was
+  committed green, which means it was committed without the app's test typecheck being run
+  after the last edit to it.
 
 ## 7. What is still not known
 
@@ -10984,6 +11136,13 @@ and which single claim in this document could not be checked at all:
   the whole reason `onSettled` exists. The correction it performs — a screen redrawing
   after a rollback took back rows it had already shown — has never been watched happening.
   `docs/design/on-a-device.md` is where that belongs.
+
+  §6.154 widened this without meaning to. `bulkPut` opens a transaction now, so the case
+  above is no longer only an import: **every episode fetch** on the phone is a transaction
+  with a live query reading through the same connection. That is the right trade — the
+  alternative is the torn write §6.154 measured — but the number of times a day the
+  unobserved behaviour occurs went from "when somebody imports" to "whenever a show is
+  added".
 - ~~**The web's design pass still does not say what is below its folds** — twenty-six of
   the forty-four shots are scroll positions nobody can tell from whole screens.~~
   **Corrected in §6.142: the number was six, not twenty-six.** `capture-web.mjs` has always
@@ -11002,25 +11161,24 @@ and which single claim in this document could not be checked at all:
   suites audit named controls **per screen** on each platform separately; nothing compares
   the two counts, and nothing could without an instrument that reads both trees as trees
   rather than as source text.
-- **Attribution is shown on a build that is not using the API.** `usingFixtures()` makes
-  Settings and More say "Running on sample data" *instead of* the two attributions; Discover
-  and *Where to watch* show them regardless, so every screenshot in this document credits
-  TMDB and JustWatch for data neither supplied. Two screens answer "is this real?" one way
-  and two answer it the other, and §6.147 fixed the drawing without touching the condition —
-  because changing it costs the two smoke clauses that assert the attribution appears, on the
-  only builds the suites ever run. Which way it should go is a decision nobody has made.
-- **The component sweep compares words and nothing else.** §6.147 gave `copy.test.ts` the
-  twenty-three shared components and it found two divergences in prose. `offers.test.ts` —
-  what you can *do* on each platform — still reads only `PAIRS`, so a component that offers a
-  control on one platform and not the other is exactly as invisible as the words were. The
-  catch-up sheet was one: a backdrop that was a button on the phone and nothing on the web,
-  found by the copy guard by accident, because the two names happened to look alike.
-- **`classify` calls a show finished because the data stops.** *Salt Flats* season 2 is
-  labelled a **series finale** because no season 3 exists in the fixture — and the same is
-  true of The Long Dark's S3E6. `FixtureShow` has an `ended` flag and `classify` does not
-  read it; neither does anything read TMDB's `status`. So a show on hiatus is announced as
-  over, on the screen whose whole job is telling you what is coming, and the only reason it
-  has never been wrong in a screenshot is that both fixtures happen to be ending.
+- ~~**Attribution is shown on a build that is not using the API.**~~ **Closed in §6.150**
+  (#186). `attributionLines(sources, fixtures)` in the core returns nothing when the build is
+  on fixtures, and all four sites — both `Attribution` components, Settings and More — go
+  through it. The decision the entry said nobody had made is made: a build that did not ask
+  TMDB does not credit TMDB, and the smoke clauses that asserted the credit appears were the
+  cost, paid.
+- ~~**The component sweep compares words and nothing else.**~~ **Closed in §6.148**
+  (#184). `offers.test.ts` reads `componentPairs()` as well as `PAIRS` and compares the two
+  implementations of each shared component against each other, with a clause asserting more
+  than ten are actually being compared so the sweep cannot go quiet. What §6.148 added to the
+  entry rather than removing is in the next one down: a source-text comparison has a
+  boundary, and the boundary is a claim.
+- ~~**`classify` calls a show finished because the data stops.**~~ **Closed in §6.150**
+  (#187). `classify` takes `ended` and `getUpcoming` passes `title?.ended`, so the absence of
+  a later season is no longer read as the end of the show; a clause seeds `ended: true`
+  because the first plant against it passed on a seed that was not ending. The parenthetical
+  in the original entry — "both fixtures happen to be ending" — was itself wrong when
+  written and was corrected in §6.150 by counting: it was one of two.
 - **Nothing re-reads a screenshot for what it *claims*.** §6.150's defect was on three rows
   of the design record, photographed and looked at approvingly one sprint earlier: the chips
   were drawn correctly, said the right words in the right place, and were false. The design
@@ -11028,29 +11186,46 @@ and which single claim in this document could not be checked at all:
   contrast. Nothing in it asks whether a sentence on the screen is *true*, and the two times
   that has been caught (§6.104's Stats, §6.150's chip) it was caught by somebody happening to
   wonder.
-- **Nothing else waits like a person.** §6.152 found that pressing Track and leaving the
-  screen loses the episode fetch, because the harness did it by accident. Every other suite
-  in this repo waits on a *selector* or a fixed timeout, and against the fixture both are
-  instant — so no suite anywhere has ever been in the window where a write is still running.
-  What else has a continuation somebody can walk out of is not known, and the two screens
-  that showed it are the two that were pointed at real data.
-- **The real pass has been run once and nothing in it has been judged.** §6.151 built the
-  instrument and listed five things visible in the first five screenshots; none has been
-  measured, and one of them (Up Next's counts) may be the harness photographing a cache that
-  had not finished filling. The other three passes are also still on the fixture, so the web
-  app and every signed-in screen have never seen real data at all.
-- **§7 has never been swept for entries that stopped being true.** Three of the items in
-  this list were closed by §6.147–§6.150 and are still sitting in it. That is the failure
-  this document lectures the code about — a written claim outliving its condition — in the
-  document itself.
+- **Three probes in three sprints have been wrong, and only one was caught by a guard.**
+  §6.142's counts, §6.152's settle loop and §6.153's regex were all found by looking at the
+  output and disbelieving it. Nothing in this repo checks a *probe* the way `clauses.test.ts`
+  checks a guard — a throwaway script that can only return one answer is written, run once,
+  believed, and deleted.
+
+  §6.154 is the fourth sprint and a different failure, which is why it does not extend the
+  count: the probe was right and the *sentence around it* was wider than what it measured.
+  Nothing checks that either, and it is the harder of the two — a guard can be written for an
+  instrument that cannot fail, and no guard can be written for a scope somebody did not
+  notice they were assuming.
+- **Nothing else takes the document away mid-write.** §6.152 filed this as "leaving the
+  screen loses the fetch" and §6.153 retracted that; §6.154 found the true version, which is
+  narrower and worse. An in-app navigation keeps the promise running. A **reload** does not —
+  and until §6.154 that left a *prefix* of the write in the table, fresh enough that nothing
+  would ever ask again. `bulkPut` is atomic now and Up Next fills what is missing, so the two
+  known paths are closed. What is not known is the rest: every other suite here waits on a
+  selector or a fixed timeout, both instant against the fixture, so **no suite has ever been
+  inside the window where a write is still running** except by accident. Which other
+  multi-row write a person can walk out of, and what it leaves behind, has not been asked.
+- **Two of the real pass's five findings are still unjudged, and three passes are still on
+  the fixture.** §6.152 measured the five §6.151 listed. Up Next's counts *were* the harness
+  (§6.153), the thirty-second Track is fixed (§6.153, §6.154), and the 198-viewport title
+  page is filed as #191 and not started. The other three design passes have still never seen
+  real data, so the web app and every signed-in screen are judged entirely on four invented
+  titles with no artwork.
+- ~~**§7 has never been swept for entries that stopped being true.**~~ **Done in §6.154**,
+  four sprints after it was filed: `classify`, the component sweep, the attribution condition
+  and the fixture's missing binge drop were all closed by §6.147–§6.150 and all four were
+  still sitting here as open questions. What the sweep does not fix is the reason they
+  accumulated — closing a task and striking its §7 entry are two actions and only one of them
+  is on the checklist. The sweep is part of the sprint close-out now; whether that survives a
+  sprint that runs late is the open half.
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
-  wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, but only the
-  calendar's: no fixture anywhere produces a **binge drop**, a whole season landing on one
-  date, which is how most of what people track is released now and a case the calendar's
-  grouping exists for. Nor a show on a break, nor two episodes of one show in a week. Every
-  one of those is a screen state the design track will keep judging as though it were a
-  design.
+  wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, and §6.149
+  (#185) closed the worst of them: *Salt Flats* carries `cadence: 'drop'`, so eight episodes
+  land on one date and the calendar's day grouping is finally exercised by the thing it was
+  built for. Two remain — a show on a break, and two episodes of one show in a week — and
+  both are screen states the design track will keep judging as though they were designs.
 - **The seed's coincidences are a choice nobody made.** The two airing shows share a weekday
   because 49 and 644 are both multiples of seven, which is why three dates carry two rows. It
   is realistic and it is an accident: shift either start by a day and the case disappears

@@ -411,7 +411,10 @@ try {
   const first = await text();
   check('Up Next offers the first episode', /S1E1\b/.test(first), first.slice(0, 90));
 
-  const before = Number(first.match(/(\d+) more episodes/)?.[1]);
+  // `episodes?`: the row says "1 more episode" at the end of a season, and a regex that
+  // only matched the plural reported the decrement as NaN rather than as a failure with a
+  // number in it. §6.154.
+  const before = Number(first.match(/(\d+) more episodes?/)?.[1]);
   check('shows a remaining count, not a vague badge', Number.isFinite(before), String(before));
   await audit('Up Next', 4);
   await noGhosts('Up Next');
@@ -427,7 +430,7 @@ try {
     .click();
   await page.waitForSelector('text=/S1E2/', { timeout: 15000 });
   const after = await text();
-  const now = Number(after.match(/(\d+) more episodes/)?.[1]);
+  const now = Number(after.match(/(\d+) more episodes?/)?.[1]);
   check('marking watched advances to the next episode', /S1E2\b/.test(after));
   check('remaining count decrements', now === before - 1, `${before} → ${now}`);
   await page.screenshot({ path: OUT + '4-watched.png' });

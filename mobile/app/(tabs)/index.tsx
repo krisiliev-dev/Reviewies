@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -19,6 +19,7 @@ import {
 } from '@reviewies/core/data/repo';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { requestFill } from '@reviewies/core/calendar/refresh';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { CatchUp } from '../../src/ui/CatchUp';
@@ -63,6 +64,16 @@ export default function UpNextScreen() {
   const unmatched = useLive(() => unmatchedImportCount(), []);
   // Still working is a third thing, distinct from empty and from unreadable. §6.80.
   const importing = useImporting();
+
+  /**
+   * A show can be in the library before its episodes are. §6.154, and `requestFill`
+   * carries the reasoning: the four adding sites report `Tracking` and fetch afterwards,
+   * so the fetch is no longer guaranteed to finish. This is the screen where that shows —
+   * an empty Up Next for a show you just added — and so it is the screen that closes it.
+   */
+  useEffect(() => {
+    void requestFill();
+  }, []);
 
   if (entries === undefined) {
     return (

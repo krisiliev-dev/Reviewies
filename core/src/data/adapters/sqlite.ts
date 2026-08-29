@@ -131,10 +131,23 @@ class SqliteQuery<T> implements Query<T> {
 class SqliteTable<T> implements Table<T> {
   private readonly driver: SqlDriver;
   private readonly spec: TableSpec;
+  /**
+   * The database's own transaction wrapper, passed in rather than issued here.
+   *
+   * SQLite has no nested `BEGIN` and this repository nests: `catchUpTo` and both
+   * importers call a bulk write from inside `db.transaction`. Only the database knows
+   * whether one is already open, so a bulk write asks it instead of deciding.
+   */
+  private readonly atomically: (body: () => Promise<void>) => Promise<unknown>;
 
-  constructor(driver: SqlDriver, spec: TableSpec) {
+  constructor(
+    driver: SqlDriver,
+    spec: TableSpec,
+    atomically: (body: () => Promise<void>) => Promise<unknown>,
+  ) {
     this.driver = driver;
     this.spec = spec;
+    this.atomically = atomically;
   }
 
   private columnsFor(value: T): { names: string[]; values: unknown[] } {
@@ -197,13 +210,32 @@ class SqliteTable<T> implements Table<T> {
     );
   }
 
+  /**
+   * All of them or none of them.
+   *
+   * This was a bare loop, and a bare loop is a promise the other store keeps and this one
+   * does not: Dexie's `bulkPut` is one IndexedDB transaction, so a reader sees the whole
+   * write or nothing. Here each row was its own statement, committed as it went.
+   *
+   * What that costs is not theoretical, and it is worse than losing the write. §6.154
+   * measured it: tracking a show on the phone and reloading a moment later left **four**
+   * of The Long Dark's twenty-four episodes in the table — and those four carry a
+   * `fetchedAt` of a second ago, so `getEpisodesCached` reads a full, fresh cache and
+   * never asks again. The library was permanently wrong, and confidently so, for the
+   * length of the TTL. A write that vanishes is re-run by the next reader; a write that
+   * half-lands looks like an answer.
+   */
   async bulkPut(values: T[]): Promise<unknown> {
-    for (const value of values) await this.write(value, true);
+    await this.atomically(async () => {
+      for (const value of values) await this.write(value, true);
+    });
     return values.length;
   }
 
   async bulkAdd(values: T[]): Promise<unknown> {
-    for (const value of values) await this.add(value);
+    await this.atomically(async () => {
+      for (const value of values) await this.add(value);
+    });
     return values.length;
   }
 
@@ -259,7 +291,10 @@ export class SqliteDatabase implements Database {
   constructor(driver: SqlDriver) {
     this.driver = driver;
     for (const spec of TABLES) {
-      this.tables.set(spec.name, new SqliteTable(driver, spec));
+      this.tables.set(
+        spec.name,
+        new SqliteTable(driver, spec, (body) => this.transaction('rw', body)),
+      );
     }
   }
 

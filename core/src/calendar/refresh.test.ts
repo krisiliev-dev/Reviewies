@@ -95,6 +95,44 @@ describe('keeping the calendar current', () => {
     expect(asked).toEqual(['tmdb:tv:1']);
   });
 
+  it('asks only about the shows with nothing behind them, on a fill pass', async () => {
+    /*
+     * The pass Up Next runs when it opens. §6.154: a show reaches the library before its
+     * episodes do — §6.153 made the fetch deliberately un-awaited so the row can say
+     * `Tracking` at once — and nothing ever tried again if that fetch did not finish.
+     *
+     * Narrow is the whole point. The full pass refetches on *age*, up to twenty-five
+     * shows, and `startCalendarRefresh` does not run on launch precisely because that is
+     * not what somebody opening their list is waiting for. The stale-but-present show
+     * below must be left alone.
+     */
+    await db.library.put(item());
+    await db.titles.put(title());
+    await db.episodes.put(ep(1, { fetchedAt: NOW - 2 * REFRESH_EVERY_MS }));
+
+    await db.library.put(item({ titleId: 'tmdb:tv:2' }));
+    await db.titles.put(title({ id: 'tmdb:tv:2' }));
+
+    const { asked, spy } = lookup();
+    await refreshTracked({ now: NOW, lookup: spy, missingOnly: true });
+
+    expect(asked).toEqual(['tmdb:tv:2']);
+  });
+
+  it('does not sweep the metadata cache on a fill pass', async () => {
+    // `expireMetadata` walks every cached title and episode. On the calendar, opened
+    // deliberately, that is fine; on the first screen of every launch it is not.
+    await db.library.put(item({ titleId: 'tmdb:tv:2' }));
+    await db.titles.put(title({ id: 'tmdb:tv:2' }));
+    await db.titles.put(title({ id: 'tmdb:tv:99', fetchedAt: NOW - 400 * DAY }));
+
+    const { spy } = lookup();
+    const report = await refreshTracked({ now: NOW, lookup: spy, missingOnly: true });
+
+    expect(report.expired).toBe(0);
+    expect(await db.titles.get('tmdb:tv:99')).toBeDefined();
+  });
+
   it('never asks the provider about a title it has never heard of', async () => {
     await db.library.put(item({ titleId: 'local:tv:tvtime-900' }));
 

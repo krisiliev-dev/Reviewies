@@ -190,9 +190,24 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
   async function track() {
     await cacheTitle();
     await addToLibrary(result.id, result.kind);
-    // Episodes are needed before Up Next can offer anything for this show.
-    if (result.kind === 'show') await getEpisodesCached(result.id);
+    /*
+     * Said before the episodes arrive, not after.
+     *
+     * This awaited `getEpisodesCached` and only then set the state, so the row read
+     * *Track* for as long as the fetch took — one request per season, which for a
+     * 1,220-episode show is twenty-four of them and over thirty seconds of a control that
+     * looks untouched. §6.151's real-data pass gave up waiting for the label.
+     *
+     * The show **is** tracked by this line; saying so is not a promise about episodes.
+     * They fill behind it, and §6.153 measured that they land whether or not the person
+     * stays: tracked, left the screen after 150ms, and the count arrived exactly as it did
+     * for somebody who waited. The floating promise is not a shortcut — it is the truth
+     * about what depends on what. §6.153.
+     */
     setAdded('library');
+    // Episodes are needed before Up Next can offer anything for this show, and nothing
+    // here has to wait for them. A rejection is the provider's to report, not this row's.
+    if (result.kind === 'show') void getEpisodesCached(result.id).catch(() => {});
   }
 
   /**

@@ -68,13 +68,20 @@ export interface RefreshReport {
  * nobody has told you about, and it is the only way back to watching.
  */
 export async function refreshTracked(
-  options: { maxAgeMs?: number; batch?: number; now?: number; lookup?: RefreshLookup } = {},
+  options: {
+    maxAgeMs?: number;
+    batch?: number;
+    now?: number;
+    lookup?: RefreshLookup;
+    missingOnly?: boolean;
+  } = {},
 ): Promise<RefreshReport> {
   const {
     maxAgeMs = REFRESH_EVERY_MS,
     batch = REFRESH_BATCH,
     now = Date.now(),
     lookup = DEFAULT_LOOKUP,
+    missingOnly = false,
   } = options;
 
   const tracked = (await db.library.toArray()).filter(
@@ -87,7 +94,11 @@ export async function refreshTracked(
     // Never fetched at all is the stalest thing there is, and it happens: a show added
     // by an import has a library row and no episodes behind it.
     const oldest = episodes.length ? Math.min(...episodes.map((e) => e.fetchedAt)) : 0;
-    if (now - oldest > maxAgeMs) withAge.push({ id: item.titleId, fetchedAt: oldest });
+    // `missingOnly` is the hole, not the staleness: a show that is in the library with no
+    // episodes behind it at all. See `requestFill` below for who asks and why.
+    if (missingOnly ? episodes.length === 0 : now - oldest > maxAgeMs) {
+      withAge.push({ id: item.titleId, fetchedAt: oldest });
+    }
   }
 
   withAge.sort((a, b) => a.fetchedAt - b.fetchedAt);
@@ -96,7 +107,11 @@ export async function refreshTracked(
   // The pass that is already running on a timer is the natural place to do this: the
   // settings screens promise the cache expires automatically, and nothing was deleting
   // anything — `isStale` only stops a row being served.
-  const expired = await expireMetadata(now);
+  //
+  // Not on a fill pass. That one runs when Up Next opens, which is the first screen of
+  // every launch, and sweeping the whole metadata cache is not what somebody standing in
+  // front of their list is waiting for.
+  const expired = missingOnly ? 0 : await expireMetadata(now);
 
   const report: RefreshReport = {
     refreshed: 0,
@@ -138,11 +153,13 @@ export async function refreshTracked(
 let stopCurrent: (() => void) | undefined;
 let running: Promise<RefreshReport | undefined> | undefined;
 
-export async function requestRefresh(): Promise<RefreshReport | undefined> {
+export async function requestRefresh(
+  options: { missingOnly?: boolean } = {},
+): Promise<RefreshReport | undefined> {
   if (running) return running;
   running = (async () => {
     try {
-      return await refreshTracked();
+      return await refreshTracked(options);
     } catch {
       return undefined;
     } finally {
@@ -150,6 +167,29 @@ export async function requestRefresh(): Promise<RefreshReport | undefined> {
     }
   })();
   return running;
+}
+
+/**
+ * Fill in the shows that have no episodes at all — the pass Up Next runs when it opens.
+ *
+ * A show reaches the library before its episodes do. That is deliberate now: §6.153 moved
+ * the four adding sites to say `Tracking` and fetch afterwards, because a 1,220-episode
+ * show took thirty seconds during which the row said nothing (#190). The fetch is no
+ * longer awaited, so it is no longer guaranteed to finish — close the app, background it,
+ * reload the tab, lose the network, and the show sits in the library with an empty Up Next
+ * and nothing that would ever try again.
+ *
+ * `refreshTracked` has always known how to fix this — its own comment says "never fetched
+ * at all is the stalest thing there is, and it happens" — and only the calendar ever ran
+ * it. So the one screen that could not see the hole was the only one closing it.
+ *
+ * Narrow on purpose. The full pass refetches up to twenty-five shows on age and sweeps the
+ * metadata cache, and `startCalendarRefresh` deliberately does not run on launch for
+ * exactly that reason. This asks only for the shows with nothing behind them, which on an
+ * ordinary launch is none and costs one query.
+ */
+export function requestFill(): Promise<RefreshReport | undefined> {
+  return requestRefresh({ missingOnly: true });
 }
 
 export function startCalendarRefresh(options: { intervalMs?: number } = {}): () => void {
