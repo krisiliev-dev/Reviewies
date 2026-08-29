@@ -11930,6 +11930,123 @@ Four plants, needle counted before and after: the `ended`-only library, the unre
 sentence, a screen that stops reading it, and the finished shot renamed out of the capture
 script. All red.
 
+### 6.165 Reading the pictures
+
+**#201.** §7 had just recorded that three findings in three sprints came from looking at a
+photograph and none from a guard, and that all three were in code every clause passed. Four
+sprints running had gone into the instrument — §6.160 unified the shot, §6.161 made four flaky
+checks answer, §6.162 enumerated the empty states, §6.163 seeded two more libraries, §6.164
+split one state in two. The instrument was in good order and had roughly doubled since anybody
+last read what it produces. So this sprint read it.
+
+## The scope, stated first
+
+There are **130 files** across four directories, not the forty-eight the task estimated —
+`design/screens/` alone has 50, and `design/real-screens/`, `design/web/` and
+`design/web-real/` hold 17, 24 and 38 more. That miscount is worth recording on its own: the
+task was written from a listing of one directory and nobody noticed the other three.
+
+**Twenty-one were read**, chosen for coverage rather than order: nine earlier in the session
+(which produced §6.162 to §6.164) and twelve here — Up Next, the watchlist, Discover, Stats,
+Your data, Watching Mode live, the fixture title page, the web's settings foot, and Severance
+on real data before and after the fix. The remaining hundred and nine have **not** been read,
+and saying so is the point: §6.155, the scope of a measurement is part of the claim, and a
+sprint that reported "the screenshots are fine" from twenty-one of them would be making a
+claim about a hundred and nine it never opened.
+
+## Nine findings, and the one that matters
+
+The full notes are in the sprint's own file; the shape of them is what belongs here.
+
+**Three are the shape §6.162 to §6.164 kept finding** — a true sentence over an offer
+belonging to a different state:
+
+- `06-watchlist.png`: the only element on a watchlist row **drawn as a control** is *Remove*.
+  The title is a link and the note is a pressable whose visible content is the note text
+  itself, so both constructive affordances are drawn as content and the one that looks like a
+  control is *give up on this*. §6.150 removed the second link from this row and left the
+  destructive one as the survivor. The counter-example is two rows away: `05-discover.png`
+  offers the **same film** with **Track** filled and **Watchlist** outlined and a reason
+  underneath. The product knows how to draw a row's offers.
+- `03-upnext.png`: *Caught up further?* is a question where every other control in this product
+  is a verb, and it is the accessible name too.
+- `08-stats.png`: two rows of chips in one visual language and two meanings — the period row
+  marks its choice with the `border.tally` rule §6.95 settled on, and *Year in Review* draws three years the same
+  way with none marked, because it is a launcher.
+
+**Two are the platform painting a control nobody designed:**
+
+- `13-data.png` and `dark-10-settings-foot.png`: *Open the conversation after marking watched*
+  is a **teal sliding switch** on the phone and a **browser-default checkbox** on the web —
+  `<Switch value={openComments} />` with no colour props, and `<input type="checkbox">`. Teal
+  appears nowhere else; the accent is amber. Every other control goes through `Button`, `Row`,
+  `Choice` or `CrossOff`, the components §6.159 built so this could not happen. §6.138's seventh finding is the
+  same shape one control over — two platforms, two kinds of mark — and §6.111 found the native
+  equivalent in Expo's scaffold navy.
+  The comment above the Switch says *"this is the only Switch in the app"* — somebody looked at
+  it for target size and did not look at its colour.
+- `15-title.png` and `r6-title-severance.png`: the provider chip is a near-black box inside a
+  lighter card. It is the only place in the product where a filled element is darker than what
+  it sits on. Checked against real data first, so it is a decision and not the fixture's
+  missing logos.
+
+**One is housekeeping with a real edge.** `design/screens/00-calendar-unmatched.png`, mtime
+21:02 against 22:1x for everything else: sprint 73's failed attempt, a photograph of a **full**
+calendar filed under a name meaning empty. Nothing cleans that directory, so a deleted walk
+leaves its last picture behind and a reader cannot tell it from a current one.
+
+## And the one that mattered: the real-data pass was building against the live backend
+
+`r6-title-severance.png` showed **Add to list** and **Content warnings**. Both components open
+`if (!syncConfigured()) return null`, and `design:real` blanks its Supabase configuration —
+`design/capture.mjs`'s own comment states as fact that these controls "do not exist at all" on
+a build with no account.
+
+Following it down, one measurement at a time:
+
+```
+mobile/dist          hosts: none                                    ← correct
+mobile/dist-signedin hosts: design-harness.invalid                  ← the deliberate stub
+app/dist             hosts: none                                    ← correct
+app/dist-real        hosts: none                                    ← correct
+mobile/dist-real     hosts: https://<live project>.supabase.co      ← alone among the five
+```
+
+`mobile/app.config.ts` resolves configuration through a fallback list:
+
+```ts
+const env = (...names) => { for (const n of names) { const v = process.env[n]; if (v) return v; } };
+env('EXPO_PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL')
+```
+
+An empty value is **falsy**, so blanking the first name does not blank the setting — it falls
+through to the second, and the second comes from the workspace `.env`. `design:phone` blanks
+all six names. `design:real` blanked only the two `EXPO_PUBLIC_` ones.
+
+One line fixes it, and the proof is the photograph: rebuilt, the live host is gone from the
+bundle and both controls are gone from the shot. Two hundred points of that screen were
+controls a token-less build cannot have, in every real-data title shot ever taken.
+
+Not a secret escaping — an anon key is designed to ship in a client, RLS is what protects the
+data, and `app.config.ts` already refuses to build with an `sb_secret_`. It is a **determinism**
+failure, which is §6.125's whole reason for blanking credentials: a design pass that can reach
+a live backend has screenshots that depend on something outside the repository.
+
+`app/src/wiring/designCredentials.test.ts` holds it, and reads the fallback pairs **out of
+`app.config.ts`** rather than restating them — a list copied is a list that drifts. It applies
+only to scripts that run an `expo export`: the Vite builds read one name each, and requiring
+`EXPO_PUBLIC_` of them would be a clause inventing a rule the code does not have. Two plants —
+the bug put back, and the fallback list removed to prove the clause is not vacuous — both red.
+
+## What the sprint says about the method
+
+The instrument found nothing this sprint. The reading found nine things, one of which had been
+wrong in every real-data screenshot the design track has ever taken, and which a clause now
+catches. That is the argument for both halves: **the looking is what finds it, and the clause
+is what stops it coming back.** Neither substitutes for the other, and four sprints of building
+instruments without reading their output is how a live backend got into a pass that had a
+comment saying it could not be there.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12762,14 +12879,27 @@ and which single claim in this document could not be checked at all:
   it nearly did so in the sprint that wrote it. The pattern is wider; the lesson is that a
   sweep matching *names* rather than *shapes* is one rename from blind.
 
-- **Three findings in three sprints came from looking at a photograph, and none from reading
-  source.** §6.162's import state under a filled *Find something to watch*, §6.163's empty
-  list offering only to publish itself, §6.164's caught-up screen sending a waiting person to
-  search. All three are the same shape — a true sentence over an offer belonging to a
-  different state — and all three were in code that every guard passed. There is no clause
-  that can see this, and the only instrument that has ever found it is a person looking at a
-  screenshot. That is worth stating plainly rather than leaving as an implication: the design
-  track's value so far is not in what it automates.
+- **The reading is the instrument, and §6.165 is the demonstration.** Three findings in three
+  sprints came from looking at a photograph and none from a guard; §6.165 read twenty-one
+  shots and found nine more, one of which — `design:real` building against the live backend —
+  had been wrong in every real-data screenshot the design track has ever taken and now has a
+  clause. Both halves earn their keep: the looking finds it, the clause stops it coming back,
+  and four sprints of building instruments without reading their output is how a live backend
+  got into a pass whose own comment said it could not be there.
+
+- **A hundred and nine shots have not been read.** §6.165 states its scope: 130 files across
+  `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
+  twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
+  was written from a listing of one directory. Six of the nine findings came out of the first
+  eight shots, which is a rate worth taking seriously about the remaining hundred and nine.
+
+- **Six findings are filed and unfixed**, each with its shot named: the watchlist row whose
+  only drawn control is *Remove*; *Caught up further?* as a question where every control is a
+  verb; Stats' two chip rows in one visual language with two meanings; the preference toggle
+  that is a teal platform switch on the phone and a browser checkbox on the web; the provider
+  chip darker than the card it sits in; and the drawer handle sitting on top of the emoji pad.
+  The switch is the largest — it is a component that does not exist, in the sense §6.159 built
+  the other eleven.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column
