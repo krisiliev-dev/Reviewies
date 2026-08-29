@@ -24,6 +24,7 @@ import { Section } from '../ui/Section';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
 import { Button } from '../ui/Button';
+import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
 
 export function Calendar() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
@@ -44,6 +45,8 @@ export function Calendar() {
 
   const [pushNote, setPushNote] = useState<string>();
   const [syncNote, setSyncNote] = useState<string>();
+  // Revealed, not resident: `core/src/ui/compose.ts` and §6.134.
+  const [tuning, setTuning] = useState(SETTINGS_OPEN);
 
   async function choose(next: NotifyPreference) {
     setPref(next);
@@ -75,18 +78,44 @@ export function Calendar() {
     <div className="p-s16">
       <Masthead level="page" className="px-1">Upcoming</Masthead>
 
+      {/* Closed, this whole panel is one row that says what the setting currently is.
+          
+          It used to stand open on arrival — three options with a sub-line each, a
+          paragraph about the iPhone Home Screen and up to four conditional notes, 470
+          points of a 900-point screen called *Upcoming*, above the thing you came for.
+          §6.129's rule, on a setting rather than a form. §6.134. */}
+      {!tuning ? (
+        <ul className="mb-6">
+          <BaseRow
+            density="index"
+            title={COPY.calendar.tellMeAbout}
+            meta={NOTIFY_OPTIONS.find((o) => o.key === preference)?.label}
+            open={{
+              name: `${COPY.calendar.tellMeAbout} — ${
+                NOTIFY_OPTIONS.find((o) => o.key === preference)?.label ?? ''
+              }`,
+              run: () => setTuning(true),
+            }}
+            trailing={
+              <Note as="span" className="shrink-0 pl-2" aria-hidden="true">
+                ›
+              </Note>
+            }
+          />
+        </ul>
+      ) : (
       <section className="mb-6 rounded-plate bg-ground-raised p-4">
         {/* The eyebrow, at the step §6.108 chose for it on Stats: uppercase with
             letter-spacing reads a size larger than its number, and the phone has drawn
             this heading at 12 since it was written while the web drew it at 14 in
             sentence case. One treatment, on both. */}
-        <Section>Tell me about</Section>
+        <Section>{COPY.calendar.tellMeAbout}</Section>
         {/* Rows, and every hint visible, which is what the phone did and the web did not:
             the web showed one hint in a paragraph underneath, so choosing between three
             options meant selecting each in turn to read what it does. §6.51's rule is
             that the better version wins regardless of which platform had it. */}
         <Choice<NotifyPreference>
-          name="Tell me about"
+          name={COPY.calendar.tellMeAbout}
           density="rows"
           value={preference}
           options={NOTIFY_OPTIONS}
@@ -123,7 +152,15 @@ export function Calendar() {
             notifications.
           </Note>
         )}
+        <div className="mt-3">
+          <Button
+            onPress={() => setTuning(false)}
+            label={COPY.controls.done}
+            name={`${COPY.controls.done} — close ${COPY.calendar.tellMeAbout.toLowerCase()}`}
+          />
+        </div>
       </section>
+      )}
 
       {entries === undefined && <Note className="px-1">Loading…</Note>}
       {entries?.length === 0 && (

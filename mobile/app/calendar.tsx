@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import {
   getPreference,
@@ -14,6 +14,7 @@ import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
 import { Poster } from '../src/ui/Poster';
 import { theme } from '../src/ui/theme';
+import { text, type } from '@reviewies/core/tokens';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import {
   pushSupported,
@@ -30,6 +31,7 @@ import { Section } from '../src/ui/Section';
 
 import { Choice } from '../src/ui/Choice';
 import { Note } from '../src/ui/Note';
+import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
 
 /**
  * What is coming, and how much you want to hear about it.
@@ -46,6 +48,8 @@ export default function CalendarScreen() {
   const [delivery, setDelivery] = useState<string>();
   const [syncNote, setSyncNote] = useState<string>();
   const [registered, setRegistered] = useState(false);
+  // Revealed, not resident: `core/src/ui/compose.ts` and §6.134.
+  const [tuning, setTuning] = useState(SETTINGS_OPEN);
   // Why the screen is empty, not only that it is.
   const [unmatched, setUnmatched] = useState(0);
   const router = useRouter();
@@ -67,13 +71,37 @@ export default function CalendarScreen() {
     <>
       <Stack.Screen options={{ title: 'Upcoming' }} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Section>Tell me about</Section>
+        {/* Closed, this whole panel is one row that says what the setting currently is —
+            three options with a sub-line each, a delivery block and up to four notes used
+            to stand open above the calendar on a screen called *Upcoming*. §6.129's rule,
+            on a setting rather than a form. §6.134. */}
+        {!tuning ? (
+          <Row
+            density="index"
+            title={COPY.calendar.tellMeAbout}
+            meta={NOTIFY_OPTIONS.find((o) => o.key === preference)?.label}
+            open={{
+              name: `${COPY.calendar.tellMeAbout} — ${
+                NOTIFY_OPTIONS.find((o) => o.key === preference)?.label ?? ''
+              }`,
+              // It acts rather than navigates — it opens the panel it names, in place.
+              // Without this the phone announces the row as a link (`Row`'s default), and
+              // the smoke suite's `getByRole('button', …)` found nothing, which is how it
+              // was noticed. The web's `Row` reads the same thing off `to` versus `run`.
+              does: 'act',
+              run: () => setTuning(true),
+            }}
+            trailing={<Text style={styles.chevron}>›</Text>}
+          />
+        ) : (
+          <>
+        <Section>{COPY.calendar.tellMeAbout}</Section>
         {/* This control is where `Choice` came from. It was the only one of five that
             said `radiogroup`/`radio` and put the hint in the announced name; the other
             four were buttons carrying a `selected` flag. The component is this one,
             generalised, and the reasoning below travelled with it. */}
         <Choice<(typeof NOTIFY_OPTIONS)[number]['key']>
-          name="Tell me about"
+          name={COPY.calendar.tellMeAbout}
           density="rows"
           value={preference}
           options={NOTIFY_OPTIONS}
@@ -131,6 +159,14 @@ export default function CalendarScreen() {
               </Note>
             )}
           </View>
+        )}
+
+            <Button
+              onPress={() => setTuning(false)}
+              label={COPY.controls.done}
+              name={`${COPY.controls.done} — close ${COPY.calendar.tellMeAbout.toLowerCase()}`}
+            />
+          </>
         )}
 
         {/* Sixty days on both platforms now — it was thirty here and sixty on the
@@ -205,6 +241,10 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The same chevron `more.tsx` draws on its destination rows: this row goes somewhere
+  // in the same sense — it opens the panel it names. The web's copy had one from the
+  // start and this did not, which is the drift a pair of screenshots catches.
+  chevron: { color: theme.inkSecondary, fontSize: text.s20, fontFamily: type.family.body.name },
   delivery: { marginTop: 12, gap: 8 },
   // 13 against the web's 12, for the same six status lines under the same control.
   // 13 is one of the two the scale killed.

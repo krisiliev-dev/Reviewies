@@ -29,13 +29,29 @@ export interface ChoiceOption<T extends string | number> {
 }
 
 /**
- * Selection is a rule and a weight, never a fill.
+ * Selection is a rule and a step in the ink, never a fill and never a third mark.
  *
  * A filled chip on a ruled page is the last card left in the app — §6.90 spent 822 sites
  * turning fills into rules and this is the one control that would have quietly kept one.
- * A rule plus a weight step is two channels rather than colour alone, which also means it
- * survives being read by somebody who cannot separate the two greys (§6.91's argument for
- * the tab bar, one control down).
+ * Two channels rather than colour alone, which also means it survives being read by
+ * somebody who cannot separate the two greys (§6.91's argument for the tab bar, one
+ * control down).
+ *
+ * **A rule and an *ink* step, not a weight step**, which is what this said until §6.134.
+ * The weight went in §6.113 for the reason `LABEL_FACE` gives: the phone cannot thicken a
+ * named family, so a state carried by weight is a state the phone loses. The table below
+ * has been an ink step ever since and the sentence above it had not caught up — §6.120's
+ * shape, a comment describing a mechanism the code no longer has.
+ *
+ * ## And two channels means two, at both densities
+ *
+ * `rows` drew a third: an amber ✓ at the far end of the row, `aria-hidden` and decorative,
+ * on both platforms. It was defensible one control at a time — the rule is a 2pt border at
+ * the far left of a 390pt row — and it is exactly the drift this constant exists to stop:
+ * a signal that appears at one density and not the other. §6.95's own finding was that
+ * "the density chips and the calendar's options ended up disagreeing", and the tick was
+ * the last way they still did. `dark-05-calendar.png` is what it looked like: the same
+ * state announced at both ends of one row, seven hundred points apart.
  */
 export const CHOSEN = {
   rule: border.tally,

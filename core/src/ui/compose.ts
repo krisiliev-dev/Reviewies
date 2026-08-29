@@ -1,5 +1,5 @@
 /**
- * Whether a screen opens on what there is to read, or on the box for writing more.
+ * What a reading screen opens on: what there is to read, or the panel for changing it.
  *
  * ## What the photograph showed
  *
@@ -45,6 +45,22 @@
 export const COMPOSE_OPEN = false;
 
 /**
+ * The same rule, and the second screen it turned out to describe.
+ *
+ * The calendar is called **Upcoming** and opened on "Tell me about": three notification
+ * options with a sub-line each, a paragraph about the iPhone Home Screen, and up to four
+ * conditional notes — 470 points of a 900-point screen, above the thing you came for. On
+ * both platforms. `dark-05-calendar.png` and `design/screens/09-calendar.png` are the
+ * pair, and they are identical, which is what made it a decision rather than drift.
+ *
+ * §6.129 wrote the rule for a composer and nothing had applied it since; this is what it
+ * looks like when the resident thing is a *setting* rather than a form. The collapsed
+ * state is not a bare control either — it states the current choice, which is most of
+ * what the open panel was there to tell you.
+ */
+export const SETTINGS_OPEN = false;
+
+/**
  * The control that opens it, and the one that gives up on it.
  *
  * "Say something" rather than "Add a comment": the noun in "comment" is the artefact,
@@ -56,3 +72,13 @@ export const COMPOSE = {
   open: 'Say something',
   cancel: 'Never mind',
 } as const;
+
+/**
+ * There is no constant here for the words on either control that opens or closes a panel.
+ *
+ * A `SETTINGS.close` briefly lived here and was wrong: five surfaces say "Done" — two
+ * content-warning panels, two catch-up sheets, and the calendar — and a catch-up sheet is
+ * not a setting, so the name would have belonged to one of its callers. It is
+ * `COPY.controls.done`. And the word that *opens* a settings panel is not a word at all:
+ * the row states the current choice, which the screen is the only thing that knows.
+ */

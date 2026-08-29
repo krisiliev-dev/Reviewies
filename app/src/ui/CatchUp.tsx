@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { COPY } from '@reviewies/core/copy';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
 import { useDialog } from './useDialog';
 import { Section } from './Section';
@@ -72,7 +73,7 @@ export function CatchUp({
             aria-label={marked === undefined ? 'Cancel catching up' : 'Done catching up'}
             className="tap shrink-0 text-s14 text-ink-secondary"
           >
-            {marked === undefined ? 'Cancel' : 'Done'}
+            {marked === undefined ? 'Cancel' : COPY.controls.done}
           </button>
         </div>
 

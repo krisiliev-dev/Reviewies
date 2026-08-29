@@ -9428,6 +9428,60 @@ design decisions rather than drift, and each is a sprint of its own:
   an amber ✓ at the far right. `Choice`'s spelling is a rule and a weight step (§6.95); this
   screen adds a third signal, on both platforms. **#169.**
 
+### 6.134 A rule written for a composer, and the second screen it turned out to describe
+
+§6.129 wrote it: *on a screen whose purpose is reading, composing is revealed, not
+resident.* Four sprints later nothing had applied it anywhere else, and the web's first
+design pass (§6.133) found the screen it had been describing all along.
+
+The calendar is called **Upcoming** and opened on "Tell me about" — three notification
+options with a sub-line each, a delivery block, a paragraph about the iPhone Home Screen
+and up to four conditional notes. 470 points of a 900-point screen, above the thing you
+came for, on **both platforms identically**, which is what made it a decision rather than
+drift.
+
+It is one row now: *Tell me about · Premieres & finales*, with a chevron. The collapsed
+state **states the current choice**, which is most of what the open panel told you — a
+reveal that hid the setting as well as the form would have been a worse screen, not a
+tidier one. Five days of the calendar are visible where four were.
+
+## Three things the change turned up on its way
+
+**A third mark on a chosen option.** `CHOSEN` says selection is a rule and a step in the
+ink — two channels, spelled once, which is the whole reason the constant exists. `Choice`'s
+`rows` density drew an amber ✓ at the far end of the row as well, `aria-hidden` and
+decorative, on both platforms: the same state announced at both ends of a 390-point row.
+Defensible one control at a time and exactly the drift this component ended — §6.95's own
+finding was that "the density chips and the calendar's options ended up disagreeing", and
+the tick was the last way they still did. It is gone. (#169.)
+
+`CHOSEN`'s own prose said "a rule and a **weight** step" and the table has held an *ink*
+step since §6.113 took weights out — the phone cannot thicken a named family. §6.120's
+shape, a comment describing a mechanism the code no longer has, corrected in place.
+
+**A constant named for one of its five callers.** The close control briefly became
+`SETTINGS.close` in `ui/compose.ts`, and `compose.test.ts` caught the collision
+immediately: `ContentWarnings` already said "Done", and so did `CatchUp`, on both
+platforms. Five surfaces, and a catch-up sheet is not a setting — so the name would have
+belonged to one of them rather than to the word. It is `COPY.controls.done`, which is where
+a word the product says has lived since §6.98, and `compose.ts` records why it is not
+there.
+
+**A row announced as a link when it acts.** The phone's `Row` chooses its role from
+`open.does`, defaulting to `'link'`; the web's chooses from `to` versus `run`. A row that
+opens a panel in place is not navigation, and without `does: 'act'` the phone announced it
+as one — found because `mobile/smoke.mjs`'s `getByRole('button', …)` timed out, which is a
+locator failing for the right reason. Two ways to say one thing, and the union already says
+it: **#170** is filed for whether `does` should exist at all.
+
+## And the suites now walk both states
+
+Both smoke suites read the collapsed screen, check that the setting is legible *without*
+opening anything, then open it and check what the open panel says. That is two states where
+there was one, and it is what a reveal costs a suite: the audit floors moved 9 → 8 and 4 → 3
+for the screen a person arrives at, with a second audit at 11 for the screen they get after
+a tap.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

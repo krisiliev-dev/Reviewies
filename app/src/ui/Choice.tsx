@@ -63,13 +63,6 @@ export function Choice<T extends string | number>({
                 <Note level="footnote" as="span" className="block">{option.hint}</Note>
               ) : null}
             </span>
-            {/* The state is already in `aria-checked`; a readable tick would announce it
-                twice. Decorative on purpose. */}
-            {rows && on ? (
-              <span aria-hidden="true" className="text-working-mark">
-                ✓
-              </span>
-            ) : null}
           </button>
         );
       })}

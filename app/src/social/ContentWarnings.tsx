@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { COPY } from '@reviewies/core/copy';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { Button } from '../ui/Button';
+
 import { Note } from '../ui/Note';
 import {
   CONTENT_WARNINGS,
@@ -119,14 +121,17 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             </ul>
           )}
 
-          <button
-            onClick={() => setVoting(!voting)}
-            className="tap text-s12 text-ink-secondary underline"
-            aria-expanded={voting}
-            aria-label={voting ? 'Done flagging' : 'Flag something'}
-          >
-            {voting ? 'Done' : 'Flag something'}
-          </button>
+          {/* The third instance of §6.129's reveal rule, and it was here before the rule
+              was written: a panel that stands closed and a control that folds it away
+              again. `SETTINGS.close` is that word, shared with the calendar's, so a fourth
+              screen does not invent a fifth spelling. §6.134. */}
+          <Button
+            size="inline"
+            tone="quiet"
+            onPress={() => setVoting(!voting)}
+            label={voting ? COPY.controls.done : 'Flag something'}
+            name={voting ? `${COPY.controls.done} flagging` : 'Flag something'}
+          />
 
           {voting && (
             <ul className="mt-2 flex flex-col gap-1">

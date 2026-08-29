@@ -1674,10 +1674,27 @@ try {
   // Through More, which is where it lives now — the tab bar is the phone's five.
   await viaMore(/Upcoming/);
   await page.waitForSelector('text=Tell me about', { timeout: 5000 });
+  /*
+   * Closed on arrival, and saying what it is set to.
+   *
+   * §6.134 gave the notification panel a collapsed state: it used to stand open above the
+   * calendar and take the top 470 points of a screen called Upcoming. The collapsed row
+   * names the current choice, which is most of what the open panel told you — so the first
+   * check is that the setting is legible *without* opening anything.
+   */
+  const collapsed = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
+  check('upcoming says what it will tell you about, without opening anything',
+    /Tell me about Premieres & finales/.test(collapsed), collapsed.slice(0, 120));
+  check('and the options are not standing open',
+    !/The moments worth knowing about/.test(collapsed), collapsed.slice(0, 120));
+  await audit('Upcoming', 8);
+
+  await page.getByRole('button', { name: /^Tell me about — / }).click();
+  await page.waitForSelector('text=The moments worth knowing about', { timeout: 5000 });
   const upcomingText = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('upcoming offers notification granularity', /Premieres & finales/.test(upcomingText));
   check('milestones is the default', /The moments worth knowing about/.test(upcomingText));
-  await audit('Upcoming', 9);
+  await audit('Upcoming, tuning', 9);
   await noGhosts('Upcoming');
   await scaled('Upcoming');
   await page.screenshot({ path: OUT + '10-upcoming.png' });

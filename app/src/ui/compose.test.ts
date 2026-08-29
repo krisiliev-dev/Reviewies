@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { COMPOSE, COMPOSE_OPEN } from '@reviewies/core/ui/compose';
+import { COMPOSE, COMPOSE_OPEN, SETTINGS_OPEN } from '@reviewies/core/ui/compose';
 
 /**
  * Composing is revealed, not resident — the rule `core/src/ui/compose.ts` states, held on
@@ -82,6 +82,55 @@ describe('a composer on a reading screen', () => {
       expect(reveal, `${file} renders a multiline field with no reveal`).toBeGreaterThan(-1);
       expect(field, `${file} renders its composer before the reveal that guards it`)
         .toBeGreaterThan(reveal);
+    }
+  });
+
+  it('reveals a settings panel too, on both platforms and by the same rule', () => {
+    /*
+     * §6.129 wrote "composing is revealed, not resident" and nothing applied it for four
+     * sprints. §6.134 found the second screen it describes: the calendar is called
+     * *Upcoming* and opened on "Tell me about" — three options with a sub-line each, a
+     * delivery block and up to four conditional notes, 470 points of a 900-point screen,
+     * above the thing you came for. On both platforms, identically, which is what made it
+     * a decision rather than drift.
+     *
+     * The collapsed state is a `Row` that *states the current choice*, not a bare control:
+     * most of what the open panel told you, in one line. That is the clause below —
+     * a screen that hid the panel behind a button saying nothing would satisfy a check
+     * that only looked for the reveal.
+     */
+    expect(SETTINGS_OPEN).toBe(false);
+    for (const [name, file] of [
+      ['web', 'app/src/screens/Calendar.tsx'],
+      ['phone', 'mobile/app/calendar.tsx'],
+    ] as const) {
+      const source = withoutProse(read(file));
+      expect(source, `${name} does not seed the panel from the rule`)
+        .toMatch(/useState\(SETTINGS_OPEN\)/);
+      expect(source, `${name} has no collapsed state`).toMatch(/\{!tuning \? \(/);
+      // The row says what the setting is, rather than only that there is one.
+      expect(source, `${name}'s collapsed row does not name the current choice`)
+        .toMatch(/meta=\{NOTIFY_OPTIONS\.find\(\(o\) => o\.key === preference\)\?\.label\}/);
+      expect(source, `${name} cannot be closed again`).toContain('COPY.controls.done');
+    }
+  });
+
+  it('does not mark a chosen option a third way', () => {
+    /*
+     * `CHOSEN` is a rule and a step in the ink — two channels, and the constant exists so
+     * selection is spelled once. `Choice`'s `rows` density drew an amber ✓ at the far end
+     * of the row as well, `aria-hidden` and decorative, on both platforms: the same state
+     * announced at both ends of a 390pt row, seven hundred points apart in the photograph.
+     *
+     * A signal at one density and not the other is the drift this component was built to
+     * end — §6.95's own finding was that "the density chips and the calendar's options
+     * ended up disagreeing", and the tick was the last way they still did.
+     */
+    for (const [name, file] of [
+      ['web', 'app/src/ui/Choice.tsx'],
+      ['phone', 'mobile/src/ui/Choice.tsx'],
+    ] as const) {
+      expect(withoutProse(read(file)), `${name}'s Choice still draws a tick`).not.toContain('✓');
     }
   });
 

@@ -309,6 +309,8 @@ This came out of the only route the design track had never photographed. `commen
 
 Two things follow for this component. A `multiline` field is the shape of a composer — 350 points of screen whether or not anybody wanted to write — so every one of them in the product has to be behind a reveal, and `compose.test.ts` enumerates them. And `multiline` is not free on the phone: React Native gives a multiline input the Return key for a newline, so an `onSubmitEditing` beside it never fires. The phone's watchlist note was the only one of the four note fields in the product that was multiline, and it was carrying exactly that dead prop.
 
+**And the rule is not only about fields (§6.134).** The second screen it described was the calendar: "Tell me about" stood open above `Upcoming` and took the top 470 points of a 900-point screen, on both platforms. `SETTINGS_OPEN` in `core/src/ui/compose.ts` is the same default for a settings panel, and the collapsed state is a `Row` that **states the current choice** — a reveal that hides the setting as well as the form is a worse screen, not a tidier one. The word that folds one away is `COPY.controls.done`, shared with `ContentWarnings` and `CatchUp`, because five surfaces say it and a catch-up sheet is not a setting.
+
 ---
 
 ## 9. `Choice` — the radiogroup
@@ -333,6 +335,8 @@ interface ChoiceProps<T extends string | number> {
 
 **Replaces:** `stats.tsx` `Chip` (windows + years), `comments` `EFFORT_LEVELS`, `watching` `REACTION_DENSITY_CHOICES`, `WhereToWatch` `REGIONS`, `calendar` `NOTIFY_OPTIONS`. The option data already lives in core for four of the five — this consumes it rather than duplicating it.
 
+
+**Two channels, at both densities (§6.134).** `CHOSEN` is a rule and a step in the ink, and the constant exists so selection is spelled once. `rows` drew an amber ✓ at the far end of the row as well — decorative and `aria-hidden`, but a third channel, and only at one density. That is what §6.95 called the density chips and the calendar's options "disagreeing", still true four sprints after the component was supposed to have ended it. The tick is gone. And `CHOSEN`'s prose said "a weight step" until the same sprint: the table has been an ink step since §6.113 removed weights, because the phone cannot thicken a named family.
 ---
 
 ## 10. `CrossOff` — the signature move

@@ -579,7 +579,9 @@ try {
   // asserting they hold three controls would assert something untrue. What the audit
   // still catches there is a control that exists and has no name.
   for (const [detail, expect_, controls] of [
-    ['What is airing, and what to be told about', /Tell me about/i, 4],
+    // 3, down from 4: §6.134 collapsed the notification panel, so the screen a person
+    // arrives at is a calendar with one settings row rather than three radio options.
+    ['What is airing, and what to be told about', /Tell me about/i, 3],
     ['Film and television in the same list', /list/i, 1],
     ['Your handle, following, blocking', /account|sync|following/i, 1],
   ]) {
@@ -599,6 +601,20 @@ try {
   // the screen says so rather than showing a control that does nothing.
   await page.getByText('What is airing, and what to be told about').click();
   await page.waitForSelector('text=/Tell me about/i', { timeout: 15000 });
+  /*
+   * Open it first. §6.134 gave this panel a collapsed state — it used to stand open above
+   * the calendar and take the top 470 points of a screen called Upcoming — so the sentence
+   * this suite is here to read is one tap in. The row itself names the current choice,
+   * which is checked before the tap.
+   */
+  const collapsed = await text();
+  check(
+    'the calendar says what it will tell you about, without opening anything',
+    /Tell me about\s*Premieres & finales/i.test(collapsed.replace(/\s+/g, ' ')),
+    collapsed.slice(0, 120),
+  );
+  await page.getByRole('button', { name: /^Tell me about — / }).click();
+  await page.waitForSelector('text=/The moments worth knowing about/i', { timeout: 10000 });
   const upcoming = await text();
   check(
     'the calendar is honest about what it can deliver',

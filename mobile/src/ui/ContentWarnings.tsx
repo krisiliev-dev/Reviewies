@@ -1,4 +1,5 @@
 import { SURFACE } from '@reviewies/core/ui/surface';
+import { COPY } from '@reviewies/core/copy';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { syncConfigured } from '@reviewies/core/sync/auth';
@@ -121,7 +122,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             accessibilityState={{ expanded: voting }}
             accessibilityLabel={voting ? 'Done flagging' : 'Flag something'}
           >
-            <Text style={styles.link}>{voting ? 'Done' : 'Flag something'}</Text>
+            <Text style={styles.link}>{voting ? COPY.controls.done : 'Flag something'}</Text>
           </Pressable>
 
           {voting &&

@@ -64,9 +64,11 @@ export function Choice<T extends string | number>({
                 minWidth: metrics.minWidth,
                 paddingHorizontal: metrics.paddingX,
                 justifyContent: 'center',
-                // A row lays its body and its tick side by side. Without this the tick
-                // stacks under the hint, which the screenshots showed and nothing else
-                // would have: it is named, reachable, big enough and in the wrong place.
+                // A row is a row: `rowBody` is `flex: 1` and needs a row direction to
+                // grow along rather than fill the height. This used to say it laid the
+                // body and the tick side by side, and the tick went in §6.134 — the
+                // direction stayed because the body still needs it, which is the sort of
+                // thing worth checking rather than deleting with the reason.
                 ...(rows
                   ? { flexDirection: 'row' as const, alignItems: 'center' as const, gap: metrics.gap }
                   : null),
@@ -95,14 +97,6 @@ export function Choice<T extends string | number>({
               </Text>
               {rows && option.hint ? <Note level="footnote">{option.hint}</Note> : null}
             </View>
-            {/* A mono tick, on rows only, and aria-hidden: the state is already in
-                `accessibilityState`, and announcing it twice is how a reader ends up
-                hearing "selected, tick, selected". */}
-            {rows && on ? (
-              <Text accessible={false} style={styles.tick}>
-                ✓
-              </Text>
-            ) : null}
           </Pressable>
         );
       })}
@@ -118,5 +112,4 @@ const styles = StyleSheet.create({
   // From `CHOICE_SIZE` in the core, which is where the web reads them too — the two were
   // 14 here and an inherited 16 there.
   label: { fontSize: CHOICE_SIZE.chips.label, fontFamily: type.family.title.name },
-  tick: { color: theme.workingMark, fontSize: CHOICE_SIZE.chips.label, fontFamily: type.family.title.name },
 });

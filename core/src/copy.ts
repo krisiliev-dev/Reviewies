@@ -137,6 +137,16 @@ export const COPY = {
    * see the screen actually reads.
    */
   controls: {
+    /**
+     * The word that folds a revealed thing away again — a settings panel, a flagging list,
+     * a catch-up sheet.
+     *
+     * Five sites wrote it: two `ContentWarnings`, two `CatchUp`s and the calendar's panel
+     * when §6.134 gave it one. It nearly became `SETTINGS.close` in `ui/compose.ts`, and
+     * that was the wrong home — `CatchUp` is a sheet, not a setting, so the constant would
+     * have been named for one of its five callers. A word the product says belongs here.
+     */
+    done: 'Done',
     addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
     saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
@@ -313,6 +323,14 @@ export const COPY = {
   },
 
   calendar: {
+    /**
+     * The notification block's name, on the screen and on the row that reveals it.
+     *
+     * Written at three call sites — a `Section`, a `Choice`'s announced name and the phone's
+     * copy of both — until §6.134 gave the panel a collapsed state and needed a fourth. Four
+     * literals of the same sentence is how `COPY` exists in the first place (§6.98).
+     */
+    tellMeAbout: 'Tell me about',
     /**
      * Says how far ahead it looks, which the phone's version had dropped, and what to
      * do about the emptiness, which is the phone's half. `UPCOMING_DAYS` is what makes
