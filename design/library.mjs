@@ -139,9 +139,10 @@ const dayString = (daysAgo) => {
  * — the deliberately half-finished library every pass has used — and `everything` marks every
  * episode that has **aired**, which is a different library and the one §6.163 needed.
  */
-function exportCsv(watched) {
+function exportCsv(watched, include = () => true) {
   const rows = ['show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id'];
   SCHEDULE.forEach((show, i) => {
+    if (!include(show)) return;
     let index = 0;
     show.seasons.forEach((episodes, s) => {
       for (let n = 1; n <= episodes; n++) {
@@ -179,4 +180,35 @@ const CSV = exportCsv((show, index) => index <= show.watchedThrough);
  */
 const CAUGHT_UP_CSV = exportCsv((_show, _index, aired) => aired >= 0);
 
-export { CSV, CAUGHT_UP_CSV };
+/** Whether every episode of a show has aired — so nothing of it can be upcoming. */
+const allAired = (show) => {
+  let index = 0;
+  return show.seasons.every((episodes, s) => {
+    for (let n = 1; n <= episodes; n++) {
+      index++;
+      if (airedDaysAgo(show, index, s + 1) < 0) return false;
+    }
+    return true;
+  });
+};
+
+/**
+ * Caught up and **finished**, which is a different screen. §6.164.
+ *
+ * `CAUGHT_UP_CSV` above leaves two shows still running, so Up Next says *"All caught up.
+ * The Long Dark is next, Saturday."* and offers the calendar. `allCaughtUp` — the sentence
+ * for somebody with nothing coming at all — needs a library where every tracked show is over
+ * and every episode of it has aired.
+ *
+ * `ended && allAired`, not a hand-picked name. Hollow Crown Saga is `ended: true` and still
+ * has three episodes to air, which is exactly the case §6.150 spent a sprint on: TMDB marks a
+ * show Ended once its last season is the last one, often before the finale has gone out. A
+ * rule written as "the ended ones" would have quietly included it and photographed the
+ * waiting state under the finished state's name.
+ */
+const FINISHED_CSV = exportCsv(
+  (_show, _index, aired) => aired >= 0,
+  (show) => show.ended && allAired(show),
+);
+
+export { CSV, CAUGHT_UP_CSV, FINISHED_CSV };

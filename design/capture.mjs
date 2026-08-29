@@ -36,7 +36,7 @@ mkdirSync(OUT, { recursive: true });
  * Two seasons of the two multi-season fixtures and a run of the long one: enough rows that
  * a list is judged as a list, and enough left unwatched that Up Next has something in it.
  */
-import { CAUGHT_UP_CSV, CSV } from './library.mjs';
+import { CAUGHT_UP_CSV, CSV, FINISHED_CSV } from './library.mjs';
 
 const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -1211,6 +1211,53 @@ try {
   });
 } finally {
   await settled.close();
+}
+
+/*
+ * Caught up and **finished**, which is the other half of the same screen. §6.164.
+ *
+ * `00-caughtup-upnext` above is somebody waiting: two of its four shows are still running and
+ * Up Next now names the next episode and offers the calendar. `allCaughtUp` is what the screen
+ * says when nothing is coming at all, and it keeps *Find something to watch* because there the
+ * question really is a new show.
+ *
+ * A third library and a third context, for the reason the second one needed its own: this is
+ * not a state of a screen, it is a state of a library. `FINISHED_CSV` is every show that is
+ * over **and** has no episode left to air — one of the four.
+ */
+const finished = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const over = await finished.newPage();
+over.on('pageerror', (e) => console.log('PAGEERROR (finished)', e.message));
+try {
+  await over.goto('http://localhost:4200/');
+  await over.waitForTimeout(2500);
+  over.on('filechooser', (c) =>
+    c.setFiles({ name: 'episodes.csv', mimeType: 'text/csv', buffer: Buffer.from(FINISHED_CSV) }).catch(() => {}));
+  await over.getByRole('button', { name: /Import from TV Time/i }).click();
+  for (let i = 0; i < 40; i++) {
+    if (/Your history is in/.test(await over.locator('body').innerText())) break;
+    await over.waitForTimeout(500);
+  }
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await over.goto('http://localhost:4200/');
+    await over.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
+    let quiet = 0;
+    for (let i = 0; i < 60 && quiet < 4; i++) {
+      quiet = /Matching…/.test(await over.locator('body').innerText()) ? 0 : quiet + 1;
+      await over.waitForTimeout(500);
+    }
+    if (/nothing has aired that you have not seen/.test(await over.locator('body').innerText())) break;
+  }
+  await shoot(over, {
+    out: OUT,
+    name: '00-caughtup-finished',
+    mustContain: 'nothing has aired that you have not seen',
+    problems: unshot,
+    scrolls,
+    settle: 1200,
+  });
+} finally {
+  await finished.close();
 }
 
 await browser.close();

@@ -86,7 +86,11 @@ describe('a screen with nothing on it', () => {
     for (const [section, group] of Object.entries(COPY)) {
       if (typeof group !== 'object' || group === null) continue;
       for (const key of Object.keys(group)) {
-        if (/^(empty|.*Empty|allCaughtUp|sealed)/.test(key)) found.push(`${section}.${key}`);
+        // `caughtUp` in any case, because §6.164 added `caughtUpWaiting` — an empty state by
+        // every definition here — and the pattern as written did not see it. A sweep that
+        // misses the key the sprint just added is the sweep going stale in one sprint, which
+        // is the thing it exists to prevent.
+        if (/^(empty|.*Empty|.*[Cc]aughtUp.*|sealed)/.test(key)) found.push(`${section}.${key}`);
       }
     }
     expect(found.length, 'the sweep found no empty-state copy at all').toBeGreaterThan(6);

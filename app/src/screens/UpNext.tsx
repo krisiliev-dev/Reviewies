@@ -16,6 +16,8 @@ import { MatchImports } from '../ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { requestFill } from '@reviewies/core/calendar/refresh';
+import { getUpcoming } from '@reviewies/core/calendar/upcoming';
+import { formatDay } from '@reviewies/core/time';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
@@ -59,6 +61,20 @@ export function UpNext() {
    * so the fetch is no longer guaranteed to finish. This is the screen where that shows —
    * an empty Up Next for a show you just added — and so it is the screen that closes it.
    */
+  /**
+   * What is coming, but only when there is nothing to watch. §6.164.
+   *
+   * `getUpcoming` walks every tracked show's episodes, which on the 1,220-episode library
+   * §6.156 measured is not free — so it is asked only in the branch that needs it. The
+   * dependency is the *count* rather than the array: `useLiveQuery` re-runs on any write to
+   * these tables anyway, and depending on the array itself would re-run this on every mark.
+   */
+  const waiting = useLiveQuery(
+    async () => (entries && entries.length === 0 ? (await getUpcoming())[0] : undefined),
+    [entries?.length],
+    undefined,
+  );
+
   useEffect(() => {
     void requestFill();
   }, []);
@@ -134,7 +150,9 @@ export function UpNext() {
             ? COPY.upNext.stillImporting(importing)
             : unmatched
               ? COPY.upNext.matchingImport(unmatched)
-              : COPY.upNext.allCaughtUp}
+              : waiting
+                ? COPY.upNext.caughtUpWaiting(waiting.seriesName, formatDay(waiting.day))
+                : COPY.upNext.allCaughtUp}
         </Note>
         {/* Run where the gap is felt, not filed under a settings screen — but never
             over a library still being written. Matching what has landed so far leaves
@@ -153,9 +171,27 @@ export function UpNext() {
           Not removed — leaving is allowed and the screen would be a dead end without it. It
           stops being the offer, which is what a tone is for.
         */}
+        {/*
+          The offer follows the state. §6.164.
+
+          Caught up **and waiting** is the one case where the calendar is the answer: the
+          sentence above names the next episode, and the rest of what is coming is one screen
+          away behind More. Searching stays available and stops being the loudest thing, which
+          is the same correction §6.162 made for the importing state.
+        */}
+        {waiting && !importing && !unmatched && (
+          <Button
+            to="/calendar"
+            tone="primary"
+            size="page"
+            label={COPY.upNext.seeUpcoming}
+            name={COPY.upNext.seeUpcoming}
+            className="mt-5"
+          />
+        )}
         <Button
           to="/search"
-          tone={importing ? 'secondary' : 'primary'}
+          tone={importing || waiting ? 'secondary' : 'primary'}
           size="page"
           label="Find something to watch"
           name="Find something to watch"

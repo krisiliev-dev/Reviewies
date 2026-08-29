@@ -11843,6 +11843,93 @@ The first plant of the sprint also did not apply — the indentation in the edit
 the needle count said so before the run did. That is the third time counting the needle first
 has caught a plant that would otherwise have been read as a guard working.
 
+### 6.164 Caught up is two states
+
+**#200.** §6.163 photographed `00-caughtup-upnext.png` for the first time — the settled state
+of the screen this product opens on:
+
+> **All caught up — nothing has aired that you have not seen.**
+> `[ Find something to watch ]`
+
+The sentence was true and the offer answered a different question. That person is caught up on
+four shows, **two of which are still running**; their next episodes were in the calendar the
+same design run photographed. What they are doing is *waiting*, and the screen they open every
+day between episodes had nothing to say about the thing they were waiting for.
+
+Third time in three sprints the same shape has been found by **looking at a photograph** rather
+than by reading source. §6.162: the import's working state under a filled *Find something to
+watch*. §6.163: an empty list whose only control offered to publish it. Each one a true
+sentence over an offer belonging to a different state.
+
+## Two states, because they are two questions
+
+Caught up **and waiting** is not caught up **and finished**. One sentence served both:
+
+```
+caughtUpWaiting: (show, when) => `All caught up. ${when}: ${show}.`
+allCaughtUp:     'All caught up — nothing has aired that you have not seen.'
+```
+
+The offer follows. Waiting gets **See what's upcoming** as its primary — the calendar is one
+screen away behind More and is where the rest of what is coming lives — with searching demoted
+to secondary, the same correction §6.162 made for the importing state. Finished keeps *Find
+something to watch* as its primary, because there the question really is a new show.
+
+`when` is `formatDay`, the formatter the calendar's own day headings use, so the two screens
+cannot disagree about what "Saturday" means.
+
+## The day goes first, and the photograph is why
+
+The first version read *"All caught up. The Long Dark is next, Today."* `formatDay` capitalises
+for a heading, and mid-sentence that reads as a mistake. Lowercasing would break "Sat, Sep 19";
+a sentence-position formatter would be a second answer to the question §6.66 settled. Putting
+the day first makes all four outputs sentence-initial and front-loads what somebody waiting
+wants:
+
+```
+All caught up. Today: The Long Dark.
+All caught up. Tomorrow: The Long Dark.
+All caught up. Saturday: The Long Dark.
+All caught up. Sat, Sep 19: The Long Dark.
+```
+
+That correction came from the shot, one run after the finding did.
+
+## A third library, and the trap in it
+
+Two states are two **libraries**, not two screens, so `design/library.mjs` gained
+`FINISHED_CSV` beside `CAUGHT_UP_CSV` and `capture.mjs` a third browser context.
+
+The rule is `ended && allAired`, and the second half is not decoration. Hollow Crown Saga is
+`ended: true` **and has three episodes still to air** — TMDB marks a show Ended once its last
+season is the last one, often before the finale has gone out, which is the whole of §6.150. A
+rule reading only `ended` puts it in the finished library and photographs the waiting state
+under the finished state's name. Planted exactly that way, and `designLibrary.test.ts` names it:
+
+```
+AssertionError: the finished library holds a show that is still airing:
+  expected [ 'Hollow Crown Saga' ] to deeply equal []
+```
+
+The clause holds both directions — nothing in the finished library has anything left to air,
+**and** the caught-up library does — because two libraries that quietly became the same one
+would be two shots of one screen under two names.
+
+## The sweep missed the key this sprint added
+
+`emptyStates.test.ts` sweeps `copy.ts` for keys shaped like an absence and fails on anything
+unregistered. Its pattern was `/^(empty|.*Empty|allCaughtUp|sealed)/` — `allCaughtUp` by name,
+because that was the only one. `caughtUpWaiting` is an empty state by every definition in that
+file and the sweep did not see it.
+
+A register that goes stale in one sprint is the thing the sweep exists to prevent, and it
+nearly did so in the sprint that wrote it. The pattern is `.*[Cc]aughtUp.*` now, and planting
+the missing registration goes red.
+
+Four plants, needle counted before and after: the `ended`-only library, the unregistered
+sentence, a screen that stops reading it, and the finished shot renamed out of the capture
+script. All red.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12666,15 +12753,23 @@ and which single claim in this document could not be checked at all:
   and `reveals.ts`'s `NOT_A_REVEAL` names them as in-flight without claiming anybody has seen
   them.
 
-- **Up Next has nothing to say to somebody who is waiting.** §6.163 photographed
-  `00-caughtup-upnext.png` for the first time: *"All caught up — nothing has aired that you
-  have not seen"* over a filled **Find something to watch**. The person is caught up on four
-  shows, two of which are still running, and the calendar in the same run holds The Long
-  Dark's next episode and Salt Flats' eight-episode drop. The screen they will open every day
-  between episodes says nothing about the thing they are waiting for and sends them to search
-  for something else. The sentence is true; the offer answers a different question. Not fixed
-  in §6.163 because it needs a sentence made of upcoming data on a screen that reads none —
-  which is a task, not a tail-end edit.
+- ~~**Up Next has nothing to say to somebody who is waiting.**~~ **Closed in §6.164.** Caught
+  up is two states now — waiting names the next episode and its day and offers the calendar;
+  finished keeps *Find something to watch* — with `FINISHED_CSV` as a third seeded library so
+  both are photographed. What the closing taught, and what stays worth watching: the sweep in
+  `emptyStates.test.ts` did not see `caughtUpWaiting`, the key the same sprint added. A
+  register that goes stale in one sprint is precisely what that sweep exists to prevent, and
+  it nearly did so in the sprint that wrote it. The pattern is wider; the lesson is that a
+  sweep matching *names* rather than *shapes* is one rename from blind.
+
+- **Three findings in three sprints came from looking at a photograph, and none from reading
+  source.** §6.162's import state under a filled *Find something to watch*, §6.163's empty
+  list offering only to publish itself, §6.164's caught-up screen sending a waiting person to
+  search. All three are the same shape — a true sentence over an offer belonging to a
+  different state — and all three were in code that every guard passed. There is no clause
+  that can see this, and the only instrument that has ever found it is a person looking at a
+  screenshot. That is worth stating plainly rather than leaving as an implication: the design
+  track's value so far is not in what it automates.
 
 - **The title page is the only screen whose layout is decided by a rule written for the
   other nine, and nobody has photographed the alternative.** §6.159 declined a second column

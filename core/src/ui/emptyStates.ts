@@ -86,10 +86,16 @@ export const EMPTY_STATES: readonly EmptyState[] = [
       reason,
   },
   {
+    copy: 'upNext.caughtUpWaiting',
+    screens: ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx'],
+    says: 'caught up, and what is next — the state §6.164 found this screen had nothing to say to',
+    shot: '00-caughtup-upnext',
+  },
+  {
     copy: 'upNext.allCaughtUp',
     screens: ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx'],
-    says: 'nothing has aired that you have not seen — the settled empty state',
-    shot: '00-caughtup-upnext',
+    says: 'nothing has aired that you have not seen, and nothing is coming either',
+    shot: '00-caughtup-finished',
   },
   {
     copy: 'watchlist.empty',

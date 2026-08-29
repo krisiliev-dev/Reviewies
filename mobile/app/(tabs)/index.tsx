@@ -20,6 +20,8 @@ import {
 import { openCommentsAfterWatch } from '@reviewies/core/data/prefs';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { requestFill } from '@reviewies/core/calendar/refresh';
+import { getUpcoming } from '@reviewies/core/calendar/upcoming';
+import { formatDay } from '@reviewies/core/time';
 import { db } from '@reviewies/core/data/db';
 import { Poster } from '../../src/ui/Poster';
 import { CatchUp } from '../../src/ui/CatchUp';
@@ -62,6 +64,18 @@ export default function UpNextScreen() {
   // Not an episode count: an import now writes the episodes it knows were watched, so
   // "no episodes" stopped meaning "nothing matched" the moment that landed.
   const unmatched = useLive(() => unmatchedImportCount(), []);
+  /**
+   * What is coming, but only when there is nothing to watch. §6.164.
+   *
+   * `getUpcoming` walks every tracked show's episodes, which on the 1,220-episode library
+   * §6.156 measured is not free — so it is asked only in the branch that needs it. The
+   * dependency is the *count* rather than the array, because depending on the array would
+   * re-run this on every mark.
+   */
+  const waiting = useLive(
+    async () => (entries && entries.length === 0 ? (await getUpcoming())[0] : undefined),
+    [entries?.length],
+  );
   // Still working is a third thing, distinct from empty and from unreadable. §6.80.
   const importing = useImporting();
 
@@ -169,27 +183,42 @@ export default function UpNextScreen() {
                 ? COPY.upNext.stillImporting(importing)
                 : unmatched
                   ? COPY.upNext.matchingImport(unmatched)
-                  : COPY.upNext.allCaughtUp}
+                  : waiting
+                    ? COPY.upNext.caughtUpWaiting(waiting.seriesName, formatDay(waiting.day))
+                    : COPY.upNext.allCaughtUp}
             </Text>
             {/* Offered where the gap is felt, not filed under a settings screen — but
                 never over an import still in flight. */}
             {unmatched && !importing ? <MatchImports /> : null}
-        {/*
-              Secondary while the import is running. §6.162.
-              
-              `02a-import-reading.png` is the first photograph anyone has taken of this state, and
-              it shows one sentence — "Still reading your TV Time export" — under a **filled
-              primary** button reading *Find something to watch*. The app is busy carrying
-              somebody's history across and the loudest thing on the screen invites them to leave.
-              First run gets this right, where searching is explicitly the alternative to
-              importing; here one Button served all three states and the loudest tone won.
-              
-              Not removed — leaving is allowed and the screen would be a dead end without it. It
-              stops being the offer, which is what a tone is for.
+            {/*
+              The offer follows the state. §6.162, §6.164.
+
+              `02a-import-reading.png` was the first photograph of the importing state and it
+              showed one sentence — "Still reading your TV Time export" — under a **filled
+              primary** reading *Find something to watch*: the app carrying somebody's history
+              across while the loudest thing on screen invited them to leave. First run gets
+              this right, where searching is explicitly the alternative to importing; here one
+              Button served every state and the loudest tone won.
+
+              §6.164 found the same shape one state over. Caught up **and waiting** is the case
+              where the calendar is the answer — the sentence above names the next episode and
+              the rest of what is coming is a screen away behind More.
+
+              Searching is never removed: leaving is allowed and this screen would be a dead
+              end without it. It stops being the offer, which is what a tone is for.
             */}
+            {waiting && !importing && !unmatched ? (
+              <Button
+                to="/calendar"
+                tone="primary"
+                size="page"
+                label={COPY.upNext.seeUpcoming}
+                name={COPY.upNext.seeUpcoming}
+              />
+            ) : null}
             <Button
               to="/search"
-              tone={importing ? 'secondary' : 'primary'}
+              tone={importing || waiting ? 'secondary' : 'primary'}
               size="page"
               label="Find something to watch"
               name="Find something to watch"

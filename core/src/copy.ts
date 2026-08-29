@@ -114,8 +114,40 @@ export const COPY = {
       `Bringing in ${shows} ${shows === 1 ? 'show' : 'shows'} from your import. ` +
       `Episodes appear as each one is found.`,
 
-    /** Nothing to watch, and nothing pending — the genuinely settled empty state. */
+    /**
+     * Caught up, and **waiting** — which is not the same state and had one sentence. §6.164.
+     *
+     * `00-caughtup-upnext.png` was the first photograph of this screen settled, and it said
+     * *"All caught up — nothing has aired that you have not seen"* over a filled *Find
+     * something to watch*, to somebody caught up on two shows that are still running. Their
+     * next episodes were in the calendar the same design run photographed. The sentence was
+     * true and the offer answered a different question: what that person is doing is waiting,
+     * and the screen they open every day between episodes said nothing about the thing they
+     * were waiting for.
+     *
+     * `when` comes from `formatDay`, the same formatter the calendar's own day headings use —
+     * so "Today", "Tomorrow", a weekday inside the week, and a date beyond it.
+     *
+     * **The day opens the clause**, and that is the photograph's doing. The first version read
+     * *"All caught up. The Long Dark is next, Today."* — `formatDay` capitalises for a heading,
+     * and mid-sentence that reads as a mistake. Lowercasing it would break "Sat, Sep 19", and a
+     * second sentence-position formatter would be a second answer to §6.66's question. Putting
+     * the day first makes every one of the four outputs sentence-initial, and it front-loads
+     * what somebody waiting actually wants: *"All caught up. Today: The Long Dark."*
+     *
+     * One show, not a list. The next one is what this screen is for; the rest are what the
+     * calendar is for, and the offer beside this sentence now goes there.
+     */
+    caughtUpWaiting: (show: string, when: string) => `All caught up. ${when}: ${show}.`,
+    /**
+     * Nothing to watch, and nothing pending — the genuinely settled empty state.
+     *
+     * This one keeps *Find something to watch* as its offer, because here that is the right
+     * question: nothing is coming, and the way out really is a new show.
+     */
     allCaughtUp: 'All caught up — nothing has aired that you have not seen.',
+    /** Where the rest of what is coming lives. Named for the screen it opens — §6.78. */
+    seeUpcoming: "See what's upcoming",
   },
 
   /**

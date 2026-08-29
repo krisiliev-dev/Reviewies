@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCHEDULE, airedDaysAgo, CAUGHT_UP_CSV, CSV } from '../../../design/library.mjs';
+import { SCHEDULE, airedDaysAgo, CAUGHT_UP_CSV, CSV, FINISHED_CSV } from '../../../design/library.mjs';
 import { FixtureProvider } from '@reviewies/core/metadata/fixtures';
 import { classify, UPCOMING_DAYS, type EpisodeKind } from '@reviewies/core/calendar/upcoming';
 import { dayKey, startOfDay } from '@reviewies/core/time';
@@ -280,5 +280,61 @@ describe('the calendar the seed produces', () => {
     // And that it is a *different* library from the one every other pass uses, or the two
     // shots taken from it are shots of the same thing under another name.
     expect(CAUGHT_UP_CSV.length).toBeGreaterThan(CSV.length);
+  });
+
+  it('has a third library with nothing left to air, and it is not the second one', () => {
+    /*
+     * The two caught-up states are two libraries, not two screens. §6.164.
+     *
+     * `CAUGHT_UP_CSV` leaves two shows still running, so Up Next says what is next and offers
+     * the calendar; `FINISHED_CSV` is the state where nothing is coming and *Find something to
+     * watch* is the right question. If the second ever stopped having something upcoming, or
+     * the third ever gained something, the two shots would be of the same screen under two
+     * names and no clause would say so.
+     *
+     * The trap is `ended`. Hollow Crown Saga is `ended: true` **and** has three episodes still
+     * to air — TMDB marks a show Ended once its last season is the last one, which is often
+     * before the finale has gone out, and §6.150 spent a sprint on exactly that. A rule reading
+     * only `ended` would have put it in the finished library and photographed the waiting state
+     * under the finished state's name.
+     */
+    const shows = (csv: string) => new Set(csv.split('\n').slice(1).map((l) => l.split(',')[0]));
+    const finished = shows(FINISHED_CSV);
+    expect(finished.size, 'the finished library is empty').toBeGreaterThan(0);
+
+    const stillToAir = (name: string) => {
+      const show = SCHEDULE.find((x: { name: string }) => x.name === name)!;
+      let index = 0;
+      return show.seasons.some((episodes: number, s: number) => {
+        for (let n = 1; n <= episodes; n++) {
+          index++;
+          if (airedDaysAgo(show, index, s + 1) < 0) return true;
+        }
+        return false;
+      });
+    };
+
+    // Nothing in the finished library has anything left to air, or it is not finished.
+    expect(
+      [...finished].filter(stillToAir),
+      'the finished library holds a show that is still airing',
+    ).toEqual([]);
+
+    // And the caught-up library does, or the two are the same state twice.
+    expect(
+      [...shows(CAUGHT_UP_CSV)].some(stillToAir),
+      'the caught-up library has nothing coming, so it is the finished one under another name',
+    ).toBe(true);
+
+    // Every episode of what is in the finished library is watched — it is caught up as well.
+    const seen = new Set(FINISHED_CSV.split('\n').slice(1).map((r) => r.split(',').slice(0, 3).join('|')));
+    for (const name of finished) {
+      const show = SCHEDULE.find((x: { name: string }) => x.name === name)!;
+      show.seasons.forEach((episodes: number, s: number) => {
+        for (let n = 1; n <= episodes; n++) {
+          expect(seen.has(`${name}|${s + 1}|${n}`), `${name} S${s + 1}E${n} is not watched`).toBe(true);
+        }
+      });
+    }
   });
 });

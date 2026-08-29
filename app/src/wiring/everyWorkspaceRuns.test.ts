@@ -151,7 +151,7 @@ describe('every workspace', () => {
    * alone. What matters here is that a block stops existing.
    */
   const FLOOR: Record<string, number> = {
-    core: 922, app: 621, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    core: 922, app: 622, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -248,7 +248,7 @@ describe('every workspace', () => {
      * `['00-…']` tuple satisfies, so one floor over two lists would let three deleted routes
      * hide behind three added empties. `EMPTY_FIRST` is objects for exactly that reason.
      */
-    'design/capture.mjs#empty': { pattern: /name: '00-/g, least: 5 },
+    'design/capture.mjs#empty': { pattern: /name: '00-/g, least: 6 },
     /*
      * And the signed-in half. §6.163.
      *
