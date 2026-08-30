@@ -31,6 +31,7 @@ import { Chevron } from '../../src/ui/Mark';
 import { disclosure } from '@reviewies/core/ui/mark';
 import { Button } from '../../src/ui/Button';
 import { Section } from '../../src/ui/Section';
+import { Masthead } from '../../src/ui/Masthead';
 import { Data } from '../../src/ui/Data';
 import { Note } from '../../src/ui/Note';
 import { Field } from '../../src/ui/Field';
@@ -119,9 +120,23 @@ export default function TitleScreen() {
         <View style={styles.header}>
           <Poster url={title?.posterUrl} name={title?.name ?? ''} size="detail" />
           <View style={styles.headerBody}>
-            <Text style={styles.title}>
+            {/*
+             * `MASTHEAD.sub`, drawn by the component rather than restated here.
+             *
+             * This was a `StyleSheet` entry naming the same three facts the table names —
+             * `theme.ink`, `text.s20`, the title face — so the two platforms agreed by
+             * hand-copy rather than by reading. It also announced as ordinary text: the
+             * role and the `aria-level` that `mobile/src/ui/Masthead.tsx` exists to make
+             * unforgettable were both absent, and react-native-web would have emitted an
+             * `<h1>` had the role been there alone.
+             *
+             * `sub`, matching `app/src/screens/TitleDetail.tsx`: this name sits beside a
+             * poster in a header block, and on this platform the navigator's own title
+             * above it is already the screen's name at depth 1.
+             */}
+            <Masthead level="sub">
               {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
-            </Text>
+            </Masthead>
             {!title && (failed || !loading) && (
               <Button
                   onPress={() => {
@@ -394,7 +409,6 @@ const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1, paddingBottom: 48 },
   header: { flexDirection: 'row', gap: 16 },
   headerBody: { flex: 1, gap: 6 },
-  title: { color: theme.ink, fontSize: text.s20, fontFamily: type.family.title.name },
   year: { color: theme.inkSecondary },
   overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: leadingOf(text.s16, leading.l143), fontFamily: type.family.prose.name },
   ratingBlock: { gap: 6 },

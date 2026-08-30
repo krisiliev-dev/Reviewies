@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SECTION, SECTION_FACE, SECTION_RULE, type SectionLevel } from '@reviewies/core/ui/section';
-import { track, type } from '@reviewies/core/tokens';
+import { type } from '@reviewies/core/tokens';
 import { space, theme, tracking } from './theme';
 
 /**
@@ -56,17 +56,36 @@ const styles = StyleSheet.create({
   blockSection: { marginBottom: SECTION.section.gapBelow },
   blockGroup: { marginBottom: SECTION.group.gapBelow },
   ruled: { flexDirection: 'row', alignItems: 'center', gap: space.s8 },
+  /*
+   * Every channel from the table, including the two that used to be spelled here.
+   *
+   * `tracking(size, track.t83)` and `textTransform: 'uppercase'` were literals that
+   * *happened* to equal `SECTION.section.track` and to agree with `SECTION.section.caps`.
+   * The table stated both for both levels and nothing read either one — the only consumer
+   * was the channel-counter in `section.test.ts`, which compares `caps` and `track` to each
+   * other and so is satisfied by any two values that differ. Case and tracking are two of
+   * the four channels that keep a dateline tellable from the section containing it, and
+   * both were held by hand-copy at exactly the point where the component was supposed to
+   * end hand-copy.
+   *
+   * `group` states them too, at their off values, rather than omitting them. Tracking
+   * left off and tracking derived from `track.t0` render identically, and only the second
+   * can be compared to `SECTION.group.track`; the same goes for `'none'` against no
+   * `textTransform` at all. Absence is not a value the table can be held to.
+   */
   section: {
     color: theme[SECTION.section.ink],
     fontSize: SECTION.section.size,
     fontFamily: type.family[SECTION_FACE].name,
-    letterSpacing: tracking(SECTION.section.size, track.t83),
-    textTransform: 'uppercase',
+    letterSpacing: tracking(SECTION.section.size, SECTION.section.track),
+    textTransform: SECTION.section.caps ? 'uppercase' : 'none',
   },
   group: {
     color: theme[SECTION.group.ink],
     fontSize: SECTION.group.size,
     fontFamily: type.family[SECTION_FACE].name,
+    letterSpacing: tracking(SECTION.group.size, SECTION.group.track),
+    textTransform: SECTION.group.caps ? 'uppercase' : 'none',
   },
   rule: { flex: 1, height: SECTION_RULE, backgroundColor: theme.strokeHairline },
 });

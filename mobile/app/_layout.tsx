@@ -9,6 +9,7 @@ import { bindNativePlatform } from '../src/platform';
 import { theme } from '../src/ui/theme';
 import { text, type } from '@reviewies/core/tokens';
 import { MASTHEAD } from '@reviewies/core/ui/masthead';
+import { Masthead } from '../src/ui/Masthead';
 import { breakInEffect, breakOnRender } from '../src/ui/breakScreen';
 import { FailureBanner } from '../src/ui/FailureBanner';
 import { reportFailure } from '@reviewies/core/data/failure';
@@ -37,12 +38,23 @@ import { useAppFonts } from '../src/ui/fonts';
  * not surface those the way a browser's `unhandledrejection` does, and the ways to hook
  * it are internal to the runtime and change between versions. The web export gets them
  * through the same listener the web app uses; a device does not.
+ *
+ * ## The title, which was the third hand-drawn masthead on this platform
+ *
+ * `styles.title` was `theme.ink` at `text.s24` in the title face — `MASTHEAD.page`'s three
+ * facts, restated — and it dressed both takeover screens in this file: this one and the
+ * boot failure below. `page` rather than `sub` because these two replace the `Stack`
+ * outright, so there is no navigator title above them: the heading is the screen's only
+ * name and has to be the level-1 one, which is what `app/src/ui/ErrorBoundary.tsx` already
+ * says with the same level. The visible change is the gap — `MASTHEAD.page.gapBelow` is
+ * `s12` and `centre`'s own `gap` is 8, so the title now sits 20 above the sentence rather
+ * than 8, exactly as the web's `gap-3` plus `mb-s12` already put it at 24.
  */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   reportFailure(error);
   return (
     <View style={styles.centre}>
-      <Text style={styles.title}>{COPY.app.crashed}</Text>
+      <Masthead level="page">{COPY.app.crashed}</Masthead>
       <Text style={styles.detail}>{COPY.app.crashedDetail}</Text>
       <Button
         onPress={() => void retry()}
@@ -126,7 +138,7 @@ export default function RootLayout() {
   if (failed) {
     return (
       <View style={styles.centre}>
-        <Text style={styles.title}>Reviewies could not start</Text>
+        <Masthead level="page">Reviewies could not start</Masthead>
         <Text style={styles.detail}>{failed}</Text>
       </View>
     );
@@ -190,6 +202,5 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
-  title: { color: theme.ink, fontSize: text.s24, fontFamily: type.family.title.name },
   detail: { color: theme.inkSecondary, fontSize: text.s14, textAlign: 'center', fontFamily: type.family.body.name },
 });

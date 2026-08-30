@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { SECTION, SECTION_FACE, SECTION_RULE } from '@reviewies/core/ui/section';
-import { border, text, track } from '@reviewies/core/tokens';
+import { border, text, track, type } from '@reviewies/core/tokens';
 import { declarationOf } from '@reviewies/core/test/source';
 
 /**
@@ -212,6 +212,115 @@ describe('the section label', () => {
     expect(offenders).toEqual([]);
     expect(read('app/src/ui/Section.tsx'), 'the component stopped owning the gap')
       .toContain('mb-s8');
+  });
+
+  it('writes the table’s channels as classes the table can be compared to', () => {
+    /*
+     * Four entries with no reader on either platform, and a renderer comment claiming a
+     * guard that did not exist.
+     *
+     * `SECTION.section.caps`, `SECTION.group.caps`, `SECTION.section.track` and
+     * `SECTION.group.track` were stated by the table and read by nothing. The phone
+     * hardcoded `tracking(size, track.t83)` and `textTransform: 'uppercase'` beside the
+     * entries that say both; the web wrote three frozen class literals. Their only
+     * consumer was the channel-counter at the top of this file, which compares the two
+     * levels **to each other** — so any two values that differ satisfy it, including two
+     * that neither renderer reads.
+     *
+     * And `app/src/ui/Section.tsx` said in its own header that this suite held it: *"change
+     * `SECTION.group.caps` and the web fails until it follows"*. It did not. This file read
+     * that renderer three times — `'SECTION[level].depth'`, the `as?:` prop type, and the
+     * string `'mb-s8'` — and never compared a class to the table. Reproduced before it was
+     * fixed, twice: `SECTION.section.ink` to `'inkTertiary'` and `SECTION.group.gapBelow`
+     * to `space.s8` each moved the phone, left the web where it was, and kept every clause
+     * green.
+     *
+     * The classes are compared token by token rather than by `toContain` on the file. A
+     * whole-file needle cannot tell the two levels apart — `text-s12` is in both — and
+     * worse, `text-ink` is a *substring* of `text-ink-secondary`, so a `toContain` for the
+     * group's ink passes on a file that only ever writes the section's. Same trap the
+     * `size: text.s12` clause above documents, one layer along.
+     */
+    const web = read('app/src/ui/Section.tsx');
+    /*
+     * Read out of the two records **by level**, not as two free-standing constants. The
+     * renderer used to pick its type with `level === 'group' ? GROUP_CLASS : SECTION_CLASS`,
+     * which puts the pairing in an expression rather than in data — so a clause could hold
+     * both strings to the table and still not know which level got which. `LEVEL_CLASS`
+     * indexed by `level` cannot hand `group` the section's type, and this reads the same
+     * key the renderer indexes with.
+     */
+    const constant = (name: string) => new RegExp(`const ${name} =\\s*'([^']*)'`).exec(web)?.[1];
+    const entry = (record: string, level: string) => {
+      const value = new RegExp(`${level}: (?:'([^']*)'|(\\w+))`)
+        .exec(declarationOf(web, record) ?? '');
+      // One indirection, because `LEVEL_CLASS` names the two constants rather than
+      // inlining them — `type.test.ts`'s face sweep reads those by name.
+      return value?.[1] ?? (value?.[2] ? constant(value[2]) : undefined);
+    };
+    const CLASSES = {
+      section: entry('LEVEL_CLASS', 'section'),
+      group: entry('LEVEL_CLASS', 'group'),
+    };
+    /** `t83` from `0.083` — the class contains the key, so the key is what to look up. */
+    const trackKey = (value: number) =>
+      Object.entries(track).find(([, v]) => v === value)?.[0];
+    /** `inkSecondary` is `ink-secondary` in a class name, by rule rather than by table. */
+    const inkKey = (name: string) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+
+    for (const level of ['section', 'group'] as const) {
+      const table = SECTION[level];
+      const classes = CLASSES[level];
+      expect(classes, `no ${level} class list to read`).toBeTruthy();
+      const tokens = (classes ?? '').split(/\s+/);
+
+      expect(tokens, `${level}'s size is not the table's`).toContain(`text-s${table.size}`);
+      expect(tokens, `${level}'s face is not the table's`).toContain(`font-${SECTION_FACE}`);
+      expect(tokens, `${level}'s tracking is not the table's`)
+        .toContain(`tracking-${trackKey(table.track)}`);
+      expect(tokens, `${level}'s ink is not the table's`).toContain(`text-${inkKey(table.ink)}`);
+      /*
+       * `caps` is the one channel checked as a presence rather than a spelling, because
+       * `false` has no class: `normal-case` on an element nothing uppercased does nothing.
+       * Asserting the boolean both ways is what makes it a reader — a bare
+       * `toContain('uppercase')` would be satisfied by a renderer that uppercased both.
+       */
+      expect(tokens.includes('uppercase'), `${level}'s case is not the table's`)
+        .toBe(table.caps);
+
+      expect(entry('GAP_CLASS', level), `${level}'s gap is not the table's`)
+        .toBe(`mb-s${table.gapBelow}`);
+
+      /*
+       * One per channel, which is the plant the presence checks above do not stop on
+       * their own: append `text-ink-secondary` to the group's list and every `toContain`
+       * still passes while the ink that reaches the page is decided by whichever rule
+       * Tailwind emitted last. A channel stated twice is a channel the table no longer
+       * decides, so each namespace is allowed exactly one token.
+       */
+      const once = (pattern: RegExp) => tokens.filter((t) => pattern.test(t)).length;
+      expect(once(/^text-s\d/), `${level} names more than one size`).toBe(1);
+      expect(once(/^text-(?!s\d)/), `${level} names more than one ink`).toBe(1);
+      expect(once(/^tracking-/), `${level} names more than one tracking`).toBe(1);
+      // Faces by name, because `font-semibold` is in this namespace too and is the
+      // weight — `SECTION_FACE`'s own file says the weight is the face's file, not a
+      // second choice, so what must be unique is the family.
+      const faces = new RegExp(`^font-(?:${Object.keys(type.family).join('|')})$`);
+      expect(once(faces), `${level} names more than one face`).toBe(1);
+    }
+
+    /*
+     * And the spelling stays in the token namespace, checked on the class lists rather
+     * than on the file so the prose above cannot trip it. `mb-2` is eight pixels by
+     * Tailwind's own scale and by coincidence; `mb-s8` is eight because `space.s8` is,
+     * and only the second can be rebuilt from `gapBelow`. `tokens.generated.css` defines
+     * `--spacing-sNN`, `--text-sNN` and `--tracking-tNN`, so every spelling above
+     * generates.
+     */
+    for (const [level, classes] of Object.entries(CLASSES)) {
+      expect(classes ?? '', `${level} went back to Tailwind’s own scale`)
+        .not.toMatch(/\b(?:text|tracking|mb)-\d/);
+    }
   });
 
   it('is a heading at a depth the table decides, on both platforms', () => {

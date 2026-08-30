@@ -30,6 +30,17 @@ function filesUnder(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * The one file per platform allowed to draw this treatment, identified the way
+ * `section.test.ts` identifies its own: **a component whose treatment is declared in
+ * `core/src/ui/`**. Both halves are required — a screen that imports `ui/masthead` is not
+ * the renderer, and a file renamed `Masthead.tsx` that imports nothing renders nothing —
+ * so a call site cannot join the club by being renamed, and the renderer cannot leave it
+ * by dropping the import.
+ */
+const declaresMasthead = (file: string) =>
+  /\/Masthead\.tsx$/.test(file) && read(file).includes("from '@reviewies/core/ui/masthead'");
+
 describe('a screen title', () => {
   it('is in the app\'s own face on a pushed screen too', () => {
     /*
@@ -97,14 +108,96 @@ describe('a screen title', () => {
   });
 
   it('is the only thing on either platform that draws a screen title', () => {
+    /*
+     * "Either platform", and for a sprint it meant one.
+     *
+     * Both loops below used to iterate `filesUnder('app/src')`, and the second one guarded
+     * its own non-vacuity — `expect(seen).toBeGreaterThan(5)` — which is what made the
+     * shortfall invisible. A clause that reports how much it scanned reads as thorough
+     * whether or not it scanned the right thing, and nothing here counted phone files at
+     * all because nothing here opened one. The phone half was **absent**, not empty, so
+     * there was no zero for the non-vacuity guard to catch.
+     *
+     * It cost three live titles. `mobile/app/+not-found.tsx` drew `s20` where the web drew
+     * `MASTHEAD.page`; `mobile/app/title/[id].tsx` and `mobile/app/_layout.tsx` each
+     * restated a level's size, face and colour in a `StyleSheet`. None of the three
+     * announced itself as a heading — measured, not inferred: served the export and read
+     * the document, and `/+not-found` had exactly one heading in it, the navigator's
+     * `<h1>Not found</h1>`, with "Nothing at this address" rendering as ordinary text
+     * beneath it.
+     */
+    const SIZES = new Set(Object.values(MASTHEAD).map((m) => m.size));
+    const FACES = new Set<string>(Object.values(MASTHEAD).map((m) => m.face));
+
+    /*
+     * The sizes come from the table rather than from `(20|24|30)` written out here. The
+     * spelling is the token one on both platforms — `text-s24` in a class list, `text.s24`
+     * in a `StyleSheet` — so the class and the property both *contain* the key and the
+     * sweep can be rebuilt from `MASTHEAD` instead of from a second hand-kept list that
+     * stops agreeing with it the day a step moves. `choice.test.ts` §6.181 is the pattern.
+     */
     const web: string[] = [];
+    let webFiles = 0;
     for (const file of filesUnder('app/src')) {
-      if (file.endsWith('ui/Masthead.tsx')) continue;
+      if (declaresMasthead(file)) continue;
+      webFiles++;
       for (const m of read(file).matchAll(/<(h1|h2) className="([^"]*)"/g)) {
-        if (/text-s(20|24|30)\b/.test(m[2])) web.push(`${file}: ${m[2]}`);
+        const classes = m[2].split(/\s+/);
+        if ([...SIZES].some((size) => classes.includes(`text-s${size}`))) {
+          web.push(`${file}: ${m[2]}`);
+        }
       }
     }
+    expect(webFiles, 'no web files scanned, so this proved nothing').toBeGreaterThan(20);
     expect(web).toEqual([]);
+
+    /*
+     * The phone half, which has no tag to key on. React Native's heading is a `<Text>`
+     * like every other, so what identifies a screen title is the treatment itself: one of
+     * the table's three (size, face) pairs, in a `StyleSheet` entry.
+     *
+     * Both halves are needed and neither alone would do. Size alone fires on
+     * `ReactionStream`'s `emoji: { fontSize: text.s24 }`, which is an emoji and not a
+     * heading; face alone fires on every label in the app, because `title` is the face
+     * most of the interface is set in. The pair is what `MASTHEAD` actually says.
+     *
+     * **The plant that survives it**, stated rather than left to be discovered: a raw
+     * `fontSize: 24` beside the title face is a screen title this clause does not see,
+     * because it looks for the token spelling. That one is not left open — `type.test.ts`'s
+     * *"has no site left on either platform that names its own size"* fails on any
+     * `fontSize: <digits>` in `mobile/`, checked by planting exactly that and watching it
+     * fire. Two clauses, and neither is complete alone.
+     *
+     * `headerTitleStyle` in `_layout.tsx` is out of reach of the block scan by its
+     * indentation and is meant to be: it is React Navigation's option rather than a `<Text>`
+     * this app renders, it reads `MASTHEAD.sub.face` and `.size` from the table, and the
+     * first clause in this file is what holds it there.
+     */
+    const phone: string[] = [];
+    let phoneFiles = 0;
+    for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
+      if (declaresMasthead(file)) continue;
+      phoneFiles++;
+      for (const m of read(file).matchAll(/\n {2}(\w+): \{([^{}]*)\},/g)) {
+        const size = Number(/fontSize: text\.s(\d+)/.exec(m[2])?.[1]);
+        const face = /fontFamily: type\.family\.(\w+)\.name/.exec(m[2])?.[1];
+        if (SIZES.has(size) && face !== undefined && FACES.has(face)) {
+          phone.push(`${file}: ${m[1]} draws s${size} in ${face} by hand`);
+        } else if (/\bMASTHEAD\./.test(m[2])) {
+          /*
+           * And a style that reads the table is still a hand-drawn title. This is the
+           * plant that would otherwise survive the pair above: swap `text.s20` for
+           * `MASTHEAD.sub.size` and the treatment can no longer drift, but the `<Text>`
+           * carrying it still announces itself as ordinary text, which is the half of
+           * the defect that `mobile/src/ui/Masthead.tsx` exists for and the half a
+           * type-only sweep cannot see.
+           */
+          phone.push(`${file}: ${m[1]} reads MASTHEAD outside the renderer`);
+        }
+      }
+    }
+    expect(phoneFiles, 'no phone files scanned, so this proved nothing').toBeGreaterThan(20);
+    expect(phone).toEqual([]);
 
     // And no call site sets its own gap, which is the whole of what went wrong.
     const gaps: string[] = [];
