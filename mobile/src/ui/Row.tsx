@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SCREEN } from '@reviewies/core/ui/screen';
-import { ROW, ROW_INK, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
+import { ROW, ROW_INK, ROW_LINES, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
 import { text, type, track } from '@reviewies/core/tokens';
@@ -53,11 +53,11 @@ export function Row({
 }) {
   const words = (
     <View style={styles.body}>
-      <Text numberOfLines={1} style={[styles.title, disabled && styles.off, crossedOff(!!struck)]}>
+      <Text numberOfLines={ROW_LINES.title} style={[styles.title, disabled && styles.off, crossedOff(!!struck)]}>
         {title}
       </Text>
       {code || meta ? (
-        <Text numberOfLines={1} style={[styles.meta, disabled && styles.off]}>
+        <Text numberOfLines={ROW_LINES.meta} style={[styles.meta, disabled && styles.off]}>
           {code}
           {code && meta ? ' · ' : ''}
           {meta}
@@ -66,12 +66,12 @@ export function Row({
       {/* The row's own words, not a badge — see the contract for what happened when this
           was a `tag`. Same size and ink as the meta line, on a line of its own. */}
       {count ? (
-        <Text numberOfLines={1} style={styles.meta}>
+        <Text numberOfLines={ROW_LINES.count} style={styles.meta}>
           {count}
         </Text>
       ) : null}
       {note ? (
-        <Text numberOfLines={2} style={styles.note}>
+        <Text numberOfLines={ROW_LINES.note} style={styles.note}>
           {note}
         </Text>
       ) : null}

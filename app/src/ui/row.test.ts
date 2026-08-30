@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { jsxElements, stripComments } from '@reviewies/core/test/source';
-import { ROW, ROW_INK } from '@reviewies/core/ui/row';
+import { ROW, ROW_INK, ROW_LINES } from '@reviewies/core/ui/row';
 import { border, color, size } from '@reviewies/core/tokens';
 
 /**
@@ -303,6 +303,40 @@ describe('the listing row', () => {
       expect(contrast(table[ROW_INK.meta], table.ground), `${theme} meta`).toBeGreaterThan(4.5);
       expect(contrast(table[ROW_INK.disabled], table.ground), `${theme} off`).toBeGreaterThan(4.5);
     }
+  });
+
+  it('truncates every slot at the number the table gives, on both platforms', () => {
+    /*
+     * §6.179. The phone gave `note` two lines and the web gave it `truncate`, which is one
+     * — a sentence cut short on one platform and not the other, in the component §6.140 and
+     * §6.141 spent two sprints unifying.
+     *
+     * What let it survive is that **nothing said what the numbers were**. Every other slot
+     * agreed at one by accident, so there was nothing to disagree with. `ROW_LINES` is the
+     * statement and this is what holds the two renderers to it.
+     *
+     * Spelled per platform because the mechanisms genuinely differ. The phone **reads the
+     * table** — `numberOfLines={ROW_LINES.note}` — which is the strongest form and the one
+     * `coreWiring` asked for when it reported `ROW_LINES` as an export nothing reached. The
+     * web cannot: Tailwind generates the utilities it can see, so `line-clamp-${'{n}'}` built
+     * at runtime is a class that does not exist. Its classes stay literal and this clause is
+     * what binds them to the table.
+     */
+    for (const [slot, lines] of Object.entries(ROW_LINES)) {
+      expect(
+        RENDERERS.phone,
+        `the phone does not read the table for ${slot}`,
+      ).toContain(`numberOfLines={ROW_LINES.${slot}}`);
+      expect(RENDERERS.web, `the web does not read the table for ${slot}`)
+        .toContain(`CLAMP[ROW_LINES.${slot}]`);
+    }
+    /*
+     * And the map both platforms go through has to say what the table says. Reading the
+     * table is only worth anything if the lookup it feeds is right: `CLAMP` mapping 2 to
+     * `truncate` would satisfy every assertion above and clamp the note to one line.
+     */
+    expect(RENDERERS.web, 'the web maps one line to something that is not truncate')
+      .toContain("{ 1: 'truncate', 2: 'line-clamp-2' }");
   });
 
   it('takes the strike from the cross-off rather than drawing its own', () => {

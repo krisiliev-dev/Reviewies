@@ -13559,6 +13559,90 @@ happen to jump from tomorrow to a week out. Not a defect; a state nobody has jud
 dates.
 
 
+### 6.179 One field, two line limits, and no photograph of the difference
+
+Ten shots read from `design/unread.mjs`'s list. Eight produced nothing. The ninth and tenth
+produced one thing, and it is in `Row` — the component §6.140 and §6.141 spent two sprints
+unifying.
+
+#### The finding
+
+`app/src/ui/Row.tsx` gave `note` Tailwind's `truncate`. `mobile/src/ui/Row.tsx` gave it
+`numberOfLines={2}`. One field, two platforms, different halves — §6.170's shape, in the
+component that exists so the two platforms cannot have different halves.
+
+`note` is the only one of the row's four text slots holding a **sentence**. The title is a
+name, the meta is `Series · 2005`, the count is a number; those are labels, and a label that
+wraps makes a list scan worse. `note` is Discover's *"Because you track It's Always Sunny in
+Philadelphia"* — the line the doc calls the difference between a recommendation and an advert
+— and the watchlist's *"why you saved it"*, somebody's own words in italic. §6.51 gives it to
+the phone.
+
+#### Why nothing caught it, and why no shot shows it
+
+**Nothing said what the numbers were.** The other three slots agreed at one *by accident*
+rather than by a table, so there was no statement for `note` to disagree with. `ROW_LINES` is
+that statement now.
+
+And the design record cannot show the difference at all: the longest `because` sentence the
+real library produces fits on one line at 390, so `r4-discover.png` and `wide-discover.png`
+are identical either way. This was found by reading the two renderers side by side — the
+method §6.173 established and this sprint's other six shots exercised without result.
+
+#### Both platforms read the table, and the web needed a trick to
+
+The phone reads it directly: `numberOfLines={ROW_LINES.note}`. The web cannot do the same
+thing, and the reason is worth writing down — Tailwind generates the utilities it can *see*,
+so `` `line-clamp-${n}` `` built at runtime is a class that does not exist. A static
+`CLAMP = { 1: 'truncate', 2: 'line-clamp-2' }` is how the web reads the table without lying
+to the compiler: both literals are in the source, both are generated, and the number still
+comes from one place.
+
+That is not decoration. `coreWiring.test.ts` reported `ROW_LINES` as **an export nothing
+reached** when only the test read it, and then as *"mobile only"* when only the phone did.
+Two of this repo's own guards pushed the change from a table-and-a-comment into a table both
+renderers actually use.
+
+Three plants, all red: the web's note back on `truncate`; the phone's dropped to one; and the
+one that matters most — `CLAMP` mapping 2 to `'truncate'`, which would satisfy "both
+platforms read the table" perfectly while clamping the note to one line.
+
+#### The eight that produced nothing
+
+`r6-title-sh-gun`, `wide-search`, `narrow-search`, `r1-search-long-title`, `wide-upnext`,
+`wide-calendar`, `narrow-title-one-piece`, `r4-discover`. Two candidates dissolved, and the
+second is a measurement lesson:
+
+- **Up Next's mark, 800 points from its row.** Measured on the wide shot and it looked like
+  §6.169's defect returning. It was not: the shot is a **2× capture**, so the real distance is
+  half what the pixels say, and `SCREEN.measure = 720` was chosen — the comment says so
+  explicitly — to keep "a row's two ends close enough to belong to each other". Measuring in
+  the wrong units is the third near-miss in three sprints; the others were poster fixtures
+  counted as screenshots and a stale count that was not stale.
+- **A long title cut off at "20th Anniversa…"** on both platforms at 390, in full on the web
+  at 2560. Consistent, and one line for a row title is `ROW_LINES.title` working.
+
+## What is not done, and why it is said here
+
+**Sixty-three shots are unread**, of 137. `node design/unread.mjs` prints them.
+
+**The rate is one finding in ten, and the finding was in the source rather than the shot.**
+Said plainly because the brief asked for the judgement: the design backlog is no longer
+finding design defects. Both of the last two entries' findings came from *reading code the
+shots pointed at* — a wrong comment, and two renderers side by side — and neither would have
+been missed by a sprint that skipped the images entirely.
+
+That suggests the design track's next useful shape is **not** "read the remaining 63". It is
+to keep the harness running as a regression net, which is what it is now good at, and to
+spend the reading on pairs of renderers rather than on pairs of pixels. `ROW_LINES` is the
+model: four numbers, stated once, with both platforms held to them. The other components
+`row.ts` has siblings for — `Button`, `Choice`, `Key`, `CrossOff`, `Poster` — have never been
+asked whether they carry an unstated number that has quietly come apart.
+
+**`formatDay`'s 2–6 day branch is still unphotographed**, carried from §6.178. Not reached
+this sprint.
+
+
 
 ## 7. What is still not known
 

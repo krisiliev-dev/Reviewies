@@ -155,6 +155,37 @@ export const ROW_TAG = {
   rule: null,
 } as const;
 
+/**
+ * How many lines each of a row's four text slots gets before it truncates.
+ *
+ * §6.179 found the two renderers disagreeing about exactly one of them: the phone gave
+ * `note` `numberOfLines={2}` and the web gave it Tailwind's `truncate`, which is one line
+ * with no argument about it. Every other slot agreed at one — by accident rather than by a
+ * table, because nothing said what the numbers were, so nothing could notice that one had
+ * come apart.
+ *
+ * ## Why `note` is the one that gets two
+ *
+ * It is the only slot holding a **sentence**. The title is a name, the meta is
+ * `Series · 2005`, the count is a number; those are labels, and a label that wraps makes a
+ * list of rows scan worse. `note` is Discover's *"Because you track It's Always Sunny in
+ * Philadelphia"* and the watchlist's *"why you saved it"* — prose, in italic, and often the
+ * reason the row is there at all. §6.51 gives it to the phone's version.
+ *
+ * ## What no photograph shows
+ *
+ * The difference is invisible in the design record: the longest `because` sentence the real
+ * library produces fits on one line at 390, so `r4-discover.png` looks the same either way.
+ * Found by reading the two renderers side by side rather than by looking at them, which is
+ * the argument for the table rather than for another screenshot.
+ */
+export const ROW_LINES = {
+  title: 1,
+  meta: 1,
+  count: 1,
+  note: 2,
+} as const;
+
 export interface RowContract {
   title: string;
   /** `S02·E07`, or a year. Set through `Data` once that exists. */

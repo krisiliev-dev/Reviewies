@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ROW, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
+import { ROW, ROW_LINES, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
 import { crossedOffText } from './CrossOff';
 import { Note } from './Note';
 
@@ -75,6 +75,17 @@ interface Props extends RowContract {
   under?: ReactNode;
 }
 
+/**
+ * `ROW_LINES` as Tailwind classes, written out.
+ *
+ * The phone reads the table directly — `numberOfLines={ROW_LINES.note}` — and the web
+ * cannot do the same thing, because Tailwind generates the utilities it can *see* and a
+ * class built at runtime is a class that does not exist. A static map is how the web reads
+ * it without lying to the compiler: both literals are in the source, so both are generated,
+ * and the number still comes from one place. §6.179.
+ */
+const CLAMP = { 1: 'truncate', 2: 'line-clamp-2' } as const;
+
 export function Row({
   title,
   code,
@@ -93,7 +104,7 @@ export function Row({
   const words = (
     <span className="min-w-0 flex-1">
       <span
-        className={`block truncate text-s14 font-title font-semibold ${
+        className={`block ${CLAMP[ROW_LINES.title]} text-s14 font-title font-semibold ${
           disabled ? 'text-ink-tertiary' : crossedOffText(!!struck)
         }`}
       >
@@ -101,7 +112,7 @@ export function Row({
       </span>
       {code || meta ? (
         <span
-          className={`block truncate text-s12 ${disabled ? 'text-ink-tertiary' : 'text-ink-secondary'}`}
+          className={`block ${CLAMP[ROW_LINES.meta]} text-s12 ${disabled ? 'text-ink-tertiary' : 'text-ink-secondary'}`}
         >
           {code}
           {code && meta ? ' · ' : ''}
@@ -110,8 +121,10 @@ export function Row({
       ) : null}
       {/* The row's own words, not a badge — see the contract for what happened when this
           was a `tag`. Same size and ink as the meta line, on a line of its own. */}
-      {count ? <Note level="footnote" as="span" className="block truncate">{count}</Note> : null}
-      {note ? <span className="block truncate text-s12 font-prose font-regular italic text-ink-secondary">{note}</span> : null}
+      {count ? <Note level="footnote" as="span" className={`block ${CLAMP[ROW_LINES.count]}`}>{count}</Note> : null}
+      {/* Two lines, because `ROW_LINES.note` is 2 and the phone has always drawn it that
+          way. This is the one slot holding a sentence rather than a label. §6.179. */}
+      {note ? <span className={`${CLAMP[ROW_LINES.note]} text-s12 font-prose font-regular italic text-ink-secondary`}>{note}</span> : null}
     </span>
   );
 

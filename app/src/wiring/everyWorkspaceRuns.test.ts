@@ -170,7 +170,9 @@ describe('every workspace', () => {
     // empty" — the branch that could not be reached, and the two either side of it.
     // app 657, up one: §6.178's clause that the shot backlog is measured over the
     // directories the capture scripts actually file into.
-    core: 928, app: 657, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 658, up one: §6.179's clause that both renderers read `ROW_LINES` and that the
+    // web's lookup says what the table says.
+    core: 928, app: 658, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
