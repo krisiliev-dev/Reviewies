@@ -239,7 +239,7 @@ export default function TitleScreen() {
                   run: () => setChosen(expanded ? null : season),
                 }}
                 trailing={
-                  <Chevron points={disclosure(expanded)} color={theme.inkSecondary} size={16} />
+                  <Chevron points={disclosure(expanded)} color={theme.inkSecondary} />
                 }
               />
               {expanded &&

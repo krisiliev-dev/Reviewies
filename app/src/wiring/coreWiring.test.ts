@@ -192,6 +192,26 @@ const LOPSIDED: Record<string, string> = {
    */
   'mobile only: ui/poster#POSTER_GLYPH_SCALES':
     'allowFontScaling is an RN prop; the web is in px and never scaled. poster.test.ts holds both.',
+  /*
+   * The active tab's rule is three numbers, and the web writes them as Tailwind's own
+   * utilities by decision — `w-6`, `gap-0.5`, `border-t-tally` — because a class assembled
+   * at runtime is a class that never gets built. Same shape as the `button` entries above,
+   * with the same requirement: `tabIcon.test.ts` derives those three class names *from*
+   * `TAB_MARKER` and compares, so moving a number in the table fails the web until it
+   * follows. It was the gap that had drifted — 2 on the web against 4 on the phone. §6.183.
+   */
+  'mobile only: ui/tabIcon#TAB_MARKER':
+    'Tailwind needs literal classes; tabIcon.test.ts derives them from the table.',
+  /*
+   * Not a spelling difference — a mechanism the web has and the phone does not, which is the
+   * `POSTER_GLYPH_SCALES` shape from the other end. The web's chevron is drawn `1em` square,
+   * so it takes the size of the text it sits beside and there is no number for that side to
+   * read; an `Svg` inherits no font, so the phone has to be told one. `mark.test.ts` holds
+   * both ends: the phone's default must *be* this export, and the web's call sites must sit
+   * in the text class named after the same token. §6.183.
+   */
+  'mobile only: ui/mark#CHEVRON_SIZE':
+    'The web mark is 1em and takes the row’s text size; mark.test.ts holds both ends.',
   'mobile only: ui/note#NOTE': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/note#NOTE_INK': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',

@@ -93,7 +93,7 @@ export default function CalendarScreen() {
               // it was noticed (§6.134). #170 deleted the flag; the union says it now.
               run: () => setTuning(true),
             }}
-            trailing={<Chevron points="right" color={theme.inkSecondary} size={16} />}
+            trailing={<Chevron points="right" color={theme.inkSecondary} />}
           />
         ) : (
           <>

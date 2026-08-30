@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
+import { border, text } from '@reviewies/core/tokens';
 import {
   CHEVRON_PATH,
+  CHEVRON_SIZE,
   CHEVRON_TURN,
   MARK_BOX,
+  MARK_STROKE,
   TICK_PATH,
   disclosure,
 } from '@reviewies/core/ui/mark';
@@ -75,6 +78,111 @@ describe('the marks a control draws', () => {
       expect(source, `${path} names a direction by hand`).not.toMatch(
         /points=(?:"|\{')(?:up|down|left|right)/,
       );
+    }
+  });
+
+  it('draws a row’s chevron at one size, rather than one size per platform', () => {
+    /*
+     * §6.183. The four disclosure pairs agreed at 16 three times and disagreed once:
+     * `mobile/app/lists.tsx` drew at **20** against `app/src/screens/Lists.tsx`'s 16, with
+     * no argument anywhere for the difference. Three-quarters agreement and no stated reason
+     * is what a slip looks like from the outside.
+     *
+     * The two platforms reach the size differently and both ways are right, which is why
+     * this clause has two halves rather than one string. The web's mark is `1em`, so the
+     * call site's text class is the size and the renderer names nothing; an `Svg` inherits
+     * no font, so the phone has to be told a number — and four call sites each telling it
+     * one is how they came apart.
+     */
+    expect(CHEVRON_SIZE, 'the size is a bare number rather than the row’s text size').toBe(
+      text.s16,
+    );
+
+    /*
+     * The phone reads the table, and reads it *as* the default rather than as a term in a
+     * sum. `size = CHEVRON_SIZE + 4` satisfies "the file contains CHEVRON_SIZE" and draws at
+     * 20 again, which is the §6.139 shape and is why this is anchored to the end of the
+     * line.
+     */
+    expect(RENDERERS.phone, 'the phone does not default its chevron to the table').toMatch(
+      /^ {2}size = CHEVRON_SIZE,$/m,
+    );
+    // Both dimensions, for the reason `tabIcon.test.ts` gives: a plant that replaced one of
+    // them with a literal left the other reading the prop and the string present.
+    expect(RENDERERS.phone, 'the phone sizes a dimension of its chevron by hand').toContain(
+      'width={size} height={size}',
+    );
+
+    /*
+     * And no call site anywhere names a size — the whole of the defect was four of them
+     * doing exactly that. The web's half is the text class, derived from the token rather
+     * than typed here, because `text-s16` in this file would be a fifth copy of the number.
+     */
+    const SIZE_CLASS = `text-${
+      Object.entries(text).find(([, px]) => px === CHEVRON_SIZE)?.[0] ?? '?'
+    }`;
+    /*
+     * The drawer's handle is the one chevron that is not in a row: it is a tap target of its
+     * own at `text-s20`, and the phone has no counterpart to disagree with it. Exempt by
+     * name, with the staleness check every exemption in this file carries.
+     */
+    const HANDLE = 'app/src/remote/RemoteDrawer.tsx';
+    const rows: string[] = [];
+    let handles = 0;
+    for (const dir of ['app/src', 'mobile/src', 'mobile/app']) {
+      for (const file of filesUnder(dir)) {
+        if (file.includes('.test.')) continue;
+        const source = stripComments(readFileSync(resolve(ROOT, file), 'utf8'));
+        for (const [tag] of source.matchAll(/<Chevron\b[\s\S]*?\/>/g)) {
+          if (file === HANDLE) {
+            handles++;
+            continue;
+          }
+          const flat = tag.replace(/\s+/g, ' ');
+          if (/\bsize=/.test(tag)) rows.push(`${file} names a size: ${flat}`);
+          /*
+           * The text classes on the tag, as a set — not `toContain(SIZE_CLASS)`, which a
+           * plant walked straight through. `text-s16 text-s20` contains the string, and
+           * which of the two wins is Tailwind's stylesheet order rather than anything in
+           * this file: the mark draws at 20 and the guard is green. §6.139's shape, in a
+           * clause written the same hour, again.
+           */
+          if (file.startsWith('app/')) {
+            const classes = [...new Set(tag.match(/\btext-s\d+\b/g) ?? [])];
+            if (classes.join(' ') !== SIZE_CLASS)
+              rows.push(`${file} is not in a ${SIZE_CLASS} box: ${flat}`);
+          }
+        }
+      }
+    }
+    expect(rows, 'a chevron in a row decides its own size').toEqual([]);
+    expect(handles, `${HANDLE} no longer draws a chevron — delete its line`).toBe(1);
+  });
+
+  it('strokes both marks at one weight, and that weight is on the scale', () => {
+    /*
+     * §6.183. `strokeWidth` was typed once per platform per mark and stated nowhere: 2 on
+     * the chevron and **2.5** on the tick, four literals agreeing because they were written
+     * in the same hour. 2 is `border.mark` by coincidence; 2.5 is on no scale at all — grep
+     * either tree and it appears at those two lines and nowhere else — and there is no
+     * border-scale sweep anywhere to have noticed.
+     *
+     * The clause above this one counts that a `strokeWidth=` exists per path and never reads
+     * the value, so the two platforms could have drawn at 2 and 3 and stayed green. Its name
+     * is honest — it is about stroking versus filling — so this is a second clause rather
+     * than a repair of that one.
+     */
+    expect(MARK_STROKE, 'the weight is off the border scale').toBe(border.mark);
+    for (const [platform, source] of Object.entries(RENDERERS)) {
+      const weights = [...source.matchAll(/strokeWidth=(\{[^}]*\}|"[^"]*")/g)].map((m) => m[1]);
+      expect(weights.length, `${platform} does not stroke two marks`).toBe(2);
+      /*
+       * The exact expression, not "contains MARK_STROKE". `strokeWidth={MARK_STROKE * 1.25}`
+       * reads the table, restores the 2.5, and would satisfy any looser spelling — the same
+       * plant `CHEVRON_SIZE + 4` is above.
+       */
+      for (const weight of weights)
+        expect(weight, `${platform} weights a mark by hand`).toBe('{MARK_STROKE}');
     }
   });
 

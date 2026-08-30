@@ -39,13 +39,24 @@
  * ## What this is
  *
  * Path data, and nothing else: no colour, no size, no platform. The web draws it into an
- * `<svg>` and the phone into `react-native-svg`, both inheriting `currentColor` so the
- * active tab still tints. `tabIcon.test.ts` holds the two renderers to this table the way
- * `key.test.ts` holds the fascia to its own.
+ * `<svg>` and the phone into `react-native-svg`. `tabIcon.test.ts` holds the two renderers
+ * to this table the way `key.test.ts` holds the fascia to its own.
+ *
+ * The tint arrives by a different route on each side, and this file said otherwise for two
+ * sprints — "both inheriting `currentColor` so the active tab still tints". **React Native
+ * has no inherited paint.** The web's `<svg>` takes `fill="currentColor"` and the ink falls
+ * out of the link's own colour; the phone's `TabIcon` is handed a `color` by React
+ * Navigation for the state the tab is in and puts it on the `Path` explicitly, which is what
+ * `mobile/src/ui/TabIcon.tsx` has said in its own header the whole time. Both tabs tint
+ * correctly, so the cost was never a wrong pixel — it was a core table describing a
+ * mechanism one of its two readers does not have, which is how a decision ends up made in
+ * the wrong place. `tabIcon.test.ts` holds each platform to the mechanism it actually has.
  *
  * The viewBox is fixed at 24 because every path here is drawn in that space; a path and the
  * box it was drawn for are one fact, so they live together.
  */
+
+import { border, space } from '../tokens.ts';
 
 /** The square every path below is drawn inside. */
 export const TAB_ICON_BOX = 24;
@@ -59,6 +70,45 @@ export const TAB_ICON_BOX = 24;
  * about the text.
  */
 export const TAB_ICON_SIZE = 22;
+
+/**
+ * The rule that marks the active tab: how thick, how wide, and how far above the glyph.
+ *
+ * §6.90 replaced a pink active tint with `ink` on `ink.secondary` — a brightness step where
+ * there had been a hue — and recorded that as a regression rather than shipping it quietly.
+ * This rule is the replacement, and it is the most important piece of wayfinding in the
+ * product: two channels, so it survives being read by somebody who cannot separate those two
+ * greys.
+ *
+ * It was three numbers written out twice, and one of them had already drifted. Both
+ * platforms drew it 24 wide and `border.tally` thick; the gap above the glyph was **2** on
+ * the web (`gap-0.5` on the column) and **4** on the phone (`marginBottom` on the rule). Both
+ * are on the space scale, so `space.test.ts` was right to pass either — a scale can say a
+ * number is legal and cannot say two platforms picked the same one.
+ *
+ * The web's 2 is the one that stands. The rule belongs *to* the glyph — it is a marker on
+ * the tab, not an underline on the word — so it sits at the tightest step the scale has, and
+ * 4 is the gap you leave between two separate things. The measurement agrees: the phone's
+ * bar is a fixed height and 4 was the difference between a column that fits its budget and
+ * one that does not (see `TAB_BAR_HEIGHT` in `mobile/app/(tabs)/_layout.tsx`).
+ *
+ * Each platform reaches these by the means it has — the phone reads the numbers, the web
+ * writes the Tailwind utilities generated from the same tokens — so `tabIcon.test.ts` checks
+ * the web's class names against this table rather than against a string somebody typed.
+ */
+export const TAB_MARKER = {
+  thickness: border.tally,
+  width: space.s24,
+  /**
+   * Above the glyph, not under it.
+   *
+   * Worth stating because the phone's bar-height comment had it backwards for two sprints —
+   * it budgeted for "the 4pt gap under" the icon, and the 4 was the rule's `marginBottom`,
+   * which is over it. A gap named on the wrong side is a part the budget counts twice or not
+   * at all.
+   */
+  gap: space.s2,
+} as const;
 
 /**
  * One path per name. The names are the routes' own, not the drawings'.
