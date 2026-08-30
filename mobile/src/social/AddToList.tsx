@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
-import { radius, theme, tap } from '../ui/theme';
+import { REACH, radius, theme, tap } from '../ui/theme';
 import { Button } from '../ui/Button';
+import { LABEL_LINES } from '@reviewies/core/ui/button';
 import { text, type } from '@reviewies/core/tokens';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
@@ -64,7 +65,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
       */}
       <Pressable
         onPress={() => setOpen(!open)}
-        hitSlop={8}
+        hitSlop={REACH.inline}
         style={tap}
         accessibilityRole="button"
         aria-expanded={open}
@@ -84,12 +85,17 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               each one pressed to the colour it was already painted and nothing happened.
               §6.131. */}
           {lists?.map((list) => (
+            /* One line, the same as the web's twin — this is a name somebody typed and
+               `Field` lets it run to a hundred and twenty characters. Unclamped it wrapped
+               and the pill grew to fit, which is a picker whose rows are different heights
+               for a reason nobody chose. §6.180. */
             <Button
               key={list.id}
               size="inline"
               onPress={() => add(list.id, list.name)}
               label={list.name}
               name={`Add to ${list.name}`}
+              lines={LABEL_LINES}
             />
           ))}
 

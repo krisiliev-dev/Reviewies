@@ -172,7 +172,11 @@ describe('every workspace', () => {
     // directories the capture scripts actually file into.
     // app 658, up one: §6.179's clause that both renderers read `ROW_LINES` and that the
     // web's lookup says what the table says.
-    core: 928, app: 658, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 661, up three: §6.180's two clauses in `button.test.ts` — the clamp landing on
+    // the label rather than the box, and the two call sites that ask for it — plus the
+    // `hitSlop` clause in `space.test.ts`, which is in the file that bans an unstated
+    // number in a phone style and could not have seen a prop.
+    core: 928, app: 661, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

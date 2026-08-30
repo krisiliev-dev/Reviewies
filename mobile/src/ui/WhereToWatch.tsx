@@ -4,7 +4,7 @@ import { getProvidersCached } from '@reviewies/core/metadata/index';
 import { Attribution } from './Attribution';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { border, leadingOf, radius, tap, theme } from './theme';
+import { REACH, border, leadingOf, radius, tap, theme } from './theme';
 import { COPY } from '@reviewies/core/copy';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from './Section';
@@ -73,7 +73,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         <Section>{COPY.whereToWatch.heading}</Section>
         <Pressable
           onPress={() => setPicking(!picking)}
-          hitSlop={8}
+          hitSlop={REACH.inline}
           accessibilityRole="button"
           // The label belonged to the Text, which is not the thing you press.
           accessibilityLabel={`Change country — currently ${regionName(region)}`}
@@ -129,7 +129,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           {providers.link && (
             <Pressable
               onPress={() => void Linking.openURL(providers.link!)}
-              hitSlop={8}
+              hitSlop={REACH.inline}
               accessibilityRole="link"
             >
               <Text style={styles.link}>{COPY.controls.openJustWatch}</Text>

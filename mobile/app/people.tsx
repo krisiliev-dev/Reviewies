@@ -17,7 +17,7 @@ import {
   updateProfile,
   type Person,
 } from '@reviewies/core/social/people';
-import { leadingOf, theme } from '../src/ui/theme';
+import { REACH, leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
@@ -117,7 +117,7 @@ export default function PeopleScreen() {
               <Pressable
                 onPress={() => setHandle(me?.handle ?? '')}
                 disabled={!me}
-                hitSlop={8}
+                hitSlop={REACH.inline}
                 accessibilityRole="button"
                 aria-disabled={!me}
               >

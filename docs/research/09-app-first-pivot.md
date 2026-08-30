@@ -13303,6 +13303,14 @@ one the design pass keeps teaching, one layer over: **a green check is only evid
 something has been shown to make it go red.** The right command for a single workspace here
 is `npx tsc -b app`.
 
+> **§6.180 corrects this paragraph.** `npx tsc -b app` covers the *app*, and
+> `tsconfig.app.json` excludes `src/wiring`, `src/test` and every `*.test.ts` — they are a
+> separate project, run by the workspace's own `typecheck` script. So the command named here
+> is no evidence at all for a change to a test file, which is what the two sprints after this
+> one mostly made. §6.179 shipped an unused binding into `row.test.ts` that `npm run verify`
+> refuses and `tsc -b app` never looked at. The command that covers everything is
+> `npm run verify`; there is no shorter one that is honest for a guard.
+
 The design passes have run since: `design:phone`, `design:signedin` and `design:web`, all
 with no hollow shots, and `00-addtolist-empty` is on file with its foot.
 
@@ -13644,6 +13652,168 @@ this sprint.
 
 
 
+### 6.180 Two numbers nobody stated, found by reading renderers instead of pixels
+
+§6.179 argued the design backlog had stopped finding design defects — both of the previous
+two findings came from *reading code the shots pointed at* — and proposed spending the
+reading on **pairs of renderers** rather than pairs of pixels. This is that sprint. No
+screenshots were read; twenty-five renderer pairs were.
+
+#### The instrument, and the one that did not work
+
+The first attempt counted numeric literals per file and diffed the counts. It was useless:
+one platform's numbers are Tailwind class strings and the other's are `StyleSheet` values,
+so `p-3` and `padding: 12` are the same decision spelled two ways and a count cannot tell
+them apart. It reported every pair as different.
+
+What works is keyword-anchored. `behaviour.mjs` looks for the handful of things that are a
+*number with behaviour attached* — `numberOfLines`/`line-clamp`/`truncate`, `maxLength`,
+`slice`, timers, `hitSlop`, `vibrate`, `limit`, `duration`, `debounce` — and compares
+`app/src/ui` against `mobile/src/ui` and `app/src/social` against `mobile/src/social`. Seven
+pairs differed. Two were real; the rest were the probe's own artefacts.
+
+It had one bug worth recording, because it is §6.179's bug in the instrument built to find
+§6.179's shape: it matched `line-clamp-N` and not `truncate`, so the web's one-line clamps
+were invisible to it. The same asymmetry, one level up.
+
+#### The first: nineteen call sites agreeing by accident
+
+`mobile/src/ui/theme.ts` defines `tap` and explains at length that `hitSlop` sits **on top
+of** a real height rather than instead of one — because slop is invisible to layout and no
+suite can measure it. What it never said is *how much*. Nineteen call sites across sixteen
+files each carried a bare number: eighteen `hitSlop={8}` and one `hitSlop={12}`, and nothing
+in the repository could say whether the odd one out was a decision or a slip.
+
+It is a decision. `REACH = { inline: 8, dark: 12 }` now says so, and `dark` names what it is
+for: Watching Mode's *Leave* control, pressed mid-episode in a dark room by somebody who is
+not looking at the screen. Nineteen literals became nineteen reads.
+
+Two things fell out of writing it down. `tap` was typing `minHeight: 24` when `size.tap` is
+24 — the floor spelled twice, one of them by hand, in the file whose job is holding it. And
+**`react-native-web`'s `Pressable` ignores `hitSlop` entirely** (only its `Touchable` reads
+it, and nothing here uses `Touchable`), so the export the phone's smoke suite measures sees
+the unslopped 24. That is the number that has to clear WCAG 2.5.8 on its own, and does — but
+it means no browser-based check can ever observe the slop, which is exactly why it needed
+stating rather than measuring.
+
+The guard went into `app/src/ui/space.test.ts`, which is the file that bans an unstated
+number in a phone style — and could never have caught this, because `hitSlop` is a *prop*
+and its `KEY` regex reads style keys. Four plants, all red: one site back to a bare literal;
+`dark` equal to `inline`; `tap` typing 24 again; `tap` dropped under the floor.
+
+#### The second: a class that did nothing, opposite a class that was missing
+
+`app/src/social/AddToList.tsx` passed `className="w-full truncate"` to the list picker's
+rows. `mobile/src/social/AddToList.tsx` passed nothing. The label is `list.name` — somebody's
+own text, which `Field` lets run to a hundred and twenty characters — so this is the one
+`Button` call site on either platform whose words are unbounded.
+
+Neither half was right, and the web's is the interesting one. Measured in Chromium rather
+than reasoned about: on the `inline-flex` button, `truncate` renders **byte-identically** to
+`overflow:hidden; white-space:nowrap` with no `text-overflow` at all — same pixels, same
+hash. The label is a blockified flex item, so the container has no inline content of its own
+for an ellipsis to trim. The span stayed 290pt wide inside a 176pt box and the name was cut
+mid-word — *"Films I keep meaning to finish one of t"* — with nothing to say it had been
+cut. Moving the same class onto the span changes the pixels, which is the proof it does
+something there and did nothing where it was.
+
+The phone, meanwhile, wrapped: the pill grew to fit a long name, so a picker's rows were
+different heights for a reason nobody chose.
+
+`LABEL_LINES` in `core/src/ui/button.ts` is the statement, and the contract gained
+`lines?: 1 | 2` — narrowed rather than `number`, because the web can only spell budgets
+Tailwind has generated and a wider type turns a missing class into silence at runtime instead
+of an error at build time.
+
+**Unset means unlimited, and that is the opposite of what `ROW_LINES` does one component
+over.** A row is a line in a list, and a list that does not align scans worse. A button is a
+*target*, and a target whose words are clipped at 200% text is `phoneTextScaling.test.ts`'s
+subject and WCAG 1.4.4's. Clamping every label would have traded this defect for a worse
+one, so the budget is asked for at the two call sites with unbounded text — the web's
+picker and the phone's — rather than imposed on the other hundred and twenty-three.
+
+`CLAMP` moved out of `Row.tsx` into `app/src/ui/clamp.ts` on the way, because `Button` needs
+the same lookup and a second copy of a three-entry map is how the forty-five button styles
+this design system replaced got started.
+
+##### And the fixture can produce the case now
+
+§6.179 could only say *"no photograph shows the difference"*. This one does not have to. The
+signed-in harness seeded two lists called *Sunday nights* and *Ana recommends* — thirteen and
+fourteen characters — so `15-title-addtolist` looked identical whatever the renderers did.
+That is §6.146's rule: a fixture that cannot produce the case has an opinion about the
+screen.
+
+A third list was added, owned by the signed-in account because the picker shows only your
+own, with a name of 110 characters — just under the 120 `Field` allows, so it is the worst
+case somebody can really type rather than a number chosen to make a point. The first attempt
+at 47 characters was **not enough**: at `size="inline"`'s twelve points a 390-wide phone fits
+that on one line, and the shot came back looking exactly as it had. `15-title-addtolist` now
+shows the pill one row tall with a real ellipsis — *"Films I keep meaning to finish one of
+these days, mostly ones Ana…"* — which is the fix, photographed.
+
+The web half stays unphotographed and the reason is structural: `design:web` runs with no
+Supabase URL, `AddToList` returns `null` when `syncConfigured()` is false, and there is no
+signed-in web pass. The measurement above is what stands in for it, and it is a stronger
+instrument than a screenshot for this particular question.
+
+Seven plants, all red. The one that matters is the first: **moving the clamp from the label
+onto the box while leaving `CLAMP[lines]` in place** — which satisfies "the web reads the
+map" completely while restoring the exact defect. The clause reads *where* the class lands,
+not that it exists.
+
+#### And a third thing, which was in the method again
+
+`npm run verify` came back **red at HEAD** — before any of this sprint's changes — on a line
+§6.179 wrote: `for (const [slot, lines] of Object.entries(ROW_LINES))`, with `lines` never
+read. `noUnusedLocals` refuses it.
+
+The reason it shipped is the reason worth writing down. §6.176 corrected `tsc --noEmit -p app`
+(which compiles nothing) to `npx tsc -b app`, and that correction is itself incomplete:
+`tsconfig.app.json` **excludes** `src/wiring`, `src/test` and every `*.test.ts`, which are a
+separate project reached only by the workspace's `typecheck` script. So `tsc -b app` is not
+evidence about a test file — and a guard is a test file. Two sprints of work were mostly
+guards.
+
+That is §6.106 twice over: a written excuse re-read and found wrong, where the excuse was
+itself a correction of an earlier wrong excuse. The §6.176 paragraph now carries the
+correction inline, and the honest instruction is the boring one: **`npm run verify`**, which
+has no shorter honest substitute for a change to a guard.
+
+#### What dissolved
+
+- **The target-size story.** The probe flagged `size = { target: 44, tap: 24 }` as two
+  numbers doing similar work. They are both stated, both in `tokens.ts`, and eight test files
+  already hold them; the distinction between "a control you tap once" and "a fascia you press
+  repeatedly" is written down in `key.test.ts`. Not a defect — a table doing its job.
+- **The other five probe hits**, which were Tailwind-versus-StyleSheet spellings of the same
+  decision rather than differences.
+
+## What is not done, and why it is said here
+
+**No screenshots were read this sprint**, so sixty-three remain unread of 137 — unchanged
+from §6.179, though `15-title-addtolist` and `00-addtolist-empty` were re-taken and one of
+them now shows something it could not before. That was the intended trade and it is said plainly rather than buried: the
+reading went to renderer pairs, and two findings came out of twenty-five pairs against one
+finding out of the previous ten shots.
+
+**There is no signed-in web design pass**, so every state behind an account — the list
+picker included — is photographed on the phone only. Named here rather than fixed because it
+is a harness of its own rather than a fixture change, and §6.164 says what building one costs.
+
+**Five of the twenty-five pairs were never judged by a person**, only by the probe. They
+came back identical on every keyword it knows, which is weaker than "they agree" — the probe
+knows nine keywords and a component can carry a number outside all of them. `Poster`,
+`Choice`, `Key` and `CrossOff` were named in §6.179 as never having been asked the question;
+`Button` and `Row` have now been asked and answered. The other three have been asked only by
+the instrument.
+
+**`formatDay`'s 2–6 day branch is still unphotographed**, carried from §6.178 and §6.179 and
+not reached again. It returns a bare weekday — *"Sunday"*, no date — and both calendar
+fixtures happen to jump from tomorrow to a week out. Cheap to reach by moving a fixture's air
+date; three sprints of not doing it is now the more interesting fact about it.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -13719,7 +13889,16 @@ and which single claim in this document could not be checked at all:
   mid-word — "Quiet Harbou / r" — because react-native-web wraps on characters where React
   Native wraps on words. Nothing is wrong with the component; the renderer under the review
   is not the renderer under the product, and a design review cannot tell those apart by
-  looking.
+  looking. §6.180 adds a second of exactly this kind, and it is one nothing here can ever
+  see: **`react-native-web`'s `Pressable` ignores `hitSlop` entirely.** Only its `Touchable`
+  reads the prop, and nothing in this app uses `Touchable` — so the nineteen slopped controls
+  the phone ships reach eight points further than their box on a device and not one pixel
+  further in the export every suite drives. `REACH` states the number and `space.test.ts`
+  holds every call site to it, which is as far as a statement can get; that the reach is
+  actually there has never been observed and cannot be, here. The number that *has* been
+  measured is the one underneath it — `tap`'s 24, which clears WCAG 2.5.8 without any slop
+  at all, which is why the rule is that slop sits on top of a real height rather than
+  standing in for one.
 - **Offline here is a switch, not a bad connection.** §6.56 runs both apps with
   Playwright's offline mode, which is a clean break: every request fails at once and
   keeps failing. What that does not reproduce is the case people actually meet — a

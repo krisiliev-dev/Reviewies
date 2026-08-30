@@ -17,7 +17,7 @@ import {
   type Comment,
 } from '@reviewies/core/social/comments';
 import { pickCommentImage } from '../../src/comments/pickImage';
-import { leadingOf, radius, theme, space} from '../../src/ui/theme';
+import { REACH, leadingOf, radius, theme, space} from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { COMPOSE, COMPOSE_OPEN } from '@reviewies/core/ui/compose';
 import { COPY } from '@reviewies/core/copy';
@@ -164,7 +164,7 @@ export default function CommentsScreen() {
                       onPress={() => setImage(undefined)}
                       accessibilityRole="button"
                       accessibilityLabel={COPY.controls.removeScreenshot}
-                      hitSlop={8}
+                      hitSlop={REACH.inline}
                       style={styles.removeAttached}
                     >
                       <Text style={styles.deleteCommentText}>Remove</Text>
@@ -255,7 +255,7 @@ export default function CommentsScreen() {
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={COPY.controls.deleteComment}
-                      hitSlop={8}
+                      hitSlop={REACH.inline}
                       style={styles.deleteComment}
                     >
                       <Text style={styles.deleteCommentText}>Delete</Text>

@@ -1,4 +1,4 @@
-import { color } from '@reviewies/core/tokens';
+import { color, size } from '@reviewies/core/tokens';
 
 /**
  * The palette the phone draws from, which is the dark half of the token table.
@@ -66,7 +66,33 @@ export {
  * nothing can measure them. This gives them the height for real, and keeps the hitSlop
  * on top of it.
  */
-export const tap = { minHeight: 24, justifyContent: 'center' } as const;
+export const tap = { minHeight: size.tap, justifyContent: 'center' } as const;
+
+/**
+ * How far past its edge a `tap` affordance can still be pressed, in points.
+ *
+ * The paragraph above says the slop sits on top of the height and stops there — it never
+ * said **how much**, so nineteen call sites each carried a bare number and agreed by
+ * accident. §6.180 counted them: eighteen `hitSlop={8}` and one `hitSlop={12}`, and
+ * nothing in the repository could tell whether the odd one out was a decision or a slip.
+ *
+ * It is a decision, and this is where it gets written down. `dark` is Watching Mode's
+ * *Leave* control: pressed mid-episode, in a dark room, by somebody who is not looking at
+ * the screen. Everything else is `inline`.
+ *
+ * ## Why there is no web half of this
+ *
+ * `hitSlop` is a React Native mechanism with no CSS equivalent, and the web does not need
+ * one: its inline affordances carry `min-h-11` in the class, so the reach *is* the box and
+ * layout can see it. On a device the slop is real and invisible — two slopped targets side
+ * by side overlap and nothing can measure the result — which is the argument the paragraph
+ * above makes for giving them the height for real first. This number is what sits on top.
+ *
+ * `react-native-web`'s `Pressable` ignores `hitSlop` entirely (its `Touchable` reads it,
+ * and nothing here uses `Touchable`), so the export the smoke suite measures sees the
+ * unslopped 24 — which is the number that has to clear WCAG 2.5.8, and does.
+ */
+export const REACH = { inline: 8, dark: 12 } as const;
 
 /**
  * Tracking, in points, from tracking in em.

@@ -166,6 +166,18 @@ export interface ButtonContract {
   disabled?: boolean;
   busy?: boolean;
   selected?: boolean;
+  /**
+   * A line budget for the label. Unset means unlimited, which is what a label wants.
+   *
+   * Pass `LABEL_LINES` where the label is somebody's own text rather than the app's — see
+   * the note there for why this is asked for rather than assumed.
+   *
+   * One or two, and not `number`, because the web can only spell the budgets Tailwind has
+   * generated: a class built from an arbitrary integer is a class that does not exist, and
+   * a wider type here would turn that into a blank `className` at runtime instead of an
+   * error at build time. `app/src/ui/clamp.ts` is the map, and it has these two.
+   */
+  lines?: 1 | 2;
 }
 
 /**
@@ -186,6 +198,41 @@ export interface ButtonContract {
  * call sites: half of them were fills standing in for exactly this.
  */
 export { CHOSEN as SELECTED } from './choice.ts';
+
+/**
+ * How many lines a label is allowed, when the label is not the app's own words.
+ *
+ * Every other label in the product is authored — `COPY.controls.track`, "Add", "Cancel" —
+ * and short enough that the question never comes up. Two are somebody's own text: the list
+ * picker's rows are `list.name`, which `Field`'s `maxLength` caps at a hundred and twenty
+ * characters. That is the case this number is for.
+ *
+ * ## Why it is not the default
+ *
+ * `lines` is optional and unset means unlimited, which is deliberate and is the opposite of
+ * what `ROW_LINES` does one component over. A row is a line in a list and a list that does
+ * not align scans worse; a **button is a target**, and a target whose words are clipped at
+ * 200% text is `phoneTextScaling.test.ts`'s subject and WCAG 1.4.4's. Clamping every label
+ * would trade the defect below for a worse one, so the clamp is asked for at the one call
+ * site that has unbounded text rather than imposed on the forty that do not.
+ *
+ * ## What it fixes
+ *
+ * Neither platform stated this, so the two renderers had drifted and neither was right.
+ * The phone wrote nothing, so a long list name **wrapped** and the pill grew to fit it. The
+ * web wrote `truncate` — on the `<button>`, which is `inline-flex`, and whose label is a
+ * `<span>` flex item. Measured in Chromium rather than reasoned about: `truncate` there
+ * renders **byte-identically** to `overflow:hidden; white-space:nowrap` with no
+ * `text-overflow` at all, because a flex item is blockified and a flex container has no
+ * inline content of its own for an ellipsis to trim. The span stayed 290pt wide inside a
+ * 176pt button and the name was cut mid-word — `Films I keep meaning to finish one of t` —
+ * with no ellipsis to say so. Moving the same class onto the span changes the pixels,
+ * which is the proof that it does something there and did nothing where it was.
+ *
+ * So: the number here, `numberOfLines` on the phone, and the clamp on the **label element**
+ * on the web. `button.test.ts` holds all three together.
+ */
+export const LABEL_LINES = 1;
 
 /** Boxed tones are pills; `quiet` has no box, so this does not reach it. */
 export const BOX_RADIUS = radius.pill;

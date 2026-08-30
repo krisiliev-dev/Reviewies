@@ -15,7 +15,7 @@ import {
   type ListSummary,
 } from '@reviewies/core/social/lists';
 import { db } from '@reviewies/core/data/db';
-import { leadingOf, theme } from '../src/ui/theme';
+import { REACH, leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../src/ui/Button';
@@ -289,7 +289,7 @@ function ListCard({
                 }
                 onChanged();
               }}
-              hitSlop={8}
+              hitSlop={REACH.inline}
               accessibilityRole="button"
               accessibilityLabel={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
             >

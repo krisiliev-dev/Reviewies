@@ -3,7 +3,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { airedSeasonSizes, catchUpTo } from '@reviewies/core/data/repo';
-import { radius, tap, theme } from './theme';
+import { REACH, radius, tap, theme } from './theme';
 import { useReducedMotion } from './useReducedMotion';
 import { text, type } from '@reviewies/core/tokens';
 import { Section } from './Section';
@@ -91,7 +91,7 @@ export function CatchUp({
           </Text>
           <Pressable
             onPress={onDone}
-            hitSlop={8}
+            hitSlop={REACH.inline}
             accessibilityRole="button"
             accessibilityLabel={marked === undefined ? COPY.catchUp.cancel : COPY.catchUp.done}
             style={tap}
@@ -126,7 +126,7 @@ export function CatchUp({
                 {seasons.length > 1 && (
                   <Pressable
                     onPress={() => setSeason(undefined)}
-                    hitSlop={8}
+                    hitSlop={REACH.inline}
                     accessibilityRole="button"
                   >
                     <Text style={styles.link}>{COPY.catchUp.pickSeason}</Text>

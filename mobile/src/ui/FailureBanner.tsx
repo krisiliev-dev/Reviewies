@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { COPY } from '@reviewies/core/copy';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { onFailure, reportFailure, type Failure } from '@reviewies/core/data/failure';
-import { leadingOf, theme } from './theme';
+import { REACH, leadingOf, theme } from './theme';
 import { text, type, leading } from '@reviewies/core/tokens';
 
 /**
@@ -93,7 +93,7 @@ export function FailureBanner() {
         onPress={() => setFailure(undefined)}
         accessibilityRole="button"
         accessibilityLabel={COPY.controls.dismiss}
-        hitSlop={8}
+        hitSlop={REACH.inline}
         style={styles.dismiss}
       >
         <Text style={styles.dismissText}>Dismiss</Text>

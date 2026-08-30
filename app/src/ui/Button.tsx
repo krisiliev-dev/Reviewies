@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { BUSY, type ButtonContract } from '@reviewies/core/ui/button';
+import { CLAMP } from './clamp';
 
 /**
  * The DOM renderer of `core/src/ui/button.ts`. The decisions are there; this is Tailwind.
@@ -73,6 +74,7 @@ export function Button({
   onPress,
   submit,
   to,
+  lines,
   className = '',
   children,
 }: Props) {
@@ -106,9 +108,21 @@ export function Button({
     .filter(Boolean)
     .join(' ');
 
+  /*
+   * The clamp goes on the label, never on the box.
+   *
+   * `AddToList` wrote `className="w-full truncate"` on the button itself and it did nothing
+   * — measured, not assumed: on an `inline-flex` container `truncate` renders identically
+   * to `overflow:hidden; white-space:nowrap` with no `text-overflow`, because the label is
+   * a blockified flex item and the container has no inline content of its own to trim. The
+   * name was cut mid-word with no ellipsis. On the span the same class changes the pixels.
+   * `LABEL_LINES` in the core carries the argument; this is the one line that acts on it.
+   */
+  const clamp = lines ? CLAMP[lines] : '';
+
   const inside = (
     <>
-      <span>{label}</span>
+      <span className={clamp}>{label}</span>
       {children}
       {/* Busy keeps the label and rules under it. It never becomes a spinner: a spinner
           has no text to read, which `account.tsx` worked around rather than avoided. */}

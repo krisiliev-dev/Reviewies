@@ -20,7 +20,7 @@ import { WhereToWatch } from '../../src/ui/WhereToWatch';
 import { AddToList } from '../../src/social/AddToList';
 import { StarRating } from '../../src/ui/StarRating';
 import { RATING_OPEN, ratingAction, ratingLabel } from '@reviewies/core/ui/rating';
-import { leadingOf, tap, theme } from '../../src/ui/theme';
+import { REACH, leadingOf, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
@@ -165,7 +165,7 @@ export default function TitleScreen() {
             {posterDraft === undefined ? (
               <Pressable
                 onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-                hitSlop={8}
+                hitSlop={REACH.inline}
                 accessibilityRole="button"
                 style={tap}
               >
@@ -197,7 +197,7 @@ export default function TitleScreen() {
                 />
                 <Pressable
                   onPress={() => setPosterDraft(undefined)}
-                  hitSlop={8}
+                  hitSlop={REACH.inline}
                   accessibilityRole="button"
                   accessibilityLabel={COPY.controls.cancelPoster}
                 >

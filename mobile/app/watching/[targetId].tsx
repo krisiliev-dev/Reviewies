@@ -17,7 +17,7 @@ import { PadCell, PadGrid } from '../../src/ui/PadCell';
 import { padLive } from '@reviewies/core/ui/padCell';
 import { ListenSync } from '../../src/watching/ListenSync';
 import { RemoteDrawer } from '../../src/devices/RemoteDrawer';
-import { radius, space, tap, theme } from '../../src/ui/theme';
+import { REACH, radius, space, tap, theme } from '../../src/ui/theme';
 import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import {
@@ -151,7 +151,7 @@ export default function WatchingScreen() {
         <View style={styles.header}>
           <Pressable
             onPress={() => router.back()}
-            hitSlop={12}
+            hitSlop={REACH.dark}
             accessibilityRole="button"
             // Named, because this screen now holds two things that say "Close": this,
             // and the remote drawer. Ambiguous to a screen reader and ambiguous to a

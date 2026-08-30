@@ -9,7 +9,7 @@ import {
   type RunProgress,
 } from '@reviewies/core/data/reconcile';
 import { Poster } from './Poster';
-import { tap, theme, space} from './theme';
+import { REACH, tap, theme, space} from './theme';
 import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 
@@ -156,7 +156,7 @@ export function MatchImports({
               // time, which is the whole point of not forcing a choice.
               setAsks((current) => current.filter((a) => a.localId !== ask.localId))
             }
-            hitSlop={8}
+            hitSlop={REACH.inline}
             style={tap}
             accessibilityRole="button"
             accessibilityLabel={`Leave ${ask.name} unmatched`}

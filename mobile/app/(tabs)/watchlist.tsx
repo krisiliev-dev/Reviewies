@@ -8,7 +8,7 @@ import { removeFromWatchlist, setWatchlistNote, startWatching } from '@reviewies
 import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 
-import { tap, theme } from '../../src/ui/theme';
+import { REACH, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
@@ -149,7 +149,7 @@ function Row({
           // has. Until now the phone could only display what the web wrote.
           <Pressable
             onPress={() => setEditing(true)}
-            hitSlop={8}
+            hitSlop={REACH.inline}
             accessibilityRole="button"
             // Every row on this screen says "Add a note". Which show is only knowable
             // from what is above it, which a screen reader does not read along with it.

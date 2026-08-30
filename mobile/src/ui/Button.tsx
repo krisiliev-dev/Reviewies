@@ -47,6 +47,7 @@ export function Button({
   selected,
   onPress,
   to,
+  lines,
   children,
 }: Props) {
   const shape = TONE[tone];
@@ -88,6 +89,13 @@ export function Button({
       ]}
     >
       <Text
+        /*
+         * Unset is unlimited, which is `Text`'s own default and is what a label wants: a
+         * button is a target, and clipping its words at 200% text is a worse defect than
+         * a tall pill. `LABEL_LINES` in the core says where the number comes from and why
+         * the one call site with somebody else's text asks for it.
+         */
+        numberOfLines={lines}
         style={[
           styles.label,
           // From the table, not from this file. A single size here printed `inline` at

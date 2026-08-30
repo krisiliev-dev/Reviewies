@@ -67,6 +67,25 @@ export const ROWS = {
   lists: [
     { id: 'list-1', user_id: USER_ID, name: 'Sunday nights', description: null, is_public: true, deleted: false, list_items: [{ count: 2 }] },
     { id: 'list-2', user_id: ANA_ID, name: 'Ana recommends', description: null, is_public: true, deleted: false, list_items: [{ count: 1 }] },
+    /*
+     * A name longer than a phone is wide, and it is here to be photographed.
+     *
+     * §6.180 gave `Button` a line budget because the add-to-list picker prints `list.name`
+     * — somebody's own text, which `Field` caps at 120 characters — and neither platform
+     * said what happened when it did not fit. The web cut it mid-word with no ellipsis and
+     * the phone wrapped the pill to two lines. Both fixes are invisible against the two
+     * names above, which are thirteen and fourteen characters: a fixture that cannot
+     * produce the case has an opinion about the screen, which is §6.146's rule.
+     *
+     * A first attempt at 47 characters was not enough: at `size="inline"`'s twelve points a
+     * 390-wide phone fits it on one line, so the shot looked exactly as it had. This one is
+     * 110 characters — just under the 120 `Field` allows — which is the worst case somebody
+     * can actually type rather than a number chosen to make a point.
+     *
+     * `user_id: USER_ID` because the picker shows **only your own** lists, so a long name
+     * on Ana's would never reach it.
+     */
+    { id: 'list-3', user_id: USER_ID, name: 'Films I keep meaning to finish one of these days, mostly ones Ana lent me on disc and I still have not returned', description: null, is_public: false, deleted: false, list_items: [{ count: 0 }] },
   ],
   /*
    * `title_id` and `rank`, which is what `fetchListItems` selects.

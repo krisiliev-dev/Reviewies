@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { declarationOf, stripComments } from '@reviewies/core/test/source';
-import { BOX_RADIUS, BUSY, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { BOX_RADIUS, BUSY, LABEL_LINES, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
+import { CLAMP } from './clamp';
 import { PRESS } from '@reviewies/core/ui/surface';
 import { CHOSEN } from '@reviewies/core/ui/choice';
 import { border, color, radius, size, text } from '@reviewies/core/tokens';
@@ -20,6 +21,11 @@ const ROOT = resolve(import.meta.dirname, '../../..');
 const read = (path: string) => stripComments(readFileSync(resolve(ROOT, path), 'utf8'));
 const WEB = read('app/src/ui/Button.tsx');
 const PHONE = read('mobile/src/ui/Button.tsx');
+/** The two call sites whose label is somebody's own text rather than the app's. */
+const PICKERS = {
+  web: read('app/src/social/AddToList.tsx'),
+  phone: read('mobile/src/social/AddToList.tsx'),
+};
 
 describe('the button contract', () => {
   it('reads two renderers rather than nothing', () => {
@@ -239,6 +245,63 @@ describe('the button contract', () => {
      */
     expect(WEB).toContain(`active:bg-${PRESS.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`);
     expect(PRESSED.fill).toBe('groundRaised');
+  });
+
+  it('clamps a label on the words, not on the box', () => {
+    /*
+     * §6.180, and the shape is §6.179's one component over: **nothing said what the number
+     * was**, so the two renderers had drifted and neither was right.
+     *
+     * The web wrote `className="w-full truncate"` on the `<button>`. Measured in Chromium
+     * rather than argued about: on an `inline-flex` box, `truncate` renders
+     * byte-identically to `overflow:hidden; white-space:nowrap` with no `text-overflow` at
+     * all — the label is a blockified flex item, so the container has no inline content for
+     * an ellipsis to trim. A hundred-and-twenty-character list name was cut mid-word with
+     * nothing to say it had been. The phone wrote nothing at all, so the same name wrapped
+     * and the pill grew to fit it.
+     *
+     * Which makes the interesting assertion the third one. "The web reads CLAMP" is
+     * satisfied by appending the class to `classes` — the exact defect, with the number now
+     * coming from the right place. So this reads *where* it lands: on the element that
+     * carries `{label}`, and not in the box's class list.
+     */
+    expect(PHONE, 'the phone ignores the line budget').toContain('numberOfLines={lines}');
+    expect(WEB, 'the web does not read the map for its budget').toContain('CLAMP[lines]');
+
+    const classes = declarationOf(WEB, 'classes') ?? '';
+    expect(classes.length, 'the web renderer has no class list to read').toBeGreaterThan(100);
+    expect(classes, 'the web clamps the box instead of the label').not.toContain('clamp');
+    expect(WEB, 'the web clamps nothing that holds the label')
+      .toContain('<span className={clamp}>{label}</span>');
+
+    // And the number the core states has to be one the web can actually spell. Tailwind
+    // generates the utilities it can see, so a budget outside the map is a blank class.
+    expect(Object.keys(CLAMP).map(Number), `${LABEL_LINES} is not in CLAMP`).toContain(LABEL_LINES);
+    expect(CLAMP[1], 'the map spells one line as something that is not truncate').toBe('truncate');
+  });
+
+  it('is asked for the budget by the two controls that print somebody else’s text', () => {
+    /*
+     * The non-vacuity half. Every other label in the app is authored and short — `COPY`
+     * entries, "Add", "Cancel" — and unset means unlimited on purpose, because a target
+     * whose words are clipped at 200% text is a worse defect than a tall pill and is what
+     * `phoneTextScaling.test.ts` exists for. So the clause above can go green with the
+     * feature reaching nothing, which is §6.121's failure exactly.
+     *
+     * These two are the ones that matter: the list picker prints `list.name`, which `Field`
+     * caps at a hundred and twenty characters. Both must ask, by the name rather than by a
+     * typed `1` — a literal here is the number leaving the core again.
+     */
+    for (const [platform, source] of Object.entries(PICKERS)) {
+      expect(source, `${platform}'s picker does not ask for a line budget`)
+        .toContain('lines={LABEL_LINES}');
+      expect(source, `${platform}'s picker does not read the core for it`)
+        .toMatch(/LABEL_LINES.*from '@reviewies\/core\/ui\/button'|from '@reviewies\/core\/ui\/button'/);
+    }
+    // And the web must not go back to clamping the box from the call site, which is where
+    // this started: a class that looked like it did the job and did nothing.
+    expect(PICKERS.web, 'the web picker clamps from its className again')
+      .not.toMatch(/className="[^"]*\b(truncate|line-clamp-\d)\b/);
   });
 
   it('is a pill where it has a box at all', () => {

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ROW, ROW_LINES, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
+import { CLAMP } from './clamp';
 import { crossedOffText } from './CrossOff';
 import { Note } from './Note';
 
@@ -74,17 +75,6 @@ interface Props extends RowContract {
    */
   under?: ReactNode;
 }
-
-/**
- * `ROW_LINES` as Tailwind classes, written out.
- *
- * The phone reads the table directly — `numberOfLines={ROW_LINES.note}` — and the web
- * cannot do the same thing, because Tailwind generates the utilities it can *see* and a
- * class built at runtime is a class that does not exist. A static map is how the web reads
- * it without lying to the compiler: both literals are in the source, so both are generated,
- * and the number still comes from one place. §6.179.
- */
-const CLAMP = { 1: 'truncate', 2: 'line-clamp-2' } as const;
 
 export function Row({
   title,

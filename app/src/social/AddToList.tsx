@@ -3,6 +3,7 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { addToList, createList, fetchLists, type ListSummary } from '@reviewies/core/social/lists';
 import type { MediaKind } from '@reviewies/core/domain/types';
 import { Button } from '../ui/Button';
+import { LABEL_LINES } from '@reviewies/core/ui/button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { COPY } from '@reviewies/core/copy';
@@ -71,12 +72,18 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
           <ul className="flex flex-col gap-1">
             {lists?.map((list) => (
               <li key={list.id}>
+                {/* `lines`, not a `truncate` in the className. It was there and it did
+                    nothing: on the `inline-flex` box `truncate`'s ellipsis half has no
+                    inline content to trim, so a long name was cut mid-word with no sign
+                    that anything had been cut. `w-full` stays — how wide the control is
+                    remains this screen's business. §6.180. */}
                 <Button
                   size="inline"
                   onPress={() => add(list.id, list.name)}
                   label={list.name}
                   name={`Add to ${list.name}`}
-                  className="w-full truncate"
+                  lines={LABEL_LINES}
+                  className="w-full"
                 />
               </li>
             ))}

@@ -28,7 +28,7 @@ import { CatchUp } from '../../src/ui/CatchUp';
 import { ImportFiles, ImportFormats } from '../../src/ui/ImportFiles';
 import { MatchImports } from '../../src/ui/MatchImports';
 import type { ImportReport } from '@reviewies/core/data/transfer';
-import { tap, theme } from '../../src/ui/theme';
+import { REACH, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
@@ -126,7 +126,7 @@ export default function UpNextScreen() {
             <Pressable
               onPress={() => setImported(undefined)}
               style={tap}
-              hitSlop={8}
+              hitSlop={REACH.inline}
               accessibilityRole="button"
             >
               <Text style={styles.later}>{COPY.controls.later}</Text>

@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { jsxElements, stripComments } from '@reviewies/core/test/source';
 import { ROW, ROW_INK, ROW_LINES } from '@reviewies/core/ui/row';
 import { border, color, size } from '@reviewies/core/tokens';
+import { CLAMP } from './clamp';
 
 /**
  * The listing row, held to the rule that is not a style rule.
@@ -322,7 +323,7 @@ describe('the listing row', () => {
      * at runtime is a class that does not exist. Its classes stay literal and this clause is
      * what binds them to the table.
      */
-    for (const [slot, lines] of Object.entries(ROW_LINES)) {
+    for (const slot of Object.keys(ROW_LINES)) {
       expect(
         RENDERERS.phone,
         `the phone does not read the table for ${slot}`,
@@ -334,9 +335,17 @@ describe('the listing row', () => {
      * And the map both platforms go through has to say what the table says. Reading the
      * table is only worth anything if the lookup it feeds is right: `CLAMP` mapping 2 to
      * `truncate` would satisfy every assertion above and clamp the note to one line.
+     *
+     * It moved to `app/src/ui/clamp.ts` in §6.180, because `Button`'s label needs the same
+     * lookup and a second copy of a three-entry map is how forty-five button styles start.
+     * So this reads the map itself rather than a literal in a renderer — which is stronger
+     * than what it replaced: a `CLAMP` whose values were right in `Row.tsx` and wrong in
+     * the module both files import was not something the old spelling could have seen.
      */
-    expect(RENDERERS.web, 'the web maps one line to something that is not truncate')
-      .toContain("{ 1: 'truncate', 2: 'line-clamp-2' }");
+    expect(CLAMP[ROW_LINES.note], 'the map does not give note two lines').toBe('line-clamp-2');
+    expect(CLAMP[ROW_LINES.title], 'the map does not give title one line').toBe('truncate');
+    expect(RENDERERS.web, 'the web keeps a second copy of the map')
+      .not.toMatch(/CLAMP\s*=/);
   });
 
   it('takes the strike from the cross-off rather than drawing its own', () => {

@@ -14,7 +14,7 @@ import {
 } from '@reviewies/core/sync/auth';
 import { onSyncStatus, retryRejectedWrites, syncStatus } from '@reviewies/core/sync/driver';
 import { COPY } from '@reviewies/core/copy';
-import { leadingOf, theme } from '../src/ui/theme';
+import { REACH, leadingOf, theme } from '../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { Button } from '../src/ui/Button';
 import { text, type, leading } from '@reviewies/core/tokens';
@@ -161,7 +161,7 @@ export default function AccountScreen() {
 
             <Pressable
               onPress={() => setMode(mode === 'in' ? 'up' : 'in')}
-              hitSlop={8}
+              hitSlop={REACH.inline}
               accessibilityRole="button"
             >
               <Text style={styles.toggle}>

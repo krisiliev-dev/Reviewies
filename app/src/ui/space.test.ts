@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
 import { size, space } from '@reviewies/core/tokens';
+import { REACH, tap } from '../../../mobile/src/ui/theme';
 
 /**
  * Ten steps on a 2pt base, and nothing else.
@@ -145,6 +146,47 @@ describe('the space scale, on the phone', () => {
      */
     expect(seen, 'the scan found no spacing at all').toBeGreaterThan(176);
     expect(off).toEqual([]);
+  });
+
+  it('states how far past its edge a control reaches, rather than typing it nineteen times', () => {
+    /*
+     * §6.180. `hitSlop` is a *prop*, not a style key, so `KEY` above could never have seen
+     * it — and nineteen call sites each carried a bare number that agreed by accident.
+     * Eighteen `hitSlop={8}` and one `hitSlop={12}`, with nothing in the repository able to
+     * say whether the odd one out was a decision or a slip. It was a decision (Watching
+     * Mode's *Leave*, pressed in a dark room) and `REACH` in `mobile/src/ui/theme.ts` is
+     * where it is written down.
+     *
+     * This is the same argument the file's header makes about 7-versus-8 padding, one layer
+     * out: a number nobody stated is a number nobody can disagree with.
+     */
+    const slopped = PHONE.filter((path) => /hitSlop/.test(read(path)));
+    expect(slopped.length, 'nothing on the phone slops a target at all').toBeGreaterThan(12);
+
+    const bare: string[] = [];
+    let reads = 0;
+    for (const path of slopped) {
+      const source = read(path);
+      for (const [, value] of source.matchAll(/hitSlop=\{([^}]+)\}/g)) {
+        if (/^REACH\.\w+$/.test(value.trim())) reads += 1;
+        else bare.push(`${relative(ROOT, path)}: hitSlop={${value.trim()}}`);
+      }
+    }
+    expect(bare, 'a control says how far it reaches without reading the table').toEqual([]);
+    // And the table is actually reached, rather than being an export beside nineteen
+    // literals — which is what `coreWiring.test.ts` reports one layer up and what §6.121
+    // is about down here.
+    expect(reads, 'almost nothing reads REACH').toBeGreaterThan(15);
+
+    // The one distinction the table exists to carry. A `dark` that is not further than an
+    // `inline` is two names for one number, which is the state this replaced.
+    expect(REACH.dark, 'dark reaches no further than inline').toBeGreaterThan(REACH.inline);
+    // Slop is on *top* of a real height and never instead of one: it is invisible to layout
+    // and no suite can measure it, which is why `tap` has to clear the floor by itself.
+    expect(tap.minHeight, 'tap does not clear the WCAG 2.5.8 floor on its own')
+      .toBeGreaterThanOrEqual(size.tap);
+    expect(read(resolve(ROOT, 'mobile/src/ui/theme.ts')), 'tap types its own floor')
+      .toContain('minHeight: size.tap');
   });
 });
 

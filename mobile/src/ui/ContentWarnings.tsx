@@ -13,7 +13,7 @@ import {
   type ContentWarningId,
   type WarningSummary,
 } from '@reviewies/core/social/contentWarnings';
-import { border, leadingOf, radius, theme } from './theme';
+import { REACH, border, leadingOf, radius, theme } from './theme';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Note } from './Note';
 
@@ -112,7 +112,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           <Pressable
             onPress={() => setVoting(!voting)}
-            hitSlop={8}
+            hitSlop={REACH.inline}
             accessibilityRole="button"
             aria-expanded={voting}
             accessibilityLabel={voting ? 'Done flagging' : COPY.controls.flagSomething}
