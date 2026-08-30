@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { NOTIFY_OPTIONS, UPCOMING_DAYS } from '@reviewies/core/calendar/upcoming';
+import { TAB_BAR } from '@reviewies/core/ui/tabIcon';
 import { componentPairs, PAIRS, ROOT } from './pairs';
 import { stripComments } from '@reviewies/core/test/source';
 
@@ -251,15 +252,35 @@ function screenFiles(dir: string, out: string[] = []): string[] {
  * A control's name is a different kind of text with a different owner (`COPY.controls`,
  * and `labelSet.test.ts` holds those), so it is not swept here.
  *
- * That line is a floor, not a finish. §6.175 measured **67** shorter pieces of text still
- * typed on both platforms after this sprint moved the twenty-five sentences — *"Create
- * account"*, *"Change poster"*, *"Leave Watching Mode"* — every one of them the same defect
- * at a smaller size. Lowering this threshold is how they get found; it is written as one
- * constant so that a later sprint can lower it and read off the damage.
+ * That line was a floor, not a finish, and §6.176 lowered it twice: **25 → 12** took the
+ * sixty-seven phrases §6.175 had measured and left standing — *"Create account"*, *"Change
+ * poster"*, *"Leave Watching Mode"* — and **12 → 6** took the sixteen two-word names under
+ * those. Both passes found real defects rather than just tidying: the phrase pass turned up
+ * `More`'s whole contents table typed out on each platform, and the two-word pass turned up
+ * one control with two names.
+ *
+ * ## Where the line actually is, which is not where this number is
+ *
+ * Lowering it further finds nothing, and the reason is worth writing down because the first
+ * version of this comment got it wrong and a measurement corrected it. `isProse` requires a
+ * **space**. So the floor never governed single words at any setting, and the sweep at four
+ * and at two both come back empty — not because two-word names are all owned now (they are)
+ * but because there is nothing between two characters and six for it to find.
+ *
+ * The live boundary is the space, and past it sit **65 single words** typed on both
+ * platforms: `Save`, `Cancel`, `Add`, `Yes`, `No` — and also `Watchlist`, `Discover`,
+ * `Following`, `Blocked`, `Tracking`, which are not generic verbs at all. They are this
+ * product's nouns, and three of them are already `TAB_BAR`'s labels. That split is why the
+ * space stays for now: a rule forcing `Cancel` through `copy.ts` would be the §6.94 pin
+ * this guard is otherwise careful not to be, and a rule letting `Watchlist` stay typed in
+ * nine files is the defect this guard is about. Telling them apart is a judgement per word,
+ * not a threshold, so it is a sprint rather than a constant.
+ *
+ * `SINGLE_WORD_FLOOR` is the ratchet in the meantime: 65 today, and it may only fall.
  */
-const PROSE_FLOOR = 25;
-const isProse = (text: string) =>
-  text.length >= PROSE_FLOOR && /\s/.test(text) && /^[A-Z]/.test(text) && /[.?!]$/.test(text);
+const PROSE_FLOOR = 6;
+const isProse = (text: string, floor = PROSE_FLOOR) =>
+  text.length >= floor && /\s/.test(text) && /^[A-Z]/.test(text);
 
 /**
  * The prose a file **types**, as opposed to the prose it reads.
@@ -269,12 +290,12 @@ const isProse = (text: string) =>
  * words. A sentence reached through `COPY.` is not in the file. One typed into the file is,
  * and that is the whole subject here.
  */
-export function typedLiterals(source: string): Set<string> {
+export function typedLiterals(source: string, floor = PROSE_FLOOR): Set<string> {
   const src = strip(source);
   const found = new Set<string>();
   const keep = (raw: string) => {
     const text = raw.replace(/\s+/g, ' ').trim();
-    if (isProse(text)) found.add(text);
+    if (isProse(text, floor)) found.add(text);
   };
   for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) keep(m[1]);
   for (const m of src.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)) keep(m[1]);
@@ -283,12 +304,12 @@ export function typedLiterals(source: string): Set<string> {
 }
 
 /** Every typed sentence on each platform, with the files that type it. */
-function typedProse(): { web: Map<string, string[]>; phone: Map<string, string[]> } {
+function typedProse(floor = PROSE_FLOOR): { web: Map<string, string[]>; phone: Map<string, string[]> } {
   const side = (trees: string[]) => {
     const out = new Map<string, string[]>();
     for (const tree of trees) {
       for (const file of screenFiles(tree)) {
-        for (const text of typedLiterals(read(file))) {
+        for (const text of typedLiterals(read(file), floor)) {
           out.set(text, [...(out.get(text) ?? []), file]);
         }
       }
@@ -296,6 +317,37 @@ function typedProse(): { web: Map<string, string[]>; phone: Map<string, string[]
     return out;
   };
   return { web: side(WEB_TREES), phone: side(PHONE_TREES) };
+}
+
+/**
+ * The words past the space rule: single, capitalised, typed on both platforms.
+ *
+ * 65 of them, and they are two different things wearing one shape — `Cancel` and `Save` on
+ * one side, `Watchlist` and `Following` on the other. See the header for why that is a
+ * judgement per word rather than a threshold.
+ */
+const SINGLE_WORD_FLOOR = 65;
+
+function singleWords(): string[] {
+  const one = (trees: string[]) => {
+    const found = new Set<string>();
+    for (const tree of trees) {
+      for (const file of screenFiles(tree)) {
+        const src = strip(read(file));
+        const keep = (raw: string) => {
+          const text = raw.replace(/\s+/g, ' ').trim();
+          if (text.length >= 2 && !/\s/.test(text) && /^[A-Z]/.test(text)) found.add(text);
+        };
+        for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) keep(m[1]);
+        for (const m of src.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)) keep(m[1]);
+        for (const m of src.matchAll(/>([^<>{}]+)</g)) keep(m[1]);
+      }
+    }
+    return found;
+  };
+  const web = one(WEB_TREES);
+  const phone = one(PHONE_TREES);
+  return [...web].filter((w) => phone.has(w));
 }
 
 /** Every sentence `copy.ts` already owns, as text. */
@@ -532,6 +584,43 @@ describe('the words, on both platforms', () => {
     expect(seen.phone.size, 'no typed prose found on the phone at all').toBeGreaterThan(6);
     // And that it is prose rather than everything: `useState` must not survive the sieve.
     expect([...seen.web.keys(), ...seen.phone.keys()].join(' ')).not.toContain('useState');
+  });
+
+  it('names its own screen the way the tab bar names it', () => {
+    /*
+     * §6.176's one deliberate pair of keys, asserted rather than assumed.
+     *
+     * `TAB_BAR[0].label` and `COPY.upNext.name` are the same words for two different jobs —
+     * the bar's label and the page's title — and the product would look broken if they came
+     * apart. Two keys, because they are two decisions; one clause, because it is one word.
+     *
+     * The same argument as `copy.test.ts`'s "two months" clause: a number in the words and
+     * a number in the code, pinned to each other rather than left to agree by luck.
+     */
+    expect(TAB_BAR[0].label).toBe(COPY.upNext.name);
+    // And that the screens read the sentence rather than typing it.
+    for (const file of ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx']) {
+      expect(strip(read(file)), `${file} types its own title`).not.toMatch(/>Up Next</);
+    }
+  });
+
+  it('holds the single words at 65 and lets that number only fall', () => {
+    /*
+     * The measurement past the space rule, kept runnable instead of written down once — and
+     * a ratchet rather than a pin, for `everyWorkspaceRuns`'s reason: it fails when the
+     * number *grows*, so owning one of these words is never blocked by this clause and
+     * typing a new one on both platforms is.
+     *
+     * It also proves the sweep finds anything at all past the space, which is the §6.121
+     * half: `singleWords()` returning nothing would leave the ratchet green for ever.
+     */
+    const both = singleWords();
+    expect(both.length, 'the sweep past the space finds nothing, so it is measuring nothing')
+      .toBeGreaterThan(20);
+    expect(both.length, `${both.length} single words typed on both platforms`)
+      .toBeLessThanOrEqual(SINGLE_WORD_FLOOR);
+    // And the nouns worth arguing about are still in there, so the next sprint has its list.
+    expect(both).toContain('Watchlist');
   });
 
   it('offers a notification hint for every choice, in one voice', () => {

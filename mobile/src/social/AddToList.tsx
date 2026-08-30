@@ -69,7 +69,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         accessibilityRole="button"
         aria-expanded={open}
       >
-        <Text style={styles.toggle}>{open ? 'Cancel' : 'Add to list'}</Text>
+        <Text style={styles.toggle}>{open ? 'Cancel' : COPY.controls.addToList}</Text>
       </Pressable>
 
       {open && (
@@ -110,7 +110,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               tone="primary"
               size="inline"
               label="Add"
-              name="Make this list and add the title to it"
+              name={COPY.controls.makeListAndAdd}
             />
           </View>
         </View>

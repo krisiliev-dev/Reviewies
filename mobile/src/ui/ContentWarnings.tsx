@@ -73,7 +73,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
         aria-expanded={open}
       >
         <Text style={styles.toggleText}>
-          {open ? 'Hide content warnings' : 'Content warnings'}
+          {open ? COPY.controls.hideWarnings : COPY.warnings.heading}
         </Text>
       </Pressable>
 
@@ -115,9 +115,9 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             hitSlop={8}
             accessibilityRole="button"
             aria-expanded={voting}
-            accessibilityLabel={voting ? 'Done flagging' : 'Flag something'}
+            accessibilityLabel={voting ? 'Done flagging' : COPY.controls.flagSomething}
           >
-            <Text style={styles.link}>{voting ? COPY.controls.done : 'Flag something'}</Text>
+            <Text style={styles.link}>{voting ? COPY.controls.done : COPY.controls.flagSomething}</Text>
           </Pressable>
 
           {voting &&

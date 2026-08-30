@@ -75,6 +75,14 @@ function SuggestionRow({
   onActed: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  /*
+   * What the press did, kept so the control can say it. §6.176 found the web had no such
+   * state at all: both buttons stayed on their original labels and re-enabled themselves,
+   * so pressing "Watchlist" twice looked exactly like pressing it once and nothing on the
+   * screen confirmed the first press. The phone has disabled-and-relabelled since it
+   * shipped; §6.51 says the better version wins, and this is the web taking it.
+   */
+  const [added, setAdded] = useState<'library' | 'watchlist'>();
 
   async function cache() {
     await db.titles.put({
@@ -97,6 +105,7 @@ function SuggestionRow({
      * say so is a control that looks untouched for half a minute. §6.153.
      */
     await addToLibrary(suggestion.id, suggestion.kind);
+    setAdded('library');
     // Reload so the newly tracked title drops out of the feed immediately.
     onActed();
     if (suggestion.kind === 'show') void getEpisodesCached(suggestion.id).catch(() => {});
@@ -106,6 +115,7 @@ function SuggestionRow({
     setBusy(true);
     await cache();
     await addToWatchlist(suggestion.id, suggestion.kind, `Suggested by ${suggestion.because[0]}`);
+    setAdded('watchlist');
     onActed();
   }
 
@@ -144,16 +154,16 @@ function SuggestionRow({
         <div className="flex flex-wrap gap-1.5">
           <Button
             onPress={track}
-            disabled={busy}
+            disabled={busy || added === 'library'}
             tone="primary"
-            label={COPY.controls.track}
+            label={added === 'library' ? COPY.controls.tracking : COPY.controls.track}
             name={COPY.controls.trackTitle(suggestion.name)}
           />
           <Button
             onPress={save}
-            disabled={busy}
+            disabled={busy || added === 'watchlist'}
             tone="secondary"
-            label="Watchlist"
+            label={added === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
             name={COPY.controls.addToWatchlist(suggestion.name)}
           />
         </div>

@@ -57,9 +57,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
           <a
             href="/"
             className="self-start rounded-pill bg-action-fill px-5 py-3 font-title font-semibold text-action-label"
-          >
-            Go to Up Next
-          </a>
+          >{COPY.controls.goToUpNext}</a>
         </div>
       );
     }

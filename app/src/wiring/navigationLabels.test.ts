@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
+import { COPY } from '@reviewies/core/copy';
+import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
+import { TAB_BAR } from '@reviewies/core/ui/tabIcon';
 
 /**
  * A sentence that sends somebody somewhere has to name a place that exists.
@@ -25,12 +28,35 @@ import { stripComments } from '@reviewies/core/test/source';
 const ROOT = resolve(import.meta.dirname, '../../..');
 
 /** The functions whose argument is a place somebody is being sent to. */
-const DIRECTIONS = /\bCOPY\.\w+\.(signInToMake|signInToFollow)\(\s*'([^']*)'/g;
+const DIRECTIONS =
+  /\bCOPY\.\w+\.(signInToMake|signInToFollow)\(\s*(?:'([^']*)'|(COPY\.\w+\.\w+))/g;
 
-/** Every `label: '…'` in a navigation source, which is what a person actually reads. */
+/**
+ * Every navigation label a person actually reads, from wherever it is now kept.
+ *
+ * It read `label: '…'` out of the two navigation files and nothing else, and §6.176 walked
+ * straight through it: both More screens now read `MORE_INDEX`, so the literals this scanned
+ * for were gone and `labels` came back with two entries on the web and none on the phone.
+ * Every assertion below still passed its `wrong` check — against an empty set.
+ *
+ * That is the cost of giving words an owner, and the fix is not to put them back. A guard
+ * about *what the navigation says* has to read the navigation's owner: the shared table, the
+ * tab bar, and whatever a platform still keeps in its own file.
+ */
 function labelsIn(file: string): Set<string> {
   const source = stripComments(readFileSync(resolve(ROOT, file), 'utf8'));
-  return new Set([...source.matchAll(/\blabel:\s*'([^']+)'/g)].map((m) => m[1]));
+  const found = new Set([...source.matchAll(/\blabel:\s*'([^']+)'/g)].map((m) => m[1]));
+  if (source.includes('MORE_INDEX')) for (const row of MORE_INDEX) found.add(row.label);
+  if (source.includes('TAB_BAR')) for (const tab of TAB_BAR) found.add(tab.label);
+  return found;
+}
+
+/** And the destination a sentence is handed, which may be a literal or a reference. */
+function destination(raw: string): string {
+  const path = raw.match(/^COPY\.(\w+)\.(\w+)$/);
+  if (!path) return raw;
+  const value = (COPY as Record<string, Record<string, unknown>>)[path[1]]?.[path[2]];
+  return typeof value === 'string' ? value : raw;
 }
 
 const PLATFORMS = [
@@ -76,8 +102,9 @@ describe('where a signed-out screen sends you', () => {
         let match;
         while ((match = DIRECTIONS.exec(source))) {
           found++;
-          if (!labels.has(match[2])) {
-            wrong.push(`${relative(ROOT, file)}: sends people to "${match[2]}"`);
+          const place = destination(match[2] ?? match[3]);
+          if (!labels.has(place)) {
+            wrong.push(`${relative(ROOT, file)}: sends people to "${place}"`);
           }
         }
       }

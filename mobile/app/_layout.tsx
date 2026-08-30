@@ -48,15 +48,15 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         onPress={() => void retry()}
         tone="primary"
         size="page"
-        label="Try again"
-        name="Try again"
+        label={COPY.controls.tryAgain}
+        name={COPY.controls.tryAgain}
       />
       <Button
         onPress={() => router.replace('/')}
         tone="secondary"
         size="page"
-        label="Go to Up Next"
-        name="Go to Up Next"
+        label={COPY.controls.goToUpNext}
+        name={COPY.controls.goToUpNext}
       />
     </View>
   );

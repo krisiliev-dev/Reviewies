@@ -13171,6 +13171,124 @@ real-TMDB build, which none of this touched.
 one produced this.
 
 
+### 6.176 Lowering the line twice, and what a shared owner costs the guards that read literals
+
+§6.175 moved the twenty-five duplicated *sentences* into `copy.ts`, drew its line at a full
+stop, and left sixty-seven shorter pieces of text measured and standing. This is that list,
+and the two things that fell out of clearing it.
+
+#### The line moves twice
+
+**25 → 12** takes the phrases: *"Create account"*, *"Change poster"*, *"Leave Watching
+Mode"*, *"Metadata cache"*, *"Export watch history (CSV)"*. **12 → 6** takes the sixteen
+two-word names under them: *"Sign in"*, *"Follow back"*, *"This year"*, *"Add to list"*.
+
+The brief expected some of these to belong to `labelSet.test.ts` rather than `copy.ts`. They
+do not: that file is about the eight label **colours**. There is no second owner, so the
+argument §6.175 made — that a sentence is the product speaking and a control's name is a
+different kind of text — was right about the kind and wrong about the conclusion. Both go in
+`copy.ts`; the groups tell them apart.
+
+**Where the line actually is** turned out not to be where the number is. The first version
+of that comment claimed the floor stops at six because below six the words are generic verbs
+— and predicted that lowering it to four would turn up `Done`, `Cancel`, `Add`. Measured: at
+four the sweep finds **nothing**, and at two it finds nothing either. `isProse` requires a
+**space**, so the floor never governed single words at any setting. The live boundary is the
+space, and past it sit **65 single words** typed on both platforms:
+
+> `Save`, `Cancel`, `Add`, `Yes`, `No` — and `Watchlist`, `Discover`, `Following`,
+> `Blocked`, `Tracking`, `Episodes`, `Followers`
+
+Two different things in one shape. The first five are what a control says when it is not
+naming anything; the rest are this product's nouns, and three are already `TAB_BAR`'s
+labels. Telling them apart is a judgement per word, not a threshold, so it is a sprint and
+not a constant — and `SINGLE_WORD_FLOOR = 65` is the ratchet meanwhile, proved by planting a
+66th.
+
+#### Two findings, not just a tidy
+
+**`More`'s whole contents table was typed out on each platform.** Not five sentences — five
+rows, each with a label *and* a one-line description, in two `LINKS` arrays:
+
+```
+{ to:   '/settings', label: 'Your data', detail: 'Import from TV Time, export everything' }
+{ href: '/data',     label: 'Your data', detail: 'Import from TV Time, export everything' }
+```
+
+Ten strings agreeing by hand on the screen whose whole job is saying what the product
+contains. Moving the words alone would have left the two arrays free to disagree about their
+order or their length, so it is a table: `core/src/ui/moreIndex.ts`, `TAB_BAR`'s pattern,
+carrying both addresses because the web's `/settings` genuinely is the phone's `/data`. The
+phone's `Account` and `Remote` rows stay in its own file — the web reaches those two from
+elsewhere, and a shared table naming them would claim a parity that does not exist.
+
+**One control with two names.** `Lists` said `isPublic ? 'Make private' : 'Publish'` on the
+web and `isPublic ? 'Make private' : 'Make public'` on the phone. `copy.test.ts`'s near-match
+comparison cannot see this: "Publish" and "Make public" share no word, so they score **0**
+and read as two unrelated pieces of text rather than as one written twice. The threshold is
+calibrated for *reworded* copy; this was *renamed* copy. §6.51 gives it to the pair — "Make
+public" beside "Make private" reads as one control's two states, "Publish" beside it reads as
+two controls.
+
+#### What a shared owner costs, which is the part worth keeping
+
+Thirteen checks went red, in six files, and none of them was a bug in the product. Every one
+was a guard reading a **literal that had moved**:
+
+| guard | what it read | what happened |
+| --- | --- | --- |
+| `navigationLabels` | `label: '…'` in the two More files | found 2 labels on the web, **0** on the phone — and still passed its own "sends you somewhere real" check, against an empty set |
+| `offers` | `to:` / `href:` literals | reported the `/settings`-vs-`/data` exemption as **stale**, i.e. claimed a real difference had gone away |
+| `type` | `>Up Next</Masthead>` × 4 | counted 0 |
+| `section`, `migrationParity`, `already` | a pinned expression each | no longer present |
+| `shape` | `COPY.x.y` references in order | see below |
+
+`navigationLabels` is the one to look at twice. Its assertion is *"only sends people to a
+place the web names"*, and with `labels` empty that clause is comparing every destination
+against nothing — it would have gone green the moment its own inputs vanished, if the
+non-vacuity clause beside it had not caught the emptiness. That clause was written for
+exactly this and it earned itself here.
+
+The fix in every case is the same and it is not to put the literals back: **a guard about
+what the navigation says has to read the navigation's owner.** `labelsIn` reads `MORE_INDEX`
+and `TAB_BAR` when a file references them; `routesOffered` adds the table's destinations —
+the sixth widening in that file's history and the first where the new "spelling" is not a
+spelling at all, but a table. Its own comments already say twice that reading one side more
+closely than the other invents differences; this is that failure one layer up, reading a
+*file* more closely than the table the file reads.
+
+#### And `shape.test.ts` found something, because it can see references and not literals
+
+`shapeOf` counts `COPY.x.y` as a rendered thing. So moving text into `copy.ts` made it see
+**more**, and it reported the two Discover screens as differently shaped. Reading them:
+
+- the phone tracks what the press did and swaps the control — `disabled`, and *"Tracking"* /
+  *"On watchlist"*;
+- the web had `busy` only. Both labels stayed put and the buttons re-enabled, so pressing
+  *Watchlist* twice looked exactly like pressing it once and nothing confirmed the first
+  press landed.
+
+A real §6.51 gap on the screen whose whole job is getting something into your library, found
+by a guard that could only see it once the words had an owner. The web has the phone's
+behaviour now.
+
+## What is not done, and why it is said here
+
+**The 65 single words.** Named above, ratcheted, and a judgement per word rather than a
+sweep. `Watchlist` and `Tracking` are already owned as `controls.*` and still appear as
+literals elsewhere — the tab bar's label, a masthead, a row tag — which is the shape of the
+work: each word needs somebody to decide whether the two uses are one decision.
+
+**`COPY.comments.sealed` is still filed, not fixed.** This sprint did not get to it. The
+proof stands in `emptyStates.ts` and §6.175: `gated: comments.length === 0 && !hasWatched`,
+rendered only inside a `watched ?` branch, so it cannot be reached. Making it reachable needs
+the client to know whether *this episode's* watch is still in the outbox, and that is a sync
+change rather than a copy change.
+
+**Seventy-one shots are unread.** Sprint 86 read none. Part 1 of its own brief took the whole
+sprint, and saying that is better than a hurried skim to make the count move.
+
+
 
 ## 7. What is still not known
 

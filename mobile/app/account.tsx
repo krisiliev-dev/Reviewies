@@ -63,7 +63,7 @@ export default function AccountScreen() {
         await signIn(email.trim(), password);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong');
+      setError(e instanceof Error ? e.message : COPY.sync.failed);
     } finally {
       setBusy(false);
     }
@@ -119,10 +119,10 @@ export default function AccountScreen() {
                 {retryNote ? <Note>{retryNote}</Note> : null}
               </View>
             )}
-            <Button onPress={() => void signOut()} tone="secondary" label="Sign out" name="Sign out" />
+            <Button onPress={() => void signOut()} tone="secondary" label={COPY.controls.signOut} name={COPY.controls.signOut} />
           </Block>
         ) : (
-          <Block heading="Sync across devices">
+          <Block heading={COPY.sync.acrossDevices}>
             <Note>
               Optional. Everything already works on this device — an account adds sync,
               episode comments and shared reactions.
@@ -141,7 +141,7 @@ export default function AccountScreen() {
             label={COPY.fields.password}
             value={password}
             onChange={setPassword}
-            placeholder="Password (8+ characters)"
+            placeholder={COPY.fields.passwordRule}
             secureTextEntry
           />
 
@@ -155,8 +155,8 @@ export default function AccountScreen() {
               disabled={busy}
               tone="primary"
               size="page"
-              label={mode === 'in' ? 'Sign in' : 'Create account'}
-              name={mode === 'in' ? 'Sign in' : 'Create account'}
+              label={mode === 'in' ? COPY.controls.signIn : COPY.controls.createAccount}
+              name={mode === 'in' ? COPY.controls.signIn : COPY.controls.createAccount}
             />
 
             <Pressable
@@ -165,7 +165,7 @@ export default function AccountScreen() {
               accessibilityRole="button"
             >
               <Text style={styles.toggle}>
-                {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
+                {mode === 'in' ? COPY.controls.createAccountInstead : COPY.controls.haveAccount}
               </Text>
             </Pressable>
 

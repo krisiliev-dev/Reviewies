@@ -44,7 +44,7 @@ export default function WatchlistScreen() {
                 the web's Calendar: the screen knows exactly what you should do next and
                 makes you find it yourself. The web's empty watchlist has had this
                 button since it shipped. */}
-            <Button to="/search" tone="primary" size="page" label="Find something" name="Find something" />
+            <Button to="/search" tone="primary" size="page" label={COPY.controls.findSomething} name={COPY.controls.findSomething} />
           </View>
         )}
 

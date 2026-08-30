@@ -156,7 +156,7 @@ export default function WatchingScreen() {
             // Named, because this screen now holds two things that say "Close": this,
             // and the remote drawer. Ambiguous to a screen reader and ambiguous to a
             // test, which is how the ambiguity got noticed.
-            accessibilityLabel="Leave Watching Mode"
+            accessibilityLabel={COPY.controls.leaveWatching}
             style={tap}
           >
             <Text style={styles.close}>Close</Text>
@@ -195,23 +195,23 @@ export default function WatchingScreen() {
               onPress={() => clock.start()}
               tone="primary"
               size="page"
-              label="Start watching"
-              name="Start watching"
+              label={COPY.controls.startWatching}
+              name={COPY.controls.startWatching}
             />
           </View>
         ) : (
           <View style={styles.controls}>
             <Button
               label={clock.running ? 'Pause' : 'Resume'}
-              name={clock.running ? 'Pause the clock' : 'Resume the clock'}
+              name={clock.running ? COPY.controls.pauseClock : COPY.controls.resumeClock}
               onPress={clock.toggle}
             />
             <Button
               label={streamHeld ? 'Held' : 'Hold'}
               name={
                 streamHeld
-                  ? 'Let other people’s reactions move again'
-                  : 'Hold other people’s reactions still'
+                  ? COPY.controls.moveReactions
+                  : COPY.controls.holdReactions
               }
               selected={streamHeld}
               onPress={() => setStreamHeld(!streamHeld)}
@@ -234,7 +234,7 @@ export default function WatchingScreen() {
                 *Cliffhanger* and *Dead*. §6.167. */}
             <Button
               label="Remote"
-              name="Open remote"
+              name={COPY.controls.openRemote}
               onPress={() => setRemoteOpen(true)}
             />
             {/* A control label, beside its control — the web's spelling, which the phone
@@ -323,7 +323,7 @@ export default function WatchingScreen() {
             label={COPY.fields.emoji}
             value={query}
             onChange={setQuery}
-            placeholder="Search any emoji…"
+            placeholder={COPY.fields.emojiPlaceholder}
             autoCorrect={false}
             style={styles.searchBox}
           />

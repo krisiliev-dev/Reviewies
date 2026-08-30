@@ -153,7 +153,7 @@ export function EpisodeComments() {
                   <button
                     type="button"
                     onClick={() => setImage(undefined)}
-                    aria-label="Remove the attached screenshot"
+                    aria-label={COPY.controls.removeScreenshot}
                     className="tap text-s12 text-ink-secondary underline"
                   >
                     Remove
@@ -204,7 +204,7 @@ export function EpisodeComments() {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Choice
-              name="How much effort a comment has to show"
+              name={COPY.comments.effortLabel}
               options={EFFORT_LEVELS.map((level) => ({
                 key: level.minLength,
                 label: level.label,
@@ -255,7 +255,7 @@ export function EpisodeComments() {
                         await load();
                       }}
                       label="Delete"
-                      name="Delete your comment"
+                      name={COPY.controls.deleteComment}
                       className="shrink-0"
                     />
                   )}

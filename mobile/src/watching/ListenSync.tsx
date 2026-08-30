@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { COPY } from '@reviewies/core/copy';
 import { radius, theme } from '../ui/theme';
 import { Button } from '../ui/Button';
 import { useListenSync } from '../fingerprint/listen';
@@ -68,7 +69,7 @@ export function ListenSync({
       <View style={styles.row}>
         <Button
           size="inline"
-          label={mapping ? 'Finish and contribute' : uploading ? 'Sending…' : 'Help map this episode'}
+          label={mapping ? 'Finish and contribute' : uploading ? 'Sending…' : COPY.controls.helpMapEpisode}
           name={
             mapping
               ? 'Finish mapping and contribute what was heard'

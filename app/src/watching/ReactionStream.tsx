@@ -267,7 +267,7 @@ export function ReactionStream({
   return (
     <div
       className="pointer-events-none relative h-32 overflow-hidden"
-      aria-label="Reactions from other viewers"
+      aria-label={COPY.watching.reactionsHeading}
     >
       {/* The only thing here that speaks. The emoji themselves are hidden from a screen
           reader: they are a visual swell, and read one at a time they are noise. */}

@@ -193,7 +193,7 @@ export function Calendar() {
         version wins whichever platform had it — and it is also what makes `group` below
         mean something rather than being a second treatment of the same depth.
       */}
-      <Section className="px-1">Next two months</Section>
+      <Section className="px-1">{COPY.calendar.horizon}</Section>
 
       <div className="flex flex-col gap-5">
         {grouped.map(([day, dayEntries]) => (

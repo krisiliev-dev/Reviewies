@@ -34,8 +34,8 @@ import { Progress } from '../src/ui/Progress';
  */
 const WINDOWS: Array<{ key: Window; label: string }> = [
   { key: '30d', label: '30 days' },
-  { key: 'ytd', label: 'This year' },
-  { key: 'all', label: 'All time' },
+  { key: 'ytd', label: COPY.stats.thisYear },
+  { key: 'all', label: COPY.stats.allTime },
 ];
 
 export default function StatsScreen() {
@@ -174,7 +174,7 @@ export default function StatsScreen() {
               <Figure label="Episodes" value={String(summary.episodes)} />
               <Figure label="Titles" value={String(summary.distinctTitles)} />
               <Figure
-                label="Longest streak"
+                label={COPY.stats.longestStreak}
                 value={`${summary.longestStreakDays} day${summary.longestStreakDays === 1 ? '' : 's'}`}
               />
             </View>
@@ -190,7 +190,7 @@ export default function StatsScreen() {
 
             {summary.topTitles.length > 0 && (
               <View style={styles.section}>
-                <Section>Most watched</Section>
+                <Section>{COPY.stats.mostWatched}</Section>
                 {summary.topTitles.map((title) => (
                   <View key={title.titleId} style={styles.tallyCard}>
                     <View style={styles.tallyHead}>

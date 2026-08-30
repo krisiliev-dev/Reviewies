@@ -23,7 +23,7 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-6 p-s16">
-      <Masthead level="page" className="px-1">Your data</Masthead>
+      <Masthead level="page" className="px-1">{COPY.app.yourData}</Masthead>
 
       <AccountPanel />
 
@@ -63,7 +63,7 @@ export function Settings() {
         <Button
           size="page"
           tone="primary"
-          label="Export everything (JSON)"
+          label={COPY.controls.exportJson}
           name="Export everything as JSON"
           onPress={async () => {
             const bundle = await exportAll();
@@ -93,7 +93,7 @@ export function Settings() {
               'text/csv',
             )
           }
-          label="Export watch history (CSV)"
+          label={COPY.controls.exportCsv}
           name="Export watch history as a CSV file"
         />
       </section>
@@ -124,7 +124,7 @@ export function Settings() {
           type="button"
           role="switch"
           {...toggleState(openComments)}
-          aria-label="Open the conversation after marking watched"
+          aria-label={COPY.settings.openComments}
           aria-description={COPY.settings.openCommentsHint}
           onClick={() => {
             const on = !openComments;
@@ -134,7 +134,7 @@ export function Settings() {
           className="flex w-full items-center justify-between gap-3 rounded-plate bg-ground-raised px-4 py-4 text-left"
         >
           <span className="min-w-0">
-            <span className="block">Open the conversation after marking watched</span>
+            <span className="block">{COPY.settings.openComments}</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
             <Note as="span" className="block">{COPY.settings.openCommentsHint}</Note>
@@ -144,15 +144,13 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <Section className="px-1">
-          Metadata cache
-        </Section>
+        <Section className="px-1">{COPY.settings.cacheHeading}</Section>
         <Note className="px-1">{COPY.settings.cacheBlurb}</Note>
         <Button
           size="page"
           onPress={() => void clearMetadataCache().then((n) => setCleared(n))}
-          label="Clear cached metadata"
-          name="Clear cached metadata"
+          label={COPY.controls.clearCache}
+          name={COPY.controls.clearCache}
         />
         {cleared !== undefined && (
           <Note className="px-1" role="status">

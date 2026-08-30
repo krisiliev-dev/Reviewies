@@ -92,7 +92,7 @@ export function MatchImports({
       // Caught and said, rather than thrown out of an event handler. Without this the
       // screen quietly went back to offering the button, which looks identical to a run
       // that found nothing to do — and nothing anywhere said the provider was down.
-      setError(e instanceof Error ? e.message : 'Could not reach the metadata provider');
+      setError(e instanceof Error ? e.message : COPY.import.providerFailed);
     } finally {
       setRunning(false);
       onDone?.();
@@ -119,9 +119,7 @@ export function MatchImports({
         <button
           onClick={start}
           className="rounded-pill bg-action-fill px-4 py-3 font-title font-semibold text-action-label"
-        >
-          Match imported shows
-        </button>
+        >{COPY.import.heading}</button>
       )}
 
       {running && (
@@ -167,7 +165,7 @@ export function MatchImports({
               <BaseRow
                 key={candidate.id}
                 title={candidate.name}
-                meta={candidate.year ? String(candidate.year) : 'Year unknown'}
+                meta={candidate.year ? String(candidate.year) : COPY.import.yearUnknown}
                 open={{
                   // Pressing this *is* the answer — nothing opens — so there is no `to`
                   // and both platforms announce a button rather than a link.
@@ -189,7 +187,7 @@ export function MatchImports({
             aria-label={`Leave ${ask.name} unmatched`}
             className="tap mt-2 text-s12 text-ink-secondary underline"
           >
-            {ask.candidates.length > 0 ? 'None of these' : 'Leave it for now'}
+            {ask.candidates.length > 0 ? COPY.controls.noneOfThese : 'Leave it for now'}
           </button>
         </div>
       ))}
@@ -222,7 +220,7 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
     } catch (e) {
       // Said rather than swallowed: an empty list and a failed request look identical,
       // and one of them is worth trying again.
-      setFailed(e instanceof Error ? e.message : 'Could not reach the metadata provider');
+      setFailed(e instanceof Error ? e.message : COPY.import.providerFailed);
     } finally {
       setBusy(false);
     }
@@ -272,7 +270,7 @@ function FindIt({ ask, onChosen }: { ask: Proposal; onChosen: (providerId: strin
           <BaseRow
             key={result.id}
             title={result.name}
-            meta={result.year ? String(result.year) : 'Year unknown'}
+            meta={result.year ? String(result.year) : COPY.import.yearUnknown}
             open={{
               // No `to`: choosing is the answer, not a destination.
               name: `${ask.name} is ${result.name}${result.year ? `, ${result.year}` : ''}`,

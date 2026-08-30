@@ -1,5 +1,6 @@
 import { SURFACE } from '@reviewies/core/ui/surface';
 import { COPY } from '@reviewies/core/copy';
+import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
 import { Chevron } from '../../src/ui/Mark';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,15 +24,19 @@ import { Masthead } from '../../src/ui/Masthead';
  * The tab bar holds five, so the rest lives here. Ordered by how often it is actually
  * opened, not by how interesting it is to build.
  */
+/**
+ * Two rows this platform has and the web does not, then the five it shares.
+ *
+ * The shared five are `MORE_INDEX`'s — labels and descriptions both, which were typed out
+ * on each platform separately until §6.176. The two above them stay here on purpose: the
+ * web reaches its account panel from another screen and its remote from a control in the
+ * masthead, so putting them in a shared table would claim a parity that does not exist.
+ */
 const LINKS = [
   { href: '/account', label: 'Account', detail: 'Optional — adds sync and the shared layer' },
   { href: '/remote', label: 'Remote', detail: 'Control a TV on your Wi-Fi, directly' },
-  { href: '/calendar', label: 'Upcoming', detail: 'What is airing, and what to be told about' },
-  { href: '/lists', label: 'Lists', detail: 'Film and television in the same list' },
-  { href: '/people', label: 'People', detail: 'Your handle, following, blocking' },
-  { href: '/stats', label: 'Stats', detail: 'Runtime-weighted, and your year in review' },
-  { href: '/data', label: 'Your data', detail: 'Import from TV Time, export everything' },
-] as const;
+  ...MORE_INDEX.map((row) => ({ href: row.route, label: row.label, detail: row.detail })),
+];
 
 export default function MoreScreen() {
   const counts = useLive(

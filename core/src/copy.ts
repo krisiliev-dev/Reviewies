@@ -47,6 +47,9 @@ export const COPY = {
       many === 1 ? 'Queued one change again.' : `Queued ${many} changes again.`,
     /** After a sign-up: the account exists, the session does not yet. */
     confirmEmail: 'Check your email to confirm the account, then sign in.',
+    /** The account panel's heading, and the one thing it does not know how to explain. */
+    acrossDevices: 'Sync across devices',
+    failed: 'Something went wrong',
   },
 
   app: {
@@ -95,6 +98,19 @@ export const COPY = {
      * nothing, which is §6.57's other half and has its own sentence.
      */
     timedOut: 'That took too long. Check your connection and try again.',
+    /** A route that is not one. Both `NotFound` screens said this, separately. */
+    notFound: 'Nothing at this address',
+    /**
+     * What the destination is called, in the one place that names it.
+     *
+     * `lists.signInToMake(where)` and `people.signInToFollow(where)` both take this as an
+     * argument because §6.78 found the two platforms calling it different things; the
+     * argument stayed and the noun was typed at four call sites. `MORE_INDEX` reads it too,
+     * so the contents page and the sentences pointing at it cannot come apart.
+     */
+    yourData: 'Your data',
+    /** A search that came back with an error, as against one that came back empty. §6.57. */
+    searchFailed: 'Search failed',
   },
 
   upNext: {
@@ -183,6 +199,19 @@ export const COPY = {
       'reads it and picks up where you left off.',
     /** The way out for somebody who has nothing to bring. */
     nothingToImport: 'Nothing to import? Search for a show and start from there.',
+    /** The two headings over the migration, which are the first words a migrant reads. */
+    historyIsIn: 'Your history is in',
+    /** The tag on a season's final episode. */
+    lastOne: 'Last one',
+    /**
+     * The screen's own name, which is also `TAB_BAR[0].label` and was typed into five
+     * `Masthead`s across the two platforms. It is one key rather than a read of `TAB_BAR`
+     * because the tab bar's job is the bar's five labels and this is the page's title; they
+     * are the same words on purpose, and `copy.test.ts` is where that is asserted rather
+     * than assumed.
+     */
+    name: 'Up Next',
+    bringHistory: 'Bring your history with you',
     seeUpcoming: "See what's upcoming",
   },
 
@@ -262,6 +291,116 @@ export const COPY = {
      */
     seek: (seconds: number) =>
       `Move the clock ${seconds < 0 ? 'back' : 'forward'} ${Math.abs(seconds)} seconds`,
+
+    /**
+     * The rest of the product's control names, which both platforms typed for themselves
+     * until §6.176.
+     *
+     * §6.175 moved the *sentences* and drew its line at a full stop, on the argument that a
+     * sentence is the product speaking and a control's name is a different kind of text.
+     * That argument was right about the kind and wrong about the owner: there is no second
+     * owner. `labelSet.test.ts`, which the brief expected to hold these, is about the eight
+     * label **colours**. So they come here, and the line moves down to where it should have
+     * been — a name a person reads on both platforms has one owner, the same as a sentence.
+     *
+     * Grouped by what they act on rather than by screen, because several are used on more
+     * than one and the screen is not the thing that owns them.
+     */
+
+    // The account panel.
+    createAccount: 'Create account',
+    createAccountInstead: 'Create an account instead',
+    haveAccount: 'I already have an account',
+
+    // Comments.
+    removeScreenshot: 'Remove the attached screenshot',
+    deleteComment: 'Delete your comment',
+
+    /**
+     * Lists, and a drift this sweep found rather than moved.
+     *
+     * The web said `isPublic ? 'Make private' : 'Publish'` and the phone
+     * `isPublic ? 'Make private' : 'Make public'` — **one control, two names**, and
+     * `copy.test.ts`'s near-match comparison could not see it: "Publish" and "Make public"
+     * share no word, so they score 0 and read as two unrelated pieces of text rather than
+     * as the same one written twice. The threshold is calibrated for *reworded* copy and
+     * this was *renamed* copy.
+     *
+     * §6.51 settles which wins: the pair. "Make public" and "Make private" read as one
+     * control's two states; "Publish" beside "Make private" reads as two controls.
+     */
+    makePublic: 'Make public',
+    makePrivate: 'Make private',
+    createList: 'Create this list',
+    makeListAndAdd: 'Make this list and add the title to it',
+
+    // Getting somewhere else after something went wrong.
+    goToUpNext: 'Go to Up Next',
+    seeEverythingElse: 'See everything else',
+    searchAgain: 'Try that search again',
+    dismiss: 'Dismiss this message',
+
+    // Your data.
+    exportJson: 'Export everything (JSON)',
+    exportCsv: 'Export watch history (CSV)',
+    clearCache: 'Clear cached metadata',
+    chooseFiles: 'Choose files',
+    restoreListsAndFollows: 'Restore lists and follows',
+    importFromTvTime: 'Import from TV Time',
+
+    // The poster somebody supplies when the provider has none.
+    changePoster: 'Change poster',
+    differentPoster: 'Use a different poster',
+    savePoster: 'Save this poster',
+    cancelPoster: 'Cancel changing the poster',
+
+    // Watching Mode's controls, which are the ones a person uses in the dark.
+    startWatching: 'Start watching',
+    leaveWatching: 'Leave Watching Mode',
+    pauseClock: 'Pause the clock',
+    resumeClock: 'Resume the clock',
+    holdReactions: 'Hold other people’s reactions still',
+    moveReactions: 'Let other people’s reactions move again',
+    helpMapEpisode: 'Help map this episode',
+    closeRemote: 'Close remote',
+
+    // Content warnings.
+    hideWarnings: 'Hide content warnings',
+    /* The shut state's name is `warnings.heading` — one word for one thing, and this file's
+       own unread-sentence clause is what noticed a second key for it. */
+    flagSomething: 'Flag something',
+
+    /**
+     * The two-word names, swept at `PROSE_FLOOR = 6`. §6.176 lowered the line twice: 25 to
+     * 12 took the phrases, 12 to 6 takes these. Below six it stops, and the reason is in
+     * `copy.test.ts` — "Done", "Cancel", "Add" are the words a control uses when it is not
+     * naming anything specific, and two screens using the same generic verb are not two
+     * copies of one decision.
+     */
+    signIn: 'Sign in',
+    signOut: 'Sign out',
+    followBack: 'Follow back',
+    seenIt: 'Seen it',
+    tryAgain: 'Try again',
+    watchAlong: 'Watch along',
+    addToList: 'Add to list',
+    openRemote: 'Open remote',
+
+    // The rest.
+    /**
+     * The two labels a Discover row swaps to once it has been pressed.
+     *
+     * §6.176 found the web had neither: its Watchlist button said "Watchlist" for ever, so
+     * pressing it twice looked identical and nothing confirmed the first press had landed.
+     * The phone had already disabled the control and relabelled it. §6.51 — the phone's
+     * version wins, and these are the words it wins with.
+     */
+    tracking: 'Tracking',
+    watchlist: 'Watchlist',
+    findToWatch: 'Find something to watch',
+    findSomething: 'Find something',
+    noneOfThese: 'None of these',
+    openJustWatch: 'Open on JustWatch',
   },
 
   /**
@@ -293,6 +432,19 @@ export const COPY = {
      * same box appears said "New list…". §6.98's rule, in the layer §6.116 was building.
      */
     newListPlaceholder: 'New list…',
+    /**
+     * The rest of the placeholders and field names, both platforms' until §6.176.
+     *
+     * `emojiPlaceholder` is not a duplicate of `emoji` above it: one is the name a reader
+     * hears, the other is the grey text in the box, and they differ by an ellipsis. That
+     * they differed *only* by an ellipsis, in two files, is why they are both here now.
+     */
+    passwordRule: 'Password (8+ characters)',
+    handleOrName: 'Handle or name',
+    searchPlaceholder: 'Shows, films, anime…',
+    emojiPlaceholder: 'Search any emoji…',
+    /** The box under `posterUrl`, which is that field's label. */
+    posterUrlPlaceholder: 'Image URL',
   },
 
   watchlist: {
@@ -307,6 +459,8 @@ export const COPY = {
      * question, on all four of the places it appears.
      */
     notePlaceholder: 'Why did you save this?',
+    /** What a search result says when the thing is already saved. */
+    alreadyOn: 'On watchlist',
   },
 
   discover: {
@@ -451,6 +605,15 @@ export const COPY = {
   },
 
   stats: {
+    /** Two figures' names, typed on both platforms until §6.176. */
+    /**
+     * The two periods, which both platforms named in their own `PERIODS` array. The keys
+     * were already shared; the labels were not.
+     */
+    thisYear: 'This year',
+    allTime: 'All time',
+    longestStreak: 'Longest streak',
+    mostWatched: 'Most watched',
     /**
      * What the whole period control is called — one name, because it is one question.
      *
@@ -530,6 +693,8 @@ export const COPY = {
   },
 
   calendar: {
+    /** The horizon, said out loud. `UPCOMING_DAYS` is the number and `copy.test.ts` pins them together. */
+    horizon: 'Next two months',
     /**
      * The notification block's name, on the screen and on the row that reveals it.
      *
@@ -619,10 +784,16 @@ export const COPY = {
      * than a form: the clock starts from the press, and can be corrected afterwards.
      */
     startHint: 'Tap the moment you press play. You can nudge the timing at any point.',
+    /** What the band above the pad is, for somebody who cannot see it moving. */
+    reactionsHeading: 'Reactions from other viewers',
     streamResting: 'Other people’s reactions appear here as you reach their moments',
   },
 
   title: {
+    /** The season list before it has one. */
+    loadingEpisodes: 'Loading episodes…',
+    /** An episode that has not aired, tagged on the row rather than said in a sentence. */
+    notYet: 'Not yet',
     /**
      * The title page, when the provider could not be reached and nothing is cached.
      *
@@ -645,6 +816,8 @@ export const COPY = {
   },
 
   whereToWatch: {
+    /** The section's own name, which both platforms drew and neither owned. */
+    heading: 'Where to watch',
     /**
      * Not the same sentence as "nowhere to watch it", which is what this used to say
      * when the request failed — a statement about the world made from a network error.
@@ -670,6 +843,8 @@ export const COPY = {
    * which is a pair of files agreeing to keep two copies in step by hand. §6.175.
    */
   warnings: {
+    /** The control's name when the section is shut; `controls.hideWarnings` when it is open. */
+    heading: 'Content warnings',
     /**
      * §6.57 on the screen where it matters most: somebody avoiding a trigger would read
      * "nobody has flagged anything" as a fact about the title rather than as a request
@@ -720,6 +895,8 @@ export const COPY = {
     allFiltered: 'Everything is filtered out at this level.',
     /** A comment that did not post, rather than a button that did nothing. */
     postFailed: 'Could not post that',
+    /** The effort dial's name — what it filters by, rather than what it is called. */
+    effortLabel: 'How much effort a comment has to show',
   },
 
   people: {
@@ -744,6 +921,8 @@ export const COPY = {
      * one of them beginning "See the web's copy". §6.175.
      */
     noMatch: 'Nobody by that name.',
+    /** The search section's own heading. */
+    findHeading: 'Find people',
     /**
      * The lists themselves, when the asking failed.
      *
@@ -797,6 +976,9 @@ export const COPY = {
     cacheEmpty: 'Nothing cached to clear.',
     cacheCleared: (many: number) =>
       many === 1 ? 'Cleared 1 cached record.' : `Cleared ${many} cached records.`,
+    cacheHeading: 'Metadata cache',
+    /** The switch's own name; `openCommentsHint` under it is why it is offered off. */
+    openComments: 'Open the conversation after marking watched',
   },
   catchUp: {
     /**
@@ -830,6 +1012,7 @@ export const COPY = {
     /** Not "nothing to catch up on" — the show has not started. §6.57's distinction. */
     nothingAired: 'No episodes have aired yet.',
     /** Why a grid of numbers is safe to read: it is the whole point of the sheet. */
+    pickSeason: 'Pick a different season',
     spoilerFree:
       'How far have you got? Nothing here shows episode names, so you cannot be spoiled ' +
       'by catching up.',
@@ -872,6 +1055,12 @@ export const COPY = {
      * comment above it and the web with a different one, which is two files agreeing to
      * keep one sentence in step by hand.
      */
+    /** The matcher's own heading, and its two failures. §6.57 keeps them apart. */
+    heading: 'Match imported shows',
+    providerFailed: 'Could not reach the metadata provider',
+    fileFailed: 'Could not read that file',
+    /** A candidate whose first-air date the provider does not carry. */
+    yearUnknown: 'Year unknown',
     ambiguous:
       'More than one show could be this. Picking the wrong one would move your history ' +
       'onto it.',

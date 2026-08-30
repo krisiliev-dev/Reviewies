@@ -104,8 +104,8 @@ export function UpNext() {
        * gap rather than finding it, by giving the web's `<h1>` the tab-root treatment. A
        * heading that is a *sentence* is not a screen title, and 30/700 read like one.
        */}
-        <Masthead>Up Next</Masthead>
-        <Masthead level="sub">Your history is in</Masthead>
+        <Masthead>{COPY.upNext.name}</Masthead>
+        <Masthead level="sub">{COPY.upNext.historyIsIn}</Masthead>
         <p>
           Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
           {imported.watchlist > 0 && `, ${imported.watchlist} watchlist items`}.
@@ -134,7 +134,7 @@ export function UpNext() {
   if (entries.length === 0 && libraryCount !== 0) {
     return (
       <div className="p-6">
-        <Masthead>Up Next</Masthead>
+        <Masthead>{COPY.upNext.name}</Masthead>
         {/* Three states, not two. "Nothing here yet … until they are matched" plus a
             button was what somebody saw after importing years of history: an empty
             screen and a chore, so matching runs itself now and the sentence says what
@@ -189,8 +189,8 @@ export function UpNext() {
           to="/search"
           tone={importing || waiting ? 'secondary' : 'primary'}
           size="page"
-          label="Find something to watch"
-          name="Find something to watch"
+          label={COPY.controls.findToWatch}
+          name={COPY.controls.findToWatch}
           className="mt-5"
         />
       </div>
@@ -211,12 +211,12 @@ export function UpNext() {
   if (entries.length === 0) {
     return (
       <div className="flex flex-col gap-3 p-6">
-        <Masthead>Up Next</Masthead>
+        <Masthead>{COPY.upNext.name}</Masthead>
         {/* A heading under the screen's own title — see the note on the arrival state. */}
-        <Masthead level="sub">Bring your history with you</Masthead>
+        <Masthead level="sub">{COPY.upNext.bringHistory}</Masthead>
         <Note>{COPY.upNext.tvTimeGone}</Note>
         <ImportFormats />
-        <ImportFiles label="Import from TV Time" onImported={setImported} primary />
+        <ImportFiles label={COPY.controls.importFromTvTime} onImported={setImported} primary />
         <Note className="mt-2 px-1">{COPY.upNext.nothingToImport}</Note>
         {/* The secondary of the two. It was the bright one and the import was the muted
             one, which is the opposite of what this screen is for — the migration is the
@@ -226,8 +226,8 @@ export function UpNext() {
           to="/search"
           tone="secondary"
           size="page"
-          label="Find something to watch"
-          name="Find something to watch"
+          label={COPY.controls.findToWatch}
+          name={COPY.controls.findToWatch}
           className="self-start"
         />
       </div>
@@ -236,7 +236,7 @@ export function UpNext() {
 
   return (
     <div className="p-4">
-      <Masthead className="px-1">Up Next</Masthead>
+      <Masthead className="px-1">{COPY.upNext.name}</Masthead>
 
       {/*
         Here too, and this is the whole point of the second copy.
@@ -341,7 +341,7 @@ function UpNextRow({
       // whose unit has been shortened away to fit a pill is the badge it was replacing.
       count={
         entry.remaining === 0
-          ? 'Last one'
+          ? COPY.upNext.lastOne
           : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`
       }
       open={{
@@ -395,7 +395,7 @@ function UpNextRow({
             size="inline"
             tone="quiet"
             to={`/watching/${encodeURIComponent(episode.id)}`}
-            label="Watch along"
+            label={COPY.controls.watchAlong}
             name={`Watch along with ${entry.seriesName} ${code}`}
           />
         </div>

@@ -174,7 +174,7 @@ export default function CalendarScreen() {
         {/* Sixty days on both platforms now — it was thirty here and sixty on the
             web, the same screen showing a different amount of the future. */}
         <View style={styles.spaced}>
-          <Section>Next two months</Section>
+          <Section>{COPY.calendar.horizon}</Section>
         </View>
         {entries === undefined && <ActivityIndicator color={theme.workingMark} />}
         {entries?.length === 0 && (

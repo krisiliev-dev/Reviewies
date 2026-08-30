@@ -140,14 +140,14 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             onPress={track}
             disabled={added === 'library'}
             tone="primary"
-            label={added === 'library' ? 'Tracking' : COPY.controls.track}
+            label={added === 'library' ? COPY.controls.tracking : COPY.controls.track}
             name={COPY.controls.trackTitle(item.name)}
           />
           <Button
             onPress={save}
             disabled={added === 'watchlist'}
             tone="secondary"
-            label={added === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+            label={added === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
             name={COPY.controls.addToWatchlist(item.name)}
           />
         </View>

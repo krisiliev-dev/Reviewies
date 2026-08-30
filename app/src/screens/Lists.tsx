@@ -63,7 +63,7 @@ export function Lists() {
     return (
       <div className="p-6">
         <Masthead level="page">Lists</Masthead>
-        <Note>{COPY.lists.signInToMake('Your data')}</Note>
+        <Note>{COPY.lists.signInToMake(COPY.app.yourData)}</Note>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export function Lists() {
             `disabled:opacity-40` on an accent fill gave a maroon block with unreadable
             dark red lettering, which read as broken rather than as waiting. The component
             owns that now and `button.test.ts` holds it to it. */}
-        <Button submit tone="primary" label="Create" name="Create this list" disabled={!name.trim()} />
+        <Button submit tone="primary" label="Create" name={COPY.controls.createList} disabled={!name.trim()} />
       </form>
 
       {createFailed && (
@@ -209,7 +209,7 @@ function ListCard({
               aria-label={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
               className="mb-2 text-s12 text-trouble"
             >
-              {list.isPublic ? 'Make private' : 'Publish'}
+              {list.isPublic ? COPY.controls.makePrivate : COPY.controls.makePublic}
             </button>
           )}
 

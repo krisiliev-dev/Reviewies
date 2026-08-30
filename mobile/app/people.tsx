@@ -166,7 +166,7 @@ export default function PeopleScreen() {
           action={(p) =>
             following.some((f) => f.id === p.id)
               ? undefined
-              : { label: 'Follow back', run: () => follow(p.id) }
+              : { label: COPY.controls.followBack, run: () => follow(p.id) }
           }
           onChanged={load}
         />
@@ -225,12 +225,12 @@ function FindPeople({
 
   return (
     <View style={styles.section}>
-      <Section>Find people</Section>
+      <Section>{COPY.people.findHeading}</Section>
       <Field
           label={COPY.fields.findPeople}
           value={query}
           onChange={setQuery}
-          placeholder="Handle or name"
+          placeholder={COPY.fields.handleOrName}
           autoCapitalize="none"
           autoCorrect={false}
         />

@@ -100,7 +100,7 @@ export default function UpNextScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>Up Next</Masthead>
+        <Masthead>{COPY.upNext.name}</Masthead>
 
         {/* §6.64's undo — the row can change under the press when two devices are racing,
             and the ordinary mis-tap needs the same way back — used to be a banner here,
@@ -109,7 +109,7 @@ export default function UpNextScreen() {
 
         {imported ? (
           <View style={styles.empty}>
-            <Masthead level="sub">Your history is in</Masthead>
+            <Masthead level="sub">{COPY.upNext.historyIsIn}</Masthead>
             <Text style={styles.emptyText}>
               Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
               {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
@@ -143,10 +143,10 @@ export default function UpNextScreen() {
            * the alternative rather than the other way round.
            */
           <View style={styles.empty}>
-            <Masthead level="sub">Bring your history with you</Masthead>
+            <Masthead level="sub">{COPY.upNext.bringHistory}</Masthead>
             <Text style={styles.emptyText}>{COPY.upNext.tvTimeGone}</Text>
             <ImportFormats />
-            <ImportFiles label="Import from TV Time" onImported={setImported} primary />
+            <ImportFiles label={COPY.controls.importFromTvTime} onImported={setImported} primary />
             <Text style={styles.emptyText}>{COPY.upNext.nothingToImport}</Text>
             {/* The secondary of the two. It was the bright one and the import was the
                 muted one — the opposite of what this screen is for. The web had the
@@ -156,8 +156,8 @@ export default function UpNextScreen() {
               to="/search"
               tone="secondary"
               size="page"
-              label="Find something to watch"
-              name="Find something to watch"
+              label={COPY.controls.findToWatch}
+              name={COPY.controls.findToWatch}
             />
           </View>
         ) : entries.length === 0 ? (
@@ -211,8 +211,8 @@ export default function UpNextScreen() {
               to="/search"
               tone={importing || waiting ? 'secondary' : 'primary'}
               size="page"
-              label="Find something to watch"
-              name="Find something to watch"
+              label={COPY.controls.findToWatch}
+              name={COPY.controls.findToWatch}
             />
           </View>
         ) : (
@@ -320,7 +320,7 @@ function Row({
       // whose unit has been shortened away to fit a pill is the badge it was replacing.
       count={
         entry.remaining === 0
-          ? 'Last one'
+          ? COPY.upNext.lastOne
           : `${entry.remaining} more episode${entry.remaining === 1 ? '' : 's'}`
       }
       lead={
@@ -375,7 +375,7 @@ function Row({
             size="inline"
             tone="quiet"
             to={`/watching/${encodeURIComponent(episode.id)}`}
-            label="Watch along"
+            label={COPY.controls.watchAlong}
             name={`Watch along with ${entry.seriesName} ${code}`}
           />
         </View>

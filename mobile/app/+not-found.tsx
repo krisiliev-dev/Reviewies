@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { COPY } from '@reviewies/core/copy';
 import { Stack, usePathname } from 'expo-router';
 import { theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
@@ -23,7 +24,7 @@ export default function NotFoundScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ title: 'Not found' }} />
-      <Text style={styles.title}>Nothing at this address</Text>
+      <Text style={styles.title}>{COPY.app.notFound}</Text>
       <Note>
         <Text style={styles.path}>{pathname}</Text> is not a screen in this app. It may be
         an old link, or a typo.
@@ -32,13 +33,13 @@ export default function NotFoundScreen() {
           index-keyed object and throws on first render, a blank page — is why these were
           written as one flat object each. `Button` takes the destination itself, so there
           is no Link to hand a style to. */}
-      <Button to="/" tone="primary" size="page" label="Go to Up Next" name="Go to Up Next" />
+      <Button to="/" tone="primary" size="page" label={COPY.controls.goToUpNext} name={COPY.controls.goToUpNext} />
       <Button
         to="/more"
         tone="secondary"
         size="page"
-        label="See everything else"
-        name="See everything else"
+        label={COPY.controls.seeEverythingElse}
+        name={COPY.controls.seeEverythingElse}
       />
     </View>
   );

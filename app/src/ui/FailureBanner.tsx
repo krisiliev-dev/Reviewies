@@ -82,7 +82,7 @@ export function FailureBanner() {
         tone="quiet"
         size="inline"
         label="Dismiss"
-        name="Dismiss this message"
+        name={COPY.controls.dismiss}
         className="shrink-0"
       />
     </div>

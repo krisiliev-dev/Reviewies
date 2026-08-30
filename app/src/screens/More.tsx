@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { COPY } from '@reviewies/core/copy';
+import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { Chevron } from '../ui/Mark';
@@ -25,13 +26,12 @@ import { Masthead } from '../ui/Masthead';
  * one of these is still at the address it was, which is what the smoke suite, the
  * in-app links and anybody's bookmark rely on.
  */
-const LINKS = [
-  { to: '/calendar', label: 'Upcoming', detail: 'What is airing, and what to be told about' },
-  { to: '/lists', label: 'Lists', detail: 'Film and television in the same list' },
-  { to: '/people', label: 'People', detail: 'Your handle, following, blocking' },
-  { to: '/stats', label: 'Stats', detail: 'Runtime-weighted, and your year in review' },
-  { to: '/settings', label: 'Your data', detail: 'Import from TV Time, export everything' },
-];
+/**
+ * The five rows are `MORE_INDEX`'s now — both platforms carried this array with the same
+ * labels and the same descriptions typed out separately, which §6.176 measured as ten
+ * agreeing-by-hand strings on the screen whose job is saying what the product contains.
+ */
+const LINKS = MORE_INDEX;
 
 export function More() {
   const counts = useLiveQuery(async () => ({

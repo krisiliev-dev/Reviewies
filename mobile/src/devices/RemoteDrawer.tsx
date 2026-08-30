@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { COPY } from '@reviewies/core/copy';
 import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScrollView } from 'react-native';
 import { useRemote } from './useRemote';
@@ -109,7 +110,7 @@ export function RemoteDrawer({ open, onClose }: { open: boolean; onClose: () => 
             hitSlop={8}
             accessibilityRole="button"
             // Named, because "Close" on its own is what half the sheets in this app say.
-            accessibilityLabel="Close remote"
+            accessibilityLabel={COPY.controls.closeRemote}
             style={tap}
           >
             <Text style={styles.close}>Close</Text>

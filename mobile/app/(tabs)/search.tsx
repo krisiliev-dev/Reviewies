@@ -81,7 +81,7 @@ export default function SearchScreen() {
           setError(COPY.app.timedOut);
           setBusy(false);
         } else if (!controller.signal.aborted) {
-          setError(e instanceof Error ? e.message : 'Search failed');
+          setError(e instanceof Error ? e.message : COPY.app.searchFailed);
         }
       } finally {
         clearTimeout(giveUp);
@@ -104,7 +104,7 @@ export default function SearchScreen() {
           label={COPY.fields.search}
           value={query}
           onChange={setQuery}
-          placeholder="Shows, films, anime…"
+          placeholder={COPY.fields.searchPlaceholder}
           autoFocus
           autoCorrect={false}
         />
@@ -133,8 +133,8 @@ export default function SearchScreen() {
                 doing the same thing in Tailwind. §6.131. */}
               <Button
                 onPress={() => setAttempt((n) => n + 1)}
-                label="Try again"
-                name="Try that search again"
+                label={COPY.controls.tryAgain}
+                name={COPY.controls.searchAgain}
               />
           </View>
         )}
@@ -307,7 +307,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
             onPress={() => setNoting(true)}
             disabled={shelf === 'watchlist'}
             tone="secondary"
-            label={shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'}
+            label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
             name={COPY.controls.addToWatchlist(result.name)}
           />
           {/* Films only: "watched" is not a thing you can say about a whole series in
@@ -317,7 +317,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
               onPress={log}
               disabled={added === 'logged'}
               tone="secondary"
-              label={added === 'logged' ? 'Logged' : 'Seen it'}
+              label={added === 'logged' ? 'Logged' : COPY.controls.seenIt}
               name={`Log that you have seen ${result.name}`}
             />
           )}

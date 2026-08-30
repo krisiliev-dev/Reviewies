@@ -119,13 +119,13 @@ export function ListenSync({
           onPress={contribute}
           disabled={!!busy || positionMs < 1000}
           busy={busy === 'contributing'}
-          label={busy === 'contributing' ? 'Recording…' : 'Help map this episode'}
+          label={busy === 'contributing' ? 'Recording…' : COPY.controls.helpMapEpisode}
           // The title attribute is a tooltip on a pointer and nothing at all otherwise;
           // the reason it is disabled has to be part of the name.
           name={
             positionMs < 1000
               ? 'Help map this episode — start the episode first'
-              : 'Help map this episode'
+              : COPY.controls.helpMapEpisode
           }
         />
       </div>

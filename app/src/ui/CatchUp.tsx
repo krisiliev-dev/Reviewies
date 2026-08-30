@@ -108,9 +108,7 @@ export function CatchUp({
                   <button
                     onClick={() => setSeason(undefined)}
                     className="tap mt-3 text-s12 text-ink-secondary underline"
-                  >
-                    Pick a different season
-                  </button>
+                  >{COPY.catchUp.pickSeason}</button>
                 )}
                 <Note level="footnote" className="mt-3">
                   {/* Said plainly: the app cannot know when these were really watched,

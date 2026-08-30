@@ -35,7 +35,7 @@ describe('the first run, on both platforms', () => {
       // The premise of the app is that TV Time shut down. Leading with a search box
       // asks somebody holding years of history to start again.
       expect(firstRun.indexOf('<ImportFiles'), name).toBeLessThan(
-        firstRun.indexOf('Find something to watch'),
+        firstRun.indexOf('COPY.controls.findToWatch'),
       );
     }
   });

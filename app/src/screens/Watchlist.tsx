@@ -37,8 +37,8 @@ export function Watchlist() {
           to="/search"
           tone="primary"
           size="page"
-          label="Find something"
-          name="Find something"
+          label={COPY.controls.findSomething}
+          name={COPY.controls.findSomething}
           className="mt-5"
         />
       </div>

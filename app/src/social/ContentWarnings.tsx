@@ -65,8 +65,8 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
       <Button
         size="inline"
         onPress={() => setOpen(!open)}
-        label={open ? 'Hide content warnings' : 'Content warnings'}
-        name={open ? 'Hide content warnings' : 'Show content warnings'}
+        label={open ? COPY.controls.hideWarnings : COPY.warnings.heading}
+        name={open ? COPY.controls.hideWarnings : 'Show content warnings'}
       />
 
       {open && (
@@ -125,8 +125,8 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             size="inline"
             tone="quiet"
             onPress={() => setVoting(!voting)}
-            label={voting ? COPY.controls.done : 'Flag something'}
-            name={voting ? `${COPY.controls.done} flagging` : 'Flag something'}
+            label={voting ? COPY.controls.done : COPY.controls.flagSomething}
+            name={voting ? `${COPY.controls.done} flagging` : COPY.controls.flagSomething}
           />
 
           {voting && (

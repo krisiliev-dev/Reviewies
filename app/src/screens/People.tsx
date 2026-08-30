@@ -74,7 +74,7 @@ export function People() {
         <Masthead level="page" className="px-1">People</Masthead>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
-        <Note className="px-1">{COPY.people.signInToFollow('Your data')}</Note>
+        <Note className="px-1">{COPY.people.signInToFollow(COPY.app.yourData)}</Note>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export function People() {
         action={(p) =>
           following.some((f) => f.id === p.id)
             ? undefined
-            : { label: 'Follow back', run: () => follow(p.id) }
+            : { label: COPY.controls.followBack, run: () => follow(p.id) }
         }
         onChanged={load}
       />
@@ -243,12 +243,12 @@ function FindPeople({
 
   return (
     <section className="flex flex-col gap-2">
-      <Section className="px-1">Find people</Section>
+      <Section className="px-1">{COPY.people.findHeading}</Section>
       <Field
         label={COPY.fields.findPeople}
         value={query}
         onChange={setQuery}
-        placeholder="Handle or name"
+        placeholder={COPY.fields.handleOrName}
       />
 
       {/* "Nobody by that name" was said for both no match and no answer, and somebody

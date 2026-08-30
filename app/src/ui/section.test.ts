@@ -163,10 +163,10 @@ describe('the section label', () => {
      * subordinate to. §6.51 — the better version wins whichever platform had it.
      */
     const web = read('app/src/screens/Calendar.tsx');
-    expect(web).toContain('<Section className="px-1">Next two months</Section>');
+    expect(web).toContain('<Section className="px-1">{COPY.calendar.horizon}</Section>');
     expect(web).toContain('<Section level="group"');
     const phone = read('mobile/app/calendar.tsx');
-    expect(phone).toContain('<Section>Next two months</Section>');
+    expect(phone).toContain('<Section>{COPY.calendar.horizon}</Section>');
     expect(phone).toContain('<Section level="group">{formatDay(day)}</Section>');
     // The two styles that used to be here, gone rather than merely unused.
     expect(declarationOf(phone, 'sectionHeading'), 'the hand-written style is back')

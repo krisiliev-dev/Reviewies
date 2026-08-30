@@ -99,7 +99,7 @@ export function ReactionStream({
       pointerEvents="none"
       // Named for the same reason the web's is: without it this is an unlabelled box
       // that emoji appear inside of.
-      accessibilityLabel="Reactions from other viewers"
+      accessibilityLabel={COPY.watching.reactionsHeading}
     >
       {/* The only thing here that speaks. The emoji are a visual swell; read one at a
           time they are noise. */}

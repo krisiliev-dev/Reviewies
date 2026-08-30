@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -155,6 +156,22 @@ export function routesOffered(source: string, platform: 'web' | 'phone'): Set<st
           /router\.(?:push|replace|navigate)\(\s*[`'"]([^`'"]+)[`'"]/g,
         ];
   const found = new Set<string>();
+  /*
+   * And the destinations that are no longer in the file at all — the sixth time this
+   * scanner has had to learn a new spelling, and the first time the spelling is *not a
+   * spelling*. §6.176 moved both More screens onto `MORE_INDEX`, so five destinations that
+   * had been `to:` and `href:` literals became a shared table, and this reported the
+   * `/settings`-versus-`/data` exemption as stale — a written claim that a real difference
+   * had gone away, when what had gone away was the scanner's sight of it.
+   *
+   * The paragraphs above say twice that reading one side more closely than the other
+   * invents differences. This is the same failure one layer up: reading a *file* more
+   * closely than the table the file reads. A destination that has an owner is still a
+   * destination offered.
+   */
+  if (src.includes('MORE_INDEX')) {
+    for (const row of MORE_INDEX) found.add(platform === 'web' ? row.to : row.route);
+  }
   for (const pattern of patterns) {
     for (const match of src.matchAll(pattern)) {
       // Only in-app destinations: an external href is not a screen this app offers.

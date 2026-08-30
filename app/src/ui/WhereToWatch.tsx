@@ -68,7 +68,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
           the side of its own card — visible in a screenshot and invisible to the
           viewport check, because it escaped the card and not the screen. */}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <Section>Where to watch</Section>
+        <Section>{COPY.whereToWatch.heading}</Section>
         <button
           onClick={() => setPicking(!picking)}
           aria-expanded={picking}
@@ -130,9 +130,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               target="_blank"
               rel="noreferrer noopener"
               className="tap mt-2 inline-block text-s12 text-ink-secondary underline"
-            >
-              Open on JustWatch
-            </a>
+            >{COPY.controls.openJustWatch}</a>
           )}
 
           {/* Licence condition, not a courtesy. */}

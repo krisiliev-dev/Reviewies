@@ -113,7 +113,9 @@ describe('what you already have', () => {
         "shelf === 'library' ? 'Tracking' : COPY.controls.track",
       );
       expect(source, `${path} still labels the watchlist from local state alone`).toContain(
-        "shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'",
+        // Both halves are `COPY`'s since §6.176; the clause is about the *conditional*
+        // being driven by `shelf` rather than by local state, which is unchanged.
+        "shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist",
       );
 
       /*

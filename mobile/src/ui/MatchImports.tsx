@@ -74,7 +74,7 @@ export function MatchImports({
       // Said rather than thrown out of a handler: silently returning to the button
       // looks identical to a run that found nothing, and nothing said the provider
       // was unreachable.
-      setError(e instanceof Error ? e.message : 'Could not reach the metadata provider');
+      setError(e instanceof Error ? e.message : COPY.import.providerFailed);
     } finally {
       setRunning(false);
       onDone?.();
@@ -106,8 +106,8 @@ export function MatchImports({
         <Button
           onPress={start}
           tone="primary"
-          label="Match imported shows"
-          name="Match imported shows"
+          label={COPY.import.heading}
+          name={COPY.import.heading}
         />
       )}
 
@@ -135,7 +135,7 @@ export function MatchImports({
             <BaseRow
               key={candidate.id}
               title={candidate.name}
-              meta={candidate.year ? String(candidate.year) : 'Year unknown'}
+              meta={candidate.year ? String(candidate.year) : COPY.import.yearUnknown}
               open={{
                 // Pressing this *is* the answer — nothing opens — so there is no `to`
                 // and both platforms announce a button rather than a link.
@@ -161,7 +161,7 @@ export function MatchImports({
             accessibilityRole="button"
             accessibilityLabel={`Leave ${ask.name} unmatched`}
           >
-            <Text style={styles.skip}>None of these</Text>
+            <Text style={styles.skip}>{COPY.controls.noneOfThese}</Text>
           </Pressable>
         </View>
       ))}

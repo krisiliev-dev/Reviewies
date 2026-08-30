@@ -16,7 +16,7 @@ import { COPY } from '@reviewies/core/copy';
  * zip in their downloads folder would think to open.
  */
 export function ImportFiles({
-  label = 'Choose files',
+  label = COPY.controls.chooseFiles,
   onImported,
   primary = false,
 }: {
@@ -97,7 +97,7 @@ export function ImportFiles({
       setFiles(outcomes);
       onImported?.(combined);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file');
+      setError(e instanceof Error ? e.message : COPY.import.fileFailed);
     } finally {
       setBusy(false);
     }
@@ -157,7 +157,7 @@ export function ImportFiles({
               disabled={restoring}
               className="mt-3 min-h-[44px] w-full rounded-pill border border-stroke-signal px-4 py-3 disabled:opacity-50"
             >
-              {restoring ? 'Restoring…' : 'Restore lists and follows'}
+              {restoring ? 'Restoring…' : COPY.controls.restoreListsAndFollows}
             </button>
           )}
           {restored && (

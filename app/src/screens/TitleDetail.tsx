@@ -189,7 +189,7 @@ export function TitleDetail() {
               onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
               className="tap text-s12 text-ink-secondary underline"
             >
-              {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
+              {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
             </button>
           ) : (
             <div className="flex gap-1.5">
@@ -199,14 +199,14 @@ export function TitleDetail() {
                 label={COPY.fields.posterUrl}
                 value={posterDraft}
                 onChange={setPosterDraft}
-                placeholder="Image URL"
+                placeholder={COPY.fields.posterUrlPlaceholder}
                 className="min-w-0 flex-1"
                 autoFocus
               />
               <Button
                 tone="primary"
                 label="Save"
-                name="Save this poster"
+                name={COPY.controls.savePoster}
                 onPress={async () => {
                   await setPosterOverride(titleId, posterDraft.trim() || undefined);
                   setPosterDraft(undefined);
@@ -216,7 +216,7 @@ export function TitleDetail() {
                 tone="quiet"
                 onPress={() => setPosterDraft(undefined)}
                 label="Cancel"
-                name="Cancel changing the poster"
+                name={COPY.controls.cancelPoster}
               />
             </div>
           )}
@@ -229,7 +229,7 @@ export function TitleDetail() {
           heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
       <ContentWarnings titleId={titleId} />
 
-      {loading && episodes.length === 0 && <Note>Loading episodes…</Note>}
+      {loading && episodes.length === 0 && <Note>{COPY.title.loadingEpisodes}</Note>}
 
       {seasons.map(([season, eps], index) => {
         const summary = summaries[index];
@@ -308,7 +308,7 @@ function EpisodeRow({
       }`}
       // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
       // the ink rather than fading it: "not yet" has to read differently from "broken".
-      tag={!aired && !watched ? 'Not yet' : undefined}
+      tag={!aired && !watched ? COPY.title.notYet : undefined}
       trailing={
         /* Was a pill reading "Mark" or "Watched", announcing `aria-pressed` and fading to
            30% when unaired — three separate things the component settles. */

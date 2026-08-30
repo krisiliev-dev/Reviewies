@@ -129,7 +129,7 @@ export function CatchUp({
                     hitSlop={8}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.link}>Pick a different season</Text>
+                    <Text style={styles.link}>{COPY.catchUp.pickSeason}</Text>
                   </Pressable>
                 )}
                 {/* Said plainly: the app cannot know when these were really watched, and

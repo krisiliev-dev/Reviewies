@@ -170,7 +170,7 @@ export default function TitleScreen() {
                 style={tap}
               >
                 <Text style={styles.posterToggle}>
-                  {libraryItem.posterOverride ? 'Change poster' : 'Use a different poster'}
+                  {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
                 </Text>
               </Pressable>
             ) : (
@@ -180,7 +180,7 @@ export default function TitleScreen() {
                 label={COPY.fields.posterUrl}
                 value={posterDraft}
                 onChange={setPosterDraft}
-                placeholder="Image URL"
+                placeholder={COPY.fields.posterUrlPlaceholder}
                 keyboardType="url"
                 autoFocus
                 autoCapitalize="none"
@@ -189,7 +189,7 @@ export default function TitleScreen() {
                 <Button
                   tone="primary"
                   label="Save"
-                  name="Save this poster"
+                  name={COPY.controls.savePoster}
                   onPress={async () => {
                     await setPosterOverride(titleId, posterDraft.trim() || undefined);
                     setPosterDraft(undefined);
@@ -199,7 +199,7 @@ export default function TitleScreen() {
                   onPress={() => setPosterDraft(undefined)}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Cancel changing the poster"
+                  accessibilityLabel={COPY.controls.cancelPoster}
                 >
                   <Text style={styles.posterCancel}>Cancel</Text>
                 </Pressable>
@@ -219,7 +219,7 @@ export default function TitleScreen() {
         {loading && seasons.length === 0 && (
           <>
             <ActivityIndicator color={theme.workingMark} style={styles.loading} />
-            <Note accessibilityLiveRegion="polite">Loading episodes…</Note>
+            <Note accessibilityLiveRegion="polite">{COPY.title.loadingEpisodes}</Note>
           </>
         )}
 
@@ -311,7 +311,7 @@ function EpisodeRow({
       }`}
       // What an unaired episode gets instead of a ring. The whole reason `disabled` steps
       // the ink rather than fading it: "not yet" has to read differently from "broken".
-      tag={!aired && !watched ? 'Not yet' : undefined}
+      tag={!aired && !watched ? COPY.title.notYet : undefined}
       trailing={
         /* The `checked` this used to carry sat on `accessibilityRole="button"`, which has
            no way to announce it — §6.95's defect on the control it matters most on. */

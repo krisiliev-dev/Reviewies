@@ -280,10 +280,19 @@ describe('the type scale', () => {
     expect(phone).toContain('type.family[MASTHEAD.masthead.face].name');
     expect(phone).toContain('fontSize: MASTHEAD.masthead.size');
 
-    // The structural half of §6.110: every arrival state keeps the screen's own title.
+    /*
+     * The structural half of §6.110: every arrival state keeps the screen's own title.
+     *
+     * It counted `>Up Next</Masthead>` until §6.176 gave that title an owner, and then it
+     * counted zero — a clause reading a literal that had moved, which is the cost this
+     * whole sprint was measuring and the reason it is a *reference* here now. The four is
+     * unchanged: four arrival states, four titles.
+     */
     const upNext = read('app/src/screens/UpNext.tsx');
-    expect((upNext.match(/>Up Next<\/Masthead>/g) ?? []).length, 'an arrival state lost its title')
-      .toBe(4);
+    expect(
+      (upNext.match(/\{COPY\.upNext\.name\}<\/Masthead>/g) ?? []).length,
+      'an arrival state lost its title',
+    ).toBe(4);
   });
 
   it('is what the crash screen says on both platforms, which nobody photographs', () => {

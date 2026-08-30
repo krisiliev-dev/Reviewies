@@ -48,7 +48,7 @@ export default function DataScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Your data' }} />
+      <Stack.Screen options={{ title: COPY.app.yourData }} />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Only ever rendered by a device genuinely an hour or more out. §6.67. */}
         {clockWarning() && (
@@ -72,8 +72,8 @@ export default function DataScreen() {
               );
             }}
             tone="primary"
-            label="Export everything (JSON)"
-            name="Export everything (JSON)"
+            label={COPY.controls.exportJson}
+            name={COPY.controls.exportJson}
           />
           {exportNote && (
             <Note accessibilityLiveRegion="polite">
@@ -86,8 +86,8 @@ export default function DataScreen() {
               downloadFile(`reviewies-watches-${today}.csv`, await exportWatchesCsv(), 'text/csv')
             }
             tone="secondary"
-            label="Export watch history (CSV)"
-            name="Export watch history (CSV)"
+            label={COPY.controls.exportCsv}
+            name={COPY.controls.exportCsv}
           />
         </Block>
 
@@ -112,7 +112,7 @@ export default function DataScreen() {
             style={styles.toggleRow}
             accessibilityRole="switch"
             {...toggleState(openComments)}
-            accessibilityLabel="Open the conversation after marking watched"
+            accessibilityLabel={COPY.settings.openComments}
             accessibilityHint={COPY.settings.openCommentsHint}
             onPress={() => {
               const on = !openComments;
@@ -121,7 +121,7 @@ export default function DataScreen() {
             }}
           >
             <View style={styles.toggleText}>
-              <Text style={styles.toggleLabel}>Open the conversation after marking watched</Text>
+              <Text style={styles.toggleLabel}>{COPY.settings.openComments}</Text>
               {/* Off is offered because anyone working through several episodes wants to
                   stay put. Catching up in bulk has its own control, which never moves. */}
               <Note>{COPY.settings.openCommentsHint}</Note>
@@ -137,13 +137,13 @@ export default function DataScreen() {
         {/* The web has offered this since the settings screen existed and the phone
             never has, which is the same shape as everything else found in this pass:
             the core could do it and one platform simply never asked. */}
-        <Block heading="Metadata cache">
+        <Block heading={COPY.settings.cacheHeading}>
           <Note>{COPY.settings.cacheBlurb}</Note>
           <Button
             onPress={() => void clearMetadataCache().then(setCleared)}
             tone="secondary"
-            label="Clear cached metadata"
-            name="Clear cached metadata"
+            label={COPY.controls.clearCache}
+            name={COPY.controls.clearCache}
           />
           {cleared !== undefined && (
             <Note accessibilityLiveRegion="polite">

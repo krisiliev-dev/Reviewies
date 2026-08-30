@@ -70,7 +70,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   return (
     <View style={styles.block}>
       <View style={styles.header}>
-        <Section>Where to watch</Section>
+        <Section>{COPY.whereToWatch.heading}</Section>
         <Pressable
           onPress={() => setPicking(!picking)}
           hitSlop={8}
@@ -132,7 +132,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
               hitSlop={8}
               accessibilityRole="link"
             >
-              <Text style={styles.link}>Open on JustWatch</Text>
+              <Text style={styles.link}>{COPY.controls.openJustWatch}</Text>
             </Pressable>
           )}
 

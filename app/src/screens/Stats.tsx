@@ -29,8 +29,8 @@ import { Button } from '../ui/Button';
 
 const WINDOWS: Array<{ key: Window; label: string }> = [
   { key: '30d', label: '30 days' },
-  { key: 'ytd', label: 'This year' },
-  { key: 'all', label: 'All time' },
+  { key: 'ytd', label: COPY.stats.thisYear },
+  { key: 'all', label: COPY.stats.allTime },
 ];
 
 export function Stats() {
@@ -183,7 +183,7 @@ function Summary({
         <Tile label="Episodes" value={String(summary.episodes)} />
         <Tile label="Titles" value={String(summary.distinctTitles)} />
         <Tile
-          label="Longest streak"
+          label={COPY.stats.longestStreak}
           value={`${summary.longestStreakDays} ${summary.longestStreakDays === 1 ? 'day' : 'days'}`}
         />
       </dl>
@@ -197,9 +197,7 @@ function Summary({
       <section>
         {/* s12, not s14: an uppercase eyebrow with letter-spacing reads a step larger than
             its number, and the phone has drawn this at 12 since it was written. */}
-        <Section className="px-1">
-          Most watched
-        </Section>
+        <Section className="px-1">{COPY.stats.mostWatched}</Section>
         <ul className="flex flex-col gap-1.5">
           {summary.topTitles.map((t) => (
             <li key={t.titleId} className="rounded-plate bg-ground-raised p-3">

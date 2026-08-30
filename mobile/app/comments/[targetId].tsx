@@ -153,7 +153,7 @@ export default function CommentsScreen() {
                     <Pressable
                       onPress={() => setImage(undefined)}
                       accessibilityRole="button"
-                      accessibilityLabel="Remove the attached screenshot"
+                      accessibilityLabel={COPY.controls.removeScreenshot}
                       hitSlop={8}
                       style={styles.removeAttached}
                     >
@@ -198,7 +198,7 @@ export default function CommentsScreen() {
             )}
             <View style={styles.chips}>
               <Choice
-                name="How much effort a comment has to show"
+                name={COPY.comments.effortLabel}
                 options={EFFORT_LEVELS.map((level) => ({
                   key: level.minLength,
                   label: level.label,
@@ -244,7 +244,7 @@ export default function CommentsScreen() {
                         await load();
                       }}
                       accessibilityRole="button"
-                      accessibilityLabel="Delete your comment"
+                      accessibilityLabel={COPY.controls.deleteComment}
                       hitSlop={8}
                       style={styles.deleteComment}
                     >

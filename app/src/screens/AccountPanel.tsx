@@ -49,13 +49,13 @@ export function AccountPanel() {
         await signIn(email, password);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : COPY.sync.failed);
     }
   }
 
   if (!session) {
     return (
-      <Block heading="Sync across devices">
+      <Block heading={COPY.sync.acrossDevices}>
         <Note className="mb-3">
           Optional. Everything already works on this device — an account adds sync and
           shared reactions.
@@ -77,14 +77,14 @@ export function AccountPanel() {
             label={COPY.fields.password}
             value={password}
             onChange={setPassword}
-            placeholder="Password (8+ characters)"
+            placeholder={COPY.fields.passwordRule}
           />
           <Button
             submit
             size="page"
             tone="primary"
-            label={mode === 'in' ? 'Sign in' : 'Create account'}
-            name={mode === 'in' ? 'Sign in' : 'Create account'}
+            label={mode === 'in' ? COPY.controls.signIn : COPY.controls.createAccount}
+            name={mode === 'in' ? COPY.controls.signIn : COPY.controls.createAccount}
           />
         </form>
 
@@ -92,7 +92,7 @@ export function AccountPanel() {
           onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
           className="tap mt-2 text-s14 text-ink-secondary underline"
         >
-          {mode === 'in' ? 'Create an account instead' : 'I already have an account'}
+          {mode === 'in' ? COPY.controls.createAccountInstead : COPY.controls.haveAccount}
         </button>
 
         {error && <p className="mt-2 text-s14 text-trouble">{error}</p>}
@@ -155,7 +155,7 @@ export function AccountPanel() {
         />
         <Button
           onPress={() => void signOut()}
-          label="Sign out"
+          label={COPY.controls.signOut}
           name="Sign out of your account"
         />
       </div>

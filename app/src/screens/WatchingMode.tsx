@@ -208,7 +208,7 @@ export function WatchingMode() {
         <button
           onClick={() => navigate(-1)}
           className="tap text-s14 text-ink-secondary"
-          aria-label="Leave Watching Mode"
+          aria-label={COPY.controls.leaveWatching}
         >
           Close
         </button>
@@ -299,7 +299,7 @@ export function WatchingMode() {
           label="Search emoji"
           value={query}
           onChange={setQuery}
-          placeholder="Search any emoji…"
+          placeholder={COPY.fields.emojiPlaceholder}
         />
       </div>
     </div>
@@ -315,8 +315,8 @@ function StartPanel({ onStart }: { onStart: () => void }) {
       <Button
         size="page"
         tone="primary"
-        label="Start watching"
-        name="Start watching"
+        label={COPY.controls.startWatching}
+        name={COPY.controls.startWatching}
         onPress={onStart}
         className="w-full"
       />
@@ -350,7 +350,7 @@ function SyncBar({
       <Button
         onPress={clock.toggle}
         label={clock.running ? 'Pause' : 'Resume'}
-        name={clock.running ? 'Pause the clock' : 'Resume the clock'}
+        name={clock.running ? COPY.controls.pauseClock : COPY.controls.resumeClock}
       />
       {/* Manual drift correction, always available. The crowd-derived estimate
           above handles the common case; these cover the rest. */}
@@ -363,7 +363,7 @@ function SyncBar({
       <Button
         label={streamPaused ? 'Held' : 'Hold'}
         name={
-          streamPaused ? 'Let other people’s reactions move again' : 'Hold other people’s reactions still'
+          streamPaused ? COPY.controls.moveReactions : COPY.controls.holdReactions
         }
         selected={streamPaused}
         onPress={() => onStreamPaused(!streamPaused)}

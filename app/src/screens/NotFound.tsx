@@ -28,13 +28,13 @@ export function NotFound() {
 
   return (
     <div className="flex flex-col gap-3 p-s16">
-      <Masthead level="page">Nothing at this address</Masthead>
+      <Masthead level="page">{COPY.app.notFound}</Masthead>
       <Note>
         <code className="rounded-plate bg-ground-raised px-1.5 py-0.5 text-s14">{pathname}</code> is not
         a screen in this app. It may be an old link, or a typo.
       </Note>
-      <Button size="page" tone="primary" to="/" label="Go to Up Next" name="Go to Up Next" />
-      <Button size="page" to="/more" label="See everything else" name="See everything else" />
+      <Button size="page" tone="primary" to="/" label={COPY.controls.goToUpNext} name={COPY.controls.goToUpNext} />
+      <Button size="page" to="/more" label={COPY.controls.seeEverythingElse} name={COPY.controls.seeEverythingElse} />
     </div>
   );
 }

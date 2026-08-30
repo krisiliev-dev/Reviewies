@@ -57,8 +57,8 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
       <Button
         size="inline"
         onPress={() => setOpen(!open)}
-        label={open ? 'Cancel' : 'Add to list'}
-        name={open ? 'Cancel adding to a list' : 'Add to list'}
+        label={open ? 'Cancel' : COPY.controls.addToList}
+        name={open ? 'Cancel adding to a list' : COPY.controls.addToList}
       />
 
       {open && (
@@ -96,7 +96,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
               submit
               tone="primary"
               label="Add"
-              name="Make this list and add the title to it"
+              name={COPY.controls.makeListAndAdd}
               disabled={!newName.trim()}
             />
           </form>

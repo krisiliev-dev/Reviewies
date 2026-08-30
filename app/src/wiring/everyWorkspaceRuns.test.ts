@@ -164,7 +164,9 @@ describe('every workspace', () => {
     // both renderers, and the clause that the field is still drawn at all.
     // app 654, up two: §6.175's one-owner sweep in `copy.test.ts` — the clause that no
     // sentence is typed twice, and the non-vacuity clause that it is reading prose at all.
-    core: 925, app: 654, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 656, up two: §6.176's `copy.test.ts` pair — the tab bar and the screen title
+    // named the same thing, and the single-word ratchet past the space rule.
+    core: 925, app: 656, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

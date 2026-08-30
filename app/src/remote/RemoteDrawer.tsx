@@ -1,3 +1,4 @@
+import { COPY } from '@reviewies/core/copy';
 import { useState } from 'react';
 import { bridgeConfigured, useBridge, type RemoteCommand } from './useBridge';
 import { useDialog } from '../ui/useDialog';
@@ -60,7 +61,7 @@ export function RemoteDrawer() {
           fell to the body and a keyboard was dropped at the top of the page. */}
       <button
         onClick={() => setOpen(true)}
-        aria-label="Open remote"
+        aria-label={COPY.controls.openRemote}
         inert={open}
         /* Was `bg-ground-well/90 text-ink-secondary backdrop-blur` — the same 1.21:1 handle the
            phone had, plus a blur. Both platforms hid the drawer's only affordance the
@@ -109,7 +110,7 @@ export function RemoteDrawer() {
           {/* Named, because Watching Mode has a "Close" of its own. */}
           <button
             onClick={() => setOpen(false)}
-            aria-label="Close remote"
+            aria-label={COPY.controls.closeRemote}
             className="text-s14 text-ink-secondary"
           >
             Close

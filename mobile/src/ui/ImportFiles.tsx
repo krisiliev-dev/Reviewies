@@ -25,7 +25,7 @@ import { COPY } from '@reviewies/core/copy';
  * the same place. Everything it could not read is listed rather than dropped.
  */
 export function ImportFiles({
-  label = 'Choose files',
+  label = COPY.controls.chooseFiles,
   primary = false,
   onImported,
 }: {
@@ -102,7 +102,7 @@ export function ImportFiles({
       setFiles(outcomes);
       onImported?.(combined);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file');
+      setError(e instanceof Error ? e.message : COPY.import.fileFailed);
     } finally {
       setBusy(false);
     }
@@ -153,8 +153,8 @@ export function ImportFiles({
               busy={restoring}
               disabled={restoring}
               tone="secondary"
-              label={restoring ? 'Restoring…' : 'Restore lists and follows'}
-              name="Restore lists and follows"
+              label={restoring ? 'Restoring…' : COPY.controls.restoreListsAndFollows}
+              name={COPY.controls.restoreListsAndFollows}
             />
           )}
           {restored && (

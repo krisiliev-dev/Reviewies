@@ -118,7 +118,7 @@ export default function ListsScreen() {
             disabled={!name.trim() || busy}
             tone="primary"
             label="Add"
-            name="Create this list"
+            name={COPY.controls.createList}
           />
         </View>
 
@@ -294,7 +294,7 @@ function ListCard({
               accessibilityLabel={`Make ${list.name} ${list.isPublic ? 'private' : 'public'}`}
             >
               <Text style={styles.remove}>
-                {list.isPublic ? 'Make private' : 'Make public'}
+                {list.isPublic ? COPY.controls.makePrivate : COPY.controls.makePublic}
               </Text>
             </Pressable>
           )}
