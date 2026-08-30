@@ -22,9 +22,9 @@ import { Tick } from './Mark';
 export function Toggle({ value, disabled }: ToggleContract) {
   return (
     <View
+      // `aria-hidden` alone: `View` expands it into the two React Native props on a
+      // device, and it is the only spelling the web export reads. §6.173.
       aria-hidden
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
       style={[
         styles.box,

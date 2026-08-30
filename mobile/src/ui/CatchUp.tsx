@@ -76,8 +76,13 @@ export function CatchUp({
       <Pressable
         style={styles.backdrop}
         onPress={onDone}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
+        /* The scrim, which is deliberately not a control: naming it would put a second
+           "Close" in the reading order. It was hidden only by the two React Native props
+           that `createDOMProps` does not read, so in the export it was an **unnamed
+           pressable** in a sheet's reading order — the worst of the three §6.173 found,
+           because a reader meets a button that says nothing at all. `Pressable` renders a
+           `View`, which expands `aria-hidden` into those two on a device. */
+        aria-hidden
       />
       <View style={styles.sheet}>
         <View style={styles.header}>

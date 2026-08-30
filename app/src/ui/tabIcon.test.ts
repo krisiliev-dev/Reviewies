@@ -119,9 +119,23 @@ describe('the tab bar’s marks', () => {
   });
 
   it('is one mark, not a second name for the reader to arrow past', () => {
-    // The label beside it says what the tab is. A drawing that announces itself is the same
-    // state read twice, which is the collision `row.ts` records for a listing row.
+    /*
+     * The label beside it says what the tab is. A drawing that announces itself is the same
+     * state read twice, which is the collision `row.ts` records for a listing row.
+     *
+     * The phone's half of this clause used to read `accessibilityElementsHidden`, and
+     * §6.173 measured that prop reaching **nothing** in the web export: react-native-web's
+     * `createDOMProps` does not mention it, so this clause was green for a tab bar whose
+     * icons were in the reading order. Worse than green — react-native-svg's web build
+     * passed the sibling prop through onto all ten `<svg>` elements as an invalid HTML
+     * attribute. So it is the flat spelling on both sides now: the web writes it as
+     * `aria-hidden="true"`, the phone as a bare JSX `aria-hidden`, and `View` expands it
+     * into the two React Native props on a device.
+     *
+     * A clause naming the wrong spelling is §6.121's shape from the other end — it *can*
+     * fail, it just cannot fail for the thing its name is about.
+     */
     expect(RENDERERS.web).toContain('aria-hidden="true"');
-    expect(RENDERERS.phone).toContain('accessibilityElementsHidden');
+    expect(RENDERERS.phone).toMatch(/\baria-hidden\b/);
   })
 });

@@ -405,6 +405,34 @@ try {
   await page.waitForSelector('text=Tracking', { timeout: 15000 });
   check('tracking a show persists', true);
 
+  /*
+   * And it says so to a reader, not only to a pair of eyes. §6.173: `aria-disabled` was one
+   * of the four keys §6.172 converted off `accessibilityState` and did not measure arriving,
+   * and this is the only place in this suite where anything is disabled — the Track button
+   * becomes `Tracking` and unavailable the moment the show is in the library.
+   *
+   * The `disabled` attribute is asserted beside it because they are different promises from
+   * different layers: react-native-web's `isDisabled` reads `props.disabled` and writes the
+   * DOM attribute, which is what stops the click; the flat `aria-disabled` is what this
+   * project writes by hand and what a screen reader says. Either can go without the other.
+   */
+  const unavailable = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('button,[role="button"]')].find(
+      (n) => (n.textContent || '').trim() === 'Tracking',
+    );
+    return el && { aria: el.getAttribute('aria-disabled'), attr: el.hasAttribute('disabled') };
+  });
+  check(
+    'a control that has become unavailable says so in the spelling the export reads',
+    unavailable?.aria === 'true',
+    JSON.stringify(unavailable),
+  );
+  check(
+    'and the renderer stops the press as well as announcing it',
+    unavailable?.attr === true,
+    JSON.stringify(unavailable),
+  );
+
   // --- Up Next ---------------------------------------------------------------
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=The Long Dark', { timeout: 20000 });

@@ -34,8 +34,18 @@ export function Poster({
           about this until §6.137 put the same content in both.
         */}
         <Text
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
+          /* The initials are a stand-in for artwork, and the row above already says the
+             name — so a reader that announces them reads the title twice, once as prose.
+
+             `aria-hidden` alone, and it is not a shorthand: React Native 0.86's `Text.js`
+             expands it into `accessibilityElementsHidden` and
+             `importantForAccessibility="no-hide-descendants"` itself, and
+             react-native-web's `createDOMProps` reads the flat spelling and mentions
+             neither of those. This element used to carry the two and not the flat one, so
+             the initials sat in the export's DOM as plain text with `aria-hidden: null`
+             and every Up Next row read its title, then its own initials, as loose prose.
+             §6.173. */
+          aria-hidden
           style={[styles.fallbackText, { fontSize: POSTER_GLYPH[size] }]}
         >
           {posterInitials(name)}

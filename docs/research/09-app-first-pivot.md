@@ -12817,6 +12817,107 @@ guard holds the *spelling* everywhere; the *arrival* is measured in one place.
 **Eighty-six shots are unread**, unchanged — this sprint spent itself on the thing the last
 one could not settle.
 
+### 6.173 Four keys measured, a prop family that reaches nothing, and a fix that was wrong twice
+
+**#209.** §6.172 closed with a "What is not done" that named its own gap: `aria-checked` had a
+before-and-after in the export, and `aria-selected`, `aria-expanded`, `aria-busy` and
+`aria-disabled` had been converted by the same sweep and the same argument with nothing
+behind them. A guard that holds a *spelling* everywhere and an *arrival* in one place is a
+guard passing on faith in four fifths of its range — §6.121's shape, waiting.
+
+#### All five arrive, and each was measured where it is true rather than where it is easy
+
+| key | measured | reading |
+| --- | --- | --- |
+| `aria-checked` | §6.172, the Stats period radios | `2026 true`, the rest `false` |
+| `aria-selected` | Up Next's buttons and the active tab | `false` on the buttons, `true` on the tab |
+| `aria-busy` | Up Next's buttons at rest | `false` |
+| `aria-disabled` | Search's Track button once the show is tracked | `"true"`, on a real `<button disabled>` with `pointer-events: none` |
+| `aria-expanded` | the title screen's country list, opened | `"true"` |
+
+The last two are the ones that needed somewhere to *be* true, which is why they were the two
+left over: nothing in either suite had ever disabled a control or expanded a disclosure and
+then looked. `mobile/smoke.mjs` has two checks about an unavailable control now — one for
+what a reader is told, one for the DOM attribute that actually stops the press, because those
+come from different layers and either can go without the other. `design/capture.mjs` asserts
+the country opener's `aria-expanded` at the one reveal in either pass where anything is open.
+
+That assertion had a bug of exactly the kind this document keeps recording: it read
+`if ((await opener.count()) && …)`, so a run that could not find the control would have
+skipped the check and photographed a happy screen. §6.153. It says `no such control` now and
+fails.
+
+Six `unshot.push(` clauses in that pass were held by no floor at all — the ratchet counts
+routes, reveals, folds and empties, and these are lines *inside* a walk. There is a
+`#unshot` floor now.
+
+#### The second prop family, and why the first fix for it was wrong
+
+The same question one prop over: what else does the phone spell in an API the export drops?
+Swept against `createDOMProps` — `accessibilityValue` and `accessibilityLiveRegion` are read;
+**`accessibilityElementsHidden` and `importantForAccessibility` are not**. Four elements used
+them; three had nothing else, so they were hidden on a device and read aloud in the export.
+(`Toggle` was the fourth and already carried `aria-hidden` too — which is what made the
+"two audiences" story below look plausible, since one site had been written both ways for
+years and nobody had asked which half was doing the work.) Measured, before:
+
+```
+A11Y-POSTER [{"text":"KN","hidden":null},{"text":"LD","hidden":null}]
+```
+
+Every Up Next row announced its title and then its own initials as loose prose. `CatchUp`'s
+scrim was worse — a `Pressable` with an `onPress` and no name, a silent full-screen target in
+front of a sheet.
+
+The first fix added `aria-hidden` **beside** the two, on the argument that they were two
+audiences: the flat one for the export, the React Native pair for the device. Then
+`react-native/Libraries/Components/View/View.js` was read:
+
+```js
+if (ariaHidden !== undefined) {
+  processedProps.accessibilityElementsHidden = ariaHidden;
+  if (ariaHidden === true) {
+    processedProps.importantForAccessibility = 'no-hide-descendants';
+  }
+}
+```
+
+`Text.js` does the same. They are not two audiences; they are one thing said twice, which is
+§6.138 — the argument was written in a comment, checked by a guard, and false. The rule is an
+**absence** now, in the shape `ROW_TAG.rule` uses: nothing under `mobile/` may name either
+prop, because `aria-hidden` alone reaches both renderers.
+
+#### And the one element that does not expand it, which was the worst of the three
+
+`react-native-svg`'s `Svg` is not a React Native primitive. Its `render()` spreads props
+straight onto a native host component and never touches `View`, so `aria-hidden` is not
+expanded there — and the pair carried on it instead was measurably *worse than nothing*,
+because its web build passes unknown props through:
+
+```
+A11Y-TABICON  attrs: width,height,viewBox,importantForAccessibility,aria-hidden
+```
+
+`importantForAccessibility="no-hide-descendants"` sat on all ten `<svg>` elements of the
+shipped export as an invalid HTML attribute, hiding nothing on either platform. The icon is
+wrapped in a hidden `View` now, which costs no layout — the mark has a fixed width and
+height — and the absence rule holds everywhere with no exception to remember.
+
+`tabIcon.test.ts` had a clause named *is one mark, not a second name for the reader to arrow
+past* which asserted `accessibilityElementsHidden` on the phone. It was green for a tab bar
+whose icons were in the reading order: a clause that can fail, but not for the thing its name
+is about.
+
+## What is not done, and why it is said here
+
+**Eighty-six shots are unread**, of 134 — unchanged for a third sprint. Two sprints have now
+been spent on what §6.171 could not settle, and the reading queue has not moved.
+
+**Nothing here was seen by a screen reader.** Five keys and one hidden-ness are measured
+*arriving in the DOM*, which is the half a static export can answer. Whether VoiceOver or
+TalkBack then says the right sentence is the device question, unchanged and unrelated.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12862,9 +12963,12 @@ and which single claim in this document could not be checked at all:
   `mobile/smoke.mjs` now makes three checks about a chosen state that were impossible the
   day before.
 
-  What survives is smaller: `aria-busy` and `aria-expanded` were converted by the same sweep
-  and only `aria-checked` has a measurement behind it, and whether VoiceOver and TalkBack
-  read the right *sentence* is still a device question — a different one.
+  **All five keys are measured now** — §6.173 caught `aria-selected`, `aria-busy`,
+  `aria-disabled` and `aria-expanded` arriving, each where it is actually true rather than
+  where it was convenient to look, and found a second prop family (`accessibilityElements-
+  Hidden`, `importantForAccessibility`) that reaches nothing either, hiding three decorations
+  from a device and from nobody in the export. What survives is only the device question:
+  whether VoiceOver and TalkBack read the right *sentence*, which no static export answers.
 
 - **Nothing has run on a physical device, and §6.111 measured exactly how far short of
   one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
@@ -13676,7 +13780,11 @@ and which single claim in this document could not be checked at all:
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
   was written from a listing of one directory. §6.168 opened thirteen more and §6.169 six, and
   each got a finding out of them, so the rate has not fallen off. Most of the `-foot` shots and
-  most of `design/real-screens/` are what is left.
+  most of `design/real-screens/` are what is left. **Three sprints have now gone by without
+  the number moving**: §6.171 filed a question a photograph could not settle, and §6.172 and
+  §6.173 both spent themselves answering it. That was the right trade twice — a dead prop at
+  seventeen sites and a second family at four — but it is twice, and the queue is where it
+  was.
 
 - ~~**Discover's recommendation feed has never been photographed against real data.**~~ —
   **closed in §6.170, and it was not a fixture problem.** `seedTitles` read watch history

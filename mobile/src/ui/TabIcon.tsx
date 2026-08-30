@@ -1,5 +1,5 @@
 import Svg, { Path } from 'react-native-svg';
-import type { ColorValue } from 'react-native';
+import { View, type ColorValue } from 'react-native';
 import {
   TAB_ICON_BOX,
   TAB_ICON_PATHS,
@@ -19,15 +19,27 @@ import {
  */
 export function TabIcon({ name, color }: { name: TabIconName; color: ColorValue }) {
   return (
-    <Svg
-      width={TAB_ICON_SIZE}
-      height={TAB_ICON_SIZE}
-      viewBox={`0 0 ${TAB_ICON_BOX} ${TAB_ICON_BOX}`}
-      // The label beside it is the name; a second one is a thing to swipe past.
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <Path d={TAB_ICON_PATHS[name]} fill={color} />
-    </Svg>
+    /*
+     * The `View` is here to be hidden. The label beside the icon is the name; a second one
+     * is a thing to swipe past — but `Svg` is not a React Native primitive, it spreads its
+     * props straight onto a native host component, so it is the one element in this app
+     * where `aria-hidden` is *not* expanded into the two props a device reads. Carrying
+     * those two on the `Svg` instead was worse than useless: react-native-svg's web build
+     * passes unknown props through, and §6.173 measured
+     * `importantForAccessibility="no-hide-descendants"` sitting on all ten `<svg>` elements
+     * of the shipped export as an invalid HTML attribute, hiding nothing.
+     *
+     * A `View` wrapper costs no layout — the icon has a fixed width and height — and both
+     * renderers know what `aria-hidden` on a container means.
+     */
+    <View aria-hidden>
+      <Svg
+        width={TAB_ICON_SIZE}
+        height={TAB_ICON_SIZE}
+        viewBox={`0 0 ${TAB_ICON_BOX} ${TAB_ICON_BOX}`}
+      >
+        <Path d={TAB_ICON_PATHS[name]} fill={color} />
+      </Svg>
+    </View>
   );
 }

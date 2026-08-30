@@ -158,7 +158,9 @@ describe('every workspace', () => {
     // `recommend.test.ts`, and the remote drawer's one-place-one-register clause.
     // app 645, up three: §6.171's refused-connection pair and the year-in-review clause.
     // app 648, up three: §6.172's `announcedState.test.ts`.
-    core: 925, app: 648, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 650, up two: §6.173 gave that file the hidden-decoration pair — the absence rule
+    // and the four sites it would otherwise be vacuously true about.
+    core: 925, app: 650, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -195,10 +197,11 @@ describe('every workspace', () => {
     /* 152, up one: §6.171 added the other half of the year-in-review check — the headline
        figure is not also a tile. */
     'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 152 },
-    /* 81, up three: §6.172 gave this suite the first checks it has ever made about a
-       *chosen* state — two on the calendar's options, one on the watching preference.
-       They could not have passed before, which is why they were never written. */
-    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 81 },
+    /* 83, up two: §6.173 measured the fourth of the five keys §6.172 converted — the two
+       checks on a control that has become unavailable, one for what a reader is told and
+       one for what actually stops the press. Same reason as the three below them: they
+       could not have passed before, which is why they were never written. */
+    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 83 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },
@@ -210,6 +213,16 @@ describe('every workspace', () => {
      * table, and the thing that could vanish quietly is the checks, not a row in a list.
      */
     'design/capture.mjs#watching': { pattern: /unseen\.push\(/g, least: 4 },
+    /*
+     * And the assertions the pass makes about a *chosen* state, which no shot count and no
+     * reveal count can see: they are lines inside a walk, and deleting one leaves the
+     * photograph in place and the pass green.
+     *
+     * §6.173 added the sixth — that the country list's opener says it is open — and found
+     * the other five were held by nothing at all. `unseen.push(` above is Watching Mode's
+     * own list; this is the pass's.
+     */
+    'design/capture.mjs#unshot': { pattern: /unshot\.push\(/g, least: 6 },
     /*
      * And that every shot records what is below its fold, which is not a route either.
      *

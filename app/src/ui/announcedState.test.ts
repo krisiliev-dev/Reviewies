@@ -34,6 +34,7 @@ const withoutProse = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 
 const PHONE = ['mobile/app', 'mobile/src'];
+const MOBILE_UI = 'mobile/src/ui';
 
 function filesUnder(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
@@ -72,6 +73,61 @@ describe('how the phone announces a control’s state', () => {
       }
     }
     expect(announcing, 'the phone announces no control state at all').toBeGreaterThan(15);
+  });
+
+  it('hides a decoration in one spelling, and it is the one both renderers read', () => {
+    /*
+     * §6.173, the same defect one prop family over, and then the correction to it.
+     *
+     * `accessibilityElementsHidden` and `importantForAccessibility` are how React Native
+     * takes something out of the reading order, and **neither appears in `createDOMProps`**
+     * — so four elements hidden by those alone were hidden on a device and read aloud in
+     * the export. The measurement is what settled that rather than the grep: the poster's
+     * fallback initials sat in the DOM as `KN` and `LD`, plain text, `aria-hidden: null`,
+     * so every Up Next row announced its title and then its own initials as loose prose.
+     * `CatchUp`'s scrim was worse — a `Pressable` with an `onPress` and no name, sitting in
+     * a sheet's reading order.
+     *
+     * The first fix added `aria-hidden` **beside** the two, on the argument that they were
+     * two audiences. Reading `react-native/Libraries/Components/View/View.js` killed that
+     * argument: `if (ariaHidden !== undefined)` sets `accessibilityElementsHidden` and
+     * `importantForAccessibility='no-hide-descendants'` itself, and `Text.js` does the
+     * same. They are not two audiences; they are one thing said twice, which is §6.138.
+     *
+     * So the rule is an **absence**, written the way `ROW_TAG.rule` is: nothing under the
+     * phone may name either prop. `aria-hidden` alone reaches both renderers — RN expands
+     * it, react-native-web maps it. The one element that does not expand it is
+     * `react-native-svg`'s `Svg`, which spreads onto a native host component; carrying the
+     * two there was measurably worse than nothing, because its web build passed
+     * `importantForAccessibility` through onto all ten `<svg>` elements of the export as an
+     * invalid HTML attribute. That icon is wrapped in a hidden `View` now, so the absence
+     * holds everywhere with no exception to remember.
+     */
+    const said: string[] = [];
+    for (const dir of PHONE) {
+      for (const file of filesUnder(dir)) {
+        const source = withoutProse(read(file));
+        if (/accessibilityElementsHidden|importantForAccessibility/.test(source)) {
+          said.push(`${file} spells a hidden decoration the way React Native writes it for you`);
+        }
+      }
+    }
+    expect(said).toEqual([]);
+  });
+
+  it('hides the four decorations that were being read aloud', () => {
+    /*
+     * The absence above would also be satisfied by hiding nothing at all, which is
+     * §6.121's shape — a clause that checks nothing once the thing it guards is deleted.
+     * These are the four §6.173 measured, each named so that removing one is a failure
+     * with a filename in it rather than a silently smaller number.
+     */
+    const bare: string[] = [];
+    for (const file of ['Poster.tsx', 'TabIcon.tsx', 'CatchUp.tsx', 'Toggle.tsx']) {
+      const source = withoutProse(read(`${MOBILE_UI}/${file}`));
+      if (!/aria-hidden/.test(source)) bare.push(`${file} hides its decoration from nobody`);
+    }
+    expect(bare).toEqual([]);
   });
 
   it('has one owner for the toggle, and it is the prop rather than the value', () => {

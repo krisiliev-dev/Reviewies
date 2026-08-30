@@ -930,6 +930,24 @@ if (await link.count()) {
   };
   await reveal(page, { out: OUT, name: '15-title-country', control: /Change country/i, arrive, problems: unshot, scrolls });
   /*
+   * And the control says it is open. §6.173: `aria-expanded` was one of the four keys
+   * §6.172 converted from `accessibilityState` and did not measure arriving, and this
+   * reveal is the only place in either pass where something is expanded — so the
+   * measurement costs a line here and nothing anywhere else.
+   */
+  {
+    /*
+     * No `if (count)` guard around this. A clause that skips itself when it cannot find the
+     * control is §6.153's instrument: the reveal above has already failed loudly if the
+     * country list never opened, so by this line the opener exists or the pass is lying.
+     */
+    const opener = page.getByRole('button', { name: /Change country/i }).first();
+    const said = (await opener.count()) ? await opener.getAttribute('aria-expanded') : 'no such control';
+    if (said !== 'true') {
+      unshot.push(`15-title-country: the country list is open and the control says ${said}`);
+    }
+  }
+  /*
    * `15-title-warnings` is **not** here. `ContentWarnings` opens with
    * `if (!syncConfigured()) return null`, so on the fixture build the control does not
    * exist at all — the walk said so by name rather than filing a shot of a screen without
