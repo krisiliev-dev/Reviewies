@@ -8,6 +8,10 @@ Answers to `docs/device/on-the-phone.md`. One heading per question, in order.
 heading left as `NOT YET CHECKED` is a true and useful statement. A heading quietly deleted is
 how this went wrong last time.
 
+**A sprint's worth of direction is sitting in question 10** — the information architecture
+notes, from the person holding the phone. It is not a device defect and not actionable as a
+bug; it is what the next design sprint should read first.
+
 Replace a status line when you have an answer. Say what you did, what you saw, and the number
 where there is one. Photographs go in `docs/device/shots/`, named for the question.
 
@@ -76,8 +80,20 @@ components rather than at either screen.
 
 **Still NOT YET CHECKED, and not implied by the above:**
 
-- **The monogram** — does the poster plate stay 44pt while type grows? The brief calls this the
-  single most valuable line in the section. Still unanswered.
+- **The monogram — probably held, but this is not a clean observation.** Asked directly, the
+  answer was *"I am unsure which monogram you mean, but I only see text growing so I think the
+  answer is yes."*
+
+  Recorded as qualified rather than as a pass, for two reasons. It is an inference from not
+  noticing a change, not a check of the plate's width. And the monogram is the two-letter
+  stand-in shown **only where poster artwork is missing** — so a library with artwork
+  everywhere puts none on screen, and the question cannot be answered from that view at all.
+
+  What would settle it: find an Up Next row showing two letters instead of a poster, then set
+  text to maximum and watch that plate. If `POSTER_GLYPH_SCALES = false` is doing its job the
+  letters stay put while the title beside them grows. Failure looks like two enormous letters
+  with their stems cut off — which is what the browser export did at 200% before the flag
+  existed, and the reason the flag exists.
 - **The tab bar** at `TAB_BAR_HEIGHT` 60 — do labels clip or overlap the rule?
 - **Watching Mode's emoji pad** — does it reflow to fewer columns?
 - Whether Up Next titles *wrap*, as distinct from clip.
@@ -219,3 +235,28 @@ committed. It recurred in a different file within the same sprint block.
 `docsReferences > names only paths that exist` failed at this tip because `on-the-phone.md` names
 `docs/device/findings.md` and nothing had written it — a brief referencing its own output. The
 skeleton this file was merged into closes that.
+
+## An App Store app's data cannot be read off an iPhone without a backup
+
+Tested rather than assumed, because it bears on the `DioCache.db` importer that
+`docs/research/08-second-reddit-sweep.md` calls the highest-value feature in the field.
+
+`devicectl` lists exactly one app on a connected, developer-mode iPhone:
+
+```
+Name        Bundle Identifier         Version   Bundle Version
+Reviewies   dev.krisiliev.reviewies   0.1.0     1
+```
+
+One. The development-signed one. iOS exposes a container to tooling only for apps you could
+attach a debugger to, so TV Time — App Store signed — is not addressable at all: not by
+`devicectl`, not by Xcode's container download, not by anything short of a backup.
+
+That is worth writing into the record because the importer's own comment says it runs on
+"whatever files the user managed to pull off their phone", which reads as though pulling them is
+the easy part. It is the hard part, and it has exactly one route: a full local backup, then
+extraction from it. Every published rescue tool works this way for the same reason.
+
+TV Time shut down in **July 2026**, so the on-device cache is now the only copy that exists. The
+practical consequence for anyone reading this: the file is only recoverable while the app remains
+installed and the phone has not been reset.
