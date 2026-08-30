@@ -41,7 +41,7 @@ export const MARK_BOX = 24;
 /**
  * How big a chevron in a row is drawn.
  *
- * `text.s16` rather than a bare 16, because the size *is* the row's text size. The web
+ * §6.184. `text.s16` rather than a bare 16, because the size *is* the row's text size. The web
  * draws the mark `1em` square inside a `text-s16` box, so on that platform it already takes
  * the size of the words beside it and no number was ever written. React Native has neither
  * `em` nor an inherited font on an `Svg`, so the phone has to be told — and a number the
@@ -65,7 +65,7 @@ export const CHEVRON_SIZE = text.s16;
 /**
  * The weight every mark here is stroked at — one weight, not one per mark per platform.
  *
- * `border.mark` is the token named for exactly this, and the chevron was already on it by
+ * §6.184. `border.mark` is the token named for exactly this, and the chevron was already on it by
  * coincidence: both renderers typed a bare `2`. The tick typed **2.5**, once per platform
  * and stated nowhere — grep either tree and that value appears at those two lines and
  * nowhere else. `tokens.ts` builds its scales by killing the members that carry no

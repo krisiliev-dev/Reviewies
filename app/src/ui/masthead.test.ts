@@ -126,7 +126,7 @@ describe('a screen title', () => {
      * `<h1>Not found</h1>`, with "Nothing at this address" rendering as ordinary text
      * beneath it.
      */
-    const SIZES = new Set(Object.values(MASTHEAD).map((m) => m.size));
+    const SIZES = new Set<number>(Object.values(MASTHEAD).map((m) => m.size));
     const FACES = new Set<string>(Object.values(MASTHEAD).map((m) => m.face));
 
     /*
@@ -193,6 +193,28 @@ describe('a screen title', () => {
            * type-only sweep cannot see.
            */
           phone.push(`${file}: ${m[1]} reads MASTHEAD outside the renderer`);
+        }
+      }
+
+      /*
+       * And the same pair in an **inline** style, which the block scan above cannot see.
+       *
+       * Found by re-planting after the merge rather than by reading: a `<Text>` carrying
+       * `style={{ fontSize: text.s24, color: theme.ink, fontFamily: type.family.title.name }}`
+       * in `+not-found.tsx` walked straight through the clause that had just been written to
+       * catch exactly that, because the phone half keys on a two-space-indented `StyleSheet`
+       * entry and an inline object has neither the indentation nor the trailing comma.
+       *
+       * `type.test.ts`'s digit sweep does not cover it either — this spells the size with the
+       * token, which is the thing that sweep permits. So it was open on both sides, and it is
+       * the ordinary way to write a one-off style in React Native. No file in `mobile/` has an
+       * inline `fontSize` today; this is what keeps it that way.
+       */
+      for (const m of read(file).matchAll(/style=\{\{([^{}]*)\}\}/g)) {
+        const size = Number(/fontSize: text\.s(\d+)/.exec(m[1])?.[1]);
+        const face = /fontFamily: type\.family\.(\w+)\.name/.exec(m[1])?.[1];
+        if (SIZES.has(size) && face !== undefined && FACES.has(face)) {
+          phone.push(`${file}: an inline style draws s${size} in ${face} by hand`);
         }
       }
     }

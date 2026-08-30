@@ -122,7 +122,7 @@ describe('the tab bar’s marks', () => {
 
   it('tints by the mechanism each platform has, not by an inherited paint the phone lacks', () => {
     /*
-     * §6.183. The table's header said the two renderers were "both inheriting
+     * §6.183 filed it, §6.184 fixed it. The table's header said the two renderers were "both inheriting
      * `currentColor` so the active tab still tints". **React Native has no inherited
      * paint.** `mobile/src/ui/TabIcon.tsx` says so in its own header and puts
      * `fill={color}` on the `Path`; the web writes `fill="currentColor"` and takes the ink
@@ -144,7 +144,7 @@ describe('the tab bar’s marks', () => {
 
   it('marks the active tab from one table, not three numbers written out twice', () => {
     /*
-     * §6.183. The rule over the active tab is the most important piece of wayfinding in the
+     * §6.183 filed it, §6.184 fixed it. The rule over the active tab is the most important piece of wayfinding in the
      * product — §6.90's replacement for a hue that had become a brightness step — and it
      * was three numbers, written out on both platforms, with nothing in the core about it
      * at all. Two of the three agreed. The gap did not: `gap-0.5` (2) on the web against
@@ -188,7 +188,7 @@ describe('the tab bar’s marks', () => {
 
   it('budgets the bar for the parts it actually holds', () => {
     /*
-     * §6.183. `TAB_BAR_HEIGHT` was `space.s8 + size.tap + space.s4 + LABEL_LINE + space.s8`
+     * §6.183 filed it, §6.184 fixed it. `TAB_BAR_HEIGHT` was `space.s8 + size.tap + space.s4 + LABEL_LINE + space.s8`
      * over a comment reading "the 24pt glyph, the 4pt gap under it", and it was wrong three
      * ways at once: `size.tap` is the WCAG 2.5.8 *target floor*, not the glyph, which is
      * `TAB_ICON_SIZE` = 22; the 4 is the rule's `marginBottom`, which puts it *above* the

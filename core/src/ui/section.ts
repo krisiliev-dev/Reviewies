@@ -29,6 +29,9 @@
  * |---|---|---|
  * | case | uppercase | as written |
  * | tracking | `t83` | none |
+ *
+ * §6.184 is where the other half of this landed: `caps` and `track` were stated for both
+ * levels and read by neither renderer.
  * | ink | secondary | full |
  * | rule | none | hairline, to the right edge |
  *

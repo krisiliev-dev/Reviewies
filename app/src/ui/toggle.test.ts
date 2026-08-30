@@ -86,7 +86,7 @@ describe('a setting that is on or off', () => {
 
   it('draws the mark at the size the table says, which on the web is a font size', () => {
     /*
-     * The finding only a browser could make.
+     * The finding only a browser could make. §6.184.
      *
      * `Tick` is `h-[1em] w-[1em] shrink-0 ${className}` — it sizes itself in `em` and takes
      * the caller's class *after* its own. `size-5` and `h-[1em]` set the same two properties
@@ -140,7 +140,7 @@ describe('a setting that is on or off', () => {
 
   it('says what an unavailable mark is drawn in, rather than letting each renderer pick', () => {
     /*
-     * The second finding, and the one this file had already written the warning for:
+     * The second finding (§6.184), and the one this file had already written the warning for:
      * *"the same size as the other mark is exactly the sort of agreement two files reach by
      * hand and then lose"* — one property over.
      *

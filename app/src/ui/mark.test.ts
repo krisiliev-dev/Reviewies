@@ -83,7 +83,7 @@ describe('the marks a control draws', () => {
 
   it('draws a row’s chevron at one size, rather than one size per platform', () => {
     /*
-     * §6.183. The four disclosure pairs agreed at 16 three times and disagreed once:
+     * §6.183 filed it, §6.184 fixed it. The four disclosure pairs agreed at 16 three times and disagreed once:
      * `mobile/app/lists.tsx` drew at **20** against `app/src/screens/Lists.tsx`'s 16, with
      * no argument anywhere for the difference. Three-quarters agreement and no stated reason
      * is what a slip looks like from the outside.
@@ -161,7 +161,7 @@ describe('the marks a control draws', () => {
 
   it('strokes both marks at one weight, and that weight is on the scale', () => {
     /*
-     * §6.183. `strokeWidth` was typed once per platform per mark and stated nowhere: 2 on
+     * §6.183 filed it, §6.184 fixed it. `strokeWidth` was typed once per platform per mark and stated nowhere: 2 on
      * the chevron and **2.5** on the tick, four literals agreeing because they were written
      * in the same hour. 2 is `border.mark` by coincidence; 2.5 is on no scale at all — grep
      * either tree and it appears at those two lines and nowhere else — and there is no

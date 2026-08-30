@@ -86,7 +86,7 @@ export const TAB_ICON_SIZE = 22;
  * are on the space scale, so `space.test.ts` was right to pass either — a scale can say a
  * number is legal and cannot say two platforms picked the same one.
  *
- * The web's 2 is the one that stands. The rule belongs *to* the glyph — it is a marker on
+ * §6.184. The web's 2 is the one that stands. The rule belongs *to* the glyph — it is a marker on
  * the tab, not an underline on the word — so it sits at the tightest step the scale has, and
  * 4 is the gap you leave between two separate things. The measurement agrees: the phone's
  * bar is a fixed height and 4 was the difference between a column that fits its budget and

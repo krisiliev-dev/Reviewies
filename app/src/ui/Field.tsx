@@ -14,7 +14,7 @@ import { FIELD_LINES, type FieldSize } from '@reviewies/core/ui/field';
  */
 
 /*
- * `leading-l143` is the half of this that took a browser to notice.
+ * `leading-l143` is the half of this that took a browser to notice. §6.184.
  *
  * A textarea's height is `rows` line boxes plus its padding, so `rows={FIELD_LINES}` says
  * nothing about how tall the box is until something says how tall a line is — and nothing

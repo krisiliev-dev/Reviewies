@@ -183,7 +183,15 @@ describe('every workspace', () => {
     // states, the pad filling the row on the narrowest phone, and a literal read whole
     // whether or not a digit happens to be in it. One from each of three parallel branches,
     // which is why this line could only be set after all three had merged.
-    core: 928, app: 667, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 677, up ten: §6.184's clauses across four parallel branches. The press half is
+    // three — a phone press sweep that reads blocks rather than lines, a press that is
+    // never a transform, and the button table's fill removed. The other seven are one or
+    // two per component from three worktrees: the chevron's size and the two marks'
+    // stroke; the tab bar's rule and its height budget; the masthead sweep's phone half,
+    // which includes the inline-style clause added *after* the merge when re-planting
+    // found the branch's version could not see one; `Section`'s four channels as classes
+    // the table can be compared to; and `Field`'s line box and `Toggle`'s two.
+    core: 928, app: 677, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

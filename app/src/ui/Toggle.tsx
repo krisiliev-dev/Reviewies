@@ -36,7 +36,7 @@ export function Toggle({ value, disabled }: ToggleContract) {
           specificity are decided by Tailwind's *emission order*, not by which is written last
           — `.size-5` lands before `.h-[1em]` in the compiled sheet — so `size-5` was inert and
           this span carries no `text-*` class, leaving the mark at one em of the inherited body
-          16px. Measured on Settings at 16x16 against `CrossOff`'s 20. Every other `Tick` and
+          16px. Measured on Settings at 16x16 against `CrossOff`'s 20 (§6.184). Every other `Tick` and
           `Chevron` on the web already sized itself with a font size; this was the odd one.
 
           Written out rather than interpolated for the reason above — a class built from a

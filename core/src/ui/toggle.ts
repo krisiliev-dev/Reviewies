@@ -84,7 +84,8 @@ export const TOGGLE = {
   /**
    * Unavailable: "not available", never "broken" — and **both** channels of it.
    *
-   * This was the single string `'strokeHairline'`, and its own comment said *the border*.
+   * §6.184. This was the single string `'strokeHairline'`, and its own comment said *the
+   * border*.
    * A setting that is on and unavailable still draws a tick, and nothing here said what
    * colour it is, so both renderers reached for `dimInk` by hand — the agreement two files
    * make in private that the paragraph above `mark` warns about, one property over.

@@ -14297,6 +14297,342 @@ today is the import report, on every import.
 **No screenshot was read this sprint**, a fourth running, and **72** remain unread of 137 — re-run after the design passes rather than carried from the paragraph above, which is the whole of §6.182's lesson about this number.
 
 
+### 6.184 A decision the record made, and the table it never reached
+
+Three items had been sitting in the queue as three small separate things — a pressed fill, a
+scale transform, a doubled stroke. Read as one question, *what does this product do when you
+press something*, they are one finding, and the answer was that the product had decided and
+then not carried the decision.
+
+#### §6.122 already answered this, at length
+
+Two days ago. Its entry is the header of `core/src/ui/surface.ts` and it is not ambiguous: it
+names the two conventions the app was holding at once, says which four controls rose and which
+two sank, prints a contrast table for both directions on both grounds, and defines
+
+```ts
+/** Where a control goes while it is held. One direction, for every control on both platforms. */
+export const PRESS = elevation.sunken;
+```
+
+It argued the case against the rise from a specific failure: `groundRaised` is also
+`SURFACE.card`, so *"a row inside a card presses to the colour it is already painted, so
+nothing happens — no feedback at all on the highest-frequency gesture in the product"*. It
+proved that by holding a pointer down in `design/capture.mjs` and printing
+`-> rgb(28, 25, 30) on rgb(28, 25, 30)`.
+
+`Button` is one of the four it names.
+
+#### The fix went to a renderer, and the table stayed wrong
+
+That commit touched twenty-three files. It changed `app/src/ui/Button.tsx`, `Choice.tsx` and
+`Row.tsx` on the web and `Choice.tsx`, `Row.tsx` and `Key.tsx` on the phone. It did not open
+`core/src/ui/button.ts`, which went on saying:
+
+```ts
+export const PRESSED = { stroke: border.mark, fill: 'groundRaised' } as const;
+```
+
+and it did not open `mobile/src/ui/Button.tsx`, which is the file that reads it. So for two
+days the web's button sank and the phone's rose.
+
+Measured, not deduced, and the number is the one to notice. Holding the phone export's button
+reports `rgb(28, 25, 30)` — `groundRaised`, `SURFACE.card`, **the same value §6.122 printed as
+its evidence for the defect**, on the control §6.122 named, after §6.122 fixed it. The web's
+`active:bg-ground-well` really is in the built stylesheet; checked there rather than in the
+source, because §6.180 found a class that was inert where it was written.
+
+This is not "somebody missed a file". The three-file pattern exists precisely so that a
+decision lives in `core/` and neither renderer can hold a private opinion, and the fix was
+applied at the two renderers while the table between them kept the old answer. A renderer edit
+looks complete because the screen you are looking at is correct.
+
+#### The guard, which had both directions on consecutive lines
+
+§6.122 rewrote `app/src/ui/button.test.ts` in that same commit, and the diff it shipped is:
+
+```ts
+expect(WEB).toContain(`active:bg-${PRESS...}`);   // resolves to ground-well — down
+expect(PRESSED.fill).toBe('groundRaised');        // up
+```
+
+with a comment above the first line explaining the exact defect the second line preserves —
+*"a button inside a card pressed to the colour behind it"*. One line apart, in the commit
+whose subject was *"A press had two directions"*.
+
+A guard that checks each platform against its own source cannot fail on a disagreement
+**between** them. It records it. §6.121's shape with two eyes instead of none, and the reason
+the disagreement survived a suite that was looking straight at it.
+
+#### The sweep that could not reach the renderer
+
+`app/src/ui/surface.test.ts` carried a clause named for exactly this — every phone press steps
+to `theme[PRESS]` — and it was green, with a non-vacuity check.
+
+It found **zero matches in `Button.tsx`**. Proved rather than assumed: running the old pattern
+over the pre-fix source in node prints the four files it did see (`Choice`, `Key`, `PadCell`,
+`Row`) and not the fifth. The pattern was a single-line regex and the offending expression was
+formatted across three:
+
+```ts
+pressed && !disabled
+  ? { borderWidth: PRESSED.stroke, backgroundColor: theme[PRESSED.fill] }
+  : null,
+```
+
+The non-vacuity check passed on the four it could see, which is the trap worth naming: a floor
+proves the instrument found *something*; it never proves the instrument could reach the thing
+it was named for. Prettier's line width decided what this guard was able to see. It reads a
+220-character block from each `pressed` now, and its floor is a count rather than a boolean.
+
+#### The two transforms, and the comments above them
+
+`app/src/ui/PadCell.tsx` had `active:scale-90`; `mobile/src/ui/PadCell.tsx` had
+`transform: [{ scale: 0.94 }]`. Both sat under, or one import away from, a comment stating that
+press feedback in this app was deliberately never motion — so Reduce Motion has nothing to
+substitute for and `motion.test.ts` has no `reduced ?` branch to find. A scale is a transform,
+a transform is motion, and neither had a `reduced ?` branch. They were the only two presses in
+the build that moved anything, and they disagreed about how far — 0.90 on the web, 0.94 on the
+phone. What remains is a centring offset, an SVG rotate and two deliberate animations, and the
+animations do branch on Reduce Motion, which is the point: these two were the ones pretending
+not to be animation.
+
+Both removed. `surface.test.ts` says a press is never a transform, which is what both platforms
+had already said in writing and neither had done.
+
+#### The stroke that cited a rule and then did its own arithmetic
+
+`mobile/src/ui/CrossOff.tsx`:
+
+```ts
+// Instant. The same reasoning as `Button`: press feedback that was never motion
+// is press feedback Reduce Motion does not have to substitute for.
+pressed && !disabled ? { borderWidth: RING.stroke * 2 } : null,
+```
+
+`Button` thickens to `PRESSED.stroke`, which is `border.mark`, which is 2. `RING.stroke` is
+`border.icon`, 1.5 — so this reached 3, which is `border.tally`, where the web's twin thickens
+to `border-mark` and every other press in the build thickens to 2. A comment naming the rule it
+follows, directly above arithmetic that does not follow it. §6.120's shape, at the width of one
+expression.
+
+#### The harness §6.122 built to settle this had never pressed a Button
+
+`design/capture.mjs` carries `pressReadings`, written by §6.122, run on every design pass. It
+holds a pointer down and reads the computed background, because a style that exists only while
+the pointer is down is in no stylesheet a source clause can read. It is the right instrument.
+
+It asks one question: does the press land on the colour behind it. That catches the collision
+it was built for and says nothing about **direction** — so a phone `Button` rising to
+`groundRaised` on a plain `ground` page is a perfectly visible press, and the harness printed
+the reading on stdout every run without objecting.
+
+And it could not have reached `Button` if it had asked. The sampler took the first six
+interactive elements per route. Measured, with the defect planted: **five presses across twelve
+routes, and every one of them a `Row`** — because a row is what the top of every list screen is
+made of. §6.122's instrument had never pressed the control §6.122 got wrong.
+
+Both halves in one run. With `PRESSED.fill` planted back:
+
+- at a cap of six, the new wrong-way check stayed silent — the old check's blindness, measured;
+- with the cap lifted, twelve presses, and five of them named: `Export everything (JSON)`,
+  `Export watch history (CSV)`, `Choose files`, `Scan Wi-Fi` — all `Button`s, all pressing to
+  `rgb(28, 25, 30)` against a `PRESS` of `rgb(12, 11, 13)`;
+- `invisible` stayed green throughout, on the same run, on the same defect.
+
+Restored, all twelve land on `rgb(12, 11, 13)` and the pass exits 0. `PRESS_RGB` is read out of
+the token file rather than typed — `scripts/tokens-to-css.mjs` has imported the `.ts` directly
+since it was written, so node reading `core/src/tokens.ts` is an established move here rather
+than a new one.
+
+The screenshots are byte-identical before and after. A press state is not in a photograph,
+which is why this needed an instrument and why the instrument needs to ask the right question.
+
+### The other three, in parallel worktrees
+
+Three agents, three branches off HEAD, merged with no conflicts. Every finding below was
+**re-planted in the main checkout after merging** rather than taken on the branch's word — the
+protocol §6.183 set. Six re-plants, five red. The sixth is the reason the protocol exists and
+has its own paragraph.
+
+#### Two marks written twice, and a table that described a mechanism one reader lacks
+
+A row's chevron is `CHEVRON_SIZE` now — `text.s16`, because on the web the size *is* the row's
+text size (`h-[1em]` inside `text-s16`) and the phone, having no `em`, was being told a number
+by hand at four call sites, one of which said 20 against the web's 16 with the other three
+pairs agreeing at 16.
+
+Both marks stroke at `MARK_STROKE` = `border.mark`. The tick's 2.5 was typed once per platform,
+appeared nowhere else in either tree, and sat between two members of a four-member scale —
+which is the shape `tokens.ts` already kills elsewhere. It was also not buying what it looks
+like: both marks draw in the same `MARK_BOX` and the tick renders larger, so at one weight the
+tick already lands heavier (2/24 × 20 = 1.67px against 1.33px). The tick loses 0.4px, stated
+rather than slipped in.
+
+`tabIcon.ts` claimed both renderers inherit `currentColor`. React Native has no inherited paint;
+the phone is handed a colour and puts it on the path. The cost of that sentence was never a
+pixel — it was a core table describing a mechanism one of its two readers does not have.
+
+`TAB_MARKER` holds the active-tab rule's three numbers. The gap had drifted to 2 on the web and
+4 on the phone, both legal on the space scale, which is exactly the distinction a scale cannot
+make and a table can. The web's 2 stands, because the rule belongs to the glyph rather than
+separating two things — and because `TAB_BAR_HEIGHT` budgeted `size.tap`, the WCAG *target*
+floor, for a 22pt glyph, put the gap under the icon rather than over it, and omitted the rule
+entirely, so the column drew 29 in the 28 allowed. Built from its parts it measures 60 against
+61, and in the export the tab item goes 52pt to 51pt and **gains** a point of slack.
+
+Near-miss spellings, all caught by the second draft and named in the clauses: `CHEVRON_SIZE + 4`,
+`MARK_STROKE * 1.25`, and a second `text-s*` class on the same tag — which walked through the
+first version of the size clause, because Tailwind's emission order decides the winner and
+`toContain` cannot see that.
+
+#### A sweep called "either platform" that scanned one
+
+`masthead.test.ts` said it was *"the only thing on either platform that draws a screen title"*
+and iterated `app/src` twice. The clause guarded its own non-vacuity — on the half it had. That
+is what hid the shortfall: **a clause reporting how much it scanned reads as thorough whether or
+not it scanned the right thing**, and the missing half was absent rather than empty, so there
+was no zero for the count to catch. §6.153's instrument that can only return one answer, in a
+new disguise.
+
+It cost three hand-drawn phone titles, none of them a heading: `+not-found.tsx`,
+`title/[id].tsx`, and `_layout.tsx`, whose one style dressed both takeover screens.
+
+The Not Found question — `page` or `sub` — was settled by serving the export rather than by
+reading the source. `/+not-found` rendered one `<h1>Not found</h1>` from the navigator and
+"Nothing at this address" beneath it as ordinary text, so the `page` slot was already filled,
+and filled with different words from the ones the web uses. The answer is `page` on both
+platforms, drawn where each platform draws a `page`: the body on the web, the navigator title on
+the phone, as the other nine pushed screens already do.
+
+`Section`'s defect was the same shape one layer down. `caps` and `track` were stated for both
+levels and read by **neither** renderer, their only consumer a counter comparing them to each
+other — which any two differing values satisfy. Demonstrated before anything was touched:
+setting `section.ink` to `inkTertiary` moved the phone, left the web, and kept all thirteen
+clauses green.
+
+The sharpest part was underneath both. `type.test.ts`'s tracking clause allowed a component's
+table entry for the *size* argument and demanded a literal token for the *tracking* one — so a
+renderer that read `SECTION.section.track` **failed the guard**. A clause written to stop a
+hand-typed `letterSpacing: 1` was, one argument along, requiring one. That is what kept the
+entry unreadable, and no amount of reading `Section.tsx` would have shown it.
+
+#### Four lines of nothing in particular
+
+`FIELD_LINES = 4` was four of *what*. The web read it as `rows={4}` at whatever line height it
+inherited — Tailwind preflight's 1.5, a ratio nobody in this build has chosen — and the phone
+read it as `FIELD_SIZE.minHeight * 4`, which multiplies the 44pt **target floor**, what a finger
+needs, by a line count. On one control at a 390 viewport: **358×122 on the web and 358×176 on
+the phone**.
+
+The cause sat one property up, and `tokens.ts` had already named it as the census defect the
+type layer exists to fix — the phone sets a line height and the web sets none. A box measured in
+*lines* has no height until the table says how tall a line is. `FIELD_BOX.leading` says it now;
+the two re-measure at **117.5 and 118**, the half point being each platform's own rounding of
+1.43 × 16.
+
+On `Toggle`, `<Tick className="size-5" />` drew a **16×16** mark against the phone's 20 and
+`CrossOff`'s 20. `Tick` sizes itself in `em` and takes the caller's class *after* its own, so
+`size-5` and `h-[1em]` set the same properties at the same specificity and the winner is
+Tailwind's **emission order** — `.size-5` at byte 10020, `.h-[1em]` at 10364 — leaving `size-5`
+inert and the mark at one em of the inherited 16px. Six of the seven web call sites already
+sized with a font size; this was the seventh, and the clause guarding it asserted the *string*
+`size-5` was present, so it passed whichever rule won.
+
+`TOGGLE.unavailable` was a single string whose own comment said *the border*. Nothing stated the
+mark's colour when a setting is on and unavailable, so both renderers reached for `dimInk` —
+Watching Mode's auto-dim, **9.31:1** on the dark ground and **1.78:1** in light. Wrong in both
+directions at once: a disabled tick shouting louder than the ink beside it in dark, and no mark
+at all in light. Those two lines were its only mention anywhere in either app.
+
+Two things in that brief did not survive measurement and are dropped rather than quietly kept:
+the web's textarea inherits 24px, not `normal`; and `border-icon` resolves perfectly well — the
+1px in `getComputedStyle` is Chromium flooring a 1.5px border at DPR 1, not a dead class.
+
+Fifteen plants, four written specifically to satisfy the new guard while breaking the behaviour.
+One of the four survived the first draft by appending `min-h-[300px]` to a className the guard
+only checked with `toContain`, and that is recorded in the clause it broke.
+
+#### The re-plant that went green, which is why the protocol exists
+
+Six findings re-planted in the main checkout after merging. Five went red. The sixth did not:
+a `<Text>` in `+not-found.tsx` carrying
+
+```tsx
+style={{ fontSize: text.s24, color: theme.ink, fontFamily: type.family.title.name }}
+```
+
+walked straight through the masthead sweep that had just been written to catch exactly that. The
+phone half keys on a two-space-indented `StyleSheet` entry, and an inline object has neither the
+indentation nor the trailing comma. `type.test.ts`'s digit sweep does not cover it either,
+because this spells the size with the *token*, which is the thing that sweep permits — so it was
+open on both sides at once, and it is the ordinary way to write a one-off style in React Native.
+
+No file in `mobile/` has an inline `fontSize` today, so nothing was broken. What was wrong was
+the claim. The clause scans inline style objects now; planted, it names the file and the level;
+restored, green.
+
+The branch's report was honest and thorough and still could not have found this, because a
+report is written by whoever wrote the guard. §6.183 set re-planting as the merge protocol on the
+argument that *"that is the check that makes the branch's word unnecessary"*. This is the sprint
+where it paid.
+
+## What is not done, and why it is said here
+
+**A worktree is not a checkout, and all three agents paid the same toll.** Every one of them
+found its worktree had **no `node_modules` at all**, and every one of them tried a symlink farm
+first and had it fail the same way: Metro resolves symlinks to real paths and its `watchFolders`
+is the worktree, so `expo export` cannot resolve `expo-router/entry`. Two ended up doing a real
+copy — one of them 870MB — and one used `cp -al` hardlinks. Three agents, one problem, three
+independent diagnoses of it, none of them cheap. §6.183 said the next step for more parallel work
+was a port allocator; this says it also needs a worktree that can build. `cp -al` is the answer
+that was found; nothing yet does it for them.
+
+**One agent measured the wrong build for part of its run.** It served
+`/home/user/Reviewies/mobile/dist` — the *main checkout's* export, containing none of its changes
+— on its own port, and it took `ps` from outside to notice. It had built its own export a minute
+earlier. The reading in question turned out to be one it wanted (the pre-fix state, deliberately),
+and it re-measured the fix against its own build once told. But nothing in the worktree
+arrangement stops an absolute path in a brief from reaching across the isolation, and a
+measurement of the wrong tree looks exactly like a measurement.
+
+**A filled button inverts completely on press, and now there is a number for it.** The design
+pass reports `Export everything (JSON)` resting at `rgb(244, 239, 231)` and pressing to
+`rgb(12, 11, 13)`. That is a near-white plate going to near-black under a finger — the sink rule
+applied to a control whose rest state is not a ground at all. It was in the queue as a question
+and it is now a measurement; the alternative is a step *within* the accent rather than a step to
+the well, and that is a decision rather than a fix. Not taken this sprint.
+
+**The whole `dim` palette has no renderer consumers.** `dimInk`, `dimInkSecondary` and
+`dimWorking` — including in Watching Mode, whose palette it is — now that `TOGGLE.unavailable`
+has stopped reaching for one of them. That is a fifth token layer with a name, a meaning and no
+readers, after `ratio.poster` (§6.118), heading depth (§6.120), `elevation` (§6.122) and the
+light table. Noticed in passing while fixing something else, not chased.
+
+**`App.tsx` says the tab labels are "sized in rem".** They are not: `tokens-to-css.mjs` emits
+`--text-s12: 12px`. Stale prose in a file this sprint touched, on a different subject from any
+of the nine findings, so it is reported rather than swept in.
+
+**Three box utilities are still unswept.** `CrossOff`'s `h-11 w-11` and `Button`'s `min-h-12` /
+`min-h-11` are the same numbers arrived at twice. `space.test.ts`'s `UTILITY` regex covers none
+of `size` / `h` / `w` / `min-h`, and §6.182 reached only `Choice`. `Toggle`'s was fixed because
+it was the one measured *wrong*; the others agree with the table, which is luck rather than a
+guard.
+
+**The cross-call-site `Tick`/`Chevron` sweep is in the wrong file.** It lives in
+`toggle.test.ts` because that file was in scope; it belongs in `mark.test.ts`, which owns
+`Mark.tsx`. Filed in both places rather than moved, because moving it was outside the branch's
+subject and a rule with no guard is a comment.
+
+**The phone may still not announce a progress value**, carried from §6.183 with nothing added:
+three possibilities and no measurement separating them.
+
+**No screenshot was read this sprint**, a fifth running, and **72** remain unread of 137 — re-run
+with `node design/unread.mjs` rather than carried from §6.183's paragraph, and unchanged because
+nothing this sprint read one. Five sprints of component work is a defensible run and it is also
+how a backlog stops being a backlog and becomes a fact about the repo.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -14398,6 +14734,19 @@ and which single claim in this document could not be checked at all:
   say is whether iOS's Dynamic Type and Android's font scale honour that prop the way
   react-native-web's `Text` does. The two mechanisms are different code; the export is
   evidence about the decision and not about the platform.
+
+  §6.184 adds a fourth, and it is the closest of the four to being a real measurement. Every
+  press reading in this repo — §6.122's and §6.184's alike — is `page.mouse.down()` on an
+  export, which gives a real computed background and a real contrast ratio. What it is not is
+  a finger. On a device the ground step is the *corroboration* and the haptic is the
+  confirmation, which `surface.ts` says in as many words while paying for the sink at 1.046
+  against the rise's 1.080 — a cost that is only affordable if the haptic is doing the work
+  the sentence claims. `expo-haptics` **is** in this build, at five call sites — but every one
+  of them fires on an *action* completing (a watch marked, a season caught up, a remote command
+  sent), not on a control being held. No shared control's press path touches it. So the sink's
+  argument leans on a channel that is real on the phone, is wired to a different event, and is
+  inert in every export any suite drives. Checked rather than assumed: a first draft of this
+  paragraph said the package was absent, which it is not.
 - **Offline here is a switch, not a bad connection.** §6.56 runs both apps with
   Playwright's offline mode, which is a clean break: every request fails at once and
   keeps failing. What that does not reproduce is the case people actually meet — a

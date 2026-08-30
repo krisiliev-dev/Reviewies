@@ -77,7 +77,7 @@ export const FIELD_BOX = {
  * A multi-line field starts at four lines and grows.
  *
  * Four **line boxes**, which is the only reading of "four lines" both platforms can honour,
- * and stating it that way is this sprint's whole finding. It used to be four of nothing in
+ * and stating it that way is §6.184's whole finding. It used to be four of nothing in
  * particular, and each renderer supplied its own missing number:
  *
  * | | what four lines came to | measured |
