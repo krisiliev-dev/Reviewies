@@ -100,6 +100,28 @@ const figure = (body, label) => {
  * raising the text size on a device does — the type grows and the poster does not — and
  * it is the property 1.4.4 actually asks about.
  *
+ * ## The line box is not one of the pixel values that stays where it is
+ *
+ * This sprint, and it is the correction that matters most here, because this function is the
+ * evidence §6.183 reasoned from. "Every other pixel value left where it is" is true of a
+ * poster and false of a `lineHeight`. React Native scales the stored line height by exactly
+ * the multiplier it scales the glyphs by — iOS in `RCTTextAttributes.mm` and Fabric's
+ * `RCTAttributedTextUtils.mm`, Android through `toPixelFromSP` in `TextAttributeProps.kt` —
+ * and `react-native-web` is the only one of the three that does not, because it emits `px`
+ * and pins `Dimensions.fontScale` to 1.
+ *
+ * So doubling the font size alone did not simulate a phone at 200%. It simulated the export
+ * at 200%, in which every line box on every screen ends up smaller than the glyphs in it:
+ * measured before this change, a tab label at 24pt in a box of 17 and a `Note` running six
+ * rows that overlap by 8pt each. None of that happens on a device. The line box is doubled
+ * with the type now, and the ratio holds at 1.43 the way the web's always did.
+ *
+ * `letterSpacing` is deliberately left alone, and that is the one property the two shipping
+ * platforms do not agree about: Android scales it through the same `toPixelFromSP`, iOS
+ * hands it to `NSKernAttributeName` raw. No single simulation is faithful to both. What is
+ * left here is iOS's, which is the worse of the two, and `core/src/tokens.ts` under `track`
+ * carries the argument for leaving it.
+ *
  * Not a substitute for a device. It is a substitute for nothing, which is what was here.
  */
 /**
@@ -142,10 +164,17 @@ async function scaled(screen) {
   const applied = await page.evaluate(() => {
     let count = 0;
     for (const el of document.querySelectorAll('*')) {
-      const size = parseFloat(getComputedStyle(el).fontSize);
+      const style = getComputedStyle(el);
+      const size = parseFloat(style.fontSize);
       if (!Number.isFinite(size) || size === 0) continue;
       el.setAttribute('data-was', el.style.fontSize);
       el.style.fontSize = `${size * 2}px`;
+      // The line box goes with the glyphs, because on a device it does. See above.
+      const line = style.lineHeight === 'normal' ? 0 : parseFloat(style.lineHeight);
+      if (Number.isFinite(line) && line > 0) {
+        el.setAttribute('data-was-line', el.style.lineHeight);
+        el.style.lineHeight = `${line * 2}px`;
+      }
       count++;
     }
     return count;
@@ -167,13 +196,109 @@ async function scaled(screen) {
         clipped.push((el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 30));
       }
     }
-    return { scrollWidth: document.documentElement.scrollWidth, viewport: innerWidth, clipped };
+    /*
+     * And the other axis, which this check never had and which is the shape a text-scaling
+     * fault actually takes: a box with a fixed height cuts the ascenders and descenders off
+     * the words in it and never moves a right edge, so `box.right > innerWidth` is blind to
+     * it. §6.181's poster monogram was found by hand for exactly this reason.
+     *
+     * The glyphs are placed rather than measured. CSS centres a `font-size`-tall content
+     * area in the line box, so a run reaches half the difference past its own rectangle at
+     * each end; `cut` is how far that passes the nearest ancestor that clips.
+     *
+     * `overflow-y: hidden` only, and only when nothing between the words and it can scroll.
+     * Anything below the fold of a scroller is not cut, it is scrolled to, and counting it
+     * would report every long screen as broken.
+     *
+     * What is deliberately *not* asserted here is the thing §6.183 proposed — that no line
+     * box is smaller than its font size. Now that the doubling above scales the line box the
+     * way a device does, that ratio is invariant by construction: it cannot fail, whatever
+     * the source says, which makes it a clause that reports on this function rather than on
+     * the product. What a fixed box does to a doubled word is still a real question, and it
+     * is this one.
+     */
+    const cut = [];
+    for (const el of document.querySelectorAll('*')) {
+      if (el.children.length) continue;
+      const words = el.textContent?.trim();
+      if (!words) continue;
+      if (el.closest('[aria-hidden="true"]')) continue;
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) continue;
+      const style = getComputedStyle(el);
+      const font = parseFloat(style.fontSize);
+      const line = style.lineHeight === 'normal' ? font : parseFloat(style.lineHeight);
+      if (!Number.isFinite(font) || !font) continue;
+      /*
+       * From the element itself, not from its parent. A first draft started at the parent
+       * and a planted `height: 20, overflow: 'hidden'` on `Note` was caught on one screen
+       * of eleven — the one where the words happened to sit in a nested `<Text>`. Everywhere
+       * else the clipping box *is* the box with the words in it, which is the ordinary way a
+       * React Native style clips its own content and was the exact shape being planted.
+       */
+      let clipper = null;
+      for (let p = el; p; p = p.parentElement) {
+        const o = getComputedStyle(p);
+        if (o.overflowY === 'auto' || o.overflowY === 'scroll') break;
+        if (o.overflowY !== 'hidden') continue;
+        /*
+         * A box told to truncate is doing its job, and this is a rule rather than an
+         * exemption. `numberOfLines` compiles to `-webkit-line-clamp` with `overflow:
+         * hidden`, and its box height is react-native-web's, not one this repo chose —
+         * the five tab labels sit in a 13pt clamp box at every text size, which reads as
+         * "4pt cut at 100%, 21pt at 200%" and is a measurement of `-webkit-box`. A first
+         * draft of this clause failed on all five and would have had somebody repairing a
+         * third-party renderer's line-clamp. What is being looked for is the other kind:
+         * a box that clips because it was given a *height*.
+         *
+         * **And this exclusion is exactly where the one defect a real phone has found
+         * would hide, so a pass here is not an all-clear.** The first device session saw
+         * text cropped at the bottom of Up Next rows and the More menu's rows at maximum
+         * Dynamic Type, and `mobile/src/ui/Row.tsx` argues from source that the mechanism
+         * there is `numberOfLines` — this exclusion's subject. The exclusion is still
+         * right, because the export's clamp box is `-webkit-line-clamp` and iOS's is
+         * TextKit's used rect, and a clause cannot tell somebody to repair the first when
+         * the fault is in the second. `design/measure.mjs --lines` prints every truncation
+         * cut with its number and its reason and asserts nothing, which is where a fault
+         * this clause must not claim belongs.
+         */
+        if (o.webkitLineClamp && o.webkitLineClamp !== 'none') break;
+        if (o.textOverflow === 'ellipsis' || o.whiteSpace === 'nowrap') break;
+        clipper = p;
+        break;
+      }
+      if (!clipper) continue;
+      const half = Math.max(0, (font - line) / 2);
+      const c = clipper.getBoundingClientRect();
+      /*
+       * Two different measurements, because a box that clips its own words hides them
+       * *inside* its rectangle and a rectangle comparison reads zero. `scrollHeight` against
+       * `clientHeight` is what says how many rows went missing; the half-leading is what
+       * says the one row it kept is taller than the room it was given.
+       */
+      const past =
+        clipper === el
+          ? Math.max(el.scrollHeight - el.clientHeight, half)
+          : Math.max(c.top - (r.top - half), r.bottom + half - c.bottom);
+      if (past > 1) cut.push(`${words.replace(/\s+/g, ' ').slice(0, 24)} by ${Math.round(past)}pt`);
+    }
+
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      viewport: innerWidth,
+      clipped,
+      cut,
+    };
   });
 
   await page.evaluate(() => {
     for (const el of document.querySelectorAll('[data-was]')) {
       el.style.fontSize = el.getAttribute('data-was') || '';
       el.removeAttribute('data-was');
+    }
+    for (const el of document.querySelectorAll('[data-was-line]')) {
+      el.style.lineHeight = el.getAttribute('data-was-line') || '';
+      el.removeAttribute('data-was-line');
     }
   });
   await page.waitForTimeout(200);
@@ -184,6 +309,11 @@ async function scaled(screen) {
     `${screen}: holds together at 200% text`,
     result.scrollWidth <= result.viewport + 1 && result.clipped.length === 0,
     `${result.scrollWidth} wide in ${result.viewport}${result.clipped.length ? `, off screen: ${result.clipped.join(', ')}` : ''}`,
+  );
+  check(
+    `${screen}: no words cut by a fixed height at 200% text`,
+    result.cut.length === 0,
+    result.cut.length ? result.cut.join(', ') : 'nothing clipped vertically',
   );
 }
 

@@ -186,9 +186,14 @@ describe('the type scale', () => {
      * a third of it. One role, two platforms, three times apart, and no test could see it
      * because neither number had a name.
      *
-     * Points is the reason it is a token rather than a constant: stored as 1, tracking
-     * holds still while the glyphs double at 200% Dynamic Type and the tracked caps close
-     * into a block.
+     * Em is the reason it is a token rather than a constant, and the reason is derivability:
+     * one figure in the table instead of a point value per size. The sentence here said the
+     * em also makes the tracking grow at 200% Dynamic Type, and that is half true in a way
+     * worth stating, because it is the one property where the two shipping platforms differ.
+     * Android converts `letterSpacing` with `toPixelFromSP` and it grows; iOS hands it to
+     * `NSKernAttributeName` raw and it does not — 0.083em becomes 0.042 at 200%, measured in
+     * the export. `core/src/tokens.ts` under `track` argues why the unconditional repair is
+     * worse than the fault.
      */
     const phone: string[] = [];
     for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {

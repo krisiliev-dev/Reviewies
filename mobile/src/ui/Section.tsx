@@ -13,7 +13,12 @@ import { space, theme, tracking } from './theme';
  *
  * `tracking()` rather than a stored point value, for derivability — not, as this comment
  * used to say, because a literal "holds still while the glyphs double at 200% Dynamic Type".
- * So does the computed one: it is a module-load constant. `theme.ts` has the measurement.
+ * So does the computed one: it is a module-load constant.
+ *
+ * These two eyebrows are the sites where that actually costs something, and the cost is one
+ * platform's. Android scales a stored `letterSpacing` with the glyphs; iOS does not, so the
+ * eyebrows here tighten from 0.083em to 0.042 at 200%. Measured, argued and left alone in
+ * `core/src/tokens.ts` under `track`, because the unconditional repair breaks Android.
  */
 export function Section({
   children,

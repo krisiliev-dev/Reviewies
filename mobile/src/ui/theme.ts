@@ -97,15 +97,20 @@ export const REACH = { inline: 8, dark: 12 } as const;
 /**
  * Tracking, in points, from tracking in em.
  *
- * The one RN-specific derivation the token layer cannot do for itself. `letterSpacing` on
- * React Native is points, and the sentence that used to be here said storing em and
- * multiplying at the call site makes the tracking "grow with them" at 200% Dynamic Type. It
- * does not, for the reason set out under `leadingOf` below: `tracking(text.s12, track.t83)`
- * is the constant 0.996, fixed at module load, and a point value does not answer `fontScale`.
+ * The one RN-specific derivation the token layer cannot do for itself, and what it buys is
+ * **derivability** — one em figure in the table rather than a point value per size. CSS takes
+ * em directly, so the web never calls this.
  *
- * What it buys is derivability — one em figure in the token layer rather than a point value
- * per size — and the paragraph below says so correctly. CSS takes em directly, so the web
- * never calls this and the web's tracking really does scale.
+ * Whether the point value it produces answers the reader's setting is a question with two
+ * answers, which is why it is not the same paragraph as `leadingOf` below. Android converts
+ * `letterSpacing` with `toPixelFromSP`, the font-scaled unit, so it does. iOS hands it to
+ * `NSKernAttributeName` untouched, so it does not: 0.996 stays 0.996 while the caps double,
+ * and the tracking falls from 0.083em to 0.042 at 200% and 0.028 at 300% — measured in the
+ * export, which happens to draw iOS's version of this.
+ *
+ * Not repaired here, and `core/src/tokens.ts`'s `track` has the argument: an unconditional
+ * `* fontScale` would correct iOS and double Android. `phoneTextScaling.test.ts` allows the
+ * repair under an explicit `Platform.OS === 'ios'` and forbids it without one.
  *
  * Always `tracking(text.sNN, track.tNN)` at the site, never a number: the pair is what
  * makes it derivable, and a lone product is a literal again.
@@ -117,19 +122,37 @@ export function tracking(size: number, em: number): number {
 /**
  * Line height, in points, from a ratio.
  *
- * The pair to `tracking()` — and the reason given here was **wrong**, measured in the export
- * at 200%: a tab label's glyphs go from 12 to 24 and its line box stays at 17, which is
- * `leadingOf(text.s12, leading.l143)`. That is the collision the sentence claimed this
- * function avoids.
+ * The pair to `tracking()`, and the paragraph here has now been wrong in two directions.
  *
- * Both arguments are token constants and the call sits inside a `StyleSheet.create` object
- * literal, so it is evaluated once at module load: `leadingOf(14, 1.43)` **is** the stored 20
- * it was offered as the alternative to, byte for byte at runtime. React Native's `lineHeight`
- * is a fixed point value and does not answer `fontScale` however it was computed.
+ * It first said a stored 20 collides at 200% and this function is the escape. §6.183 measured
+ * the export and refuted it: both arguments are token constants and the call sits inside a
+ * `StyleSheet.create` literal, so `leadingOf(14, 1.43)` **is** the stored 20, byte for byte —
+ * and the export's line box duly held at 17 while a tab label's glyphs went 12 → 24.
  *
- * What it does buy is the paragraph below, which was right all along: derivability. Change
- * `text.s14` and every line height follows at build time. That is worth having and it is not
- * what the old sentence said. §6.183 has the measurement and the decision that is still open.
+ * That arithmetic is still right. The conclusion drawn from it — that React Native does not
+ * answer `fontScale` however the value was arrived at — was a fact about `react-native-web`
+ * written down as a fact about React Native. Reading the text layer of the version this app
+ * actually depends on settles it:
+ *
+ * - iOS, both renderers: `lineHeight * effectiveFontSizeMultiplier`, the same multiplier
+ *   applied to the glyphs (`Libraries/Text/RCTTextAttributes.mm:141`, and Fabric's
+ *   `RCTAttributedTextUtils.mm:230`).
+ * - Android: `toPixelFromSP(lineHeight)` while `allowFontScaling` is on
+ *   (`TextAttributeProps.kt`), the same conversion `fontSize` gets.
+ *
+ * So the stored 20 **is** 40 at 200% on a device, and the phone's leading already answers the
+ * reader's setting. What does not is `react-native-web`, which emits `px` and pins
+ * `Dimensions.fontScale` to 1 — the renderer every suite and every design pass here drives.
+ * `design/measure.mjs` scales the line box with the type for that reason, and with it the
+ * phone's leading holds at 1.417–1.429 through 100%, 200% and 300% exactly as the web's does.
+ *
+ * The consequence for a call site is the opposite of the fix that was being considered:
+ * multiplying by `useWindowDimensions().fontScale` here would scale the box **twice**, to
+ * 80 around 28pt glyphs, and would look correct in every check this repo can run.
+ * `phoneTextScaling.test.ts` forbids it.
+ *
+ * What this function buys remains derivability: change `text.s14` and every line height
+ * follows at build time.
  *
  * Rounded, because a fractional line height on a device is a fractional baseline.
  *

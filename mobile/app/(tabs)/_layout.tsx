@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { TabIcon } from '../../src/ui/TabIcon';
 import { TAB_BAR, TAB_ICON_SIZE, TAB_MARKER, type TabIconName } from '@reviewies/core/ui/tabIcon';
-import { View, type ColorValue } from 'react-native';
+import { View, useWindowDimensions, type ColorValue } from 'react-native';
 import { leadingOf, space, theme } from '../../src/ui/theme';
 import { text, type, leading } from '@reviewies/core/tokens';
 
@@ -40,11 +40,40 @@ const LABEL_LINE = leadingOf(text.s12, leading.l143);
  * still eat the room back with its own `paddingBottom`, and React Navigation has spacing of
  * its own inside the item. Measured in the export at 390x844, the tab item is 52pt with 46
  * of content in it before this change and 51 with 44 after — the slack goes up by one.
+ *
+ * ## One term of the six is in a unit the reader can change
+ *
+ * This sprint, and the composition above is what makes it a one-term repair rather than a rewrite.
+ * `space.s8`, `TAB_MARKER.thickness`, `TAB_MARKER.gap` and `TAB_ICON_SIZE` are device pixels
+ * and stay where they are put. `LABEL_LINE` is a `lineHeight`, and React Native scales one of
+ * those by the reader's font scale on both shipping platforms — iOS multiplies it by the same
+ * `effectiveFontSizeMultiplier` as the glyphs, Android converts it with `toPixelFromSP`. So
+ * at 200% the label wants 34 of the 17 this sum allowed it and the bar is seventeen points
+ * short of its own contents, while `height` — not a unit anything scales — holds at 62.
+ *
+ * Measured in the export at 390x844, where the disagreement is visible even though the cause
+ * is not: the phone's tab item is **78x51 at 100%, 200% and 300% alike**, against the web's
+ * 78x63, 92x102 and 195x140. The web's bar grows with the words because CSS was asked for a
+ * ratio; this one was asked for a number.
+ *
+ * The export cannot confirm the repair, and that is worth saying rather than glossing:
+ * `react-native-web` pins `Dimensions.fontScale` to 1, so `fontScale` here is 1 in every
+ * check this repo can run and the sum is byte-for-byte what it was. What is checkable is that
+ * it is the *label's* term being scaled and not the whole budget — scaling the padding and
+ * the glyph too would be a second defect wearing the first one's face — and
+ * `phoneTextScaling.test.ts` allows a font scale on a box for exactly this while forbidding
+ * it on the `lineHeight` two lines below, which the platform already scales.
  */
-const TAB_BAR_HEIGHT =
-  space.s8 + TAB_MARKER.thickness + TAB_MARKER.gap + TAB_ICON_SIZE + LABEL_LINE + space.s8;
+const tabBarHeight = (fontScale: number) =>
+  space.s8 +
+  TAB_MARKER.thickness +
+  TAB_MARKER.gap +
+  TAB_ICON_SIZE +
+  LABEL_LINE * fontScale +
+  space.s8;
 
 export default function TabLayout() {
+  const { fontScale } = useWindowDimensions();
   return (
     <Tabs
       screenOptions={{
@@ -62,7 +91,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.ground,
           borderTopColor: theme.strokeHairline,
-          height: TAB_BAR_HEIGHT,
+          height: tabBarHeight(fontScale),
           paddingBottom: space.s8,
         },
         tabBarLabelStyle: {

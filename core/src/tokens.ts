@@ -315,12 +315,27 @@ export const weight = {
  *
  * A ratio rather than a number so that one change to a size moves every line height with it.
  *
- * The reason given here until §6.183 was that "a stored 20 stays 20 while the glyphs double at
- * 200% Dynamic Type and the lines collide", with the phone's multiplication at the call site
- * as the fix. Measured in the export: it is not. `leadingOf(size, ratio)` takes two constants
- * and is evaluated once, so the phone's line box holds at 17 while a tab label's glyphs go
- * from 12 to 24 — the collision, in the call site that claimed immunity from it. The web is
- * the half that was right: CSS gets the ratio and computes against the rendered size.
+ * ## What happens at 200%, corrected twice
+ *
+ * This said "a stored 20 stays 20 while the glyphs double at 200% Dynamic Type and the lines
+ * collide", with the phone's multiplication at the call site as the fix. §6.183 measured the
+ * export, found the line box holding at 17 while a tab label's glyphs went 12 → 24, and
+ * concluded the multiplication buys nothing because both arguments are constants.
+ *
+ * The arithmetic was right and the conclusion was about the wrong renderer. Reading React
+ * Native 0.86's own text layer settles it: **the stored point value is already in the unit
+ * the platform scales.** iOS multiplies `lineHeight` by the same `effectiveFontSizeMultiplier` that grows
+ * the glyphs (`RCTTextAttributes.mm`, and Fabric's `RCTAttributedTextUtils.mm`); Android
+ * converts it with `toPixelFromSP` whenever `allowFontScaling` is on
+ * (`TextAttributeProps.kt`). A 17 stored here is 34 at 200% on both.
+ *
+ * What holds at 17 is `react-native-web`, which emits the value as a `px` rule and hardcodes
+ * `Dimensions.fontScale` to 1. That is the renderer §6.183 measured and every suite here
+ * drives, and it is not the renderer the product ships. So the ratio is right, the derivation
+ * is right, and the thing that must never happen is a call site multiplying by `fontScale` —
+ * which would scale it twice. `phoneTextScaling.test.ts` holds that line.
+ *
+ * The web needed none of this: CSS gets the ratio and computes against the rendered size.
  */
 export const leading = { l100: 1, l120: 1.2, l143: 1.43 } as const;
 
@@ -341,11 +356,23 @@ export const leading = { l100: 1, l120: 1.2, l143: 1.43 } as const;
  * 0.025em, a third of it. Two platforms, one role, three times apart, and no test could
  * see it because neither number had a name.
  *
- * Em, never points, and this is the whole reason the token exists rather than a constant.
- * React Native's `letterSpacing` is points: stored as 1, tracking stays fixed while the
- * glyphs double at 200% Dynamic Type and the caps close into a block. So the phone
- * derives `size x track` at the call site — `tracking(text.s12, track.t83)` — and the web
- * emits em directly, which is what CSS already wanted.
+ * Em, never points, and the reason is derivability rather than scaling — the sentence here
+ * survived §6.183's sweep of its twin above and said the wrong thing for four sprints longer.
+ * One em figure in the table beats a point value per size, and the web emits em directly,
+ * which is what CSS already wanted.
+ *
+ * Scaling is where this and `leading` above part company, and it is the one place the two
+ * shipping platforms disagree with each other. Android puts `letterSpacing` through the same
+ * `toPixelFromSP` it puts the line height through, so the tracking grows with the glyphs.
+ * **iOS does not**: `NSKernAttributeName` takes the value raw, so `tracking(text.s12,
+ * track.t83)`'s 0.996pt stays 0.996pt while the caps double, and the eyebrows close up.
+ * Measured in the export, which draws iOS's behaviour here: 0.083em at 100%, **0.042 at
+ * 200%, 0.028 at 300%**.
+ *
+ * Left as it is, because the repair is worse than the fault: multiplying by `fontScale`
+ * unconditionally would fix iOS and double Android, and a kern that is tighter in em than
+ * intended is a refinement degrading, not a word becoming unreadable. If anybody takes it,
+ * `phoneTextScaling.test.ts` requires them to name the platform they are taking it for.
  *
  * Magnitudes, not uses, like everything else here: `t83`, not `t.eyebrow`.
  */

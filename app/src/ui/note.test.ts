@@ -51,8 +51,14 @@ describe('the note', () => {
      * writing `lineHeight: 20`. It reproduces 20 at 14 and 17 at 12 — the commonest value at
      * each size — so the layer arrives without moving anything that had been decided.
      *
-     * A ratio, because RN's `lineHeight` is points: a stored 20 stays 20 while the glyphs
-     * double at 200% Dynamic Type and the lines collide.
+     * A ratio, because a ratio is derivable: change `text.s14` and every line height that
+     * reads it follows. This said "a stored 20 stays 20 while the glyphs double at 200%
+     * Dynamic Type and the lines collide", which §6.183 refuted (both arguments are
+     * constants, so the derived value *is* the stored one) and this sprint refuted again in the
+     * other direction — React Native scales the stored line height on both shipping
+     * platforms, so there is nothing here for a ratio to rescue. `core/src/tokens.ts` under
+     * `leading` has the citations, and `phoneTextScaling.test.ts` holds the consequence:
+     * multiplying one of these by `fontScale` scales it twice.
      */
     expect(NOTE.note.leading).toBe(leading.l143);
     expect(Math.round(text.s14 * leading.l143)).toBe(20);
