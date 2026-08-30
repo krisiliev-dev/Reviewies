@@ -13402,9 +13402,46 @@ rendered.
 
 ## What is not done, and why it is said here
 
-**The 65 single words.** Part 1 of this sprint's brief, untouched: taking the product defect
-first was the right order and it took the sprint. The list and the argument are in
-§6.176 and `SINGLE_WORD_FLOOR` still holds at 65.
+#### And then part 1: the 65 single words, one at a time
+
+Not untouched after all — the product defect took the first half of the sprint and this took
+the second.
+
+**The rule that sorted them.** A word gets an owner when *changing it should change both
+platforms*. True of anything this product **names**; false of the ordinary English for what a
+button does on two controls that have nothing else in common.
+
+**44 moved.** Eight screen names into a new `COPY.screens` — and each of those eight was
+*also* sitting in `TAB_BAR` or `MORE_INDEX`, so they were sixteen copies rather than eight.
+Two kinds a title can be. Six waiting words, of which `Loading…` alone was in eleven web
+files and five phone ones — one decision, sixteen copies, and the ellipsis convention with
+it. People's four sections and its two paired controls (`Follow`/`Unfollow`, `Block`/
+`Unblock` — the §6.176 lesson from `Publish` beside `Make private`: a control's two states
+are one decision). The five figures. The three ways a provider offers something. And the
+states Watching Mode names.
+
+**16 stay:** `Close`, `Email`, `Post`, `Delete`, `Remove`, `Collapse`, `Expand`, `Save`,
+`Cancel`, `Export`, `Import`, `Add`, `Yes`, `No`, `Undo`, `Dismiss`. Forcing those through
+`copy.ts` would be the §6.94 pin this guard is careful not to be: a shared key implies a
+shared decision, and there is none here to share.
+
+**Five of the 65 were never words.** `Promise`, from `useRef<() => Promise<void>>` — the
+extractor read type parameters as text, so the ratchet was holding a number that included
+TypeScript. Fixing it took **three** goes, and the middle one is the interesting failure:
+checking the character before the `>` excludes `useRef<Foo>` and *also* excludes
+`<Masthead>More<`, which is text. Doing that silently dropped every `<Masthead>` title and
+made eight screen names look already-owned when they were not. The discriminator that works
+is the closing side: real JSX text ends `</`, a type parameter never does.
+
+**Six guards went red again**, in the pattern §6.176 named: `screenMode` pinned
+`<Figure label="Watched"`, `already` pinned a whole conditional expression, `type` counted
+`>Up Next</Masthead>`, `shape` saw the phone's More carrying a `COPY.controls.remote` the
+web has not got. Each repointed at the owner; the last is an exemption, because that
+difference is real and `moreIndex.ts` already records why.
+
+One consolidation fell out of it: `upNext.name` and `screens.upNext` were the same words
+twice, and `copy.test.ts`'s own unread-sentence clause is what noticed — the second time this
+sprint pair that clause has caught a duplicate key I had just created.
 
 **The phone's half is unphotographed.** `00-comments-syncing` is the web export, which is
 what `capture-signedin.mjs` drives. The phone runs the same `fetchComments` and the same
@@ -13412,6 +13449,10 @@ what `capture-signedin.mjs` drives. The phone runs the same `fetchComments` and 
 an argument again, and this entry is about the difference between those.
 
 **Seventy-one shots are unread**, unchanged. Sprint 87 read one, and it was one it made.
+
+**`SINGLE_WORD_FLOOR` is 16 and may only fall.** Both halves planted: a seventeenth word typed
+into both Stats screens fails it, and putting `Watchlist` back into a masthead fails the
+clause that says what is left is the generic half.
 
 
 

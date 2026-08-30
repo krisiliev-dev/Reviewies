@@ -180,7 +180,7 @@ export function EpisodeComments() {
                 {/* Screenshots were core to TV Time's comment culture and are named
                     most often as the thing successors dropped. */}
                 <label className="cursor-pointer rounded-pill border border-stroke-signal px-4 py-2 text-s14 text-ink-secondary">
-                  {uploading ? 'Uploading…' : image ? 'Replace image' : COPY.comments.attach}
+                  {uploading ? COPY.waiting.uploading : image ? 'Replace image' : COPY.comments.attach}
                   <input
                     type="file"
                     accept={IMAGE_TYPES.join(',')}
@@ -225,7 +225,7 @@ export function EpisodeComments() {
             {hidden > 0 && <Note level="footnote" as="span">{hidden} hidden</Note>}
           </div>
 
-          {loading && <Note className="mt-4">Loading…</Note>}
+          {loading && <Note className="mt-4">{COPY.waiting.loading}</Note>}
 
           {!loading && visible.length === 0 && (
             <Note className="mt-6">

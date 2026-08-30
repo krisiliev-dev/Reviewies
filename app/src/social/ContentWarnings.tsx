@@ -71,7 +71,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
       {open && (
         <div className="mt-2 rounded-plate bg-ground-raised p-3">
-          {summaries === undefined && <Note level="footnote">Loading…</Note>}
+          {summaries === undefined && <Note level="footnote">{COPY.waiting.loading}</Note>}
 
           {/* Two states, two sentences, and the reason is in `COPY.warnings.failed`:
               a request that did not arrive is not an answer, and this is the one screen

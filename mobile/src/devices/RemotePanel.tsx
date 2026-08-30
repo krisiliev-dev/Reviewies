@@ -1,4 +1,5 @@
 import { ROW } from '@reviewies/core/ui/row';
+import { COPY } from '@reviewies/core/copy';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
@@ -47,7 +48,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
     <>
         <View style={styles.devices}>
           <View style={styles.devicesHead}>
-            <Section>Device</Section>
+            <Section>{COPY.controls.device}</Section>
             {/* A `Button`. It was a bare `Text` in the title face at primary ink inside a
                 `Pressable` — brighter than the `Section` eyebrow beside it and shaped like
                 nothing, so `24-watching-remote` reads it as a second heading rather than

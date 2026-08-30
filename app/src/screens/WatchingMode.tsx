@@ -214,7 +214,7 @@ export function WatchingMode() {
         </button>
         <div className="min-w-0 flex-1 text-center">
           {/* Two lines before it gives up, rather than one character. */}
-          <p className="line-clamp-2 text-s14 font-title font-semibold">{series?.name ?? 'Watching'}</p>
+          <p className="line-clamp-2 text-s14 font-title font-semibold">{series?.name ?? COPY.screens.watching}</p>
           {episode && (
             <Note level="footnote" className="line-clamp-2">
               {[episodeCode(episode.season, episode.number), episodeName(episode.name, episode.number)]
@@ -349,7 +349,7 @@ function SyncBar({
           equivalents have been `Button`s since sprint 9 and nobody compared them. §6.131. */}
       <Button
         onPress={clock.toggle}
-        label={clock.running ? 'Pause' : 'Resume'}
+        label={clock.running ? COPY.controls.pause : COPY.controls.resume}
         name={clock.running ? COPY.controls.pauseClock : COPY.controls.resumeClock}
       />
       {/* Manual drift correction, always available. The crowd-derived estimate
@@ -361,7 +361,7 @@ function SyncBar({
           the accent fill, which is the app's one filled shape and means "worth pressing"
           rather than "already on". */}
       <Button
-        label={streamPaused ? 'Held' : 'Hold'}
+        label={streamPaused ? COPY.controls.held : COPY.controls.hold}
         name={
           streamPaused ? COPY.controls.moveReactions : COPY.controls.holdReactions
         }

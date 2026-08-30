@@ -79,7 +79,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
       {open && (
         <View style={styles.panel}>
-          {summaries === undefined && <Note level="footnote">Loading…</Note>}
+          {summaries === undefined && <Note level="footnote">{COPY.waiting.loading}</Note>}
           {/* Two states, two sentences — the reason lives with the words now, in
               `COPY.warnings.failed`, rather than in a comment on each platform saying
               "see the web's copy of this". */}

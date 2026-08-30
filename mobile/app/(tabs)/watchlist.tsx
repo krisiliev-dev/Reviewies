@@ -35,7 +35,7 @@ export default function WatchlistScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>Watchlist</Masthead>
+        <Masthead>{COPY.screens.watchlist}</Masthead>
 
         {items?.length === 0 && (
           <View style={styles.emptyBlock}>

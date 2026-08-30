@@ -95,7 +95,7 @@ export default function AccountScreen() {
                 leaving somebody to guess whether their history has gone anywhere. */}
             <Note>
               {status.busy
-                ? 'Syncing…'
+                ? COPY.waiting.syncing
                 : status.pending > 0
                   ? `${status.pending} change${status.pending === 1 ? '' : 's'} waiting to upload.`
                   : 'Everything is uploaded.'}

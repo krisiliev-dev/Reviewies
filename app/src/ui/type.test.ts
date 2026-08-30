@@ -290,7 +290,7 @@ describe('the type scale', () => {
      */
     const upNext = read('app/src/screens/UpNext.tsx');
     expect(
-      (upNext.match(/\{COPY\.upNext\.name\}<\/Masthead>/g) ?? []).length,
+      (upNext.match(/\{COPY\.screens\.upNext\}<\/Masthead>/g) ?? []).length,
       'an arrival state lost its title',
     ).toBe(4);
   });

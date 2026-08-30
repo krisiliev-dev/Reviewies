@@ -157,7 +157,7 @@ export function ImportFiles({
               disabled={restoring}
               className="mt-3 min-h-[44px] w-full rounded-pill border border-stroke-signal px-4 py-3 disabled:opacity-50"
             >
-              {restoring ? 'Restoring…' : COPY.controls.restoreListsAndFollows}
+              {restoring ? COPY.waiting.restoring : COPY.controls.restoreListsAndFollows}
             </button>
           )}
           {restored && (

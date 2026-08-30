@@ -44,7 +44,7 @@ export function More() {
 
   return (
     <div className="flex flex-col gap-3 p-s16">
-      <Masthead>More</Masthead>
+      <Masthead>{COPY.screens.more}</Masthead>
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>{COPY.app.localFirst}</Note>
@@ -54,9 +54,9 @@ export function More() {
             number per fifth of the width. */}
         {counts && (
           <dl className="mt-3 grid grid-cols-2 gap-2 text-s14">
-            <Stat label="Watches" value={counts.watches} />
-            <Stat label="Tracked" value={counts.library} />
-            <Stat label="Watchlist" value={counts.watchlist} />
+            <Stat label={COPY.stats.watches} value={counts.watches} />
+            <Stat label={COPY.stats.tracked} value={counts.library} />
+            <Stat label={COPY.screens.watchlist} value={counts.watchlist} />
             <Stat label="Reactions" value={counts.reactions} />
           </dl>
         )}

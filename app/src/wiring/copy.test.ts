@@ -267,16 +267,36 @@ function screenFiles(dir: string, out: string[] = []): string[] {
  * and at two both come back empty — not because two-word names are all owned now (they are)
  * but because there is nothing between two characters and six for it to find.
  *
- * The live boundary is the space, and past it sit **65 single words** typed on both
- * platforms: `Save`, `Cancel`, `Add`, `Yes`, `No` — and also `Watchlist`, `Discover`,
- * `Following`, `Blocked`, `Tracking`, which are not generic verbs at all. They are this
- * product's nouns, and three of them are already `TAB_BAR`'s labels. That split is why the
- * space stays for now: a rule forcing `Cancel` through `copy.ts` would be the §6.94 pin
- * this guard is otherwise careful not to be, and a rule letting `Watchlist` stay typed in
- * nine files is the defect this guard is about. Telling them apart is a judgement per word,
- * not a threshold, so it is a sprint rather than a constant.
+ * The live boundary is the space, and past it §6.176 measured 65 single words typed on both
+ * platforms. §6.177 went through them one at a time, and the count is **16**.
  *
- * `SINGLE_WORD_FLOOR` is the ratchet in the meantime: 65 today, and it may only fall.
+ * ## The rule that sorted them
+ *
+ * A word gets an owner when **changing it should change both platforms**. That is true of
+ * anything this product *names* — a screen, a kind of title, a section, a state, a control's
+ * two paired halves — and false of the ordinary English for what a button does in a context
+ * the two screens do not otherwise share.
+ *
+ * By that rule 44 moved: eight screen names into `COPY.screens` (each of which was **also**
+ * sitting in `TAB_BAR` or `MORE_INDEX`, so they were sixteen copies rather than eight); the
+ * two kinds a title can be; six waiting words, of which `Loading…` alone was in eleven web
+ * files and five phone ones; People's four sections and its two paired controls; the five
+ * figures; the three ways a provider offers something; and the states Watching Mode names.
+ *
+ * The 16 that stay are `Close`, `Email`, `Post`, `Delete`, `Remove`, `Collapse`, `Expand`,
+ * `Save`, `Cancel`, `Export`, `Import`, `Add`, `Yes`, `No`, `Undo`, `Dismiss`. Every one is
+ * the plain word for the action, on controls that have nothing else in common. Forcing them
+ * through `copy.ts` would be the §6.94 pin this guard is otherwise careful not to be: a
+ * shared key implies a shared decision, and there is no decision here to share.
+ *
+ * ## Five of the 65 were never words
+ *
+ * `Promise`, from `useRef<() => Promise<void>>`. The extractor read a type parameter as
+ * text, so the ratchet was holding a number that included TypeScript. `sentences()` two
+ * hundred lines up had solved this and this had not — §6.138 in a helper — and fixing it
+ * took two goes, because a generic sits against an identifier *or* against an arrow.
+ *
+ * `SINGLE_WORD_FLOOR` may only fall. Raising it means somebody typed a new word twice.
  */
 const PROSE_FLOOR = 6;
 const isProse = (text: string, floor = PROSE_FLOOR) =>
@@ -322,11 +342,11 @@ function typedProse(floor = PROSE_FLOOR): { web: Map<string, string[]>; phone: M
 /**
  * The words past the space rule: single, capitalised, typed on both platforms.
  *
- * 65 of them, and they are two different things wearing one shape — `Cancel` and `Save` on
- * one side, `Watchlist` and `Following` on the other. See the header for why that is a
- * judgement per word rather than a threshold.
+ * 16 of them, and the header says which and why. They were 65 before §6.177 sorted them —
+ * two different things wearing one shape, and telling them apart was a judgement per word
+ * rather than a threshold.
  */
-const SINGLE_WORD_FLOOR = 65;
+const SINGLE_WORD_FLOOR = 16;
 
 function singleWords(): string[] {
   const one = (trees: string[]) => {
@@ -340,7 +360,31 @@ function singleWords(): string[] {
         };
         for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) keep(m[1]);
         for (const m of src.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)) keep(m[1]);
-        for (const m of src.matchAll(/>([^<>{}]+)</g)) keep(m[1]);
+        /*
+         * A generic is not a word somebody reads. `useRef<() => Promise<void>>` puts
+         * `Promise` between two angle brackets, and the first version of this counted it —
+         * so the ratchet was holding a number that included a TypeScript type. `sentences()`
+         * two hundred lines up already solves this by looking at what precedes the `<`;
+         * this had the same problem and not the same answer, which is §6.138 in a helper.
+         */
+        for (const m of src.matchAll(/>([^<>{}]+)<\//g)) {
+          /*
+           * Whether that `>` closed a **tag** or a **type**, which took three goes to get
+           * right and is worth the paragraph.
+           *
+           * `sentences()` two hundred lines up looks at the character before the `>`. That
+           * works there and is wrong here in both directions: `<Masthead>More<` has an
+           * identifier before the `>` and is text, `useRef<Foo>` has one and is a type. The
+           * character that separates them is the one before the **opening** `<` — nothing
+           * or punctuation for a tag, an identifier for a type parameter.
+           *
+           * Getting it wrong the first way left `Promise` in the count, from
+           * `useRef<() => Promise<void>>`, so the ratchet was holding a number that included
+           * TypeScript. Getting it wrong the second way silently dropped every `<Masthead>`
+           * title, which is how eight screen names looked already owned when they were not.
+           */
+          keep(m[1]);
+        }
       }
     }
     return found;
@@ -590,21 +634,21 @@ describe('the words, on both platforms', () => {
     /*
      * §6.176's one deliberate pair of keys, asserted rather than assumed.
      *
-     * `TAB_BAR[0].label` and `COPY.upNext.name` are the same words for two different jobs —
+     * `TAB_BAR[0].label` and `COPY.screens.upNext` are the same words for two different jobs —
      * the bar's label and the page's title — and the product would look broken if they came
      * apart. Two keys, because they are two decisions; one clause, because it is one word.
      *
      * The same argument as `copy.test.ts`'s "two months" clause: a number in the words and
      * a number in the code, pinned to each other rather than left to agree by luck.
      */
-    expect(TAB_BAR[0].label).toBe(COPY.upNext.name);
+    expect(TAB_BAR[0].label).toBe(COPY.screens.upNext);
     // And that the screens read the sentence rather than typing it.
     for (const file of ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx']) {
       expect(strip(read(file)), `${file} types its own title`).not.toMatch(/>Up Next</);
     }
   });
 
-  it('holds the single words at 65 and lets that number only fall', () => {
+  it('holds the single words at 16 and lets that number only fall', () => {
     /*
      * The measurement past the space rule, kept runnable instead of written down once — and
      * a ratchet rather than a pin, for `everyWorkspaceRuns`'s reason: it fails when the
@@ -616,11 +660,16 @@ describe('the words, on both platforms', () => {
      */
     const both = singleWords();
     expect(both.length, 'the sweep past the space finds nothing, so it is measuring nothing')
-      .toBeGreaterThan(20);
+      .toBeGreaterThan(8);
     expect(both.length, `${both.length} single words typed on both platforms`)
       .toBeLessThanOrEqual(SINGLE_WORD_FLOOR);
-    // And the nouns worth arguing about are still in there, so the next sprint has its list.
-    expect(both).toContain('Watchlist');
+    /*
+     * And what is left is the generic half rather than the named half — the claim the
+     * header makes, asserted rather than left as prose. `Watchlist` being back in this list
+     * would mean a screen had started typing a screen name again.
+     */
+    expect(both).toContain('Cancel');
+    expect(both).not.toContain('Watchlist');
   });
 
   it('offers a notification hint for every choice, in one voice', () => {

@@ -71,7 +71,7 @@ export default function CalendarScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Upcoming' }} />
+      <Stack.Screen options={{ title: COPY.screens.upcoming }} />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Closed, this whole panel is one row that says what the setting currently is —
             three options with a sub-line each, a delivery block and up to four notes used

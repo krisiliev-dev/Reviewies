@@ -106,9 +106,7 @@ export function Settings() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <Section className="px-1">
-          Watching
-        </Section>
+        <Section className="px-1">{COPY.screens.watching}</Section>
         {/*
           The whole row is the control. §6.166.
 

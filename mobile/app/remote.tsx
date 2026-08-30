@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet } from 'react-native';
+import { COPY } from '@reviewies/core/copy';
 import { Stack } from 'expo-router';
 import { useRemote } from '../src/devices/useRemote';
 import { RemotePanel } from '../src/devices/RemotePanel';
@@ -17,7 +18,7 @@ export default function RemoteScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Remote' }} />
+      <Stack.Screen options={{ title: COPY.controls.remote }} />
       <ScrollView contentContainerStyle={styles.content}>
         <RemotePanel remote={remote} />
       </ScrollView>

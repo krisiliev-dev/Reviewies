@@ -61,7 +61,7 @@ export function ListenSync({
               ? `Following along, ${Math.round(listen.lastMatch.confidence * 100)}% sure`
               : listen.misses > 0
                 ? 'Listening — nothing recognised yet'
-                : 'Listening…'}
+                : COPY.waiting.listening}
           </Text>
         )}
       </View>

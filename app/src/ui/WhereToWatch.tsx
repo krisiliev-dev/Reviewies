@@ -99,7 +99,7 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </div>
       )}
 
-      {providers === undefined && <Note className="mt-2">Checking…</Note>}
+      {providers === undefined && <Note className="mt-2">{COPY.waiting.checking}</Note>}
 
       {unmatched && (
         <Note className="mt-2">{COPY.whereToWatch.unmatched}</Note>
@@ -120,9 +120,9 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
 
       {providers && !nothing && (
         <>
-          <Row label="Stream" names={providers.flatrate} />
-          <Row label="Rent" names={providers.rent} />
-          <Row label="Buy" names={providers.buy} />
+          <Row label={COPY.whereToWatch.stream} names={providers.flatrate} />
+          <Row label={COPY.whereToWatch.rent} names={providers.rent} />
+          <Row label={COPY.whereToWatch.buy} names={providers.buy} />
 
           {providers.link && (
             <a

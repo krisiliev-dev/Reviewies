@@ -164,7 +164,9 @@ describe('a year in review', () => {
       );
       // And the tile the headline already gave is not drawn beside it.
       expect(source, `${file} draws Watched beside a headline that just said it`).toMatch(
-        /(!isYearReview|year === undefined) &&\s*(<Tile label="Watched"|\(\s*<Figure label="Watched")/,
+        // §6.177 gave that label an owner, so the pin reads the reference. What it is about —
+        // the figure being *conditional* on not being the year review — is unchanged.
+        /(!isYearReview|year === undefined) &&\s*(<Tile label=\{COPY\.stats\.watched\}|\(\s*<Figure label=\{COPY\.stats\.watched\})/,
       );
     }
   });

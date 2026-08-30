@@ -100,7 +100,7 @@ export default function UpNextScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>{COPY.upNext.name}</Masthead>
+        <Masthead>{COPY.screens.upNext}</Masthead>
 
         {/* §6.64's undo — the row can change under the press when two devices are racing,
             and the ordinary mis-tap needs the same way back — used to be a banner here,
@@ -129,7 +129,7 @@ export default function UpNextScreen() {
               hitSlop={8}
               accessibilityRole="button"
             >
-              <Text style={styles.later}>Later</Text>
+              <Text style={styles.later}>{COPY.controls.later}</Text>
             </Pressable>
           </View>
         ) : entries.length === 0 && libraryCount === 0 ? (

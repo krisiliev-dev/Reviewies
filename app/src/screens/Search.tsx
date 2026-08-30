@@ -87,7 +87,7 @@ export function Search() {
 
   return (
     <div className="p-s16">
-      <Masthead className="px-1">Search</Masthead>
+      <Masthead className="px-1">{COPY.screens.search}</Masthead>
       <Field
         label={COPY.fields.search}
         value={query}
@@ -96,7 +96,7 @@ export function Search() {
         autoFocus
       />
 
-      {busy && <Note className="mt-4 px-1">Searching…</Note>}
+      {busy && <Note className="mt-4 px-1">{COPY.waiting.searching}</Note>}
       {error && (
         <div className="mt-4 flex flex-col items-start gap-2 px-1">
           <p className="text-s14 text-trouble" role="status">
@@ -214,7 +214,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
   return (
     <BaseRow
       title={result.name}
-      meta={`${result.kind === 'show' ? 'Series' : 'Film'}${result.year ? ` · ${result.year}` : ''}`}
+      meta={`${result.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${result.year ? ` · ${result.year}` : ''}`}
       open={{
         // The poster was the only target and the words beside it were not one.
         name: `Open ${result.name}`,
@@ -252,7 +252,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
                 onPress={track}
                 disabled={shelf === 'library'}
                 tone="primary"
-                label={shelf === 'library' ? 'Tracking' : COPY.controls.track}
+                label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
                 name={COPY.controls.trackTitle(result.name)}
               />
               <Button
@@ -269,7 +269,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
                   onPress={log}
                   disabled={added === 'logged'}
                   tone="secondary"
-                  label={added === 'logged' ? 'Logged' : COPY.controls.seenIt}
+                  label={added === 'logged' ? COPY.controls.logged : COPY.controls.seenIt}
                   name={`Log that you have seen ${result.name}`}
                 />
               )}

@@ -96,7 +96,7 @@ export default function DataScreen() {
           <ImportFiles />
         </Block>
 
-        <Block heading="Watching">
+        <Block heading={COPY.screens.watching}>
           {/* The whole row, not the switch.
               *
               * The switch alone measured 40x20 under react-native-web, below the 24px

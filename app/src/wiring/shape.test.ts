@@ -51,6 +51,8 @@ const EXEMPT: Record<string, string> = {
     'the phone extracts a ListItem component where the web writes the row inline, and orders its two failure lines the other way round; both render both',
   '/watchlist':
     'the web draws its Masthead in both branches — empty and populated — because §6.110 found an arrival state that had lost its own title; the phone renders one above the conditional. Same outcome, one structure each',
+  '/more':
+    'the phone has two rows the web does not — Account and Remote, reached from another screen and from the masthead respectively on the web — so its LINKS array carries `COPY.controls.remote` before the five `MORE_INDEX` rows both platforms share. §6.176 made those five a table and §6.177 gave the phone-only row its own word; the difference is the parity that genuinely does not exist, recorded in moreIndex.ts',
   '/title':
     'the phone puts the title\'s name in the native header through <Stack.Screen options>, where the web draws a Masthead inline. That is the pushed-screen half of the Masthead component, which is a navigation change across ten files rather than a component extraction — #160, and masthead.test.ts counts the fourteen Stack titles so this exemption expires when they do',
 };

@@ -79,7 +79,7 @@ export default function ListsScreen() {
   if (!syncConfigured()) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Lists' }} />
+        <Stack.Screen options={{ title: COPY.screens.lists }} />
         <View style={styles.centre}>
           <Note>{COPY.lists.needsAccount}</Note>
         </View>
@@ -92,7 +92,7 @@ export default function ListsScreen() {
   if (session === null) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Lists' }} />
+        <Stack.Screen options={{ title: COPY.screens.lists }} />
         <View style={styles.centre}>
           <Note>{COPY.lists.signInToMake('Account')}</Note>
         </View>
@@ -102,7 +102,7 @@ export default function ListsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Lists' }} />
+      <Stack.Screen options={{ title: COPY.screens.lists }} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.newRow}>
           <Field
@@ -245,7 +245,7 @@ function ListCard({
               title={item.name ?? item.titleId}
               // No poster on a list item, so the shorter of the two heights.
               density="index"
-              tag={item.kind === 'show' ? 'Series' : 'Film'}
+              tag={item.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}
               open={{
                 // The list's name, because a screen with three lists open at once
                 // otherwise announces the same title three times with nothing to tell

@@ -49,7 +49,7 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>Discover</Masthead>
+        <Masthead>{COPY.screens.discover}</Masthead>
         {/* Two modes, said apart. The web's copy of this has the reasoning. */}
         <Note>{items?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}</Note>
 
@@ -111,7 +111,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
   return (
     <BaseRow
       title={item.name}
-      meta={`${item.kind === 'show' ? 'Series' : 'Film'}${item.year ? ` · ${item.year}` : ''}`}
+      meta={`${item.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${item.year ? ` · ${item.year}` : ''}`}
       // Saying why is what separates a recommendation from an advert. In `note` because
       // that is the slot for a sentence about the row rather than a fact about it.
       // A trending row is not *because* of anything you watched, and saying it was is a

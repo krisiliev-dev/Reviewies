@@ -34,7 +34,7 @@ import { Masthead } from '../../src/ui/Masthead';
  */
 const LINKS = [
   { href: '/account', label: 'Account', detail: 'Optional — adds sync and the shared layer' },
-  { href: '/remote', label: 'Remote', detail: 'Control a TV on your Wi-Fi, directly' },
+  { href: '/remote', label: COPY.controls.remote, detail: 'Control a TV on your Wi-Fi, directly' },
   ...MORE_INDEX.map((row) => ({ href: row.route, label: row.label, detail: row.detail })),
 ];
 
@@ -52,15 +52,15 @@ export default function MoreScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>More</Masthead>
+        <Masthead>{COPY.screens.more}</Masthead>
 
         <View style={styles.card}>
           <Note>{COPY.app.localFirst}</Note>
           {counts && (
             <View style={styles.stats}>
-              <Stat label="Watches" value={counts.watches} />
-              <Stat label="Tracked" value={counts.library} />
-              <Stat label="Watchlist" value={counts.watchlist} />
+              <Stat label={COPY.stats.watches} value={counts.watches} />
+              <Stat label={COPY.stats.tracked} value={counts.library} />
+              <Stat label={COPY.screens.watchlist} value={counts.watchlist} />
             </View>
           )}
           {stats && stats.minutes > 0 && (

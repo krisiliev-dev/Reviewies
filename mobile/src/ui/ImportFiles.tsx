@@ -153,7 +153,7 @@ export function ImportFiles({
               busy={restoring}
               disabled={restoring}
               tone="secondary"
-              label={restoring ? 'Restoring…' : COPY.controls.restoreListsAndFollows}
+              label={restoring ? COPY.waiting.restoring : COPY.controls.restoreListsAndFollows}
               name={COPY.controls.restoreListsAndFollows}
             />
           )}

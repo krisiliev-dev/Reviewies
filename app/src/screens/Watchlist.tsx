@@ -26,12 +26,12 @@ export function Watchlist() {
     undefined,
   );
 
-  if (items === undefined) return <Note className="p-6">Loading…</Note>;
+  if (items === undefined) return <Note className="p-6">{COPY.waiting.loading}</Note>;
 
   if (items.length === 0) {
     return (
       <div className="p-s16">
-        <Masthead>Watchlist</Masthead>
+        <Masthead>{COPY.screens.watchlist}</Masthead>
         <Note>{COPY.watchlist.empty}</Note>
         <Button
           to="/search"
@@ -47,7 +47,7 @@ export function Watchlist() {
 
   return (
     <div className="p-4">
-      <Masthead className="px-1">Watchlist</Masthead>
+      <Masthead className="px-1">{COPY.screens.watchlist}</Masthead>
       <ul className="flex flex-col gap-2">
         {items.map(({ item, title }) => (
           <Row

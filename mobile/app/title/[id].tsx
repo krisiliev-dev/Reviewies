@@ -120,7 +120,7 @@ export default function TitleScreen() {
           <Poster url={title?.posterUrl} name={title?.name ?? ''} size="detail" />
           <View style={styles.headerBody}>
             <Text style={styles.title}>
-              {title?.name ?? (failed || !loading ? COPY.title.loadFailed : 'Loading…')}
+              {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
             </Text>
             {!title && (failed || !loading) && (
               <Button
@@ -303,7 +303,7 @@ function EpisodeRow({
       // to spell its own is a row free to pick a different colour.
       struck={watched}
       disabled={!aired && !watched}
-      meta={`${aired ? episode.airDate : `Airs ${episode.airDate ?? 'TBA'}`}${
+      meta={`${aired ? episode.airDate : `Airs ${episode.airDate ?? COPY.title.tba}`}${
         episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''
       }${
         // Requested across r/Letterboxd, r/Simkl and r/Serializd.
@@ -339,14 +339,14 @@ function EpisodeRow({
             size="inline"
             tone="quiet"
             to={`/watching/${encodeURIComponent(episode.id)}`}
-            label="React"
+            label={COPY.controls.react}
             name={`React along with ${which}`}
           />
           <Button
             size="inline"
             tone="quiet"
             to={`/comments/${encodeURIComponent(episode.id)}`}
-            label="Talk"
+            label={COPY.controls.talk}
             name={`Comments on ${which}`}
           />
           {/* "A series of 8 television episodes is really just a series of 8 films"

@@ -110,7 +110,9 @@ describe('what you already have', () => {
       // ternary now reads a name rather than typing the word. What is being held is that
       // the label turns on `shelf`, not where the two words come from.
       expect(source, `${path} still labels from local state alone`).toContain(
-        "shelf === 'library' ? 'Tracking' : COPY.controls.track",
+        // Both halves are `COPY`'s since §6.177. The clause is about the conditional being
+        // driven by `shelf` rather than by local state, which is unchanged.
+        "shelf === 'library' ? COPY.controls.tracking : COPY.controls.track",
       );
       expect(source, `${path} still labels the watchlist from local state alone`).toContain(
         // Both halves are `COPY`'s since §6.176; the clause is about the *conditional*

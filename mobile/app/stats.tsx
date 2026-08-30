@@ -65,7 +65,7 @@ export default function StatsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Stats' }} />
+      <Stack.Screen options={{ title: COPY.screens.stats }} />
       <ScrollView contentContainerStyle={styles.content}>
         {/*
          * One question, drawn on two rows — see the web's copy of this screen for the
@@ -169,10 +169,10 @@ export default function StatsScreen() {
             <View style={styles.figures}>
               {/* Not while the card is up: it just said this at s30. */}
               {year === undefined && (
-                <Figure label="Watched" value={formatDuration(summary.minutes)} />
+                <Figure label={COPY.stats.watched} value={formatDuration(summary.minutes)} />
               )}
-              <Figure label="Episodes" value={String(summary.episodes)} />
-              <Figure label="Titles" value={String(summary.distinctTitles)} />
+              <Figure label={COPY.stats.episodes} value={String(summary.episodes)} />
+              <Figure label={COPY.stats.titles} value={String(summary.distinctTitles)} />
               <Figure
                 label={COPY.stats.longestStreak}
                 value={`${summary.longestStreakDays} day${summary.longestStreakDays === 1 ? '' : 's'}`}

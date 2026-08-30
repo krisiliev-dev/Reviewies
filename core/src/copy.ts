@@ -203,14 +203,6 @@ export const COPY = {
     historyIsIn: 'Your history is in',
     /** The tag on a season's final episode. */
     lastOne: 'Last one',
-    /**
-     * The screen's own name, which is also `TAB_BAR[0].label` and was typed into five
-     * `Masthead`s across the two platforms. It is one key rather than a read of `TAB_BAR`
-     * because the tab bar's job is the bar's five labels and this is the page's title; they
-     * are the same words on purpose, and `copy.test.ts` is where that is asserted rather
-     * than assumed.
-     */
-    name: 'Up Next',
     bringHistory: 'Bring your history with you',
     seeUpcoming: "See what's upcoming",
   },
@@ -385,6 +377,26 @@ export const COPY = {
     watchAlong: 'Watch along',
     addToList: 'Add to list',
     openRemote: 'Open remote',
+    /**
+     * The rest of the product's own words on its own controls, swept at the single-word
+     * line. §6.177's judgement: a word gets an owner when changing it should change both
+     * platforms, which is true of a thing this product names and false of ordinary English
+     * for what a button does.
+     */
+    remote: 'Remote',
+    device: 'Device',
+    talk: 'Talk',
+    react: 'React',
+    season: 'Season',
+    /** Watching Mode's transport, the labels beside `pauseClock` / `resumeClock`'s names. */
+    pause: 'Pause',
+    resume: 'Resume',
+    hold: 'Hold',
+    held: 'Held',
+    /** A search result that is already in the history, and one saved for later. */
+    logged: 'Logged',
+    later: 'Later',
+
 
     // The rest.
     /**
@@ -612,6 +624,16 @@ export const COPY = {
      */
     thisYear: 'This year',
     allTime: 'All time',
+    /**
+     * The figures' names. `watches` and `tracked` are More's card rather than this screen,
+     * and they are here because they count the same things — one word per quantity, not
+     * one per screen that shows it.
+     */
+    watched: 'Watched',
+    episodes: 'Episodes',
+    titles: 'Titles',
+    watches: 'Watches',
+    tracked: 'Tracked',
     longestStreak: 'Longest streak',
     mostWatched: 'Most watched',
     /**
@@ -794,6 +816,8 @@ export const COPY = {
     loadingEpisodes: 'Loading episodes…',
     /** An episode that has not aired, tagged on the row rather than said in a sentence. */
     notYet: 'Not yet',
+    /** An air date the provider does not have. Not "unknown": it has not been announced. */
+    tba: 'TBA',
     /**
      * The title page, when the provider could not be reached and nothing is cached.
      *
@@ -818,6 +842,10 @@ export const COPY = {
   whereToWatch: {
     /** The section's own name, which both platforms drew and neither owned. */
     heading: 'Where to watch',
+    /** The three ways a provider offers something, which is the row's own vocabulary. */
+    stream: 'Stream',
+    rent: 'Rent',
+    buy: 'Buy',
     /**
      * Not the same sentence as "nowhere to watch it", which is what this used to say
      * when the request failed — a statement about the world made from a network error.
@@ -858,6 +886,65 @@ export const COPY = {
     provenance:
       'Community-reported, so treat it as a heads-up rather than a guarantee. Nothing ' +
       'here hides anything.',
+  },
+
+  /**
+   * The screens, by the name a person sees on the way to them.
+   *
+   * Eight words that were typed into a masthead on one platform and a masthead on the
+   * other, while the *same eight words* sat in `TAB_BAR` and `MORE_INDEX` naming the
+   * controls that lead there. Not eight duplications — sixteen, counting the tables.
+   *
+   * They are keys here rather than reads of those tables because they are two decisions
+   * that happen to agree: what the control is called, and what the page is titled. The
+   * agreement is the thing worth holding, so `copy.test.ts` asserts it rather than
+   * arranging for it — the shape §6.176 gave `upNext.name`, which folded in here with the rest.
+   */
+  screens: {
+    upNext: 'Up Next',
+    search: 'Search',
+    discover: 'Discover',
+    watchlist: 'Watchlist',
+    more: 'More',
+    upcoming: 'Upcoming',
+    lists: 'Lists',
+    people: 'People',
+    stats: 'Stats',
+    /**
+     * The feature, named the same in the two places that name it: the settings section that
+     * configures it, and the title a session falls back to before it knows what is on.
+     * Renaming one without the other is the drift this group exists to stop.
+     */
+    watching: 'Watching',
+  },
+
+  /**
+   * What a title *is*, which the product says on four screens and had typed on six.
+   *
+   * `kind` is a field on every title and these are its two faces. The row's meta line, the
+   * search result, the list entry and the suggestion all draw from here now.
+   */
+  kinds: {
+    show: 'Series',
+    film: 'Film',
+  },
+
+  /**
+   * The six ways this product says it is working on something.
+   *
+   * `Loading…` alone was typed into eleven files on the web and five on the phone — one
+   * decision, sixteen copies, and the ellipsis convention with it. The other five name what
+   * is being waited for, which is why they are five keys and not one.
+   */
+  waiting: {
+    loading: 'Loading…',
+    syncing: 'Syncing…',
+    searching: 'Searching…',
+    checking: 'Checking…',
+    restoring: 'Restoring…',
+    /** The microphone is open. Watching Mode's, and the only one that costs battery. */
+    listening: 'Listening…',
+    uploading: 'Uploading…',
   },
 
   comments: {
@@ -923,6 +1010,21 @@ export const COPY = {
     noMatch: 'Nobody by that name.',
     /** The search section's own heading. */
     findHeading: 'Find people',
+    /**
+     * The four sections of the screen, and the four controls that move somebody between
+     * them. The controls are two **pairs** — the §6.176 lesson from `Publish` beside
+     * `Make private`: a control's two states are one decision, and a platform that renames
+     * half of it is drift the near-match comparison scores at zero and cannot see.
+     */
+    following: 'Following',
+    followers: 'Followers',
+    blocked: 'Blocked',
+    you: 'You',
+    handleHeading: 'Handle',
+    follow: 'Follow',
+    unfollow: 'Unfollow',
+    block: 'Block',
+    unblock: 'Unblock',
     /**
      * The lists themselves, when the asking failed.
      *

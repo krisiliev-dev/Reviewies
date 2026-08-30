@@ -78,7 +78,7 @@ export default function PeopleScreen() {
   if (!syncConfigured() || !session) {
     return (
       <>
-        <Stack.Screen options={{ title: 'People' }} />
+        <Stack.Screen options={{ title: COPY.screens.people }} />
         <View style={styles.centre}>
           <Note>
             {syncConfigured()
@@ -102,7 +102,7 @@ export default function PeopleScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'People' }} />
+      <Stack.Screen options={{ title: COPY.screens.people }} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {listsFailed && (
           <Text style={styles.failed} accessibilityLiveRegion="polite">
@@ -110,10 +110,10 @@ export default function PeopleScreen() {
           </Text>
         )}
 
-        <Block heading="You">
+        <Block heading={COPY.people.you}>
           {handle === undefined ? (
             <>
-              <Note>{me ? `@${me.handle}` : 'Loading…'}</Note>
+              <Note>{me ? `@${me.handle}` : COPY.waiting.loading}</Note>
               <Pressable
                 onPress={() => setHandle(me?.handle ?? '')}
                 disabled={!me}
@@ -130,7 +130,7 @@ export default function PeopleScreen() {
             label={COPY.fields.handle}
             value={handle}
             onChange={setHandle}
-            placeholder="Handle"
+            placeholder={COPY.people.handleHeading}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -152,15 +152,15 @@ export default function PeopleScreen() {
         <FindPeople following={following} blocked={blocked} onChanged={load} />
 
         <PersonList
-          heading="Following"
+          heading={COPY.people.following}
           people={following}
           empty={COPY.people.followingEmpty}
-          action={(p) => ({ label: 'Unfollow', run: () => unfollow(p.id) })}
+          action={(p) => ({ label: COPY.people.unfollow, run: () => unfollow(p.id) })}
           onChanged={load}
         />
         {/* Only ever visible to you; see the note at the top of this file. */}
         <PersonList
-          heading="Followers"
+          heading={COPY.people.followers}
           people={followers}
           empty={COPY.people.followersEmpty}
           action={(p) =>
@@ -172,10 +172,10 @@ export default function PeopleScreen() {
         />
         {blocked.length > 0 && (
           <PersonList
-            heading="Blocked"
+            heading={COPY.people.blocked}
             people={blocked}
             empty=""
-            action={(p) => ({ label: 'Unblock', run: () => unblockPerson(p.id) })}
+            action={(p) => ({ label: COPY.people.unblock, run: () => unblockPerson(p.id) })}
             onChanged={load}
           />
         )}
@@ -267,10 +267,10 @@ function FindPeople({
               <Button
                 size="inline"
                 tone={already ? 'secondary' : 'primary'}
-                label={already ? 'Following' : 'Follow'}
+                label={already ? COPY.people.following : COPY.people.follow}
                 // A search result is a row of identical words. Which person "Follow"
                 // belongs to is only visible, never spoken.
-                name={`${already ? 'Unfollow' : 'Follow'} @${person.handle}`}
+                name={`${already ? COPY.people.unfollow : COPY.people.follow} @${person.handle}`}
                 // Was `styles.disabled`, an opacity, which the component bans and says
                 // why: a faded control reads as broken rather than as unavailable.
                 disabled={isBlocked}
@@ -292,7 +292,7 @@ function FindPeople({
               <Button
                 size="inline"
                 tone="destructive"
-                label="Block"
+                label={COPY.people.block}
                 name={`Block @${person.handle}`}
                 onPress={async () => {
                   setActionFailed(false);

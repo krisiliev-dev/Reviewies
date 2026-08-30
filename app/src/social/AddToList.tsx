@@ -63,7 +63,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
       {open && (
         <div className="mt-2 rounded-plate border border-stroke-signal p-3">
-          {lists === undefined && <Note level="footnote">Loading…</Note>}
+          {lists === undefined && <Note level="footnote">{COPY.waiting.loading}</Note>}
           {lists?.length === 0 && (
             <Note level="footnote" className="mb-2">{COPY.lists.emptyInPicker}</Note>
           )}

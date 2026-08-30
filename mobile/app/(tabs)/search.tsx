@@ -99,7 +99,7 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Masthead>Search</Masthead>
+        <Masthead>{COPY.screens.search}</Masthead>
         <Field
           label={COPY.fields.search}
           value={query}
@@ -118,7 +118,7 @@ export default function SearchScreen() {
         {busy && (
           <>
             <ActivityIndicator color={theme.workingMark} style={styles.loading} />
-            <Note accessibilityLiveRegion="polite">Searching…</Note>
+            <Note accessibilityLiveRegion="polite">{COPY.waiting.searching}</Note>
           </>
         )}
         {error && (
@@ -252,7 +252,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
   return (
     <BaseRow
       title={result.name}
-      meta={`${result.kind === 'show' ? 'Series' : 'Film'}${result.year ? ` · ${result.year}` : ''}`}
+      meta={`${result.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${result.year ? ` · ${result.year}` : ''}`}
       lead={
         <Poster url={result.posterUrl} name={result.name} />
       }
@@ -300,7 +300,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
             onPress={track}
             disabled={shelf === 'library'}
             tone="primary"
-            label={shelf === 'library' ? 'Tracking' : COPY.controls.track}
+            label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
             name={COPY.controls.trackTitle(result.name)}
           />
           <Button
@@ -317,7 +317,7 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
               onPress={log}
               disabled={added === 'logged'}
               tone="secondary"
-              label={added === 'logged' ? 'Logged' : COPY.controls.seenIt}
+              label={added === 'logged' ? COPY.controls.logged : COPY.controls.seenIt}
               name={`Log that you have seen ${result.name}`}
             />
           )}

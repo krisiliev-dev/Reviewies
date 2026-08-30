@@ -60,7 +60,7 @@ export function Stats() {
 
   return (
     <div className="p-s16">
-      <Masthead level="page" className="px-1">Stats</Masthead>
+      <Masthead level="page" className="px-1">{COPY.screens.stats}</Masthead>
 
       {/*
        * One question, drawn on two rows.
@@ -123,7 +123,7 @@ export function Stats() {
       </div>
 
       {summary === undefined ? (
-        <Note>Loading…</Note>
+        <Note>{COPY.waiting.loading}</Note>
       ) : summary.episodes === 0 ? (
         <div className="flex flex-col items-start gap-3">
           <Note>{COPY.stats.empty}</Note>
@@ -179,9 +179,9 @@ function Summary({
       <dl className="grid grid-cols-2 gap-2">
         {/* Not while the card is up: it just said this at s30, and a headline restated one
             size down is the same repetition a step quieter. */}
-        {!isYearReview && <Tile label="Watched" value={formatDuration(summary.minutes)} />}
-        <Tile label="Episodes" value={String(summary.episodes)} />
-        <Tile label="Titles" value={String(summary.distinctTitles)} />
+        {!isYearReview && <Tile label={COPY.stats.watched} value={formatDuration(summary.minutes)} />}
+        <Tile label={COPY.stats.episodes} value={String(summary.episodes)} />
+        <Tile label={COPY.stats.titles} value={String(summary.distinctTitles)} />
         <Tile
           label={COPY.stats.longestStreak}
           value={`${summary.longestStreakDays} ${summary.longestStreakDays === 1 ? 'day' : 'days'}`}

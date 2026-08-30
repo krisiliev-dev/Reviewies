@@ -145,7 +145,7 @@ export function AccountPanel() {
       <div className="mt-3 flex gap-2">
         <Button
           tone="primary"
-          label={busy ? 'Syncing…' : 'Sync now'}
+          label={busy ? COPY.waiting.syncing : 'Sync now'}
           name="Sync now"
           // The rule under the label rather than a spinner in place of it: `busy` keeps
           // the word readable, which is what this call site worked around by hand.

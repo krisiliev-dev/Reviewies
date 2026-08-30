@@ -38,7 +38,7 @@ export function Discover() {
 
   return (
     <div className="p-s16">
-      <Masthead className="px-1">Discover</Masthead>
+      <Masthead className="px-1">{COPY.screens.discover}</Masthead>
       {/*
         Two modes, said apart. `getSuggestions` builds from the library and only falls back
         to a chart when that comes back empty, so the feed is entirely one or entirely the
@@ -122,7 +122,7 @@ function SuggestionRow({
   return (
     <BaseRow
       title={suggestion.name}
-      meta={`${suggestion.kind === 'show' ? 'Series' : 'Film'}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
+      meta={`${suggestion.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
       /*
        * Saying why is what separates a recommendation from an advert. In `note` because
        * that is the slot for a sentence about the row rather than a fact about it. A

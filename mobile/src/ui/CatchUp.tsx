@@ -105,7 +105,7 @@ export function CatchUp({
             {marked === 0 ? COPY.catchUp.nothingToMark : COPY.catchUp.marked(marked)}
           </Text>
         ) : seasons === undefined ? (
-          <Note>Loading…</Note>
+          <Note>{COPY.waiting.loading}</Note>
         ) : seasons.length === 0 ? (
           <Note>{COPY.catchUp.nothingAired}</Note>
         ) : (
@@ -115,7 +115,7 @@ export function CatchUp({
             </Note>
 
             {season === undefined ? (
-              <Grid label="Season" values={seasons.map((s) => s.season)} onPick={setSeason} />
+              <Grid label={COPY.controls.season} values={seasons.map((s) => s.season)} onPick={setSeason} />
             ) : (
               <>
                 <Grid

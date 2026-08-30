@@ -163,7 +163,7 @@ export default function WatchingScreen() {
           </Pressable>
           <View style={styles.headerMiddle}>
             <Text numberOfLines={1} style={styles.series}>
-              {series?.name ?? 'Watching'}
+              {series?.name ?? COPY.screens.watching}
             </Text>
             {episode && (
               <Text numberOfLines={1} style={styles.episode}>
@@ -202,12 +202,12 @@ export default function WatchingScreen() {
         ) : (
           <View style={styles.controls}>
             <Button
-              label={clock.running ? 'Pause' : 'Resume'}
+              label={clock.running ? COPY.controls.pause : COPY.controls.resume}
               name={clock.running ? COPY.controls.pauseClock : COPY.controls.resumeClock}
               onPress={clock.toggle}
             />
             <Button
-              label={streamHeld ? 'Held' : 'Hold'}
+              label={streamHeld ? COPY.controls.held : COPY.controls.hold}
               name={
                 streamHeld
                   ? COPY.controls.moveReactions
@@ -233,7 +233,7 @@ export default function WatchingScreen() {
                 and `23-watching-live.png` shows it covering the fourth column between
                 *Cliffhanger* and *Dead*. §6.167. */}
             <Button
-              label="Remote"
+              label={COPY.controls.remote}
               name={COPY.controls.openRemote}
               onPress={() => setRemoteOpen(true)}
             />

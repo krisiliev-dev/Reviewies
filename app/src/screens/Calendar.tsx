@@ -79,7 +79,7 @@ export function Calendar() {
 
   return (
     <div className="p-s16">
-      <Masthead level="page" className="px-1">Upcoming</Masthead>
+      <Masthead level="page" className="px-1">{COPY.screens.upcoming}</Masthead>
 
       {/* Closed, this whole panel is one row that says what the setting currently is.
           
@@ -163,7 +163,7 @@ export function Calendar() {
       </section>
       )}
 
-      {entries === undefined && <Note className="px-1">Loading…</Note>}
+      {entries === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}
       {entries?.length === 0 && (
         <div className="flex flex-col items-start gap-3 px-1">
           {/* Doc 10 §8: this said nothing was on and stopped, with Discover a tap away.

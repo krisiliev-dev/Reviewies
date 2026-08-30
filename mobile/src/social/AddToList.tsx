@@ -74,7 +74,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
 
       {open && (
         <View style={styles.panel}>
-          {lists === undefined && <Note level="footnote">Loading…</Note>}
+          {lists === undefined && <Note level="footnote">{COPY.waiting.loading}</Note>}
           {lists?.length === 0 && (
             <Note level="footnote">{COPY.lists.emptyInPicker}</Note>
           )}

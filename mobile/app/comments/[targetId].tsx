@@ -124,7 +124,7 @@ export default function CommentsScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: episode ? episodeCode(episode.season, episode.number) : 'Talk' }}
+        options={{ title: episode ? episodeCode(episode.season, episode.number) : COPY.controls.talk }}
       />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {episode && episodeName(episode.name, episode.number) && (
@@ -177,7 +177,7 @@ export default function CommentsScreen() {
                   busy={uploading}
                   disabled={uploading}
                   tone="secondary"
-                  label={uploading ? 'Uploading…' : image ? 'Replace screenshot' : COPY.comments.attach}
+                  label={uploading ? COPY.waiting.uploading : image ? 'Replace screenshot' : COPY.comments.attach}
                   name={image ? 'Replace the attached screenshot' : COPY.comments.attach}
                 />
 

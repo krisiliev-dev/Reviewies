@@ -106,7 +106,7 @@ export function RemoteDrawer() {
         aria-label="Remote control"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-s16 font-title font-semibold">Remote</h2>
+          <h2 className="text-s16 font-title font-semibold">{COPY.controls.remote}</h2>
           {/* Named, because Watching Mode has a "Close" of its own. */}
           <button
             onClick={() => setOpen(false)}
@@ -120,9 +120,7 @@ export function RemoteDrawer() {
         <Status bridge={bridge} />
 
         {bridge.devices.length > 0 && (
-          <label className="flex flex-col gap-1 text-s12 text-ink-secondary">
-            Device
-            <select
+          <label className="flex flex-col gap-1 text-s12 text-ink-secondary">{COPY.controls.device}<select
               value={bridge.selected?.id ?? ''}
               onChange={(e) => bridge.select(e.target.value)}
               /*

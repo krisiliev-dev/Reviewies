@@ -112,8 +112,8 @@ export function ListenSync({
           onPress={listen}
           disabled={!!busy}
           busy={busy === 'listening'}
-          label={busy === 'listening' ? 'Listening…' : 'Sync by listening'}
-          name={busy === 'listening' ? 'Listening…' : 'Sync by listening'}
+          label={busy === 'listening' ? COPY.waiting.listening : 'Sync by listening'}
+          name={busy === 'listening' ? COPY.waiting.listening : 'Sync by listening'}
         />
         <Button
           size="inline"

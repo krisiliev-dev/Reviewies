@@ -62,7 +62,7 @@ export function People() {
   if (!syncConfigured()) {
     return (
       <div className="p-s16">
-        <Masthead level="page" className="px-1">People</Masthead>
+        <Masthead level="page" className="px-1">{COPY.screens.people}</Masthead>
         <Note className="px-1">{COPY.people.withoutAccount}</Note>
       </div>
     );
@@ -71,7 +71,7 @@ export function People() {
   if (!session) {
     return (
       <div className="p-4">
-        <Masthead level="page" className="px-1">People</Masthead>
+        <Masthead level="page" className="px-1">{COPY.screens.people}</Masthead>
         {/* The destination is the one word that differs by platform, and it has to be
             what the navigation calls it: "Your data" here, "Account" on the phone. */}
         <Note className="px-1">{COPY.people.signInToFollow(COPY.app.yourData)}</Note>
@@ -81,7 +81,7 @@ export function People() {
 
   return (
     <div className="flex flex-col gap-6 p-4">
-      <Masthead level="page" className="px-1">People</Masthead>
+      <Masthead level="page" className="px-1">{COPY.screens.people}</Masthead>
 
       {listsFailed && (
         <p className="px-1 text-s14 text-trouble" role="status">
@@ -93,17 +93,17 @@ export function People() {
       <FindPeople following={following} blocked={blocked} onChanged={load} />
 
       <PersonList
-        heading="Following"
+        heading={COPY.people.following}
         people={following}
         empty={COPY.people.followingEmpty}
-        action={(p) => ({ label: 'Unfollow', run: () => unfollow(p.id) })}
+        action={(p) => ({ label: COPY.people.unfollow, run: () => unfollow(p.id) })}
         onChanged={load}
       />
 
       {/* Only ever visible to you: the follow policy exposes edges you are part of and
           nothing else, which is also why no follower count appears anywhere. */}
       <PersonList
-        heading="Followers"
+        heading={COPY.people.followers}
         people={followers}
         empty={COPY.people.followersEmpty}
         action={(p) =>
@@ -116,10 +116,10 @@ export function People() {
 
       {blocked.length > 0 && (
         <PersonList
-          heading="Blocked"
+          heading={COPY.people.blocked}
           people={blocked}
           empty=""
-          action={(p) => ({ label: 'Unblock', run: () => unblockPerson(p.id) })}
+          action={(p) => ({ label: COPY.people.unblock, run: () => unblockPerson(p.id) })}
           onChanged={load}
         />
       )}
@@ -147,12 +147,12 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
   }
 
   return (
-    <Block heading="You">
+    <Block heading={COPY.people.you}>
 
       {!editing ? (
         <>
           <Note>
-            {me ? `@${me.handle}` : 'Loading…'}
+            {me ? `@${me.handle}` : COPY.waiting.loading}
             {me?.displayName ? ` · ${me.displayName}` : ''}
           </Note>
           <button
@@ -172,7 +172,7 @@ function ProfileEditor({ me, onSaved }: { me?: Person; onSaved: () => void }) {
             label={COPY.fields.handle}
             value={handle}
             onChange={setHandle}
-            placeholder="Handle"
+            placeholder={COPY.people.handleHeading}
             autoFocus
           />
           <Field
@@ -285,8 +285,8 @@ function FindPeople({
                 <Button
                   size="inline"
                   tone={already ? 'secondary' : 'primary'}
-                  label={already ? 'Following' : 'Follow'}
-                  name={`${already ? 'Unfollow' : 'Follow'} @${p.handle}`}
+                  label={already ? COPY.people.following : COPY.people.follow}
+                  name={`${already ? COPY.people.unfollow : COPY.people.follow} @${p.handle}`}
                   // Was `disabled:opacity-40`, which the component bans and says why: a
                   // faded control reads as broken rather than as unavailable.
                   disabled={isBlocked}
@@ -308,7 +308,7 @@ function FindPeople({
                 <Button
                   size="inline"
                   tone="destructive"
-                  label="Block"
+                  label={COPY.people.block}
                   name={`Block @${p.handle}`}
                   onPress={async () => {
                     setActionFailed(false);

@@ -104,7 +104,7 @@ export function RemoteDrawer({ open, onClose }: { open: boolean; onClose: () => 
         aria-hidden={!open}
       >
         <View style={styles.head}>
-          <Text style={styles.title}>Remote</Text>
+          <Text style={styles.title}>{COPY.controls.remote}</Text>
           <Pressable
             onPress={onClose}
             hitSlop={8}

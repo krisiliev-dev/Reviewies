@@ -46,7 +46,7 @@ export function Lists() {
   if (!syncConfigured()) {
     return (
       <div className="p-s16">
-        <Masthead level="page">Lists</Masthead>
+        <Masthead level="page">{COPY.screens.lists}</Masthead>
         <Note>{COPY.lists.needsAccount}</Note>
       </div>
     );
@@ -62,7 +62,7 @@ export function Lists() {
   if (!session) {
     return (
       <div className="p-6">
-        <Masthead level="page">Lists</Masthead>
+        <Masthead level="page">{COPY.screens.lists}</Masthead>
         <Note>{COPY.lists.signInToMake(COPY.app.yourData)}</Note>
       </div>
     );
@@ -85,7 +85,7 @@ export function Lists() {
 
   return (
     <div className="p-4">
-      <Masthead level="page" className="px-1">Lists</Masthead>
+      <Masthead level="page" className="px-1">{COPY.screens.lists}</Masthead>
       <Note className="mb-4 px-1">Films and series together, in one list.</Note>
 
       <form onSubmit={create} className="mb-5 flex gap-1.5">
@@ -110,7 +110,7 @@ export function Lists() {
         </p>
       )}
 
-      {lists === undefined && <Note className="px-1">Loading…</Note>}
+      {lists === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}
       {/* "No lists yet" was shown for both having none and failing to ask, which is a
           strange thing to tell somebody about work they did. */}
       {failed && (
@@ -234,7 +234,7 @@ function ListCard({
                 title={item.name ?? item.titleId}
                 // No poster on a list item, so the shorter of the two heights.
                 density="index"
-                tag={item.kind === 'show' ? 'Series' : 'Film'}
+                tag={item.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}
                 open={{
                   // The list's name, because a screen that has three lists open at once
                   // otherwise announces the same title three times with nothing to tell
