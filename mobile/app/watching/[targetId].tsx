@@ -53,6 +53,8 @@ export default function WatchingScreen() {
   const clock = usePlaybackClock();
   const [query, setQuery] = useState('');
   const [density, setDensity] = useState<number>(DEFAULT_REACTION_DENSITY);
+  /** The remote's trigger lives in the control row below, so its state lives here. */
+  const [remoteOpen, setRemoteOpen] = useState(false);
   // Separate from the clock: the timecode can keep running while the top of the screen
   // holds still, which is what WCAG 2.2.2 asks for and what someone who finds the
   // drift distracting actually wants.
@@ -228,6 +230,15 @@ export default function WatchingScreen() {
               name={COPY.controls.seek(5)}
               onPress={() => clock.nudge(5000)}
             />
+            {/* Among its siblings rather than over the pad. The tab this replaces sat at
+                `top: '45%'` under a comment claiming it was "never in the way of the pad",
+                and `23-watching-live.png` shows it covering the fourth column between
+                *Cliffhanger* and *Dead*. §6.167. */}
+            <Button
+              label="Remote"
+              name="Open remote"
+              onPress={() => setRemoteOpen(true)}
+            />
             {/* A control label, beside its control — the web's spelling, which the phone
                 stacked and right-aligned into the middle of a wrapped row.
                 `23-watching-live` is what that looked like: "Density" centred over the
@@ -320,8 +331,11 @@ export default function WatchingScreen() {
           />
   
       {/* "Hidden in a drawer to the side" — and here rather than only on its own screen,
-          because reaching for the remote should not cost you the clock and the stream. */}
-      <RemoteDrawer />
+          because reaching for the remote should not cost you the clock and the stream.
+          The trigger is the `Remote` button in the control row above, not a tab floating
+          over the pad: `RemoteDrawer` has the reasoning and `23-watching-live.png` is the
+          photograph. */}
+      <RemoteDrawer open={remoteOpen} onClose={() => setRemoteOpen(false)} />
     </SafeAreaView>
     </>
   );

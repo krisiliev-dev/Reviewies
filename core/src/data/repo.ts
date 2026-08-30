@@ -403,6 +403,32 @@ export async function setWatchlistNote(titleId: InternalId, note: string): Promi
   });
 }
 
+/**
+ * Start watching something you had saved: one act, not two.
+ *
+ * §6.167 asked what a watchlist row is *for*. It is a thing you mean to watch, and an
+ * intention resolves two ways — you start it, or you give up on it. The row drew only the
+ * second: `Remove` was the only element on it wearing a control's shape, on the screen
+ * whose whole subject is things you want. `05-discover.png` offers the same film with
+ * **Track** and **Watchlist** side by side; `06-watchlist.png` offers *Remove*.
+ *
+ * Tracking it takes it off the list, and that is not a nicety either. Both of the
+ * products this one is answering do it — Trakt drops a title from the watchlist when you
+ * watch it, Letterboxd when you log the film — and `discover/recommend.ts` already
+ * excludes anything tracked *or* watchlisted, so a title in both places is one the feed
+ * reasons about twice while the two lists say contradictory things about it: "I mean to
+ * watch this" and "I am watching this".
+ *
+ * It is one function rather than two calls at four call sites because the ordering has a
+ * failure mode: remove first and a crash between them loses the title from both lists.
+ * Track first, and the worst case is a title tracked and still saved, which the next
+ * press fixes. Two platforms writing this by hand would each get one vote on that.
+ */
+export async function startWatching(titleId: InternalId, kind: MediaKind): Promise<void> {
+  await addToLibrary(titleId, kind);
+  await removeFromWatchlist(titleId);
+}
+
 export async function removeFromWatchlist(titleId: InternalId): Promise<void> {
   const existing = await db.watchlist.get(titleId);
   await queued(db.watchlist, async () => {

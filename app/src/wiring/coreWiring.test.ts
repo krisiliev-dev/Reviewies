@@ -37,6 +37,8 @@ const UNREACHED: Record<string, string> = {
     'Every screen this product can show with nothing on it, and whether anybody has looked. §6.162, and the sibling of REVEALS: no renderer reads it, because a screen already knows its own empty branch — what nothing knew was which empty states exist and which of them have never been photographed. emptyStates.test.ts reads it, checks each named screen really renders the sentence, and fails on an unphotographed state whose reason is too thin to be worth reading.',
   'ui/emptyStates#NOT_AN_EMPTY_STATE':
     'The sentences that look like empty states and are not — failures, gates, and prose that is drawn over a full screen too — each with why. The allowlist is the honest half: emptyStates.test.ts sweeps copy.ts for the key shape and fails on anything neither registered nor excused, which is how the four literal "Nobody yet" strings in People were found.',
+  'ui/surface#SUNK_FILLS':
+    'Every place the sunken ground is painted and left there, and what is meant to sit in it. \u00a76.167, and the third of these registers after REVEALS and EMPTY_STATES: no renderer reads it, because a component already knows its own fill \u2014 what nothing knew was how many static ones exist. Found by asking why a streaming service in 15-title.png was drawn two steps darker than the card around it, which turned out to be the only element in a hundred and thirty shots darker than its own container. sunkenFill.test.ts sweeps both platforms and fails on a fill nobody has said what goes in.',
   'ui/screen#EDGE_EXEMPT':
     'The screens that do not take the standard edge, and why. It is a design decision rather than a test fixture — Watching Mode is immersive and has no rows to bleed — so it lives beside the decision it qualifies; screen.test.ts is what reads it, and what fails when an entry outlives its screen.',
   'sync/driver#resetSyncDriver': 'Test seam: the driver is a singleton and cases must not share it.',
@@ -217,6 +219,10 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/crossOff#STRUCK': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/surface#SURFACE_OFF': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/row#ROW_INK': 'The same divergence as `ui/button#SIZE`.',
+  'app only: data/sqlWasm#setSqlJsLoader':
+    'Binds the loader that fetches sql.js\u2019 WASM binary, which is how the *web* runs SQLite \u2014 in a browser it has to be fetched and instantiated. The phone has expo-sqlite compiled in and never asks for one. Invisible until \u00a76.167: the function names itself inside its own "call setSqlJsLoader() from your entry point" error, and until the scan blanked string literals as well as comments, that mention counted as the module reaching itself.',
+  'mobile only: sync/auth#setAuthStorage':
+    'React Native has no `localStorage`, so the phone hands the Supabase client AsyncStorage before it is created; in a browser the client uses `localStorage` by default and there is nothing to bind. Hidden the same way and for the same sprint: `setAuthStorage() must be called before the Supabase client is created` names it in a string.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',
   'mobile only: fingerprint/continuous#shouldCorrect': 'Part of the same continuous session.',
 };

@@ -143,16 +143,26 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   );
 }
 
+/**
+ * `Stream — Netflix · Now TV`. A label, then the names, as facts.
+ *
+ * They were `rounded-plate bg-ground-well` plates: the sunken ground, painted inside a
+ * card that is `groundRaised`, so a service name sat **two steps darker than its own
+ * container** — the only element in a hundred and thirty screenshots darker than the
+ * thing it sits in, and it read as a hole punched in the card. `15-title.png`.
+ *
+ * The fill was the whole mistake, not its colour. `surface.ts` says the sunken ground is
+ * *held down, or the inside of a plate*, and a service name is neither: it is not
+ * pressable and nothing sits in it. What it is is a fact, and this build already draws a
+ * run of facts one way — `Film · 2024`, `2025-11-22 · 22m`, `S1E6 · Episode 6`. So does
+ * this now. No box means no shape to misread as a control, which is `Choice`'s job.
+ */
 function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
-    <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+    <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
       <Note level="footnote" as="span">{label}</Note>
-      {names.map((name) => (
-        <span key={name} className="rounded-plate bg-ground-well px-3 py-1 text-s14">
-          {name}
-        </span>
-      ))}
+      <span className="text-s14">{names.join(' · ')}</span>
     </div>
   );
 }

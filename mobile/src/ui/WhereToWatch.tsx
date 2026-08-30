@@ -144,16 +144,13 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   );
 }
 
+/** `Stream — Netflix · Now TV`. The web's copy of this carries the reasoning. */
 function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      {names.map((name) => (
-        <View key={name} style={styles.service}>
-          <Text style={styles.serviceText}>{name}</Text>
-        </View>
-      ))}
+      <Text style={styles.serviceText}>{names.join(' · ')}</Text>
     </View>
   );
 }
@@ -181,12 +178,6 @@ const styles = StyleSheet.create({
   failed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), marginTop: 6, fontFamily: type.family.body.name },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
   rowLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  service: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.plate,
-    backgroundColor: theme.groundWell,
-  },
-  serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name },
+  serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name, flexShrink: 1 },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

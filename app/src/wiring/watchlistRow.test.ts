@@ -1,0 +1,112 @@
+import { describe, expect, it } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { COPY } from '@reviewies/core/copy';
+
+/**
+ * What a watchlist row offers, and what a control is allowed to be called.
+ *
+ * §6.167 asked what the watchlist screen is *for*. It is things you mean to watch, and an
+ * intention resolves two ways: you start it, or you give up on it. `06-watchlist.png` drew
+ * only the second — *Remove* was the one element on the row wearing a control's shape —
+ * while `05-discover.png` offers the very same film with **Track** and **Watchlist** side
+ * by side. Two screens, one title, and only the one you already saved it on refuses to let
+ * you begin it.
+ *
+ * Two things came out of that and both can be held:
+ *
+ * 1. **Tracking from the watchlist is one act.** `startWatching` adds to the library and
+ *    takes the title off the list, in that order, in `repo.ts`. Four screens calling
+ *    `addToLibrary` and `removeFromWatchlist` by hand is four chances to get the order
+ *    backwards — and losing a title from both lists is the failure that order prevents.
+ * 2. **A control is called by a verb.** *"Caught up further?"* was the only question mark
+ *    on any control in the product, on a screen whose other controls are *Track*, *Remove*,
+ *    *Save*, *Pause*, *Hold*. Its own announced name was already `Catch up on {show}`, so
+ *    the label and the name disagreed about what the control was.
+ */
+
+const ROOT = resolve(import.meta.dirname, '../../..');
+const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
+const withoutProse = (s: string) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+
+const WATCHLISTS = ['app/src/screens/Watchlist.tsx', 'mobile/app/(tabs)/watchlist.tsx'];
+const TREES = ['app/src', 'mobile/app', 'mobile/src'];
+
+function filesUnder(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'dist-signedin', 'dist-real', '.expo'].includes(entry.name)) continue;
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) filesUnder(path, out);
+    else if (/\.tsx$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
+
+describe('a watchlist row', () => {
+  it('offers the verb the list exists for, on both platforms', () => {
+    for (const file of WATCHLISTS) {
+      const source = withoutProse(read(file));
+      /*
+       * The `label`, not the word anywhere in the file. `toContain('COPY.controls.track')`
+       * was the first draft and a plant walked through it: `COPY.controls.trackTitle` —
+       * the *announced* name, on the same call — contains that string, so the drawn label
+       * could be deleted outright and the clause stayed green. §6.121, in a substring.
+       */
+      expect(source, `${file} draws no way to start what you saved`).toMatch(
+        /label=\{COPY\.controls\.track\}/,
+      );
+      expect(source, `${file} does not say which title it would start`).toContain(
+        'COPY.controls.trackTitle',
+      );
+      // And still the way out. A screen that can only be added to is its own defect.
+      expect(source, `${file} draws no way off the list`).toContain('removeFromWatchlist');
+    }
+  });
+
+  it('starts something through the one call that also takes it off the list', () => {
+    /*
+     * The half that matters, and the one a screen can quietly get wrong: `addToLibrary`
+     * alone leaves the title tracked *and* still saved, which `discover/recommend.ts`
+     * then excludes twice while the two lists say contradictory things about it.
+     */
+    const wrong: string[] = [];
+    for (const file of WATCHLISTS) {
+      const source = withoutProse(read(file));
+      if (!source.includes('startWatching')) wrong.push(`${file} does not call startWatching`);
+      if (/\baddToLibrary\b/.test(source)) {
+        wrong.push(`${file} tracks with addToLibrary, so the title stays on the watchlist`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+});
+
+describe('what a control is called', () => {
+  it('is never a question, anywhere in the product', () => {
+    /*
+     * `label=` and nothing else: `name=` is the announced sentence and a hint is prose,
+     * both of which may legitimately ask something. This is about the drawn word.
+     *
+     * A literal or a `COPY.` reference — an expression is followed into `copy.ts` by the
+     * clause below rather than guessed at here.
+     */
+    const asking: string[] = [];
+    for (const dir of TREES) {
+      for (const file of filesUnder(dir)) {
+        for (const [, label] of withoutProse(read(file)).matchAll(/label=(?:"([^"]*)"|'([^']*)')/g)) {
+          if (label?.includes('?')) asking.push(`${file}: label="${label}"`);
+        }
+      }
+    }
+    expect(asking, 'a control drawn as a question — see COPY.controls.catchUp').toEqual([]);
+  });
+
+  it('is never a question in the words either platform reads from copy.ts', () => {
+    // The other half of the same rule, where the words actually live now.
+    const asking = Object.entries(COPY.controls)
+      .filter(([, value]) => typeof value === 'string' && value.includes('?'))
+      .map(([key]) => `COPY.controls.${key}`);
+    expect(asking, 'a drawn control word that asks rather than says').toEqual([]);
+  });
+});

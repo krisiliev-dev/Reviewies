@@ -252,8 +252,8 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
                 onPress={track}
                 disabled={shelf === 'library'}
                 tone="primary"
-                label={shelf === 'library' ? 'Tracking' : 'Track'}
-                name={`Track ${result.name}`}
+                label={shelf === 'library' ? 'Tracking' : COPY.controls.track}
+                name={COPY.controls.trackTitle(result.name)}
               />
               <Button
                 onPress={() => setNoting(true)}

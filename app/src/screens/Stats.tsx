@@ -101,9 +101,11 @@ export function Stats() {
 
         {YEARS.length > 0 && (
           <div className="mb-5">
-            <Section className="px-1">
-              Year in review
-            </Section>
+            {/* A footnote labelling the second row of one control, not a `Section`
+                dividing the screen in the middle of one radiogroup. §6.167. */}
+            <Note level="footnote" className="px-1">
+              {COPY.stats.yearInReview}
+            </Note>
             {/* Bleeding to the screen edge, so the row that scrolls looks like one — a
                 scroller that stops short of the margin reads as a clipped list. */}
             <div className="-mx-4 px-4">

@@ -53,7 +53,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
           already has two — §6.61 counted them rather than felt them. The rule the app
           follows now: filled accent for the one action a row exists for, a ghost pill
           for the others, and underlined text only for a rare aside that opens something
-          else ("Use a different poster", "Caught up further?"). §6.131. */}
+          else ("Use a different poster", "Catch up"). §6.131. */}
       <Button
         size="inline"
         onPress={() => setOpen(!open)}

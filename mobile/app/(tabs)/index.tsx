@@ -369,8 +369,8 @@ function Row({
           <Button
             size="inline"
             tone="quiet"
-            label="Caught up further?"
-            name={`Catch up on ${entry.seriesName}`}
+            label={COPY.controls.catchUp}
+            name={COPY.controls.catchUpOn(entry.seriesName)}
             onPress={() => onCatchUp({ seriesId: entry.seriesId, seriesName: entry.seriesName })}
           />
 

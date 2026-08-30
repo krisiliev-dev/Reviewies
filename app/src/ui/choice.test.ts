@@ -159,7 +159,15 @@ describe('the choice contract', () => {
       const source = inRepo(path);
       const rows = source.match(/<Choice\b/g) ?? [];
       expect(rows.length, `${path} does not draw the question on two rows`).toBe(2);
-      expect(source, `${path} does not name Year in review`).toContain('Year in review');
+      // Named through `copy.ts` since §6.167, which also stopped it being a `Section`:
+      // a heading in the middle of one radiogroup drew the two rows as two questions,
+      // which is the visual half of the defect this clause holds the markup half of.
+      expect(source, `${path} does not name Year in review`).toContain(
+        'COPY.stats.yearInReview',
+      );
+      expect(source, `${path} draws the row's label as a section heading`).not.toMatch(
+        /<Section[^>]*>\s*\{?COPY\.stats\.yearInReview/,
+      );
       expect(source, `${path}'s years do not scroll`).toMatch(/\bscroll\b/);
 
       // Both rows continue a group rather than declaring one.

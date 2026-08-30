@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScrollView } from 'react-native';
 import { useRemote } from './useRemote';
 import { RemotePanel } from './RemotePanel';
-import { radius, tap, theme } from '../ui/theme';
-import { Chevron } from '../ui/Mark';
+import { tap, theme } from '../ui/theme';
 import { useReducedMotion } from '../ui/useReducedMotion';
-import { color, duration, reduced as reducedMotion, z, text, type } from '@reviewies/core/tokens';
+import { duration, reduced as reducedMotion, z, text, type } from '@reviewies/core/tokens';
 
 /**
  * The remote, hidden in a drawer to the side — which is what the brief asked for.
@@ -21,11 +20,33 @@ import { color, duration, reduced as reducedMotion, z, text, type } from '@revie
  * you scanned for is still selected the second time you open it. Scanning a subnet takes
  * a few seconds and doing it again because a component unmounted would be its own answer
  * to why nobody uses the feature.
+ *
+ * ## Why it does not own its own handle any more
+ *
+ * It used to draw a tab on the right edge at `top: '45%'`, above a comment reading *"a tab
+ * on the edge, always there, **never in the way of the pad**"*. `23-watching-live.png` is
+ * that claim photographed: the tab sits squarely over the emoji pad's fourth column,
+ * between *Cliffhanger* and *Dead*. §6.41 — an excuse that outlives its condition — and
+ * §6.139, a claim about the product proved against the product.
+ *
+ * The reason there is no better `top` is that on the phone **this drawer is mounted on
+ * exactly one screen**, and that screen is a full-bleed grid of twenty targets under a
+ * control row under a reaction stream. There is no free band on it, so a floating tab
+ * covers something wherever it goes, and what it covered was two targets.
+ *
+ * So the trigger belongs *in* the layout rather than over it: Watching Mode draws a named
+ * `Remote` button in the control row beside *Pause*, *Hold* and the two seeks, which is
+ * where its siblings already are. This component takes `open` and `onClose` and draws the
+ * drawer.
+ *
+ * The web keeps its edge tab, and the difference is a difference in the situation rather
+ * than drift: `App.tsx` mounts that one app-wide and it is the web's **only** route to the
+ * remote — there is no `/remote` screen there, where the phone has `app/remote.tsx` in the
+ * More tab — and it floats over screens that are lists rather than grids.
  */
 const WIDTH = Math.min(300, Dimensions.get('window').width * 0.85);
 
-export function RemoteDrawer() {
-  const [open, setOpen] = useState(false);
+export function RemoteDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const slide = useRef(new Animated.Value(0)).current;
   const remote = useRemote();
   const reduced = useReducedMotion();
@@ -47,26 +68,11 @@ export function RemoteDrawer() {
 
   return (
     <>
-      {/* The handle: a tab on the edge, always there, never in the way of the pad. */}
-      {!open && (
-        <Pressable
-          onPress={() => setOpen(true)}
-          style={styles.tab}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Open remote"
-        >
-          {/* Left, the way the panel arrives. It was `⌇` — a drag grip, on a control that
-              opens with a tap — against the web's `⇤`. §6.144. */}
-          <Chevron points="left" color={color.dark.ground} size={20} />
-        </Pressable>
-      )}
-
       {/* The scrim dismisses on a tap, which is what a scrim does. It is deliberately
           not a control: naming it would put a second "Close remote" in the reading
           order, saying the same thing as the button already in the drawer. */}
       {open && (
-        <Pressable style={styles.scrim} onPress={() => setOpen(false)} aria-hidden />
+        <Pressable style={styles.scrim} onPress={onClose} aria-hidden />
       )}
 
       <Animated.View
@@ -99,7 +105,7 @@ export function RemoteDrawer() {
         <View style={styles.head}>
           <Text style={styles.title}>Remote</Text>
           <Pressable
-            onPress={() => setOpen(false)}
+            onPress={onClose}
             hitSlop={8}
             accessibilityRole="button"
             // Named, because "Close" on its own is what half the sheets in this app say.
@@ -118,25 +124,6 @@ export function RemoteDrawer() {
 }
 
 const styles = StyleSheet.create({
-  tab: {
-    position: 'absolute',
-    right: 0,
-    top: '45%',
-    paddingVertical: 16,
-    paddingHorizontal: 6,
-    // The handle is a thin tab by design; 24 wide is the floor for it still being a
-    // target rather than a decoration.
-    minWidth: 24,
-    alignItems: 'center',
-    // Was `theme.surface2` on `theme.ink` — 1.21:1. A 24pt handle has been on this edge
-    // for sprints and every design reviewer independently reported the drawer as having
-    // no affordance, because at that ratio it is not there. `strokeSignal` is the token
-    // for a mark that means something, at 4.51 in the worst case.
-    backgroundColor: color.dark.strokeSignal,
-    borderTopLeftRadius: radius.none,
-    borderBottomLeftRadius: radius.none,
-    zIndex: z.drawerHandle,
-  },
   scrim: {
     position: 'absolute',
     top: 0,

@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { stripComments } from '@reviewies/core/test/source';
+import { blankLiterals } from '@reviewies/core/test/source';
 
 /**
  * What the core offers, and who actually calls it.
@@ -188,14 +188,18 @@ export function scan(tree: Tree): Reach[] {
   // A symbol used inside the module that declares it is not dead either; it is simply
   // not the entry point. Without this the report is mostly helper functions.
   //
-  // Comments stripped first, which §6.72 would have caught if its plant had been this
-  // shape. §6.75 wrote a sentence about `resetClock` into the file that declares it and
-  // the export stopped being reported as unreached — the second "mention" was prose. A
-  // guard that counts the word rather than the call cannot tell an explanation from a
-  // use, and the failure is silent in the direction that matters: it marks dead code
-  // alive.
+  // Comments **and string literals** blanked first, which is the same lesson twice.
+  // §6.75 wrote a sentence about `resetClock` into the file that declares it and the
+  // export stopped being reported as unreached — the second "mention" was prose, and
+  // `stripComments` was the answer. §6.167 hit the other half: `surface.ts` gained a
+  // register whose *values* are sentences, one of them naming `SURFACE_OFF`, and a
+  // string is not a comment — so a data table explaining a symbol marked it reached, and
+  // a two-sprint-old LOPSIDED entry silently expired. A guard that counts the word rather
+  // than the call cannot tell an explanation from a use, wherever the explanation is
+  // written, and the failure is silent in the direction that matters: it marks dead code
+  // alive. `blankLiterals` blanks both.
   for (const [module, names] of exports) {
-    const source = stripComments(tree.read(`core/src/${module}.ts`));
+    const source = blankLiterals(tree.read(`core/src/${module}.ts`));
     for (const name of names) {
       const mentions = source.match(new RegExp(`\\b${name}\\b`, 'g'))?.length ?? 0;
       if (mentions > 1) record(module, name, 'core');

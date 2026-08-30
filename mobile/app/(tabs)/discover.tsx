@@ -137,8 +137,8 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             onPress={track}
             disabled={added === 'library'}
             tone="primary"
-            label={added === 'library' ? 'Tracking' : 'Track'}
-            name={`Track ${item.name}`}
+            label={added === 'library' ? 'Tracking' : COPY.controls.track}
+            name={COPY.controls.trackTitle(item.name)}
           />
           <Button
             onPress={save}

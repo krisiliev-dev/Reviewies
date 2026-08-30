@@ -130,8 +130,15 @@ describe('the space scale, on the phone', () => {
      * one of which carried the `marginTop: 12` that was the whole of what #173 was about.
      * The space did not vanish — it is `ATTRIBUTION_SEPARATION` now, held by
      * `attribution.test.ts` on both platforms at once. §6.147.
+     *
+     * 178, down three, all §6.167: `WhereToWatch`'s service plate lost the padding it
+     * had as a box when a streaming service stopped being drawn as one, and the phone's
+     * `RemoteDrawer` lost the `paddingVertical`/`Horizontal` of the edge tab it no
+     * longer draws — the trigger is a `Button` in Watching Mode's control row, so that
+     * spacing belongs to `Button` now. One is a shape deleted and two are a shape moved
+     * into a component, which is the same two reasons as every note above.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(181);
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(177);
     expect(off).toEqual([]);
   });
 });

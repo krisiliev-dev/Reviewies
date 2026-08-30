@@ -72,6 +72,39 @@ export const SURFACE = {
 } as const;
 
 /**
+ * Every place the sunken ground is painted and left there, and why.
+ *
+ * `SURFACE.sunk` two entries up says what the fill means — *held down, and the inside of
+ * a plate* — and a press is self-limiting: it exists while a finger is on it. A **static**
+ * sunken fill is the other half, and until §6.167 nobody had counted them.
+ *
+ * The one that started it: `15-title.png` draws the streaming service as a `groundWell`
+ * plate **inside** the `groundRaised` *Where to watch* card. Two steps down from its own
+ * container, on the only element in a hundred and thirty screenshots darker than the thing
+ * it sits in, and it is not a control and not an input — it is the name of a service. It
+ * read as a hole punched in the card. The names are ink on the card now, separated the way
+ * every other fact in this build is separated, and the eleven that remain are here with
+ * their reasons.
+ *
+ * The shape is `bareControl.test.ts`'s: a table with a sentence per entry, so the twelfth
+ * has to be argued for rather than typed. Every one of these is a **well** — something
+ * sits *in* it — which is what `SURFACE.sunk` says the fill is for. `sunkenFill.test.ts`
+ * sweeps both platforms against it.
+ */
+export const SUNK_FILLS: Record<string, string> = {
+  'app/src/ui/Poster.tsx': 'the well artwork sits in, and the ground behind a poster that has none',
+  'mobile/src/ui/Poster.tsx': 'the well artwork sits in, and the ground behind a poster that has none',
+  'app/src/screens/More.tsx': 'the figure plate on the contents screen: a number set into the page',
+  'mobile/app/(tabs)/more.tsx': 'the figure plate on the contents screen: a number set into the page',
+  'mobile/app/comments/[targetId].tsx': 'the well an attached image sits in, before it has loaded',
+  'mobile/src/ui/CatchUp.tsx': 'the sheet is a well over the screen it covers',
+  'mobile/src/social/AddToList.tsx': 'the sheet is a well over the screen it covers',
+  'mobile/src/watching/ListenSync.tsx': 'the level meter is a trough the bar moves in',
+  'app/src/ui/MatchImports.tsx':
+    'a filled action with nothing to do: the fill goes down rather than fading, which is `SURFACE_OFF` below',
+};
+
+/**
  * A control that is present and not yet pressable: the fill goes, a hairline rule
  * arrives, the ink steps to tertiary.
  *

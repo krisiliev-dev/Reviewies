@@ -783,7 +783,9 @@ try {
   // exactly the person using it.
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=The Long Dark', { timeout: 20000 });
-  await page.getByText('Caught up further?').first().click();
+  // `Catch up`, and not the question it read until §6.167: the only question mark on any
+  // control in the product, against an announced name that had always been the verb.
+  await page.getByText('Catch up', { exact: true }).first().click();
   await page.waitForSelector('text=How far have you got?', { timeout: 15000 });
   const sheet = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('the catch-up sheet opens', true);

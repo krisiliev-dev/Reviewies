@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { COPY } from '@reviewies/core/copy';
+import type { MediaKind } from '@reviewies/core/domain/types';
 import { db } from '../data/db';
-import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
+import { removeFromWatchlist, setWatchlistNote, startWatching } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
 import { Row as BaseRow } from '../ui/Row';
 import { Button } from '../ui/Button';
@@ -52,6 +53,7 @@ export function Watchlist() {
           <Row
             key={item.titleId}
             titleId={item.titleId}
+            kind={item.kind}
             name={title?.name ?? item.titleId}
             posterUrl={title?.posterUrl}
             year={title?.year}
@@ -65,12 +67,14 @@ export function Watchlist() {
 
 function Row({
   titleId,
+  kind,
   name,
   posterUrl,
   year,
   note,
 }: {
   titleId: string;
+  kind: MediaKind;
   name: string;
   posterUrl?: string;
   year?: number;
@@ -130,16 +134,36 @@ function Row({
             <Button tone="primary" label="Save" name={`Save note for ${name}`} onPress={save} />
           </div>
         ) : (
-          <button
-            onClick={() => setEditing(true)}
-            // Every row says "Add a note…". Which row is a visual fact only.
-            aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
-            className="tap text-left text-s14 font-prose font-regular text-ink-secondary italic"
-          >
-            {/* "The amount of things I have in my wishlist that i have ZERO memory for
-                why they're there" — r/Letterboxd. */}
-            {note || 'Add a note…'}
-          </button>
+          <div className="flex flex-col items-start gap-2">
+            <button
+              onClick={() => setEditing(true)}
+              // Every row says "Add a note…". Which row is a visual fact only.
+              aria-label={note ? `Edit note for ${name}` : `Add a note for ${name}`}
+              className="tap text-left text-s14 font-prose font-regular text-ink-secondary italic"
+            >
+              {/* "The amount of things I have in my wishlist that i have ZERO memory for
+                  why they're there" — r/Letterboxd. */}
+              {note || 'Add a note…'}
+            </button>
+            {/*
+              The verb the list exists for, and §6.167's finding: until now the only
+              element on a watchlist row wearing a control's shape was *Remove*.
+              `05-discover.png` offers this same film with **Track** and **Watchlist**
+              side by side; `06-watchlist.png` offered *Remove* and an italic sentence.
+
+              `secondary` and not `primary`, which is the tone Discover gives the same
+              verb: `button.ts` calls `primary` "the one thing on a screen worth
+              pressing", and a list of twenty rows cannot hold twenty of those. Discover
+              ranks two verbs against each other on a handful of rows; here there is one
+              verb and nothing to rank it against.
+            */}
+            <Button
+              tone="secondary"
+              label={COPY.controls.track}
+              name={COPY.controls.trackTitle(name)}
+              onPress={() => startWatching(titleId, kind)}
+            />
+          </div>
         )
       }
     />

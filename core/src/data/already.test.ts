@@ -106,8 +106,11 @@ describe('what you already have', () => {
       expect(source, `${path} never asks what you already have`).toContain('alreadyHave()');
       expect(source, `${path} never resolves a result against it`).toContain('shelfFor(result');
       // And the label is driven by that rather than by this session's button presses.
+      // `Track` moved into `copy.ts` when §6.167 gave the watchlist the same verb, so the
+      // ternary now reads a name rather than typing the word. What is being held is that
+      // the label turns on `shelf`, not where the two words come from.
       expect(source, `${path} still labels from local state alone`).toContain(
-        "shelf === 'library' ? 'Tracking' : 'Track'",
+        "shelf === 'library' ? 'Tracking' : COPY.controls.track",
       );
       expect(source, `${path} still labels the watchlist from local state alone`).toContain(
         "shelf === 'watchlist' ? 'On watchlist' : 'Watchlist'",

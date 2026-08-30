@@ -60,7 +60,7 @@ export {
  * The minimum a control can be and still be a target.
  *
  * WCAG 2.5.8 asks for 24x24 CSS pixels. Several controls here are a line of text and
- * nothing else — "Caught up further?", "Remove", "Use a different poster" — and came out
+ * nothing else — "Catch up", "Remove", "Use a different poster" — and came out
  * fourteen to seventeen pixels tall. `hitSlop` was doing the work, which is real on a
  * device and invisible to layout: two hitSlop targets next to each other overlap, and
  * nothing can measure them. This gives them the height for real, and keeps the hitSlop

@@ -94,7 +94,9 @@ export default function StatsScreen() {
 
           {years.length > 0 && (
             <View style={styles.section}>
-              <Section>Year in review</Section>
+              {/* The web's copy of this has the reasoning: a footnote labelling the
+                  second row of one control, not a section heading inside a radiogroup. */}
+              <Note level="footnote">{COPY.stats.yearInReview}</Note>
               <Choice
                 continues
                 name={COPY.stats.period}

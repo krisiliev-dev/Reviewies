@@ -127,8 +127,8 @@ function SuggestionRow({
             onPress={track}
             disabled={busy}
             tone="primary"
-            label="Track"
-            name={`Track ${suggestion.name}`}
+            label={COPY.controls.track}
+            name={COPY.controls.trackTitle(suggestion.name)}
           />
           <Button
             onPress={save}

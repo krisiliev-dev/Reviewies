@@ -179,6 +179,34 @@ export const COPY = {
      * have been named for one of its five callers. A word the product says belongs here.
      */
     done: 'Done',
+    /**
+     * The verb that starts something, drawn and announced.
+     *
+     * `Track` is the word Search and Discover already draw on the button that puts a title
+     * in your library, typed at each call site. §6.167 gave the watchlist the same verb —
+     * the screen's only drawn control was *Remove* — and a third hand-typed copy of a word
+     * three screens say is how `saveToWatchlist` and `addToWatchlist` came to be two
+     * sentences for one act.
+     *
+     * The label is the bare verb and the name carries the title, because a screen of rows
+     * is the same word repeated down the page and a screen reader reads the control rather
+     * than what is above it.
+     */
+    /**
+     * The way back into a show you binged away from the app, drawn as what it does.
+     *
+     * It read **"Caught up further?"** on both platforms — the only question mark on any
+     * control in the product, on a screen where every other control is a verb: *Track*,
+     * *Watchlist*, *Remove*, *Save*, *Pause*, *Hold*. §6.167.
+     *
+     * The verb was already there and only screen readers heard it: the announced name has
+     * always been `Catch up on {show}`, so the label and the name disagreed about what the
+     * control was. This makes the drawn word the announced one.
+     */
+    catchUp: 'Catch up',
+    catchUpOn: (name: string) => `Catch up on ${name}`,
+    track: 'Track',
+    trackTitle: (name: string) => `Track ${name}`,
     addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
     saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
@@ -361,6 +389,25 @@ export const COPY = {
      */
     showAllTime: 'Show all time',
     /**
+     * The second row of the one period control, labelled rather than sectioned.
+     *
+     * It was a `Section` on both platforms — tracked caps at a section's spacing — drawn
+     * in the **middle of a single radiogroup**. §6.138 made the two rows one question and
+     * one answer in the markup; the drawing still said two, because a section heading is
+     * what this build puts between parts of a screen, and a reader takes it as a boundary.
+     * `08-stats.png`: three chips, a heading, three more chips, and one mark somewhere in
+     * the six.
+     *
+     * A footnote is what `note.ts` calls "a footnote under a control", which is what
+     * Watching Mode's density label is and what this is: the row's own label, not a part
+     * of the screen. Sentence case for the same reason — `section.ts`'s table gives caps
+     * and tracking to a section and *as written* to everything else.
+     *
+     * The words stay: TV Time's REWIND was among its most-loved features and this is that,
+     * so the row says what it is.
+     */
+    yearInReview: 'Year in review',
+    /**
      * "Period", not the phone's "window": the control offers *All time*, and all time
      * is not a window. The word has to be true of every choice the screen offers.
      */
@@ -446,7 +493,23 @@ export const COPY = {
      * §6.13 is the standing rule about that; this is the same mistake in the flagship.
      */
     densityChoice: (many: number) => `Show at most ${many} reactions on screen at once`,
-    densityLabel: 'Density',
+    /**
+     * The label names what the number counts, because the chips cannot.
+     *
+     * It read `Density`, and `23-watching-live.png` shows the result: *Density  8  24  60*
+     * — a property, then three bare numbers, with nothing on the screen saying eight of
+     * what. The sentence that says it is `densityChoice` above, and that is the option's
+     * *hint*: announced to a screen reader and drawn nowhere.
+     *
+     * §6.55 already found and fixed the wrong unit here — the hint used to say "a minute"
+     * when the code counts a four-second window — so this control has now been wrong about
+     * its unit twice, once by saying the wrong one and once by drawing none.
+     *
+     * `Most on screen` and not `Reactions on screen`: the number is a **cap**, and a label
+     * that reads as an exact count is the near-true kind this build keeps rejecting. Three
+     * words, because it sits in a control row beside *Pause*, *Hold* and two seeks.
+     */
+    densityLabel: 'Most on screen',
     /**
      * What the empty reaction band says while nothing is crossing it.
      *

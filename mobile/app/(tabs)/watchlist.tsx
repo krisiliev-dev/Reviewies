@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { COPY } from '@reviewies/core/copy';
+import type { MediaKind } from '@reviewies/core/domain/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '@reviewies/core/data/db';
-import { removeFromWatchlist, setWatchlistNote } from '@reviewies/core/data/repo';
+import { removeFromWatchlist, setWatchlistNote, startWatching } from '@reviewies/core/data/repo';
 import { Poster } from '../../src/ui/Poster';
 import { Row as BaseRow } from '../../src/ui/Row';
 
@@ -51,6 +52,7 @@ export default function WatchlistScreen() {
           <Row
             key={item.titleId}
             titleId={item.titleId}
+            kind={item.kind}
             name={title?.name ?? item.titleId}
             year={title?.year}
             posterUrl={title?.posterUrl}
@@ -64,12 +66,14 @@ export default function WatchlistScreen() {
 
 function Row({
   titleId,
+  kind,
   name,
   year,
   posterUrl,
   note,
 }: {
   titleId: string;
+  kind: MediaKind;
   name: string;
   year?: number;
   posterUrl?: string;
@@ -158,6 +162,20 @@ function Row({
           </Pressable>
         )}
 
+        {/*
+          The verb the list exists for. The web's copy of this has the reasoning: until
+          §6.167 the only element on a watchlist row wearing a control's shape was
+          *Remove*, on the screen whose whole subject is things you want to watch.
+        */}
+        <View style={styles.act}>
+          <Button
+            tone="secondary"
+            label={COPY.controls.track}
+            name={COPY.controls.trackTitle(name)}
+            onPress={() => startWatching(titleId, kind)}
+          />
+        </View>
+
         </View>
       }
     />
@@ -176,6 +194,8 @@ const styles = StyleSheet.create({
    * them and turned up in the sprint that swept the accent fill.
    */
   rowBody: { flex: 1, minWidth: 0, gap: 4 },
+  /** `alignItems` so the pill is the width of its words, not the width of the row. */
+  act: { alignItems: 'flex-start', marginTop: 4 },
   note: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.proseItalic.name },
   addNote: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
   editor: { gap: 6 },

@@ -12120,15 +12120,174 @@ drawn tick, on both platforms, in the same alphabet as every other mark in the p
 
 ## What is not done, and why it is said here
 
-Five of §6.165's six findings are still open, and this entry claims nothing about them. The
-watchlist row whose only drawn control is *Remove*, the provider chip darker than its card,
-the drawer handle over the emoji pad, Stats' two chip rows in one visual language, and the two
-small ones — *"Caught up further?"* as a question, and tracking separating a figure's decimal
-point. Each needs a decision rather than a line, and taking a decision badly at the end of a
-sprint is how the design record gets a shot of something nobody chose.
+Five of §6.165's six findings are still open at the close of this sprint, and this entry
+claims nothing about them; §6.167 below is where they are taken. The other **109 unread
+shots** are also still unread.
 
-The other **109 unread shots** are also still unread. §6.165's rate — six findings in the
-first eight pictures — has not been tested against them.
+### 6.167 Five findings, five decisions, and one of them was wrong
+
+**#203.** §6.166 took the largest of §6.165's six findings and left five, each of which
+needed a *decision* rather than a line. This is those five. Four became changes; the fifth
+was measured and retracted.
+
+#### The watchlist row's only drawn control was *Remove*
+
+Two screenshots, one film:
+
+| shot | what it offers you for *Quiet Harbour* |
+| --- | --- |
+| `05-discover.png` | **Track** (filled) and **Watchlist** (outlined), side by side |
+| `06-watchlist.png` | *Remove*, and an italic sentence reading "Ana recommended" |
+
+The screen whose whole subject is things you mean to watch was the one screen in the
+product that would not let you begin one. The question the finding asked — what is a
+watchlist row *for* — has a short answer: an intention, which resolves two ways. You start
+it, or you give up on it. The row drew only the second.
+
+So the row gains **Track**, the same verb Discover and Search draw on the same title, and
+`repo.ts` gains `startWatching` — `addToLibrary` then `removeFromWatchlist`, one act.
+Tracking taking it off the list is not a nicety: both products this one is answering do it
+(Trakt when you watch, Letterboxd when you log), and `discover/recommend.ts` already
+excludes anything tracked *or* watchlisted, so a title in both places is one the feed
+reasons about twice while the two lists say contradictory things about it. The order is the
+reason it is one function and not two calls at four sites: track first and the worst case
+is a title tracked and still saved, which the next press fixes; remove first and a crash
+between them loses it from both.
+
+`secondary` rather than Discover's `primary`, and the reason is in `button.ts`: `primary`
+is "the one thing on a screen worth pressing", and a list of twenty rows cannot hold twenty
+of those. Discover ranks two verbs against each other on a handful of rows; here there is
+one verb and nothing to rank it against.
+
+`watchlistRow.test.ts` holds both halves — the drawn label, and that neither platform
+tracks with a bare `addToLibrary`.
+
+#### The provider chip was darker than the card it sits in
+
+`15-title.png`: *Example Streaming* drawn as a `groundWell` plate **inside** the
+`groundRaised` *Where to watch* card. Two steps down from its own container, and the only
+element in a hundred and thirty screenshots darker than the thing it sits in. It reads as a
+hole punched in the card.
+
+The colour was not the mistake — the fill was. `surface.ts` has said since it was written
+that the sunken ground means *held down, or the inside of a plate*, and a service name is
+neither: it is not pressable and nothing sits in it. What it is is a **fact**, and this
+build already draws a run of facts one way: `Film · 2024`, `2025-11-22 · 22m`,
+`S1E6 · Episode 6`. So `Stream — Netflix · Now TV`, in ink, on both platforms. No box means
+no shape to be misread as a control, which is `Choice`'s job.
+
+The finding generalised into `SUNK_FILLS`: every static sunken fill in the product with a
+sentence saying what is meant to sit in it. Nine survive and all nine are wells. It is the
+third register of this shape after `REVEALS` and `EMPTY_STATES`, and `sunkenFill.test.ts`
+sweeps both platforms against it.
+
+#### The drawer handle sat over the emoji pad, under a comment saying it did not
+
+The line above the phone's remote tab read *"a tab on the edge, always there, **never in
+the way of the pad**"*. `23-watching-live.png` is that claim photographed: at `top: '45%'`
+it sits squarely over the pad's fourth column, between *Cliffhanger* and *Dead*. §6.41 and
+§6.139 in one comment.
+
+There is no better `top`. On the phone this drawer is mounted on **exactly one screen**,
+and that screen is a grid of twenty targets under a control row under a reaction stream —
+a floating tab covers something wherever it goes, and what it covered was two targets. So
+the trigger moved into the layout: a named `Remote` button in the control row beside
+*Pause*, *Hold* and the two seeks, where its siblings already are. `RemoteDrawer` takes
+`open` and `onClose` and draws the drawer.
+
+The web keeps its edge tab, and that is a difference in the situation rather than drift:
+`App.tsx` mounts it app-wide and it is the web's **only** route to the remote — there is no
+`/remote` screen there, where the phone has one in the More tab — and it floats over lists
+rather than grids. The register records the two states under two names for that reason.
+
+The same screen's second finding was smaller and the same kind: *Density — 8 · 24 · 60*, a
+property and three bare numbers, with nothing drawn saying eight of what. The sentence that
+says it is the option's *hint*, announced to a screen reader and drawn nowhere. §6.55
+already found and fixed the wrong unit on this control, so it has now been wrong about its
+unit twice — once by naming the wrong one and once by naming none. It reads **Most on
+screen** now: `Most`, not `Reactions`, because the number is a cap and a label that reads
+as an exact count is the near-true kind this build keeps rejecting.
+
+#### Stats' two chip rows: the filed reading was wrong, and something else was true
+
+The finding said the two rows were one visual language with two meanings, and that *Year in
+Review* marked nothing. Read against the code, that is not what the shot shows: §6.138
+already made the two rows **one radiogroup with one answer**, and in `08-stats.png` the
+answer is `This year`, in the first row. The second row marking nothing is the control
+working.
+
+What the photograph does support is the half §6.138 fixed in the markup and not in the
+drawing: `Year in review` was a **`Section`** — tracked caps at a section's spacing — set
+in the middle of a single radiogroup. A section heading is what this build puts between
+parts of a screen, so a reader takes it as a boundary and sees two questions. It is a
+`Note level="footnote"` now, which `note.ts` defines as "a footnote under a control", and
+which is exactly what Watching Mode's density label is: the row's own label, not a part of
+the screen.
+
+#### The two small ones, and the retraction
+
+*"Caught up further?"* was the only question mark on any control in the product, on a screen
+whose other controls are *Track*, *Remove*, *Save*, *Pause*, *Hold*. Its own announced name
+had always been `Catch up on {show}` — so the drawn label and the spoken one disagreed about
+what the control was, and the verb was already there and only screen readers heard it. It
+reads **Catch up**. The rule generalised: `watchlistRow.test.ts` refuses a `label=` or a
+`COPY.controls` word containing a question mark, anywhere in either app.
+
+The second one is **retracted**. The finding said tracking separates a figure's decimal
+point — `1 . 0 days`, `6 . 0h`. Measured in the built app at 20px:
+
+| | `10` | `1.0` | what the period costs |
+| --- | --- | --- | --- |
+| IBM Plex Mono, the figure face | 20.00px | 25.00px | **5.00px** |
+| Archivo, the body face | 21.89px | 27.42px | **5.53px** |
+
+`letter-spacing` is `normal` in both. There is no tracking on the figure, and the period is
+*narrower* in the mono face than in the face beside it — so there is nothing to reclaim and
+nothing to correct. What the eye is reading is a mono period sitting centred in its own
+advance, which is what the face the direction asked for does, and which the four figure
+tiles either side of it depend on to line up. The cause named in the finding is measurably
+absent; the measurement is here so the next reader does not file it again.
+
+#### And the guard that was reading prose as code, again
+
+`coreWiring.test.ts` counts an export as reached-by-its-own-module when the name appears
+more than once in the file that declares it, with **comments stripped** — a rule §6.75 wrote
+after a sentence about `resetClock` marked it alive. Adding `SUNK_FILLS`, whose *values* are
+sentences and one of which names `SURFACE_OFF`, silently expired a two-sprint-old LOPSIDED
+entry: a string is not a comment.
+
+The scan blanks string literals as well now, and the fix immediately surfaced two real
+asymmetries that had been hidden the same way for much longer. `setSqlJsLoader` (web only —
+a browser has to fetch sql.js' WASM; the phone has expo-sqlite compiled in) and
+`setAuthStorage` (phone only — React Native has no `localStorage`) **each name themselves
+inside their own error message**, and the scan had been counting that as the module reaching
+itself. Both are deliberate and both now have a reason on the record; neither had one before,
+because neither had ever been reported.
+
+Five plants, all red before the change and green after: an unclaimed sunken fill, a stale
+register entry, a register entry too short to be a sentence, a watchlist that tracks with a
+bare `addToLibrary`, and a question-mark label in each of the two places one can be written.
+A sixth plant passed and changed the clause instead of the code — `toContain('COPY.controls.track')`
+was satisfied by `COPY.controls.trackTitle` on the same call, so the drawn label could be
+deleted outright and the check stayed green. It reads the `label=` now. A seventh passed and
+changed the clause's *name*: a word-count cannot tell a reason from a phrase, so the clause
+says "too short to be a sentence" and the reading is left to a reviewer.
+
+## What is not done, and why it is said here
+
+**109 shots are still unread.** §6.165's rate — six findings in the first eight pictures —
+has still not been tested against them, and `design/web/` in both themes, `design/web-real/`
+at both widths, and every `-foot` shot are where the next reading should start.
+
+**Stats has never been photographed with a year selected.** The finding above was filed from
+a shot showing the first row holding the answer, and re-read against the code rather than
+against a picture of the other case. §6.146's rule — a fixture that cannot produce the case
+has an opinion about the screen — applies: the capture scripts walk the period control but
+never press a year.
+
+**The web's edge tab has never been judged in a shot.** It only renders when
+`bridgeConfigured()`, which no design pass configures, so the element this entry decided to
+*keep* is the one it has no photograph of.
 
 ## 7. What is still not known
 
@@ -12976,12 +13135,21 @@ and which single claim in this document could not be checked at all:
   was written from a listing of one directory. Six of the nine findings came out of the first
   eight shots, which is a rate worth taking seriously about the remaining hundred and nine.
 
-- **Five findings are filed and unfixed**, each with its shot named: the watchlist row whose
-  only drawn control is *Remove*; *Caught up further?* as a question where every control is a
-  verb; Stats' two chip rows in one visual language with two meanings; the provider chip darker
-  than the card it sits in; and the drawer handle sitting on top of the emoji pad. The sixth —
-  the preference toggle drawn by two platform defaults — is closed in §6.166. Each of the five
-  needs a decision rather than a line.
+- **All nine of §6.165's findings are now taken, and one of them was wrong.** §6.166 closed
+  the preference toggle; §6.167 took the other five and retracted one on measurement — the
+  claim that tracking separates a figure's decimal point, where `letter-spacing` is `normal`
+  and the period is *narrower* in the mono face (5.00px at 20px) than in the body face
+  beside it (5.53px). A second was half wrong: Stats' two chip rows are one radiogroup with
+  one answer, §6.138 having made them so, and what the shot actually shows is a `Section`
+  heading drawn inside that group. Both were filed by reading a picture and settled by
+  measuring one.
+
+- **Two states the design harness cannot reach, both about controls §6.167 decided.** Stats
+  has never been photographed with a *year* selected — the capture scripts walk the period
+  control and never press one — so the second row's chosen state is reasoned about rather
+  than seen, which is §6.146's rule. And the **web's** remote handle renders only when
+  `bridgeConfigured()`, which no design pass configures: §6.167 decided to keep that edge
+  tab, on the platform where it is the only route to the remote, without a photograph of it.
 
 - **The settings *row* is still a surface with no component.** §6.166 drew the mark and left
   the row, on both platforms, in `bareControl.test.ts`'s exemption table with that as its

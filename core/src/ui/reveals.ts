@@ -111,8 +111,18 @@ export const REVEALS: readonly Reveal[] = [
     shot: '15-title-country',
   },
   {
-    states: ['open', 'open'],
-    screens: ['app/src/remote/RemoteDrawer.tsx', 'mobile/src/devices/RemoteDrawer.tsx'],
+    /**
+     * Two states with two names, because the two platforms open this from different
+     * places — and §6.167 is why.
+     *
+     * The web's drawer owns its own trigger: an edge tab, mounted app-wide in `App.tsx`,
+     * and the web's only route to the remote. The phone's is mounted on Watching Mode
+     * alone, and a floating tab over a screen that is a grid of twenty targets covered
+     * two of them — `23-watching-live.png`. So on the phone the trigger is a named
+     * `Remote` button in the control row and the state lives on the screen.
+     */
+    states: ['open', 'remoteOpen'],
+    screens: ['app/src/remote/RemoteDrawer.tsx', 'mobile/app/watching/[targetId].tsx'],
     shows: 'the remote, which is the one reveal that was already photographed open',
     shot: '24-watching-remote',
   },
