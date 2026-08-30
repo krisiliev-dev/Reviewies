@@ -186,7 +186,17 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     copy: 'warnings.empty',
     screens: ['app/src/social/ContentWarnings.tsx', 'mobile/src/ui/ContentWarnings.tsx'],
     says: 'nobody has flagged this title yet — and the section says so rather than staying shut',
-    shot: '00-warnings-empty',
+    /**
+     * The reveal's own shot, which has been a photograph of this state all along: the
+     * seeded set has no warnings in it, so pressing the control has always opened onto
+     * *"Nobody has flagged anything yet."* §6.175 filed a second capture step for it and
+     * the file came out byte-identical, which is how that was found.
+     *
+     * One photograph, two registers, two different claims about it — `reveals.ts` that
+     * the section opens when pressed, this one that it says something when empty. The
+     * same arrangement as `00-people-empty`, which answers for both social graphs.
+     */
+    shot: '15-title-warnings',
   },
   {
     copy: 'lists.emptyInPicker',

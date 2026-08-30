@@ -342,17 +342,23 @@ await shoot(page, {
 });
 
 /*
- * The two reveals, again, on an account with nothing in it.
+ * The add-to-list picker, again, on an account with nothing in it.
  *
- * `15-title-addtolist` and `15-title-warnings` above are the same two controls over the
- * *seeded* set — a picker with two lists in it, a section with flags on it. The empty
- * halves are different screens and §6.175 registered them, so they are walked to a second
- * time rather than assumed from the first pair.
+ * `15-title-addtolist` above is the same control over the *seeded* set — a picker with two
+ * lists in it — and the empty half is a different screen, so it is walked to a second time
+ * rather than assumed from the first.
+ *
+ * Its sibling is **not** here, and the reason is the entry that added it. §6.175 wrote a
+ * `00-warnings-empty` step beside this one and the file it produced was byte-identical to
+ * `15-title-warnings`: the seeded set has no content warnings in it either, so that shot
+ * has been a photograph of `warnings.empty` since the day it was taken. Registering a
+ * second copy of it would have been the §6.139 mistake that entry is about, committed an
+ * hour after fixing it — caught by `md5sum` rather than by argument, which is the point.
+ * `emptyStates.ts` points at `15-title-warnings` instead, the way both halves of People
+ * point at `00-people-empty`.
  */
 await toTitle();
 await press('00-addtolist-empty', /Add to list/i);
-await toTitle();
-await press('00-warnings-empty', /content warnings/i);
 
 /*
  * And a list that exists with nothing on it, which is a third answer rather than a shade of

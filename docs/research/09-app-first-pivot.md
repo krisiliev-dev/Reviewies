@@ -13103,9 +13103,36 @@ comment has been sitting above the sentence saying so.
 The register now carries that as the `why` on a `shot: null`, which is the strongest kind of
 §6.146 answer: what stands between the harness and this screen is the product. The
 unwatched gate is registered in its place, pointing at the shot that has been of it all
-along, and two genuinely new empty states — Content Warnings with nothing flagged, the
-add-to-list picker with no lists — are registered and photographed, walked to a second time
-under the no-rows stub rather than assumed from the seeded reveals above them.
+along, and two more empty states — Content Warnings with nothing flagged, the add-to-list
+picker with no lists — are registered.
+
+#### And then the same mistake again, one hour later, caught by `md5sum`
+
+Both of those were given a fresh capture step under the no-rows stub, on the reasoning that
+`15-title-addtolist` and `15-title-warnings` above them are shots of the *seeded* set. The
+pass ran and the two files came out at 88,358 and 106,299 bytes. So did their neighbours:
+
+```
+7c3f6e0e9228e5fbab1cef4013a2a2c6  00-warnings-empty.png
+7c3f6e0e9228e5fbab1cef4013a2a2c6  15-title-warnings.png
+6871009e4d1c42d558163741bc0ac1da  00-addtolist-empty.png
+d60213d069ee3e504b3cbbb7b25dc243  15-title-addtolist.png
+```
+
+The picker is genuinely different — two lists against none. The warnings section is
+**byte-identical**, because the seeded set has no content warnings in it either:
+`15-title-warnings` has been a photograph of *"Nobody has flagged anything yet."* since the
+day it was taken.
+
+That is the same §6.139 defect as the one at the top of this entry — a register entry naming
+a shot nobody had compared against the thing it claims — committed in the hour after fixing
+it, by me, while writing about it. It was not caught by argument. It was caught by hashing
+two files, which took four seconds and is the only reason this paragraph is not a second
+false claim sitting in the register.
+
+The duplicate step and its two files are gone; `warnings.empty` points at `15-title-warnings`
+the way both halves of People point at `00-people-empty` — one photograph, two registers,
+two different claims about it. Only `00-addtolist-empty` is a new shot.
 
 #### One more clause that could not see what its name claims
 
@@ -13134,10 +13161,11 @@ approximation of a spoiler guarantee is not a thing to do in the last twenty min
 sprint. The register says the branch is unreachable and why; the next sprint can decide
 whether to make it reachable or delete the sentence.
 
-**The design passes have not run against these changes.** Twelve screens changed what they
-read a sentence from; none changed what the sentence says, and the suite proves each screen
-still reaches for its `COPY` path. But that is an argument, and §6.139 is that an argument
-about the product is not a measurement of it.
+**The design passes have run.** `design:phone`, `design:signedin` and `design:web` all
+completed with no hollow shots; the two `-foot` shots the picker needs are on file, and
+nothing above the fold changed on any of the twelve screens that swapped a literal for a
+`COPY` path. Only `design:real` and `design:web:real` are unrun, and those exercise the
+real-TMDB build, which none of this touched.
 
 **Seventy-two shots are still unread.** This sprint read three and stopped, because the third
 one produced this.
