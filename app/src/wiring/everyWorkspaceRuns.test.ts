@@ -179,7 +179,11 @@ describe('every workspace', () => {
     // app 664, up three: §6.181's clause per component — the key's shape, the monogram
     // held still against the reader's text setting, and the web's `Choice` literals bound
     // to `CHOICE_SIZE`.
-    core: 928, app: 664, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 667, up three: §6.183's clause per defect — the fill drawn at the height the table
+    // states, the pad filling the row on the narrowest phone, and a literal read whole
+    // whether or not a digit happens to be in it. One from each of three parallel branches,
+    // which is why this line could only be set after all three had merged.
+    core: 928, app: 667, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

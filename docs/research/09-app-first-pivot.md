@@ -14179,6 +14179,123 @@ size and measures controls for overflow, and could assert that no line box is sm
 its font size. It cannot be added yet, because today it fails everywhere; the clause has to
 assert whatever the decision turns out to be.
 
+#### The pad wrapped to three on the phone it was sized for
+
+`mobile/src/ui/PadCell.tsx` sized a reaction cell `width: '23%'`, and four of those plus three
+8pt gaps want a row of 300pt. The narrowest phone this app supports gives **296** — the screen
+less a 12pt gutter each side. Measured in the export at 320 before anything was touched: cells
+68.08pt wide, **three to a row, seven rows of three where the design is five of four**, the
+last reachable only by scrolling. Which is verbatim the failure `core/src/ui/padCell.ts` says
+the count of four exists to avoid: *"the pad is tapped in the dark; scrolling to reach
+'Popcorn' is the failure this avoids"*.
+
+At 390 it did not wrap — 84.17 in a row that allows 85.5, five points of slack. **390 is the
+width every design pass and both smoke suites use**, which is how a pad that wraps on the
+phone it was sized for was photographed twice and read as correct.
+
+A percentage cannot pay for a gap: Yoga and CSS both lay `gap` out *beside* the basis, so any
+percentage that fits at 390 overflows somewhere narrower, and `flexBasis: '25%'` with a gap
+still wants 320pt of row. So the gap moved into the column — half of `PAD.gap` either side of
+the plate, with the row taking that half back at its edges — leaving a column at exactly
+`100 / PAD.columns` percent. Measured after, both platforms, both widths: **four to a row,
+68.0 at 320 and 85.5 at 390**, the phone and the web agreeing to the point where they used to
+agree on one device by luck.
+
+The second defect is the comment above it, which called the percentage *"what `PAD.columns`
+and `PAD.gap` describe and what `padCell.test.ts` checks the two platforms agree about"*. Both
+halves were false. No clause ever read `23%`; the file checked that the phone contains the
+string `gap: PAD.gap`, and it did — beside a width that disagreed with the table.
+
+#### A table can state a number neither renderer draws
+
+`core/src/ui/progress.ts` states `bar` at 6pt and `rule` at 2pt. Both renderers drew the track
+as a 1pt **border** — `border border-stroke-hairline` on the web, `borderWidth: border.hairline`
+on the phone — and the file says nothing about a stroke. Preflight sets `box-sizing:
+border-box` and Yoga is border-box with nothing to switch, so the fill's `h-full` resolved
+against the *content* box: the stated height less two hairlines.
+
+| | stated | drawn |
+|---|---|---|
+| `bar`, three tally bars on Stats | 6pt | **4.0pt** |
+| `rule`, the phone's network scan | 2pt | **0.0pt, at 33.8pt wide** |
+
+The scan indicator has one call site and had never drawn a pixel of progress at any
+percentage — a static hairline with a number behind it. The clause that should have caught it
+asserts that `PROGRESS_SIZE[size].height` is a member of `space`, and it is: 2 is on the
+scale, and the bar it describes was two hairlines tall. **A table checked against the scale it
+came from is not checked against the box anybody sees.**
+
+The repair is that the track is a ground rather than an outline: `strokeHairline` names a
+token family and was never a drawing instruction. Absorbing the border into the numbers —
+`rule` at 4 to draw 2 — was the tempting alternative and is the defect rather than the repair.
+
+#### The digit rule, run backwards
+
+Stage 3 found that `Data`'s "anything with a digit in it" gave the mono face to four
+sentences, and fixed those. Nobody ran the rule the other way. `splitFigure`'s fallback asked
+the same question of values that were never numbers, so a filename without a digit came back
+as all *unit* — the body face. An import report drew `watched-2024.csv` in mono and
+`letterboxd.csv` in the same face as the `— skipped` beside it, one line apart, on both
+platforms. `livingroom.local` reached the prose face for the same reason `192.168.1.4` did
+not, and since Roku discovery reads `new URL(location).hostname` out of an SSDP header, the
+hostname is the ordinary case rather than an edge one.
+
+The fix is not a sharper predicate. **The fact is not in the string** — `data` is a filename
+and `data` is a word, and they arrive spelled the same — so `kind` is on the contract:
+nineteen of the twenty-two call sites are a `measure` and say nothing, three hold a `literal`
+and say so. A better predicate, a second function and a no-default contract were each weighed
+and are argued down in the file.
+
+#### What the guards cost, and what still walks past them
+
+Every one was proved in §6.182's order — plant first, watch the *old* clause pass, repair with
+the defect still planted, restore — and every one was re-planted afterwards in the main
+checkout rather than taken on the branch's word. Two things came out of that which are worth
+more than the fixes:
+
+- **A guard's own regex hid a plant.** `padCell`'s first repair read a style block with
+  `/slot: \{[^}]*\}/`, which gives up at the brace inside `${100 / PAD.columns}` and left the
+  column's checks matching an empty string — so `marginRight: PAD.gap` passed. Found by
+  planting, not by reading.
+- **Two plants survive, and both are named in prose rather than left to be found.**
+  `scale-y-50` on a progress track keeps every source number right and measures 3pt of a
+  stated 6; `minWidth: 90` on a pad plate gives four to a row with 90pt plates overlapping in
+  76pt columns. A transform is a rectangle's question and a number in an unnamed style block
+  is invisible to a file reader. `design/measure.mjs` is the instrument for both, and a source
+  guard is not.
+
+## What is not done, and why it is said here
+
+**Ports are the one thing worktrees do not isolate, and the failure outlives the agent.**
+Three agents and the main checkout all reach for 4200 and 4202. `npm run smoke` and
+`design:web` each refused to run against a port another agent held — the suites protecting
+themselves correctly, *"this suite would test that instead of the build it just made"* — and
+between them cost three re-runs. The sharper half is that `scripts/portFree.mjs` could not
+clear it: a `vite preview` started inside a worktree was still listening **thirty-one minutes
+after that agent finished**, and only `ps` found it. A worktree gives an agent its own files
+and its own git; it does not give it its own process table. Anything wanting more parallel
+work than this needs a port allocation and a reaper, not more agents.
+
+**`design/measure.mjs` could not answer the question it was built for.** It pins the viewport
+at 390 and reaches a screen with at most one `--reveal` click; Watching Mode is a dynamic route
+that 404s on a deep link into a static export and has to be walked to from a title page, and
+the whole question was what happens at 320. Written one sprint ago to stop the rebuilding of
+throwaway probes, and this sprint rebuilt two. A width argument and a walk are what it wants.
+
+**The phone may not announce a progress value.** `mobile/src/ui/Progress.tsx` sets
+`accessibilityValue={{ min, max, now }}`, and the export measured `aria-valuenow: null` on the
+scan track while the web reports its number. A probe on the phone's Stats found no
+`[role="progressbar"]` at all, which is a different answer again — the role may not map, or
+that screen may draw no bars in the state reached. That is three possibilities and no
+measurement that separates them, so it is filed as a question rather than as the third
+instance of a prop `react-native-web` ignores, after `accessibilityState` and `hitSlop`.
+
+**`Data`'s own example is fixture-only.** The core cites `Nothing yet` as the word-only case;
+it appears in that comment and in a test and nowhere in the product. The thing producing one
+today is the import report, on every import.
+
+**No screenshot was read this sprint**, a fourth running, and **72** remain unread of 137 — re-run after the design passes rather than carried from the paragraph above, which is the whole of §6.182's lesson about this number.
+
 
 ## 7. What is still not known
 
