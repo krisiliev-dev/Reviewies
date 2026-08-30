@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import { SHOT_DIRS, shots, unnamed } from '../../../design/unread.mjs';
 import { stripMarkdownComments } from '@reviewies/core/test/source';
 
 /**
@@ -261,5 +262,50 @@ describe('cross-references in the source', () => {
     // Guards that had stopped explaining themselves would pass silently.
     expect(found, 'nothing in the source cites the record').toBeGreaterThan(100);
     expect(dangling).toEqual([]);
+  });
+
+  it('can still say how much of the design record is unread', () => {
+    /*
+     * §6.178 turned "eighty-six shots are unread, of 134" from a sentence carried by hand
+     * through eight entries into `design/unread.mjs`, and this is what stops that script
+     * quietly measuring nothing.
+     *
+     * ## The clause this replaced could not fail for its own subject
+     *
+     * The first version checked that every entry in `SHOT_DIRS` exists and holds `.png`
+     * files. Planted the exact mistake it was written against — `design/real/t/p/w300`,
+     * which holds sixty-three **TMDB poster fixtures** and which a first pass at this
+     * measurement really did count — and the suite went **green**: that directory exists,
+     * it holds PNGs, the total is over a hundred, the backlog is a subset. Every assertion
+     * satisfied, and the script now measuring poster art. §6.121 in a guard written the
+     * same hour as the thing it guards.
+     *
+     * ## What tells them apart
+     *
+     * Not the file type and not the count. A shot of the product is a file **a capture
+     * script wrote**, so the check is against the harness rather than against the disk:
+     * every directory in `SHOT_DIRS` must be some `capture*.mjs`'s `OUT`, and every `OUT`
+     * must be in `SHOT_DIRS`. Both directions, because a new capture script filing into a
+     * fifth directory would otherwise leave its shots outside the backlog for ever —
+     * §6.157's hole, which is what this whole entry is about.
+     */
+    const scripts = readdirSync(resolve(ROOT, 'design')).filter((f) => /^capture.*\.mjs$/.test(f));
+    expect(scripts.length, 'no capture scripts, so nothing files shots').toBeGreaterThan(3);
+    const outs = new Set(
+      scripts.flatMap((f) => [
+        ...readFileSync(resolve(ROOT, 'design', f), 'utf8').matchAll(
+          /const OUT = new URL\('\.\/([a-z-]+)\//g,
+        ),
+      ].map((m) => `design/${m[1]}`)),
+    );
+    expect([...outs].sort(), 'a capture script files somewhere the backlog does not count')
+      .toEqual([...SHOT_DIRS].sort());
+
+    const all = shots();
+    const left = unnamed();
+    expect(all.length, 'the design record has no shots in it').toBeGreaterThan(100);
+    expect(left.length, 'every shot is named, which has never been true').toBeGreaterThan(0);
+    expect(left.length, 'no shot has ever been named, so the proxy is broken')
+      .toBeLessThan(all.length);
   });
 });

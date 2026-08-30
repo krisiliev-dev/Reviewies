@@ -13460,6 +13460,105 @@ had the extractor's middle mistake survived, every screen title would have been 
 every shot.
 
 
+### 6.178 A quiet sprint: seven shots, one wrong sentence, and a count made re-derivable
+
+Three sprints had deferred the design backlog for reasons that were good at the time. This
+one went back to it with nothing owed, and the honest report is that **it found very little**.
+That is the outcome this record is built to hold, so here it is at the top rather than buried.
+
+#### The near miss, which is the useful part
+
+The backlog is "seventy-one shots unread, of 134" — a sentence carried by hand through eight
+entries, decremented by whoever remembered. First thing this sprint did was check it, and the
+first measurement said **200 shots, 143 never named**, which would have made the record wrong
+by a factor of two and been a finding in itself.
+
+It was wrong. `design/real/t/p/w300` and its two siblings hold sixty-three **TMDB poster
+fixtures** for the snapshot server — not screenshots of the product. Counted over the four
+directories that actually hold shots: **137, of which 80 have never been named.** The
+record's figure was right, allowing for the three shots §6.177 added.
+
+So the finding is not "the count is stale". It is that a number nobody can re-derive is a
+number nobody can check — including the person who wrote it, and including me, one command
+away from filing a confident correction to something that was correct. `design/unread.mjs`
+re-derives it now, and says in its own header that "named in the doc" is a **proxy** for
+"read": it over-counts what has been looked at, so the real backlog is at least this big.
+
+A clause in `docsReferences.test.ts` holds the script to measuring the right thing — and the
+first version of that clause could not fail for its own subject, which is worth recording
+because it was written in the same hour as the thing it guards.
+
+It checked that every entry in `SHOT_DIRS` exists and holds `.png` files. Planting the exact
+mistake it was written against — `SHOT_DIRS` pointing at `design/real/t/p/w300` — left the
+suite **green**: that directory exists, it holds PNGs, the total is over a hundred, the
+backlog is a subset. Every assertion satisfied, over poster art. §6.121's shape, caught only
+because the plant was run.
+
+What tells a shot from a fixture is not the file type and not the count: it is that **a
+capture script wrote it**. So the clause reads the harness rather than the disk — every
+directory in `SHOT_DIRS` must be some `capture*.mjs`'s `OUT`, and every `OUT` must be in
+`SHOT_DIRS`. Both directions, because a new script filing into a fifth directory would
+otherwise leave its shots outside the backlog for ever, which is §6.157's hole and the thing
+this entry is about. Both planted red.
+
+#### What seven shots produced
+
+`r6-title-sh-gun`, `wide-search`, `wide-calendar`, `light-08-people`, `narrow-title-one-piece`,
+`09-calendar-tuning`, and the 33 `-foot` shots as a batch. Four things looked like findings
+and four dissolved against the source, which is the method working rather than the method
+failing:
+
+- **Two poster labels.** The title page says *"Use a different poster"* on Shōgun and
+  *"Change poster"* in the fixture shots. One control, two states —
+  `libraryItem.posterOverride ? changePoster : differentPoster`. Deliberate.
+- **A search row with two controls and one with three.** *"Seen it"* is films-only, and the
+  comment beside it says why: *"watched is not a thing you can say about a whole series in one
+  tap without lying about which episodes."*
+- **The calendar's day headings, two colours.** They are not: `Today` and `Sun, Sep 6` are the
+  same `<Section level="group">` on the same screen, and `09-calendar-tuning` shows them
+  identical. My eye on a dark render.
+- **A dark slab clinging to the right edge of a cream page.** The remote drawer's trigger, and
+  it *is* theme-aware — `bg-stroke-signal text-ground`, a deliberate inversion whose comment
+  records that the previous version was 1.21:1 and this one is the fix.
+
+And a batch measurement that came back clean: all 33 `-foot` shots are byte-distinct from
+their heads and every one has a head, so the fold logic is not filing duplicates. That took
+four seconds and is the §6.176 lesson applied before there was anything to be wrong about.
+
+#### The one thing that was wrong, and I wrote it
+
+`core/src/ui/moreIndex.ts` — two sprints old — explained why the phone's `Remote` row is not
+in the shared table: *"the web reaches ... its remote from a control in the masthead"*.
+
+`App.tsx:139` mounts `<RemoteDrawer />` at the app root. The web's remote is a fixed tab
+clinging to the right edge of **every screen** — `light-08-people.png` is a photograph of it
+hovering over the social screen — and there is no masthead control and never was.
+
+The conclusion was right and the reason was invented. That is §6.106's shape ("re-read every
+written excuse, since one of them was wrong for a year") on a comment two sprints old rather
+than a year, in the file whose entire job is being the authority on what the two platforms
+share. The paragraph now says what each platform actually does and names the shot that shows
+it.
+
+## What is not done, and why it is said here
+
+**Seventy-three shots are unread**, of 137 — down seven, and `node design/unread.mjs` prints
+which. The next sprint gets a list instead of a number.
+
+**One finding in seven shots, and it was a comment rather than the product.** Worth stating
+plainly rather than dressing up: the design backlog is now mostly shots of screens that have
+been looked at in some other form, and the rate should be expected to keep falling. The thing
+to watch is whether it falls to zero — at which point reading the remaining shots is
+maintenance rather than investigation, and saying so will be more useful than another sprint
+of it.
+
+**The 2–6 day branch of `formatDay` is unphotographed.** It returns a bare weekday —
+*"Sunday"*, no date — and no shot in the record shows one, because both calendar fixtures
+happen to jump from tomorrow to a week out. Not a defect; a state nobody has judged, which is
+§6.146's subject, and it is cheap for a later sprint to reach by moving the fixture's air
+dates.
+
+
 
 ## 7. What is still not known
 

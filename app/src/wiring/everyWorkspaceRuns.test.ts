@@ -168,7 +168,9 @@ describe('every workspace', () => {
     // named the same thing, and the single-word ratchet past the space rule.
     // core 928, up three: §6.177's three answers to "does an empty conversation mean
     // empty" — the branch that could not be reached, and the two either side of it.
-    core: 928, app: 656, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 657, up one: §6.178's clause that the shot backlog is measured over the
+    // directories the capture scripts actually file into.
+    core: 928, app: 657, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

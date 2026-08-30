@@ -27,10 +27,21 @@ import { COPY } from '../copy.ts';
  *
  * ## What is deliberately not here
  *
- * The phone's `Account` and `Remote` rows. Those are not the same row drawn twice — the web
- * reaches its account panel from a different screen and its remote from a control in the
- * masthead, so a shared table naming them would be claiming a parity that does not exist.
- * They stay in `mobile/app/(tabs)/more.tsx` as that platform's own two rows.
+ * The phone's `Account` and `Remote` rows. Those are not the same row drawn twice, and the
+ * reason is different for each:
+ *
+ *  - **Account.** The web reaches its account panel from another screen; the phone gives it
+ *    a row here.
+ *  - **Remote.** The web has no row for it *anywhere*. `App.tsx` mounts `RemoteDrawer` at
+ *    the root, so the web's remote is a fixed tab clinging to the right edge of every
+ *    screen — `light-08-people.png` shows it over the social screen — while the phone's is
+ *    a route with a row pointing at it. One feature, two affordances, and the shared table
+ *    would be claiming a parity that does not exist.
+ *
+ * §6.178 corrected this paragraph: it said the web reached its remote "from a control in the
+ * masthead", which is not where it is and never was. A file whose job is being the authority
+ * on what the two platforms share is the worst place for a reason nobody checked — §6.106's
+ * lesson, on a comment two sprints old rather than a year.
  */
 export const MORE_INDEX = [
   {
