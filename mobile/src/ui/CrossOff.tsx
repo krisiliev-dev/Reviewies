@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RING, STRUCK, UNDO_MS, type CrossOffContract } from '@reviewies/core/ui/crossOff';
+import { PRESSED } from '@reviewies/core/ui/button';
 import { radius, space, theme } from './theme';
 import { Tick } from './Mark';
 import { text, type } from '@reviewies/core/tokens';
@@ -55,7 +56,11 @@ export function CrossOff({
           },
           // Instant. The same reasoning as `Button`: press feedback that was never motion
           // is press feedback Reduce Motion does not have to substitute for.
-          pressed && !disabled ? { borderWidth: RING.stroke * 2 } : null,
+          // `PRESSED.stroke`, not `RING.stroke * 2`. The comment above cites `Button`'s
+          // reasoning and then the arithmetic reached a different number: 1.5 doubled is 3,
+          // which is `border.tally`, where the web thickens to `border-mark` and every
+          // other press in this build thickens to 2. §6.184.
+          pressed && !disabled ? { borderWidth: PRESSED.stroke } : null,
         ]}
       >
         {/* The tick is one of three channels, not the signal. The ring's fill and the row's

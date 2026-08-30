@@ -119,14 +119,36 @@ export const SIZE = {
 >;
 
 /**
- * Press is a thickening and a ground step, applied instantly.
+ * Press is a thickening; the ground step is `PRESS` in `surface.ts`.
  *
  * Not an animation. §6.59's rule is that Reduce Motion substitutes rather than removes,
  * and the cleanest way to honour it is for the feedback never to have been motion: at 0ms
  * the app feels identical either way, and there is no `reduced ? … : …` for `motion.test.ts`
- * to find.
+ * to find. §6.184 removed the last two transforms in the build for the same reason.
+ *
+ * ## The fill that used to be here, and which way a press goes
+ *
+ * This carried `fill: 'groundRaised'` until §6.184, while `surface.ts` carries
+ * `PRESS = elevation.sunken`. Those are opposite directions: in the dark palette
+ * `groundRaised` is `#1C191E` against a `#131114` base and `groundWell` is `#0C0B0D`, so one
+ * says a pressed control comes **up** and the other says it goes **down**.
+ *
+ * Both were live. The web's button reads `active:bg-ground-well`, and the rule really is in
+ * the built stylesheet — checked, because §6.180 found a class that was inert where it was
+ * written. The phone's read this constant, and a held button measured `rgb(28, 25, 30)` in
+ * the export, which is `groundRaised` exactly. **The same control moved in opposite
+ * directions on the two platforms.** `button.test.ts` asserted both — the web against
+ * `PRESS`, the table against `'groundRaised'` — so the one guard looking at it pinned the
+ * disagreement rather than failing on it.
+ *
+ * `PRESS` wins, and not narrowly: eight pressable controls read it — `Button`, `Choice`,
+ * `Row`, `Key` and `PadCell`, across both platforms — against the phone's `Button` alone.
+ * It is also the only one of the two that is a metaphor for anything.
+ *
+ * The thickening stays here because it is a second channel rather than a second opinion, and
+ * `field.ts` names it as the pair to a focus ring.
  */
-export const PRESSED = { stroke: border.mark, fill: 'groundRaised' } as const;
+export const PRESSED = { stroke: border.mark } as const;
 
 /**
  * `busy` keeps the label and adds a rule under it.

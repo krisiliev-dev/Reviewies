@@ -83,18 +83,74 @@ describe('a press', () => {
     expect(seen, 'no web press styles were found, so this proved nothing').toBeGreaterThan(3);
     expect(offenders).toEqual([]);
 
+    /*
+     * A block, not a line. §6.184: this matched `pressed` and `backgroundColor` with
+     * `[^\n]*` between and after them — both words on one line — and `Button.tsx` spread
+     * them across a
+     * three-line ternary:
+     *
+     *     pressed && !disabled
+     *       ? { borderWidth: PRESSED.stroke, backgroundColor: theme[PRESSED.fill] }
+     *       : null,
+     *
+     * so the one control that disagreed was **never in the set**. The sweep matched four
+     * files — `Choice`, `Key`, `PadCell`, `Row` — each of which writes
+     * `pressed: { backgroundColor: theme[PRESS] }` on one line and therefore passes, and
+     * the non-vacuity check below found those four and reported the sweep healthy. A
+     * pattern that cannot reach the offender is worse than no pattern, because it reports
+     * a number.
+     *
+     * Counting from `pressed` and reading forward instead, so a ternary, an object spread
+     * over lines and a one-liner all land in the same net.
+     */
     let phoneSeen = 0;
     for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
-      for (const m of withoutProse(read(file)).matchAll(/[^\n]*[Pp]ressed[^\n]*backgroundColor[^\n]*/g)) {
+      const source = withoutProse(read(file));
+      for (const m of source.matchAll(/[Pp]ressed\b/g)) {
+        const block = source.slice(m.index, m.index + 220);
+        if (!/backgroundColor/.test(block)) continue;
         phoneSeen++;
-        if (!/theme\[PRESS\]/.test(m[0])) offenders.push(`${file}: ${m[0].trim()}`);
+        const fill = /backgroundColor:\s*([^,\n}]+)/.exec(block)?.[1]?.trim() ?? '';
+        if (!/theme\[PRESS\]/.test(fill)) offenders.push(`${file}: presses to ${fill}`);
       }
     }
     expect(phoneSeen, 'no phone press styles were found, so this proved nothing')
-      .toBeGreaterThan(2);
+      .toBeGreaterThan(4);
     // Read a failure as: this control has its own opinion about which way a press goes,
     // and the app already had two.
     expect(offenders).toEqual([]);
+  });
+
+  it('is never a transform, which is what both platforms already said in writing', () => {
+    /*
+     * §6.184. Two files say this in prose and neither said it anywhere a check could read:
+     * `app/src/screens/WatchingMode.tsx` records that `active:scale-[0.98]` "was here and is
+     * not" because "a scale is a transform and needs a `reduced ?` branch to be honest", and
+     * `mobile/src/ui/Row.tsx` says "a ground step, not a scale: press feedback that was never
+     * motion is feedback Reduce Motion has nothing to substitute for".
+     *
+     * `PadCell` carried one on each platform anyway — `active:scale-90` and
+     * `transform: [{ scale: 0.94 }]`, the only two transform scales in the build, at two
+     * different magnitudes, neither with a `reduced ?` branch. `motion.test.ts` looks for
+     * transitions and durations and never for a scale, so the rule existed only as an
+     * explanation of a deletion somebody had already done once.
+     */
+    const scaled: string[] = [];
+    for (const file of filesUnder('app/src')) {
+      for (const m of withoutProse(read(file)).matchAll(/\b(?:active|hover|focus):scale-[\w.[\]-]+/g)) {
+        scaled.push(`${file}: ${m[0]}`);
+      }
+    }
+    for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
+      const source = withoutProse(read(file));
+      for (const m of source.matchAll(/[Pp]ressed\b/g)) {
+        const block = source.slice(m.index, m.index + 220);
+        const scale = /transform:\s*\[[^\]]*scale/.exec(block);
+        if (scale) scaled.push(`${file}: ${scale[0]}`);
+      }
+    }
+    expect(scaled, 'a press is drawn with a transform, which Reduce Motion cannot substitute for')
+      .toEqual([]);
   });
 
   it('is not what a card is painted with, on the phone, from the table', () => {

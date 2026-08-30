@@ -11,6 +11,7 @@ import {
   TONE,
   type ButtonContract,
 } from '@reviewies/core/ui/button';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { type } from '@reviewies/core/tokens';
 import { border, radius, theme } from './theme';
 
@@ -84,7 +85,7 @@ export function Button({
         // Instant, and therefore identical with Reduce Motion on. A thickening plus a
         // ground step, which is press feedback rather than animation.
         pressed && !disabled
-          ? { borderWidth: PRESSED.stroke, backgroundColor: theme[PRESSED.fill] }
+          ? { borderWidth: PRESSED.stroke, backgroundColor: theme[PRESS] }
           : null,
       ]}
     >

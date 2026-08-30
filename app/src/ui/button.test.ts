@@ -250,9 +250,26 @@ describe('the button contract', () => {
      * passed for as long as the button rose on press — which was the defect: `groundRaised`
      * is also the card fill, so a button inside a card pressed to the colour behind it. The
      * clause was correct about the class and silent about what the class did.
+     *
+     * §6.184: that repair reached the web and stopped. The line under this paragraph was
+     * `expect(PRESSED.fill).toBe('groundRaised')` — the phone's `Button` read `PRESSED.fill`
+     * and nothing else did — so the guard asserted the fix on one platform and the thing the
+     * fix replaced on the other, in adjacent lines, with the paragraph explaining the defect
+     * sitting directly above the assertion that preserved it. Measured in the export: a held
+     * button came back `rgb(28, 25, 30)`, which is `SURFACE.card` exactly, so on the phone a
+     * button in a card still pressed to the colour behind it.
+     *
+     * There is one press now and `PRESSED` has no fill to disagree with. Both renderers are
+     * held to `PRESS` below.
      */
-    expect(WEB).toContain(`active:bg-${PRESS.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`);
-    expect(PRESSED.fill).toBe('groundRaised');
+    const pressClass = `active:bg-${PRESS.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`;
+    expect(WEB).toContain(pressClass);
+    expect(PHONE, 'the phone presses to something other than the house ground')
+      .toContain('theme[PRESS]');
+    expect(
+      Object.keys(PRESSED),
+      'PRESSED carries a fill again, which is a second opinion about which way a press goes',
+    ).toEqual(['stroke']);
   });
 
   it('clamps a label on the words, not on the box', () => {

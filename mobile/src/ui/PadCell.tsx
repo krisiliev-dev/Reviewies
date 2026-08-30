@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     borderWidth: SURFACE_OFF.rule,
     borderColor: theme[SURFACE_OFF.colour],
   },
-  pressed: { backgroundColor: theme[PRESS], transform: [{ scale: 0.94 }] },
+  pressed: { backgroundColor: theme[PRESS] },
   glyph: { fontSize: PAD.glyph },
   label: {
     color: theme.inkSecondary,
