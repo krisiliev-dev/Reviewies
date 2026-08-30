@@ -36,16 +36,14 @@ const BOTH = Object.entries(RENDERERS);
 
 /** The call sites migrated so far. Each one that lands joins this list. */
 const MIGRATED = {
-  'mobile/app/calendar.tsx': 'phone',
-  'app/src/screens/Calendar.tsx': 'web',
+  'mobile/src/ui/Coming.tsx': 'phone',
+  'app/src/ui/Coming.tsx': 'web',
   'mobile/app/(tabs)/watchlist.tsx': 'phone',
   'app/src/screens/Watchlist.tsx': 'web',
   'mobile/app/(tabs)/index.tsx': 'phone',
   'app/src/screens/UpNext.tsx': 'web',
   'mobile/app/title/[id].tsx': 'phone',
   'app/src/screens/TitleDetail.tsx': 'web',
-  'mobile/app/(tabs)/search.tsx': 'phone',
-  'app/src/screens/Search.tsx': 'web',
   'mobile/app/(tabs)/discover.tsx': 'phone',
   'app/src/screens/Discover.tsx': 'web',
   'mobile/app/lists.tsx': 'phone',

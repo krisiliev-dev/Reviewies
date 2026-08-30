@@ -569,7 +569,7 @@ describe('the words, on both platforms', () => {
     // leaving somebody wondering whether anything is airing.
     for (const n of [1, 3]) expect(COPY.calendar.emptyUnmatched(n)).toContain('two months');
 
-    for (const path of ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx']) {
+    for (const path of ['app/src/ui/Coming.tsx', 'mobile/src/ui/Coming.tsx']) {
       const source = read(path);
       expect(source, `${path} does not use it`).toContain('COPY.calendar.emptyUnmatched');
       // And decides which sentence from the count rather than always showing one.

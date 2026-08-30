@@ -101,7 +101,7 @@ describe('what you already have', () => {
      * label said **Track** for everything, for ever. Checking the module in isolation
      * would prove the part and miss the product, which is the plant §6.101 learned from.
      */
-    for (const path of ['app/src/screens/Search.tsx', 'mobile/app/(tabs)/search.tsx']) {
+    for (const path of ['app/src/screens/Discover.tsx', 'mobile/app/(tabs)/discover.tsx']) {
       const source = read(path);
       expect(source, `${path} never asks what you already have`).toContain('alreadyHave()');
       expect(source, `${path} never resolves a result against it`).toContain('shelfFor(result');

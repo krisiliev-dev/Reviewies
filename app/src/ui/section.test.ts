@@ -162,10 +162,10 @@ describe('the section label', () => {
      * its day headings opened onto nothing and `group` would have had nothing to be
      * subordinate to. §6.51 — the better version wins whichever platform had it.
      */
-    const web = read('app/src/screens/Calendar.tsx');
+    const web = read('app/src/ui/Coming.tsx');
     expect(web).toContain('<Section className="px-1">{COPY.calendar.horizon}</Section>');
     expect(web).toContain('<Section level="group"');
-    const phone = read('mobile/app/calendar.tsx');
+    const phone = read('mobile/src/ui/Coming.tsx');
     expect(phone).toContain('<Section>{COPY.calendar.horizon}</Section>');
     expect(phone).toContain('<Section level="group">{formatDay(day)}</Section>');
     // The two styles that used to be here, gone rather than merely unused.

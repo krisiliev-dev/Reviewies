@@ -4,9 +4,11 @@ import {
   addToLibrary,
   airedSeasonSizes,
   catchUpTo,
+  getHistory,
   getStats,
   getUpNext,
   hasAired,
+  HISTORY_LIMIT,
   markWatched,
   syncSeriesStatus,
   unwatchLatest,
@@ -513,5 +515,109 @@ describe('a finished show leaves "watching" on its own', () => {
     await db.library.update(SERIES, { status: 'watching' });
     expect(await syncSeriesStatus(SERIES)).toBe(true);
     expect(await status()).toBe('completed');
+  });
+});
+
+/**
+ * The past, which Up Next draws above the present. `docs/design/architecture.md` section 3.
+ *
+ * Three properties, and each is something the screen would be wrong about if the query
+ * were: the order, the window, and what a rewatch is.
+ */
+describe('the past Up Next draws above the present', () => {
+  it('returns the watches oldest first, so scrolling up goes back in time', async () => {
+    await seedSeries(5);
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: 1000 });
+    await markWatched({ targetId: ep(2), seriesId: SERIES, watchedAt: 2000 });
+    await markWatched({ targetId: ep(3), seriesId: SERIES, watchedAt: 3000 });
+
+    const past = await getHistory();
+    expect(past.map((row) => row.watchedAt)).toEqual([1000, 2000, 3000]);
+    /*
+     * Not merely sorted — sorted the way the screen reads. A query that came back
+     * newest-first would still be "in order" and would draw the evening upside down, which
+     * is the defect this clause is written against rather than a spelling of `sort`.
+     */
+    expect(past.at(-1)?.targetId, 'the newest watch sits nearest the present').toBe(ep(3));
+  });
+
+  it('keeps the newest watches when there are more than the cap', async () => {
+    await seedSeries(HISTORY_LIMIT + 5);
+    for (let i = 1; i <= HISTORY_LIMIT + 5; i++) {
+      await markWatched({ targetId: ep(i), seriesId: SERIES, watchedAt: i * 1000 });
+    }
+
+    const past = await getHistory();
+    expect(past.length).toBe(HISTORY_LIMIT);
+    /*
+     * The **newest** window, not the first page of the oldest. Both are `limit`-many rows
+     * in ascending order and only one of them is a history: taking the oldest forty of a
+     * decade would draw 2015 above tonight's episode.
+     */
+    expect(past.at(-1)?.targetId).toBe(ep(HISTORY_LIMIT + 5));
+    expect(past[0]?.targetId).toBe(ep(6));
+  });
+
+  it('honours a smaller window without changing the order', async () => {
+    await seedSeries(5);
+    for (let i = 1; i <= 5; i++) {
+      await markWatched({ targetId: ep(i), seriesId: SERIES, watchedAt: i * 1000 });
+    }
+
+    expect((await getHistory(2)).map((row) => row.targetId)).toEqual([ep(4), ep(5)]);
+  });
+
+  it('draws a rewatch twice, because it happened twice', async () => {
+    await seedSeries(3);
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: 1000 });
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: 5000 });
+
+    const past = await getHistory();
+    expect(past.length).toBe(2);
+    // Keyed by the event rather than by the episode, which is the whole difference from
+    // `getUpNext` — one row per show there, one row per watch here.
+    expect(new Set(past.map((row) => row.watchId)).size).toBe(2);
+  });
+
+  it('carries the series name, the poster and the episode', async () => {
+    await seedSeries(3);
+    await db.titles.update(SERIES, { posterUrl: 'https://example.invalid/p.jpg' });
+    await markWatched({ targetId: ep(2), seriesId: SERIES, watchedAt: 1000 });
+
+    const [row] = await getHistory();
+    expect(row.name).toBe('The Long Dark');
+    expect(row.posterUrl).toBe('https://example.invalid/p.jpg');
+    expect(row.titleId).toBe(SERIES);
+    expect(row.episode).toEqual({ season: 1, number: 2, name: 'Episode 2' });
+  });
+
+  it('still draws a watch whose episode has fallen out of the cache', async () => {
+    /*
+     * §6.57's distinction, on the row rather than on the screen: "I could not look it up"
+     * is not "it did not happen". The metadata cache has a TTL and the watch does not.
+     */
+    await seedSeries(3);
+    await markWatched({ targetId: ep(1), seriesId: SERIES, watchedAt: 1000 });
+    await db.episodes.clear();
+
+    const [row] = await getHistory();
+    expect(row.targetId).toBe(ep(1));
+    expect(row.name).toBe('The Long Dark');
+    expect(row.episode).toBeUndefined();
+  });
+
+  it('draws a film, which has no episode and opens itself', async () => {
+    const FILM = makeId('tmdb', 'movie', 77);
+    await db.titles.put({ id: FILM, kind: 'film', name: 'Salt Flats', fetchedAt: Date.now() });
+    await markWatched({ targetId: FILM, watchedAt: 1000 });
+
+    const [row] = await getHistory();
+    expect(row.titleId).toBe(FILM);
+    expect(row.episode).toBeUndefined();
+    expect(row.name).toBe('Salt Flats');
+  });
+
+  it('is empty rather than absent when nothing has been watched', async () => {
+    expect(await getHistory()).toEqual([]);
   });
 });

@@ -20,6 +20,23 @@ interface FixtureShow {
   overview: string;
   seasons?: Array<{ episodes: number; runtime: number }>;
   runtime?: number;
+  /**
+   * What it is, in words — the third line on a browse box. `docs/design/architecture.md` section 5.
+   *
+   * Required rather than optional, and the five differ from each other on purpose: a
+   * genre filter that every fixture answers to is a control this repository's harness can
+   * photograph and cannot test. Two of the five share `Drama`, so the filter is a real
+   * partition rather than five singletons.
+   */
+  genres: string[];
+  /**
+   * The crowd's score out of ten, which filters and is never printed.
+   *
+   * Spread deliberately across `WELL_RATED`: three fixtures clear it and two do not, so
+   * turning the filter on visibly changes the shelf. A fixture set where every row passes
+   * a filter is a fixture set that cannot show the filter working.
+   */
+  rating: number;
   /** Ended shows exercise the auto-complete path; the others must not trigger it. */
   ended?: boolean;
   /**
@@ -65,6 +82,8 @@ const FIXTURES: FixtureShow[] = [
     name: 'The Long Dark',
     year: 2021,
     overview: 'A survival drama set across three winters in a coastal town.',
+    genres: ['Drama'],
+    rating: 8.2,
     seasons: [
       { episodes: 8, runtime: 52 },
       { episodes: 10, runtime: 55 },
@@ -85,6 +104,8 @@ const FIXTURES: FixtureShow[] = [
     name: 'Kitchen Nightshift',
     year: 2023,
     overview: 'A half-hour comedy about the staff of an all-night diner.',
+    genres: ['Comedy'],
+    rating: 6.4,
     seasons: [{ episodes: 12, runtime: 22 }],
     ended: true,
     // Long over. An ended show has nothing upcoming, which is a case the calendar has to
@@ -99,6 +120,8 @@ const FIXTURES: FixtureShow[] = [
     year: 2019,
     // One long season on purpose: this is how TMDB renders many long-running anime.
     overview: 'A long-running animated epic with continuous episode numbering.',
+    genres: ['Animation', 'Adventure'],
+    rating: 7.9,
     seasons: [{ episodes: 96, runtime: 24 }],
     // Ninety-two weeks in, three episodes left. The last of them is a series finale inside
     // the window, and its weekday matches The Long Dark's, so three dates carry two rows —
@@ -119,6 +142,8 @@ const FIXTURES: FixtureShow[] = [
     name: 'Quiet Harbour',
     year: 2024,
     overview: 'Two estranged siblings return to their father’s fishing village.',
+    genres: ['Drama'],
+    rating: 7.1,
     runtime: 118,
     // A film has no episodes, so neither of these is ever read. Required rather than
     // optional so the next fixture cannot be added without deciding.
@@ -131,6 +156,8 @@ const FIXTURES: FixtureShow[] = [
     name: 'Salt Flats',
     year: 2024,
     overview: 'A border-town crime series released a season at a time.',
+    genres: ['Crime', 'Drama'],
+    rating: 8.6,
     seasons: [
       { episodes: 8, runtime: 47 },
       { episodes: 8, runtime: 47 },
@@ -172,19 +199,31 @@ const FIXTURES: FixtureShow[] = [
 
 const titleId = (f: FixtureShow) => makeId('tmdb', f.kind === 'show' ? 'tv' : 'movie', f.id);
 
+/**
+ * A fixture as the boundary hands it out.
+ *
+ * Written once rather than three times. It was three — `search`, `getRecommendations` and
+ * `getTrending` each spelled the same five fields — and the moment a sixth was added it
+ * would have gone into one of them, which is the drift `tmdb.ts`'s own `toResult` exists
+ * to stop one file over.
+ */
+const result = (f: FixtureShow): SearchResult => ({
+  id: titleId(f),
+  kind: f.kind,
+  name: f.name,
+  year: f.year,
+  overview: f.overview,
+  genres: f.genres,
+  rating: f.rating,
+});
+
 export class FixtureProvider implements MetadataProvider {
   readonly name = 'fixtures';
 
   async search(query: string): Promise<SearchResult[]> {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return FIXTURES.filter((f) => f.name.toLowerCase().includes(q)).map((f) => ({
-      id: titleId(f),
-      kind: f.kind,
-      name: f.name,
-      year: f.year,
-      overview: f.overview,
-    }));
+    return FIXTURES.filter((f) => f.name.toLowerCase().includes(q)).map(result);
   }
 
   async getTitle(id: string): Promise<CachedTitle | undefined> {
@@ -198,6 +237,7 @@ export class FixtureProvider implements MetadataProvider {
       overview: f.overview,
       runtimeMin: f.runtime ?? f.seasons?.[0]?.runtime,
       seasonCount: f.seasons?.length,
+      genres: f.genres,
       ended: f.kind === 'show' ? Boolean(f.ended) : undefined,
       fetchedAt: Date.now(),
     };
@@ -243,23 +283,11 @@ export class FixtureProvider implements MetadataProvider {
   async getRecommendations(id: string): Promise<SearchResult[]> {
     // Everything except the title asked about, so discovery has something to
     // filter and the exclusion logic is exercised offline.
-    return FIXTURES.filter((f) => titleId(f) !== id).map((f) => ({
-      id: titleId(f),
-      kind: f.kind,
-      name: f.name,
-      year: f.year,
-      overview: f.overview,
-    }));
+    return FIXTURES.filter((f) => titleId(f) !== id).map(result);
   }
 
   async getTrending(): Promise<SearchResult[]> {
-    return FIXTURES.map((f) => ({
-      id: titleId(f),
-      kind: f.kind,
-      name: f.name,
-      year: f.year,
-      overview: f.overview,
-    }));
+    return FIXTURES.map(result);
   }
 
   async getWatchProviders(id: string, country: string): Promise<CachedProviders | undefined> {

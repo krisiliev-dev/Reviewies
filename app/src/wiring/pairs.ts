@@ -15,13 +15,18 @@ export const ROOT = resolve(import.meta.dirname, '../../..');
 /** Web screen file ↔ the phone file or files that stand in for it. */
 export const PAIRS: Record<string, { web: string; phone: string[] }> = {
   '/': { web: 'UpNext.tsx', phone: ['(tabs)/index.tsx'] },
-  '/search': { web: 'Search.tsx', phone: ['(tabs)/search.tsx'] },
   '/watchlist': { web: 'Watchlist.tsx', phone: ['(tabs)/watchlist.tsx'] },
   '/title': { web: 'TitleDetail.tsx', phone: ['title/[id].tsx'] },
   '/watching': { web: 'WatchingMode.tsx', phone: ['watching/[targetId].tsx'] },
   '/comments': { web: 'EpisodeComments.tsx', phone: ['comments/[targetId].tsx'] },
+  /*
+   * One surface for *find me something*, in the two shapes that question has.
+   *
+   * `/search` was its own entry here until `docs/design/architecture.md` section 5 merged the two:
+   * `Search.tsx` and `(tabs)/search.tsx` are gone, and the field, the results list, the note
+   * composer and the shelf are all on this pair.
+   */
   '/discover': { web: 'Discover.tsx', phone: ['(tabs)/discover.tsx'] },
-  '/calendar': { web: 'Calendar.tsx', phone: ['calendar.tsx'] },
   '/lists': { web: 'Lists.tsx', phone: ['lists.tsx'] },
   '/people': { web: 'People.tsx', phone: ['people.tsx'] },
   '/stats': { web: 'Stats.tsx', phone: ['stats.tsx'] },

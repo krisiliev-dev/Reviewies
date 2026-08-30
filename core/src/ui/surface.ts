@@ -138,6 +138,10 @@ export const SUNK_FILLS: Record<string, string> = {
   'mobile/src/ui/CatchUp.tsx': 'the sheet is a well over the screen it covers',
   'mobile/src/social/AddToList.tsx': 'the sheet is a well over the screen it covers',
   'mobile/src/watching/ListenSync.tsx': 'the level meter is a trough the bar moves in',
+  'app/src/ui/Browse.tsx':
+    'the well a browse box\u2019s artwork sits in, and the ground behind a box that has none \u2014 the same well `Poster` paints, at the one size measured by its column rather than by the table',
+  'mobile/src/ui/Browse.tsx':
+    'the well a browse box\u2019s artwork sits in, and the ground behind a box that has none \u2014 the same well `Poster` paints, at the one size measured by its column rather than by the table',
   'app/src/ui/MatchImports.tsx':
     'a filled action with nothing to do: the fill goes down rather than fading, which is `SURFACE_OFF` below',
 };

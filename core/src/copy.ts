@@ -205,6 +205,34 @@ export const COPY = {
     lastOne: 'Last one',
     bringHistory: 'Bring your history with you',
     seeUpcoming: "See what's upcoming",
+
+    /**
+     * The two halves of this screen, named. `docs/design/architecture.md` section 4.
+     *
+     * Upcoming stopped being a destination this sprint: the report was *"I am unsure what
+     * the difference between the Watchlist and Upcoming is"*, and the difference was real
+     * and lived only in the source. It is not a better label on a seventh screen — what is
+     * airing is a fact about the shows you already watch, so it is a view of this one.
+     *
+     * `outNow` against `COPY.screens.upcoming` on purpose. The opposition is *has it come
+     * out or not*, which is the only axis these two halves differ on, and the word somebody
+     * already knows keeps its meaning while losing its address.
+     */
+    outNow: 'Out now',
+    /**
+     * What the two chips are a choice *of*, which is the name a screen reader announces
+     * after the option. "Out now, selected, 1 of 2, Showing".
+     */
+    showing: 'Showing',
+    /**
+     * The heading over the past. `architecture.md` section 3.
+     *
+     * The history sits **above** the present, so this is the one heading on the screen a
+     * person meets by scrolling *up* into it — which is why it is a heading at all rather
+     * than an unlabelled run of struck rows. Without it the fold reads as a list that has
+     * been crossed off by mistake.
+     */
+    alreadyWatched: 'Already watched',
   },
 
   /**
@@ -267,6 +295,19 @@ export const COPY = {
     addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
     saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
+    /**
+     * The two faces of a browse box. `docs/design/architecture.md` section 5.
+     *
+     * A box is one control with two states rather than a card with a button on it, which
+     * is what `row.ts` means by "never a control inside the target": the front is a press
+     * that turns it over and the back is a press that turns it back, and the two actions
+     * that matter — Track, Watchlist — are only on the back, where a decision is being made.
+     *
+     * Named rather than announced as "button": the shelf is a grid of twenty of these and
+     * a screen reader reads the control, not what is above it. §6.96.
+     */
+    turnOver: (name: string) => `More about ${name}`,
+    turnBack: (name: string) => `Turn ${name} back over`,
     /**
      * The announced name of a field, which is not its placeholder.
      *
@@ -460,8 +501,16 @@ export const COPY = {
   },
 
   watchlist: {
-    /** The phone's, which names the way out. The web's was "Nothing saved yet." */
-    empty: 'Nothing saved yet. Add something from Search, then say why you saved it.',
+    /**
+     * The phone's, which names the way out. The web's was "Nothing saved yet."
+     *
+     * It said *"from Search"* until this sprint, and Search is not a place any more —
+     * `docs/design/architecture.md` section 5 merged it into Discover. A sentence that sends
+     * somebody to a screen the interface no longer has is §6.78's defect, which is the one
+     * `navigationLabels.test.ts` exists because of; the same class of bug, on a sentence
+     * that guard does not read.
+     */
+    empty: 'Nothing saved yet. Add something from Discover, then say why you saved it.',
     /**
      * Second person, matching the sentence above. The web asked "Why is this here?"
      *
@@ -556,6 +605,43 @@ export const COPY = {
      * Not a "because" at all, so it does not pretend to be one.
      */
     trending: 'Popular right now',
+
+    /**
+     * The filter row, revealed rather than resident. `docs/design/architecture.md` section 6.
+     *
+     * `compose.ts`'s rule, sixth application: on a surface whose purpose is reading, a
+     * control panel is opened, not left standing over the thing you came for. Three
+     * `Choice` groups behind one row, and the row states what is on when it is shut — the
+     * same shape the calendar's notification panel took in §6.134.
+     */
+    filters: 'Filters',
+    /** What is on, said by the shut row, so opening it is never the only way to find out. */
+    filtersOn: 'Narrowed',
+    filtersOff: 'Everything',
+    filterKind: 'Kind',
+    filterGenre: 'Genre',
+    /**
+     * Not "rating".
+     *
+     * The word `rating` in this product means **your** rating — `rate()`, the five stars on
+     * an episode row — and a filter on a shelf of things you have not seen cannot mean that.
+     * This one is the crowd's, and `architecture.md`'s third refusal is that the number
+     * filters and is never printed. A different word for a different thing.
+     */
+    filterStanding: 'Standing',
+    anyKind: 'Anything',
+    anyGenre: 'Any genre',
+    anyStanding: 'Any',
+    wellRated: 'Well rated',
+    /**
+     * Absence somebody caused with a control, which is not an empty state.
+     *
+     * `emptyStates.ts` files it under `NOT_AN_EMPTY_STATE` for the reason its neighbour
+     * `comments.allFiltered` gives: the shelf is not empty, it has been narrowed, and
+     * saying "nothing to suggest" here would be §6.57's mistake in reverse — blaming the
+     * data for what the filter did.
+     */
+    allFiltered: 'Nothing on the shelf matches those filters.',
   },
 
   lists: {
@@ -570,7 +656,7 @@ export const COPY = {
      * over a single control reading **Make public**: an offer to publish a list with nothing
      * on it. The way to put something on a list is `AddToList`, which lives on a title page
      * and which this screen never mentions. Its two neighbours both name the way out —
-     * `lists.empty` says "Make one above", `watchlist.empty` says "Add something from Search"
+     * `lists.empty` says "Make one above", `watchlist.empty` says "Add something from Discover"
      * — and this one was the odd one of the three.
      */
     listEmpty: 'Nothing on this list yet. Open a title and use Add to list.',
@@ -902,7 +988,6 @@ export const COPY = {
    */
   screens: {
     upNext: 'Up Next',
-    search: 'Search',
     discover: 'Discover',
     watchlist: 'Watchlist',
     more: 'More',

@@ -71,14 +71,14 @@ for (const show of SHOWS) {
 
 // Search, with a real result on it — the longest title in the library, deliberately.
 const LONGEST = [...SHOWS].sort((a, b) => b.name.length - a.name.length)[0];
-await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
 await page.getByPlaceholder('Shows, films, anime…').fill(LONGEST.name);
 await page.waitForTimeout(2500);
 await shot('r1-search-long-title', LONGEST.name);
 
 // A film, which is the other row shape.
 if (FILM) {
-  await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
   await page.getByPlaceholder('Shows, films, anime…').fill(FILM.name);
   await page.waitForTimeout(2500);
   await shot('r2-search-film', FILM.name);
@@ -92,7 +92,7 @@ await page.goto(`${BASE}/(tabs)/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(3000);
 await shot('r4-discover');
 
-await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/?on=coming`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(3000);
 await shot('r5-calendar');
 

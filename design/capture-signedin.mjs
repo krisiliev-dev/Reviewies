@@ -103,7 +103,7 @@ for (const [name, path, want] of SHOTS) {
  * person reaches it: from a static route, through the control that pushes to it. Which is
  * also the honest way to photograph a gate, since the gate is a rule and not a URL.
  */
-await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2000);
 await page.getByPlaceholder('Shows, films, anime…').fill('Kitchen');
 const open = page.getByRole('link', { name: /^Open Kitchen Nightshift$/i });
@@ -196,7 +196,7 @@ if (!(await page.getByRole('textbox').count())) {
  * it, because the control does not exist signed out. Measured here rather than asserted in
  * source: `hitSlop` is real on a device and invisible to layout, so only the box counts.
  */
-await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2000);
 await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
 await page.waitForTimeout(2500);
@@ -262,7 +262,7 @@ await press('18-lists-open', /Sunday nights|Ana recommends/i, '/lists');
  * not exist. The fixture pass said so by name rather than filing a title page without it.
  */
 const toTitle = async () => {
-  await page.goto(`${BASE}/search`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(2000);
   await page.getByPlaceholder('Shows, films, anime…').fill('Kitchen');
   const link = page.getByRole('link', { name: /^Open Kitchen Nightshift$/i });

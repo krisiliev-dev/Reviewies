@@ -280,7 +280,6 @@ describe('the type scale', () => {
      */
     const roots = [
       'mobile/app/(tabs)/index.tsx',
-      'mobile/app/(tabs)/search.tsx',
       'mobile/app/(tabs)/discover.tsx',
       'mobile/app/(tabs)/watchlist.tsx',
       'mobile/app/(tabs)/more.tsx',
@@ -298,15 +297,40 @@ describe('the type scale', () => {
      * The structural half of §6.110: every arrival state keeps the screen's own title.
      *
      * It counted `>Up Next</Masthead>` until §6.176 gave that title an owner, and then it
-     * counted zero — a clause reading a literal that had moved, which is the cost this
-     * whole sprint was measuring and the reason it is a *reference* here now. The four is
-     * unchanged: four arrival states, four titles.
+     * counted zero — a clause reading a literal that had moved, which is the cost that
+     * sprint was measuring and the reason it is a *reference* here now.
+     *
+     * ## And then the count itself became the wrong question
+     *
+     * It asked for **four** — four arrival states, four titles — which was the right shape
+     * while `UpNext` was four early returns each drawing its own. `docs/design/
+     * architecture.md` sections 3 and 4 gave the screen a segment control, and a control that
+     * has to be on screen in every state cannot live inside a branch: the masthead and the
+     * chips were hoisted into a shell that renders whichever half is showing. So the correct
+     * screen draws the title **once**, and a clause asking for four fails on it — which is a
+     * guard stating the rule wrongly rather than a screen that lost a title.
+     *
+     * Restated, and the restatement is stronger than the count was. What §6.110 is about is
+     * that **no branch can render without the title**; four titles was one way to get there
+     * and a shell with no branches at all is the other. So: the title is drawn once, and it
+     * is drawn by a component that has exactly one `return` in it, which is what makes
+     * "every arrival state keeps it" true by construction instead of by counting.
      */
     const upNext = read('app/src/screens/UpNext.tsx');
     expect(
       (upNext.match(/\{COPY\.screens\.upNext\}<\/Masthead>/g) ?? []).length,
-      'an arrival state lost its title',
-    ).toBe(4);
+      'Up Next does not draw its own title, or draws it more than once',
+    ).toBe(1);
+    const opens = upNext.indexOf('export function UpNext(');
+    expect(opens, 'no UpNext component to read').toBeGreaterThan(-1);
+    const shell = upNext.slice(opens, upNext.indexOf('\n}\n', opens));
+    expect(shell, 'the title is not in the shell, so a branch draws it').toContain(
+      '{COPY.screens.upNext}</Masthead>',
+    );
+    expect(
+      (shell.match(/\breturn\b/g) ?? []).length,
+      'the shell branches, so an arrival state can render without the title',
+    ).toBe(1);
   });
 
   it('is what the crash screen says on both platforms, which nobody photographs', () => {

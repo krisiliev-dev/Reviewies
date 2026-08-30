@@ -15,21 +15,46 @@ import {
 } from '@reviewies/core/calendar/upcoming';
 import { requestRefresh } from '@reviewies/core/calendar/refresh';
 import { unmatchedImportCount } from '@reviewies/core/data/repo';
-import { Poster } from '../ui/Poster';
+import { Poster } from './Poster';
 import { disablePush, enablePush, pushSupported, syncPreference, vapidPublicKey } from '../calendar/push';
 import { COPY } from '@reviewies/core/copy';
 import { formatDay } from '@reviewies/core/time';
-import { Choice } from '../ui/Choice';
-import { Row as BaseRow } from '../ui/Row';
-import { Chevron } from '../ui/Mark';
-import { Section } from '../ui/Section';
-import { Note } from '../ui/Note';
-import { Masthead } from '../ui/Masthead';
-import { Button } from '../ui/Button';
+import { Choice } from './Choice';
+import { Row as BaseRow } from './Row';
+import { Chevron } from './Mark';
+import { Section } from './Section';
+import { Note } from './Note';
+import { Button } from './Button';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
 import { episodeName, runCode } from '@reviewies/core/ui/episode';
 
-export function Calendar() {
+/**
+ * What is coming, and how much you want to hear about it — the second half of Up Next.
+ *
+ * `docs/design/architecture.md` section 4. This was a screen at `/calendar`, reached from a row on
+ * More called *Upcoming*, and the report that started this sprint was **"I am unsure what
+ * the difference between the Watchlist and Upcoming is"**. From the source they are
+ * genuinely different — one is what you mean to watch with a note saying why, this is what
+ * airs next with the notification granularity attached — and a distinction only legible in
+ * the code is not one the user has.
+ *
+ * The answer was not a better label. What is airing is a fact about the shows you are
+ * already watching, so it belongs on the screen about the shows you are already watching:
+ * a segment of Up Next, not a seventh destination.
+ *
+ * ## Why a component pair rather than two screens
+ *
+ * It has a twin at `mobile/src/ui/Coming.tsx`, and `pairs.ts` derives its component
+ * comparisons from the two `ui/` directories — so the copy guard and the offers guard keep
+ * comparing these two halves after they stop being routes. Moving a screen out of `PAIRS`
+ * without giving it another way to be compared would have quietly ended thirty sprints of
+ * parity checking on it, which is the failure `pairs.ts`'s own header names.
+ *
+ * Notification granularity was the top request on Trakt's roadmap, and milestones is the
+ * default because "every episode of everything" is what makes people turn notifications off
+ * entirely — after which the feature may as well not exist.
+ */
+export function Coming() {
   const entries = useLiveQuery(() => getUpcoming(), [], undefined);
   // Why the screen is empty, not only that it is. An imported show has no air dates
   // until matching gives it a provider ID.
@@ -37,7 +62,7 @@ export function Calendar() {
 
   // Opening the calendar is the one moment somebody definitely wants it current. The
   // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
-  // the live query picks up whatever it writes without this screen waiting on it.
+  // the live query picks up whatever it writes without this waiting on it.
   useEffect(() => void requestRefresh(), []);
   // Lazy, like the phone's: the initial value is only wanted on the first render, and
   // calling it on every one reads the stored preference for nothing.
@@ -78,11 +103,9 @@ export function Calendar() {
   const grouped = entries ? groupByDay(entries) : [];
 
   return (
-    <div className="p-s16">
-      <Masthead level="page" className="px-1">{COPY.screens.upcoming}</Masthead>
-
+    <div>
       {/* Closed, this whole panel is one row that says what the setting currently is.
-          
+
           It used to stand open on arrival — three options with a sub-line each, a
           paragraph about the iPhone Home Screen and up to four conditional notes, 470
           points of a 900-point screen called *Upcoming*, above the thing you came for.
@@ -174,7 +197,6 @@ export function Calendar() {
               And which sentence it is depends on *why* it is empty. An imported show has
               no air dates until matching gives it a provider ID, so somebody who has just
               brought in eleven shows was being told to track one. */}
-          {/* It had no size and inherited 16; the phone's `blurb` is 14. */}
           <Note>
             {unmatched ? COPY.calendar.emptyUnmatched(unmatched) : COPY.calendar.empty}
           </Note>
@@ -205,7 +227,7 @@ export function Calendar() {
             </Section>
             <ul className="flex flex-col gap-1.5">
               {runsOf(dayEntries).map((run) => (
-                <Row key={run.episodes[0].id} run={run} />
+                <ComingRow key={run.episodes[0].id} run={run} />
               ))}
             </ul>
           </section>
@@ -224,7 +246,7 @@ export function Calendar() {
  * Doc 6 §5 named this row specifically; §6.96's collision clause is what stopped it being
  * possible to write the next one the same way.
  */
-function Row({ run }: { run: UpcomingRun }) {
+function ComingRow({ run }: { run: UpcomingRun }) {
   const first = run.episodes[0];
   const code = runCode(first.season, run.episodes.map((e) => e.number));
   // A run has no single name, and a count is what the row is about. One episode keeps the
@@ -247,10 +269,9 @@ function Row({ run }: { run: UpcomingRun }) {
         <Poster
           url={run.posterUrl}
           name={run.seriesName}
-         
+
         />
       }
     />
   );
 }
-

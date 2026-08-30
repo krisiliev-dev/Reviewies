@@ -62,7 +62,7 @@ export const REVEALS: readonly Reveal[] = [
   },
   {
     states: ['tuning', 'tuning'],
-    screens: ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx'],
+    screens: ['app/src/ui/Coming.tsx', 'mobile/src/ui/Coming.tsx'],
     shows: 'the three notification options and the delivery block, §6.134',
     shot: '09-calendar-tuning',
   },
@@ -92,7 +92,7 @@ export const REVEALS: readonly Reveal[] = [
   },
   {
     states: ['noting', 'noting'],
-    screens: ['app/src/screens/Search.tsx', 'mobile/app/(tabs)/search.tsx'],
+    screens: ['app/src/screens/Discover.tsx', 'mobile/app/(tabs)/discover.tsx'],
     shows: 'the "why you saved it" note, written at the moment of saving',
     shot: '04-search-noting',
   },
@@ -109,6 +109,35 @@ export const REVEALS: readonly Reveal[] = [
     screens: ['app/src/ui/WhereToWatch.tsx', 'mobile/src/ui/WhereToWatch.tsx'],
     shows: 'the country list, which decides every streaming answer on the page',
     shot: '15-title-country',
+  },
+  {
+    /**
+     * The browse box's other face, and the only reveal in the register whose *content* is
+     * the reason it exists rather than a panel attached to it.
+     *
+     * `docs/design/architecture.md` section 5. The front of a box carries genre, year and title;
+     * the synopsis and the two actions are on the back, because a shelf of twenty boxes each
+     * carrying **Track** and **Watchlist** is forty controls with two names between them —
+     * `row.ts`'s naming rule broken twenty times over. So the box is one control with two
+     * faces, and the face a design review has to judge is the one behind the press.
+     */
+    states: ['over', 'over'],
+    screens: ['app/src/ui/Browse.tsx', 'mobile/src/ui/Browse.tsx'],
+    shows: 'the back of a browse box — the synopsis, what it is, and the two actions',
+    shot: '05-discover-back',
+  },
+  {
+    /**
+     * The filter row, opened. `architecture.md` section 6.
+     *
+     * `compose.ts`'s rule, sixth application, and every previous application cost the design
+     * track a shot — which is the whole reason this register exists. Registered the same hour
+     * the panel was written rather than three sprints later.
+     */
+    states: ['open', 'open'],
+    screens: ['app/src/ui/Filters.tsx', 'mobile/src/ui/Filters.tsx'],
+    shows: 'the three groups Discover can be narrowed by, and what each one offers',
+    shot: '05-discover-filters',
   },
   {
     /**

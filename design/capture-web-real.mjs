@@ -104,10 +104,10 @@ const LONGEST = [...SHOWS].sort((a, b) => b.name.length - a.name.length)[0];
  */
 const ROUTES = [
   ['upnext', '/', LONGEST.name],
-  ['search', `/search`, LONGEST.name, LONGEST.name],
-  ['search-film', `/search`, FILM.name, FILM.name],
+  ['search', `/discover`, LONGEST.name, LONGEST.name],
+  ['search-film', `/discover`, FILM.name, FILM.name],
   ['discover', '/discover', undefined],
-  ['calendar', '/calendar', undefined],
+  ['calendar', '/?on=coming', undefined],
   ['stats', '/stats', undefined],
   ['watchlist', '/watchlist', undefined],
 ];

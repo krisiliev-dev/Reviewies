@@ -144,6 +144,18 @@ const NOT_ON_DISK: Record<string, string> = {
   // send people to. A faithful quotation of a wrong path is the one honest reason to
   // name a file that is not there.
   'app/src/metadata/provider.ts': '§6.79 quotes the sentence that used to name it',
+  /*
+   * `docs/design/architecture.md` names the two screens it deleted, which is the same honest
+   * reason as the entry above: a document recording *what moved* has to be able to say what
+   * it moved. Section 1 quotes both files to show that the difference between them was real
+   * and lived only in the source, and section 4 says where the content went. Naming the
+   * destination instead would make the paragraph about the repair rather than about the
+   * finding — and the finding is the part worth keeping.
+   *
+   * `docs/design/components.md` also names the phone one, in a line-numbered measurement
+   * taken while it existed. One entry answers for both.
+   */
+  'mobile/app/calendar.tsx': 'architecture.md records its deletion and has to name it',
 
   /**
    * Files the design system specifies but nobody has built yet.

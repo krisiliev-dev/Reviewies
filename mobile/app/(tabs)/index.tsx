@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,9 +8,10 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  getHistory,
   getUpNext,
   markWatched,
   unwatchLatest,
@@ -35,10 +36,14 @@ import { useLive } from '../../src/useLive';
 import { COPY } from '@reviewies/core/copy';
 import { useImporting } from '../../src/useImporting';
 import { Button } from '../../src/ui/Button';
+import { Choice } from '../../src/ui/Choice';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
 import { Masthead } from '../../src/ui/Masthead';
+import { Coming } from '../../src/ui/Coming';
+import { Past } from '../../src/ui/Past';
 import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
+import { UP_NEXT_VIEWS, VIEW_PARAM, viewFrom, type UpNextView } from '@reviewies/core/ui/segments';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -49,8 +54,65 @@ import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
  *
  * So: no dashboard, no feed, no onboarding carousel. The list, and a button. Same
  * rule as the web version, and the logic behind it is the same code.
+ *
+ * ## It has three jobs now, and it had one
+ *
+ * `docs/design/architecture.md` sections 3 and 4. The past goes **above** the present, and what is
+ * **coming** is this screen's second half rather than a seventh destination called Upcoming
+ * that nobody could tell apart from the Watchlist. The sentence above still governs both:
+ * the list is what the screen opens on, which is what `present` below is for.
  */
 export default function UpNextScreen() {
+  const params = useLocalSearchParams<{ on?: string }>();
+  const on = viewFrom(params[VIEW_PARAM]);
+
+  return (
+    <SafeAreaView style={styles.screen} edges={['top']}>
+      <Body on={on} />
+    </SafeAreaView>
+  );
+}
+
+/**
+ * The masthead, the two chips, and whichever half is showing.
+ *
+ * The scroll lives here rather than in each half, because the past and the present are one
+ * scrolling column and the arrival position is measured across both. §6.157's finding is
+ * why the segment is in the address rather than in state alone: a state reachable only by
+ * pressing is a state the design record loses.
+ */
+function Body({ on }: { on: UpNextView }) {
+  /*
+   * The column, held here and handed down.
+   *
+   * React Native has no `scrollIntoView` and no way for a child to reach the scrolling
+   * ancestor it happens to be inside, so the handle travels as a prop. One column, owned by
+   * the component that renders it — the alternative is a context provider for a single
+   * value, or a module-level handle that outlives the screen and is wrong the second time
+   * anybody mounts two of them.
+   */
+  const column = useRef<ScrollView>(null);
+  return (
+    <ScrollView ref={column} contentContainerStyle={styles.content}>
+      <Masthead>{COPY.screens.upNext}</Masthead>
+      <Choice<UpNextView>
+        name={COPY.upNext.showing}
+        options={UP_NEXT_VIEWS}
+        value={on}
+        // The key is always written, including for the default: `setParams` cannot remove
+        // one, and a web that dropped it and a phone that could not would be two addresses
+        // for one state. `segments.ts` owns the spelling for both.
+        onChange={(next) => router.setParams({ [VIEW_PARAM]: next })}
+      />
+      {on === 'coming' ? <Coming /> : <OutNow column={column} />}
+    </ScrollView>
+  );
+}
+
+type Column = RefObject<ScrollView | null>;
+
+/** The half this screen opens on: what you have watched, what is next, and how to mark it. */
+function OutNow({ column }: { column: Column }) {
   const entries = useLive(() => getUpNext(), []);
   const libraryCount = useLive(() => db.library.count(), []);
   // Owned by the screen rather than by the row that opens it. A catch-up completes by
@@ -90,155 +152,160 @@ export default function UpNextScreen() {
   }, []);
 
   if (entries === undefined) {
+    return <ActivityIndicator color={theme.workingMark} style={styles.loading} />;
+  }
+
+  if (imported) {
+    /*
+     * No `Past` above it, and that is a decision rather than an oversight: the import has
+     * just written a few hundred watches, so the history is at its longest exactly here,
+     * and burying the one confirmation somebody came for under forty struck rows would
+     * undo what this panel is for. The past is drawn on the two branches that mean *you
+     * have a library*, which this one is the minute before.
+     */
     return (
-      <SafeAreaView style={styles.screen} edges={['top']}>
-        <ActivityIndicator color={theme.workingMark} style={styles.loading} />
-      </SafeAreaView>
+      <View style={styles.empty}>
+        <Masthead level="sub">{COPY.upNext.historyIsIn}</Masthead>
+        <Text style={styles.emptyText}>
+          Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
+          {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
+        </Text>
+        {/* An export carries no provider IDs, so what has landed is a set of shows
+            with no artwork, no air dates and no episode lists beyond what was
+            watched. Matching them is offered here rather than mentioned, because
+            here is where somebody is standing. */}
+        <Text style={styles.emptyText}>{COPY.upNext.importedExplained}</Text>
+        {/* Not auto-started here: this panel has just explained what matching is
+            for, and starting it underneath that explanation would talk over
+            itself. Up Next runs it without asking once this is dismissed. */}
+        <MatchImports autoStart={false} />
+        <Pressable
+          onPress={() => setImported(undefined)}
+          style={tap}
+          hitSlop={REACH.inline}
+          accessibilityRole="button"
+        >
+          <Text style={styles.later}>{COPY.controls.later}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (entries.length === 0 && libraryCount === 0) {
+    /**
+     * The first minute.
+     *
+     * This app exists because TV Time shut down, and what it said to someone
+     * arriving with years of history in a zip was "Nothing tracked yet" and a
+     * search box — the import that would have rescued all of it two taps away
+     * behind a tab called Data. So the migration is the offer, and searching is
+     * the alternative rather than the other way round.
+     */
+    return (
+      <View style={styles.empty}>
+        <Masthead level="sub">{COPY.upNext.bringHistory}</Masthead>
+        <Text style={styles.emptyText}>{COPY.upNext.tvTimeGone}</Text>
+        <ImportFormats />
+        <ImportFiles label={COPY.controls.importFromTvTime} onImported={setImported} primary />
+        <Text style={styles.emptyText}>{COPY.upNext.nothingToImport}</Text>
+        {/* The secondary of the two. It was the bright one and the import was the
+            muted one — the opposite of what this screen is for. The web had the
+            same inversion, and neither was visible to any check: both controls were
+            named, reachable and big enough. */}
+        <Button
+          to="/discover"
+          tone="secondary"
+          size="page"
+          label={COPY.controls.findToWatch}
+          name={COPY.controls.findToWatch}
+        />
+      </View>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <Present column={column}>
+        <View style={styles.empty}>
+          {/* Three states, not two. This screen used to say "Nothing here yet. N shows
+              came from an import and have no episode lists until they are matched" —
+              the web's pre-doc-10 §4 sentence, which reads as a chore and which the
+              web stopped saying a long time ago. §6.80 found it still here, and found
+              the third state underneath it: for five and a half seconds of a 266-row
+              import, N was a count still growing and the button below matched a
+              library that was still being written. */}
+          <Text style={styles.emptyText}>
+            {importing
+              ? COPY.upNext.stillImporting(importing)
+              : unmatched
+                ? COPY.upNext.matchingImport(unmatched)
+                : waiting
+                  ? COPY.upNext.caughtUpWaiting(waiting.seriesName, formatDay(waiting.day))
+                  : COPY.upNext.allCaughtUp}
+          </Text>
+          {/* Offered where the gap is felt, not filed under a settings screen — but
+              never over an import still in flight. */}
+          {unmatched && !importing ? <MatchImports /> : null}
+          {/*
+            The offer follows the state. §6.162, §6.164.
+
+            `02a-import-reading.png` was the first photograph of the importing state and it
+            showed one sentence — "Still reading your TV Time export" — under a **filled
+            primary** reading *Find something to watch*: the app carrying somebody's history
+            across while the loudest thing on screen invited them to leave. First run gets
+            this right, where searching is explicitly the alternative to importing; here one
+            Button served every state and the loudest tone won.
+
+            §6.164 found the same shape one state over. Caught up **and waiting** is the case
+            where what is coming is the answer — and since `architecture.md` section 4 it is the
+            other half of *this* screen rather than a screen away behind More, so the offer
+            changes the segment instead of navigating.
+
+            Searching is never removed: leaving is allowed and this screen would be a dead
+            end without it. It stops being the offer, which is what a tone is for.
+          */}
+          {waiting && !importing && !unmatched ? (
+            <Button
+              onPress={() => router.setParams({ [VIEW_PARAM]: 'coming' satisfies UpNextView })}
+              tone="primary"
+              size="page"
+              label={COPY.upNext.seeUpcoming}
+              name={COPY.upNext.seeUpcoming}
+            />
+          ) : null}
+          <Button
+            to="/discover"
+            tone={importing || waiting ? 'secondary' : 'primary'}
+            size="page"
+            label={COPY.controls.findToWatch}
+            name={COPY.controls.findToWatch}
+          />
+        </View>
+      </Present>
     );
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Masthead>{COPY.screens.upNext}</Masthead>
+    <Present column={column}>
+      {/*
+        Here too, and this is the whole point of the second copy.
 
-        {/* §6.64's undo — the row can change under the press when two devices are racing,
-            and the ordinary mis-tap needs the same way back — used to be a banner here,
-            a screen away from the tap that caused it and above a list that had already
-            reflowed. It sits beside the ring now, within reach of the thumb that made the mark. */}
+        The offer used to live only in the empty branch above, and the comment
+        beside it already said what that costs — "matching what has landed so far
+        leaves the rest of the import behind it, unmatched and unoffered". It does,
+        and worse: the first show to match produces an entry, the screen leaves the
+        empty branch, that panel unmounts, and the shows still waiting have nowhere
+        in the app to be matched from. A control offered only while it is not needed.
 
-        {imported ? (
-          <View style={styles.empty}>
-            <Masthead level="sub">{COPY.upNext.historyIsIn}</Masthead>
-            <Text style={styles.emptyText}>
-              Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
-              {imported.watchlist > 0 ? `, ${imported.watchlist} watchlist items` : ''}.
-            </Text>
-            {/* An export carries no provider IDs, so what has landed is a set of shows
-                with no artwork, no air dates and no episode lists beyond what was
-                watched. Matching them is offered here rather than mentioned, because
-                here is where somebody is standing. */}
-            <Text style={styles.emptyText}>{COPY.upNext.importedExplained}</Text>
-            {/* Not auto-started here: this panel has just explained what matching is
-                for, and starting it underneath that explanation would talk over
-                itself. Up Next runs it without asking once this is dismissed. */}
-            <MatchImports autoStart={false} />
-            <Pressable
-              onPress={() => setImported(undefined)}
-              style={tap}
-              hitSlop={REACH.inline}
-              accessibilityRole="button"
-            >
-              <Text style={styles.later}>{COPY.controls.later}</Text>
-            </Pressable>
-          </View>
-        ) : entries.length === 0 && libraryCount === 0 ? (
-          /**
-           * The first minute.
-           *
-           * This app exists because TV Time shut down, and what it said to someone
-           * arriving with years of history in a zip was "Nothing tracked yet" and a
-           * search box — the import that would have rescued all of it two taps away
-           * behind a tab called Data. So the migration is the offer, and searching is
-           * the alternative rather than the other way round.
-           */
-          <View style={styles.empty}>
-            <Masthead level="sub">{COPY.upNext.bringHistory}</Masthead>
-            <Text style={styles.emptyText}>{COPY.upNext.tvTimeGone}</Text>
-            <ImportFormats />
-            <ImportFiles label={COPY.controls.importFromTvTime} onImported={setImported} primary />
-            <Text style={styles.emptyText}>{COPY.upNext.nothingToImport}</Text>
-            {/* The secondary of the two. It was the bright one and the import was the
-                muted one — the opposite of what this screen is for. The web had the
-                same inversion, and neither was visible to any check: both controls were
-                named, reachable and big enough. */}
-            <Button
-              to="/search"
-              tone="secondary"
-              size="page"
-              label={COPY.controls.findToWatch}
-              name={COPY.controls.findToWatch}
-            />
-          </View>
-        ) : entries.length === 0 ? (
-          <View style={styles.empty}>
-            {/* Three states, not two. This screen used to say "Nothing here yet. N shows
-                came from an import and have no episode lists until they are matched" —
-                the web's pre-doc-10 §4 sentence, which reads as a chore and which the
-                web stopped saying a long time ago. §6.80 found it still here, and found
-                the third state underneath it: for five and a half seconds of a 266-row
-                import, N was a count still growing and the button below matched a
-                library that was still being written. */}
-            <Text style={styles.emptyText}>
-              {importing
-                ? COPY.upNext.stillImporting(importing)
-                : unmatched
-                  ? COPY.upNext.matchingImport(unmatched)
-                  : waiting
-                    ? COPY.upNext.caughtUpWaiting(waiting.seriesName, formatDay(waiting.day))
-                    : COPY.upNext.allCaughtUp}
-            </Text>
-            {/* Offered where the gap is felt, not filed under a settings screen — but
-                never over an import still in flight. */}
-            {unmatched && !importing ? <MatchImports /> : null}
-            {/*
-              The offer follows the state. §6.162, §6.164.
-
-              `02a-import-reading.png` was the first photograph of the importing state and it
-              showed one sentence — "Still reading your TV Time export" — under a **filled
-              primary** reading *Find something to watch*: the app carrying somebody's history
-              across while the loudest thing on screen invited them to leave. First run gets
-              this right, where searching is explicitly the alternative to importing; here one
-              Button served every state and the loudest tone won.
-
-              §6.164 found the same shape one state over. Caught up **and waiting** is the case
-              where the calendar is the answer — the sentence above names the next episode and
-              the rest of what is coming is a screen away behind More.
-
-              Searching is never removed: leaving is allowed and this screen would be a dead
-              end without it. It stops being the offer, which is what a tone is for.
-            */}
-            {waiting && !importing && !unmatched ? (
-              <Button
-                to="/calendar"
-                tone="primary"
-                size="page"
-                label={COPY.upNext.seeUpcoming}
-                name={COPY.upNext.seeUpcoming}
-              />
-            ) : null}
-            <Button
-              to="/search"
-              tone={importing || waiting ? 'secondary' : 'primary'}
-              size="page"
-              label={COPY.controls.findToWatch}
-              name={COPY.controls.findToWatch}
-            />
-          </View>
-        ) : (
-          <>
-            {/*
-              Here too, and this is the whole point of the second copy.
-
-              The offer used to live only in the empty branch above, and the comment
-              beside it already said what that costs — "matching what has landed so far
-              leaves the rest of the import behind it, unmatched and unoffered". It does,
-              and worse: the first show to match produces an entry, the screen leaves the
-              empty branch, that panel unmounts, and the shows still waiting have nowhere
-              in the app to be matched from. A control offered only while it is not needed.
-
-              Measured after importing the demo library: the calendar read "2 imported
-              shows still need matching" and this screen showed one matched show and no
-              way to match the other two. Those two were asks — ambiguous matches — which
-              is not a race that resolves itself but a state that lasts until answered.
-            */}
-            {unmatched && !importing ? <MatchImports /> : null}
-            {entries.map((entry) => (
-              <Row key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
-            ))}
-          </>
-        )}
-      </ScrollView>
+        Measured after importing the demo library: the calendar read "2 imported
+        shows still need matching" and this screen showed one matched show and no
+        way to match the other two. Those two were asks — ambiguous matches — which
+        is not a race that resolves itself but a state that lasts until answered.
+      */}
+      {unmatched && !importing ? <MatchImports /> : null}
+      {entries.map((entry) => (
+        <Row key={entry.seriesId} entry={entry} onCatchUp={setCatchingUp} />
+      ))}
 
       {catchingUp && (
         <CatchUp
@@ -247,7 +314,108 @@ export default function UpNextScreen() {
           onDone={() => setCatchingUp(undefined)}
         />
       )}
-    </SafeAreaView>
+    </Present>
+  );
+}
+
+/**
+ * The past above, the present below, and the screen arriving at the present.
+ *
+ * `docs/design/architecture.md` section 3, and the web's twin carries the argument: both
+ * requirements are real and they do not conflict. The history belongs *up*; the app has to
+ * open on the episodes you can mark. So the layout puts one above the other and this
+ * scrolls past it once, on arrival.
+ *
+ * **Once**, guarded by a ref rather than by a dependency list, and this matters more here
+ * than on the web: `useLive` re-runs every query in the app on *any* write, because
+ * expo-sqlite's change listener fires per statement. Without the guard, crossing an episode
+ * off would yank the column back to a position that had just changed under it — on the one
+ * action this product exists for, on the platform it is now built around.
+ *
+ * `onLayout` rather than a measured ref: React Native has no `scrollIntoView`, and the y a
+ * layout event reports is already relative to the `ScrollView`'s content. `animated: false`
+ * because an arrival that slides is a screen that moves while you are reading it.
+ */
+function Present({ column, children }: { column: Column; children: ReactNode }) {
+  /*
+   * One query, here, rather than one inside `Past` and another to decide when to scroll.
+   * The condition for the scroll is the data and not a timer: `useLive` answers on a later
+   * tick, so a layout pass that fired before the rows existed would spend the one arrival
+   * on a column with nothing above it and leave the screen at the top for ever — the same
+   * screen as not scrolling at all, and considerably harder to notice.
+   */
+  const past = useLive(() => getHistory(), []);
+  const marker = useRef<View>(null);
+  const arrived = useRef(false);
+
+  /**
+   * Where the present begins, measured against the column rather than reported by a layout
+   * event — and this took a browser to find out.
+   *
+   * The first version read `event.nativeEvent.layout.y` straight off `onLayout`, which is
+   * what that field is for on a device. On `react-native-web` it is **always 0**: the
+   * implementation reports a `ResizeObserver` entry's `contentRect`, whose `x` and `y` are
+   * the element's own padding offsets rather than its position in anything. So the guard
+   * below (`y <= 0`) declined to scroll, every time, and the phone's export arrived at the
+   * top of the past while the web arrived at the present.
+   *
+   * Nothing in this repository could have said so. It is not a type error, not a rule any
+   * source guard states, and `phoneTextScaling.test.ts`'s neighbours are all about what the
+   * source *says*. It was found by serving the export and reading `scrollTop` — a number,
+   * because "it looked fine" is not an answer to a question about a scroll position, and
+   * `docs/design/on-a-device.md` opens with exactly that sentence.
+   *
+   * `measureLayout` is the API that means what this needs on **both** platforms: on a device
+   * it walks the shadow tree, and on the web `react-native-web` implements it with two
+   * `getBoundingClientRect`s and a subtraction, which is correct. Measured against the
+   * scroll view's *inner* node — the content view — because a `scrollTo` is in content
+   * coordinates and the outer node is the window onto them.
+   *
+   * ## And it is run from an effect, not from `onLayout`
+   *
+   * The second half of the same finding, and the export said so twice before it was heard.
+   * `onLayout` looks like the right trigger — something moved, measure it — and on a device
+   * it is one, because a layout event fires when a view's *position* changes. On
+   * `react-native-web` it is a `ResizeObserver`, which fires when a view's **size** changes
+   * and never when it merely moves. This wrapper's size does not change when the past
+   * arrives above it; only its position does. So the observer fired once, before the query
+   * had answered, and never again.
+   *
+   * An effect with no dependency list runs after **every** commit, including the one that
+   * draws the past, which is exactly the signal this needs — and it is what the web's twin
+   * has always done, for no better reason than that the web has no `onLayout` to be tempted
+   * by. `arrived` is what keeps it to one.
+   */
+  const arrive = () => {
+    if (arrived.current || !past?.length) return;
+    const node = column.current;
+    const view = marker.current;
+    if (!node || !view) return;
+    const inner = (node as unknown as { getInnerViewNode?: () => unknown }).getInnerViewNode?.();
+    view.measureLayout(
+      (inner ?? node) as never,
+      (_x, y) => {
+        // Nothing above the present is nothing to scroll past, and consuming the one
+        // arrival on that would leave the screen at the top for ever.
+        if (y <= 0) return;
+        arrived.current = true;
+        node.scrollTo({ y, animated: false });
+      },
+      // A measurement that cannot be taken leaves the screen where it is, which is the
+      // behaviour this whole component is an improvement on rather than a dependency of.
+      () => {},
+    );
+  };
+
+  // Every commit, and `arrive` is what makes it once. See above for why this is not
+  // `onLayout`.
+  useEffect(arrive);
+
+  return (
+    <>
+      <Past entries={past} />
+      <View ref={marker}>{children}</View>
+    </>
   );
 }
 

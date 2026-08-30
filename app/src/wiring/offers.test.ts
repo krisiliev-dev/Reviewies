@@ -69,7 +69,7 @@ const EXEMPT: Record<string, string> = {
    * to excuse. An excuse that was never true is worse than one that has expired: it reads
    * as a decision somebody made.
    */
-  '/calendar web-only setPreference()':
+  'ui/Coming.tsx web-only setPreference()':
     'the phone reaches the same core setter through syncPreference in mobile/src/notifications, which writes the preference and then tells the backend which device to notify — one hop further out than this reads, not a missing control',
 
   /*
@@ -315,7 +315,7 @@ describe('what each platform offers', () => {
     // Non-vacuity. Every assertion above passes trivially if the extractors return
     // nothing — which is exactly what a renamed router API or a moved screen directory
     // would cause, silently.
-    const search = read('app/src/screens/Search.tsx');
+    const search = read('app/src/screens/Discover.tsx');
     expect(routesOffered(search, 'web')).toContain('/title');
     expect(writersCalled(search)).toContain('markWatched');
 
@@ -332,7 +332,7 @@ describe('what each platform offers', () => {
       ]);
     }
 
-    const phoneSearch = read('mobile/app/(tabs)/search.tsx');
+    const phoneSearch = read('mobile/app/(tabs)/discover.tsx');
     expect(routesOffered(phoneSearch, 'phone')).toContain('/title');
     expect(writersCalled(phoneSearch)).toContain('markWatched');
   });

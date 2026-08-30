@@ -42,12 +42,20 @@ function filesUnder(dir: string, out: string[] = []): string[] {
 
 const SCREENS = [...filesUnder('app/src'), ...filesUnder('mobile/app'), ...filesUnder('mobile/src')];
 
-/** The four places a control reports that something has been added to the library. */
+/**
+ * Every place a control reports that something has been added to the library.
+ *
+ * It was four and is four: two of them moved this sprint rather than went.
+ * `docs/design/architecture.md` section 5 merged Search into Discover, so the result row is
+ * on the Discover screens; and section 5 again moved the *shelf's* two actions onto the back
+ * of a browse box, so the other pair is `Browse`. Both still call `addToLibrary` and both
+ * still have to say so before the episodes land, which is the whole subject here.
+ */
 const ADDING = [
-  'app/src/screens/Search.tsx',
-  'mobile/app/(tabs)/search.tsx',
   'app/src/screens/Discover.tsx',
   'mobile/app/(tabs)/discover.tsx',
+  'app/src/ui/Browse.tsx',
+  'mobile/src/ui/Browse.tsx',
 ];
 
 describe('adding a show to the library', () => {

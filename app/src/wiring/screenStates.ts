@@ -53,29 +53,34 @@ const NO_ACCOUNT =
 export const SCREEN_STATES: ScreenStates[] = [
   // --- web -------------------------------------------------------------------
   {
+    /*
+     * Three jobs on one screen since `docs/design/architecture.md` sections 3 and 4: the past, the
+     * present, and what is coming. The calendar's states are here because the calendar is
+     * here — `/calendar` was its own row until this sprint and is no longer a route.
+     */
     platform: 'web',
     route: '/',
     states: [
       { name: 'first run: the migration offer', verdict: 'suite' },
       { name: 'tracked, with a remaining count', verdict: 'suite' },
+      { name: 'the past, above the present', verdict: 'suite' },
       { name: 'just imported: the report', verdict: 'suite' },
       { name: 'imported shows still unmatched', verdict: 'suite' },
       { name: 'the catch-up sheet, open', verdict: 'suite' },
       { name: 'a series finished by catching up', verdict: 'suite' },
-    ],
-  },
-  {
-    platform: 'web',
-    route: '/search',
-    states: [
-      { name: 'empty query', verdict: 'suite' },
-      { name: 'results, series and film', verdict: 'suite' },
-      { name: 'the quick-log note composer', verdict: 'suite' },
-      // Was 'unit', excused as "the fixture provider cannot be made to fail from a
-      // browser" — true of the fixtures and beside the point: §6.58 builds with a token
-      // and intercepts the provider instead. Three failures, including a hang.
-      { name: 'the provider failed', verdict: 'suite' },
-      { name: 'the provider never answered, and the deadline fired', verdict: 'suite' },
+      { name: 'coming: nothing scheduled', verdict: 'suite' },
+      { name: 'coming: episodes, grouped by day', verdict: 'suite' },
+      { name: 'coming: notifications, the three granularities', verdict: 'suite' },
+      {
+        name: 'coming: permission denied by the browser',
+        verdict: 'never',
+        why: 'the suite never denies it; Chromium starts at "default"',
+      },
+      {
+        name: 'coming: push configured and subscribed',
+        verdict: 'never',
+        why: 'no VAPID key in this build',
+      },
     ],
   },
   {
@@ -134,27 +139,26 @@ export const SCREEN_STATES: ScreenStates[] = [
     ],
   },
   {
+    /*
+     * One surface for *find me something*, so the states of two screens are the states of
+     * one. `docs/design/architecture.md` section 5 — `/search` was its own row here until this
+     * sprint, and every state it named is still produced; they are produced on this route.
+     */
     platform: 'web',
     route: '/discover',
     states: [
-      { name: 'suggestions, with reasons', verdict: 'suite' },
+      { name: 'the shelf: suggestions, with reasons', verdict: 'suite' },
+      { name: 'the back of a box', verdict: 'suite' },
+      { name: 'the filter row, opened', verdict: 'suite' },
+      { name: 'narrowed to nothing', verdict: 'unit' },
       { name: 'nothing to suggest', verdict: 'unit', why: 'the fixture set always suggests' },
+      { name: 'results, series and film', verdict: 'suite' },
+      { name: 'the quick-log note composer', verdict: 'suite' },
+      // Was 'unit', excused as "the fixture provider cannot be made to fail from a
+      // browser" — true of the fixtures and beside the point: §6.58 builds with a token
+      // and intercepts the provider instead. Three failures, including a hang.
       { name: 'the provider failed', verdict: 'suite' },
-    ],
-  },
-  {
-    platform: 'web',
-    route: '/calendar',
-    states: [
-      { name: 'nothing scheduled', verdict: 'suite' },
-      { name: 'episodes, grouped by day', verdict: 'suite' },
-      { name: 'notifications: the three granularities', verdict: 'suite' },
-      {
-        name: 'permission denied by the browser',
-        verdict: 'never',
-        why: 'the suite never denies it; Chromium starts at "default"',
-      },
-      { name: 'push configured and subscribed', verdict: 'never', why: 'no VAPID key in this build' },
+      { name: 'the provider never answered, and the deadline fired', verdict: 'suite' },
     ],
   },
   {
@@ -219,34 +223,40 @@ export const SCREEN_STATES: ScreenStates[] = [
 
   // --- phone -----------------------------------------------------------------
   {
+    /* Three jobs on one screen — see the web's `/`. */
     platform: 'phone',
     route: '(tabs)/index',
     states: [
       { name: 'first run: the migration offer', verdict: 'suite' },
       { name: 'tracked, with a remaining count', verdict: 'suite' },
+      { name: 'the past, above the present', verdict: 'suite' },
       { name: 'the catch-up sheet, open', verdict: 'suite' },
       {
         name: 'just imported: the report',
         verdict: 'never',
         why: 'importing goes through the system document picker, which the web export cannot drive',
       },
+      { name: 'coming: nothing scheduled', verdict: 'suite' },
+      { name: 'coming: episodes, grouped by day', verdict: 'suite' },
+      { name: 'coming: honest about what it cannot deliver', verdict: 'suite' },
+      {
+        name: 'coming: a real push token, registered',
+        verdict: 'never',
+        why: 'getExpoPushTokenAsync has never executed (§7)',
+      },
     ],
   },
   {
-    platform: 'phone',
-    route: '(tabs)/search',
-    states: [
-      { name: 'empty query', verdict: 'suite' },
-      { name: 'results, and tracking one', verdict: 'suite' },
-      { name: 'the provider failed', verdict: 'unit' },
-    ],
-  },
-  {
+    /* One surface, so one row — see the web's `/discover`. */
     platform: 'phone',
     route: '(tabs)/discover',
     states: [
-      { name: 'suggestions', verdict: 'suite' },
+      { name: 'the shelf: suggestions', verdict: 'suite' },
+      { name: 'the back of a box', verdict: 'suite' },
+      { name: 'the filter row, opened', verdict: 'suite' },
+      { name: 'narrowed to nothing', verdict: 'unit' },
       { name: 'nothing to suggest', verdict: 'unit' },
+      { name: 'results, and tracking one', verdict: 'suite' },
       { name: 'the provider failed', verdict: 'unit' },
     ],
   },
@@ -267,20 +277,6 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'sync not configured', verdict: 'suite' },
       { name: 'signed out, with the form', verdict: 'never', why: 'the phone build carries no credentials' },
       { name: 'signed in, with sync status', verdict: 'never', why: NO_ACCOUNT },
-    ],
-  },
-  {
-    platform: 'phone',
-    route: 'calendar',
-    states: [
-      { name: 'nothing scheduled', verdict: 'suite' },
-      { name: 'episodes, grouped by day', verdict: 'suite' },
-      { name: 'honest about what it cannot deliver', verdict: 'suite' },
-      {
-        name: 'a real push token, registered',
-        verdict: 'never',
-        why: 'getExpoPushTokenAsync has never executed (§7)',
-      },
     ],
   },
   {
