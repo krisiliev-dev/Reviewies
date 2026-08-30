@@ -80,6 +80,70 @@ describe('a watchlist row', () => {
     }
     expect(wrong).toEqual([]);
   });
+
+  it('puts the note field and its Save on one line, wherever the phone draws that pair', () => {
+    /*
+     * `size="inline"` is a request the parent can refuse, and a column refuses it silently.
+     *
+     * `06-watchlist-editing.png`, read for the first time: the *Save* beside the note runs
+     * the full width of the row — measured off the shot at 2x, **358 x 44pt**, from the
+     * screen's left edge to its right — while *Track* directly under it, which asks for no
+     * size at all and therefore gets `row`, hugs its label at 63pt. The louder control by a
+     * factor of five and a half is the one that stores a sentence about why you saved
+     * something; the one that starts watching it is the small pill underneath.
+     *
+     * Nothing about the button is wrong. `SIZE.inline` is 8/4 padding around a 12pt label
+     * and the pill measures its 44pt floor exactly. The width comes from the box around it:
+     * `styles.editor` was `{ gap: 6 }`, and React Native lays a `View` as a **column** whose
+     * `alignItems` defaults to `stretch`, so the field and the button became two stacked
+     * full-width rows. The web's twin has always been `flex gap-1.5` with the field on
+     * `min-w-0 flex-1` — a row — and `search.tsx`'s editor says in a comment that this is
+     * *"the watchlist screen's note field, because it is the same field"*, which was a claim
+     * about the field and not about the box, and the box is where they had parted.
+     *
+     * Read as a rule rather than as one screen: a size token is a decision the component
+     * makes and a `flexDirection` is a decision the call site makes, and only the second one
+     * gets the last word. So both phone editors are held to it, not just the one that was
+     * wrong — the pair is what §6.51 says has to agree, and one of them agreeing by
+     * accident is how they parted the first time.
+     */
+    const PHONE_NOTE_EDITORS = ['mobile/app/(tabs)/watchlist.tsx', 'mobile/app/(tabs)/search.tsx'];
+    const stacked: string[] = [];
+    for (const file of PHONE_NOTE_EDITORS) {
+      const source = withoutProse(read(file));
+      const editor = /editor:\s*\{[^}]*\}/.exec(source)?.[0];
+      if (!editor) {
+        stacked.push(`${file} has no editor style for this clause to read`);
+        continue;
+      }
+      if (!/flexDirection:\s*'row'/.test(editor)) {
+        stacked.push(`${file} stacks its note editor, so an inline Save stretches full width`);
+      }
+      // And the field takes the room the button does not, rather than both being content-
+      // sized: `minWidth: 0` because a flex child will not shrink below its text without it.
+      if (!/grow:\s*\{[^}]*flex:\s*1[^}]*minWidth:\s*0/.test(source)) {
+        stacked.push(`${file} gives the note field no room to grow beside its Save`);
+      }
+    }
+    expect(stacked).toEqual([]);
+
+    /*
+     * The half that was right, kept honest: the web's is the layout the phone now matches,
+     * so a clause pointing the phone at a twin has to know the twin still exists.
+     *
+     * Read as the editor's own block rather than as a class string anywhere in the file.
+     * The first spelling was a regex containing `gap-` and a bracketed character class,
+     * which `space.test.ts` reads as a Tailwind arbitrary value and files as one — a guard
+     * failing another guard over a pattern that is not markup at all. The shape is what
+     * matters here anyway: a row, and not a column.
+     */
+    const web = withoutProse(read('app/src/screens/Watchlist.tsx'));
+    const editor = /editing \? \(([\s\S]*?)\n\s*\) : \(/.exec(web)?.[1] ?? '';
+    expect(editor, 'the web has no note editor for this clause to read').toContain('<Field');
+    expect(editor, 'the web stacks its note editor too, so there is no twin left to copy')
+      .toMatch(/className="flex /);
+    expect(editor, 'the web turned its note editor into a column').not.toMatch(/flex-col/);
+  });
 });
 
 describe('what a control is called', () => {
