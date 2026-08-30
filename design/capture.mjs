@@ -2,6 +2,8 @@ import { chromium } from 'playwright';
 import { longerScreens, reveal, shoot } from './shoot.mjs';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
+import { color } from '../core/src/tokens.ts';
+import { PRESS } from '../core/src/ui/surface.ts';
 
 /**
  * Screenshots of every screen of the phone app, for design review.
@@ -707,7 +709,20 @@ async function insetRules(page) {
 async function pressReadings(page) {
   const out = [];
   const targets = page.locator('[role=link], a, [role=button], button');
-  const n = Math.min(await targets.count(), 6);
+  /*
+   * Every candidate, not the first six.
+   *
+   * Six was the original cap and §6.184 measured what it bought: across twelve routes it
+   * pressed **five** controls and all five were `Row`s, because a row is what the top of
+   * every list screen is made of. So this harness — built by §6.122 to settle which way a
+   * press goes — had never pressed a `Button`, which is the control §6.122 got wrong.
+   * Proved by planting: with the old `PRESSED.fill` back in place, the wrong-way check
+   * below stayed silent at a cap of six.
+   *
+   * The cap was there for time. Twelve routes at a fifth of a second each is a cost worth
+   * paying for a check that can reach more than one component.
+   */
+  const n = await targets.count();
   for (let i = 0; i < n; i++) {
     const el = targets.nth(i);
     const box = await el.boundingBox().catch(() => null);
@@ -796,6 +811,25 @@ const floating = [];
 /** Every press that repaints, and the ones that repaint to the colour behind them. */
 const presses = [];
 const invisible = [];
+/**
+ * Presses that repaint to something other than `PRESS`.
+ *
+ * `invisible` below asks whether a press can be *seen*; this asks whether it goes the
+ * direction the product decided. They are not the same question and §6.184 is the proof:
+ * the phone's `Button` rose to `groundRaised` for two days after §6.122 ruled that a press
+ * sinks, and this harness printed that reading on every run without objecting, because on
+ * a plain page a rise is perfectly visible. `own === behind` catches the collision; nothing
+ * caught the disagreement.
+ *
+ * Taken from the token file rather than typed, so the day somebody changes `elevation` this
+ * moves with it. Node reads the `.ts` directly — `scripts/tokens-to-css.mjs` has done the
+ * same since it was written.
+ */
+const wrongWay = [];
+const PRESS_RGB = ((hex) => {
+  const [, r, g, b] = /^#(..)(..)(..)$/.exec(hex);
+  return `rgb(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)})`;
+})(color.dark[PRESS]);
 for (const [name, path, via] of routes) {
   if (via) {
     // Through More, so the screen gets the stack it would really have. Falls back to the
@@ -850,6 +884,8 @@ for (const [name, path, via] of routes) {
     presses.push(`${name}: "${p.name}" ${p.rest} -> ${p.own} on ${p.behind}`);
     if (p.own === p.behind) {
       invisible.push(`${name}: "${p.name}" presses to ${p.own}, which is what it sits on`);
+    } else if (p.own !== PRESS_RGB) {
+      wrongWay.push(`${name}: "${p.name}" presses to ${p.own}, and PRESS is ${PRESS_RGB}`);
     }
   }
   await THEN[name]?.();
@@ -877,6 +913,10 @@ if (floating.length) {
 for (const p of presses) console.log(`  ${p}`);
 if (invisible.length) {
   console.error(`Presses that repaint to the colour behind them, so nothing happens:\n  ${invisible.join('\n  ')}`);
+  process.exitCode = 1;
+}
+if (wrongWay.length) {
+  console.error(`Presses that repaint the wrong way, against PRESS:\n  ${wrongWay.join('\n  ')}`);
   process.exitCode = 1;
 }
 

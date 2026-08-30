@@ -126,24 +126,36 @@ export const SIZE = {
  * the app feels identical either way, and there is no `reduced ? … : …` for `motion.test.ts`
  * to find. §6.184 removed the last two transforms in the build for the same reason.
  *
- * ## The fill that used to be here, and which way a press goes
+ * ## The fill that used to be here, and the decision it outlived
  *
- * This carried `fill: 'groundRaised'` until §6.184, while `surface.ts` carries
- * `PRESS = elevation.sunken`. Those are opposite directions: in the dark palette
- * `groundRaised` is `#1C191E` against a `#131114` base and `groundWell` is `#0C0B0D`, so one
- * says a pressed control comes **up** and the other says it goes **down**.
+ * This carried `fill: 'groundRaised'` until §6.184, two days after §6.122 decided a press
+ * sinks. That entry is `surface.ts`'s header and it is not ambiguous: it names `Button` as
+ * one of the four controls that rose, prints a contrast table, and defines
+ * `PRESS = elevation.sunken` as *"one direction, for every control on both platforms"*.
  *
- * Both were live. The web's button reads `active:bg-ground-well`, and the rule really is in
- * the built stylesheet — checked, because §6.180 found a class that was inert where it was
- * written. The phone's read this constant, and a held button measured `rgb(28, 25, 30)` in
- * the export, which is `groundRaised` exactly. **The same control moved in opposite
- * directions on the two platforms.** `button.test.ts` asserted both — the web against
- * `PRESS`, the table against `'groundRaised'` — so the one guard looking at it pinned the
- * disagreement rather than failing on it.
+ * It changed `app/src/ui/Button.tsx` and did not open this file. So the web sank and the
+ * phone, which reads this constant, went on rising — and `groundRaised` is `SURFACE.card`,
+ * which is the whole reason §6.122 called the rise a defect: *"a row inside a card presses
+ * to the colour it is already painted, so nothing happens"*. §6.122 proved that by holding
+ * a pointer down and printing `rgb(28, 25, 30) on rgb(28, 25, 30)`. §6.184 held the phone's
+ * button down and measured `rgb(28, 25, 30)` — the same number, on the control the entry
+ * named, two days after it was written up.
+ *
+ * The guard is the sharp part. §6.122 rewrote `button.test.ts` in the same commit and left
+ * the two directions on **consecutive lines**:
+ *
+ * ```ts
+ * expect(WEB).toContain(`active:bg-${PRESS...}`);   // ground-well, down
+ * expect(PRESSED.fill).toBe('groundRaised');        // up
+ * ```
+ *
+ * with a comment above the first explaining the exact defect the second preserves. A guard
+ * that checks each platform against its own source cannot fail on a disagreement between
+ * them; it records it.
  *
  * `PRESS` wins, and not narrowly: eight pressable controls read it — `Button`, `Choice`,
- * `Row`, `Key` and `PadCell`, across both platforms — against the phone's `Button` alone.
- * It is also the only one of the two that is a metaphor for anything.
+ * `Row`, `Key` and `PadCell`, across both platforms — against the phone's `Button` alone,
+ * and §6.122 already paid for the reasoning.
  *
  * The thickening stays here because it is a second channel rather than a second opinion, and
  * `field.ts` names it as the pair to a focus ring.

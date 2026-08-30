@@ -51,6 +51,16 @@ import { border, elevation } from '../tokens.ts';
 /**
  * Where a control goes while it is held. One direction, for every control on both
  * platforms — the thing that had two answers.
+ *
+ * It had three for two more days. §6.122 changed `app/src/ui/Button.tsx` and never opened
+ * `core/src/ui/button.ts`, which went on saying `PRESSED = { fill: 'groundRaised' }` — so
+ * the phone's `Button`, one of the four this header names as rising, kept rising, and
+ * §6.184 measured it pressing to `rgb(28, 25, 30)` on a card painted `rgb(28, 25, 30)`.
+ * The same reading this header prints, on the control it names, after the fix.
+ *
+ * The lesson is where the fix went rather than that one was missed: a renderer was edited
+ * to satisfy a decision whose home is a table, and the table is the only thing the other
+ * platform reads. Both `PRESSED` and this constant say so at their own definitions now.
  */
 export const PRESS = elevation.sunken;
 

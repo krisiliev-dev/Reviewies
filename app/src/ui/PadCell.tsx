@@ -19,8 +19,10 @@ const CELL = 'flex aspect-square flex-col items-center justify-center gap-1 roun
 /* No `active:scale-90`. A scale is a transform, and `WatchingMode.tsx` and `Row.tsx` each
    say in writing that press feedback here was never motion so Reduce Motion has nothing to
    substitute for — a transform needs a `reduced ?` branch to be honest, and neither of the
-   two in this build had one. They were also the only two, at 0.90 here and 0.94 on the
-   phone. §6.184. */
+   two in this build had one. They were the only two presses in the build that moved
+   anything, and they disagreed about how far — 0.90 here, 0.94 on the phone. The
+   transforms that remain are a centring offset, an SVG rotate, and two deliberate
+   animations that do branch on Reduce Motion. §6.184. */
 const READY = 'bg-ground-raised active:bg-ground-well';
 const OFF = 'border-hairline border-stroke-hairline text-ink-tertiary';
 
