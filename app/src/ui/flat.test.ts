@@ -161,7 +161,12 @@ describe('the flat rule', () => {
      * 48, down one: §6.168 took the plate off `Row`'s tag. A fact drawn in the one shape
      * this build reserves for controls was the finding; the radius went with the box.
      */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(47);
+    /*
+     * 47, down one: `WhereToWatch`'s country chips were `rounded-pill` on the web against
+     * `radius.plate` on the phone — the same control, two corners — and `Choice` draws one
+     * plate on both. A call-site migration again, and the same reason as every note above.
+     */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(46);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

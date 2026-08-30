@@ -31,6 +31,15 @@ function sources(dir: string, out: string[] = []): string[] {
 }
 
 const PHONE = ['mobile/app', 'mobile/src'].flatMap((t) => sources(resolve(ROOT, t)));
+const WEB = sources(resolve(ROOT, 'app/src'));
+/**
+ * The two files allowed to say `radio`, by exact path rather than by basename.
+ *
+ * `path.endsWith('Choice.tsx')` is what the button-role clause below uses and it is one
+ * rename away from useless: a `CountryChoice.tsx` beside it would be skipped by a check
+ * meant to catch exactly that sort of second control.
+ */
+const RENDERERS = ['mobile/src/ui/Choice.tsx', 'app/src/ui/Choice.tsx'];
 const read = (path: string) => stripComments(readFileSync(path, 'utf8'));
 const RENDERER = read(resolve(ROOT, 'mobile/src/ui/Choice.tsx'));
 /** Repo-relative, because `read` above takes an absolute path and a clause that
@@ -86,7 +95,44 @@ describe('the choice contract', () => {
     expect(CHOSEN.rule).toBe(border.tally);
     expect(CHOSEN.label.off).toBe('inkSecondary');
     expect(CHOSEN.label.on).toBe('ink');
-    expect(RENDERER).not.toMatch(/backgroundColor:\s*theme\.(actionFill|workingFill)/);
+
+    /*
+     * **No fill at all**, rather than not these two named fills.
+     *
+     * This clause read `theme.(actionFill|workingFill)` and nothing else, so it held a
+     * two-item deny list against a rule with no exceptions in it. Planted with
+     * `on && !rows ? { backgroundColor: '#f4efe7' } : null` — the chosen chip's old fill,
+     * spelled as the hex the token resolves to — it stayed green, and the fill would have
+     * come back on all five call sites at once from inside the shared renderer.
+     *
+     * So: the only ground a chip has is the card's, except momentarily under the finger.
+     * `PRESS` on the phone and `active:` on the web are the one exception, and they are
+     * exceptions to *motion*, not to selection — `Button` makes the same allowance for the
+     * same reason. Anything else painting a background here is a fill by another name.
+     */
+    const fills = [...RENDERER.matchAll(/backgroundColor:\s*([^,\n}]+)/g)].map((m) => m[1].trim());
+    expect(fills, 'the phone renderer paints no ground at all, so this proves nothing')
+      .not.toEqual([]);
+    expect(fills.filter((f) => f !== 'theme[PRESS]'), 'a fill is back in the phone renderer')
+      .toEqual([]);
+
+    /*
+     * The web's allowance is by *variant*, and a named list of them rather than "any
+     * variant": `active:bg-…` today, and `hover:`/`focus-visible:` if a mouse ever wants
+     * one. A ground that only exists while a pointer is on the control is not a selection
+     * mark, so refusing those would be refusing a correct change — and allowing *any*
+     * prefix would wave through a variant keyed on the state itself, which is the fill
+     * wearing a colon.
+     */
+    const POINTER = ['active:', 'hover:', 'focus-visible:'];
+    const webRenderer = inRepo('app/src/ui/Choice.tsx');
+    const classes = [...webRenderer.matchAll(/[a-z-]*:?bg-[a-z0-9-]+/g)].map((m) => m[0]);
+    expect(classes, 'the web renderer names no ground at all, so this proves nothing')
+      .not.toEqual([]);
+    expect(
+      classes.filter((c) => !POINTER.some((p) => c.startsWith(p))),
+      'a fill is back in the web renderer',
+    ).toEqual([]);
   });
 
   it('marks it in a colour that clears 3:1 on every ground', () => {
@@ -225,6 +271,64 @@ describe('the choice contract', () => {
       .not.toMatch(/min-[hw]-11\b|\bpx-[34]\b/);
     // And the gaps must differ, or one class would satisfy both halves above.
     expect(CHOICE_SIZE.rows.gap).not.toBe(CHOICE_SIZE.chips.gap);
+  });
+
+  it('leaves no second radio anywhere, on either platform', () => {
+    /*
+     * §6.90's rule has a hole the shape of a control that is *correct about what it is*.
+     *
+     * The clause below catches a one-of-several wearing `accessibilityRole="button"` with
+     * a `selected` flag, because that is the shape Watching Mode's density chips had. It
+     * cannot catch a hand-rolled control that calls itself a radio properly — and the
+     * clause above it reads `Choice.tsx` and nothing else, so a fill on somebody else's
+     * radio is invisible to both. `WhereToWatch` was that control on both platforms for
+     * four sprints: twenty-four `role="radio"` chips whose chosen one took
+     * `backgroundColor: theme.actionFill` on the phone and `bg-action-fill` on the web,
+     * measured on the built page at 390px as 34.75–40.77 × 32 against a 44 floor, and
+     * dropping its border when chosen so the selected chip changed shape. Every guard in
+     * this repository was green on it, which is what a rule scoped to one file buys.
+     *
+     * So the rule is scoped to the class instead: **`Choice` is the only thing in this
+     * build that may say `radio`.** Not `radiogroup` — Stats legitimately declares one
+     * around two rows that `continue` it, and the clause above depends on that — just the
+     * option itself, which is the part that carries a state and a box and can therefore
+     * disagree with the table.
+     *
+     * Both platforms, because the defect was on both and a sweep of one is how a control
+     * migrates on the phone and stays behind on the web.
+     *
+     * ## What this still cannot see, planted and confirmed
+     *
+     * A one-of-several that declares **no role at all** — a `map` over options producing
+     * bare buttons, a fill on the chosen one, and nothing announcing that it is a choice.
+     * Planted as a 20×16 filled `CountryChoice.tsx` and every clause here stayed green.
+     * It is left uncaught on purpose: the only rules that would catch it are shape
+     * heuristics over `.map(`, and a guard that guesses at intent fails on correct code,
+     * which is the more expensive failure. What the two clauses here do close is the case
+     * where the control is *honest about what it is* — which is every one written by
+     * somebody who read the accessibility rules and not the component library, and which
+     * is what `WhereToWatch` was.
+     */
+    const ONE_OF_SEVERAL = /(?:accessibilityRole|role)\s*=\s*\{?\s*['"]radio['"]/;
+    const off: string[] = [];
+    let renderers = 0;
+    for (const path of [...PHONE, ...WEB]) {
+      const here = relative(ROOT, path);
+      const said = ONE_OF_SEVERAL.test(read(path));
+      if (!said) continue;
+      if (RENDERERS.includes(here)) renderers++;
+      else off.push(here);
+    }
+    /*
+     * Proof of life, which is the half a sweep like this usually lacks: a wrong root, a
+     * regex that matches nothing, or an extension filter that skips every file all read as
+     * "no offenders". The two renderers must be found, and they are the only two.
+     */
+    expect(renderers, 'the sweep did not find the renderers, so it proves nothing').toBe(2);
+    expect(PHONE.length + WEB.length, 'the sweep read almost no files').toBeGreaterThan(80);
+    expect(off, 'a one-of-several outside `Choice` is a second control, not a call site').toEqual(
+      [],
+    );
   });
 
   it('leaves no one-of-several wearing a button’s role', () => {
