@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { color } from '@reviewies/core/tokens';
 
@@ -52,6 +52,63 @@ function hexes(value: unknown, into: string[] = []): string[] {
   else if (value && typeof value === 'object') for (const v of Object.values(value)) hexes(v, into);
   return into;
 }
+
+/**
+ * The *other* manifest a phone installs from, which this file did not read for four sprints.
+ *
+ * §6.111 wrote everything below for `mobile/app.json` and caught a product about to ship with
+ * Expo's template icon on it. `app/vite.config.ts` declares the same kind of thing for the web
+ * — and the web is the half anybody can actually install today, by Share → Add to Home Screen,
+ * which `docs/research/01` records as the whole reason a local-first design is viable on iOS at
+ * all: an installed home-screen app is exempt from Safari's 7-day eviction.
+ *
+ * It had both of the defects this file was written to catch. §6.185.
+ *
+ *   - `icon-192.png` and `icon-512.png` were named three times between them and **neither file
+ *     existed** — not in `app/public`, not in any build, nowhere in the tree. `scripts/make-icons.mjs`
+ *     draws them now.
+ *   - `theme_color` and `background_color` were `#0b0b0f`, which is in neither palette. That is
+ *     the splash and the status-bar tint of an installed app, in a colour nobody chose.
+ *
+ * Read from the built manifest rather than from the config, because that is the file a phone
+ * fetches and `vite-plugin-pwa` is what writes it — the config could be right and the plugin
+ * still emit something else. It needs `npm run build --workspace app` to have run, which
+ * `npm run verify` does; the clause says so rather than silently passing on a stale one.
+ */
+const WEB_DIST = resolve(ROOT, 'app/dist');
+const webManifestPath = resolve(WEB_DIST, 'manifest.webmanifest');
+
+describe('what a phone would install from the web', () => {
+  it('points every icon at a file that is actually in the build', () => {
+    expect(
+      existsSync(webManifestPath),
+      'no built web manifest — run `npm run build --workspace app` first; this clause cannot read the config instead, because the plugin is what writes the file a phone fetches',
+    ).toBe(true);
+
+    const web = JSON.parse(readFileSync(webManifestPath, 'utf8')) as {
+      icons?: { src: string }[];
+    };
+    const icons = web.icons ?? [];
+    expect(icons.length, 'the web manifest declares no icons at all').toBeGreaterThan(1);
+
+    // The file, in the build, beside the manifest — which is where `src` is resolved from.
+    const missing = [...new Set(icons.map((i) => i.src))].filter(
+      (src) => !existsSync(resolve(WEB_DIST, src)),
+    );
+    // Read a failure as: an installed app shows whatever the platform invents instead.
+    expect(missing).toEqual([]);
+  });
+
+  it('paints its splash and its tint out of the token table', () => {
+    const web = JSON.parse(readFileSync(webManifestPath, 'utf8')) as Record<string, unknown>;
+    const known = new Set(
+      [...Object.values(color.dark), ...Object.values(color.light)].map((v) => v.toUpperCase()),
+    );
+    const found = hexes(web);
+    expect(found.length, 'the web manifest names no colours at all').toBeGreaterThan(1);
+    expect([...new Set(found)].filter((hex) => !known.has(hex))).toEqual([]);
+  });
+});
 
 describe('what a phone would install', () => {
   it('references every asset that ships beside it', () => {

@@ -17,6 +17,7 @@
   --stroke-signal: #8A8079;
   --action-fill: #F4EFE7;
   --action-label: #131114;
+  --action-fill-pressed: #EDE8E0;
   --working-fill: #F0A93B;
   --working-on-fill: #131114;
   --working-mark: #F0A93B;
@@ -64,6 +65,7 @@
   --stroke-signal: #6E6456;
   --action-fill: #191419;
   --action-label: #F5F0E8;
+  --action-fill-pressed: #100D10;
   --working-fill: #F0A93B;
   --working-on-fill: #191419;
   --working-mark: #8A5A08;
@@ -97,6 +99,7 @@
   --color-stroke-signal: var(--stroke-signal);
   --color-action-fill: var(--action-fill);
   --color-action-label: var(--action-label);
+  --color-action-fill-pressed: var(--action-fill-pressed);
   --color-working-fill: var(--working-fill);
   --color-working-on-fill: var(--working-on-fill);
   --color-working-mark: var(--working-mark);

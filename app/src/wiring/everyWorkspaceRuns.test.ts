@@ -191,7 +191,12 @@ describe('every workspace', () => {
     // which includes the inline-style clause added *after* the merge when re-planting
     // found the branch's version could not see one; `Section`'s four channels as classes
     // the table can be compared to; and `Field`'s line box and `Toggle`'s two.
-    core: 928, app: 677, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 680, up three: §6.185. One clause that every tone's label still clears the text
+    // floor against the step its own surface takes — the press-class check went into the
+    // clause already there — and two giving `shipping.test.ts` the web manifest it had
+    // never read: every icon resolves to a file in the build, and the splash and tint come
+    // out of the token table.
+    core: 928, app: 680, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

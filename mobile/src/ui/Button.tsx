@@ -11,7 +11,7 @@ import {
   TONE,
   type ButtonContract,
 } from '@reviewies/core/ui/button';
-import { PRESS } from '@reviewies/core/ui/surface';
+import { PRESS, PRESS_FILL } from '@reviewies/core/ui/surface';
 import { type } from '@reviewies/core/tokens';
 import { border, radius, theme } from './theme';
 
@@ -83,9 +83,16 @@ export function Button({
           borderColor: on ? theme[SELECTED.colour] : stroke ? theme[stroke] : 'transparent',
         },
         // Instant, and therefore identical with Reduce Motion on. A thickening plus a
-        // ground step, which is press feedback rather than animation.
+        // step down, which is press feedback rather than animation.
+        //
+        // `PRESS_FILL` when this tone has a fill of its own, `PRESS` when it does not —
+        // `surface.ts` has the argument. A filled plate stepping the *ground* under it kept
+        // `actionLabel` on `groundWell` and measured 1.05:1. §6.185.
         pressed && !disabled
-          ? { borderWidth: PRESSED.stroke, backgroundColor: theme[PRESS] }
+          ? {
+              borderWidth: PRESSED.stroke,
+              backgroundColor: theme[fill ? PRESS_FILL : PRESS],
+            }
           : null,
       ]}
     >

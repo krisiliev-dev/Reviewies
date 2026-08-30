@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import { declarationOf, stripComments } from '@reviewies/core/test/source';
 import { BOX_RADIUS, BUSY, LABEL_LINES, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
 import { CLAMP } from './clamp';
-import { PRESS } from '@reviewies/core/ui/surface';
+import { PRESS, PRESS_FILL } from '@reviewies/core/ui/surface';
+import { contrast, TEXT_FLOOR } from '@reviewies/core/ui/contrast';
 import { CHOSEN } from '@reviewies/core/ui/choice';
 import { border, color, radius, size, text } from '@reviewies/core/tokens';
 
@@ -259,17 +260,68 @@ describe('the button contract', () => {
      * button came back `rgb(28, 25, 30)`, which is `SURFACE.card` exactly, so on the phone a
      * button in a card still pressed to the colour behind it.
      *
-     * There is one press now and `PRESSED` has no fill to disagree with. Both renderers are
-     * held to `PRESS` below.
+     * There is one press now and `PRESSED` has no fill to disagree with.
+     *
+     * §6.185 split it in two, and the split is not a second convention — `surface.ts` has the
+     * argument. A press steps the control's **own surface**. Three tones have no fill and
+     * their surface is the ground; `primary` is a plate and its surface is the plate. Held to
+     * `PRESS` and `PRESS_FILL` respectively, both derived from the core rather than spelled.
      */
-    const pressClass = `active:bg-${PRESS.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`;
-    expect(WEB).toContain(pressClass);
-    expect(PHONE, 'the phone presses to something other than the house ground')
-      .toContain('theme[PRESS]');
+    const utility = (token: string) =>
+      `active:bg-${token.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`;
+
+    const pressTable = declarationOf(WEB, 'PRESS_CLASS') ?? '';
+    expect(pressTable, 'PRESS_CLASS is not in the web renderer at all').not.toBe('');
+
+    for (const tone of Object.keys(TONE) as (keyof typeof TONE)[]) {
+      const want = utility(TONE[tone].fill ? PRESS_FILL : PRESS);
+      expect(pressTable, `${tone} does not press to the step its own surface asks for`).toContain(
+        `${tone}: '${want}'`,
+      );
+    }
+
+    /*
+     * And exactly one `active:bg-*` per tone. `toContain` on the record would pass with both
+     * spellings present, and Tailwind's emission order would then decide the real colour —
+     * which is precisely how §6.184's `size-5` sat inert behind `h-[1em]` for a sprint.
+     */
+    const pressUtilities = pressTable.match(/active:bg-[\w-]+/g) ?? [];
+    expect(pressUtilities, 'a tone names more than one press fill').toHaveLength(
+      Object.keys(TONE).length,
+    );
+
+    expect(PHONE, 'the phone does not choose its step by whether the tone has a fill')
+      .toContain('theme[fill ? PRESS_FILL : PRESS]');
     expect(
       Object.keys(PRESSED),
       'PRESSED carries a fill again, which is a second opinion about which way a press goes',
     ).toEqual(['stroke']);
+  });
+
+  it('keeps a pressed label readable, which is the defect the split exists for', () => {
+    /*
+     * The arithmetic, beside the design pass that measures the rendered thing.
+     *
+     * `design/capture.mjs` holds each control down and reads the label against the ground the
+     * press paints; it reported `Export everything (JSON)` at **1.05:1** and that is what sent
+     * §6.185 here. This clause is the cheap half — it runs in every `npm run verify` rather
+     * than only in a design pass, and it fails on a *token* change that the harness would only
+     * catch the next time somebody photographed the app.
+     *
+     * Both halves are wanted. A token pair can be fine here and still be drawn wrong by a
+     * renderer, which is the whole reason the harness reads a browser.
+     */
+    for (const theme of ['dark', 'light'] as const) {
+      const c = color[theme];
+      for (const tone of Object.keys(TONE) as (keyof typeof TONE)[]) {
+        const shape = TONE[tone];
+        const ground = shape.fill ? c[PRESS_FILL] : c[PRESS];
+        expect(
+          contrast(c[shape.label], ground),
+          `${tone} held in ${theme}: ${shape.label} on ${shape.fill ? PRESS_FILL : PRESS}`,
+        ).toBeGreaterThanOrEqual(TEXT_FLOOR);
+      }
+    }
   });
 
   it('clamps a label on the words, not on the box', () => {

@@ -14633,6 +14633,163 @@ nothing this sprint read one. Five sprints of component work is a defensible run
 how a backlog stops being a backlog and becomes a fact about the repo.
 
 
+### 6.185 The one button the screen points at, with its words gone
+
+§6.184 measured a `primary` button resting at `rgb(244, 239, 231)` and pressing to
+`rgb(12, 11, 13)` and filed it as *"a filled button inverts completely on press"* — a question
+about taste, for a later sprint. That framing was wrong, and the instrument built in the same
+hour is what showed it.
+
+#### The harness read the box and not the words
+
+`design/capture.mjs`'s `pressReadings` held each control down and recorded its background. A
+press repaints the box and **leaves the label alone**, so reading one half of the pair reports
+a healthy step wherever the other half has quietly stopped working.
+
+It reads both now, and the label's colour is taken from the deepest text node rather than the
+button, because that is what actually draws the glyphs. On `/data`:
+
+```
+"Export everything (JSON)" held reads 1.05:1 — rgb(19, 17, 20) on rgb(12, 11, 13)
+```
+
+`actionLabel` #131114 on `groundWell` #0C0B0D. Not dimmer. **Gone.** The one most consequential
+action on a screen — `TONE`'s own words, *"maximum one"* — is a blank plate while your finger is
+on it, on both platforms, and had been since §6.122.
+
+#### The rule was right and was stated for only half the controls
+
+§6.122 decided a press sinks and wrote `PRESS = elevation.sunken`. That is the right answer for
+every control that *sits* on a ground: a row, a choice, a key, a pad cell, a secondary button.
+A `primary` button does not sit on a ground — it is a plate — so "step the ground" repainted the
+box out from under a label chosen to contrast with the plate.
+
+The fix is not a second convention, which is precisely what §6.122 was cleaning up. It is the
+same convention, said properly:
+
+> **A press steps the control's own surface one step down.** For most controls that surface is
+> the ground. For a filled one it is the fill.
+
+`PRESS_FILL = 'actionFillPressed'`, and the token is sized rather than picked. The system's own
+ground steps are 1.046 (`ground`→`groundWell`) and 1.080 (`groundRaised`→`ground`); the new fill
+is **1.065** from `actionFill` in dark and **1.063** in light, arrived at from opposite ends of
+the palette. The label reads 15.40 on it. Same direction, same magnitude, one sentence.
+
+#### Two guards that failed on the repair, which is its own finding
+
+Both were written last sprint, both by me, and both went red on a *correct* change:
+
+- `surface.test.ts`'s phone sweep demanded `theme[PRESS]` exactly.
+- `design/capture.mjs`'s wrong-way check expected every press to land on `PRESS`.
+
+Neither had found a defect. They had stated the rule too narrowly, and a guard that fails a
+correct change is a guard that is wrong about what the rule is — the mirror of §6.184's guard
+that passed an incorrect one. Both now say what `surface.ts` says. The harness's version is the
+better of the two because it does not need a list of component names: **an opaque rest
+background means the control has a fill, a transparent one means its surface is the ground**, so
+it derives the expectation from the same reading it is checking.
+
+#### One owner for the arithmetic
+
+`core/src/ui/contrast.ts`. `app/src/ui/contrast.test.ts` had carried `luminance`/`contrast` since
+it was written and `palette.test.ts` had its own copy before that; this sprint was about to make
+a third inside the harness. The published-value check (`#777777` on white is 4.48) stays in the
+file that has always run it, and now proves the formula every consumer uses. It parses both
+`#RRGGBB` and `rgb(r, g, b)`, because a token and a computed style are the same question asked
+from two places.
+
+`button.test.ts` gains the cheap half of the measurement: every tone's held label against the
+step its own surface takes, in both themes, against `TEXT_FLOOR`. It runs in every `npm run
+verify` rather than only when somebody photographs the app, and it fails on a *token* change the
+harness would not see until the next design pass. Both halves are wanted — a token pair can be
+correct and still be drawn wrong by a renderer, which is the whole reason the harness reads a
+browser.
+
+#### Plants
+
+Four, all red. Web primary back to the ground step; the phone ignoring the fill; the token set
+to a colour the label vanishes on; and the survivor attempt — `active:bg-action-fill-pressed
+active:bg-ground-well` on one element, which satisfies every presence check and lets Tailwind's
+emission order decide the real colour. That is §6.184's `size-5`/`h-[1em]` defect exactly, and
+the once-per-tone count catches it.
+
+The old clause was green on the shipped defect by construction: at `4f1170c` the suite passed
+and the button measured 1.05:1.
+
+#### And the manifest a phone actually installs from
+
+Found by being asked *"how do I get this on my phone"* rather than by a sprint, which is worth
+recording as a way of finding things.
+
+`app/vite.config.ts`'s PWA manifest named `icon-192.png` twice and `icon-512.png` twice, and
+**neither file has ever existed** — not in `app/public`, not in any build, nowhere in the tree.
+Add the app to a home screen and the phone falls back to a screenshot of the page or a letter on
+a grey square. It is the first thing anybody would see of this product.
+
+`theme_color` and `background_color` were `#0b0b0f`. `ground` is `#131114`. So the splash screen
+and the status-bar tint of an installed app were a colour that is in neither palette.
+
+Both are exactly what `shipping.test.ts` exists to catch. §6.111 wrote it after `expo prebuild`
+revealed the *native* manifest pointing at Expo's template icon — *"a blue chevron on pale blue,
+with the construction guides still on it"* — and it reads `mobile/app.json` and stops. §6.184's
+masthead sweep said "either platform" and scanned one; this one did not even claim the second.
+The web is the half anybody can install today.
+
+The icons are drawn by `scripts/make-icons.mjs` from `POSTER_PLATE` and `posterInitials` — the
+product's own rule for artwork it does not have, applied to the product, which gives `RE`. That
+is a stated placeholder rather than a mark: `docs/design/direction.md` specifies no logo, and
+inventing one inside a sprint about press states would be a design decision taken sideways.
+Everything in it is a token.
+
+The face nearly went unnoticed. Rendered at 512 the monogram *looked* like a plain grotesque
+rather than Archivo Narrow, and the eye was wrong: measured, `RE` sets 244.9px in the loaded face
+against 298.7px in the fallback, 18% narrower, with `document.fonts.check` true. §6.183's lesson
+holds in the other direction too — an instrument can exonerate as well as convict.
+
+The new clauses read the **built** manifest rather than the config, because `vite-plugin-pwa` is
+what writes the file a phone fetches and a correct config can still emit something else; and they
+resolve each `src` against `app/dist`, which is where a phone resolves it from. Planted both
+defects exactly as they shipped — icons removed, tint back to `#0b0b0f` — and each went red.
+
+
+## What is not done, and why it is said here
+
+**This sprint took one of its four items.** §6.184's queue named four decisions and this entry
+covers the first. The other three — whether the phone's leading and tracking should answer
+`useWindowDimensions().fontScale` (#222, the oldest thing in the queue), the `dim` palette that
+now has no renderer consumers at all, and the three box utilities `space.test.ts`'s regex cannot
+see — are untouched and carried forward. Stopping at one is stated rather than dressed up: the
+first item turned out to be a legibility failure rather than a matter of taste, and it took the
+whole sprint.
+
+**A press on a *light* theme has never been measured.** Every reading here and in §6.122 and
+§6.184 is the dark palette, because `design/capture.mjs` serves an export that resolves
+`color.dark` at module load — §6.132's finding, still true. The light numbers in this entry are
+arithmetic on the token file, and `button.test.ts`'s new clause checks both themes from the
+tokens, which is the same arithmetic wearing a guard's clothes. §6.182 named that risk by name.
+The web's `capture-web.mjs` does photograph both themes and does not press anything.
+
+**The label is read from the deepest text node, which is a guess about structure.** It walks to
+the first child with text and stops. A button whose label sits beside an icon in a second
+element, or whose colour comes from a `<span>` the walk does not choose, would be measured on
+the wrong element. No control in this build is shaped that way today; nothing checks that it
+stays true.
+
+**Nothing looks at the icon.** The new clause proves the files exist and are named correctly;
+it cannot say they are any good. A 192px plate with two letters on it is a placeholder that
+passes every check in this repository, and the only instrument that would judge it is somebody
+looking at a home screen. `docs/design/direction.md` still specifies no mark.
+
+**The web manifest clause needs a build, and says so instead of passing quietly.** It asserts
+`app/dist/manifest.webmanifest` exists rather than skipping — a skip on a missing build is how a
+guard becomes decoration — but that does mean `npm run build --workspace app` is now load-bearing
+for `verify`. It already ran there; nothing had depended on it before.
+
+**72 shots remain unread of 137**, a sixth sprint running, re-run rather than carried. The
+component work has been worth doing and this is now the longest-standing untouched thing in the
+record.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

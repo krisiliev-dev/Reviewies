@@ -65,6 +65,27 @@ import { border, elevation } from '../tokens.ts';
 export const PRESS = elevation.sunken;
 
 /**
+ * And where a control goes when its rest state is not a ground.
+ *
+ * `PRESS` steps the ground, which is the right answer for every control that *sits* on one
+ * — a row, a choice, a key, a pad cell, a secondary button. A `primary` button does not sit
+ * on a ground; it is a plate, `actionFill`, with `actionLabel` printed on it. Stepping the
+ * ground under a plate repaints the box and leaves the label alone, and §6.185 measured what
+ * that costs: near-black `actionLabel` on near-black `groundWell` at **1.05:1**, in the
+ * export, on `/data`'s "Export everything (JSON)". Not dimmer — gone.
+ *
+ * The rule is one sentence and it covers both cases: **a press steps the control's own
+ * surface one step down.** For most controls that surface is the ground. For a filled one it
+ * is the fill. Same direction, and the same magnitude — `actionFillPressed` is 1.065 from
+ * `actionFill` where the ground steps are 1.046 and 1.080.
+ *
+ * This is not a second convention arriving by the back door, which is the thing §6.122 was
+ * cleaning up when it wrote `PRESS`. It is the same convention, said in the one place it had
+ * only ever been said for controls with no fill of their own.
+ */
+export const PRESS_FILL = 'actionFillPressed';
+
+/**
  * What a raised fill is for, now that it is not also the press.
  *
  * A card is a **summary or a form** — one object the eye takes in whole. It is not a

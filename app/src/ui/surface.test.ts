@@ -111,7 +111,19 @@ describe('a press', () => {
         if (!/backgroundColor/.test(block)) continue;
         phoneSeen++;
         const fill = /backgroundColor:\s*([^,\n}]+)/.exec(block)?.[1]?.trim() ?? '';
-        if (!/theme\[PRESS\]/.test(fill)) offenders.push(`${file}: presses to ${fill}`);
+        /*
+         * Two spellings, and only two. §6.185 gave a filled control its own step —
+         * `surface.ts` has the argument — so `Button`, the one tone table with a fill,
+         * chooses between them. Everything else has no fill and takes the ground.
+         *
+         * This clause said `theme[PRESS]` and nothing else until that landed, and it went
+         * red on the repair rather than on a defect: a guard that fails a correct change is
+         * a guard stating the rule wrongly, which is the same lesson `design/capture.mjs`
+         * learned in the same hour. The allowance is one exact expression rather than a
+         * loosened regex, so `theme[fill ? PRESS : SOMETHING_ELSE]` is still an offender.
+         */
+        const allowed = ['theme[PRESS]', 'theme[fill ? PRESS_FILL : PRESS]'];
+        if (!allowed.includes(fill)) offenders.push(`${file}: presses to ${fill}`);
       }
     }
     expect(phoneSeen, 'no phone press styles were found, so this proved nothing')

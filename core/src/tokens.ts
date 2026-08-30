@@ -73,6 +73,22 @@ const dark = {
   /** The one most consequential action on a screen. Maximum one. */
   actionFill: '#F4EFE7',
   actionLabel: '#131114',
+  /**
+   * Where the plate goes while it is held. §6.185.
+   *
+   * A press sinks (`ui/surface#PRESS`), and for every control whose rest state is a ground
+   * that means stepping the ground. A `primary` button's rest state is not a ground — it is
+   * a near-white plate — so stepping *the ground* under it repainted the box to `groundWell`
+   * and left `actionLabel` where it was: near-black on near-black, measured at **1.05:1** in
+   * the export. The one control the whole screen is pointing at lost its words under a
+   * finger.
+   *
+   * So a filled control presses its **fill**, one step down, and the step is sized to match
+   * the ground steps rather than chosen: `ground`→`groundWell` is 1.046 and
+   * `groundRaised`→`ground` is 1.080, and this is 1.065. The label reads 15.40 on it. Same
+   * direction as every other press, same magnitude, no second convention.
+   */
+  actionFillPressed: '#EDE8E0',
 
   /** Amber, and its one job: this is happening, or you did this. */
   workingFill: '#F0A93B',
@@ -121,6 +137,8 @@ const light = {
 
   actionFill: '#191419',
   actionLabel: '#F5F0E8',
+  /** 1.063 down from the fill — the dark theme's 1.065, arrived at from the other end. */
+  actionFillPressed: '#100D10',
 
   workingFill: '#F0A93B',
   workingOnFill: '#191419',

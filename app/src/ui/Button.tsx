@@ -35,6 +35,25 @@ const TONE_CLASS = {
 } as const;
 
 /**
+ * Where each tone goes while it is held, keyed by tone rather than written once for all four.
+ *
+ * `surface.ts`: a press steps the control's **own surface**. Three of these tones have no
+ * fill, so their surface is the ground and they step it. `primary` is a plate, and a plate
+ * stepping the ground under it repaints the box and leaves `text-action-label` in place —
+ * near-black on `ground-well`, measured at 1.05:1 in the export. §6.185.
+ *
+ * Written out for the same reason `TONE_CLASS` is: Tailwind's scanner reads source text and
+ * a class built from a constant never reaches it. `button.test.ts` derives both strings from
+ * `PRESS` and `PRESS_FILL` and compares, since the compiler cannot.
+ */
+const PRESS_CLASS = {
+  primary: 'active:bg-action-fill-pressed',
+  secondary: 'active:bg-ground-well',
+  quiet: 'active:bg-ground-well',
+  destructive: 'active:bg-ground-well',
+} as const;
+
+/**
  * Disabled drops the fill for the outline and never fades.
  *
  * `appearance.test.ts` bans `disabled:opacity` on a filled action and says why: it gave a
@@ -100,9 +119,9 @@ export function Button({
     SIZE_CLASS[size],
     disabled ? DISABLED_CLASS : TONE_CLASS[tone],
     on ? SELECTED_CLASS : '',
-    // Press is a thickening and a ground step, at 0ms. Never a transition, so the app is
+    // Press is a thickening and a step down, at 0ms. Never a transition, so the app is
     // identical with motion reduced and `motion.test.ts` has no ternary to find.
-    disabled ? '' : 'active:border-2 active:bg-ground-well',
+    disabled ? '' : `active:border-2 ${PRESS_CLASS[tone]}`,
     className,
   ]
     .filter(Boolean)

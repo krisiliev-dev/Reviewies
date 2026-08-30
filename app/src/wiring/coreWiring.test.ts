@@ -23,6 +23,10 @@ const ROOT = resolve(__dirname, '../../..');
  * apps never took up, and the choice is to wire it up or delete it — not to add a line.
  */
 const UNREACHED: Record<string, string> = {
+  'ui/contrast#contrast':
+    "WCAG 2.1 contrast, and the reason it is in core rather than in the file that used it: three copies were about to exist. app/src/ui/contrast.test.ts had carried the arithmetic since it was written (palette.test.ts had its own before that), and \u00a76.185 needed the same formula in design/capture.mjs to measure a *pressed* control's label against the ground the press paints under it \u2014 a question no source clause can answer, because the style only exists while the pointer is down. No renderer reads it and none should: it decides nothing at runtime, it checks decisions. contrast.test.ts holds the formula to a published value (#777777 on white is 4.48), button.test.ts holds every tone's held label to TEXT_FLOOR, and the design pass measures the rendered thing.",
+  'ui/contrast#TEXT_FLOOR':
+    'WCAG 1.4.3 AA, 4.5:1, spelled once instead of at each comparison. contrast.test.ts states that this system deliberately has no headroom above it, which is a fact to hold rather than a number to nudge, so a guard that typed 4.5 inline would be the second place somebody could nudge it.',
   'data/db#clearDatabase':
     'Test seam: unbinds the database so the proxy\'s "call setDatabase() first" error can be read. Its previous reason here said the suites that swap Dexie for SQLite need it — they do not, they call setDatabase, and nothing called this at all. §6.59 pointed the seam at the error it is good for rather than deleting it; core/src/data/db.test.ts drives it now, which this scan reads as test code.',
   'ui/screen#EMPTY_ALIGN':
@@ -127,6 +131,12 @@ const LOPSIDED: Record<string, string> = {
    * the stale-reason check above cannot expire it, and the honest thing is to say why
    * rather than to let it read as work outstanding.
    */
+  /**
+   * Not a migration either, and for the reason the entry gives: the two platforms reach the
+   * same decision through different mechanisms on purpose.
+   */
+  'mobile only: ui/surface#PRESS_FILL':
+    "Where a filled control goes while it is held. The phone reads the token by name; the web cannot \u2014 Tailwind's scanner reads source text, so a class built from a constant never reaches it, and app/src/ui/Button.tsx writes `active:bg-action-fill-pressed` out in PRESS_CLASS. That is the arrangement ui/button#BOX_RADIUS already has and the coupling is guarded rather than trusted: button.test.ts derives the utility from PRESS_FILL and PRESS for every tone and compares, and asserts exactly one `active:bg-*` per tone so a second spelling cannot sit behind the first in the cascade. \u00a76.185.",
   'app only: ui/screen#WIDE':
     'What the web does with a window wider than its column: one column, and the navigation takes the column\'s measure. The phone has no wider window — its window is the device — so this is a difference by definition rather than a migration nobody has finished.',
   /**

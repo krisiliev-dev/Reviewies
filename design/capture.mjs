@@ -3,7 +3,8 @@ import { longerScreens, reveal, shoot } from './shoot.mjs';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { color } from '../core/src/tokens.ts';
-import { PRESS } from '../core/src/ui/surface.ts';
+import { PRESS, PRESS_FILL } from '../core/src/ui/surface.ts';
+import { contrast, TEXT_FLOOR } from '../core/src/ui/contrast.ts';
 
 /**
  * Screenshots of every screen of the phone app, for design review.
@@ -736,8 +737,26 @@ async function pressReadings(page) {
           if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') break;
           behind = behind.parentElement;
         }
+        /*
+         * The label's colour as well as the box's, because a press repaints one and not
+         * the other and the pair is what a reader actually sees. §6.185: a `primary`
+         * button rests as near-black `actionLabel` on a near-white `actionFill`, and the
+         * press repaints only the ground — to `groundWell`, which is also near-black.
+         * Reading the box alone reports that as a healthy step. It is a control whose
+         * words are gone while your finger is on it.
+         *
+         * The deepest text node, because `node` is the button and its colour is inherited
+         * by whatever actually draws the glyphs; a `<span>` inside can override it.
+         */
+        let inked = node;
+        for (;;) {
+          const next = [...inked.children].find((c) => (c.textContent || '').trim());
+          if (!next) break;
+          inked = next;
+        }
         return {
           own: getComputedStyle(node).backgroundColor,
+          ink: getComputedStyle(inked).color,
           behind: behind ? getComputedStyle(behind).backgroundColor : 'none',
           name: (node.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 28),
         };
@@ -826,10 +845,36 @@ const invisible = [];
  * same since it was written.
  */
 const wrongWay = [];
-const PRESS_RGB = ((hex) => {
+/**
+ * Presses whose label stops being readable against the ground the press paints.
+ *
+ * The question `wrongWay` cannot ask. A press repaints the box and leaves the label alone,
+ * so a control whose rest state is a *filled plate* changes one half of a pair and keeps
+ * the other — and the pair is what a reader sees. §6.185.
+ */
+const illegible = [];
+const rgbOf = (hex) => {
   const [, r, g, b] = /^#(..)(..)(..)$/.exec(hex);
   return `rgb(${parseInt(r, 16)}, ${parseInt(g, 16)}, ${parseInt(b, 16)})`;
-})(color.dark[PRESS]);
+};
+const PRESS_RGB = rgbOf(color.dark[PRESS]);
+const PRESS_FILL_RGB = rgbOf(color.dark[PRESS_FILL]);
+
+/**
+ * Which of the two a given press should land on, decided from the reading itself.
+ *
+ * `surface.ts`'s rule is that a press steps the control's **own surface**, and this harness
+ * cannot see which component it just pressed — but it does not need to. The rest background
+ * *is* the answer: an opaque one means the control has a fill of its own, and a transparent
+ * one means its surface is the ground behind it. So the check derives the expectation from
+ * what it measured rather than from a list of component names somebody keeps up to date.
+ *
+ * §6.185 wrote this the narrow way first — one expectation, `PRESS`, for every control — and
+ * it went red on the very fix it was measuring, because a `primary` button correctly stopped
+ * landing on the ground step. A guard that fails on a correct change is a guard that states
+ * the rule wrongly, and the fix is to state the rule.
+ */
+const opaque = (bg) => bg !== 'none' && !/rgba\([^)]*,\s*0\s*\)$/.test(bg);
 for (const [name, path, via] of routes) {
   if (via) {
     // Through More, so the screen gets the stack it would really have. Falls back to the
@@ -884,8 +929,22 @@ for (const [name, path, via] of routes) {
     presses.push(`${name}: "${p.name}" ${p.rest} -> ${p.own} on ${p.behind}`);
     if (p.own === p.behind) {
       invisible.push(`${name}: "${p.name}" presses to ${p.own}, which is what it sits on`);
-    } else if (p.own !== PRESS_RGB) {
-      wrongWay.push(`${name}: "${p.name}" presses to ${p.own}, and PRESS is ${PRESS_RGB}`);
+    } else {
+      const filled = opaque(p.rest);
+      const want = filled ? PRESS_FILL_RGB : PRESS_RGB;
+      if (p.own !== want) {
+        wrongWay.push(
+          `${name}: "${p.name}" rests ${p.rest} and presses to ${p.own}; ` +
+            `a ${filled ? 'filled' : 'groundless'} control steps to ${want}`,
+        );
+      }
+    }
+    // Independent of direction: a press that is the right colour can still put the label out.
+    const held = p.ink && contrast(p.ink, p.own);
+    if (held && held < TEXT_FLOOR) {
+      illegible.push(
+        `${name}: "${p.name}" held reads ${held.toFixed(2)}:1 — ${p.ink} on ${p.own}`,
+      );
     }
   }
   await THEN[name]?.();
@@ -917,6 +976,12 @@ if (invisible.length) {
 }
 if (wrongWay.length) {
   console.error(`Presses that repaint the wrong way, against PRESS:\n  ${wrongWay.join('\n  ')}`);
+  process.exitCode = 1;
+}
+if (illegible.length) {
+  console.error(
+    `Presses whose label goes under ${TEXT_FLOOR}:1 while held:\n  ${illegible.join('\n  ')}`,
+  );
   process.exitCode = 1;
 }
 
