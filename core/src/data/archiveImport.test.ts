@@ -2,6 +2,9 @@ import { zipSync, strToU8 } from 'fflate';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from './db.ts';
 import { importArchive, importArchiveEntry, pairWal } from './archiveImport.ts';
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { stripComments } from '../test/source.ts';
 
 const EPISODES_CSV =
   'show,season,number,name,seen,seen_date,times_watched,air_date,show_id,episode_id\n' +
@@ -137,5 +140,74 @@ describe('importing a zip', () => {
     await importArchive(zip);
     await importArchive(zip);
     expect(await db.watches.count()).toBe(1);
+  });
+});
+
+/**
+ * The decoders this code may ask for, which is one.
+ *
+ * `isSqlite` sniffed a file's first sixteen bytes with `new TextDecoder('latin1')`. That
+ * works in every browser and in Node, and **Hermes implements UTF-8 and nothing else**, so
+ * on a real iPhone it threw:
+ *
+ * > Unknown encoding: latin1 (normalized: latin1)
+ *
+ * Not a `DioCache.db` problem. That sniff is the first thing every import runs, so the
+ * whole feature — zip, CSV, database, all of it — failed on the device and worked
+ * everywhere the suites look. Found by importing on a phone; nothing here could have seen
+ * it, because everything here runs on Node.
+ *
+ * A behavioural test cannot catch this: Node decodes `latin1` happily, so the old code
+ * passes on the machine running this file. The guard has to read the source.
+ *
+ * Byte comparison is the fix and was always the better answer — a magic number is bytes,
+ * and decoding it to text to compare it to text is a detour with an encoding in it.
+ */
+describe('the encodings core may ask for', () => {
+  const CORE = resolve(import.meta.dirname, '..');
+
+  /** Every `.ts` in core, because all of it is shipped to the phone. */
+  function coreSources(): string[] {
+    const out: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = resolve(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) out.push(path);
+      }
+    };
+    walk(CORE);
+    return out;
+  }
+
+  it('asks TextDecoder for nothing but UTF-8, anywhere in core', () => {
+    // `new TextDecoder()` with no argument is UTF-8 and is fine. Any *named* encoding is
+    // not, unless it is utf-8 spelled out. Scanned across core rather than in the one
+    // file that got it wrong: the constraint is Hermes's, so it holds for all of it.
+    const offenders: string[] = [];
+    for (const file of coreSources()) {
+      const text = stripComments(readFileSync(file, 'utf8'));
+      for (const [, encoding] of text.matchAll(/new TextDecoder\(\s*['"]([^'"]+)['"]/g)) {
+        if (encoding.toLowerCase().replaceAll('_', '-') !== 'utf-8') {
+          offenders.push(`${file.slice(CORE.length + 1)}: ${encoding}`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      'Hermes implements only UTF-8, so a named encoding throws on the phone and nowhere else',
+    ).toEqual([]);
+  });
+
+  const source = stripComments(
+    readFileSync(resolve(import.meta.dirname, 'archiveImport.ts'), 'utf8'),
+  );
+
+  it('recognises a SQLite header without decoding it', () => {
+    // The header is bytes. Reading it as text is what introduced the encoding at all.
+    expect(source).toContain('SQLITE_MAGIC');
+    expect(source, 'the sniff still routes through a decoder').not.toMatch(
+      /TextDecoder[^)]*\)\s*\.decode\([^)]*\)\s*===\s*SQLITE_MAGIC/,
+    );
   });
 });

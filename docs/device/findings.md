@@ -274,6 +274,52 @@ bulk of "storage used" is exactly the part that will not be copied, so the backu
 data and settings. Someone refusing the backup for want of disk space is usually estimating from
 the wrong number.
 
+## Every import was broken on the phone, and no suite here could see it
+
+The import failed on the device with:
+
+> **Unknown encoding: latin1 (normalized: latin1)**
+
+`core/src/data/archiveImport.ts` decided whether a dropped file was a database by decoding
+its first sixteen bytes:
+
+```js
+new TextDecoder('latin1').decode(bytes.subarray(0, 16)) === SQLITE_MAGIC
+```
+
+Every browser accepts `latin1`. Node accepts it. **Hermes implements UTF-8 and nothing
+else.**
+
+That sniff is the first thing *every* import runs, so this was not a `DioCache.db` problem:
+zip, CSV, Reviewies export and database alike failed on the phone and passed everywhere the
+suites look, because all five suites run on Node.
+
+This is the sharpest example this record has of the thing the brief was written about. The
+code was exercised, by tests, on real inputs, and the tests were run on a JS engine the
+application does not use.
+
+### The fix, and why a behavioural test cannot hold it
+
+Comparing bytes. A magic number *is* bytes; decoding them to text to compare them to text
+was a detour whose only contribution was an encoding to get wrong.
+
+A behavioural guard is useless here — Node decodes `latin1` happily, so the broken version
+passes on the machine running the test. The guard reads the source instead, and scans **all
+of `core/`** rather than the one file that got it wrong, because the constraint belongs to
+Hermes and therefore to everything shipped to the phone. Planting the exact original back
+fails it, alone:
+
+```
+expected [ 'data/archiveImport.ts: latin1' ] to deeply equal []
+```
+
+### What is still not covered
+
+The guard catches `TextDecoder`. It does not catch the general case — any Web or Node API
+that a browser and Node implement more fully than Hermes does. `Intl`, `RegExp` flags and
+`toLocaleString` are the usual next offenders. Nothing here knows which of those the code
+already leans on, and finding out needs a device, not a scan.
+
 ## The DioCache importer silently drops every series
 
 Found by importing a **real** `DioCache.db`, recovered from a phone — the first time that

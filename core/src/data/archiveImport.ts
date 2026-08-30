@@ -37,9 +37,25 @@ const empty = (): ArchiveReport => ({
 
 const SQLITE_MAGIC = 'SQLite format 3\0';
 
+/**
+ * Compared as bytes rather than decoded to text.
+ *
+ * This read the first sixteen bytes through `new TextDecoder('latin1')`, which every
+ * browser and Node accept and **Hermes does not**: React Native's TextDecoder implements
+ * UTF-8 alone, so on a real iPhone the sniff threw `Unknown encoding: latin1` and took
+ * every import down with it — zip, CSV and database alike, since this is the first thing
+ * any of them runs. It worked in all five suites because all five run on Node.
+ *
+ * Decoding was never needed. A magic number is bytes; turning them into text to compare
+ * them to text is a detour whose only contribution was an encoding to get wrong. The
+ * header is ASCII, so a byte is its code unit.
+ */
 function isSqlite(bytes: Uint8Array): boolean {
-  if (bytes.byteLength < 16) return false;
-  return new TextDecoder('latin1').decode(bytes.subarray(0, 16)) === SQLITE_MAGIC;
+  if (bytes.byteLength < SQLITE_MAGIC.length) return false;
+  for (let i = 0; i < SQLITE_MAGIC.length; i++) {
+    if (bytes[i] !== SQLITE_MAGIC.charCodeAt(i)) return false;
+  }
+  return true;
 }
 
 /** Ignore the noise every archiver adds, so it is not reported as unrecognised. */
