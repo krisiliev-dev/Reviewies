@@ -47,6 +47,49 @@ const SHOWS_RESPONSE = {
   ],
 };
 
+/**
+ * The shape a real recovered cache actually holds its series in.
+ *
+ * Taken from a `DioCache.db` pulled off a phone in August 2026, keys intact and only the
+ * names changed. That cache held **0** payloads with a top-level `shows` array — the one
+ * place this parser looked for series — and **940** objects like this one, 235 distinct,
+ * sitting in `data.objects` beside the movies it read without trouble. The whole
+ * television half of a library came back empty while every number on the screen agreed the
+ * import had gone well.
+ *
+ * `type: 'follow'` is the difference from `SHOWS_RESPONSE`: this is the library listing,
+ * not the progress endpoint, so it carries no episode counts. It does carry the two things
+ * that decide where a show lands — `meta.id` and `meta.name` — and a `filter` array whose
+ * real values across that cache were `all`, `continuing`, `stopped`, `up_to_date`,
+ * `not_started_yet` and `watch_later`.
+ */
+const FOLLOWED_SERIES_RESPONSE = {
+  status: 'success',
+  data: {
+    user_id: 1,
+    type: 'list',
+    objects: [
+      {
+        uuid: 's-uuid-1',
+        type: 'follow',
+        entity_type: 'series',
+        created_at: '2023-06-15T14:08:37.465400Z',
+        updated_at: '2024-03-30T21:31:47.879089Z',
+        filter: ['all', 'up_to_date'],
+        extended: { rating: 9, rating_count: 10, follower_count: 5, comment_count: 2 },
+        meta: { uuid: 's-uuid-1', id: 275274, name: 'The Long Dark', is_ended: false },
+      },
+      {
+        uuid: 's-uuid-2',
+        type: 'follow',
+        entity_type: 'series',
+        filter: ['all', 'watch_later'],
+        meta: { uuid: 's-uuid-2', id: 305089, name: 'Quiet Harbour: The Series' },
+      },
+    ],
+  },
+};
+
 const EPISODES_RESPONSE = [
   {
     id: 5001,
@@ -212,5 +255,64 @@ describe('ragged input', () => {
 
   it('returns empty rather than throwing on nothing at all', () => {
     expect(parseDioCache([])).toMatchObject({ movies: [], series: [], episodes: [] });
+  });
+});
+
+/**
+ * Series in the library listing, which is where a recovered cache actually keeps them.
+ *
+ * The parser read movies out of `data.objects` and series only out of a `shows` array, so
+ * a cache holding one and not the other lost every show it had. Found by importing a real
+ * one: 235 series in the file, 0 in the result, and an "Imported 115 watches" message over
+ * the top of it.
+ */
+describe('series from the library listing rather than the progress endpoint', () => {
+  it('reads a followed series that no `shows` array mentions', () => {
+    const library = parseDioCache([FOLLOWED_SERIES_RESPONSE]);
+    expect(library.series.map((s) => s.title).sort()).toEqual([
+      'Quiet Harbour: The Series',
+      'The Long Dark',
+    ]);
+  });
+
+  it('keeps the id, because that is what the show is filed under', () => {
+    // `tvtimeSeriesId` builds the library key from it; without it two shows with the same
+    // name collapse into one, and a re-import cannot correct anything.
+    const { series } = parseDioCache([FOLLOWED_SERIES_RESPONSE]);
+    expect(series.find((s) => s.title === 'The Long Dark')?.id).toBe(275274);
+  });
+
+  it('carries the two filter values the importer acts on', () => {
+    const { series } = parseDioCache([FOLLOWED_SERIES_RESPONSE]);
+    const long = series.find((s) => s.id === 275274);
+    const quiet = series.find((s) => s.id === 305089);
+    // `up_to_date` decides completed against watching; `watch_later` decides the watchlist.
+    expect(long?.upToDate, 'up_to_date not carried through').toBe(true);
+    expect(long?.forLater).toBe(false);
+    expect(quiet?.forLater, 'watch_later not carried through').toBe(true);
+    expect(quiet?.upToDate).toBe(false);
+  });
+
+  it('claims no episode counts it was never told', () => {
+    // A follow object has no progress in it. Zero here means "not stated", and the
+    // importer must not read it as "you have watched none of it".
+    const { series } = parseDioCache([FOLLOWED_SERIES_RESPONSE]);
+    for (const s of series) {
+      expect(s.watchedEpisodes).toBe(0);
+      expect(s.airedEpisodes).toBe(0);
+    }
+  });
+
+  it('still reads the progress endpoint where a cache has one', () => {
+    // The shape that already worked has to keep working: some caches hold both.
+    const { series } = parseDioCache([SHOWS_RESPONSE, FOLLOWED_SERIES_RESPONSE]);
+    expect(series.map((s) => s.id).sort((a, b) => a - b)).toEqual([12345, 275274, 305089]);
+    expect(series.find((s) => s.id === 12345)?.watchedEpisodes).toBe(20);
+  });
+
+  it('does not mistake a followed movie for a series', () => {
+    const { series, movies } = parseDioCache([MOVIE_RESPONSE, FOLLOWED_SERIES_RESPONSE]);
+    expect(series).toHaveLength(2);
+    expect(movies).toHaveLength(1);
   });
 });

@@ -141,6 +141,36 @@ export function parseDioCache(payloads: unknown[]): DioLibrary {
       movies.set(key, record);
     }
 
+    // --- Series, from the library listing ----------------------------------
+    // The same place the movies above come from, and the only place a recovered cache
+    // reliably has them: a real one held 235 series here and none in a `shows` array,
+    // so reading only the progress endpoint below lost the whole television half of a
+    // library while the movies imported cleanly. A follow object carries no episode
+    // counts — `watchedEpisodes` of 0 here means "not stated", never "none watched".
+    for (const o of objectsOf(payload)) {
+      if (o.entity_type !== 'series') continue;
+      const meta = isObject(o.meta) ? o.meta : {};
+      const id = num(meta.id) ?? num(o.id);
+      const name = str(meta.name) ?? str(o.name);
+      if (id === undefined || !name) continue;
+
+      used = true;
+      const filters = Array.isArray(o.filter) ? o.filter.map(String) : [];
+      const existing = series.get(id);
+      series.set(id, {
+        id,
+        title: name,
+        // Never lower a count the progress endpoint supplied: a cache can hold both
+        // shapes, and the listing knows less than the endpoint that counts episodes.
+        watchedEpisodes: existing?.watchedEpisodes ?? 0,
+        airedEpisodes: existing?.airedEpisodes ?? 0,
+        archived: existing?.archived ?? false,
+        forLater: (existing?.forLater ?? false) || filters.includes('watch_later'),
+        upToDate: (existing?.upToDate ?? false) || filters.includes('up_to_date'),
+        favorite: existing?.favorite ?? false,
+      });
+    }
+
     // --- Series, from the progress endpoint --------------------------------
     if (isObject(payload) && Array.isArray(payload.shows)) {
       for (const s of payload.shows) {

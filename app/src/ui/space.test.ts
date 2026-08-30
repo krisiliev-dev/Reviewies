@@ -144,7 +144,13 @@ describe('the space scale, on the phone', () => {
      * lost the padding it had as a box, and More's figure lost the plate it was painted
      * on inside a card it was already on.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(176);
+    /*
+     * 174, down three: `WhereToWatch`'s hand-rolled country chips took their padding and
+     * their row gap with them when the picker became a `Choice`. `CHOICE_SIZE` carries all
+     * three now, which is a shape moved into a component — the commonest reason on this
+     * list, and the fourth time this control has been the one moving it.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(173);
     expect(off).toEqual([]);
   });
 
@@ -291,7 +297,13 @@ describe('the space scale, on the web', () => {
      * migration that lowered it: a margin doing a space's job is spacing this scan counts
      * and a reader cannot select.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(356);
+    /*
+     * 353, down four: the web half of the same migration. The country chips' `px-3`,
+     * `py-1.5` and the group's `gap-1.5` went into `CHOICE_SIZE`, and `Row`'s `gap-y-1`
+     * went with the `flex-wrap` it existed to space — a row that no longer wraps has no
+     * second line to hold off.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(352);
     expect(off).toEqual([]);
   });
 

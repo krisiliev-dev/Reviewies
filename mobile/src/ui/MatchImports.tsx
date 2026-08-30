@@ -130,7 +130,12 @@ export function MatchImports({
       {asks.map((ask) => (
         <View key={ask.localId} style={styles.card}>
           <Text style={styles.name}>{ask.name}</Text>
-          <Note>{COPY.import.ambiguous}</Note>
+          {/* An ask with nothing in it is a miss, not an ambiguity. Showing "more than
+              one show could be this" above an empty list says the opposite of what
+              happened, and leaves "None of these" as the only control — none of nothing.
+              The web separated these; this side did not until a real import on a device
+              put the empty version in front of somebody. 6.86. */}
+          <Note>{ask.candidates.length > 0 ? COPY.import.ambiguous : COPY.import.notFound}</Note>
           {ask.candidates.map((candidate) => (
             <BaseRow
               key={candidate.id}
@@ -161,7 +166,9 @@ export function MatchImports({
             accessibilityRole="button"
             accessibilityLabel={`Leave ${ask.name} unmatched`}
           >
-            <Text style={styles.skip}>{COPY.controls.noneOfThese}</Text>
+            <Text style={styles.skip}>
+              {ask.candidates.length > 0 ? COPY.controls.noneOfThese : COPY.controls.leaveForNow}
+            </Text>
           </Pressable>
         </View>
       ))}

@@ -23,6 +23,55 @@ const ROOT = resolve(__dirname, '../../..');
 const web = () => readFileSync(resolve(ROOT, 'app/src/screens/UpNext.tsx'), 'utf8');
 const phone = () => readFileSync(resolve(ROOT, 'mobile/app/(tabs)/index.tsx'), 'utf8');
 
+/**
+ * The matcher itself, which this guard did not look at until 6.86.
+ *
+ * Everything above compares the two *screens*. The drift that got through was one level
+ * down, in the component both screens mount: the web learned to tell a miss from an
+ * ambiguity and the phone did not, so a real import on a device showed "more than one show
+ * could be this" above an empty list whose only control was "None of these".
+ *
+ * A parity guard that reads one pair of files proves nothing about the pair beside it.
+ */
+const webMatcher = () => readFileSync(resolve(ROOT, 'app/src/ui/MatchImports.tsx'), 'utf8');
+const phoneMatcher = () => readFileSync(resolve(ROOT, 'mobile/src/ui/MatchImports.tsx'), 'utf8');
+
+describe('the matcher, on both platforms', () => {
+  const both = () => [['web', webMatcher()], ['phone', phoneMatcher()]] as const;
+
+  it('tells a miss from an ambiguity', () => {
+    for (const [name, source] of both()) {
+      // The distinction has to be made from the candidate list, because that is the only
+      // thing that differs between the two states.
+      expect(source, `${name}: does not branch on there being candidates`).toMatch(
+        /candidates\.length\s*>\s*0/,
+      );
+      expect(source, `${name}: never says what an empty list means`).toContain(
+        'COPY.import.notFound',
+      );
+      expect(source, `${name}: no longer explains an ambiguity`).toContain(
+        'COPY.import.ambiguous',
+      );
+    }
+  });
+
+  it('does not offer "None of these" when there is nothing to be none of', () => {
+    for (const [name, source] of both()) {
+      expect(source, `${name}: one label for both states`).toContain(
+        'COPY.controls.leaveForNow',
+      );
+      expect(source, name).toContain('COPY.controls.noneOfThese');
+    }
+  });
+
+  it('says the same sentences on both, from the same place', () => {
+    // Not "similar wording": the same constant. A sentence written out twice is two
+    // sentences that will disagree, which is what §6.80 moved into COPY to stop.
+    expect(COPY.import.notFound).toContain('Nothing came back under that name');
+    expect(COPY.controls.leaveForNow).toBe('Leave it for now');
+  });
+});
+
 describe('the first run, on both platforms', () => {
   it('offers the import before it offers a search box', () => {
     for (const [name, source] of [['web', web()], ['phone', phone()]] as const) {

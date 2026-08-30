@@ -7,6 +7,8 @@ import { setDatabase } from '@reviewies/core/data/db';
 import { SqliteDatabase, type SqlDriver } from '@reviewies/core/data/adapters/sqlite';
 import { setStorage, type KeyValueStore } from '@reviewies/core/data/storage';
 import { setFileSaver } from '@reviewies/core/data/transfer';
+import { setSqlJsLoader } from '@reviewies/core/data/sqlWasm';
+import { toResultTable } from './sqlResult';
 
 /**
  * Everything the core needs a phone for.
@@ -119,6 +121,36 @@ export function bindNativePlatform(): Promise<void> {
     });
     await database.execAsync('PRAGMA journal_mode = WAL');
     setDatabase(await SqliteDatabase.open(createDriver(database)));
+
+    // Reading a recovered `DioCache.db` needs a second SQLite: not the app's own
+    // database but a throwaway one over bytes a person picked out of Files. The web
+    // fetches sql.js' WebAssembly for this; the phone cannot, because Hermes has no
+    // WebAssembly at all — and does not need to, with expo-sqlite already compiled in.
+    //
+    // Until 6.85 nothing here bound one, and `coreWiring` carried a written reason
+    // saying the phone "never asks for one". It asks the first time anybody imports a
+    // database, and failed on a device with the error naming this very function.
+    setSqlJsLoader(async () => ({
+      Database: class {
+        private readonly database: SQLite.SQLiteDatabase;
+
+        constructor(data?: Uint8Array) {
+          // `deserializeDatabaseSync` opens the bytes in memory, so nothing is written
+          // to disk and there is no temporary file to clean up after a failed import.
+          this.database = data
+            ? SQLite.deserializeDatabaseSync(data)
+            : SQLite.openDatabaseSync(':memory:');
+        }
+
+        exec(sql: string) {
+          return toResultTable(this.database.getAllSync(sql) as Array<Record<string, unknown>>);
+        }
+
+        close() {
+          this.database.closeSync();
+        }
+      },
+    }));
 
     setFileSaver(async (name, content) => {
       const { documentDirectory, writeAsStringAsync } = await import('expo-file-system/legacy');

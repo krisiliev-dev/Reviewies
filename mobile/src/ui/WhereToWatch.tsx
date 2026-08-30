@@ -4,11 +4,12 @@ import { getProvidersCached } from '@reviewies/core/metadata/index';
 import { Attribution } from './Attribution';
 import { getRegion, REGIONS, regionName, setRegion } from '@reviewies/core/metadata/region';
 import type { CachedProviders } from '@reviewies/core/domain/types';
-import { REACH, border, leadingOf, radius, tap, theme } from './theme';
+import { REACH, leadingOf, radius, tap, theme } from './theme';
 import { COPY } from '@reviewies/core/copy';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { Section } from './Section';
 import { Note } from './Note';
+import { Choice } from './Choice';
 
 /**
  * Where a title can be watched right now.
@@ -84,23 +85,30 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
         </Pressable>
       </View>
 
+      {/*
+        * `Choice`, rather than a second radio group with its own fill and its own box.
+        *
+        * Hand-rolled before `Choice` existed and never migrated: `chipOn` was
+        * `backgroundColor: theme.actionFill` against the house rule `Choice.tsx` states in
+        * its own source — selection is a rule, never a fill. Twenty-four of them, and every
+        * one under the 44 floor: the web's copy of this control measured 34.75–40.77 × 32
+        * on the built page at 390px, which is the same box this drew at `paddingHorizontal:
+        * 12, paddingVertical: 6` around `text.s12`. Through `Choice` the phone export
+        * measures 44 × 44 for all twenty-four, in a panel 334 × 200 that is only on screen
+        * while somebody is picking. `stats.tsx` already carries the epitaph for this exact
+        * control: "`Chip` was here — a local radio with its own fill, its own text colours
+        * and its own box". It was here too.
+        *
+        * The `View` around it was not a `radiogroup` either, so a screen reader met
+        * twenty-four loose radios with no question attached. `Choice` names the group.
+        */}
       {picking && (
-        <View style={styles.regions}>
-          {REGIONS.map((r) => (
-            <Pressable
-              key={r.code}
-              onPress={() => choose(r.code)}
-              style={[styles.chip, r.code === region && styles.chipOn]}
-              accessibilityRole="radio"
-              aria-selected={r.code === region} aria-checked={r.code === region}
-              accessibilityLabel={`Show availability in ${r.name}`}
-            >
-              <Text style={[styles.chipText, r.code === region && styles.chipTextOn]}>
-                {r.code}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <Choice
+          name={COPY.whereToWatch.country}
+          options={REGIONS.map((r) => ({ key: r.code, label: r.code, hint: r.name }))}
+          value={region}
+          onChange={choose}
+        />
       )}
 
       {providers === undefined && <Note>{COPY.waiting.checking}</Note>}
@@ -144,7 +152,25 @@ export function WhereToWatch({ titleId }: { titleId: string }) {
   );
 }
 
-/** `Stream — Netflix · Now TV`. The web's copy of this carries the reasoning. */
+/**
+ * `Stream — Netflix · Now TV`. The web's copy of this carries the rest of the reasoning.
+ *
+ * **One line, and the names wrap inside it.** This wrapped the *row* rather than the text:
+ * `flexWrap: 'wrap'` on the container with the names on `flexShrink: 1` and no `flex`, so
+ * flexbox laid the names out at their full intrinsic width, found they did not fit beside
+ * the label, and moved the whole run to a second flex line before shrinking was ever
+ * considered. The label then sat alone on a line of its own.
+ *
+ * Which made the same component draw its label in two different places depending on how
+ * many services a title had: `r6-title-the-bear.png` has "Stream" alone above five names,
+ * and `r6-title-it-s-always-sunny-in-phi.png` has "Stream  Hulu · fuboTV · YouTube TV ·
+ * FXNow" on one line and "Buy" alone above two. Three label positions, one component, two
+ * screenshots — and the doc comment above has said `Stream — Netflix · Now TV` throughout.
+ *
+ * So: no wrap on the row, and `flex: 1` on the names, which makes them a flex item sized
+ * to what is left rather than to what they want. The text then wraps *within* that width,
+ * which is what wrapping should have meant here all along, and the label keeps its place.
+ */
 function Row({ label, names }: { label: string; names: string[] }) {
   if (names.length === 0) return null;
   return (
@@ -165,19 +191,9 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   region: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
-  regions: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.plate,
-    borderWidth: border.hairline, borderColor: theme.strokeSignal, backgroundColor: 'transparent',
-  },
-  chipOn: { backgroundColor: theme.actionFill },
-  chipText: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.title.name },
-  chipTextOn: { color: theme.actionLabel },
   failed: { color: theme.trouble, fontSize: text.s14, lineHeight: leadingOf(text.s14, leading.l143), marginTop: 6, fontFamily: type.family.body.name },
-  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   rowLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
-  serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name, flexShrink: 1 },
+  serviceText: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.body.name, flex: 1 },
   link: { color: theme.inkSecondary, fontSize: text.s12, textDecorationLine: 'underline', fontFamily: type.family.title.name },
 });

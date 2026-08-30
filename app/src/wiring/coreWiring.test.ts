@@ -259,8 +259,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/crossOff#STRUCK': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/surface#SURFACE_OFF': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/row#ROW_INK': 'The same divergence as `ui/button#SIZE`.',
-  'app only: data/sqlWasm#setSqlJsLoader':
-    'Binds the loader that fetches sql.js\u2019 WASM binary, which is how the *web* runs SQLite \u2014 in a browser it has to be fetched and instantiated. The phone has expo-sqlite compiled in and never asks for one. Invisible until \u00a76.167: the function names itself inside its own "call setSqlJsLoader() from your entry point" error, and until the scan blanked string literals as well as comments, that mention counted as the module reaching itself.',
+  'mobile only: ui/row#ROW_LEADING':
+    'The same divergence as `ui/button#SIZE`, and the sharpest case of it: a Tailwind leading class has to appear literally, so the web writes `leading-l143` where the phone writes `leading[ROW_LEADING.note]`. `lineBox.test.ts` is what couples them \u2014 it derives the expected class name from the table rather than pinning the string, which is what a plant found the first version of that clause failing to do.',
   'mobile only: sync/auth#setAuthStorage':
     'React Native has no `localStorage`, so the phone hands the Supabase client AsyncStorage before it is created; in a browser the client uses `localStorage` by default and there is nothing to bind. Hidden the same way and for the same sprint: `setAuthStorage() must be called before the Supabase client is created` names it in a string.',
   'mobile only: fingerprint/continuous#positionNow': 'Part of the same continuous session.',

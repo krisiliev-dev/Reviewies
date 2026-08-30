@@ -206,7 +206,16 @@ describe('every workspace', () => {
     // took `type.test.ts`'s away, because §6.183's proposed "no line box smaller than its
     // font size" becomes vacuous by construction once the simulation is faithful — a clause
     // declined with its reason written down rather than added to make a number move.
-    core: 928, app: 689, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 694: the clipping sprint's `lineBox.test.ts`, which reads the six bundled font
+    // files rather than blacklisting a ratio, and `choice.test.ts`'s build-wide sweep for a
+    // hand-rolled radio outside `Choice`. That sweep found the two renderers and no third
+    // offender — a lock on an empty room, and worth having only because a plant first
+    // watched the old clauses shake the defect's hand.
+    // core 936, app 697, mobile 47: the device session's own work merged in — a byte-sniff
+    // for a recovered DioCache, the phone's SQLite, and the guard that was looking one level
+    // too high. Three workspaces moving at once is what a second person working on this
+    // looks like, which had not happened before.
+    core: 936, app: 697, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
