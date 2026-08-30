@@ -94,6 +94,21 @@ components rather than at either screen.
   letters stay put while the title beside them grows. Failure looks like two enormous letters
   with their stems cut off — which is what the browser export did at 200% before the flag
   existed, and the reason the flag exists.
+- **THE ONE QUESTION THAT WOULD SETTLE THIS.** On the **More** screen at maximum Dynamic Type:
+  **is the cropped text the row's own words, or the tab bar's labels underneath them** — and if
+  the row's, the *title* line or the *detail* line? One photograph answers it.
+
+  Why this is now the whole question: a sprint read all six bundled font files and measured every
+  mapped glyph against its own box. In Archivo Narrow SemiBold (a row's title) **0 of 657** glyphs
+  reach below the box, and in Newsreader Italic (a row's note) **0 of 564**. The export agrees at
+  100%, 135.3%, 214.3% and 357.1% — the real iOS ladder — where a title's ink *clears* the bottom
+  of its box by 2, 4, 5 and 10 points and never once crosses. So the mechanism the last sprint
+  named, `numberOfLines` cropping against TextKit's used rect, **cannot be what you saw**, and the
+  defect is not in `Row.tsx`.
+
+  The tab bar is the only piece of *navigation* present on both screens the report names, it is
+  the one thing here that cannot be run, and it is now the leading candidate by elimination.
+
 - **The tab bar** at `TAB_BAR_HEIGHT` 60 — do labels clip or overlap the rule?
 - **Watching Mode's emoji pad** — does it reflow to fewer columns?
 - Whether Up Next titles *wrap*, as distinct from clip.
