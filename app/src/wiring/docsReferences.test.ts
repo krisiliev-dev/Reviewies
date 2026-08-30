@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { SHOT_DIRS, shots, unnamed } from '../../../design/unread.mjs';
+import { SHOT_DIRS, missingShotDirs, shots, unnamed } from '../../../design/unread.mjs';
 import { stripMarkdownComments } from '@reviewies/core/test/source';
 
 /**
@@ -303,6 +303,35 @@ describe('cross-references in the source', () => {
 
     const all = shots();
     const left = unnamed();
+
+    /*
+     * Three numbers about the backlog — but only where there is a backlog to see.
+     *
+     * Every shot directory is gitignored: `git ls-files design/screens` returns nothing, and
+     * they exist only where a capture script has run. So this clause asserted a hundred
+     * photographs on a checkout that could not have any, and §6.187 is how that surfaced —
+     * a device agent cloned the repository on a Mac and found `verify` red for three reasons,
+     * none of them the code. `unread.mjs` threw a raw `ENOENT` before that; it reports which
+     * directories it could not open now.
+     *
+     * **A checkout with no photographs is not a record with nothing in it.** §6.57, for the
+     * third time in this file's neighbourhood, and the reason the two cases are separated
+     * rather than the assertions being softened: where the shots *are* present the three
+     * numbers below are exactly as strict as they were. What changes is that the absence of
+     * a design run is now reported as an absence rather than as a failing record.
+     *
+     * The clause above this one still runs either way — it compares `SHOT_DIRS` against the
+     * capture scripts' own `OUT` paths, which are source and are always readable. That is the
+     * half that actually guards the register, and it is deliberately not behind this branch.
+     */
+    if (missingShotDirs().length) {
+      expect(
+        all.length,
+        'some shot directories are missing and others are not, so the count is of a half-built design run',
+      ).toBe(0);
+      return;
+    }
+
     expect(all.length, 'the design record has no shots in it').toBeGreaterThan(100);
     expect(left.length, 'every shot is named, which has never been true').toBeGreaterThan(0);
     expect(left.length, 'no shot has ever been named, so the proxy is broken')

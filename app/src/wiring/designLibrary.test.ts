@@ -53,11 +53,38 @@ describe('the seeded library', () => {
      * provider's changes — a different cadence, a different start — this is what says the
      * watch history was written against the old one.
      */
-    const today = startOfDay(dayKey(Date.now()));
+    /*
+     * Calendar arithmetic, not `n * 86_400_000`. §6.187.
+     *
+     * This subtracted a fixed twenty-four hours from a **local** midnight and then asked for
+     * a day key, which is UTC-day arithmetic performed on a local-day value. In UTC the two
+     * agree and the clause passed for its whole life; at `Europe/Sofia` (+0300) it is off by
+     * one — `Kitchen Nightshift episode 1: expected '2025-11-23' to be '2025-11-22'`.
+     *
+     * Found by a device agent running `npm run verify` on a Mac, which is the only reason it
+     * was ever seen: `test:tz` exists precisely for this class and runs 877 cases at
+     * `Pacific/Kiritimati`, and this clause sits outside it, in `app`. A repository that
+     * takes a failure mode seriously enough to run a whole suite for it can still leave a
+     * case in the one workspace that suite does not cover.
+     *
+     * The provider builds these dates with `setDate(getDate() - n)`, and `design/library.mjs`
+     * builds the CSV's the same way. Matching it is the fix, and it is the fix rather than a
+     * timezone pin because a day is a calendar fact: subtracting a duration is the wrong
+     * operation for it anywhere, and merely correct where no offset happens to intervene.
+     */
+    const daysBefore = (days: number) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate(),
+      ).padStart(2, '0')}`;
+    };
+
     for (const show of SCHEDULE) {
       const episodes = served.get(show.name)!;
       for (const [i, episode] of episodes.entries()) {
-        const expected = dayKey(today - airedDaysAgo(show, i + 1, episode.season) * 86_400_000);
+        const expected = daysBefore(airedDaysAgo(show, i + 1, episode.season));
         expect(episode.airDate, `${show.name} episode ${i + 1}`).toBe(expected);
       }
     }

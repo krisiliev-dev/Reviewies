@@ -14857,6 +14857,234 @@ review rather than left to be re-read, is the shape of a fix and is not written.
 here by any means.
 
 
+### 6.187 A phone, six worktrees, and the checkout nobody had cloned
+
+The largest parallel sprint this project has run, and the first with a **real iPhone** on the
+other end of it. Six agents in worktrees, one local agent on a Mac with a device. The device's
+half is worth more than the six put together, and not for the reason expected.
+
+## What the phone said
+
+It built — `** BUILD SUCCEEDED **`, installed over USB, launched. iPhone 13 Pro Max, iOS 26.5.2,
+Release, personal team. §6.186 struck through §7's claim that no native build had ever been made;
+this is that claim's replacement, with a serial number on it.
+
+Second build, and **nothing had to be fixed first**. Every one of §6.82–§6.84's six blockers
+survived 127 commits of unrelated work and applied on its own — both `postinstall` patches, the
+`reanimated`/`worklets` pins, the empty entitlements dict that lets a free personal team sign it.
+Worth stating because no guard can: the guards fire on `npm install`, and nothing proves the
+result still *compiles* until it compiles.
+
+**No white flash.** The app is on Up Next immediately. `useFonts` gating a first paint has now
+executed on a device and costs nothing visible. No stopwatch was used, so "seconds" remains open
+and is recorded as open.
+
+### The defect, and it is not the one predicted
+
+> **Text is clipped at the bottom** — in Up Next rows, and in the More menu's navigation.
+
+The prediction was about *scaling*: type grows, the plate does not. What a device found was
+*clipping*, which is a different failure. Cut off at the bottom specifically is a container that
+did not grow with its glyphs — it takes descenders and the last line first — rather than anything
+about wrapping. It appears in a list row and a navigation row, two unrelated screens, which points
+at shared machinery rather than at either screen.
+
+That is task #222's subject, arriving from the opposite direction. The oldest open item in the
+queue asked whether the phone's leading and tracking should answer `useWindowDimensions().fontScale`,
+and offered "leave it, and say why" as a live option on condition that somebody **measure** the
+point at which text actually collides. A device has now measured it: it clips at maximum Dynamic
+Type on the product's home screen. That option is closed by observation rather than by argument,
+and the agent working the question was told so mid-flight.
+
+### What the phone could not answer, and said so
+
+The monogram question came back *"I am unsure which monogram you mean, but I only see text
+growing so I think the answer is yes."* Recorded as qualified rather than as a pass, for a reason
+worth keeping: the monogram is the stand-in shown **only where artwork is missing**, so a library
+with posters everywhere puts none on screen and the question cannot be answered from that view at
+all. The skeleton this landed in pre-marked all eleven headings `NOT YET CHECKED`, and seven of
+them still say so — which is §6.57 made structural rather than remembered.
+
+## `verify` was red on a fresh clone, for three reasons, none of them the code
+
+Found before any of the above, and worth more than several of them. The agent cloned the tree on a
+Mac and `npm run verify` exited 1. **Every failure passed on the machine that wrote it.** That is
+§6.186's shape one layer down, and it had been true for at least a sprint.
+
+**One was mine, from the sprint before this one.** §6.185's shipping clauses read the *built* web
+manifest, and `verify` ran `test` before `build` — so on any checkout whose `app/dist` was absent
+or stale they failed, and on a machine that happened to have built recently they passed. `verify`
+builds the app before testing it now. The clause still asserts the file exists rather than
+skipping: a guard that goes quiet when its input is missing reports green on a machine that cannot
+run it.
+
+**One was a day of arithmetic done in the wrong units.** `designLibrary.test.ts` subtracted
+`n * 86_400_000` from a **local** midnight and asked for a day key — UTC-day arithmetic on a
+local-day value. In UTC the two agree and it passed for its whole life; at `Europe/Sofia` it is off
+by one, `expected '2025-11-23' to be '2025-11-22'`. Reproduced here by setting `TZ` before the
+runner, repaired with calendar arithmetic — which is what the provider and `design/library.mjs`
+both already use — and re-run green at UTC, Sofia, Kiritimati and Los Angeles.
+
+The sharp part is where it was sitting. This repository takes that failure mode seriously enough
+to run an **entire second suite** for it: `test:tz`, 877 cases at `Pacific/Kiritimati`, which
+passes. The clause sits in `app`, which that suite does not cover. A project can care enough about
+a class of bug to build a whole instrument for it and still leave a case in the one workspace the
+instrument does not point at.
+
+**One was a directory git has never held.** `design/unread.mjs` scanned `design/screens` for PNGs
+so the record could report its own backlog, and every shot directory is gitignored — they exist
+only where a capture script has run. Anyone else got a raw `ENOENT`. It reports which directories
+it could not open now, and `docsReferences.test.ts` separates the two cases: where the shots are
+present its three assertions are exactly as strict as before; where **all** are absent it says so;
+where **some** are absent it still fails, because a half-built design run is a count of nothing in
+particular. Planted all three states.
+
+That is the same distinction as the monogram paragraph above and the same one as §6.186, three
+times in one sprint at three different altitudes: *nothing* and *I could not look* are different
+answers, and only one of them is about the product.
+
+## The six worktrees
+
+### The 72 shots, read at last — six sprints after they started accumulating
+
+All 72, by three agents. **Fifty-nine had nothing wrong with them**, which is the honest yield and
+is recorded as a result rather than as an absence of one.
+
+**The web's title page had no `<h1>`.** `TitleDetail.tsx` named the screen `Masthead level="sub"`,
+copied from the phone — where that line is correct, and where the comment beside it says why: the
+navigator's own title is already the screen's name at depth 1. The web has no navigator. So the
+screen the entire episode list hangs off had no first-level heading, and `WHERE TO WATCH` — a card
+*inside* it — was its sibling. `/comments` was the same. The copy brought the code and left the
+reason. Third time this record has caught that shape, and the first where the reason was sitting
+in the file being copied *from*, written out, correct and unread.
+
+**A paragraph's word spaces were CSS margins.** `AccountPanel`'s sync note was typed across three
+lines with a `<code>` at the head of two of them, and JSX deletes a newline between a text run and
+an element — so the words were `setVITE_SUPABASE_URL andVITE_SUPABASE_ANON_KEY`, which is what the
+clipboard and the accessible name said. `mx-1` on each `<code>` put the gap back for a sighted
+reader, on the side that had lost it, so the gap after each name was double the gap before it, and
+`and` had no break opportunity: `set VITE_SUPABASE_URL` stopped at 180.5pt of a 387.5pt measure,
+leaving 56% of the line blank. Seven hundred tests read that sentence and none minded, because
+every one asked whether the words were *present* rather than whether they were words.
+
+**A phone note editor stretched an inline Save across the full row** — 358x44 where the button
+asked for 63 — because a bare `View` lays out as a column and stretches. `act`, declared one line
+above it in the same sheet, already carried the rule.
+
+Eight further findings were filed rather than fixed, correctly: four of them are one control,
+`WhereToWatch`, built before `Choice` existed and never migrated — it paints its selection as a
+fill the shared control is forbidden to use, at 34x30pt against a 44pt floor, with labels that
+change side depending on how many streaming services a show carries.
+
+**The light palette holds.** All 24 role pairs measured through `contrast()`, all five
+same-screen theme pairs ink-masked: nothing sub-3:1 but the two already documented as fill-only or
+deliberate, and no mark lost between themes. A table photographed only recently is in better shape
+than its novelty suggested.
+
+### The dim palette: deleted, and not because nobody read it
+
+`dimInk`, `dimInkSecondary`, `dimWorking` — described in the token file as *"Watching Mode's
+auto-dim, as a palette rather than an opacity"*. **Watching Mode has no auto-dim.** No idle timer,
+no opacity, no second colour, on either platform, ever. `linger.dimAfter: 8000`, the timer it was
+to arrive after, was also unread by anything — invisible because `coreWiring` works at *export*
+granularity and a dead member of a live export is not a dead export. That is the fifth such layer,
+after `ratio.poster`, heading depth, `elevation` and the light table, and it would have been
+enough on its own.
+
+What made it a deletion rather than a wiring is that **the mechanism could not have done the
+job**. Most of Watching Mode's emitted light is twenty colour emoji at thirty points; `PadCell`
+gives them a size and no colour on both platforms, because a colour emoji is a bitmap in the
+platform's font and `color` does not reach it. The palette would have dimmed the header and the
+labels and left the bright half alone — the same screen with the pad *more* prominent, which
+inverts the physical argument the direction made from a sofa in a dark room.
+
+Three measurements underneath: the hexes are `mix(role, groundWell, 0.75)` **to the byte**, so a
+palette had bought an opacity and precomputed it; they were mixed against a ground neither
+Watching Mode paints; and `contrast.test.ts` read `color.dark` only, in a file that loops both
+themes everywhere else — so the light table carried the dark hexes at **1.78:1** and no clause
+ever looked.
+
+What actually dims a phone is the backlight, and the backlight belongs to the operating system.
+The live defect the dead layer was lying on top of: the phone gets it, because nothing there holds
+a wake lock, and the web takes it away for the length of an episode and offers nothing in its
+place. That is a product decision and is named rather than taken.
+
+The replacement guard asks a smaller question than the four before it needed — every colour is
+painted by product code, or carries a written reason — and it is pointed at the last commit where
+the three were green, so the plant is *run* rather than remembered.
+
+## Two guards that were wrong on a correct change, again
+
+§6.185 found two of mine stating a rule too narrowly and failing on a repair. This sprint found
+two more, and neither was about a rule:
+
+- `fromGitRef` spawned `git show` **per file**; with a second history-scanning guard that is 548
+  processes, and two unrelated suites began timing out on *scheduling*. One `git cat-file --batch`
+  takes the clause from 2797ms to 288.
+- `reactionStream`'s episode simulations ran 1.8s against a 5s default and started failing the
+  moment an 89th test file joined the run. A test whose pass depends on how busy the machine is
+  was already §6.161's subject; it has an explicit budget now.
+
+## And the re-plant caught one, for the second sprint running
+
+Six findings re-planted here after merging. Five bit. The sixth: the watchlist guard's second
+plant went red on its branch and **green in the main checkout**. Run with the needle asserted
+rather than silently replaced, deleting `style={styles.grow}` from the call site left the `grow`
+entry sitting in the StyleSheet, and the clause — which read the sheet — passed.
+
+A StyleSheet entry nothing wears is invisible to `tsc` and to `oxlint` both, so nothing else was
+going to say it either. `field.test.ts` had already learned this and written it down: *"And it has
+to be worn."* The clause checks declared **and** worn now, and both phone editors plant red.
+
+## What is not done, and why it is said here
+
+**Two of the six worktrees have not landed as this is written** — task #222's `fontScale`
+decision, now carrying the device's clipping evidence, and the Tailwind box-utility sweep. This
+entry covers four agents and the phone. It will be extended rather than replaced; a §6.187 that
+silently grows is worse than one that says it is unfinished, so this paragraph is the marker.
+
+**Seven of the phone's eleven questions are still `NOT YET CHECKED`**, and the file says so at
+each heading rather than in a summary. `hitSlop`, the six faces, Watching Mode with the screen
+locked, the haptics the press design leans on in writing, the new pressed fill on real glass,
+signing in and draining an outbox, push tokens. The device is available and the questions are
+written; nothing here can answer any of them.
+
+**The clipping defect is reported, not diagnosed.** Two screens, no component named, no point size,
+no statement of which element crops. A fixed `lineHeight`, a fixed row `minHeight` and a
+`numberOfLines` in a container that will not grow all produce the same photograph.
+
+**`app.json` declares `userInterfaceStyle: "dark"` and Expo warns it breaks the splash screen.**
+It did not cause the symptom it looked capable of causing. Left alone deliberately — a one-line
+change with no guard behind it is the drift the brief forbids — and now known not to matter for
+that symptom, which is not the same as known to be right.
+
+**Five web routes leave the tab bar with no answer** — `/calendar`, `/lists`, `/people`, `/stats`,
+`/settings` are reached from More and mark nothing; More does not stay lit for its own children.
+The phone puts those five outside `(tabs)` as pushed screens, so the platforms differ in shape
+here. A decision, filed.
+
+**The remote drawer's edge tab paints over row content and takes its presses.** Measured at CSS
+x 390–420 in a 420pt viewport: on More the Lists chevron is wholly covered and a press meant for
+the row opens the drawer; on the calendar it eats the last two letters of a tag. The app already
+has the pattern for the fix — `<main>` reserves the tab bar's own measured height — and nothing
+reserves the equivalent gutter. §6.167 kept this tab without ever photographing it.
+
+**`People.tsx` has the same JSX weld one shape over**, `{heading}` above a `{count && <span
+className="ml-1.5">}`, so the text is `Following3`. No shot shows it, because People renders no
+sections without sync. The sweep deliberately does not cover expression-over-expression, since
+`{a}` over `{b}` is the shape of every list in the tree. It wants a register, not a regex.
+
+**Two shot files are byte-identical** — `00-addtolist-empty-foot.png` and
+`15-title-addtolist-foot.png`, both `c6e2aae8…` — because a `-foot` is filed for any page over
+120pt and the foot of a long title page is the same whatever reveal is open above the fold. So the
+register's 137 is at least one photograph short of 137 distinct ones. A consequence of a rule
+worth keeping, written down rather than repaired.
+
+**72 shots read, and the backlog is not 0.** Re-run `node design/unread.mjs` after the design
+passes rather than trusting this sentence — three agents named shots in their reports, and a name
+in a report is not a name in doc 9.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

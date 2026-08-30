@@ -50,7 +50,7 @@ export function StarRating({
           // else at 200%, making the control 480 wide and pushing four and a half
           // stars through five off the side of the screen.
           //
-          // `min-h-[24px] min-w-[48px]` until §6.186, which is the same pixels and says
+          // `min-h-[24px] min-w-[48px]` until §6.187, which is the same pixels and says
           // nothing about which pixels. The token spelling is `var(--spacing-tap)` and
           // `var(--spacing-s48)` — absolute in exactly the same way, and now the WCAG
           // floor by name and two of it for the two half-targets each star carries. This

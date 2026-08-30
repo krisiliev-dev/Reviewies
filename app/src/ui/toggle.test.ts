@@ -67,7 +67,7 @@ describe('a setting that is on or off', () => {
      *
      * This was scoped to this component because nothing swept the rest: `h-11 w-11` on
      * `CrossOff` and `min-h-12` on `Button` were the same 44 and 48 arrived at twice, and
-     * `space.test.ts`'s `UTILITY` regex covered none of `size`/`h`/`w`/`min-h`. §6.186
+     * `space.test.ts`'s `UTILITY` regex covered none of `size`/`h`/`w`/`min-h`. §6.187
      * widened it and the scope argument is spent — twenty-three sites in eleven files, and
      * the sentence above that *"the others agree with the table"* was wrong about all of
      * them: Tailwind's own numeric steps compile to `calc(var(--spacing) * n)` with
@@ -112,7 +112,7 @@ describe('a setting that is on or off', () => {
      * It is in `mark.test.ts` now, which owns `Mark.tsx`; this paragraph's own last line
      * said that was where it belonged and that it was here because the defect was found
      * here. Six of the seven call sites had it right, and the seventh is this one, so what
-     * stays behind is the assertion about *this* component. §6.186.
+     * stays behind is the assertion about *this* component. §6.187.
      */
     // The premise, read rather than remembered: if `Mark.tsx` stops sizing in `em` this
     // whole clause is about a collision that no longer happens, and should be re-measured.

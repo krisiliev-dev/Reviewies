@@ -36,13 +36,47 @@ export const SHOT_DIRS = [
   'design/real-screens',
 ];
 
+/**
+ * Directories that exist, and the ones this checkout cannot see.
+ *
+ * `git ls-files design/screens` returns **nothing** — every shot directory is gitignored and
+ * exists only where a capture script has run. So on a fresh clone `readdirSync` threw, and
+ * `docsReferences.test.ts`, which reads this to report the backlog, failed with a raw `ENOENT`
+ * for anybody who had not run a design pass. §6.187, found by an agent checking the tree out
+ * on a Mac.
+ *
+ * A missing directory is **not zero shots**. That is §6.57, which this file's own header
+ * already invokes about the proxy it measures, and it is the same distinction one level down:
+ * "the record has read everything" and "I cannot see the photographs" are different answers
+ * and only one of them is about the record. `absent` is returned so a caller can say which.
+ */
 export function shots() {
-  return SHOT_DIRS.flatMap((dir) =>
-    readdirSync(resolve(ROOT, dir))
-      .filter((f) => f.endsWith('.png'))
-      .map((f) => `${dir}/${f}`),
-  );
+  const found = [];
+  const absent = [];
+  for (const dir of SHOT_DIRS) {
+    let entries;
+    try {
+      entries = readdirSync(resolve(ROOT, dir));
+    } catch {
+      absent.push(dir);
+      continue;
+    }
+    for (const f of entries) if (f.endsWith('.png')) found.push(`${dir}/${f}`);
+  }
+  missing = absent;
+  return found;
 }
+
+/**
+ * Which directories the last `shots()` could not open. Empty after a design run.
+ *
+ * A separate export rather than a property hung on the function, because a property on a
+ * function is invisible to the type `tsc` infers for an imported `.mjs` and the consumer
+ * would not compile. Found by `npm run verify` immediately, which is the argument for
+ * running it rather than the workspace's own typecheck.
+ */
+let missing = [];
+export const missingShotDirs = () => missing;
 
 /**
  * Named, meaning the whole basename appears — not a prefix of a longer one.
@@ -71,5 +105,12 @@ if (process.argv[1] === import.meta.filename) {
   const all = shots();
   const left = unnamed();
   console.log(`${all.length} shots, ${left.length} never named in doc 9\n`);
+  if (missingShotDirs().length) {
+    console.error(
+      `Could not look in ${missingShotDirs().length} of ${SHOT_DIRS.length} directories — ` +
+        `${missingShotDirs().join(', ')}. Run \`npm run design\` first; the count above is of what ` +
+        'this checkout can see, which is not the same as what exists.',
+    );
+  }
   for (const p of left) console.log(p);
 }

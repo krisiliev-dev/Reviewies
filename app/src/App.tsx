@@ -245,7 +245,7 @@ function TabBar() {
                 // the generated token layer landed — `poster.test.ts` states the same
                 // fact from the other side, that *"the web's type is in `px` and never
                 // answered the browser's font-size setting"*. The claim travelled: the
-                // 200% simulation in `app/smoke.mjs` was making it too. §6.186.
+                // 200% simulation in `app/smoke.mjs` was making it too. §6.187.
                 `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-l120 break-words ${
                   isActive ? 'text-ink' : 'text-ink-secondary'
                 }`

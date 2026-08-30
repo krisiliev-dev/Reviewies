@@ -196,7 +196,13 @@ describe('every workspace', () => {
     // clause already there — and two giving `shipping.test.ts` the web manifest it had
     // never read: every icon resolves to a file in the build, and the splash and tint come
     // out of the token table.
-    core: 928, app: 680, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 688, up eight: §6.187, five worktrees merged. The watchlist editor's row-and-grow
+    // pair; the web title page's depth-1 name; the JSX weld sweep; `paletteMembers`, which
+    // asks that every colour is painted by something or carries a written reason; and the
+    // box sweep, which is the one that pays — a sibling of `UTILITY` for the box a thing is
+    // drawn in rather than the space between things, five defects deep including a 16px
+    // WCAG target the old suite passed without a murmur.
+    core: 928, app: 688, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

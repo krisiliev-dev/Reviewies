@@ -72,8 +72,18 @@ function hexes(value: unknown, into: string[] = []): string[] {
  *
  * Read from the built manifest rather than from the config, because that is the file a phone
  * fetches and `vite-plugin-pwa` is what writes it — the config could be right and the plugin
- * still emit something else. It needs `npm run build --workspace app` to have run, which
- * `npm run verify` does; the clause says so rather than silently passing on a stale one.
+ * still emit something else.
+ *
+ * **`verify` builds the app before it tests it, and §6.187 is why.** When this clause was
+ * written `verify` ran `test` and *then* `build`, so on any checkout whose `app/dist` was
+ * absent or stale both clauses failed — and on the machine that wrote them, which had just
+ * built, they passed. A device agent on a Mac checked out a clean tree and found `verify`
+ * red for three reasons, this being one; every one of them passed where it was written.
+ * That is the §6.186 shape exactly, one layer down: a fact about a working directory,
+ * shipped as a fact about the code.
+ *
+ * The clause still asserts the file exists rather than skipping. A guard that goes quiet
+ * when its input is missing is a guard that reports green on a machine that cannot run it.
  */
 const WEB_DIST = resolve(ROOT, 'app/dist');
 const webManifestPath = resolve(WEB_DIST, 'manifest.webmanifest');
