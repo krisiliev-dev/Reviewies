@@ -87,7 +87,7 @@ export default function MoreScreen() {
               name: `${link.label} — ${link.detail}`,
               to: link.href,
             }}
-            trailing={<Chevron points="right" color={theme.inkSecondary} size={16} />}
+            trailing={<Chevron points="right" color={theme.inkSecondary} />}
           />
         ))}
 

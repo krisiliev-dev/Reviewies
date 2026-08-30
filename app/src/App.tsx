@@ -255,14 +255,21 @@ function TabBar() {
                 The active tab is marked by a rule, not only by being brighter. §6.90
                 replaced a pink active tint with `ink` on `ink.secondary` — a brightness
                 step where there was a hue — and recorded that as a regression rather
-                than shipping it quietly. This is the replacement: `border.tally`, the
-                same 3pt token the phone's tab bar now uses and the shelf rule uses,
-                because they are the same idea. Two channels, so the wayfinding survives
-                being read by somebody who cannot separate those two greys.
+                than shipping it quietly. This is the replacement: `TAB_MARKER`, in
+                `core/src/ui/tabIcon.ts`, which the phone's tab bar reads too. Two
+                channels, so the wayfinding survives being read by somebody who cannot
+                separate those two greys.
 
-                A top border rather than a filled box: 3 is `border.tally` and has a
-                token, where a 3px height would be an off-scale arbitrary value that
-                `space.test.ts` correctly refuses.
+                A top border rather than a filled box: `TAB_MARKER.thickness` is
+                `border.tally` and has a token, where a 3px height would be an off-scale
+                arbitrary value that `space.test.ts` correctly refuses.
+
+                The three utilities below are the table, in Tailwind's units — `w-6` is
+                its 24, `border-t-tally` its `border.tally`, `gap-0.5` its 2. The web
+                writes generated utilities rather than inline values by decision, so
+                `tabIcon.test.ts` derives these class names from `TAB_MARKER` and
+                compares, rather than letting them agree with the phone by hand: the gap
+                is the one that had already drifted, 2 here against 4 there.
               */}
               {({ isActive }) => (
                 <>

@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
+import { border, space } from '@reviewies/core/tokens';
 import {
   TAB_BAR,
   TAB_ICON_BOX,
   TAB_ICON_PATHS,
   TAB_ICON_SIZE,
+  TAB_MARKER,
 } from '@reviewies/core/ui/tabIcon';
 
 /**
@@ -116,6 +118,99 @@ describe('the tab bar’s marks', () => {
       }
       expect(source, `${platform} draws its icon as text`).not.toMatch(/fontSize|text\.s\d/);
     }
+  });
+
+  it('tints by the mechanism each platform has, not by an inherited paint the phone lacks', () => {
+    /*
+     * §6.183. The table's header said the two renderers were "both inheriting
+     * `currentColor` so the active tab still tints". **React Native has no inherited
+     * paint.** `mobile/src/ui/TabIcon.tsx` says so in its own header and puts
+     * `fill={color}` on the `Path`; the web writes `fill="currentColor"` and takes the ink
+     * from the link around it.
+     *
+     * Both tabs tint correctly, so this never cost a pixel. It cost a core table describing
+     * a mechanism one of its two readers does not have, which is the shape that gets the
+     * next decision made in the wrong place. The prose is corrected; this is the part of it
+     * a check can hold. `currentColor` on the phone's `Path` is not a no-op that falls back
+     * to the prop — react-native-svg has no such cascade, so the mark would go unpainted.
+     */
+    expect(RENDERERS.web, 'the web stopped inheriting its ink').toContain('fill="currentColor"');
+    expect(RENDERERS.phone, 'the phone is handed no ink to draw with').toContain('fill={color}');
+    expect(
+      RENDERERS.phone,
+      'the phone reaches for an inherited paint React Native does not have',
+    ).not.toContain('currentColor');
+  });
+
+  it('marks the active tab from one table, not three numbers written out twice', () => {
+    /*
+     * §6.183. The rule over the active tab is the most important piece of wayfinding in the
+     * product — §6.90's replacement for a hue that had become a brightness step — and it
+     * was three numbers, written out on both platforms, with nothing in the core about it
+     * at all. Two of the three agreed. The gap did not: `gap-0.5` (2) on the web against
+     * `marginBottom: space.s4` (4) on the phone.
+     *
+     * Both are on the space scale, so `space.test.ts` passed both and was right to: a scale
+     * can say a number is legal and cannot say two platforms picked the same one. That is
+     * the distinction this clause exists for, and it is the same one `key.test.ts` makes
+     * for the fascia.
+     */
+    expect(TAB_MARKER.thickness, 'the rule is off the border scale').toBe(border.tally);
+    expect(TAB_MARKER.width, 'the rule is off the space scale').toBe(space.s24);
+    expect(TAB_MARKER.gap, 'the gap is off the space scale').toBe(space.s2);
+
+    // The phone reads the three, by name, on the rule itself.
+    for (const [key, prop] of [
+      ['thickness', 'height'],
+      ['width', 'width'],
+      ['gap', 'marginBottom'],
+    ] as const)
+      expect(BARS.phone, `the phone sets the rule’s ${prop} by hand`).toContain(
+        `${prop}: TAB_MARKER.${key}`,
+      );
+
+    /*
+     * The web writes Tailwind's generated utilities rather than inline values, by decision —
+     * so the class names are derived from the table here rather than typed, the way
+     * `space.test.ts` reads the same scale through `px-3`. Typing `gap-0.5` in this file
+     * would make it the third copy of the number rather than the check on the second.
+     */
+    const quarters = (px: number) => String(px / 4).replace(/^0\./, '0.');
+    const thickness =
+      Object.entries(border).find(([, px]) => px === TAB_MARKER.thickness)?.[0] ?? '?';
+    for (const utility of [
+      `w-${quarters(TAB_MARKER.width)}`,
+      `gap-${quarters(TAB_MARKER.gap)}`,
+      `border-t-${thickness}`,
+    ])
+      expect(BARS.web, `the web’s bar does not draw the rule as ${utility}`).toContain(utility);
+  });
+
+  it('budgets the bar for the parts it actually holds', () => {
+    /*
+     * §6.183. `TAB_BAR_HEIGHT` was `space.s8 + size.tap + space.s4 + LABEL_LINE + space.s8`
+     * over a comment reading "the 24pt glyph, the 4pt gap under it", and it was wrong three
+     * ways at once: `size.tap` is the WCAG 2.5.8 *target floor*, not the glyph, which is
+     * `TAB_ICON_SIZE` = 22; the 4 is the rule's `marginBottom`, which puts it *above* the
+     * glyph rather than under it; and `border.tally` was not in the budget at all. So the
+     * column drew 3 + 4 + 22 = 29 in the 28 the sum allowed.
+     *
+     * One point over is not academic here. The bar is a fixed height and the label went to
+     * `s12` once without it: "Up Next" photographed as "Un Next", descenders gone. Measured
+     * in the export at 390x844 the item is 52pt with 46 of content, so the overflow was
+     * being absorbed by slack rather than clipping — which is exactly the state that ends
+     * at the next change, and the reason to state the parts rather than to leave a number
+     * that happens to be big enough.
+     *
+     * What this cannot see: a budget is not a measurement. `tabBarStyle.paddingBottom` could
+     * eat the room back and React Navigation has spacing of its own inside the item; only
+     * `design/measure.mjs` answers that, and it is not a guard.
+     */
+    const height = /const TAB_BAR_HEIGHT =([^;]+);/.exec(BARS.phone)?.[1] ?? '';
+    expect(height, 'the bar states no height').not.toBe('');
+    expect(height, 'the bar budgets the 24pt tap floor for a 22pt glyph').not.toContain('size.tap');
+    for (const part of ['TAB_MARKER.thickness', 'TAB_MARKER.gap', 'TAB_ICON_SIZE', 'LABEL_LINE'])
+      expect(height, `the bar’s height does not count ${part}`).toContain(part);
   });
 
   it('is one mark, not a second name for the reader to arrow past', () => {

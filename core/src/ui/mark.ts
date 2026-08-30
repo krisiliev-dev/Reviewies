@@ -33,9 +33,53 @@
  * expanded points back at what you came from. It reads as a hinge rather than as a
  * signpost, which suits a row that opens in place.
  */
+import { border, text } from '../tokens.ts';
 
 /** The square every path below is drawn inside. */
 export const MARK_BOX = 24;
+
+/**
+ * How big a chevron in a row is drawn.
+ *
+ * `text.s16` rather than a bare 16, because the size *is* the row's text size. The web
+ * draws the mark `1em` square inside a `text-s16` box, so on that platform it already takes
+ * the size of the words beside it and no number was ever written. React Native has neither
+ * `em` nor an inherited font on an `Svg`, so the phone has to be told — and a number the
+ * phone is told by hand is a number that drifts. `mobile/app/lists.tsx` was drawing its
+ * disclosure chevron at **20** against the web's 16 while the other three pairs — season,
+ * calendar, more — all agreed at 16. Three-quarters agreement with no argument anywhere is
+ * what a slip looks like from the outside.
+ *
+ * `TAB_ICON_SIZE` argues the opposite way for the tab bar, and both are right. A tab icon is
+ * not beside text: the label sits under it and five of them cross a phone, so it is pinned
+ * at 22 and stays out of the label's room. A row's chevron is on the line it belongs to, so
+ * it takes that line's size, and if the type scale moves both platforms move with it.
+ *
+ * The one chevron this does not cover is the remote drawer's handle, which is not in a row —
+ * it is a tap target of its own, drawn at `text-s20`, and the phone has no counterpart. A
+ * number only one platform writes is a number nothing can disagree with. The day the phone
+ * grows a handle, it belongs here.
+ */
+export const CHEVRON_SIZE = text.s16;
+
+/**
+ * The weight every mark here is stroked at — one weight, not one per mark per platform.
+ *
+ * `border.mark` is the token named for exactly this, and the chevron was already on it by
+ * coincidence: both renderers typed a bare `2`. The tick typed **2.5**, once per platform
+ * and stated nowhere — grep either tree and that value appears at those two lines and
+ * nowhere else. `tokens.ts` builds its scales by killing the members that carry no
+ * distinction (13 and 15, one point either side of 14, went for this reason), and 2.5 sits
+ * between `mark` and `tally` carrying none that anybody wrote down.
+ *
+ * It was not buying the difference it looks like it was buying, either. Both marks are drawn
+ * in the same `MARK_BOX` and the tick is *rendered* larger than the chevron — 20 against 16
+ * in `CrossOff` — so at one weight the tick already lands heavier on the glass: 2/24 x 20 =
+ * 1.67px against 2/24 x 16 = 1.33px. The extra half point was a second helping of a
+ * difference the sizes had already made. Folding it onto the scale takes 0.4px off the
+ * tick's stroke and puts the last unowned number in this file on a token.
+ */
+export const MARK_STROKE = border.mark;
 
 /** A chevron, pointing right. Every other direction is this, rotated. */
 export const CHEVRON_PATH = 'M9 5l7 7-7 7';

@@ -212,8 +212,9 @@ function ListCard({
         run: onToggle,
       }}
       /* One chevron, rotated, and `disclosure` owns which way: this ran right/down while
-         the web ran down/up — two conventions for one control. §6.144. */
-      trailing={<Chevron points={disclosure(expanded)} color={theme.inkSecondary} size={20} />}
+         the web ran down/up — two conventions for one control. §6.144. No size, because
+         `CHEVRON_SIZE` owns that: this one was drawing at 20 against the web's 16. */
+      trailing={<Chevron points={disclosure(expanded)} color={theme.inkSecondary} />}
       under={
         expanded ? (
           <View style={styles.cardItems}>
