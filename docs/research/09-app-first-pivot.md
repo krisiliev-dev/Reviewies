@@ -13454,6 +13454,11 @@ an argument again, and this entry is about the difference between those.
 into both Stats screens fails it, and putting `Watchlist` back into a masthead fails the
 clause that says what is left is the generic half.
 
+**All three design passes have run** since the word pass, with no hollow shots — which is
+what makes the paragraph above about `<Masthead>` titles a measurement rather than a hope:
+had the extractor's middle mistake survived, every screen title would have been wrong on
+every shot.
+
 
 
 ## 7. What is still not known
