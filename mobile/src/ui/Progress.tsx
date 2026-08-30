@@ -5,7 +5,7 @@ import {
   progressPercent,
   type ProgressSize,
 } from '@reviewies/core/ui/progress';
-import { border, theme } from './theme';
+import { theme } from './theme';
 
 /**
  * The React Native renderer of `core/src/ui/progress.ts`. The decisions are there.
@@ -46,11 +46,13 @@ export function Progress({
 }
 
 const styles = StyleSheet.create({
+  // A ground, not an outline. Yoga is border-box with no way to ask for anything else, so
+  // a 1pt border is 2pt off the height the fill measures against, and `rule` is 2pt tall:
+  // see `core/src/ui/progress.ts`, which has the measurements.
   track: {
     width: '100%',
     overflow: 'hidden',
-    borderWidth: border.hairline,
-    borderColor: theme[PROGRESS_COLOUR.track],
+    backgroundColor: theme[PROGRESS_COLOUR.track],
   },
   done: { height: '100%', backgroundColor: theme[PROGRESS_COLOUR.done] },
 });

@@ -23,6 +23,37 @@
  * `mobile/src/ui/theme.ts` is `color.dark` and nothing switches it. The day the phone gains a
  * light mode, every one of its thirteen amber spinners inherits this problem — so the rule
  * lives in the table rather than in the web's stylesheet.
+ *
+ * ## The track is a colour, and it had been drawn as an outline
+ *
+ * Both renderers drew the track as a **1pt border** — `border border-stroke-hairline` on the
+ * web, `borderWidth: border.hairline` on the phone — while this file states a height and a
+ * colour and says nothing about a stroke. Preflight sets `box-sizing: border-box` and Yoga is
+ * border-box with no way to ask for anything else, so the fill's `h-full` / `height: '100%'`
+ * resolved against the track's *content* box: the stated height, less two hairlines.
+ *
+ * Measured rather than reasoned about, on both platforms, with the instrument in
+ * `design/measure.mjs`'s spirit — the fill's `getBoundingClientRect().height` inside the
+ * track that carries the accessible name:
+ *
+ * - the web on `/stats`, three tally bars at 100%, 34% and 9%: track 6.0pt outer, borders
+ *   1px top and bottom, **fill 4.0pt**. `bar` is 6 because §6.90 wanted a shape you can
+ *   compare down a column; it was drawing four.
+ * - the phone's export on `/remote` mid-scan: track 2.0pt, the same two hairlines, **fill
+ *   0.0pt** — and 33.8pt *wide*, so the one thing on screen that says a scan is getting
+ *   somewhere was a static hairline at every percentage. `rule` has exactly one call site,
+ *   `mobile/src/devices/RemotePanel.tsx`, and it had never drawn a pixel of progress.
+ *
+ * The other answer was to add the border back into the numbers — `rule` at 4pt to draw 2.
+ * That is the defect, not the repair: `PROGRESS_SIZE` would state one number while the box
+ * on screen was another, which is the whole class of thing the last five sprints have been
+ * about. So the table keeps its heights and the renderers stop insetting them. The track's
+ * colour was never a stroke in the first place — this file has only ever said `strokeHairline`,
+ * and `stroke` there names the *token family*, not a drawing instruction. It is now the
+ * ground the fill sits on, which is also what makes a partly-filled bar legible: the unfilled
+ * part is a colour rather than an outline around a gap. `app/src/ui/progress.test.ts` holds
+ * both renderers to it — the fill fills the track, the track insets nothing, and the height
+ * the web's class asks for is the height this table states.
  */
 import { radius, space } from '../tokens.ts';
 
@@ -43,9 +74,12 @@ export const PROGRESS_SIZE = {
 } as const satisfies Record<ProgressSize, { height: number; radius: number }>;
 
 /**
- * The filled part is a **mark**, and the track is a hairline.
+ * The filled part is a **mark**, and the track is the hairline *colour*.
  *
  * Not `working.fill`. See above — this is the whole point of the component.
+ *
+ * Both are grounds: the fill is painted over the track, and neither is a stroke. Drawing
+ * the track as one is what left `rule` with a fill nothing tall, also above.
  */
 export const PROGRESS_COLOUR = { done: 'workingMark', track: 'strokeHairline' } as const;
 

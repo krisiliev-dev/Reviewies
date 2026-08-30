@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { PROGRESS_COLOUR, PROGRESS_FLOOR, PROGRESS_SIZE, progressPercent } from '@reviewies/core/ui/progress';
-import { color, radius, space } from '@reviewies/core/tokens';
+import { border, color, radius, space } from '@reviewies/core/tokens';
 
 /**
  * `Progress`, and the amber that was failing in light mode.
@@ -160,5 +160,107 @@ describe('a progress bar', () => {
       expect(Object.values(radius), `${size}'s radius is off the scale`)
         .toContain(PROGRESS_SIZE[size].radius);
     }
+  });
+
+  it('draws the height it states, because the fill measures against the content box', () => {
+    /*
+     * The clause above holds the table against the token scale and stops there — `space`
+     * contains 2, so `rule: { height: space.s2 }` passes it, and the bar it describes was
+     * drawing nothing at all. A number checked against the scale it came from is not
+     * checked against the box anybody sees.
+     *
+     * Measured, both platforms, before this clause existed. `/stats` in the web build:
+     * track 6.0pt outer, `border-top` and `border-bottom` 1px, **fill 4.0pt** at 100%,
+     * 34% and 9%. The phone's export at `/remote` mid-scan: track 2.0pt, the same two
+     * hairlines, **fill 0.0pt** while 33.8pt wide — a bar with a percentage and no body.
+     *
+     * The cause is one line of box model on each platform. Preflight sets
+     * `box-sizing: border-box` and Yoga is border-box with no way to ask for anything
+     * else, so the fill's `h-full` / `height: '100%'` resolves against the track's
+     * *content* box — the stated height less whatever the track insets it by. A 1pt
+     * outline top and bottom takes two of them:
+     */
+    expect(PROGRESS_SIZE.bar.height - 2 * border.hairline, 'the tally bar has four of its six')
+      .toBe(4);
+    expect(PROGRESS_SIZE.rule.height - 2 * border.hairline, 'the rule has nothing left at all')
+      .toBe(0);
+
+    const web = read('app/src/ui/Progress.tsx');
+    const track = /^const TRACK = '([^']*)';$/m.exec(web);
+    const done = /^const DONE = '([^']*)';$/m.exec(web);
+    const sizes = /^const SIZE_CLASS = \{([\s\S]*?)^\} as const/m.exec(web);
+    expect(track && done && sizes, 'the web renderer no longer states its track, fill and sizes')
+      .toBeTruthy();
+
+    /*
+     * The web writes its heights as class names, so the table's number and the drawn box
+     * are two spellings of one fact and nothing was comparing them. `h-s6` against 6.
+     */
+    for (const size of ['bar', 'rule'] as const) {
+      const token = Object.entries(space).find(([, pt]) => pt === PROGRESS_SIZE[size].height)?.[0];
+      const line = new RegExp(`${size}: '([^']*)'`).exec(sizes?.[1] ?? '')?.[1] ?? '';
+      expect(line, `the web draws ${size} at a height the table does not state`)
+        .toContain(`h-${token}`);
+    }
+
+    /*
+     * Nothing between the two boxes. A border or a padding on the track is subtracted
+     * from the height the table states and the fill is what loses it, so the track may
+     * carry no inset at all — which is why the track's colour is a **ground** rather than
+     * a stroke, and why both halves are asserted: a track with the border taken off and
+     * no background is an invisible track, and that is not the fix either.
+     */
+    const inset = /^(?:border(?:$|-)|p-|p[trblxyse]-)/;
+    /*
+     * The fill says its height once, and says the whole track. `h-full max-h-px` was
+     * planted against the first version of this clause and passed it: a `toContain`
+     * satisfied by a class the next class overrules, drawing 1.0pt in a 6.0pt track.
+     */
+    const classes = (s: string | undefined) => (s ?? '').split(/\s+/);
+    expect(classes(done?.[1]).filter((c) => /^(?:max-|min-)?h-/.test(c)),
+      'the fill states a height other than the whole of its track').toEqual(['h-full']);
+    expect(classes(track?.[1]).filter((c) => inset.test(c)),
+      'the web track insets the box its fill measures against').toEqual([]);
+    // `strokeHairline` -> `stroke-hairline`: the table names the colour, not this file.
+    const ground = `bg-${PROGRESS_COLOUR.track.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+    expect(track?.[1], 'the web track lost the colour that makes it a track').toContain(ground);
+
+    const phone = read('mobile/src/ui/Progress.tsx');
+    const style = (key: string) => new RegExp(`${key}: \\{([\\s\\S]*?)\\}`).exec(phone)?.[1] ?? '';
+    expect(phone, 'the phone stopped taking its height from the table')
+      .toContain('height: metrics.height');
+    expect(style('done'), 'the phone fill stopped filling its track').toContain("height: '100%'");
+    expect(style('done').match(/\b(?:max|min)Height\b/g) ?? [],
+      'the phone fill overrules its own height').toEqual([]);
+    expect(style('track').match(/\b(?:border\w*Width|padding\w*)\b/g) ?? [],
+      'the phone track insets the box its fill measures against').toEqual([]);
+    expect(style('track'), 'the phone track lost the colour that makes it a track')
+      .toContain('backgroundColor: theme[PROGRESS_COLOUR.track]');
+
+    /*
+     * And the last way a stated height stops being the drawn one: the web takes a
+     * `className`, appended after the size class, so a call site can quietly overrule it.
+     * §6.62's bar-with-no-name lived at the call sites too.
+     */
+    const overrides: string[] = [];
+    let seen = 0;
+    for (const file of filesUnder('app/src')) {
+      if (file.endsWith('ui/Progress.tsx')) continue;
+      for (const m of read(file).matchAll(/<Progress\b[\s\S]*?\/>/g)) {
+        seen++;
+        const passed = /className="([^"]*)"/.exec(m[0])?.[1] ?? '';
+        if (passed.split(/\s+/).some((c) => /^h-/.test(c))) overrides.push(`${file}: ${passed}`);
+      }
+    }
+    expect(seen, 'no bar was scanned, so this proved nothing').toBeGreaterThan(0);
+    expect(overrides, 'a call site gave the bar a height the table does not state').toEqual([]);
+
+    /*
+     * What this cannot see, said out loud rather than left to be discovered: a *transform*.
+     * `scale-y-50` on the track was planted last and passes every assertion above — the
+     * declared height stays 6px and the drawn box measures 3.0pt — because it scales at
+     * paint time and nothing in the source arithmetic is wrong. `design/measure.mjs` is
+     * the instrument for that class, and a rectangle is the only thing that answers it.
+     */
   });
 });
