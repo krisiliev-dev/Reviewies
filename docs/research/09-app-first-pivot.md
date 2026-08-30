@@ -15140,6 +15140,150 @@ passes rather than trusting this sentence — three agents named shots in their 
 in a report is not a name in doc 9.
 
 
+### 6.188 The map was wrong, and a phone said so
+
+A person put the app on an iPhone and the largest thing they found was not a defect in any
+screen. It was that **the information architecture does not match what a tracking app is
+expected to be** — Up Next has no past, Upcoming is a separate destination, *"I am unsure what
+the difference between the Watchlist and Upcoming is"*, Search and Discover should be one
+surface, and Discover should be browsable *"as if a person is in a CD shop looking at the CD
+boxes"* rather than a list of shows with buttons.
+
+`docs/design/direction.md` decided what the product **looks like**. Nothing had ever decided
+what it **is a picture of**. So the map came first: `docs/design/architecture.md`, written
+before any code, naming each surface by *the question a person arrives with* — because a
+surface that cannot be named that way is one that will be confused with its neighbour, which
+is precisely the report.
+
+| Surface | Question |
+| --- | --- |
+| Up Next | *What do I watch tonight, what have I just watched, what is coming?* |
+| Discover | *What is there, and where is that one thing?* |
+| Watchlist | *What did I mean to watch, and why?* |
+| More | Everything not done daily |
+
+Four tabs. Six of the seven requests built. **The refusals are where the document earned its
+keep**, and two of them rest on measurements rather than taste: the trailer is not started
+because no metadata method returns a video, so it is a new endpoint implemented three times
+plus a licence question — and a control that is dark against the fixture provider is a
+photograph of an affordance nobody can press. Runtime and seasons filters are refused because
+`/search/multi` and `/trending` return neither, so filtering twenty browse results would cost
+twenty detail requests; they are shown on the back of a box where cached.
+
+#### What only running it could find
+
+`onLayout` on `react-native-web` reports a **size** where a device reports a **position**, and
+then fires only when a size *changes* — so the phone arrived at the top of its own history
+twice and the scroll to the present did nothing at all. No typecheck saw it, no source guard
+states a rule about it, and the export had been returning zero the whole time. Measured after
+the repair: `scrollTop` 450 on the web, 359 on the phone.
+
+#### The suite described the architecture it was written for
+
+The rework's smoke edits could not be run — the ports are shared. Run: **four failures of 108
+checks**, and the 108 was the tell. Repaired, the same file executes **279**. About a hundred
+and seventy checks had not been running, behind a click on a tab that no longer exists.
+
+Two of them are the shape this record keeps returning to:
+
+- Discover has two states now, and three earlier sections search there and leave a query
+  typed — so the browse checks measured a search. `0 suggested` failed, and the *exclusion*
+  check **passed on those same zero rows**. The comment directly above that pair already
+  records it happening to them once before, for a different reason.
+- The scrobble read the first `S1E` on the page. The past sits above the present now, so it
+  posted for an episode already watched, the core correctly recorded a rewatch, the count went
+  16 → 16, and the check reported a broken extension channel. **The channel was fine.** A walk
+  that names the wrong episode gets the right answer to the wrong question. It reads the ring's
+  accessible name now — a control's name is a claim about what it does, where page text is only
+  a claim about where you are looking.
+
+And one that had never worked: **the sync probe answered "configured" on every build there has
+ever been.** Its sentinel belongs to the conversation screen and has never been renderable on
+the account panel, and the non-vacuity clause added beside it matched the very branch it was
+meant to rule out — both halves pointing the same way, which is why it read as green. Found on
+a worktree with no `.env`.
+
+#### The clipping a device reported is not where the record said
+
+§6.187 named `numberOfLines` against TextKit's used rect. An agent read all six bundled font
+files and measured every mapped glyph against its own box: **0 of 657** in Archivo Narrow
+SemiBold reach below it, **0 of 564** in Newsreader Italic. The export agrees at 100%, 135.3%,
+214.3% and 357.1% — the real iOS ladder — where a title's ink clears the bottom by 2, 4, 5 and
+10 points. The mechanism is real and it does not fire. The remaining candidate is the tab bar,
+by elimination, and it is one photograph away.
+
+The instrument could not have said that a week ago. Its census read `line-height` off the DOM,
+saw `normal`, wrote `null`, and dropped from every statistic exactly the runs it was sent to
+measure — a census that omits its own subject and prints a table anyway. `normal` is not the
+absence of a line box; it is the face's own, which is the box iOS builds a used rect from.
+
+What the repaired census found instead was a quieter defect beside it: `Row`'s note, the only
+multi-line run in the build set solid, in a face whose box is exactly 1.000 em against ink
+spanning 1.1845 — lines colliding by a fifth of an em, 7.9pt at the largest step, while the web
+set the same italic at 1.5 inherited.
+
+#### Four more, briefly
+
+A country picker that **outlived its own epitaph by four sprints** — `stats.tsx` still carries
+*"`Chip` was here"*, and one screen over the chip was still there: 24 radios at 32pt against a
+44pt floor, a fill on a ruled page, two corners for one control, and no `radiogroup` at all.
+The build-wide sweep for a hand-rolled radio found no second offender, which is the answer.
+
+Three filed findings settled, each a number doing a second job: `formatDay` written for a
+screen that only looks forward and handed an episode history; `paddingX` as an inset on a tone
+with nothing to be inset from; a `measure` taken off the longest row and then asked about a
+paragraph. `COPY.title.airs` turned out to be typed identically into both screens **inside a
+template literal**, where the duplication sweep cannot see it — two copies no guard could
+report.
+
+#### My own errors, which were the same one three times
+
+I recommended a half-sprint of portability fixes that had been committed an hour earlier,
+reading a device report written against an older tip as a description of now. I planted the
+wrong defect against a new guard and briefly read a correct failure as a survivor. And I let
+`>= 8` and a backtick reach a shell unquoted, producing an empty file named `=` and a commit
+message with its code spans eaten.
+
+All three are one shape, and it is the shape of §6.186: **a claim about one state, applied to
+another.** The record now has a device that disagrees with it, a second person committing to
+the same branch, and four agents merging in parallel — and the cost of assuming a state rather
+than reading it has gone up accordingly.
+
+
+## What is not done, and why it is said here
+
+**The trailer, and only the trailer**, of the seven things asked for. The back of a box is laid
+out with room for it; what is missing is a metadata method that returns a video, on three
+providers, plus a licence question nobody has asked.
+
+**`npm run design && npm run verify` is red on any credential-free checkout.** A design run
+without a TMDB token leaves two of the four shot directories empty, and `docsReferences.test.ts`
+correctly reports a half-built run. That is the clause behaving as written and it is still a
+sequence a newcomer will hit. Left alone rather than loosened by an agent who was not asked to
+touch it, which was the right call and leaves the decision here.
+
+**Seven of eleven device questions are still open**, and the ordering has changed: the clipping
+question has narrowed to one photograph of the More screen at maximum text — is the cropped text
+the row's words or the tab bar's labels — and **haptics** remains the one that would settle a
+decision already made in writing, because `surface.ts` accepts a measurably weaker press
+contrast on the argument that a haptic carries the confirmation.
+
+**The shot backlog moved in both directions and has not been re-counted since the rework.**
+Routes moved, `04-search` and `05-discover` are now one address in two states, and the register
+files cite shot names that the capture scripts still produce. `node design/unread.mjs` is the
+only honest source and it has not been run against this tip.
+
+**Nothing has judged the new surfaces by looking.** The shelf, the past above the present, the
+filter row and the back of a box are photographed by the design pass and have been read by
+nobody. That is the instrument that produced most of this record's product defects, and it is
+now a sprint behind the product again.
+
+**One survivor, named:** keeping `NARROW`/`WIDE` reading `BOX_COLUMNS` while writing conflicting
+classes beside them satisfies all four bindings, draws a different grid, and only an oxlint
+*warning* notices. The rule is restated and re-planting fails it; the general shape — a binding
+satisfied while the value it binds is overridden one line along — is not closed.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.

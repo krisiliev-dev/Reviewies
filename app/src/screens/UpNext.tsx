@@ -197,7 +197,7 @@ function OutNow() {
   // somebody's first minute with the app.
   if (entries.length === 0 && libraryCount !== 0) {
     return (
-      <Present>
+      <Present writing={importing || unmatched}>
         <div className="pt-2">
         {/* Three states, not two. "Nothing here yet … until they are matched" plus a
             button was what somebody saw after importing years of history: an empty
@@ -291,7 +291,7 @@ function OutNow() {
   }
 
   return (
-    <Present>
+    <Present writing={importing || unmatched}>
       {/*
         Here too, and this is the whole point of the second copy.
         *
@@ -350,7 +350,30 @@ function OutNow() {
  * selector is a screen that breaks when the shell changes. `behavior` is left at the
  * default — an animated scroll on arrival is a screen that moves while you are reading it.
  */
-function Present({ children }: { children: React.ReactNode }) {
+/**
+ * ## Not while the library is being written
+ *
+ * `importing` is not a nicety and it is not only about cost. §6.80's third state is
+ * "still working", and a past drawn over an import is a list that reorders under you at
+ * three hundred rows a second — a *history* whose whole claim is that it is the order
+ * things happened in, redrawn faster than anybody can read it.
+ *
+ * The cost is real too, and it is the phone's. `useLive` re-runs **every** query in the
+ * app on any write, because expo-sqlite's change listener fires per statement — its own
+ * header says so — so a 266-row import ran `getHistory` a few hundred times, each walking
+ * forty watches and their titles. `mobile/smoke.mjs` measured the result: the import stopped
+ * landing inside the ten seconds that suite samples for, on a build where the web's
+ * equivalent was unaffected. `docs/design/architecture.md` section 9 named this screen's
+ * length as the risk to look at first; this is the first place it bit.
+ */
+function Present({
+  writing,
+  children,
+}: {
+  /** Truthy while the library is still arriving: an import in flight, or rows to match. */
+  writing?: string | number;
+  children: React.ReactNode;
+}) {
   /*
    * The history is asked for here rather than inside `Past`, and it is one query rather
    * than two. The scroll has to wait for the rows it is scrolling past — `useLiveQuery`
@@ -359,7 +382,7 @@ function Present({ children }: { children: React.ReactNode }) {
    * for ever. That is the same screen as not scrolling at all and considerably harder to
    * see, so the condition is the data rather than a timer.
    */
-  const past = useLiveQuery(() => getHistory(), [], undefined);
+  const past = useLiveQuery(async () => (writing ? [] : getHistory()), [writing], undefined);
   const present = useRef<HTMLDivElement>(null);
   const arrived = useRef(false);
 

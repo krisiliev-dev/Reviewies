@@ -219,7 +219,11 @@ describe('every workspace', () => {
     // boxless tone's edge, and prose taking its own measure — plus the smoke probe that had
     // been reading a sentinel through a negation, so "I did not find the sentence" and
     // "this build has credentials" were the same answer and ~210 checks never ran.
-    core: 943, app: 703, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 971, app 710, mobile 47: §6.188's architecture rework and the four branches that
+    // landed beside it. The web smoke went from 108 executing checks to 279 in the same file,
+    // which is not counted here — this table counts `it()` clauses, and the hundred and
+    // seventy that had stopped running were behind a click on a tab that no longer exists.
+    core: 971, app: 710, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
