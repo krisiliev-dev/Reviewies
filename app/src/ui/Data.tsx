@@ -1,4 +1,4 @@
-import { splitFigure } from '@reviewies/core/ui/data';
+import { splitFigure, type DataKind } from '@reviewies/core/ui/data';
 
 /**
  * The Tailwind renderer of `core/src/ui/data.ts`. The decisions are there.
@@ -26,16 +26,23 @@ const SIZE_CLASS = {
 
 export function Data({
   value,
+  kind = 'measure',
   size = 's14',
   className = '',
 }: {
   /** A number goes through `String` — `7`, `6.0h`, `12:34`, `7 days`, `S02E07`. */
   value: string | number;
+  /**
+   * `literal` for a value that is machine-readable whole — a filename, an address. The
+   * string cannot say so itself: `letterboxd.csv` has no digit in it and came back as a
+   * *unit*, in the body face, one line above `watched-2024.csv` in mono.
+   */
+  kind?: DataKind;
   size?: keyof typeof SIZE_CLASS;
   /** Colour and alignment only — the face, weight and tabular belong to the component. */
   className?: string;
 }) {
-  const { figure, unit } = splitFigure(String(value));
+  const { figure, unit } = splitFigure(String(value), kind);
   return (
     <span className={`${SIZE_CLASS[size]} ${className}`}>
       {figure && <span className={FIGURE_CLASS}>{figure}</span>}

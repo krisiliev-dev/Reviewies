@@ -133,7 +133,10 @@ export function ImportFiles({
             <ul className="mt-2 flex flex-col gap-1">
               {files.map((f) => (
                 <Note level="footnote" as="li" key={f.name}>
-                  <Data value={f.name} size="s12" /> — {f.outcome}
+                  {/* A filename is the literal, not a measure: `letterboxd.csv` has no
+                      digit in it and the split used to hand it back as prose, beside
+                      `watched-2024.csv` in mono. */}
+                  <Data value={f.name} kind="literal" size="s12" /> — {f.outcome}
                 </Note>
               ))}
             </ul>

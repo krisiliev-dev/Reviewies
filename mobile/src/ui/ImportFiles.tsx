@@ -133,7 +133,10 @@ export function ImportFiles({
           </Text>
           {files?.map((file) => (
             <Text key={file.name} style={styles.reportLine}>
-              <Data value={file.name} size="s12" style={styles.reportName} /> — {file.outcome}
+              {/* A filename is the literal, not a measure — see the web's twin. */}
+              <Data value={file.name} kind="literal" size="s12" style={styles.reportName} />
+              {' — '}
+              {file.outcome}
             </Text>
           ))}
           {report.warnings.map((warning) => (

@@ -88,7 +88,10 @@ export function RemotePanel({ remote }: { remote: Remote }) {
               accessibilityLabel={`Use ${found.name} at ${found.address}`}
             >
               <Text style={styles.deviceName}>{found.name}</Text>
-              <Data value={found.address} size="s12" style={styles.deviceAddress} />
+              {/* An address is the literal, whether or not it is a dotted quad: SSDP
+                  reports a LOCATION URL, so this is `livingroom.local` as often as
+                  `192.168.1.4`, and only one of those has a digit to be recognised by. */}
+              <Data value={found.address} kind="literal" size="s12" style={styles.deviceAddress} />
             </Pressable>
           ))}
         </View>
