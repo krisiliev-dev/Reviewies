@@ -116,7 +116,27 @@ export function TitleDetail() {
           size="detail"
         />
         <div className="min-w-0 flex-1">
-          <Masthead level="sub">
+          {/*
+            `page`, not `sub`.
+
+            This was `sub`, matching `mobile/app/title/[id].tsx` — and that file's comment
+            gives the reason the match does not survive the crossing: *"on this platform
+            the navigator's own title above it is already the screen's name at depth 1"*.
+            The web has no navigator. So the name of the screen this product's whole
+            episode list hangs off was drawn at `MASTHEAD.sub` — **depth 2** — and the page
+            had no first-level heading at all. `WhereToWatch`'s `WHERE TO WATCH`, a card
+            inside this screen, is a `Section` at depth 2 as well, so the screen and a box
+            on it were announced as siblings.
+
+            `page` is what every other pushed screen on the web already uses — Lists,
+            People, Settings, Stats, Not Found — and `masthead.ts` says why it is the right
+            row of the table rather than a third one: *"a screen has one name whether it is
+            a tab root or pushed"*. It also brings `MASTHEAD.page.gapBelow`, so the year no
+            longer sits against the name.
+
+            The phone keeps `sub`, because there the sentence above is true.
+          */}
+          <Masthead level="page">
             {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
           </Masthead>
           {!title && (failed || !loading) && (

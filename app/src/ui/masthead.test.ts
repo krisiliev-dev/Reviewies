@@ -302,4 +302,49 @@ describe('a screen title', () => {
     expect(phone, 'the phone states a role with no level, which renders as h1')
       .toContain('aria-level={MASTHEAD[level].depth}');
   });
+
+  it('gives every web screen a name at depth 1, because nothing else on the web supplies one', () => {
+    /*
+     * The half of the pairing the web has no navigator to cover for it.
+     *
+     * `mobile/app/title/[id].tsx` draws the show's name at `sub` and says why, correctly:
+     * *"on this platform the navigator's own title above it is already the screen's name
+     * at depth 1"*. `app/src/screens/TitleDetail.tsx` had the same line — copied, with the
+     * reason left behind. There is no navigator on the web, so the title page's own name
+     * was the `<h2>` that line renders, and the only other heading on the screen —
+     * `WhereToWatch`'s `WHERE TO WATCH`, a `Section` at depth 2 — was its sibling rather
+     * than its child. A card and the page it sits on, announced as equals, and no
+     * first-level heading anywhere. `/comments` was the same shape.
+     *
+     * Visible in the photographs as well as in the outline: `narrow-title-severance.png`
+     * sets *Severance* at `s20` while `narrow-watchlist.png` sets *Watchlist* at `s30`,
+     * so the one screen whose name is the thing you came for wore the smallest name in
+     * the app.
+     *
+     * The rule is about **depth**, not about which treatment: a screen may name itself
+     * `masthead` or `page` and this passes either way. What it forbids is a screen whose
+     * every heading is a `sub` — a page with no first-level heading at all, which is the
+     * one thing the phone's navigator was silently providing.
+     *
+     * Screens that draw no `Masthead` are not in the population: Watching Mode is
+     * `EDGE_EXEMPT`'s immersive route and has no chrome to put a name in, and
+     * `AccountPanel` is a panel inside Settings rather than a route.
+     */
+    const OPENING = /<Masthead(?![A-Za-z])([^>]*)>/g;
+    const unnamed: string[] = [];
+    let scanned = 0;
+    for (const file of filesUnder('app/src/screens')) {
+      const levels = [...read(file).matchAll(OPENING)].map(
+        (m) => (/level="(\w+)"/.exec(m[1])?.[1] ?? 'masthead') as keyof typeof MASTHEAD,
+      );
+      if (!levels.length) continue;
+      scanned++;
+      if (!levels.some((level) => MASTHEAD[level].depth === 1)) {
+        unnamed.push(`${file}: names itself at ${[...new Set(levels)].join(', ')} and never at depth 1`);
+      }
+    }
+    expect(scanned, 'no screen drew a Masthead at all, so this proved nothing')
+      .toBeGreaterThan(10);
+    expect(unnamed).toEqual([]);
+  });
 });
