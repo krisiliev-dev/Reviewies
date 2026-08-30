@@ -31,14 +31,20 @@ export function Toggle({ value, disabled }: ToggleContract) {
         {
           borderWidth: TOGGLE.stroke,
           borderColor: disabled
-            ? theme[TOGGLE.unavailable]
+            ? theme[TOGGLE.unavailable.border]
             : theme[value ? TOGGLE.on.border : TOGGLE.off.border],
           backgroundColor: value && !disabled ? theme[TOGGLE.on.fill] : 'transparent',
         },
       ]}
     >
+      {/* The unavailable mark is the table's, not this file's. It was `dimInk` here and
+          `text-dim-ink` on the web — Watching Mode's auto-dim, borrowed by two files that
+          each needed a colour nothing had stated. */}
       {value ? (
-        <Tick color={theme[disabled ? 'dimInk' : TOGGLE.on.mark]} size={TOGGLE.mark} />
+        <Tick
+          color={theme[disabled ? TOGGLE.unavailable.mark : TOGGLE.on.mark]}
+          size={TOGGLE.mark}
+        />
       ) : null}
     </View>
   );

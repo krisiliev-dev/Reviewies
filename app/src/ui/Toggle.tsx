@@ -21,20 +21,29 @@ export function Toggle({ value, disabled }: ToggleContract) {
       aria-hidden="true"
       /* Written out rather than assembled: Tailwind's scanner reads source text, so a class
          built at runtime never compiles. The same reason `Choice.tsx` spells its four. */
-      className={`grid size-11 shrink-0 place-items-center rounded-plate border-icon ${
+      className={`grid size-target shrink-0 place-items-center rounded-plate border-icon ${
         disabled
-          ? 'border-stroke-hairline text-dim-ink'
+          ? 'border-stroke-hairline text-ink-tertiary'
           : value
             ? 'border-working-fill bg-working-fill text-working-on-fill'
             : 'border-stroke-signal'
       }`}
     >
-      {/* `size-5` is 20px, which is `TOGGLE.mark` and the same 20 `CrossOff` draws. Written
-          out rather than interpolated for the reason above — a class built from a number never
-          reaches Tailwind's scanner — and `toggle.test.ts` holds the literal and the token
-          together, since the compiler cannot. `currentColor`, set by the class above, is how
-          `Tick` takes its ink. */}
-      {value ? <Tick className="size-5" /> : null}
+      {/* `text-s20`, not `size-5`, and the difference is 4px of tick.
+
+          `Tick` is `h-[1em] w-[1em] shrink-0 ${className}`: it sizes itself in `em` and takes
+          the caller's class after its own. Two utilities setting the same property at the same
+          specificity are decided by Tailwind's *emission order*, not by which is written last
+          — `.size-5` lands before `.h-[1em]` in the compiled sheet — so `size-5` was inert and
+          this span carries no `text-*` class, leaving the mark at one em of the inherited body
+          16px. Measured on Settings at 16x16 against `CrossOff`'s 20. Every other `Tick` and
+          `Chevron` on the web already sized itself with a font size; this was the odd one.
+
+          Written out rather than interpolated for the reason above — a class built from a
+          number never reaches Tailwind's scanner — and `toggle.test.ts` builds `text-s20` from
+          `TOGGLE.mark` and compares, since the compiler cannot. `currentColor`, set by the
+          class above, is how `Tick` takes its ink. */}
+      {value ? <Tick className="text-s20" /> : null}
     </span>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, TextInput, type StyleProp, type ViewStyle } from 'react-native';
 import { FIELD_BOX, FIELD_LINES, FIELD_SIZE, type FieldSize } from '@reviewies/core/ui/field';
-import { leading, type } from '@reviewies/core/tokens';
+import { type } from '@reviewies/core/tokens';
 import { leadingOf, theme } from './theme';
 
 /**
@@ -12,6 +12,24 @@ import { leadingOf, theme } from './theme';
  * It thickens to `border.mark` in the focus colour — the same two channels the web's ring
  * uses, and the same thickening `Button` uses for a press.
  */
+
+/**
+ * The line box each density's text sits in, named once because it is wanted twice.
+ *
+ * The line height and the four-line floor are the *same* number, and this file used to
+ * have one of them and invented the other: `metrics.minHeight * FIELD_LINES` multiplied the
+ * 44pt target floor — what a finger needs — by a line count and produced a 176pt comment box
+ * against the web's 122. The two now compose the same terms out of the same table.
+ *
+ * `_LINE`, and at module scope rather than in the body, for the reason the tab bar's
+ * `LABEL_LINE` gives: a measurement taken from a label's line box and used somewhere else
+ * should be one call, not two that agree by hand. `note.test.ts` reads the shape.
+ */
+const FIELD_LINE = {
+  page: leadingOf(FIELD_SIZE.page.label, FIELD_BOX.leading),
+  row: leadingOf(FIELD_SIZE.row.label, FIELD_BOX.leading),
+} as const satisfies Record<FieldSize, number>;
+
 export function Field({
   value,
   onChange,
@@ -55,11 +73,13 @@ export function Field({
       style={[
         styles.box,
         {
-          minHeight: multiline ? metrics.minHeight * FIELD_LINES : metrics.minHeight,
+          minHeight: multiline
+            ? FIELD_LINE[size] * FIELD_LINES + metrics.paddingY * 2 + FIELD_BOX.stroke * 2
+            : metrics.minHeight,
           paddingHorizontal: metrics.paddingX,
           paddingVertical: metrics.paddingY,
           fontSize: metrics.label,
-          lineHeight: leadingOf(metrics.label, leading.l143),
+          lineHeight: FIELD_LINE[size],
         },
         focused ? styles.focused : null,
         style,

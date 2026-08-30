@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { FIELD_BOX, FIELD_SIZE } from '@reviewies/core/ui/field';
-import { border, radius, size, space, text } from '@reviewies/core/tokens';
+import { FIELD_BOX, FIELD_LINES, FIELD_SIZE } from '@reviewies/core/ui/field';
+import { border, leading, radius, size, space, text } from '@reviewies/core/tokens';
 import { COPY } from '@reviewies/core/copy';
+import { stripComments } from '@reviewies/core/test/source';
 
 /**
  * `Field`, and the ring that seventeen sites switched off.
@@ -147,6 +148,99 @@ describe('a field', () => {
       expect(Object.values(space), `${density}'s padding is off the scale`)
         .toContain(FIELD_SIZE[density].paddingY);
     }
+  });
+
+  it('means the same four lines on both platforms, and says how tall a line is', () => {
+    /*
+     * `FIELD_LINES = 4` was four of nothing in particular, and each renderer
+     * supplied the missing number for itself. Measured on the EpisodeComments compose box,
+     * `size="page"`, 390 viewport, both builds served from this checkout:
+     *
+     * | | line box | box |
+     * | --- | --- | --- |
+     * | web | 24pt — Tailwind's preflight `1.5`, inherited | 358x**122** |
+     * | phone | 23pt — `leadingOf(16, l143)` | 358x**176** |
+     *
+     * 54pt apart on one control. The phone's is the louder half and the plainer error:
+     * `metrics.minHeight * FIELD_LINES` multiplies the 44pt **target floor** — what a
+     * finger needs — by a line count, and lands at 2.2x the 80pt the core's own comment
+     * says was being replaced by hand.
+     *
+     * The cause is one property up, and `tokens.ts` had already named it: the phone sets a
+     * line height and *the web sets none*. A box measured in lines cannot have a height
+     * until the table says how tall a line is, so `FIELD_BOX.leading` says it, and four
+     * lines means four of those plus the padding and the two strokes on both platforms.
+     * Re-measured on the same two builds afterwards: **358x117.5** on the web and
+     * **358x118** on the phone. The half point is each platform's rounding of one line box
+     * — CSS computes 1.43x16 = 22.88 and `leadingOf` rounds to 23 — and is what the numbers
+     * below can and cannot say: the arithmetic is checked here, the rendered box is not.
+     */
+    expect(FIELD_LINES).toBe(4);
+    expect(FIELD_BOX.leading, 'the table does not say how tall a line is').toBe(leading.l143);
+
+    /*
+     * The arithmetic, with the number it replaces named beside it. `Math.round` is
+     * `leadingOf`'s, whose single owner is `mobile/src/ui/theme.ts` — a fractional line
+     * height on a device is a fractional baseline — and `note.test.ts` pins that expression
+     * in the file that owns it.
+     */
+    const lineBox = Math.round(FIELD_SIZE.page.label * FIELD_BOX.leading);
+    const floor = lineBox * FIELD_LINES + FIELD_SIZE.page.paddingY * 2 + FIELD_BOX.stroke * 2;
+    expect(lineBox).toBe(23);
+    expect(floor).toBe(118);
+    expect(floor, 'four lines is the target floor four times over again')
+      .not.toBe(FIELD_SIZE.page.minHeight * FIELD_LINES);
+
+    /*
+     * The web wears the leading and takes its height from `rows`, which is what CSS
+     * computes a textarea's content box from: `rows` line boxes, and nothing else. Those
+     * two classes are the whole of the web's side of the agreement — so the multi-line
+     * branch may add `resize-y` and no third geometry class, or the browser's answer stops
+     * being four lines while both halves above still read correctly.
+     */
+    const webField = stripComments(read('app/src/ui/Field.tsx'));
+    expect(webField, 'the textarea inherits whatever line height the body had')
+      .toContain('leading-l143');
+    expect(webField).toContain('rows={FIELD_LINES}');
+    /*
+     * Exactly that and nothing after it. The first version of this read `toContain`, and a
+     * plant that appended `min-h-[300px]` to the same string walked through every clause in
+     * this file: `rows` and the leading were both still correct and the box was 300.
+     */
+    expect(webField, 'the multi-line branch sets its own height beside `rows`')
+      .toMatch(/className=\{`\$\{classes\} resize-y`\}/);
+    /*
+     * And the box floor is the token's name rather than the number that happens to equal it:
+     * `--spacing-target` is `size.target`, and `min-h-11` was the same 44 arrived at twice.
+     * Counted rather than contained, because both densities have to carry it and a clause
+     * that reads the whole file for one copy passes on a file with one.
+     */
+    expect(webField.match(/min-h-target/g) ?? [], 'a density lost its floor')
+      .toHaveLength(Object.keys(FIELD_SIZE).length);
+    expect(webField, 'a bare Tailwind number where the table has a name')
+      .not.toMatch(/min-h-\d/);
+
+    /*
+     * The phone composes the same terms and holds no number of its own. `FIELD_LINE` is
+     * named once and used twice — the line height and the floor are the same line box, and
+     * `_LINE` is the shape `note.test.ts` already blesses for exactly that.
+     *
+     * A plant that keeps the composition and redefines `FIELD_LINE` as the target floor
+     * reproduces 176 with every clause above still green, so the definition is read too.
+     */
+    const phoneField = stripComments(read('mobile/src/ui/Field.tsx'));
+    expect(phoneField, 'the phone multiplies the target floor by a line count')
+      .not.toContain('minHeight * FIELD_LINES');
+    expect(phoneField).toMatch(
+      /FIELD_LINE\[size\] \* FIELD_LINES \+ metrics\.paddingY \* 2 \+ FIELD_BOX\.stroke \* 2/,
+    );
+    expect(phoneField, 'FIELD_LINE is not the line box the leading asks for')
+      .toContain('leadingOf(FIELD_SIZE.page.label, FIELD_BOX.leading)');
+    expect(phoneField).toContain('leadingOf(FIELD_SIZE.row.label, FIELD_BOX.leading)');
+    // Worn, not merely declared: §6.182's lesson, which the focus clause below makes again.
+    expect(phoneField).toMatch(/lineHeight: FIELD_LINE\[size\]/);
+    expect(phoneField, 'the leading is a number the phone chose rather than the table\u2019s')
+      .not.toMatch(/leadingOf\(metrics\.label, leading\./);
   });
 
   it('shows the phone where focus is, which React Native does not do for it', () => {
