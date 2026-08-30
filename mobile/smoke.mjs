@@ -437,12 +437,14 @@ try {
   // detail — it is the whole screen for somebody who has just installed the app.
   //
   // Each also has to offer the way out it names. §6.50 found the phone's empty
-  // watchlist saying "Add something from Search" and its empty calendar saying "track a
+  // watchlist saying "Add something from Discover" and its empty calendar saying "track a
   // show that is still airing", with neither offering to take you anywhere — the dead
   // end doc 10 §8 had already found on the web's calendar and fixed there.
   for (const [path, expected, wayOut] of [
     ['stats', /Nothing watched in this period yet/i],
-    ['calendar', /Nothing airing in the next two months/i, 'Find something to watch'],
+    // Up Next's second half, at its own address — `segments.ts` owns the parameter, and
+    // `docs/design/architecture.md` section 4 owns the move.
+    ['?on=coming', /Nothing airing in the next two months/i, 'Find something to watch'],
     ['watchlist', /Nothing saved yet/i, 'Find something'],
   ]) {
     await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });
@@ -526,9 +528,12 @@ try {
   );
   await page.waitForSelector('text=The Long Dark', { timeout: 15000 });
   check('search returns results', true);
-  await audit('Search', 6);
-  await noGhosts('Search');
-  await scaled('Search');
+  // `Discover`, because that is the screen. `docs/design/architecture.md` section 5 merged
+  // the two, and a fault reported under "Search" would send somebody to a file that no
+  // longer exists.
+  await audit('Discover, searching', 6);
+  await noGhosts('Discover, searching');
+  await scaled('Discover, searching');
   await page.screenshot({ path: OUT + '2-search.png' });
 
   await page.getByText('Track', { exact: true }).first().click();
@@ -604,7 +609,9 @@ try {
   // memory for why they're there" is the quote the screen was built around. The phone
   // could display a note the web had written and never write one, which is a note
   // nobody has.
-  await page.getByText('Search', { exact: true }).first().click();
+  // The tab is `Discover` now — one surface for *find me something*, with the field at the
+  // top of it. `docs/design/architecture.md` section 5.
+  await page.getByText('Discover', { exact: true }).first().click();
   await page.getByPlaceholder('Shows, films, anime…').fill('hollow');
   await page.waitForSelector('text=Hollow Crown Saga', { timeout: 20000 });
   // "to *your* watchlist" — one spelling now, from `COPY.controls.addToWatchlist`. The
@@ -616,7 +623,7 @@ try {
   /*
    * The composer this screen did not have.
    *
-   * The phone's empty watchlist says "Add something from Search, then say why you saved
+   * The phone's empty watchlist says "Add something from Discover, then say why you saved
    * it" and its Search called `addToWatchlist` with no note — so the screen was naming a
    * way out that did not exist, about itself. The reason is most of what a watchlist is
    * for: "I have ZERO memory for why they're there".
@@ -1372,7 +1379,11 @@ try {
   for (const [path, expectedTop] of [
     ['', 'Up Next'],
     ['data', 'Your data'],
-    ['calendar', 'Upcoming'],
+    // The calendar's own route is gone — it is Up Next's second half, and the screen's one
+    // top-level heading is the screen's own name whichever half is showing. That is the
+    // point of the clause rather than a weakening of it: a segment must not grow a second
+    // `<h1>`. `docs/design/architecture.md` section 4.
+    ['?on=coming', 'Up Next'],
   ]) {
     await page.goto(`${BASE}/${path}`, { waitUntil: 'networkidle' });
     await page.waitForTimeout(1500);

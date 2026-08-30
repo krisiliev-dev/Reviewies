@@ -111,13 +111,13 @@ export const EMPTY_STATES: readonly EmptyState[] = [
   },
   {
     copy: 'calendar.empty',
-    screens: ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx'],
+    screens: ['app/src/ui/Coming.tsx', 'mobile/src/ui/Coming.tsx'],
     says: 'nothing airing in the next two months, and what to do about it',
     shot: '00-calendar-empty',
   },
   {
     copy: 'calendar.emptyUnmatched',
-    screens: ['app/src/screens/Calendar.tsx', 'mobile/app/calendar.tsx'],
+    screens: ['app/src/ui/Coming.tsx', 'mobile/src/ui/Coming.tsx'],
     says: 'nothing airing *because* imported shows still need matching — §6.56',
     shot: null,
     why:
@@ -242,6 +242,11 @@ export const NOT_AN_EMPTY_STATE: Record<string, string> = {
 
   // Not about absence at all.
   'discover.blurb': 'A description of what Discover excludes, drawn above a full screen too.',
+  'discover.allFiltered':
+    'Absence caused by a control the person moved, which is exactly `comments.allFiltered`\u2019s ' +
+    'reason one screen over. The shelf is not empty — it has been narrowed — and saying ' +
+    '"nothing to suggest" over a filter somebody set would be \u00a76.57\u2019s mistake in reverse: ' +
+    'blaming the data for what the control did.',
   'watchlist.notePlaceholder': "The note field's placeholder, which is a prompt rather than a state.",
   'watching.streamResting': 'What the reaction band says while nothing is crossing it — a band, not a screen.',
   'settings.cacheEmpty':

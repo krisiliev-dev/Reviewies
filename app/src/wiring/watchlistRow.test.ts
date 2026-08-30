@@ -97,9 +97,14 @@ describe('a watchlist row', () => {
      * `styles.editor` was `{ gap: 6 }`, and React Native lays a `View` as a **column** whose
      * `alignItems` defaults to `stretch`, so the field and the button became two stacked
      * full-width rows. The web's twin has always been `flex gap-1.5` with the field on
-     * `min-w-0 flex-1` — a row — and `search.tsx`'s editor says in a comment that this is
+     * `min-w-0 flex-1` — a row — and the result row's editor says in a comment that this is
      * *"the watchlist screen's note field, because it is the same field"*, which was a claim
      * about the field and not about the box, and the box is where they had parted.
+     *
+     * The second of the two moved this sprint: `docs/design/architecture.md` section 5 merged Search
+     * into Discover, so the row that saves a title with its reason is on `(tabs)/discover.tsx`
+     * now. The rule did not move — a field and its Save are one line wherever the phone draws
+     * that pair — which is why this reads a list of editors rather than a list of screens.
      *
      * Read as a rule rather than as one screen: a size token is a decision the component
      * makes and a `flexDirection` is a decision the call site makes, and only the second one
@@ -107,7 +112,7 @@ describe('a watchlist row', () => {
      * wrong — the pair is what §6.51 says has to agree, and one of them agreeing by
      * accident is how they parted the first time.
      */
-    const PHONE_NOTE_EDITORS = ['mobile/app/(tabs)/watchlist.tsx', 'mobile/app/(tabs)/search.tsx'];
+    const PHONE_NOTE_EDITORS = ['mobile/app/(tabs)/watchlist.tsx', 'mobile/app/(tabs)/discover.tsx'];
     const stacked: string[] = [];
     for (const file of PHONE_NOTE_EDITORS) {
       const source = withoutProse(read(file));

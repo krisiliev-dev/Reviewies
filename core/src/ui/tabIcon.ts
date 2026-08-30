@@ -134,10 +134,10 @@ export const TAB_ICON_PATHS = {
 export type TabIconName = keyof typeof TAB_ICON_PATHS;
 
 /**
- * The five the bar actually offers, in order, with the route each one marks.
+ * The four the bar actually offers, in order, with the route each one marks.
  *
  * The web had this list and the phone had it again in JSX, which is how they came to
- * disagree about what a tab is drawn with while agreeing about which five there are. One
+ * disagree about what a tab is drawn with while agreeing about which ones there are. One
  * list, and the order is part of it: this is wayfinding, and a bar whose tabs move is a bar
  * somebody has to read every time.
  *
@@ -145,10 +145,27 @@ export type TabIconName = keyof typeof TAB_ICON_PATHS;
  * the web navigates to a URL and expo-router names a file. That is the honest shape — the
  * alternative is one field that means different things depending on who reads it, which is
  * the defect §6.136 spent a sprint removing from `Row`.
+ *
+ * ## Four, and it was five
+ *
+ * `docs/design/architecture.md` section 2. Search and Discover answered one question — *find me
+ * something* — split by **how** you were going to find it, which is a distinction about the
+ * app rather than about the person; they are one surface now, with the field at the top of
+ * it. Nothing else moved into the bar to take the slot, and that is a decision rather than
+ * an oversight: **five was a cap, not a target**, and a fifth tab invented to fill the bar
+ * is the exact defect this pass removes. `direction.md`'s graft 1 wants Library here and
+ * the room is being kept for it rather than filled with a placeholder.
+ *
+ * The bar sizes its items with `flex-1` on both platforms, so removing one widens the
+ * remaining four rather than leaving a hole.
+ *
+ * `TAB_ICON_PATHS` still carries `search`, and `upcoming`, and three more the bar has never
+ * offered. That table is the drawings for the product's *surfaces*, not for the slots of one
+ * control — which is why `tabIcon.test.ts` has always asked for `paths >= tabs` rather than
+ * for equality.
  */
 export const TAB_BAR = [
   { icon: 'upnext', label: 'Up Next', to: '/', route: 'index' },
-  { icon: 'search', label: 'Search', to: '/search', route: 'search' },
   { icon: 'discover', label: 'Discover', to: '/discover', route: 'discover' },
   { icon: 'watchlist', label: 'Watchlist', to: '/watchlist', route: 'watchlist' },
   { icon: 'more', label: 'More', to: '/more', route: 'more' },

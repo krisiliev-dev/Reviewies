@@ -82,7 +82,7 @@ try {
   for (const mode of ['abort', 'error']) {
     await providerFails(mode);
 
-    await page.goto(`${BASE}/search`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/discover`, { waitUntil: 'domcontentloaded' });
     await page.locator('input').first().fill('the wire');
     await page.waitForTimeout(3000);
     const searched = await text();
@@ -107,7 +107,7 @@ try {
       discover.slice(0, 140),
     );
 
-    await page.goto(`${BASE}/calendar`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/?on=coming`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2500);
     const calendar = await text();
     check(
@@ -149,7 +149,7 @@ try {
   // A hang does not reject, so nothing in the app's error handling can see it. Only the
   // deadline can. §7 has recorded this as untested since the deadline was written.
   await providerFails('hang');
-  await page.goto(`${BASE}/search`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/discover`, { waitUntil: 'domcontentloaded' });
   await page.locator('input').first().fill('the wire');
   await page.waitForTimeout(3000);
   const waiting = await text();

@@ -30,7 +30,7 @@ const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * been asked to cover twenty-four *seasons* fetched one at a time.
  */
 export async function track(page, base, name) {
-  await page.goto(`${base}/search`, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/discover`, { waitUntil: 'networkidle' });
   await page.getByPlaceholder('Shows, films, anime…').fill(name);
   await page.getByText(name, { exact: true }).first().waitFor({ timeout: 25000 });
   await page

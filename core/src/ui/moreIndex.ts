@@ -43,13 +43,19 @@ import { COPY } from '../copy.ts';
  * on what the two platforms share is the worst place for a reason nobody checked — §6.106's
  * lesson, on a comment two sprints old rather than a year.
  */
+/**
+ * ## The row that left
+ *
+ * `Upcoming` was the first row here and is not a destination any more —
+ * `docs/design/architecture.md` section 4. The report was *"I am unsure what the difference between
+ * the Watchlist and Upcoming is"*, and from the source the two are genuinely different: one
+ * is what you mean to watch with a note saying why, the other is what airs next with the
+ * notification granularity attached. **A distinction only legible in the code is not one the
+ * user has**, and the answer was not a better `detail` line on this row. What is airing is a
+ * fact about the shows you already watch, so it became the second half of Up Next, and this
+ * table is one row shorter.
+ */
 export const MORE_INDEX = [
-  {
-    label: 'Upcoming',
-    detail: 'What is airing, and what to be told about',
-    to: '/calendar',
-    route: '/calendar',
-  },
   {
     label: 'Lists',
     detail: 'Film and television in the same list',

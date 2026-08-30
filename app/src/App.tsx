@@ -12,7 +12,6 @@ import { ErrorBoundary } from './ui/ErrorBoundary';
 import { breakInEffect, breakOnRender } from './ui/breakScreen';
 import { FailureBanner } from './ui/FailureBanner';
 import { UpNext } from './screens/UpNext';
-import { Search } from './screens/Search';
 import { TitleDetail } from './screens/TitleDetail';
 import { Settings } from './screens/Settings';
 import { WatchingMode } from './screens/WatchingMode';
@@ -20,7 +19,6 @@ import { Watchlist } from './screens/Watchlist';
 import { EpisodeComments } from './screens/EpisodeComments';
 import { Stats } from './screens/Stats';
 import { Discover } from './screens/Discover';
-import { Calendar } from './screens/Calendar';
 import { Lists } from './screens/Lists';
 import { People } from './screens/People';
 import { RemoteDrawer } from './remote/RemoteDrawer';
@@ -142,13 +140,18 @@ function Shell() {
 }
 
 /**
- * Five, the same five the phone has — literally the same five since §6.140, from
+ * Four, the same four the phone has — literally the same since §6.140, from
  * `core/src/ui/tabIcon.ts`, because "the same five" had been two lists agreeing by hand.
  *
  * It was eight, which only fitted a phone-width bar because the labels were ten pixels —
  * and once §6.30 let them respond to the reader's text setting, the bar wrapped to two
  * rows and took 183 of 844 pixels at 200%. Eight was always too many; the phone knew it
- * and the web never followed. Nothing moved URL, only what this bar offers.
+ * and the web never followed.
+ *
+ * Five became four this sprint. `docs/design/architecture.md` section 2: Search and Discover
+ * answered one question split by *how* you were going to answer it, and are one surface
+ * now. Nothing was promoted to take the slot — five was a cap rather than a target, and the
+ * bar's items are `flex-1`, so four widen rather than leaving a hole.
  */
 const TABS = TAB_BAR;
 
@@ -161,13 +164,11 @@ const TABS = TAB_BAR;
  */
 const ROUTES: Array<{ path: string; screen: () => React.JSX.Element }> = [
   { path: '/', screen: UpNext },
-  { path: '/search', screen: Search },
   { path: '/watchlist', screen: Watchlist },
   { path: '/title/:id', screen: TitleDetail },
   { path: '/watching/:targetId', screen: WatchingMode },
   { path: '/comments/:targetId', screen: EpisodeComments },
   { path: '/discover', screen: Discover },
-  { path: '/calendar', screen: Calendar },
   { path: '/lists', screen: Lists },
   { path: '/people', screen: People },
   { path: '/stats', screen: Stats },

@@ -18,6 +18,31 @@ export interface SearchResult {
   year?: number;
   posterUrl?: string;
   overview?: string;
+  /**
+   * What it is, in words, for the face of the box and for the genre filter.
+   *
+   * `docs/design/architecture.md` sections 5 and 6. The browse shelf carries *genre, release date
+   * and title* — the three things printed on a spine — and until this sprint the boundary
+   * carried the second and third and not the first. Names rather than the provider's ids,
+   * because a normalised type is the whole point of this module and an integer that means
+   * "Drama" only to TMDB is exactly the response shape that must not escape it.
+   *
+   * Optional, and the shelf is built for it to be missing: a title that came from an
+   * import has no genres and never will until it is matched, and a box with no genre line
+   * is a box with two lines rather than a box with a hole.
+   */
+  genres?: string[];
+  /**
+   * The crowd's score out of ten, which **filters and is never printed**.
+   *
+   * `architecture.md`'s third refusal. `direction.md` refused the poster-wall register on
+   * the rule that *browsing is reading, not shopping*, and a number in the corner of every
+   * box is the fastest way there is to turn a shelf into a shop. Carrying it as a filter is
+   * the honest half — it changes what you are shown and never tells you what to think.
+   *
+   * `app/src/ui/browse.test.ts` is what holds the second half of that sentence.
+   */
+  rating?: number;
 }
 
 export interface MetadataProvider {

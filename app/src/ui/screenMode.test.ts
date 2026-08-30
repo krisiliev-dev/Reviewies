@@ -32,6 +32,23 @@ const withoutProse = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
 
 const DISCOVER = ['app/src/screens/Discover.tsx', 'mobile/app/(tabs)/discover.tsx'];
+/**
+ * Where the reason is composed, which is no longer the screen.
+ *
+ * `docs/design/architecture.md` section 5 turned the feed into a shelf of boxes, and the
+ * reason went with it — grouped, as a section head over the titles it is true of, which is
+ * the fix all three design directions arrived at independently (`direction.md`: *"verbatim
+ * the same fix"*). A box is 173 points wide and "Because you watched The Long Dark and Salt
+ * Flats" is not, so it could not have stayed on the row even if it had wanted to.
+ *
+ * **The rule did not move; the file did.** The third clause below used to look for
+ * `note={trending ? undefined : …}` in the screens, and after the move that spelling is
+ * simply absent from a screen that is behaving correctly — which is a guard failing on a
+ * correct change, and the fix for one of those is to state the rule rather than to edit the
+ * file until the old needle reappears. What is being asserted is unchanged: **a trending
+ * row is given no reason**, because it is not *because* of anything you watched.
+ */
+const REASON = ['app/src/ui/Browse.tsx', 'mobile/src/ui/Browse.tsx'];
 
 describe('the two feeds Discover can be showing', () => {
   it('has a different sentence for each, and neither is the other', () => {
@@ -62,18 +79,33 @@ describe('the two feeds Discover can be showing', () => {
      * passing it back into `note`, which is where it was.
      */
     const wrong: string[] = [];
-    for (const file of DISCOVER) {
+    // Both, because the regression has two shapes: the screen putting the mode back on a
+    // row, and the shelf giving a trending box a reason it has no right to.
+    for (const file of [...DISCOVER, ...REASON]) {
       const source = withoutProse(read(file));
-      if (/note=\{[^}]*COPY\.discover\.trending\b/.test(source)) {
+      if (/COPY\.discover\.trending\b(?!Blurb)/.test(source)) {
         wrong.push(`${file} puts the screen's mode back on every row`);
       }
-      // Whitespace-tolerant: the web's expression wraps across three lines once the second
+    }
+    let composed = 0;
+    for (const file of REASON) {
+      const source = withoutProse(read(file));
+      // Whitespace-tolerant: the expression wraps across three lines once the second
       // argument lands on it, and a needle that a reformat can break is a needle about
       // formatting rather than about the fact. §6.109.
-      if (!/trending\s*\?\s*undefined\s*:/.test(source)) {
+      if (!/trending\s*\?\s*(?:undefined|'')\s*:/.test(source)) {
         wrong.push(`${file} does not leave a trending row's reason empty`);
+        continue;
       }
+      // And it is `because` that is being withheld, not something else that happens to sit
+      // behind the same condition — the clause is about which sentence, not about a ternary.
+      if (!/trending[\s\S]{0,40}COPY\.discover\.because/.test(source)) {
+        wrong.push(`${file} does not decide the because-line from the flag`);
+        continue;
+      }
+      composed++;
     }
+    expect(composed, 'neither platform composes a reason, so this proved nothing').toBe(2);
     expect(wrong).toEqual([]);
   });
 });

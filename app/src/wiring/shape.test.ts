@@ -45,8 +45,6 @@ const EXEMPT: Record<string, string> = {
     'the web has a ProfileEditor component; the phone renders the same editor inline. Same fields, same order, no wrapper worth extracting for one caller',
   '/stats':
     'the phone wraps its four figures in Chip and Figure and the web in Tile and Summary — presentational wrappers around identical content, and §6.62 checked the content itself against the screenshots',
-  '/calendar':
-    'the web extracts a Row component for an upcoming episode and the phone writes the same row inline; both now carry the poster, the name, the episode and the kind — §6.63 is the sprint that gave the phone the poster',
   '/lists':
     'the phone extracts a ListItem component where the web writes the row inline, and orders its two failure lines the other way round; both render both',
   '/watchlist':

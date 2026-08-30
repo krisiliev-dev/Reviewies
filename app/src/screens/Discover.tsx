@@ -1,33 +1,68 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
-import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
-import { getEpisodesCached } from '@reviewies/core/metadata/index';
+import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
+import { addToLibrary, addToWatchlist, markWatched } from '@reviewies/core/data/repo';
+import {
+  getEpisodesCached,
+  getProvider,
+  getTitleCached,
+  type SearchResult,
+} from '@reviewies/core/metadata/index';
+import { SEARCH_TIMEOUT_MS } from '@reviewies/core/metadata/provider';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
+import {
+  applyFilters,
+  genresOf,
+  NO_FILTERS,
+  type Filters as FilterSet,
+} from '@reviewies/core/discover/filters';
+import { AddToList } from '../social/AddToList';
 import { Poster } from '../ui/Poster';
+import { Browse } from '../ui/Browse';
 import { Button } from '../ui/Button';
+import { Field } from '../ui/Field';
+import { Filters } from '../ui/Filters';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Attribution } from '../ui/Attribution';
 import { Masthead } from '../ui/Masthead';
 
 /**
- * Discovery.
+ * One surface for *find me something*, in the two shapes that question has.
  *
- * Nothing you have watched, are tracking, or have already put on your watchlist
- * appears here. That exclusion is the most repeated request on Trakt's roadmap and
- * the thing every competitor gets wrong.
+ * `docs/design/architecture.md` section 5. Search and Discover were two tabs answering one
+ * question, split by **how** you were going to answer it — which is a distinction about the
+ * app rather than about the person. They are one screen now, and each shape does the job it
+ * is right for:
+ *
+ *  - **Nothing typed** — the shelf. Boxes with genre, year and title on them, grouped by why
+ *    they are being suggested, turning over for the synopsis and the actions. Discover is
+ *    for *discovering*, and what it was — a list of shows with two buttons on each row — is
+ *    a way of adding things, not a way of looking at them.
+ *  - **Something typed** — the list. The compact row layout Discover used to have is exactly
+ *    right for results: you already know what you are looking for and the job is to find it
+ *    in a column and act on it.
+ *
+ * Filters apply to whichever is showing. Nothing you have watched, are tracking, or have
+ * already put on your watchlist appears on the shelf — that exclusion is the most repeated
+ * request on Trakt's roadmap and the thing every competitor gets wrong. Search deliberately
+ * does *not* exclude those, because looking something up you already have is the point of
+ * looking something up.
  */
 export function Discover() {
+  const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<FilterSet>(NO_FILTERS);
+
   const [suggestions, setSuggestions] = useState<Suggestion[]>();
-  const [error, setError] = useState<string>();
+  const [shelfError, setShelfError] = useState<string>();
 
   const load = useCallback(async () => {
-    setError(undefined);
+    setShelfError(undefined);
     try {
       setSuggestions(await getSuggestions());
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load suggestions');
+      setShelfError(e instanceof Error ? e.message : 'Could not load suggestions');
       setSuggestions([]);
     }
   }, []);
@@ -36,29 +71,149 @@ export function Discover() {
     void load();
   }, [load]);
 
+  /*
+   * Read once when the screen opens, not as a live subscription.
+   *
+   * A live query on the library re-renders this screen the instant `track()` writes its
+   * row — and `track()` is not finished at that point: `addToLibrary` comes first and
+   * `getEpisodesCached` after it. The re-render abandoned that continuation, so the show
+   * was tracked with no episodes cached and Up Next said "all caught up" about eighteen
+   * unwatched ones. Measured: with this as a live query the phone smoke stops at check 31,
+   * without it the same steps pass.
+   */
+  const [have, setHave] = useState<AlreadyHave>();
+  useEffect(() => {
+    void alreadyHave().then(setHave);
+  }, []);
+
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  /** Told apart from an abort caused by typing, which is not a failure. */
+  const timedOut = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) {
+      setResults([]);
+      setError(undefined);
+      return;
+    }
+
+    const controller = new AbortController();
+    // Give up rather than say "Searching…" for ever. The deadline itself lives in the
+    // core beside the provider — the phone needs the same one.
+    timedOut.current = false;
+    const giveUp = setTimeout(() => {
+      timedOut.current = true;
+      controller.abort('timeout');
+    }, SEARCH_TIMEOUT_MS);
+
+    // Debounced so typing doesn't fire a request per keystroke.
+    const timer = setTimeout(async () => {
+      setBusy(true);
+      setError(undefined);
+      try {
+        setResults(await getProvider().search(q, controller.signal));
+      } catch (e) {
+        // An abort we asked for is a timeout and has to be said; an abort from the
+        // cleanup below is somebody typing again, and says nothing.
+        if (timedOut.current) {
+          setError(COPY.app.timedOut);
+          setBusy(false);
+        } else if (!controller.signal.aborted) {
+          setError(e instanceof Error ? e.message : COPY.app.searchFailed);
+        }
+      } finally {
+        clearTimeout(giveUp);
+        if (!controller.signal.aborted) setBusy(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+      clearTimeout(giveUp);
+    };
+  }, [query, attempt]);
+
+  const searching = query.trim().length > 0;
+  /*
+   * The filters narrow whichever half is showing, and the chips offered are taken from
+   * whichever half is showing. `genresOf` says why the list is derived rather than fixed: a
+   * fixed list is thirty-four chips that empty the screen.
+   */
+  const shelf = suggestions ?? [];
+  const genres = genresOf(searching ? results : shelf);
+  const shownResults = applyFilters(filters, results);
+  const shownShelf = applyFilters(filters, shelf);
+  const narrowedToNothing = searching
+    ? results.length > 0 && shownResults.length === 0
+    : shelf.length > 0 && shownShelf.length === 0;
+
   return (
     <div className="p-s16">
       <Masthead className="px-1">{COPY.screens.discover}</Masthead>
-      {/*
-        Two modes, said apart. `getSuggestions` builds from the library and only falls back
-        to a chart when that comes back empty, so the feed is entirely one or entirely the
-        other — and until §6.169 the screen said the same sentence for both.
-      */}
-      <Note className="mb-4 px-1">
-        {suggestions?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
-      </Note>
 
-      {error && <p className="px-1 text-s14 text-trouble">{error}</p>}
-      {suggestions === undefined && <Note className="px-1">Finding something…</Note>}
-      {suggestions?.length === 0 && !error && (
-        <Note className="px-1">{COPY.discover.empty}</Note>
+      {/* The field, at the top of the surface it now belongs to. */}
+      <Field
+        label={COPY.fields.search}
+        value={query}
+        onChange={setQuery}
+        placeholder={COPY.fields.searchPlaceholder}
+      />
+
+      <div className="mt-4">
+        <Filters value={filters} onChange={setFilters} genres={genres} />
+      </div>
+
+      {searching ? (
+        <>
+          {busy && <Note className="mt-4 px-1">{COPY.waiting.searching}</Note>}
+          {error && (
+            <div className="mt-4 flex flex-col items-start gap-2 px-1">
+              <p className="text-s14 text-trouble" role="status">
+                {error}
+              </p>
+              {/* Something to press. A message with no action is only a nicer way of being
+                  stuck, which is what "Searching…" for ever already was. */}
+              <Button
+                onPress={() => setAttempt((n) => n + 1)}
+                label={COPY.controls.tryAgain}
+                name={COPY.controls.searchAgain}
+              />
+            </div>
+          )}
+          {narrowedToNothing && <Note className="mt-4 px-1">{COPY.discover.allFiltered}</Note>}
+
+          <ul className="mt-4 flex flex-col gap-2">
+            {shownResults.map((r) => (
+              <ResultRow key={r.id} result={r} have={have} />
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          {/*
+            Two modes, said apart. `getSuggestions` builds from the library and only falls
+            back to a chart when that comes back empty, so the feed is entirely one or
+            entirely the other — and until §6.169 the screen said the same sentence for both.
+          */}
+          <Note className="mb-4 px-1">
+            {suggestions?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
+          </Note>
+
+          {shelfError && <p className="px-1 text-s14 text-trouble">{shelfError}</p>}
+          {suggestions === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}
+          {suggestions?.length === 0 && !shelfError && (
+            <Note className="px-1">{COPY.discover.empty}</Note>
+          )}
+          {narrowedToNothing && <Note className="px-1">{COPY.discover.allFiltered}</Note>}
+
+          <Browse items={shownShelf} onActed={load} />
+        </>
       )}
-
-      <ul className="flex flex-col gap-2">
-        {suggestions?.map((s) => (
-          <SuggestionRow key={s.id} suggestion={s} onActed={load} />
-        ))}
-      </ul>
 
       {/* The phone credited TMDB under its suggestions and this screen did not — the same
           screen, the same data, one platform meeting a licence condition. §6.147. */}
@@ -67,106 +222,171 @@ export function Discover() {
   );
 }
 
-function SuggestionRow({
-  suggestion,
-  onActed,
-}: {
-  suggestion: Suggestion;
-  onActed: () => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  /*
-   * What the press did, kept so the control can say it. §6.176 found the web had no such
-   * state at all: both buttons stayed on their original labels and re-enabled themselves,
-   * so pressing "Watchlist" twice looked exactly like pressing it once and nothing on the
-   * screen confirmed the first press. The phone has disabled-and-relabelled since it
-   * shipped; §6.51 says the better version wins, and this is the web taking it.
-   */
-  const [added, setAdded] = useState<'library' | 'watchlist'>();
+/**
+ * A result, as a row.
+ *
+ * The compact shape Discover used to wear on everything, kept for the half it was always
+ * right for. `architecture.md` section 5: browsing is a shelf, finding is a list.
+ */
+function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
+  const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
+  const shelf = added ?? shelfFor(result, have);
+  const [note, setNote] = useState('');
+  const [noting, setNoting] = useState(false);
 
-  async function cache() {
+  /**
+   * Cache the full title, not just the search result.
+   *
+   * Search does not return runtime, external IDs, or whether a show has ended — only
+   * the detail endpoint does — and `ended` is what lets a finished show complete
+   * itself later. The detail call has to come *first*: writing the thin search row
+   * would leave a fresh cache entry that `getTitleCached` then happily serves instead
+   * of fetching, so the missing fields would never arrive.
+   */
+  async function cacheTitle() {
+    const detail = await getTitleCached(result.id).catch(() => undefined);
+    if (detail) return;
+
+    // Offline, or the provider does not know it: keep what search gave us rather
+    // than losing the title entirely.
     await db.titles.put({
-      id: suggestion.id,
-      kind: suggestion.kind,
-      name: suggestion.name,
-      year: suggestion.year,
-      overview: suggestion.overview,
-      posterUrl: suggestion.posterUrl,
+      id: result.id,
+      kind: result.kind,
+      name: result.name,
+      year: result.year,
+      overview: result.overview,
+      posterUrl: result.posterUrl,
+      genres: result.genres,
       fetchedAt: Date.now(),
     });
   }
 
-  async function track() {
-    setBusy(true);
-    await cache();
-    /*
-     * The feed reloads before the episodes land, for the reason `Search`'s `track` gives:
-     * the show is tracked by the line above, and waiting on twenty-four season requests to
-     * say so is a control that looks untouched for half a minute. §6.153.
-     */
-    await addToLibrary(suggestion.id, suggestion.kind);
-    setAdded('library');
-    // Reload so the newly tracked title drops out of the feed immediately.
-    onActed();
-    if (suggestion.kind === 'show') void getEpisodesCached(suggestion.id).catch(() => {});
+  /**
+   * Log a film as watched without opening its page.
+   *
+   * Research doc 4 §2.2: *"I try to avoid seeing reviews and ratings of movies before
+   * I see them for myself. It's a little hard to do that when I have to go to the page
+   * to add it."* Nothing about recording a watch requires reading other people's
+   * opinions of it first, so this deliberately does not navigate.
+   */
+  async function log() {
+    // Search results carry no runtime — only the detail endpoint does — and stats are
+    // runtime-weighted, so a film logged without one would be counted as a
+    // 30-minute default. cacheTitle fetches it; if that fails the watch is still
+    // recorded, just unweighted.
+    await cacheTitle();
+    const detail = await db.titles.get(result.id);
+    await markWatched({ targetId: result.id, runtimeMin: detail?.runtimeMin });
+    await addToLibrary(result.id, result.kind, 'completed');
+    navigator.vibrate?.(10);
+    setAdded('logged');
   }
 
-  async function save() {
-    setBusy(true);
-    await cache();
-    await addToWatchlist(suggestion.id, suggestion.kind, `Suggested by ${suggestion.because[0]}`);
+  async function track() {
+    await cacheTitle();
+    await addToLibrary(result.id, result.kind);
+    /*
+     * Said before the episodes arrive, not after.
+     *
+     * This awaited `getEpisodesCached` and only then set the state, so the row read
+     * *Track* for as long as the fetch took — one request per season, which for a
+     * 1,220-episode show is twenty-four of them and over thirty seconds of a control that
+     * looks untouched. §6.151's real-data pass gave up waiting for the label.
+     *
+     * The show **is** tracked by this line; saying so is not a promise about episodes.
+     * They fill behind it, and §6.153 measured that they land whether or not the person
+     * stays: tracked, left the screen after 150ms, and the count arrived exactly as it did
+     * for somebody who waited. The floating promise is not a shortcut — it is the truth
+     * about what depends on what. §6.153.
+     */
+    setAdded('library');
+    // Episodes are needed before Up Next can offer anything for this show, and nothing
+    // here has to wait for them. A rejection is the provider's to report, not this row's.
+    if (result.kind === 'show') void getEpisodesCached(result.id).catch(() => {});
+  }
+
+  async function saveToWatchlist() {
+    await db.titles.put({
+      id: result.id,
+      kind: result.kind,
+      name: result.name,
+      year: result.year,
+      posterUrl: result.posterUrl,
+      genres: result.genres,
+      fetchedAt: Date.now(),
+    });
+    await addToWatchlist(result.id, result.kind, note.trim() || undefined);
     setAdded('watchlist');
-    onActed();
+    setNoting(false);
   }
 
   return (
     <BaseRow
-      title={suggestion.name}
-      meta={`${suggestion.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
-      /*
-       * Saying why is what separates a recommendation from an advert. In `note` because
-       * that is the slot for a sentence about the row rather than a fact about it. A
-       * trending row is not *because* of anything you watched, and saying it was is a false
-       * sentence on the one line of the card a person actually reads. §6.152.
-       *
-       * And a trending row now says **nothing** here rather than *Popular right now*.
-       * §6.169 photographed thirty rows each carrying that same line: a sentence repeated
-       * on every row it appears on is not the line that distinguishes them, it is the
-       * screen's mode — and `getSuggestions` is all-or-nothing, so the mode belongs once at
-       * the top of the screen, which is where `trendingBlurb` puts it.
-       */
-      note={
-        suggestion.trending
-          ? undefined
-          : COPY.discover.because(suggestion.because, suggestion.becauseWatched)
-      }
-      open={{ name: `Open ${suggestion.name}`, to: `/title/${encodeURIComponent(suggestion.id)}` }}
+      title={result.name}
+      meta={`${result.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${result.year ? ` · ${result.year}` : ''}`}
+      open={{
+        // The poster was the only target and the words beside it were not one.
+        name: `Open ${result.name}`,
+        to: `/title/${encodeURIComponent(result.id)}`,
+      }}
       lead={
-        <Poster
-          url={suggestion.posterUrl}
-          name={suggestion.name}
-         
-        />
+        <Poster url={result.posterUrl} name={result.name} />
       }
       under={
-        /* Wraps, for the same reason the Up Next row does: at twice the text size two
-           controls and a poster are wider than a phone. */
-        <div className="flex flex-wrap gap-1.5">
-          <Button
-            onPress={track}
-            disabled={busy || added === 'library'}
-            tone="primary"
-            label={added === 'library' ? COPY.controls.tracking : COPY.controls.track}
-            name={COPY.controls.trackTitle(suggestion.name)}
-          />
-          <Button
-            onPress={save}
-            disabled={busy || added === 'watchlist'}
-            tone="secondary"
-            label={added === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
-            name={COPY.controls.addToWatchlist(suggestion.name)}
-          />
-        </div>
+        <>
+          {noting ? (
+            <div className="flex gap-1.5">
+              <Field
+                size="row"
+                label={COPY.controls.noteFor(result.name)}
+                value={note}
+                onChange={setNote}
+                placeholder={COPY.watchlist.notePlaceholder}
+                className="min-w-0 flex-1"
+                autoFocus
+              />
+              <Button
+                tone="primary"
+                label="Save"
+                name={COPY.controls.saveToWatchlist(result.name)}
+                onPress={saveToWatchlist}
+              />
+            </div>
+          ) : (
+            /* Three actions, each naming its own row. The direction's "one action" is a
+               naming rule rather than a counting one — see `Row`'s `under` — and these
+               three were each added deliberately for a reason doc 4 records. */
+            <div className="flex flex-wrap gap-1.5">
+              <Button
+                onPress={track}
+                disabled={shelf === 'library'}
+                tone="primary"
+                label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
+                name={COPY.controls.trackTitle(result.name)}
+              />
+              <Button
+                onPress={() => setNoting(true)}
+                disabled={shelf === 'watchlist'}
+                tone="secondary"
+                label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
+                name={COPY.controls.addToWatchlist(result.name)}
+              />
+              {/* Films only: "watched" is not a thing you can say about a whole series
+                  in one tap without lying about which episodes. */}
+              {result.kind === 'film' && (
+                <Button
+                  onPress={log}
+                  disabled={added === 'logged'}
+                  tone="secondary"
+                  label={added === 'logged' ? COPY.controls.logged : COPY.controls.seenIt}
+                  name={`Log that you have seen ${result.name}`}
+                />
+              )}
+            </div>
+          )}
+
+          {!noting && <AddToList titleId={result.id} kind={result.kind} />}
+        </>
       }
     />
   );

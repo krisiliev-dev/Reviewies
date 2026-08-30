@@ -232,7 +232,19 @@ npm run design:web                    # the web app, both themes
 npm run design:snapshot               # take a snapshot of real TMDB (needs a token)
 npm run design:real                   # the phone, photographed against that snapshot
 npm run design:web:real               # the web app against it, at 420 and 1280
+
+npm run design:look                   # walk the web build and report; no shots, port 4320
+npm run design:look:phone             # the same walk against the phone's export, port 4321
 ```
+
+The last two are not a fourth capture pass and file nothing into the record. They exist
+because `docs/design/architecture.md` moved three surfaces, and the things a moved surface
+gets wrong are not the things a source guard reads: whether the screen arrived where it
+meant to, whether a control a harness presses is still on the face it used to be on. They
+report a number and a sentence rather than a photograph, and they take their address as an
+argument so they can be run beside another pass without either taking the other's port —
+which is also why they are on 4320 and 4321 rather than on the capture passes' ports.
+`architecture.md` section 8 lists the two defects the first run of them found.
 
 The three run independently and `design` reports a failure at the end rather than stopping
 at the first: they share no state, and chaining them with `&&` meant one intermittent in

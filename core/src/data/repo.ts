@@ -348,6 +348,117 @@ export function hasAired(episode: CachedEpisode, now = Date.now()): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// The past — what Up Next draws above the present.
+//
+// `docs/design/architecture.md` section 3. Up Next was forward-only, on a product whose whole
+// subject is a record of attention already spent: `db.watches` has carried this since the
+// first commit and nothing had ever drawn it.
+// ---------------------------------------------------------------------------
+
+/**
+ * How far back the past goes on Up Next.
+ *
+ * Capped, and `architecture.md`'s seventh refusal says why: a library of three thousand
+ * watches rendered above the fold is a screen that cannot open, and §6.156 measured what
+ * walking a 1,220-episode library costs. Forty is about a fortnight of ordinary watching
+ * and about seven screens of scrolling — far enough to answer "what did I finish on
+ * Tuesday", nowhere near far enough to be a Library, which this deliberately is not.
+ *
+ * A number rather than "everything, lazily": a window that grows as you scroll is a
+ * second mechanism to get wrong, and the honest answer to the case it would serve is the
+ * Library graft `direction.md` names and nobody has built.
+ */
+export const HISTORY_LIMIT = 40;
+
+/**
+ * One act of watching, drawn as a row.
+ *
+ * Keyed by the **watch** rather than by the episode, because a rewatch is two events and
+ * both of them happened. `getUpNext` is keyed by series for the opposite reason: there is
+ * one next episode per show.
+ */
+export interface HistoryEntry {
+  /** The event's own id, which is what makes a rewatch two rows rather than one. */
+  watchId: string;
+  /** Episode id for a show, title id for a film — `WatchEvent.targetId`. */
+  targetId: InternalId;
+  watchedAt: number;
+  /** The series' name, or the film's. The row's title line. */
+  name: string;
+  posterUrl?: string;
+  /** Where the row opens: the series for an episode, the film for a film. */
+  titleId: InternalId;
+  /**
+   * Present for an episode and absent for a film, which is how a row knows its shape.
+   *
+   * Also absent for an episode whose row has fallen out of the metadata cache — the watch
+   * is still true and still drawn, with the series' name and no code. That is the honest
+   * degradation: the row says less rather than claiming the watch was of a film.
+   */
+  episode?: { season: number; number: number; name: string };
+}
+
+/**
+ * The most recent watches, oldest first.
+ *
+ * **The window is the newest `limit`; the order inside it is the order they happened**,
+ * because that is the order the screen draws them in — above the present, oldest at the
+ * top, so scrolling up goes further back. Returning newest-first and reversing at two call
+ * sites would be the same decision made twice, which is what this repository spends most
+ * of its guards preventing.
+ *
+ * A watch whose episode or title has fallen out of the metadata cache still gets a row:
+ * the event is the fact, and the name is the part that can go missing. §6.57's distinction
+ * applies here as everywhere — "I could not look it up" is not "it did not happen".
+ */
+export async function getHistory(limit = HISTORY_LIMIT): Promise<HistoryEntry[]> {
+  const events = await db.watches.orderBy('watchedAt').reverse().limit(limit).toArray();
+
+  /*
+   * One read per distinct title rather than one per row. A fortnight of one series is
+   * forty rows and one show, and asking the store forty times for the same title is the
+   * shape §6.156 measured on a screen that then had to be made lazy.
+   */
+  const titleIds = new Set<InternalId>();
+  const episodes = new Map<InternalId, CachedEpisode | undefined>();
+  for (const event of events) {
+    if (event.seriesId) titleIds.add(event.seriesId);
+    else titleIds.add(event.targetId);
+  }
+  await Promise.all(
+    events
+      .filter((event) => event.seriesId)
+      .map(async (event) => episodes.set(event.targetId, await db.episodes.get(event.targetId))),
+  );
+  const titles = new Map(
+    await Promise.all(
+      [...titleIds].map(async (id) => [id, await db.titles.get(id)] as const),
+    ),
+  );
+
+  const rows: HistoryEntry[] = [];
+  for (const event of events) {
+    const titleId = event.seriesId ?? event.targetId;
+    const title = titles.get(titleId);
+    const episode = event.seriesId ? episodes.get(event.targetId) : undefined;
+    rows.push({
+      watchId: event.id,
+      targetId: event.targetId,
+      watchedAt: event.watchedAt,
+      name: title?.name ?? 'Unknown',
+      posterUrl: title?.posterUrl,
+      titleId,
+      episode: episode
+        ? { season: episode.season, number: episode.number, name: episode.name }
+        : undefined,
+    });
+  }
+  // Oldest first — see the header. `reverse()` above took the newest `limit`; this puts
+  // that window back into the order somebody lived it.
+  return rows.reverse();
+}
+
+// ---------------------------------------------------------------------------
 // Library and watchlist
 // ---------------------------------------------------------------------------
 

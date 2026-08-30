@@ -61,35 +61,56 @@ export class TmdbProvider implements MetadataProvider {
     return (await res.json()) as T;
   }
 
-  async search(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
-    type Multi = {
-      results: Array<{
-        id: number;
-        media_type: string;
-        name?: string;
-        title?: string;
-        overview?: string;
-        poster_path?: string;
-        first_air_date?: string;
-        release_date?: string;
-      }>;
-    };
+  /**
+   * The genre id → name table, fetched once and kept for the life of the provider.
+   *
+   * A list endpoint returns `genre_ids: [18, 10765]` and a detail endpoint returns
+   * `genres: [{id, name}]`, so the boundary can only hand out *names* — which is what
+   * `SearchResult.genres` promises — if it holds the table. Two requests, once, cached on
+   * the instance: the lists are about forty rows each and change roughly never.
+   *
+   * **A failure here is not a search failure.** The genre is the third line on a box; the
+   * box is not worth losing over it. So the promise is cached even when it resolves to an
+   * empty map, and the caller carries on with no genres rather than throwing — which is
+   * the difference between "we could not label it" and "we could not look", and §6.57 is
+   * the rule that they must not be the same thing.
+   */
+  private genreTable?: Promise<Map<number, string>>;
 
-    const data = await this.get<Multi>('/search/multi', { query, include_adult: 'false' }, signal);
+  private genres(signal?: AbortSignal): Promise<Map<number, string>> {
+    this.genreTable ??= (async () => {
+      type List = { genres?: Array<{ id: number; name: string }> };
+      const table = new Map<number, string>();
+      try {
+        const lists = await Promise.all([
+          this.get<List>('/genre/tv/list', {}, signal),
+          this.get<List>('/genre/movie/list', {}, signal),
+        ]);
+        for (const list of lists) for (const g of list.genres ?? []) table.set(g.id, g.name);
+      } catch {
+        // Left empty on purpose — see the header. Not re-thrown and not retried per call.
+      }
+      return table;
+    })();
+    return this.genreTable;
+  }
+
+  async search(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
+    type Multi = { results: Array<TmdbListItem & { media_type: string }> };
+
+    /*
+     * The search first and the genre table beside it, rather than after. The table is
+     * cached after the first call, so this is one extra round trip in a session and none
+     * thereafter — and running it in parallel means it costs nothing even then.
+     */
+    const [data, genres] = await Promise.all([
+      this.get<Multi>('/search/multi', { query, include_adult: 'false' }, signal),
+      this.genres(signal),
+    ]);
 
     return data.results
       .filter((r) => r.media_type === 'tv' || r.media_type === 'movie')
-      .map((r) => {
-        const isShow = r.media_type === 'tv';
-        return {
-          id: makeId('tmdb', isShow ? 'tv' : 'movie', r.id),
-          kind: isShow ? ('show' as const) : ('film' as const),
-          name: (isShow ? r.name : r.title) ?? 'Untitled',
-          year: year(isShow ? r.first_air_date : r.release_date),
-          posterUrl: poster(r.poster_path),
-          overview: r.overview,
-        };
-      });
+      .map((r) => toResult(r, r.media_type === 'tv' ? 'tv' : 'movie', genres));
   }
 
   async getTitle(id: string, signal?: AbortSignal): Promise<CachedTitle | undefined> {
@@ -111,6 +132,8 @@ export class TmdbProvider implements MetadataProvider {
       status?: string;
       in_production?: boolean;
       external_ids?: { imdb_id?: string; tvdb_id?: number };
+      /** Named here, unlike the list endpoints, so this one needs no lookup table. */
+      genres?: Array<{ id: number; name: string }>;
     };
 
     const d = await this.get<Detail>(
@@ -129,6 +152,7 @@ export class TmdbProvider implements MetadataProvider {
       backdropUrl: backdrop(d.backdrop_path),
       runtimeMin: d.runtime ?? d.episode_run_time?.[0],
       seasonCount: d.number_of_seasons,
+      genres: d.genres?.length ? d.genres.map((g) => g.name) : undefined,
       // TMDB's tv status is one of Returning Series / Planned / In Production /
       // Ended / Canceled / Pilot. Only the last two mean no more episodes.
       ended: isShow ? d.status === 'Ended' || d.status === 'Canceled' : undefined,
@@ -235,23 +259,29 @@ export class TmdbProvider implements MetadataProvider {
 
   async getRecommendations(id: string, signal?: AbortSignal): Promise<SearchResult[]> {
     const { type, raw } = split(id);
-    const data = await this.get<{ results: TmdbListItem[] }>(
-      `/${type === 'tv' ? 'tv' : 'movie'}/${raw}/recommendations`,
-      {},
-      signal,
-    );
-    return (data.results ?? []).map((r) => toResult(r, type === 'tv' ? 'tv' : 'movie'));
+    const [data, genres] = await Promise.all([
+      this.get<{ results: TmdbListItem[] }>(
+        `/${type === 'tv' ? 'tv' : 'movie'}/${raw}/recommendations`,
+        {},
+        signal,
+      ),
+      this.genres(signal),
+    ]);
+    return (data.results ?? []).map((r) => toResult(r, type === 'tv' ? 'tv' : 'movie', genres));
   }
 
   async getTrending(signal?: AbortSignal): Promise<SearchResult[]> {
-    const data = await this.get<{ results: Array<TmdbListItem & { media_type?: string }> }>(
-      '/trending/all/week',
-      {},
-      signal,
-    );
+    const [data, genres] = await Promise.all([
+      this.get<{ results: Array<TmdbListItem & { media_type?: string }> }>(
+        '/trending/all/week',
+        {},
+        signal,
+      ),
+      this.genres(signal),
+    ]);
     return (data.results ?? [])
       .filter((r) => r.media_type === 'tv' || r.media_type === 'movie')
-      .map((r) => toResult(r, r.media_type === 'tv' ? 'tv' : 'movie'));
+      .map((r) => toResult(r, r.media_type === 'tv' ? 'tv' : 'movie', genres));
   }
 }
 
@@ -263,10 +293,24 @@ interface TmdbListItem {
   poster_path?: string;
   first_air_date?: string;
   release_date?: string;
+  /** Ids, not names. `TmdbProvider.genres` is the table that turns them into words. */
+  genre_ids?: number[];
+  /** Out of ten. Filters the shelf and is never drawn — `provider.ts` says why. */
+  vote_average?: number;
 }
 
-function toResult(r: TmdbListItem, type: 'tv' | 'movie'): SearchResult {
+/**
+ * One list row, normalised.
+ *
+ * `search` had its own copy of this inline and the two drifted the moment a field was
+ * added to one of them — which is what happened here, so the copy is gone and the three
+ * list endpoints go through one function.
+ */
+function toResult(r: TmdbListItem, type: 'tv' | 'movie', genres?: Map<number, string>): SearchResult {
   const isShow = type === 'tv';
+  const named = (r.genre_ids ?? [])
+    .map((id) => genres?.get(id))
+    .filter((name): name is string => !!name);
   return {
     id: makeId('tmdb', isShow ? 'tv' : 'movie', r.id),
     kind: isShow ? 'show' : 'film',
@@ -274,6 +318,11 @@ function toResult(r: TmdbListItem, type: 'tv' | 'movie'): SearchResult {
     year: year(isShow ? r.first_air_date : r.release_date),
     posterUrl: poster(r.poster_path),
     overview: r.overview,
+    // Undefined rather than `[]`: "nothing came back" and "this has no genres" are the
+    // same fact here, and an empty array reads on the box as a line that failed to fill.
+    genres: named.length ? named : undefined,
+    // 0 is TMDB's "nobody has voted", not a score of zero.
+    rating: r.vote_average || undefined,
   };
 }
 

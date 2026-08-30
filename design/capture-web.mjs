@@ -186,10 +186,14 @@ async function pass(theme) {
   const scrolls = [];
   const ROUTES = [
     ['01-upnext', '/', /The Long Dark|Kitchen Nightshift/],
-    ['02-search', '/search', /Search/],
+    // Search is a state of Discover since `docs/design/architecture.md` section 5, and the
+    // shot name is kept because the record cites it. `?q=` is not a thing the screen reads —
+    // the field is typed into after the loop, below, where the results shot is taken.
+    ['02-search', '/discover', /Quiet Harbour/],
     ['03-watchlist', '/watchlist', /Watchlist|Nothing on the list/i],
     ['04-discover', '/discover', /Discover|Because you watched/i],
-    ['05-calendar', '/calendar', /Upcoming|Tell me about/i],
+    // Up Next's second half, at its own address — `segments.ts` owns the parameter.
+    ['05-calendar', '/?on=coming', /Upcoming|Tell me about/i],
     ['06-stats', '/stats', /Watched|Episodes/],
     ['07-lists', '/lists', /Lists/],
     ['08-people', '/people', /People/],
@@ -197,8 +201,31 @@ async function pass(theme) {
     ['10-settings', '/settings', /Your data|Watching|People/i],
   ];
 
+  /**
+   * What to do on a route before photographing it, where the route's name is a **state** of
+   * the surface rather than the surface itself.
+   *
+   * `docs/design/architecture.md` section 5 merged Search into Discover, and both halves are
+   * still designed: the shelf with nothing typed, and the list with something typed. Two
+   * shots of one address, and this is what puts the second one into the state its name says.
+   * Without it `02-search` and `04-discover` would be the same photograph twice, which is a
+   * design record claiming coverage it does not have — §6.146's shape.
+   */
+  const USE = {
+    '02-search': async () => {
+      const box = page.getByPlaceholder(/Shows, films/i).first();
+      if (!(await box.count())) {
+        problems.push(`${name}-02-search: Discover has no search field to type into`);
+        return;
+      }
+      await box.click();
+      await box.fill('Quiet');
+    },
+  };
+
   for (const [shot, path, want] of ROUTES) {
     await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
+    await USE[shot]?.();
     for (let i = 0; i < 16; i++) {
       if (want.test(await page.locator('body').innerText())) break;
       await page.waitForTimeout(400);

@@ -102,8 +102,8 @@ describe('a composer on a reading screen', () => {
      */
     expect(SETTINGS_OPEN).toBe(false);
     for (const [name, file] of [
-      ['web', 'app/src/screens/Calendar.tsx'],
-      ['phone', 'mobile/app/calendar.tsx'],
+      ['web', 'app/src/ui/Coming.tsx'],
+      ['phone', 'mobile/src/ui/Coming.tsx'],
     ] as const) {
       const source = withoutProse(read(file));
       expect(source, `${name} does not seed the panel from the rule`)

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  getHistory,
   getUpNext,
   markWatched,
   unwatchLatest,
@@ -22,11 +23,15 @@ import { syncConfigured } from '@reviewies/core/sync/auth';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
+import { Choice } from '../ui/Choice';
 import { CrossOff } from '../ui/CrossOff';
 import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
+import { Coming } from '../ui/Coming';
+import { Past } from '../ui/Past';
 import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
+import { UP_NEXT_VIEWS, VIEW_PARAM, viewFrom, type UpNextView } from '@reviewies/core/ui/segments';
 
 /**
  * The home screen, and the one the whole product is judged on.
@@ -36,8 +41,61 @@ import { episodeCode, episodeName } from '@reviewies/core/ui/episode';
  * can see and mark the next episodes of my shows."
  *
  * So: no dashboard, no feed, no onboarding carousel. The list, and a button.
+ *
+ * ## It has three jobs now, and it had one
+ *
+ * `docs/design/architecture.md` sections 3 and 4. The past goes **above** the present, because
+ * every tracking app people arrived here from puts the evening you have had over the
+ * position you are at — and this one, whose subject is a record of attention already spent,
+ * had no past at all. And what is **coming** is the screen's second half rather than a
+ * seventh destination called Upcoming that nobody could tell from the Watchlist.
+ *
+ * The sentence above still governs all three. The masthead and the segment control are the
+ * only chrome; the list is what the screen opens on, which is what `Present` below is
+ * for; and neither of the two new halves is allowed to be the thing you land in.
+ *
+ * `architecture.md` section 9 is the cost, stated rather than glossed: this is now the longest
+ * screen in the product, and if it becomes the screen everything is on, that is where to
+ * look first.
  */
 export function UpNext() {
+  const [params, setParams] = useSearchParams();
+  const on = viewFrom(params.get(VIEW_PARAM));
+
+  return (
+    <div className="p-s16">
+      <Masthead className="px-1">{COPY.screens.upNext}</Masthead>
+      {/*
+        One screen, two halves — not two screens. The masthead above does not change, the
+        tab does not move, and `MORE_INDEX` no longer names the second one. `segments.ts`
+        owns the keys, the labels and the order, so the two platforms cannot draw a
+        different pair of chips.
+
+        In the address rather than in state alone, so a deep link reaches it and so the
+        design harness can photograph it by walking rather than only by pressing — §6.157's
+        finding was that every state reachable only through a control is a state the design
+        record quietly loses.
+      */}
+      <div className="mb-4 px-1">
+        <Choice<UpNextView>
+          name={COPY.upNext.showing}
+          options={UP_NEXT_VIEWS}
+          value={on}
+          // The key is always written, including for the default. `expo-router`'s
+          // `setParams` cannot remove one, so a web that dropped it and a phone that could
+          // not would be two different addresses for one state — and `segments.ts` exists
+          // because two platforms writing their own version of this is how they drift.
+          onChange={(next) => setParams({ [VIEW_PARAM]: next }, { replace: true })}
+        />
+      </div>
+
+      {on === 'coming' ? <Coming /> : <OutNow />}
+    </div>
+  );
+}
+
+/** The half this screen opens on: what you have watched, what is next, and how to mark it. */
+function OutNow() {
   // useLiveQuery re-runs on any write to these tables, so marking watched updates
   // the list with no manual invalidation.
   const entries = useLiveQuery(() => getUpNext(), [], undefined);
@@ -90,12 +148,18 @@ export function UpNext() {
    * empty. The import puts shows in the library, which used to change what this screen
    * renders mid-write and take the result with it — you got no confirmation that the
    * thing you came here to do had worked.
+   *
+   * No `Past` above it, and that is a decision rather than an oversight: the import has
+   * just written a few hundred watches, so the history is at its longest exactly here, and
+   * burying the one confirmation somebody came for under forty struck rows would undo what
+   * the paragraph above is about. The past is drawn on the two branches that mean *you have
+   * a library*, which this one is the minute before.
    */
   if (imported) {
     return (
-      <div className="flex flex-col gap-3 p-s16">
+      <div className="flex flex-col gap-3">
       {/*
-       * The screen keeps its own title, and the arrival line is a heading under it.
+       * The arrival line is a heading under the screen's own title.
        *
        * These two states used to `return` a page with no "Up Next" on it at all: the tab
        * bar said one thing and the page said another, and somebody one minute into the app
@@ -103,8 +167,10 @@ export function UpNext() {
        * it draws the title and puts the arrival heading beneath — and §6.107 widened the
        * gap rather than finding it, by giving the web's `<h1>` the tab-root treatment. A
        * heading that is a *sentence* is not a screen title, and 30/700 read like one.
+       *
+       * The title is unconditional now, because it is drawn by `UpNext` above this and no
+       * branch in here can return without it.
        */}
-        <Masthead>{COPY.screens.upNext}</Masthead>
         <Masthead level="sub">{COPY.upNext.historyIsIn}</Masthead>
         <p>
           Imported {imported.watches} watch{imported.watches === 1 ? '' : 'es'}
@@ -131,8 +197,8 @@ export function UpNext() {
   // somebody's first minute with the app.
   if (entries.length === 0 && libraryCount !== 0) {
     return (
-      <div className="p-6">
-        <Masthead>{COPY.screens.upNext}</Masthead>
+      <Present>
+        <div className="pt-2">
         {/* Three states, not two. "Nothing here yet … until they are matched" plus a
             button was what somebody saw after importing years of history: an empty
             screen and a chore, so matching runs itself now and the sentence says what
@@ -154,44 +220,37 @@ export function UpNext() {
         {unmatched && !importing ? <MatchImports /> : null}
         {/*
           Secondary while the import is running. §6.162.
-          
+
           `02a-import-reading.png` is the first photograph anyone has taken of this state, and
           it shows one sentence — "Still reading your TV Time export" — under a **filled
           primary** button reading *Find something to watch*. The app is busy carrying
           somebody's history across and the loudest thing on the screen invites them to leave.
           First run gets this right, where searching is explicitly the alternative to
           importing; here one Button served all three states and the loudest tone won.
-          
+
           Not removed — leaving is allowed and the screen would be a dead end without it. It
           stops being the offer, which is what a tone is for.
         */}
         {/*
           The offer follows the state. §6.164.
 
-          Caught up **and waiting** is the one case where the calendar is the answer: the
-          sentence above names the next episode, and the rest of what is coming is one screen
-          away behind More. Searching stays available and stops being the loudest thing, which
-          is the same correction §6.162 made for the importing state.
+          Caught up **and waiting** is the one case where what is coming is the answer: the
+          sentence above names the next episode, and the rest of it is now the other half of
+          this same screen rather than a screen away behind More. So the offer is a segment
+          change rather than a navigation — `docs/design/architecture.md` section 4 — which is also
+          why it is `onPress` and not `to`.
         */}
-        {waiting && !importing && !unmatched && (
-          <Button
-            to="/calendar"
-            tone="primary"
-            size="page"
-            label={COPY.upNext.seeUpcoming}
-            name={COPY.upNext.seeUpcoming}
-            className="mt-5"
-          />
-        )}
+        {waiting && !importing && !unmatched && <SeeUpcoming />}
         <Button
-          to="/search"
+          to="/discover"
           tone={importing || waiting ? 'secondary' : 'primary'}
           size="page"
           label={COPY.controls.findToWatch}
           name={COPY.controls.findToWatch}
           className="mt-5"
         />
-      </div>
+        </div>
+      </Present>
     );
   }
 
@@ -208,8 +267,7 @@ export function UpNext() {
    */
   if (entries.length === 0) {
     return (
-      <div className="flex flex-col gap-3 p-6">
-        <Masthead>{COPY.screens.upNext}</Masthead>
+      <div className="flex flex-col gap-3">
         {/* A heading under the screen's own title — see the note on the arrival state. */}
         <Masthead level="sub">{COPY.upNext.bringHistory}</Masthead>
         <Note>{COPY.upNext.tvTimeGone}</Note>
@@ -221,7 +279,7 @@ export function UpNext() {
             offer and searching is the fallback. Nothing but looking at it would have
             said so: both were named, both were reachable, both were big enough. */}
         <Button
-          to="/search"
+          to="/discover"
           tone="secondary"
           size="page"
           label={COPY.controls.findToWatch}
@@ -233,9 +291,7 @@ export function UpNext() {
   }
 
   return (
-    <div className="p-4">
-      <Masthead className="px-1">{COPY.screens.upNext}</Masthead>
-
+    <Present>
       {/*
         Here too, and this is the whole point of the second copy.
         *
@@ -272,7 +328,73 @@ export function UpNext() {
           onDone={() => setCatchingUp(undefined)}
         />
       )}
-    </div>
+    </Present>
+  );
+}
+
+/**
+ * The past above, the present below, and the screen arriving at the present.
+ *
+ * `docs/design/architecture.md` section 3. Both requirements are real and they are not in
+ * conflict: the history belongs *up*, and the app has to open on the episodes you can mark.
+ * So the layout puts one above the other and this scrolls past it once, on arrival — which
+ * is how a transcript works, and an evening's watching is a transcript.
+ *
+ * **Once**, guarded by a ref rather than by a dependency list. `useLiveQuery` re-renders
+ * this subtree on every write in the app, and marking an episode is a write: without the
+ * guard, crossing something off would yank the page back to a position that had just
+ * changed under it, on the one action the product exists for.
+ *
+ * `block: 'start'` on a marker rather than `scrollTop = n` on the container: the scroll is
+ * owned by `<main>` in `App.tsx`, three components up, and a screen reaching for it by
+ * selector is a screen that breaks when the shell changes. `behavior` is left at the
+ * default — an animated scroll on arrival is a screen that moves while you are reading it.
+ */
+function Present({ children }: { children: React.ReactNode }) {
+  /*
+   * The history is asked for here rather than inside `Past`, and it is one query rather
+   * than two. The scroll has to wait for the rows it is scrolling past — `useLiveQuery`
+   * answers on a later tick, so an effect that fired on the first render would scroll a
+   * column with nothing above it, spend its one arrival, and leave the screen at the top
+   * for ever. That is the same screen as not scrolling at all and considerably harder to
+   * see, so the condition is the data rather than a timer.
+   */
+  const past = useLiveQuery(() => getHistory(), [], undefined);
+  const present = useRef<HTMLDivElement>(null);
+  const arrived = useRef(false);
+
+  useEffect(() => {
+    if (arrived.current || !past?.length) return;
+    arrived.current = true;
+    present.current?.scrollIntoView({ block: 'start' });
+  });
+
+  return (
+    <>
+      <Past entries={past} />
+      <div ref={present}>{children}</div>
+    </>
+  );
+}
+
+/**
+ * The way to the other half, from the state that needs it.
+ *
+ * Its own component because it needs the search params and the branch that draws it is
+ * three levels of condition deep. `replace`, so that pressing this and then going back
+ * does not walk through a segment change.
+ */
+function SeeUpcoming() {
+  const [, setParams] = useSearchParams();
+  return (
+    <Button
+      onPress={() => setParams({ [VIEW_PARAM]: 'coming' as UpNextView }, { replace: true })}
+      tone="primary"
+      size="page"
+      label={COPY.upNext.seeUpcoming}
+      name={COPY.upNext.seeUpcoming}
+      className="mt-5"
+    />
   );
 }
 
@@ -351,7 +473,7 @@ function UpNextRow({
         <Poster
           url={entry.posterUrl}
           name={entry.seriesName}
-         
+
         />
       }
       trailing={

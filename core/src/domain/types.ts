@@ -144,6 +144,13 @@ export interface CachedTitle {
   runtimeMin?: number;
   seasonCount?: number;
   /**
+   * What it is, in words. The same field as `SearchResult.genres` and for the same reason:
+   * `docs/design/architecture.md` section 5 puts the genre on the face of a browse box, and a box
+   * built from a cached title has to be able to say the same three things as one built
+   * from a search result.
+   */
+  genres?: string[];
+  /**
    * Whether the show has finished airing. Undefined means unknown, which is treated
    * as "still running" — a show wrongly marked finished silently stops asking for
    * new episodes, which is worse than one that keeps asking.

@@ -136,10 +136,15 @@ page.on('pageerror', (e) => check('no page errors', false, e.message));
 /**
  * Reach something that is no longer a tab.
  *
- * The bar is the phone's five now — Up Next, Search, Discover, Watchlist, More — and
- * Upcoming, Lists, People, Stats and Your data live behind the last one. Their URLs did
- * not change; only the route somebody takes to them did, and this suite takes the same
- * route a person would rather than jumping straight to the address.
+ * The bar is the phone's four now — Up Next, Discover, Watchlist, More — and Lists,
+ * People, Stats and Your data live behind the last one. Their URLs did not change; only
+ * the route somebody takes to them did, and this suite takes the same route a person would
+ * rather than jumping straight to the address.
+ *
+ * Two names left this function's reach this sprint, in opposite directions.
+ * `docs/design/architecture.md` section 5 merged Search into Discover, which is a tab; and
+ * section 4 made Upcoming the second half of Up Next, so it is neither a tab nor a row on
+ * More — it is `?on=coming`, and the walk to it is a chip rather than a link.
  */
 async function viaMore(name) {
   await page.getByRole('link', { name: /^More$/ }).click();
@@ -498,7 +503,7 @@ async function scaled(screen) {
  * Did the browser arrive at a screen, or only at the tab bar?
  *
  * A level-1 heading is what says a screen rendered. Body text is not: the tab bar prints
- * "Up Next", "Search", "Discover", "Watchlist" and "More" at the bottom of every screen
+ * "Up Next", "Discover", "Watchlist" and "More" at the bottom of every screen
  * in the app, so a check that reads `body.innerText` for one of those words is satisfied
  * wherever the browser happens to be — including on an address that is not a screen at
  * all. §6.74 found two checks doing exactly that and proved it by pointing them at
@@ -877,10 +882,13 @@ try {
   // waits until the screen has stopped saying `Loading…` and then says how long it took.
   for (const [name, expected] of [
     [/Stats/, /Nothing watched in this period yet/i],
-    [/Upcoming/, /Nothing airing in the next two months/i],
+    // Not through More any more: what is airing is Up Next's second half since
+    // `docs/design/architecture.md` section 4, and the heading over it is the screen's own.
+    [/Up Next/, /Nothing airing in the next two months/i],
   ]) {
     const screen = String(name).slice(1, -1);
-    await viaMore(name);
+    if (screen === 'Up Next') await page.goto(`${BASE}/?on=coming`, { waitUntil: 'domcontentloaded' });
+    else await viaMore(name);
     // Arrived, before asking whether it has finished: `viaMore` clicks and returns, so
     // a `Loading…` that has not been rendered yet is a `Loading…` this would not wait for.
     await page.getByRole('heading', { name }).first().waitFor({ timeout: 5000 });
@@ -1006,9 +1014,11 @@ try {
   await page.getByPlaceholder('Shows, films, anime…').fill('long');
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   check('search returns results', true);
-  await audit('Search', 8);
-  await noGhosts('Search');
-  await scaled('Search');
+  // `Discover`, because that is the screen. The label is what a failure is reported under,
+  // and reporting a fault on "Search" would send somebody to a file that no longer exists.
+  await audit('Discover, searching', 8);
+  await noGhosts('Discover, searching');
+  await scaled('Discover, searching');
   await page.screenshot({ path: OUT + '02-search.png' });
 
   await page.getByRole('button', { name: 'Track The Long Dark' }).click();
@@ -1254,11 +1264,9 @@ try {
    * matches nothing. The *heading* is what says the screen rendered.
    */
   const SCREENS = [
-    ['Search', /Search/, true],
     ['Discover', /Discover/, true],
     ['Watchlist', /Watchlist/, true],
     ['Stats', /Stats/, false],
-    ['Upcoming', /Upcoming/, false],
     ['Lists', /Lists/, false],
     ['People', /People/, false],
   ];
@@ -1788,8 +1796,12 @@ try {
   check('a show still airing stays in watching', libStatus.includes('watching'), JSON.stringify(libStatus));
 
   // --- Upcoming --------------------------------------------------------------
-  // Through More, which is where it lives now — the tab bar is the phone's five.
-  await viaMore(/Upcoming/);
+  // The second half of Up Next, reached the way a person reaches it: the chip beside
+  // "Out now". `docs/design/architecture.md` section 4 — it is not a destination, so this
+  // must not be a navigation, and a walk that went to an address would be testing a route
+  // the interface no longer offers.
+  await page.getByRole('link', { name: /Up Next/ }).click();
+  await page.getByRole('radio', { name: /Upcoming/ }).first().click();
   await page.waitForSelector('text=Tell me about', { timeout: 5000 });
   /*
    * Closed on arrival, and saying what it is set to.
@@ -2578,7 +2590,7 @@ try {
      */
     for (const [path, heading] of [
       ['stats', /^Stats$/],
-      ['calendar', /^Upcoming$/],
+      ['?on=coming', /^Up Next$/],
       ['watchlist', /^Watchlist$/],
       ['discover', /^Discover$/],
     ]) {
@@ -2705,7 +2717,7 @@ try {
     for (const [path, expected] of [
       ['watchlist', /Nothing saved yet/],
       ['stats', /Stats/],
-      ['calendar', /Upcoming/],
+      ['?on=coming', /Upcoming/],
       ['more', /Everything lives on this device/],
       // The two that ask a server. Signed out they say so; the failure mode being
       // guarded against is either of them rendering as "you have nothing".

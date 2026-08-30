@@ -129,7 +129,9 @@ await shot('01-first-run');
  */
 const EMPTY_FIRST = [
   { name: '00-watchlist-empty', path: '/watchlist', want: 'Nothing saved yet' },
-  { name: '00-calendar-empty', path: '/calendar', want: 'Nothing airing in the next two months' },
+  // `?on=coming` rather than `/calendar`: what is airing is the second half of Up Next
+  // since `docs/design/architecture.md` section 4, and `segments.ts` owns the parameter.
+  { name: '00-calendar-empty', path: '/?on=coming', want: 'Nothing airing in the next two months' },
   { name: '00-stats-empty', path: '/stats', want: 'Nothing watched in this period yet' },
 ];
 for (const { name, path, want } of EMPTY_FIRST) {
@@ -339,7 +341,7 @@ for (let attempt = 0; attempt < 8 && !filled; attempt++) {
     await page.goto('http://localhost:4200/');
     await page.waitForTimeout(15000);
   }
-  await page.goto('http://localhost:4200/calendar');
+  await page.goto('http://localhost:4200/?on=coming');
   let steady = 0;
   let last = -1;
   for (let i = 0; i < 40; i++) {
@@ -419,7 +421,7 @@ if (!bothRows) {
   const holdings = [];
   for (const show of ['The Long Dark', 'Kitchen Nightshift', 'Hollow Crown Saga']) {
     try {
-      await page.goto('http://localhost:4200/search');
+      await page.goto('http://localhost:4200/discover');
       await page.waitForTimeout(1500);
       await page.getByPlaceholder('Shows, films, anime…').fill(show);
       await page.waitForTimeout(2500);
@@ -460,14 +462,29 @@ if (!bothRows) {
  * was never in the app. The screens are two deliberate conventions; the harness was the
  * third thing. It navigates the way somebody does now.
  */
+/*
+ * Twelve routes and one fewer destination, which is not a contradiction.
+ *
+ * `docs/design/architecture.md` merged Search into Discover (section 5) and Upcoming into Up
+ * Next (section 4), so two addresses went. The **pictures** did not: searching and browsing
+ * are two states of one surface and both are still worth judging, so `04-search` and
+ * `05-discover` are the same path with `USE` putting the screen into the state its name
+ * says. `09-calendar` is the same idea one screen over, reached by its own address because
+ * the segment is in the address.
+ *
+ * The shot names are unchanged on purpose. They are cited by `reveals.ts`, by
+ * `emptyStates.ts` and by the record — §6.130's rule that "the numbers are identity, not
+ * order" — and renaming a photograph to match a route that moved would break every one of
+ * those to gain nothing.
+ */
 const routes = [
   ['03-upnext', '/'],
-  ['04-search', '/search'],
+  ['04-search', '/discover'],
   ['05-discover', '/discover'],
   ['06-watchlist', '/watchlist'],
   ['07-more', '/more'],
   ['08-stats', '/stats', 'Stats'],
-  ['09-calendar', '/calendar', 'Upcoming'],
+  ['09-calendar', '/?on=coming'],
   ['10-lists', '/lists', 'Lists'],
   ['11-people', '/people', 'People'],
   ['12-account', '/account', 'Account'],
@@ -598,6 +615,13 @@ async function suggestsWhatYouTrack() {
  * the search shot is of results, not of a note composer half-open over them.
  */
 const USE = {
+  /*
+   * Discover, with something typed — which is what `04-search` is a photograph of now.
+   *
+   * The field is at the top of the surface and the shelf gives way to the list. Both halves
+   * are photographed because both are designed: `05-discover` is the same address with
+   * nothing typed.
+   */
   '04-search': async () => {
     const box = page.getByPlaceholder(/Shows, films/i).first();
     await box.click();
@@ -613,7 +637,7 @@ const THEN = {
    * app in a state the next screen is still worth photographing in.
    */
   '05-discover': async () => {
-    await page.goto('http://localhost:4200/search');
+    await page.goto('http://localhost:4200/discover');
     await page.waitForTimeout(800);
     const box = page.getByPlaceholder(/Shows, films/i).first();
     await box.click();
@@ -1200,7 +1224,38 @@ await reveal(page, {
   out: OUT,
   name: '09-calendar-tuning',
   control: /Tell me about/i,
-  arrive: 'http://localhost:4200/calendar',
+  arrive: 'http://localhost:4200/?on=coming',
+  problems: unshot,
+  scrolls,
+});
+
+/*
+ * The two Discover opened this sprint. `docs/design/architecture.md` sections 5 and 6.
+ *
+ * Registered in `core/src/ui/reveals.ts` the hour the panels were written rather than three
+ * sprints later, which is the whole point of that register: every previous application of
+ * §6.129's rule moved content out of the arriving shot and nothing noticed.
+ */
+await reveal(page, {
+  out: OUT,
+  name: '05-discover-filters',
+  // The shut row states the current setting, which is what its name is built from.
+  control: /Filters —/i,
+  arrive: 'http://localhost:4200/discover',
+  problems: unshot,
+  scrolls,
+});
+
+await reveal(page, {
+  out: OUT,
+  name: '05-discover-back',
+  /*
+   * A box is one control with two faces, so the thing to press is the box — named for the
+   * title it is about, because a shelf of twenty of them is twenty controls and §6.96 is
+   * what happens when they share a name.
+   */
+  control: /More about /i,
+  arrive: 'http://localhost:4200/discover',
   problems: unshot,
   scrolls,
 });
@@ -1215,7 +1270,7 @@ await reveal(page, {
   problems: unshot,
   scrolls,
   arrive: async () => {
-    await page.goto('http://localhost:4200/search', { waitUntil: 'domcontentloaded' });
+    await page.goto('http://localhost:4200/discover', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1800);
     const box = page.getByPlaceholder(/Shows, films/i).first();
     await box.click();
@@ -1368,6 +1423,19 @@ try {
    */
   await done.goto('http://localhost:4200/discover');
   await done.waitForTimeout(2000);
+  /*
+   * Turn the box over first. `docs/design/architecture.md` section 5: the shelf is boxes, and
+   * a box's two verbs are on its **back**, because a shelf of twenty each carrying Track and
+   * Watchlist is forty controls with two names between them. So parking a film is two presses
+   * now, and the harness has to do what a person does rather than what it used to do.
+   */
+  const turn = done.getByRole('button', { name: /^More about Quiet Harbour$/i }).first();
+  if (await turn.count()) {
+    await turn.click();
+    await done.waitForTimeout(800);
+  } else {
+    unshot.push('00-discover-empty: no box for Quiet Harbour on the shelf to turn over');
+  }
   const park = done.getByRole('button', { name: /Quiet Harbour to (your )?watchlist/i }).first();
   if (await park.count()) {
     await park.click();
