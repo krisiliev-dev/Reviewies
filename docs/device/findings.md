@@ -273,3 +273,98 @@ iMessages, SMS and MMS — along with App Store content. For a phone with iCloud
 bulk of "storage used" is exactly the part that will not be copied, so the backup is largely app
 data and settings. Someone refusing the backup for want of disk space is usually estimating from
 the wrong number.
+
+## The DioCache importer silently drops every series
+
+Found by importing a **real** `DioCache.db`, recovered from a phone — the first time that
+code has run on anything but fixtures. `docs/research/08-second-reddit-sweep.md` calls
+accepting this file "the highest-value unbuilt feature we have found". It works for films
+and loses the television.
+
+### The numbers
+
+| | in the cache | after `parseDioCache` | landed in the app |
+|---|---|---|---|
+| series | **235** | **0** | 6 (only those an episode mentioned) |
+| movies | 125 | 125 | 85 watches (the ones marked watched) |
+| episodes | — | 83 | 30 |
+
+The screen said **"Imported 115 watches."** Nothing said that 235 shows had been read and
+skipped.
+
+### Why
+
+`parseDioCache` reads the two kinds from two different places:
+
+- **movies** — `data.objects[]` where `entity_type === 'movie'`
+- **series** — a top-level `payload.shows` array, from TV Time's progress endpoint
+
+This cache contains **0** payloads with a `shows` array and **940** objects (235 distinct)
+with `entity_type === 'series'`, sitting in `data.objects` right beside the movies the
+parser does read. The series branch is looking at an endpoint this cache never held.
+
+A real one, keys intact:
+
+```
+{ uuid, type: 'follow', entity_type: 'series', created_at, updated_at,
+  meta: { id, name: 'Elite', country, day_of_week, is_ended, images, … },
+  extended: { rating, rating_count, follower_count, comment_count },
+  filter: ['all', 'stopped'] }
+```
+
+`meta.id` and `meta.name` are exactly what `DioSeries` wants. Nothing is missing from the
+data; the branch that would read it does not exist.
+
+### Why no count reports it
+
+`unrecognised` counts *payloads* that yielded nothing, not entities that were skipped. The
+payload holding those 940 series objects also holds movies, so the movie branch sets
+`used = true` and the payload is counted as recognised. A library that is 65% series comes
+back as films only, and every number on the screen agrees that it went well.
+
+That is this record's oldest theme, in the feature that most depends on not having it: a
+confident report over a partial result, with nothing able to say which.
+
+### Fixed, guard first
+
+Six cases in `diocacheParse.test.ts`, from a fixture with the real cache's keys and
+invented names, so nobody's library goes into the repository. All six fail on the old
+parser — the first as `expected [] to deeply equal [ 'Quiet Harbour: The Series', … ]` —
+and pass on the new one. The change is one loop beside the movie loop, reading
+`entity_type === 'series'` out of `data.objects`.
+
+Two decisions worth stating, because both could have been made carelessly:
+
+- **`watchedEpisodes: 0` means "not stated", not "none watched".** A follow object carries
+  no progress. The importer only reads `archived`, `upToDate` and `forLater` for a show's
+  status, so nothing downstream reads those zeros as a claim — but the next person to touch
+  it should know they are absence rather than measurement.
+- **The progress endpoint still wins where a cache has one.** Some caches hold both shapes;
+  the listing knows less than the endpoint that counts episodes, so a count already found is
+  never lowered.
+
+Measured on the real cache, before and after, through the actual import UI rather than the
+parser alone:
+
+| | before | after |
+|---|---|---|
+| series parsed | 0 | **235** |
+| titles in the library | 6 | **235** |
+| library items | 6 | **235** |
+| watches | 115 | 115 |
+| watchlist | 0 | 2 |
+
+### Still open, and deliberately not done here
+
+**A skipped entity is still invisible.** `unrecognised` counts payloads that yielded
+nothing, so a payload whose movies parsed and whose series did not was counted as fine.
+That is what let this hide. The fix makes the series parse; it does not make a future
+mismatch announce itself. Whatever reads these shapes should be able to say how many
+objects it saw and could not use — that is a separate change with its own guard.
+
+**`not_started_yet` lands as `watching`.** The real filter values across this cache were
+`all` (940), `up_to_date` (528), `not_started_yet` (292), `continuing` (108), `watch_later`
+(8) and `stopped` (4). Only `up_to_date` and `watch_later` map to anything the importer
+reads, so roughly 73 shows the owner has never begun are filed as in progress. Arguably
+they belong on the watchlist. That is a product decision about what a followed-but-unstarted
+show *is*, not a bug, and a device session is the wrong place to settle it.
