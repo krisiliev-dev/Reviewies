@@ -175,7 +175,13 @@ describe('the type scale', () => {
      * name. The population shrinks as the drawings take over, which is the same direction
      * the note above records and a different reason for it.
      */
-    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(23);
+    /*
+     * 23, down one: `WhereToWatch`'s country chips stated `font-title font-semibold`
+     * themselves and `Choice` states it for them, from `CHOICE_SIZE.chips.label`. The
+     * population shrinks as the components take the treatments over, which is the same
+     * direction and the same reason as the two notes above.
+     */
+    expect(seen, 'nothing carried a face or a weight, so this proved nothing').toBeGreaterThan(22);
     expect(offenders).toEqual([]);
   });
 

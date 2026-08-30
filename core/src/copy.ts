@@ -842,6 +842,16 @@ export const COPY = {
   whereToWatch: {
     /** The section's own name, which both platforms drew and neither owned. */
     heading: 'Where to watch',
+    /**
+     * The country picker's own name, which is what a radiogroup needs and neither had.
+     *
+     * The web spelled `aria-label="Country"` by hand and the phone declared no group at
+     * all — twenty-four radios loose in a `View`, so a screen reader met "US, radio" with
+     * nothing saying what the question was. One name in `copy.ts` for the same reason
+     * `COPY.stats.period` is one: a group whose name is written twice is a group whose
+     * name drifts, and `choice.test.ts` already holds Stats to exactly that.
+     */
+    country: 'Country',
     /** The three ways a provider offers something, which is the row's own vocabulary. */
     stream: 'Stream',
     rent: 'Rent',

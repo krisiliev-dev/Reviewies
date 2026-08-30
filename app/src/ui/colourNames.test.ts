@@ -150,7 +150,14 @@ describe('every colour a class names', () => {
      * screen* writes this ink, so if this number ever goes to zero that guard has been
      * broken too and both will say so.
      */
-    expect(seen, 'nothing writes the action label at all').toBeGreaterThan(6);
+    /*
+     * 6, down one: `WhereToWatch`'s country picker was the last screen drawing a chosen
+     * chip as `bg-action-fill text-action-label`, and it is a `Choice` now. The note above
+     * says the remaining sites belong inside the component set; this was the exception it
+     * did not know about, because the clause that should have caught it read `Choice.tsx`
+     * and nothing else.
+     */
+    expect(seen, 'nothing writes the action label at all').toBeGreaterThan(5);
     expect(off, 'action.label is near-black and only legible on the action fill').toEqual([]);
   });
 

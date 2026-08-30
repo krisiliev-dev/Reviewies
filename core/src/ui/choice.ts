@@ -142,6 +142,17 @@ export interface ChoiceContract<T extends string | number> {
    *
    * Only for a group that is genuinely a list. A group of three fixed options that
    * scrolled would be hiding a choice for no reason.
+   *
+   * **Long is not the same as data-shaped**, which is the case this nearly got wrong.
+   * `WhereToWatch`'s country picker is twenty-four options — more than any other call site
+   * here, and three times Stats' three windows — and it still takes the default. The
+   * length is the *product's*: a shortlist somebody wrote in `region.ts`, the same
+   * twenty-four for everybody, which is the opposite of one chip per year a person happens
+   * to have history in. And the arrangement is measured rather than argued: wrapping puts
+   * all twenty-four on screen in four rows, 326 × 200 at 390px; scrolling would be a
+   * 1240pt track showing six at a time with the indicator off, inside a panel somebody
+   * opened *in order to see the countries*. Hiding eighteen of them is what `scroll` costs
+   * when the list is not the person's, so the test above holds for long lists too.
    */
   scroll?: boolean;
 }
