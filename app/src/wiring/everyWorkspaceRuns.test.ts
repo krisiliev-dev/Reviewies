@@ -162,7 +162,9 @@ describe('every workspace', () => {
     // and the four sites it would otherwise be vacuously true about.
     // app 652, up two: §6.174's synopsis pair in `season.test.ts` — the clamp forbidden on
     // both renderers, and the clause that the field is still drawn at all.
-    core: 925, app: 652, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 654, up two: §6.175's one-owner sweep in `copy.test.ts` — the clause that no
+    // sentence is typed twice, and the non-vacuity clause that it is reading prose at all.
+    core: 925, app: 654, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

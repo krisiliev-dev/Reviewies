@@ -1,4 +1,5 @@
 import { SURFACE } from '@reviewies/core/ui/surface';
+import { COPY } from '@reviewies/core/copy';
 import { Chevron } from '../../src/ui/Mark';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,10 +50,7 @@ export default function MoreScreen() {
         <Masthead>More</Masthead>
 
         <View style={styles.card}>
-          <Note>
-            Everything lives on this device. Nothing here needs an account, and nothing
-            is withheld — this is the whole point of the app.
-          </Note>
+          <Note>{COPY.app.localFirst}</Note>
           {counts && (
             <View style={styles.stats}>
               <Stat label="Watches" value={counts.watches} />

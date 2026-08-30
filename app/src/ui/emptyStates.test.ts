@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { EMPTY_STATES, NOT_AN_EMPTY_STATE } from '@reviewies/core/ui/emptyStates';
@@ -26,6 +26,23 @@ const withoutProse = (s: string) =>
 
 /** Where a shot name has to appear to have been taken. */
 const CAPTURES = ['design/capture.mjs', 'design/capture-signedin.mjs', 'design/capture-web.mjs'];
+
+/** Every screen on both platforms, walked rather than listed. §6.157, §6.175. */
+const SCREEN_TREES = ['app/src', 'mobile/app', 'mobile/src'];
+
+function screenFiles(dir?: string, out: string[] = []): string[] {
+  if (dir === undefined) {
+    for (const tree of SCREEN_TREES) screenFiles(tree, out);
+    return out;
+  }
+  for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'dist-real', '.expo'].includes(entry.name)) continue;
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) screenFiles(path, out);
+    else if (/\.tsx$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
 
 /** The sentence a `COPY` path resolves to, or undefined if the path is wrong. */
 function sentence(path: string): unknown {
@@ -112,15 +129,19 @@ describe('a screen with nothing on it', () => {
      * So: an `empty=` prop must be a reference, never a string. The empty string is allowed —
      * People's Blocked list passes `empty=""` because the section is only rendered when it
      * has something in it, and a sentence there would be about a state that cannot happen.
+     *
+     * The file list used to be four paths typed out here, and §6.175 found what that costs.
+     * The sealed-comments gate was two literals in a fifth file and a sixth, and this clause
+     * — whose name says *no empty state written into a screen* — could not have seen them
+     * however hard it looked. That is the §6.157 hole this file's own header describes,
+     * inside this file. It is a walk now, so a screen added tomorrow is swept tomorrow.
+     *
+     * Its sibling in `wiring/copy.test.ts` is the one that catches a sentence written as
+     * element text rather than as a prop; between them the prop shape and the prose shape
+     * are both covered, and neither is a list somebody has to remember to add to.
      */
-    const screens = [
-      'app/src/screens/People.tsx',
-      'mobile/app/people.tsx',
-      'app/src/screens/Lists.tsx',
-      'mobile/app/lists.tsx',
-    ];
     const literals: string[] = [];
-    for (const file of screens) {
+    for (const file of screenFiles()) {
       for (const [, text] of withoutProse(read(file)).matchAll(/\bempty="([^"]+)"/g)) {
         literals.push(`${file}: empty="${text}"`);
       }

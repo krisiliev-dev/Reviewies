@@ -104,7 +104,7 @@ export default function CommentsScreen() {
       setWriting(false);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not post that');
+      setError(e instanceof Error ? e.message : COPY.comments.postFailed);
     }
   }
 
@@ -122,16 +122,12 @@ export default function CommentsScreen() {
         )}
 
         {!syncConfigured() ? (
-          <Note>
-            Comments need an account. Sync is not configured on this build.
-          </Note>
+          <Note>{COPY.comments.needsAccount}</Note>
         ) : !watched ? (
-          // The database enforces this; the screen only explains it.
-          <Block heading="Hidden until you watch it">
-            <Note>
-              Comments on this episode stay sealed until you have seen it. Nothing here
-              can spoil you, because the server will not send them.
-            </Note>
+          // The database enforces this; the screen only explains it — in `copy.ts`'s
+          // words, because the web said the same sentence letter for letter. §6.175.
+          <Block heading={COPY.comments.unwatchedHeading}>
+            <Note>{COPY.comments.unwatched}</Note>
           </Block>
         ) : (
           <>
@@ -149,7 +145,7 @@ export default function CommentsScreen() {
                   label={COPY.fields.comment}
                   value={draft}
                   onChange={setDraft}
-                  placeholder="What did you think?"
+                  placeholder={COPY.fields.commentPlaceholder}
                 />
                 {image && (
                   <View style={styles.attached}>
@@ -221,7 +217,7 @@ export default function CommentsScreen() {
             {!loading && visible.length === 0 && (
               <Note>
                 {comments.length > 0
-                  ? 'Everything is filtered out at this level.'
+                  ? COPY.comments.allFiltered
                   : gated
                     ? COPY.comments.sealed
                     : COPY.comments.empty}

@@ -58,7 +58,7 @@ export default function AccountScreen() {
     try {
       if (mode === 'up') {
         await signUp(email.trim(), password);
-        setNotice('Check your email to confirm the account, then sign in.');
+        setNotice(COPY.sync.confirmEmail);
       } else {
         await signIn(email.trim(), password);
       }

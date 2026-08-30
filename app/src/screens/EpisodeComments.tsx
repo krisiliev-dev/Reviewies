@@ -82,7 +82,7 @@ export function EpisodeComments() {
       setWriting(false);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not post that');
+      setError(err instanceof Error ? err.message : COPY.comments.postFailed);
     }
   }
 
@@ -112,17 +112,13 @@ export function EpisodeComments() {
       )}
 
       {!syncConfigured() ? (
-        <Note className="mt-6">
-          Comments need an account. Sync is not configured on this build.
-        </Note>
+        <Note className="mt-6">{COPY.comments.needsAccount}</Note>
       ) : !watched ? (
-        // The gate is enforced by the database; this only explains it.
+        // The gate is enforced by the database; this only explains it. The words are
+        // `copy.ts`'s because the phone said them too, letter for letter. §6.175.
         <div className="mt-6 rounded-plate bg-ground-raised p-4">
-          <p className="text-s14 font-title font-semibold">Hidden until you watch it</p>
-          <Note className="mt-1">
-            Comments on this episode stay sealed until you have seen it. Nothing here can
-            spoil you, because the server will not send them.
-          </Note>
+          <p className="text-s14 font-title font-semibold">{COPY.comments.unwatchedHeading}</p>
+          <Note className="mt-1">{COPY.comments.unwatched}</Note>
         </div>
       ) : (
         <>
@@ -148,7 +144,7 @@ export function EpisodeComments() {
                   const file = [...e.clipboardData.files][0];
                   if (file) void attach(file);
                 }}
-                placeholder="What did you think?"
+                placeholder={COPY.fields.commentPlaceholder}
               />
 
               {image && (
@@ -227,7 +223,7 @@ export function EpisodeComments() {
           {!loading && visible.length === 0 && (
             <Note className="mt-6">
               {comments.length > 0
-                ? 'Everything is filtered out at this level.'
+                ? COPY.comments.allFiltered
                 : gated
                   ? COPY.comments.sealed
                   : COPY.comments.empty}

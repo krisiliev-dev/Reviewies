@@ -45,6 +45,8 @@ export const COPY = {
     /** Said after pressing it, so the button is not a shrug. */
     retrying: (many: number) =>
       many === 1 ? 'Queued one change again.' : `Queued ${many} changes again.`,
+    /** After a sign-up: the account exists, the session does not yet. */
+    confirmEmail: 'Check your email to confirm the account, then sign in.',
   },
 
   app: {
@@ -72,6 +74,27 @@ export const COPY = {
      */
     clockWrong: (by: string) =>
       `This device's clock is about ${by} out. Your history is safe and syncs correctly, but dates and what is airing will look wrong until it is fixed.`,
+    /**
+     * The product's stance, drawn at the top of More on both platforms — where somebody
+     * arriving from a shut-down service goes looking for the catch.
+     */
+    localFirst:
+      'Everything lives on this device. Nothing here needs an account, and nothing is ' +
+      'withheld — this is the whole point of the app.',
+    /**
+     * What a crashed screen says. The heading names what happened to *this screen*
+     * rather than to the app, and the sentence under it is about the data, because the
+     * only question worth answering there is whether anything was lost.
+     */
+    crashed: 'This screen stopped',
+    crashedDetail:
+      'Something on it went wrong. Everything you have tracked is still here — it lives ' +
+      'on this device and nothing was lost.',
+    /**
+     * An abort we asked for, said out loud. Distinct from a search that came back with
+     * nothing, which is §6.57's other half and has its own sentence.
+     */
+    timedOut: 'That took too long. Check your connection and try again.',
   },
 
   upNext: {
@@ -147,6 +170,19 @@ export const COPY = {
      */
     allCaughtUp: 'All caught up — nothing has aired that you have not seen.',
     /** Where the rest of what is coming lives. Named for the screen it opens — §6.78. */
+    /**
+     * The migration's three sentences, on the screen the product opens on — the highest-
+     * traffic prose in the app, and typed out on both platforms until §6.175.
+     */
+    importedExplained:
+      'They are in your library under the names your export carried. Matching them to ' +
+      'the real shows fills in the artwork, the air dates and everything you have not ' +
+      'watched yet.',
+    tvTimeGone:
+      'TV Time is gone. If you got your data out — or pulled it off your phone — this ' +
+      'reads it and picks up where you left off.',
+    /** The way out for somebody who has nothing to bring. */
+    nothingToImport: 'Nothing to import? Search for a show and start from there.',
     seeUpcoming: "See what's upcoming",
   },
 
@@ -247,6 +283,8 @@ export const COPY = {
     password: 'Password',
     posterUrl: 'Address of a poster image to use instead',
     comment: 'What you thought of this episode',
+    /** The prompt inside the box; `comment` above is the name a reader hears for it. */
+    commentPlaceholder: 'What did you think?',
     emoji: 'Search any emoji',
     matchSearch: (name: string) => `Search for the show ${name} really is`,
     /**
@@ -401,6 +439,15 @@ export const COPY = {
     itemsFailed: 'Could not load what is on this list. It is still there — try again.',
     /** A remove or a publish that the server refused, rather than a row that vanishes. */
     changeFailed: 'That change did not go through. Nothing has been altered — try again.',
+    /**
+     * The picker's version of `empty` — the same absence, a different direction to point.
+     *
+     * `empty` above says "make one above" because the Lists screen puts its box at the
+     * top; the sheet that adds a title to a list puts its box at the bottom. Two
+     * sentences because the screens genuinely differ, one owner because until §6.175 both
+     * platforms typed *this* one out for themselves.
+     */
+    emptyInPicker: 'No lists yet — make one below.',
   },
 
   stats: {
@@ -567,6 +614,11 @@ export const COPY = {
      * whole product is built around — was an unmarked black gap until somebody else's
      * reaction happened to arrive. A space that is the feature should say so.
      */
+    /**
+     * The instruction the whole feature rests on, and the reason it is a *tap* rather
+     * than a form: the clock starts from the press, and can be corrected afterwards.
+     */
+    startHint: 'Tap the moment you press play. You can nudge the timing at any point.',
     streamResting: 'Other people’s reactions appear here as you reach their moments',
   },
 
@@ -610,6 +662,29 @@ export const COPY = {
     unmatched: 'Match this show to a real one and we can say where it is streaming.',
   },
 
+  /**
+   * Content warnings, the one section where being told the wrong thing has a cost.
+   *
+   * Both platforms wrote these three sentences out by hand — identically, and with a
+   * comment on each side saying *"Not the same sentence — see the web's copy of this"*,
+   * which is a pair of files agreeing to keep two copies in step by hand. §6.175.
+   */
+  warnings: {
+    /**
+     * §6.57 on the screen where it matters most: somebody avoiding a trigger would read
+     * "nobody has flagged anything" as a fact about the title rather than as a request
+     * that never arrived.
+     */
+    failed:
+      'Could not read the warnings for this title. Nothing here means nothing is known, ' +
+      'not that there is nothing.',
+    empty: 'Nobody has flagged anything yet. If you have seen it, you can below.',
+    /** What the list is worth, and the promise that it hides nothing. */
+    provenance:
+      'Community-reported, so treat it as a heads-up rather than a guarantee. Nothing ' +
+      'here hides anything.',
+  },
+
   comments: {
     /** The web's: an empty conversation is an invitation, not a status. */
     empty: 'Nothing here yet. Be the first.',
@@ -622,6 +697,29 @@ export const COPY = {
      * Lists screen made when it showed "No lists yet" for a failed fetch.
      */
     sealed: 'Your watch has not synced yet, so comments are still sealed. Try again in a moment.',
+    /**
+     * The other sealed state, and the one that had no owner at all.
+     *
+     * `sealed` above is *watched, not yet synced*; this is *not watched*, which replaces
+     * the screen rather than emptying it. Both platforms typed this heading and this
+     * sentence for themselves, identically, for as long as the screen has existed —
+     * §6.175's measurement, and the reason `19-comments-sealed` was registered against a
+     * sentence it does not show.
+     */
+    unwatchedHeading: 'Hidden until you watch it',
+    unwatched:
+      'Comments on this episode stay sealed until you have seen it. Nothing here can spoil ' +
+      'you, because the server will not send them.',
+    /** The gate before the gate: no account, so no conversation to be sealed from. */
+    needsAccount: 'Comments need an account. Sync is not configured on this build.',
+    /**
+     * Not an absence: the effort dial is a control, and this is what it did. §6.57's
+     * distinction one more time — "nothing was said" and "you filtered it out" are
+     * different claims about somebody's own screen.
+     */
+    allFiltered: 'Everything is filtered out at this level.',
+    /** A comment that did not post, rather than a button that did nothing. */
+    postFailed: 'Could not post that',
   },
 
   people: {
@@ -640,6 +738,12 @@ export const COPY = {
      */
     /** A follow or unfollow that did not happen, rather than a button that does nothing. */
     followFailed: 'That did not go through. Try again in a moment.',
+    /**
+     * A search that came back empty, which is not a search that failed. Both platforms
+     * carried this sentence *and* a comment on each side explaining the distinction —
+     * one of them beginning "See the web's copy". §6.175.
+     */
+    noMatch: 'Nobody by that name.',
     /**
      * The lists themselves, when the asking failed.
      *
@@ -675,6 +779,24 @@ export const COPY = {
      */
     exportBlurb:
       'Everything, in full, with no account and no upsell. It is yours. Signed in, the file carries your lists, the people you follow and your comments too.',
+    /**
+     * The one setting that is a habit rather than a preference, and why it is offered
+     * off: anyone working through several episodes wants to stay put.
+     */
+    openCommentsHint: 'How TV Time worked. Needs an account.',
+    /**
+     * What clearing the cache does and, more importantly, what it does not do. Somebody
+     * pressing a button called *Clear* on a screen holding ten years of history needs
+     * that answered before they press it, not after.
+     */
+    cacheBlurb:
+      'Artwork and episode listings are cached from the metadata provider and expire ' +
+      'automatically. Clearing them never touches your own history, and shows carried ' +
+      'over from an import keep their names.',
+    /** What the press did — nothing, or a number. A function, for `catchUp.marked`'s reason. */
+    cacheEmpty: 'Nothing cached to clear.',
+    cacheCleared: (many: number) =>
+      many === 1 ? 'Cleared 1 cached record.' : `Cleared ${many} cached records.`,
   },
   catchUp: {
     /**
@@ -692,6 +814,25 @@ export const COPY = {
      */
     cancel: 'Cancel catching up',
     done: 'Done catching up',
+    /**
+     * The sheet's own four sentences, which both platforms typed for themselves until
+     * §6.175 swept for literals appearing verbatim on both sides.
+     *
+     * `nothingToMark` is deliberately not "up to date": it reports what the *press* did,
+     * which is nothing, rather than describing the show. The plural is a function for the
+     * same reason `sync.retrying` is — a screen that builds its own plural is a screen
+     * that can build it differently from the other one, and these two did build it
+     * separately, character for character, on both platforms.
+     */
+    nothingToMark: 'Already up to date — nothing to mark.',
+    marked: (many: number) =>
+      many === 1 ? 'Marked 1 episode as watched.' : `Marked ${many} episodes as watched.`,
+    /** Not "nothing to catch up on" — the show has not started. §6.57's distinction. */
+    nothingAired: 'No episodes have aired yet.',
+    /** Why a grid of numbers is safe to read: it is the whole point of the sheet. */
+    spoilerFree:
+      'How far have you got? Nothing here shows episode names, so you cannot be spoiled ' +
+      'by catching up.',
   },
   import: {
     /**
@@ -722,5 +863,17 @@ export const COPY = {
      * already lost the months. §6.147.
      */
     wal: 'If you have a DioCache.db, pick its DioCache.db-wal at the same time. TV Time wrote its most recent months there, and importing the database alone loses them without telling you.',
+    /**
+     * Why the matcher stops and asks, in the words the ask-flow's own safety argument
+     * uses: the honest reason is not "we failed", it is that more than one answer looked
+     * right and picking one would be a guess about somebody's history.
+     *
+     * §6.175 found both platforms typing this out — the phone with that argument in a
+     * comment above it and the web with a different one, which is two files agreeing to
+     * keep one sentence in step by hand.
+     */
+    ambiguous:
+      'More than one show could be this. Picking the wrong one would move your history ' +
+      'onto it.',
   },
 } as const;

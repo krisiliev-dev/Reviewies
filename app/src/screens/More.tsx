@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { Chevron } from '../ui/Mark';
@@ -46,10 +47,7 @@ export function More() {
       <Masthead>More</Masthead>
 
       <section className="rounded-plate bg-ground-raised p-4">
-        <Note>
-          Everything lives on this device. Nothing here needs an account, and nothing is
-          withheld — this is the whole point of the app.
-        </Note>
+        <Note>{COPY.app.localFirst}</Note>
         {/* Four, in two columns. Three was this screen's count and four was Settings'
             copy of the same block; the copy is gone (§6.133) and Reactions came here
             rather than out of the product. Two columns because four across a phone is a

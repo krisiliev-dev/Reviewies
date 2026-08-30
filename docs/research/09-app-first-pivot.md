@@ -12986,6 +12986,163 @@ recording rather than explaining away: the shots being read now are the ones ear
 skipped as unpromising, and they are turning out to be unpromising. The rate to watch is not
 findings per shot but whether the survivors keep surviving — three examined, one shipped.
 
+### 6.175 The guard against saying it twice skips the case where both platforms say it identically
+
+This started as a design finding on `19-comments-sealed` and ended in a guard's second line.
+
+The screen shows the spoiler gate — *"Hidden until you watch it"*, and under it *"Comments on
+this episode stay sealed until you have seen it. Nothing here can spoil you, because the
+server will not send them."* Both sentences were **hard-coded literals in both platforms**,
+`app/src/screens/EpisodeComments.tsx:121` and `mobile/app/comments/[targetId].tsx:130`,
+character for character. §6.98 gave the words one owner four dozen sprints ago; nothing owned
+these.
+
+#### The line that made it invisible
+
+`app/src/wiring/copy.test.ts` is the guard whose header says it *"stops new ones being
+written twice"*. Its comparison opens:
+
+```js
+for (const a of webText) {
+  if (phoneText.includes(a)) continue;
+```
+
+An exact match across the two platforms is **skipped**. And it has to be, given how the file
+works: `sentences()` resolves `COPY.x.y` into its text, so a sentence properly owned by
+`copy.ts` shows up identically on both sides and would otherwise be reported as drift by
+every screen that reads it.
+
+But the skip does not only pass over the *fixed* case. It passes over the *unfixed* one for
+the same reason. Two screens that each type the same sentence out by hand score 1.0 and are
+skipped. So the guard could only ever see a sentence that had already been written twice
+**and then edited on one side**. It catches drift. It never caught duplication, which is what
+drift starts as.
+
+§6.162 wrote the reason down in passing — *"the four literals agreed, by hand, for as long as
+nobody edited one of them"* — fixed the four empty states it had found by enumerating them,
+and left the general case standing. That is §6.41's shape at one remove: the condition was
+named, the narrow instance repaired, and the excuse for the rest never re-read.
+
+#### The measurement
+
+Sweeping every `.tsx` under `app/src`, `mobile/app` and `mobile/src` for text typed into the
+file — not reached through `COPY` — and intersecting the two platforms:
+
+| | duplicated verbatim on both platforms |
+| --- | --- |
+| all user-facing text | **95** |
+| whole sentences (25+ chars, ends in `.` `?` `!`) | **25** |
+
+The twenty-five include the entire spoiler gate, all three of Content Warnings' sentences,
+the migration prose on the screen the product opens on (*"TV Time is gone…"*), the crashed-
+screen reassurance, and Watching Mode's one instruction. Every one of them agreeing by hand,
+for as long as nobody edits one.
+
+The codebase had noticed, too, and recorded it in duplicate: `mobile/src/ui/ContentWarnings.tsx`
+carried the comment *"Not the same sentence — see the web's copy of this"*, and
+`mobile/app/people.tsx` *"See the web's copy: …"*. Two files agreeing to keep one sentence in
+step by hand, each with a note reminding the reader to go and check the other.
+
+#### What was done
+
+All twenty-five moved into `core/src/copy.ts` — a new `warnings` group, and additions to
+`app`, `sync`, `people`, `lists`, `settings`, `upNext`, `watching`, `catchUp`, `import`,
+`fields` and `comments`. Two hand-built plurals became functions for the reason
+`sync.retrying` is one: a screen that builds its own plural can build it differently from the
+other screen, and both of these did. `AddToList`'s *"Could not create that list."* was
+§6.138 as well as §6.175 — `lists.createFailed` already existed, saying the fuller and better
+thing — so the picker reads that now instead of its own shorter sentence.
+
+Three of the four remaining "see the web's copy" comments went with them; the reason lives
+beside the words now rather than on each platform separately.
+
+#### The guard, and the plant that broke the first version of it
+
+The obvious rule is *no sentence typed on both platforms*. It was written, and a plant walked
+straight through it: reverting **one** platform to its literal while the other reads `COPY`
+leaves no intersection to find. `sentences()` names that hole in its own comment about
+resolving `COPY.x.y`; this is the same hole one layer out, and it is the hole every fix in
+this entry would have created.
+
+So the rule is two rules:
+
+- **a sentence `copy.ts` owns may not be typed anywhere** — which fails on a regression;
+- **a sentence typed on both platforms is duplicated whether or not anybody has moved it** —
+  which fails on a new pair written from scratch.
+
+Both planted, both red, both restored: the phone reverted to its literal gave *"copy.ts
+already owns this sentence"*, and a brand-new sentence pasted into both Stats screens gave
+*"typed on both platforms, owned by neither"*. A non-vacuity clause counts the typed prose it
+finds on each platform separately, because a sweep that reads only one side reports an empty
+intersection for ever.
+
+#### And the register the finding came from was making a false claim
+
+`core/src/ui/emptyStates.ts` registered `comments.sealed` — *"the conversation is sealed until
+your watch has synced"* — against `shot: '19-comments-sealed'`. That shot is of the **other**
+sealed state; the capture script's own assertion beside it reads `/Hidden until you watch
+it/`. A register entry naming a photograph of a different screen is §6.139: a claim about the
+product that was never checked against the product.
+
+Reading the branch underneath to re-point it found something worse. `fetchComments` returns
+
+```ts
+return { comments, gated: comments.length === 0 && !hasWatched };
+```
+
+and both screens only render `gated ? sealed : empty` **inside** their `watched ?` branch. So
+`hasWatched` is true wherever that sentence could be drawn, and `gated` is therefore false.
+`COPY.comments.sealed` cannot be reached.
+
+The state it describes is real — a watch this device has recorded and the server has not
+received, whose RLS gate is still shut — but nothing on the client tells it apart from an
+empty conversation, so somebody in it is shown *"Nothing here yet. Be the first."* That is
+the exact mistake the sentence's own doc comment says it was written to prevent, and the
+comment has been sitting above the sentence saying so.
+
+The register now carries that as the `why` on a `shot: null`, which is the strongest kind of
+§6.146 answer: what stands between the harness and this screen is the product. The
+unwatched gate is registered in its place, pointing at the shot that has been of it all
+along, and two genuinely new empty states — Content Warnings with nothing flagged, the
+add-to-list picker with no lists — are registered and photographed, walked to a second time
+under the no-rows stub rather than assumed from the seeded reveals above them.
+
+#### One more clause that could not see what its name claims
+
+`emptyStates.test.ts`'s *"has no empty state written into a screen instead of into copy.ts"*
+read a hand-typed array of four paths and matched only `empty="…"`. The sealed gate was in a
+fifth file and a sixth, written as element text. The clause could not have found it however
+hard it looked — §6.157's hole, inside the file whose own header describes §6.157's hole. It
+walks the three trees now, proved by planting `empty="…"` in a seventh file, and its comment
+says plainly which shape it still cannot see and which sibling covers that one.
+
+## What is not done, and why it is said here
+
+**Sixty-seven pieces of duplicated text remain**, down from 95. They are the ones below the
+sentence line: *"Create account"*, *"Change poster"*, *"Leave Watching Mode"*, *"Metadata
+cache"* — control names and headings, every one the same defect at a smaller size. The line
+is `PROSE_FLOOR = 25` and a full stop, chosen because a sentence is the product *speaking*
+and `copy.ts` is the owner of that, while a control's name has a different owner
+(`COPY.controls`, held by `labelSet.test.ts`). It is written as one constant so a later
+sprint can lower it and read off the damage; it is a floor, not a finish, and calling it
+finished would be the §6.41 mistake this entry is about.
+
+**`COPY.comments.sealed` is filed, not fixed.** The honest repair needs the client to know
+whether *this episode's* watch is still in the outbox — `pendingCount()` exists and is
+platform-agnostic, but it answers about the queue rather than about the row, and shipping an
+approximation of a spoiler guarantee is not a thing to do in the last twenty minutes of a
+sprint. The register says the branch is unreachable and why; the next sprint can decide
+whether to make it reachable or delete the sentence.
+
+**The design passes have not run against these changes.** Twelve screens changed what they
+read a sentence from; none changed what the sentence says, and the suite proves each screen
+still reaches for its `COPY` path. But that is an argument, and §6.139 is that an argument
+about the product is not a measurement of it.
+
+**Seventy-two shots are still unread.** This sprint read three and stopped, because the third
+one produced this.
+
+
 
 ## 7. What is still not known
 

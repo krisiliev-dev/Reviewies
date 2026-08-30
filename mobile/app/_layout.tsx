@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { COPY } from '@reviewies/core/copy';
 import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -41,11 +42,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   reportFailure(error);
   return (
     <View style={styles.centre}>
-      <Text style={styles.title}>This screen stopped</Text>
-      <Text style={styles.detail}>
-        Something on it went wrong. Everything you have tracked is still here — it lives
-        on this device and nothing was lost.
-      </Text>
+      <Text style={styles.title}>{COPY.app.crashed}</Text>
+      <Text style={styles.detail}>{COPY.app.crashedDetail}</Text>
       <Button
         onPress={() => void retry()}
         tone="primary"

@@ -14,6 +14,7 @@ import { Button } from './Button';
 import { Row as BaseRow } from './Row';
 
 import { text, type } from '@reviewies/core/tokens';
+import { COPY } from '@reviewies/core/copy';
 import { Note } from './Note';
 
 /**
@@ -129,12 +130,7 @@ export function MatchImports({
       {asks.map((ask) => (
         <View key={ask.localId} style={styles.card}>
           <Text style={styles.name}>{ask.name}</Text>
-          {/* The honest reason to ask is not "we failed" — it is that more than one
-              answer looked right, and picking one would be a guess about a history. */}
-          <Note>
-            More than one show could be this. Picking the wrong one would move your
-            history onto it.
-          </Note>
+          <Note>{COPY.import.ambiguous}</Note>
           {ask.candidates.map((candidate) => (
             <BaseRow
               key={candidate.id}

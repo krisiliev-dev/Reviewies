@@ -78,7 +78,7 @@ export default function SearchScreen() {
         setResults(await getProvider().search(q, controller.signal));
       } catch (e) {
         if (timedOut.current) {
-          setError('That took too long. Check your connection and try again.');
+          setError(COPY.app.timedOut);
           setBusy(false);
         } else if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Search failed');

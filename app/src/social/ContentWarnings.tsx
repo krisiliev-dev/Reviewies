@@ -73,20 +73,16 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
         <div className="mt-2 rounded-plate bg-ground-raised p-3">
           {summaries === undefined && <Note level="footnote">Loading…</Note>}
 
-          {/* Not the same sentence. A request that did not arrive is not an answer, and
-              this is the one screen where being told the wrong one matters — somebody
-              avoiding a trigger would take "nobody has flagged anything" as a fact. */}
+          {/* Two states, two sentences, and the reason is in `COPY.warnings.failed`:
+              a request that did not arrive is not an answer, and this is the one screen
+              where being told the wrong one has a cost. The pair of comments that used
+              to say this on both platforms was itself the duplication. */}
           {failed && (
-            <p className="text-s12 text-trouble" role="status">
-              Could not read the warnings for this title. Nothing here means nothing is
-              known, not that there is nothing.
-            </p>
+            <p className="text-s12 text-trouble" role="status">{COPY.warnings.failed}</p>
           )}
 
           {!failed && summaries?.length === 0 && (
-            <Note level="footnote">
-              Nobody has flagged anything yet. If you have seen it, you can below.
-            </Note>
+            <Note level="footnote">{COPY.warnings.empty}</Note>
           )}
 
           {summaries && summaries.length > 0 && (
@@ -170,10 +166,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           {note && <p className="mt-2 text-s12 text-trouble">{note}</p>}
 
-          <Note level="footnote" className="mt-3">
-            Community-reported, so treat it as a heads-up rather than a guarantee.
-            Nothing here hides anything.
-          </Note>
+          <Note level="footnote" className="mt-3">{COPY.warnings.provenance}</Note>
         </div>
       )}
     </section>

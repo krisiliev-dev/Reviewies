@@ -118,11 +118,7 @@ export default function UpNextScreen() {
                 with no artwork, no air dates and no episode lists beyond what was
                 watched. Matching them is offered here rather than mentioned, because
                 here is where somebody is standing. */}
-            <Text style={styles.emptyText}>
-              They are in your library under the names your export carried. Matching them
-              to the real shows fills in the artwork, the air dates and everything you
-              have not watched yet.
-            </Text>
+            <Text style={styles.emptyText}>{COPY.upNext.importedExplained}</Text>
             {/* Not auto-started here: this panel has just explained what matching is
                 for, and starting it underneath that explanation would talk over
                 itself. Up Next runs it without asking once this is dismissed. */}
@@ -148,15 +144,10 @@ export default function UpNextScreen() {
            */
           <View style={styles.empty}>
             <Masthead level="sub">Bring your history with you</Masthead>
-            <Text style={styles.emptyText}>
-              TV Time is gone. If you got your data out — or pulled it off your phone —
-              this reads it and picks up where you left off.
-            </Text>
+            <Text style={styles.emptyText}>{COPY.upNext.tvTimeGone}</Text>
             <ImportFormats />
             <ImportFiles label="Import from TV Time" onImported={setImported} primary />
-            <Text style={styles.emptyText}>
-              Nothing to import? Search for a show and start from there.
-            </Text>
+            <Text style={styles.emptyText}>{COPY.upNext.nothingToImport}</Text>
             {/* The secondary of the two. It was the bright one and the import was the
                 muted one — the opposite of what this screen is for. The web had the
                 same inversion, and neither was visible to any check: both controls were

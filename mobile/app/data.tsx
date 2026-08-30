@@ -113,7 +113,7 @@ export default function DataScreen() {
             accessibilityRole="switch"
             {...toggleState(openComments)}
             accessibilityLabel="Open the conversation after marking watched"
-            accessibilityHint="How TV Time worked. Needs an account."
+            accessibilityHint={COPY.settings.openCommentsHint}
             onPress={() => {
               const on = !openComments;
               setOpenComments(on);
@@ -124,7 +124,7 @@ export default function DataScreen() {
               <Text style={styles.toggleLabel}>Open the conversation after marking watched</Text>
               {/* Off is offered because anyone working through several episodes wants to
                   stay put. Catching up in bulk has its own control, which never moves. */}
-              <Note>How TV Time worked. Needs an account.</Note>
+              <Note>{COPY.settings.openCommentsHint}</Note>
             </View>
             {/* Presentational: the row above is the control, and `Toggle` hides itself for
                 the reason this comment used to give — announced once, and a tap on it is a
@@ -138,11 +138,7 @@ export default function DataScreen() {
             never has, which is the same shape as everything else found in this pass:
             the core could do it and one platform simply never asked. */}
         <Block heading="Metadata cache">
-          <Note>
-            Artwork and episode listings are cached from the metadata provider and expire
-            automatically. Clearing them never touches your own history, and shows carried
-            over from an import keep their names.
-          </Note>
+          <Note>{COPY.settings.cacheBlurb}</Note>
           <Button
             onPress={() => void clearMetadataCache().then(setCleared)}
             tone="secondary"
@@ -151,7 +147,7 @@ export default function DataScreen() {
           />
           {cleared !== undefined && (
             <Note accessibilityLiveRegion="polite">
-              {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
+              {cleared === 0 ? COPY.settings.cacheEmpty : COPY.settings.cacheCleared(cleared)}
             </Note>
           )}
         </Block>

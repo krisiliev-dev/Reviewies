@@ -265,7 +265,7 @@ function FindPeople({
         </p>
       )}
       {!searchFailed && searched && results.length === 0 && (
-        <Note className="px-1">Nobody by that name.</Note>
+        <Note className="px-1">{COPY.people.noMatch}</Note>
       )}
 
       <ul className="flex flex-col gap-1.5">

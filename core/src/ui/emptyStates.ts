@@ -152,7 +152,47 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     copy: 'comments.sealed',
     screens: ['app/src/screens/EpisodeComments.tsx', 'mobile/app/comments/[targetId].tsx'],
     says: 'the conversation is sealed until your watch has synced — not empty, withheld',
+    /**
+     * Registered against `19-comments-sealed` until §6.175, and that shot is of the
+     * **other** sealed state: the capture script's own assertion beside it reads
+     * `/Hidden until you watch it/`, which is `comments.unwatched`. A register entry
+     * naming a photograph of a different screen is §6.139 — a claim about the product
+     * that was never checked against the product — and it is what led to reading the
+     * branch underneath.
+     */
+    shot: null,
+    why:
+      'The branch cannot be reached. `fetchComments` returns `gated: comments.length === 0 ' +
+      '&& !hasWatched` (core/src/social/comments.ts:65), and both screens only render ' +
+      '`gated ? sealed : empty` inside their `watched ?` branch — so `hasWatched` is true ' +
+      'wherever the sentence could be drawn, and `gated` is therefore false. The state it ' +
+      'describes is real (a local watch the server has not received, whose RLS gate is ' +
+      'still shut) but nothing on the client distinguishes it from an empty conversation, ' +
+      'so somebody in it is told "Nothing here yet. Be the first." — the exact mistake this ' +
+      'sentence was written to prevent. Filed, not fixed.',
+  },
+  {
+    copy: 'comments.unwatched',
+    screens: ['app/src/screens/EpisodeComments.tsx', 'mobile/app/comments/[targetId].tsx'],
+    says: 'the conversation is withheld because you have not seen the episode — the spoiler gate',
+    /**
+     * The state `19-comments-sealed` has been a photograph of all along. It was registered
+     * nowhere because both platforms typed its two sentences out by hand, so nothing that
+     * sweeps `copy.ts` could find it. §6.175.
+     */
     shot: '19-comments-sealed',
+  },
+  {
+    copy: 'warnings.empty',
+    screens: ['app/src/social/ContentWarnings.tsx', 'mobile/src/ui/ContentWarnings.tsx'],
+    says: 'nobody has flagged this title yet — and the section says so rather than staying shut',
+    shot: '00-warnings-empty',
+  },
+  {
+    copy: 'lists.emptyInPicker',
+    screens: ['app/src/social/AddToList.tsx', 'mobile/src/social/AddToList.tsx'],
+    says: 'you have no lists to add this to yet, and the box below makes one',
+    shot: '00-addtolist-empty',
   },
   {
     copy: 'people.followingEmpty',
@@ -196,4 +236,20 @@ export const NOT_AN_EMPTY_STATE: Record<string, string> = {
   'discover.blurb': 'A description of what Discover excludes, drawn above a full screen too.',
   'watchlist.notePlaceholder': "The note field's placeholder, which is a prompt rather than a state.",
   'watching.streamResting': 'What the reaction band says while nothing is crossing it — a band, not a screen.',
+  'settings.cacheEmpty':
+    'The result of a press, not the state of a screen: "Nothing cached to clear" is what ' +
+    'the button just did. Its sibling `cacheCleared` is a count, which is what makes the ' +
+    'pair a report rather than an absence.',
+  'comments.allFiltered':
+    'Absence caused by a control the person moved. The effort dial has hidden them; the ' +
+    'conversation is not empty, and saying it were would be the §6.57 mistake in reverse.',
+  'people.noMatch':
+    'A search that came back empty, which is about the query rather than about the screen ' +
+    '— and it sits beside its own §6.57 sibling for a search that failed.',
+  'catchUp.nothingToMark':
+    'What the press did, which was nothing. The sheet is not empty: it has just told you ' +
+    'that you were already up to date.',
+  'catchUp.nothingAired':
+    'The show has not started. `NOT_AN_EMPTY_STATE` rather than an entry because the sheet ' +
+    'is a reveal and `reveals.ts` owns the shot of it.',
 };

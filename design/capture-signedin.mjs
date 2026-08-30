@@ -342,6 +342,19 @@ await shoot(page, {
 });
 
 /*
+ * The two reveals, again, on an account with nothing in it.
+ *
+ * `15-title-addtolist` and `15-title-warnings` above are the same two controls over the
+ * *seeded* set — a picker with two lists in it, a section with flags on it. The empty
+ * halves are different screens and §6.175 registered them, so they are walked to a second
+ * time rather than assumed from the first pair.
+ */
+await toTitle();
+await press('00-addtolist-empty', /Add to list/i);
+await toTitle();
+await press('00-warnings-empty', /content warnings/i);
+
+/*
  * And a list that exists with nothing on it, which is a third answer rather than a shade of
  * the second. §6.57 rewrote this sentence after it was being said about a request that had
  * failed, and no photograph has ever shown it being said truthfully.

@@ -125,7 +125,7 @@ export function Settings() {
           role="switch"
           {...toggleState(openComments)}
           aria-label="Open the conversation after marking watched"
-          aria-description="How TV Time worked. Needs an account."
+          aria-description={COPY.settings.openCommentsHint}
           onClick={() => {
             const on = !openComments;
             setOpenComments(on);
@@ -137,7 +137,7 @@ export function Settings() {
             <span className="block">Open the conversation after marking watched</span>
             {/* Off is offered because anyone working through several episodes wants to
                 stay put. Catching up in bulk has its own control, which never moves. */}
-            <Note as="span" className="block">How TV Time worked. Needs an account.</Note>
+            <Note as="span" className="block">{COPY.settings.openCommentsHint}</Note>
           </span>
           <Toggle value={openComments} />
         </button>
@@ -147,11 +147,7 @@ export function Settings() {
         <Section className="px-1">
           Metadata cache
         </Section>
-        <Note className="px-1">
-          Artwork and episode listings are cached from the metadata provider and expire
-          automatically. Clearing them never touches your own history, and shows carried
-          over from an import keep their names.
-        </Note>
+        <Note className="px-1">{COPY.settings.cacheBlurb}</Note>
         <Button
           size="page"
           onPress={() => void clearMetadataCache().then((n) => setCleared(n))}
@@ -160,7 +156,7 @@ export function Settings() {
         />
         {cleared !== undefined && (
           <Note className="px-1" role="status">
-            {cleared === 0 ? 'Nothing cached to clear.' : `Cleared ${cleared} cached records.`}
+            {cleared === 0 ? COPY.settings.cacheEmpty : COPY.settings.cacheCleared(cleared)}
           </Note>
         )}
       </section>

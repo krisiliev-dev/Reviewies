@@ -248,7 +248,7 @@ function FindPeople({
         </Text>
       )}
       {!searchFailed && searched && results.length === 0 && (
-        <Note>Nobody by that name.</Note>
+        <Note>{COPY.people.noMatch}</Note>
       )}
 
       {results.map((person) => {

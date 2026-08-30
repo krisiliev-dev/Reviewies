@@ -223,6 +223,128 @@ function sources(dir: string, out: string[] = []): string[] {
 
 const UNREAD_ON_PURPOSE: string[] = [];
 
+/**
+ * Where a person can be spoken to, discovered rather than listed.
+ *
+ * §6.157's lesson, and `emptyStates.test.ts` had the other half of it: a clause that reads
+ * four hand-named files cannot see a fifth, and the fifth is always the one somebody added
+ * last. These are trees, so a new screen is swept the day it is written.
+ */
+const WEB_TREES = ['app/src'];
+const PHONE_TREES = ['mobile/app', 'mobile/src'];
+
+function screenFiles(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'dist-real', '.expo'].includes(entry.name)) continue;
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) screenFiles(path, out);
+    else if (/\.tsx$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
+
+/**
+ * A sentence, as distinct from a label.
+ *
+ * The line is the full stop. Something ending in `.`, `?` or `!` is the product *speaking*
+ * — an explanation, a refusal, a reassurance — and that is what `copy.ts` is the owner of.
+ * A control's name is a different kind of text with a different owner (`COPY.controls`,
+ * and `labelSet.test.ts` holds those), so it is not swept here.
+ *
+ * That line is a floor, not a finish. §6.175 measured **67** shorter pieces of text still
+ * typed on both platforms after this sprint moved the twenty-five sentences — *"Create
+ * account"*, *"Change poster"*, *"Leave Watching Mode"* — every one of them the same defect
+ * at a smaller size. Lowering this threshold is how they get found; it is written as one
+ * constant so that a later sprint can lower it and read off the damage.
+ */
+const PROSE_FLOOR = 25;
+const isProse = (text: string) =>
+  text.length >= PROSE_FLOOR && /\s/.test(text) && /^[A-Z]/.test(text) && /[.?!]$/.test(text);
+
+/**
+ * The prose a file **types**, as opposed to the prose it reads.
+ *
+ * Deliberately not `sentences()`: that one resolves `COPY.x.y` into its text, which is
+ * right for comparing what two screens *say* and exactly wrong for finding who *owns* the
+ * words. A sentence reached through `COPY.` is not in the file. One typed into the file is,
+ * and that is the whole subject here.
+ */
+export function typedLiterals(source: string): Set<string> {
+  const src = strip(source);
+  const found = new Set<string>();
+  const keep = (raw: string) => {
+    const text = raw.replace(/\s+/g, ' ').trim();
+    if (isProse(text)) found.add(text);
+  };
+  for (const m of src.matchAll(/'((?:[^'\\\n]|\\.)*)'/g)) keep(m[1]);
+  for (const m of src.matchAll(/"((?:[^"\\\n]|\\.)*)"/g)) keep(m[1]);
+  for (const m of src.matchAll(/>([^<>{}]+)</g)) keep(m[1]);
+  return found;
+}
+
+/** Every typed sentence on each platform, with the files that type it. */
+function typedProse(): { web: Map<string, string[]>; phone: Map<string, string[]> } {
+  const side = (trees: string[]) => {
+    const out = new Map<string, string[]>();
+    for (const tree of trees) {
+      for (const file of screenFiles(tree)) {
+        for (const text of typedLiterals(read(file))) {
+          out.set(text, [...(out.get(text) ?? []), file]);
+        }
+      }
+    }
+    return out;
+  };
+  return { web: side(WEB_TREES), phone: side(PHONE_TREES) };
+}
+
+/** Every sentence `copy.ts` already owns, as text. */
+function ownedSentences(): Set<string> {
+  const out = new Set<string>();
+  for (const group of Object.values(COPY)) {
+    for (const value of Object.values(group as Record<string, unknown>)) {
+      if (typeof value === 'string' && isProse(value)) out.add(value);
+    }
+  }
+  return out;
+}
+
+/**
+ * A sentence with more than one owner, in either of the two shapes that takes.
+ *
+ * The first shape is the one §6.175 measured: both platforms typing it, nothing owning it.
+ * The second is what the fix for the first *creates* — once the web reads `COPY`, it has no
+ * literal left to be compared against, so the phone can keep or grow its own copy and an
+ * intersection rule sees nothing. `sentences()` names that hole in its own comment about
+ * resolving `COPY.x.y`; this is the same hole one layer out, and a plant walked straight
+ * through the first version of this clause because of it.
+ *
+ * So the rule is not "the same on both sides". It is: **a sentence `copy.ts` owns may not
+ * be typed anywhere**, and on top of that, a sentence typed on both platforms is duplicated
+ * whether or not anybody has moved it yet. The first half is what fails on a regression;
+ * the second is what fails on a new pair written from scratch.
+ */
+function duplicatedProse(): Array<{ text: string; where: string; why: string }> {
+  const { web, phone } = typedProse();
+  const owned = ownedSentences();
+  const out: Array<{ text: string; where: string; why: string }> = [];
+  for (const [text, files] of [...web, ...phone]) {
+    if (owned.has(text)) {
+      out.push({ text, where: files.join(', '), why: 'copy.ts already owns this sentence' });
+    }
+  }
+  for (const [text, files] of web) {
+    if (!owned.has(text) && phone.has(text)) {
+      out.push({
+        text,
+        where: `${files.join(', ')} + ${phone.get(text)!.join(', ')}`,
+        why: 'typed on both platforms, owned by neither',
+      });
+    }
+  }
+  return out;
+}
+
 describe('the words, on both platforms', () => {
   it('does not say the same thing two ways', () => {
     const unexplained = Object.keys(PAIRS)
@@ -360,6 +482,56 @@ describe('the words, on both platforms', () => {
         'unmatchedImportCount',
       );
     }
+  });
+
+  it('has no sentence both platforms type out for themselves', () => {
+    /*
+     * The hole in this file's own subject, and the one it was written to close.
+     *
+     * `drifted` above opens with `if (phoneText.includes(a)) continue;`, and it has to:
+     * `sentences()` resolves `COPY.x.y` into its text, so a sentence properly owned by
+     * `copy.ts` appears identically on both sides and would otherwise be reported as
+     * drift by every screen that reads it. But the skip does not only pass over the
+     * *fixed* case. It passes over the *unfixed* one too — two screens that each type the
+     * same sentence out by hand score 1.0 and are skipped for the same reason. So this
+     * guard, whose header says it "stops new ones being written twice", could only ever
+     * see a sentence that had **already** been written twice and then edited on one side.
+     * It caught drift. It never caught duplication, which is what drift starts as.
+     *
+     * §6.162 wrote the reason down — "the four literals agreed, by hand, for as long as
+     * nobody edited one of them" — fixed the four empty states it had found by
+     * enumerating them, and left the general case. §6.175 measured it: **95** pieces of
+     * user-facing text appeared verbatim in both a web file and a phone file, twenty-five
+     * of them whole sentences, including the entire spoiler gate on the comments screen
+     * and the migration prose on the screen the product opens on.
+     *
+     * The distinction that makes this checkable is *literal versus reference*. A sentence
+     * reached through `COPY.` is not in the file; a sentence typed into the file is. So
+     * this reads only what is typed, and fails when the same typing appears on both
+     * platforms — the shape §6.98 exists to prevent, stated as a sweep rather than as an
+     * intention.
+     */
+    expect(
+      duplicatedProse().map((d) => `${d.why}\n     ${d.text}\n     in: ${d.where}`),
+      'a sentence has more than one owner — move it to core/src/copy.ts and read it',
+    ).toEqual([]);
+  });
+
+  it('reads enough typed prose for that sweep to be looking at anything', () => {
+    /*
+     * §6.121's clause, and it is not hypothetical here: `duplicatedProse` returns nothing
+     * if `PROSE` stops matching, if the trees move, or if a build directory starts being
+     * walked and swamps the comparison. All three would leave the assertion above green
+     * over a codebase that had gone back to typing everything twice.
+     *
+     * Both sides, separately, because a sweep that reads only the web would report an
+     * empty intersection forever.
+     */
+    const seen = typedProse();
+    expect(seen.web.size, 'no typed prose found on the web at all').toBeGreaterThan(8);
+    expect(seen.phone.size, 'no typed prose found on the phone at all').toBeGreaterThan(6);
+    // And that it is prose rather than everything: `useState` must not survive the sieve.
+    expect([...seen.web.keys(), ...seen.phone.keys()].join(' ')).not.toContain('useState');
   });
 
   it('offers a notification hint for every choice, in one voice', () => {

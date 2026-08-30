@@ -79,19 +79,16 @@ export function CatchUp({
 
         {marked !== undefined ? (
           <p className="py-4 text-s14">
-            {marked === 0
-              ? 'Already up to date — nothing to mark.'
-              : `Marked ${marked} episode${marked === 1 ? '' : 's'} as watched.`}
+            {marked === 0 ? COPY.catchUp.nothingToMark : COPY.catchUp.marked(marked)}
           </p>
         ) : seasons === undefined ? (
           <Note>Loading…</Note>
         ) : seasons.length === 0 ? (
-          <Note>No episodes have aired yet.</Note>
+          <Note>{COPY.catchUp.nothingAired}</Note>
         ) : (
           <>
             <Note className="mb-3">
-              How far have you got? Nothing here shows episode names, so you cannot be
-              spoiled by catching up.
+              {COPY.catchUp.spoilerFree}
             </Note>
 
             {season === undefined ? (

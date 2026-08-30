@@ -43,7 +43,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
     if (!name) return;
     const id = await createList(name);
     if (!id) {
-      setNote('Could not create that list.');
+      setNote(COPY.lists.createFailed);
       return;
     }
     await add(id, name);
@@ -76,7 +76,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         <View style={styles.panel}>
           {lists === undefined && <Note level="footnote">Loading…</Note>}
           {lists?.length === 0 && (
-            <Note level="footnote">No lists yet — make one below.</Note>
+            <Note level="footnote">{COPY.lists.emptyInPicker}</Note>
           )}
 
           {/* `Button`, `size="inline"`, the same as the web's twin. Both were hand-drawn

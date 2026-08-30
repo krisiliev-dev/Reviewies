@@ -320,9 +320,7 @@ function StartPanel({ onStart }: { onStart: () => void }) {
         onPress={onStart}
         className="w-full"
       />
-      <Note level="footnote" className="mt-2 text-center">
-        Tap the moment you press play. You can nudge the timing at any point.
-      </Note>
+      <Note level="footnote" className="mt-2 text-center">{COPY.watching.startHint}</Note>
     </div>
   );
 }

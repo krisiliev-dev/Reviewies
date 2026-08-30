@@ -67,7 +67,7 @@ export function Search() {
         // An abort we asked for is a timeout and has to be said; an abort from the
         // cleanup below is somebody typing again, and says nothing.
         if (timedOut.current) {
-          setError('That took too long. Check your connection and try again.');
+          setError(COPY.app.timedOut);
           setBusy(false);
         } else if (!controller.signal.aborted) {
           setError(e instanceof Error ? e.message : 'Search failed');

@@ -114,11 +114,7 @@ export function UpNext() {
             a set of shows with no artwork, no air dates and no episode lists beyond what
             was watched. Matching them is the next thing to do, and it is offered here
             rather than mentioned, because here is where somebody is standing. */}
-        <Note>
-          They are in your library under the names your export carried. Matching them to
-          the real shows fills in the artwork, the air dates and everything you have not
-          watched yet.
-        </Note>
+        <Note>{COPY.upNext.importedExplained}</Note>
         {/* Not auto-started here: this panel has just explained what matching is for, and
             starting it underneath that explanation would talk over itself. The Up Next
             screen below runs it without asking. */}
@@ -218,15 +214,10 @@ export function UpNext() {
         <Masthead>Up Next</Masthead>
         {/* A heading under the screen's own title — see the note on the arrival state. */}
         <Masthead level="sub">Bring your history with you</Masthead>
-        <Note>
-          TV Time is gone. If you got your data out — or pulled it off your phone — this
-          reads it and picks up where you left off.
-        </Note>
+        <Note>{COPY.upNext.tvTimeGone}</Note>
         <ImportFormats />
         <ImportFiles label="Import from TV Time" onImported={setImported} primary />
-        <Note className="mt-2 px-1">
-          Nothing to import? Search for a show and start from there.
-        </Note>
+        <Note className="mt-2 px-1">{COPY.upNext.nothingToImport}</Note>
         {/* The secondary of the two. It was the bright one and the import was the muted
             one, which is the opposite of what this screen is for — the migration is the
             offer and searching is the fallback. Nothing but looking at it would have

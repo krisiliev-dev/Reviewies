@@ -190,9 +190,7 @@ export default function WatchingScreen() {
 
         {!clock.running && clock.positionMs === 0 ? (
           <View style={styles.startBlock}>
-            <Note>
-              Tap the moment you press play. You can nudge the timing at any point.
-            </Note>
+            <Note>{COPY.watching.startHint}</Note>
             <Button
               onPress={() => clock.start()}
               tone="primary"

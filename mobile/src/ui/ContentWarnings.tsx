@@ -80,19 +80,14 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
       {open && (
         <View style={styles.panel}>
           {summaries === undefined && <Note level="footnote">Loading…</Note>}
-          {/* Not the same sentence — see the web's copy of this. A request that did not
-              arrive is not an answer, and somebody avoiding a trigger would take
-              "nobody has flagged anything" as one. */}
+          {/* Two states, two sentences — the reason lives with the words now, in
+              `COPY.warnings.failed`, rather than in a comment on each platform saying
+              "see the web's copy of this". */}
           {failed && (
-            <Text style={styles.warningFailed} accessibilityLiveRegion="polite">
-              Could not read the warnings for this title. Nothing here means nothing is
-              known, not that there is nothing.
-            </Text>
+            <Text style={styles.warningFailed} accessibilityLiveRegion="polite">{COPY.warnings.failed}</Text>
           )}
           {!failed && summaries?.length === 0 && (
-            <Note level="footnote">
-              Nobody has flagged anything yet. If you have seen it, you can below.
-            </Note>
+            <Note level="footnote">{COPY.warnings.empty}</Note>
           )}
 
           {summaries?.map((summary) => (
@@ -160,10 +155,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
 
           {note && <Text style={styles.error}>{note}</Text>}
 
-          <Note level="footnote">
-            Community-reported, so treat it as a heads-up rather than a guarantee.
-            Nothing here hides anything.
-          </Note>
+          <Note level="footnote">{COPY.warnings.provenance}</Note>
         </View>
       )}
     </View>

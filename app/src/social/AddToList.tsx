@@ -37,7 +37,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
     e.preventDefault();
     const id = await createList(newName);
     if (!id) {
-      setNote('Could not create that list.');
+      setNote(COPY.lists.createFailed);
       return;
     }
     await add(id, newName.trim());
@@ -65,7 +65,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         <div className="mt-2 rounded-plate border border-stroke-signal p-3">
           {lists === undefined && <Note level="footnote">Loading…</Note>}
           {lists?.length === 0 && (
-            <Note level="footnote" className="mb-2">No lists yet — make one below.</Note>
+            <Note level="footnote" className="mb-2">{COPY.lists.emptyInPicker}</Note>
           )}
 
           <ul className="flex flex-col gap-1">

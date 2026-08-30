@@ -152,10 +152,7 @@ export function MatchImports({
               the opposite of the truth and then offers them nothing but giving up.
               Doc 10 §5. */}
           {ask.candidates.length > 0 ? (
-            <Note className="mb-2">
-              More than one show could be this. Picking the wrong one would move your
-              history onto it.
-            </Note>
+            <Note className="mb-2">{COPY.import.ambiguous}</Note>
           ) : (
             <>
               <Note className="mb-2">
