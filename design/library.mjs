@@ -79,7 +79,7 @@ export const SCHEDULE = [
   {
     name: 'Salt Flats',
     seasons: [8, 8],
-    startedDaysAgo: 341,
+    startedDaysAgo: 361,
     cadence: 'drop',
     /** Still running. A dropped season is not a dropped *last* season. */
     ended: false,
@@ -87,8 +87,13 @@ export const SCHEDULE = [
      * All of season 1, which is what keeps this out of Up Next.
      *
      * A season you finished, waiting on the next — and the next is eight episodes on one
-     * date, twenty-four days out, which is the shape the calendar's day grouping exists
-     * for and had never once been given. §6.149.
+     * date, which is the shape the calendar's day grouping exists for and had never once
+     * been given. §6.149.
+     *
+     * That date is **four** days out since §6.181, not twenty-four. Same drop, same day of
+     * its own; it just moved into `formatDay`'s 2–6 branch, which returns a bare weekday
+     * and which no shot in the record had ever shown. `fixtures.ts` has why that could not
+     * be done by moving a *weekly* show.
      */
     watchedThrough: 8,
   },

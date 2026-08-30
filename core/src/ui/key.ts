@@ -40,6 +40,14 @@ const TEXT = '︎';
  * A plain union rather than a table keyed by these three, because the table had the same
  * two numbers in all three rows: it looked like a decision and was not. The one number
  * that differs between a key and every other control is below.
+ *
+ * That paragraph was true when it was written and §6.181 measured it false. A union with no
+ * table is a union each renderer interprets, and they interpreted it differently: the web
+ * gave `pad` `aspect-square` and the phone gave **every** key a hand-typed `minWidth: 72`,
+ * typed a second time in `RemotePanel`'s `dpadGap` to keep the empty cells of the grid in
+ * line. Measured in both browsers, the same arrow key is **80x80 on the web and 72x60 on
+ * the phone** — a square and a landscape rectangle, on the fascia this product's remote is.
+ * `KEY_BOX` below is what the union was implying.
  */
 export type KeySize = 'pad' | 'wide' | 'centre';
 
@@ -52,6 +60,37 @@ export type KeySize = 'pad' | 'wide' | 'centre';
  * the phone's was right, so the web's moved.
  */
 export const KEY_HEIGHT = 60;
+
+/**
+ * The shape of a key, which is what `KeySize` names and neither renderer read.
+ *
+ * A rule rather than a width, deliberately, and the distinction is the whole of this entry.
+ *
+ * - `pad` is **square**. A d-pad arrow is square on every physical remote there has ever
+ *   been, and a landscape one reads as a button that happens to have an arrow on it.
+ * - `wide` **spans its row** — that is what the name says and it is what the phone already
+ *   did with `flex: 1`. On the web it is a no-op today, because `RemoteDrawer` lays the
+ *   fascia out as `grid-cols-3` and every cell is already the full width of its column; it
+ *   is written anyway so the statement is true rather than accidentally true.
+ * - `centre` is neither: it is the one filled key, and it sits in the d-pad *and* in the
+ *   transport row. Square would make it 80 tall between two 60-tall neighbours on the web.
+ *
+ * ## What is deliberately not here
+ *
+ * A width in points. The web's fascia is a 300pt drawer and the phone's is a 390pt screen,
+ * so the same rule lands on 80 there and 60 here — and that is the surface's decision, the
+ * way `SCREEN.edge` is. What was wrong was not that the numbers differed; it was that
+ * nothing said which of them was a decision, so a hand-typed 72 in two phone files was
+ * indistinguishable from one.
+ *
+ * The floor that *is* shared is below it: `KEY_HEIGHT` in both directions, so the smallest
+ * key any surface can produce is a square at the height this file already argues for.
+ */
+export const KEY_BOX = {
+  pad: { square: true, spans: false },
+  centre: { square: false, spans: false },
+  wide: { square: false, spans: true },
+} as const satisfies Record<KeySize, { square: boolean; spans: boolean }>;
 
 export interface KeySpec {
   command: Command;

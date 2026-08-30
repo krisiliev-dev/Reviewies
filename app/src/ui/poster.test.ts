@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
+import { stripComments } from '@reviewies/core/test/source';
 import { join, resolve } from 'node:path';
-import { POSTER_GLYPH, POSTER_PLATE, POSTER_SIZE, posterInitials } from '@reviewies/core/ui/poster';
+import {
+  POSTER_GLYPH,
+  POSTER_GLYPH_SCALES,
+  POSTER_PLATE,
+  POSTER_SIZE,
+  posterInitials,
+} from '@reviewies/core/ui/poster';
 import { ROW } from '@reviewies/core/ui/row';
 import { radius, ratio, space, text } from '@reviewies/core/tokens';
 
@@ -21,6 +28,11 @@ import { radius, ratio, space, text } from '@reviewies/core/tokens';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
+/** Stripped, because these clauses read for numbers and the prose here quotes them. */
+const RENDERERS = {
+  web: stripComments(read('app/src/ui/Poster.tsx')),
+  phone: stripComments(read('mobile/src/ui/Poster.tsx')),
+};
 
 function filesUnder(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
@@ -132,6 +144,40 @@ describe('a poster', () => {
     expect(webFallback).toContain('font-title');
     // And it is decoration, not content: the row beside it already says the name.
     expect(read('app/src/ui/Poster.tsx')).toContain('aria-hidden="true"');
+  });
+
+  it('holds the mark still while the reader’s text grows, because the plate cannot', () => {
+    /*
+     * §6.181, and it was measured in the export rather than argued about. The plate is
+     * 44x66 and does not scale — `mobile/smoke.mjs` states that rule from the other side:
+     * *"the type grows and the poster does not"*. The mark inside it did scale, so:
+     *
+     * - at 100% `KN` is **23pt** wide in a 44pt plate;
+     * - at 200% it is **47**;
+     * - at 300% it is **70**, and `overflow: hidden` takes the stems off both letters.
+     *
+     * Which lands back on the failure this fallback exists to end: §6.137 replaced the
+     * title with a monogram because *"a mark so thin it reads as a rendering fault rather
+     * than a stand-in"* is the thing to avoid, and a clipped `KN` is exactly that.
+     *
+     * Nothing here could see it. This file reads source; `mobile/smoke.mjs`'s 200% check
+     * measures **controls** and skips anything under `aria-hidden`, which the monogram is
+     * by design; and every design shot is taken at 100%.
+     */
+    expect(POSTER_GLYPH_SCALES, 'the mark grows inside a plate that cannot').toBe(false);
+    expect(RENDERERS.phone, 'the phone lets the mark scale')
+      .toContain('allowFontScaling={POSTER_GLYPH_SCALES}');
+
+    /*
+     * The web needs no counterpart — its type is in `px` and never answered the browser's
+     * font-size setting — so what holds the two together here is that neither plate pads
+     * its mark. The phone had `padding: 2` and the web had none: a number nothing states,
+     * left from when the plate printed a title that needed room to wrap.
+     */
+    for (const [platform, source] of Object.entries(RENDERERS)) {
+      expect(source, `${platform} pads the plate by a number nothing states`)
+        .not.toMatch(/padding:\s*\d/);
+    }
   });
 
   it('shows a mark rather than the title it is standing in for', () => {

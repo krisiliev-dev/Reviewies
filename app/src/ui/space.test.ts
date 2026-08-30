@@ -229,7 +229,18 @@ describe('the space scale, on the web', () => {
     /* 366, down six, for the same deletion. */
     /* 364, down two: §6.168 — `Row`'s tag lost its `px-1.5 py-0.5` with its box, and
        More's figure lost its `px-3 py-2` with the plate it did not need on a card. */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(363);
+    /*
+     * 359, down five: §6.181 moved `Choice`'s box and gaps off Tailwind's own scale onto
+     * the token spelling — `px-s12`, `gap-s8` — which this scan does not count and does
+     * not need to. The point of the scan is that a number typed on Tailwind's scale is on
+     * *this* app's scale too; a class that names the token has nothing left to check.
+     *
+     * Worth saying out loud because the direction of travel makes this floor a decreasing
+     * one: every future migration to a token spelling lowers it. It still catches the
+     * thing it is for — a file deleted, or a scan that stops matching — and a floor that
+     * only ever ratchets up would have to be relaxed by hand every time anyway.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(358);
     expect(off).toEqual([]);
   });
 

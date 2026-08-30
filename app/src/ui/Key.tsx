@@ -1,4 +1,4 @@
-import { KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
+import { KEY_BOX, KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
 
 /**
  * The DOM renderer of `core/src/ui/key.ts`. The decisions are there.
@@ -20,8 +20,19 @@ const READY = 'bg-ground-raised text-ink active:bg-ground-well';
 const CENTRE = 'bg-action-fill text-action-label active:bg-ground-well';
 const OFF = 'border-hairline border-stroke-hairline text-ink-tertiary';
 
+/**
+ * `KEY_BOX` as classes, written out, for the reason at the top of this file.
+ *
+ * `spans` is a no-op in `RemoteDrawer`'s `grid-cols-3` — every cell is already its column's
+ * full width — and it is written anyway, because "the web happens to do the right thing
+ * here" is not the same claim as "the web reads the rule", and only one of those survives
+ * somebody changing the layout. §6.181.
+ */
+const BOX = { square: 'aspect-square', spans: 'w-full' } as const;
+
 export function Key({ spec, disabled, onPress }: KeyContract) {
   const tone = disabled ? OFF : spec.size === 'centre' ? CENTRE : READY;
+  const box = KEY_BOX[spec.size];
   return (
     <button
       type="button"
@@ -31,7 +42,7 @@ export function Key({ spec, disabled, onPress }: KeyContract) {
       // selects. Every key on the fascia carries a spoken name for that reason.
       aria-label={spec.name}
       style={{ minHeight: KEY_HEIGHT }}
-      className={`${KEY} ${tone} ${spec.size === 'pad' ? 'aspect-square' : ''}`}
+      className={`${KEY} ${tone} ${box.square ? BOX.square : ''} ${box.spans ? BOX.spans : ''}`}
     >
       <span aria-hidden="true">{spec.legend}</span>
     </button>

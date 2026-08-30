@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { stripComments } from '@reviewies/core/test/source';
-import { KEY_HEIGHT, TRANSPORT, DPAD, VOLUME, HOME } from '@reviewies/core/ui/key';
+import { KEY_BOX, KEY_HEIGHT, TRANSPORT, DPAD, VOLUME, HOME } from '@reviewies/core/ui/key';
 import { SURFACE_OFF } from '@reviewies/core/ui/surface';
 import type { KeySpec } from '@reviewies/core/ui/key';
 import { border, color, size } from '@reviewies/core/tokens';
@@ -135,6 +135,54 @@ describe('the remote fascia', () => {
       const table = color[theme];
       expect(contrast(table[SURFACE_OFF.ink], table.ground), theme).toBeGreaterThan(4.5);
     }
+  });
+
+  it('is the shape its size names, on both platforms', () => {
+    /*
+     * §6.181, and the clause above is why it exists. That one is called "is the same size on
+     * both platforms" and what it asserts is that both sources contain the string
+     * `KEY_HEIGHT` — a name check standing in for a size check, which is §6.121's shape and
+     * the same one §6.180 caught in `CLAMP[lines]`.
+     *
+     * Measured in both browsers rather than read: the same arrow key came back **80x80 on
+     * the web and 72x60 on the phone**. `key.ts` said a table was unnecessary "because the
+     * table had the same two numbers in all three rows", and by the time anybody measured,
+     * it did not: the web branched on `pad` for `aspect-square` and the phone gave every key
+     * a hand-typed `minWidth: 72`, typed a second time in `RemotePanel`'s `dpadGap` so the
+     * grid's empty cells stayed in line with keys they knew nothing about.
+     *
+     * `KEY_BOX` is the rule the union was implying. It is a rule and not a width on purpose
+     * — a 300pt drawer and a 390pt screen are different rooms — so what this holds is the
+     * shape, and the widths stay each surface's business.
+     */
+    for (const [platform, source] of Object.entries(RENDERERS)) {
+      expect(source, `${platform} does not read the box`).toContain('KEY_BOX[spec.size]');
+    }
+    // Each renderer honours both halves, in its own mechanism.
+    expect(RENDERERS.phone, 'the phone reads square and does nothing with it')
+      .toMatch(/aspectRatio:\s*1/);
+    expect(RENDERERS.phone, 'the phone reads spans and does nothing with it')
+      .toMatch(/flex:\s*1/);
+    expect(RENDERERS.web, 'the web maps the box to something that is not a square')
+      .toContain("{ square: 'aspect-square', spans: 'w-full' }");
+
+    // The rule itself: exactly one size is square, exactly one spans, and they are not the
+    // same one — a `KEY_BOX` with every flag false satisfies every assertion above.
+    const square = Object.entries(KEY_BOX).filter(([, box]) => box.square).map(([k]) => k);
+    const spans = Object.entries(KEY_BOX).filter(([, box]) => box.spans).map(([k]) => k);
+    expect(square, 'the d-pad key is not the square one').toEqual(['pad']);
+    expect(spans, 'the row-spanning key is not the wide one').toEqual(['wide']);
+
+    /*
+     * And the number that started this is gone from both phone files. 72 is on no scale in
+     * this repository — `space.test.ts` cannot see it, because `minWidth` is not one of the
+     * style keys it reads — so it could sit in two files for sixteen sprints saying nothing.
+     */
+    for (const path of ['mobile/src/ui/Key.tsx', 'mobile/src/devices/RemotePanel.tsx']) {
+      expect(read(path), `${path} still types a width by hand`).not.toMatch(/minWidth:\s*\d/);
+    }
+    // The floor a key cannot go below, in both directions, so the smallest is a square.
+    expect(RENDERERS.phone, 'the phone drops the width floor').toContain('minWidth: KEY_HEIGHT');
   });
 
   it('keeps the d-pad a nine-cell grid, with the arrows where a thumb expects them', () => {

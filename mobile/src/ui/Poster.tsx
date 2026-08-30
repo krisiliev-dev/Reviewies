@@ -1,6 +1,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import {
   POSTER_GLYPH,
+  POSTER_GLYPH_SCALES,
   POSTER_PLATE,
   POSTER_SIZE,
   posterInitials,
@@ -46,6 +47,10 @@ export function Poster({
              and every Up Next row read its title, then its own initials, as loose prose.
              §6.173. */
           aria-hidden
+          /* The plate cannot grow, so neither does the mark inside it. `poster.ts` has the
+             measurement and the argument; the short version is that at 300% this is two
+             vertical strokes in a 44pt box. §6.181. */
+          allowFontScaling={POSTER_GLYPH_SCALES}
           style={[styles.fallbackText, { fontSize: POSTER_GLYPH[size] }]}
         >
           {posterInitials(name)}
@@ -73,11 +78,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   image: { width: '100%', height: '100%' },
+  /*
+   * No padding. It was `padding: 2` — a number the web's copy of this plate does not have
+   * and nothing states, left over from when the plate printed a title that needed room to
+   * wrap. A monogram is two glyphs that never break, and the two renderers now agree.
+   */
   fallback: {
     backgroundColor: theme.groundWell,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
   },
   /**
    * The condensed face, and a size that comes from the plate rather than from the body

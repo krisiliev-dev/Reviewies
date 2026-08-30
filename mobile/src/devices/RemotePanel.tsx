@@ -3,7 +3,7 @@ import { COPY } from '@reviewies/core/copy';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { Command } from '@reviewies/core/devices/types';
-import { DPAD, HOME, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
+import { DPAD, HOME, KEY_HEIGHT, TRANSPORT, VOLUME } from '@reviewies/core/ui/key';
 import { Key } from '../ui/Key';
 import type { Remote } from './useRemote';
 import { leadingOf, theme, space} from '../ui/theme';
@@ -171,6 +171,9 @@ const styles = StyleSheet.create({
   transport: { flexDirection: 'row', gap: 8 },
   dpad: { alignItems: 'center', gap: 8 },
   dpadRow: { flexDirection: 'row', gap: 8 },
-  dpadGap: { minWidth: 72 },
+  /* An empty cell of the d-pad grid, the same width as the key it stands in for. It was
+     `minWidth: 72` — the second hand-typed copy of a number `Key.tsx` also typed and the
+     core never stated, so the grid lined up only as long as both files agreed. §6.181. */
+  dpadGap: { minWidth: KEY_HEIGHT },
 
 });

@@ -184,6 +184,14 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/section#SECTION_RULE': 'A CSS rule is a border utility; section.test.ts couples the two.',
   'mobile only: ui/data#DATA_FACE': 'Tailwind needs a literal class; data.test.ts couples the two.',
   'mobile only: ui/data#DATA_UNIT_FACE': 'The web unit inherits the body face; data.test.ts couples the two.',
+  /*
+   * Not a spelling difference — a mechanism the web does not have. `allowFontScaling` is a
+   * React Native prop, and the web's type is in `px` and has never answered the browser's
+   * font-size setting, so its monogram already behaves the way this constant asks for.
+   * `poster.test.ts` asserts the value and that the phone reads it. §6.181.
+   */
+  'mobile only: ui/poster#POSTER_GLYPH_SCALES':
+    'allowFontScaling is an RN prop; the web is in px and never scaled. poster.test.ts holds both.',
   'mobile only: ui/note#NOTE': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/note#NOTE_INK': 'Tailwind needs a literal class; note.test.ts couples the two.',
   'mobile only: ui/field#FIELD_SIZE': 'Tailwind needs a literal class; field.test.ts couples the two.',

@@ -138,16 +138,34 @@ const FIXTURES: FixtureShow[] = [
     /*
      * The case no fixture could produce: a whole season on one date.
      *
-     * Season 1 dropped 341 days ago and is watched through; season 2 drops in 24 days,
-     * eight episodes at once, on a date no other show is using — 341 is not a multiple of
+     * Season 1 dropped 361 days ago and is watched through; season 2 drops in **four**,
+     * eight episodes at once, on a date no other show is using — 361 is not a multiple of
      * seven, and every other fixture is weekly from a multiple of seven, so the drop gets
      * a heading to itself. That is the shape the calendar groups by day *for*, and it had
      * never been rendered.
      *
      * Nothing of it has aired unwatched, so it stays out of Up Next — a show you finished
      * and are waiting on, which is also the state a person in this position is actually in.
+     *
+     * ## Four rather than twenty-four, and why it took four sprints
+     *
+     * §6.178 filed `formatDay`'s 2–6 day branch as unphotographed — it returns a bare
+     * weekday, *"Sunday"*, no date — and §6.179 and §6.180 each carried it forward calling
+     * it "cheap to reach by moving a fixture's air date". §6.181 worked out why nobody had:
+     * it is not cheap on a weekly show, it is **impossible**. A weekly cadence puts every
+     * air date at `7n - startedDaysAgo` days out, so one show can only ever produce day
+     * offsets from a single residue class mod 7, and this library has exactly one airing
+     * weekly show — The Long Dark, at 119, whose whole comment above is about the today
+     * and next-week headings that residue buys. Moving it would trade one photographed
+     * state for another.
+     *
+     * A *drop* has no such arithmetic: its date is one number. 341 was chosen so the drop
+     * would land on a day of its own, and 361 does that just as well — 361 mod 7 is 4, so
+     * it still misses every weekly date — while landing inside the window that had never
+     * been drawn. The calendar now shows a bare weekday heading with eight episodes under
+     * it, which is two states in one row rather than one.
      */
-    startedDaysAgo: 341,
+    startedDaysAgo: 361,
     cadence: 'drop',
   },
 ];

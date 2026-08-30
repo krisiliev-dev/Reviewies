@@ -111,3 +111,34 @@ export const POSTER_GLYPH = { row: text.s20, detail: text.s30 } as const satisfi
   PosterSize,
   number
 >;
+
+/**
+ * The monogram does **not** grow with the reader's text setting, and the plate is why.
+ *
+ * Every other size in this file is fixed — a poster is 44 or 96 wide because that is what
+ * fits beside a row, and `mobile/smoke.mjs` states the rule the other way round: *"the type
+ * grows and the poster does not"*. A mark sized as a proportion of a box that cannot grow
+ * has exactly one outcome, and §6.181 measured it in the export rather than arguing about
+ * it: at 200% the `KN` in a 44x66 plate is **47pt wide**, at 300% it is **70**, and the
+ * plate's `overflow: hidden` takes the stems off both letters. The photographs are in the
+ * entry. At three hundred percent it is two vertical strokes.
+ *
+ * Which is the failure this whole fallback was built to end. §6.137 replaced the title with
+ * a monogram because the title broke inside the word and *"a mark so thin it reads as a
+ * rendering fault rather than a stand-in"* is the thing to avoid — and a clipped `KN` is
+ * that mark, arrived at down a different road.
+ *
+ * ## Why not scaling is the right answer rather than a dodge
+ *
+ * This is a stand-in for **artwork**, and artwork does not grow with a text setting. It is
+ * `aria-hidden` on both platforms because the title it abbreviates is already on the row
+ * twelve points to its right, in a `Text` that scales normally — so nothing a reader needs
+ * is being held still. WCAG 1.4.4 asks that content be readable at 200%; the content here
+ * is the row, and the row is fine. The alternative on offer is not "bigger initials", it is
+ * "no legible initials at all".
+ *
+ * The web needs no counterpart: its type is in `px` and does not respond to the browser's
+ * font-size setting either, so it has always behaved this way. Stating it here is what makes
+ * the two platforms agree on purpose rather than by accident.
+ */
+export const POSTER_GLYPH_SCALES = false;

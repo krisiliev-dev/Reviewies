@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
+import { KEY_BOX, KEY_HEIGHT, type KeyContract } from '@reviewies/core/ui/key';
 import { SURFACE_OFF } from '@reviewies/core/ui/surface';
 import { radius, space, theme } from './theme';
 import { PRESS } from '@reviewies/core/ui/surface';
@@ -24,7 +24,12 @@ export function Key({ spec, disabled, onPress }: KeyContract) {
       aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.key,
-        spec.size === 'wide' && styles.wide,
+        // From the table, not from this file. `minWidth: 72` was written here and again in
+        // `RemotePanel`'s `dpadGap` to keep the grid's empty cells in line — a number
+        // nowhere in the repository, holding the d-pad together by hand, and the reason
+        // the same arrow is a square on the web and a rectangle here. §6.181.
+        KEY_BOX[spec.size].square && styles.square,
+        KEY_BOX[spec.size].spans && styles.spans,
         spec.size === 'centre' && !disabled && styles.centre,
         disabled && styles.off,
         // Instant, like every other press in this build: feedback that was never motion
@@ -47,7 +52,9 @@ export function Key({ spec, disabled, onPress }: KeyContract) {
 
 const styles = StyleSheet.create({
   key: {
-    minWidth: 72,
+    // Never narrower than it is tall, so the smallest key any surface can produce is a
+    // square at the height `key.ts` argues for. The width above that is the surface's.
+    minWidth: KEY_HEIGHT,
     minHeight: KEY_HEIGHT,
     backgroundColor: theme.groundRaised,
     borderRadius: radius.plate,
@@ -55,7 +62,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.s8,
   },
-  wide: { flex: 1 },
+  square: { aspectRatio: 1 },
+  spans: { flex: 1 },
   centre: { backgroundColor: theme.actionFill },
   off: {
     backgroundColor: 'transparent',

@@ -198,6 +198,35 @@ describe('the choice contract', () => {
     }
   });
 
+  it('writes the table’s numbers as classes the table can be compared to', () => {
+    /*
+     * §6.181. Both renderers carried a comment saying the web reads `CHOICE_SIZE` — the
+     * phone's says "which is where the web reads them too" — and the web did not. It wrote
+     * five of the table's numbers as Tailwind literals with nothing holding them to it, and
+     * one had already parted: `rows.gap` is 2 and the class list for a column of rows had
+     * **no gap at all**, so the phone put two points between one radio row and the next and
+     * the web put none.
+     *
+     * The four box numbers happened to be right, which is the state this clause exists to
+     * stop being luck. The spelling is the token one — `px-s12`, `gap-s8` — so the class
+     * *contains* the key and the assertion can rebuild it from the table rather than from a
+     * second hand-written map. `gap-2` is also eight pixels and says nothing about why.
+     */
+    const web = inRepo('app/src/ui/Choice.tsx');
+    for (const [density, metrics] of Object.entries(CHOICE_SIZE)) {
+      expect(web, `the web does not read ${density}'s padding`).toContain(`px-s${metrics.paddingX}`);
+      expect(web, `the web does not read ${density}'s gap`).toContain(`gap-s${metrics.gap}`);
+    }
+    // The floors are named rather than numbered, for the same reason: `min-h-11` is 44 by
+    // Tailwind's scale and by coincidence, `min-h-target` is 44 because `size.target` is.
+    expect(web, 'the web types its own target floor').toContain('min-h-target');
+    expect(web, 'the chips lose their width floor').toContain('min-w-target');
+    expect(web, 'the web still spells a box number on Tailwind’s own scale')
+      .not.toMatch(/min-[hw]-11\b|\bpx-[34]\b/);
+    // And the gaps must differ, or one class would satisfy both halves above.
+    expect(CHOICE_SIZE.rows.gap).not.toBe(CHOICE_SIZE.chips.gap);
+  });
+
   it('leaves no one-of-several wearing a button’s role', () => {
     /*
      * The defect itself, on the phone: a `Pressable` that carries `selected` in its

@@ -13,12 +13,31 @@ import { Note } from './Note';
  * Neither of these carried a size, so the web's chips inherited the body's 16 while the
  * phone's were 14 — the same control, one step apart, on all five screens that use it.
  */
-const CHIP = 'rounded-plate border border-stroke-signal min-h-11 min-w-11 px-3 text-s14 font-title font-semibold';
+/**
+ * `CHOICE_SIZE` as classes, written out, and `choice.test.ts` binds every one to the table.
+ *
+ * The comment above and its twin in the phone's renderer both said the web *reads* the
+ * table. It did not — it wrote five of the table's numbers as literals with nothing holding
+ * them to it, which §6.181 measured and found already parted: `CHOICE_SIZE.rows.gap` is 2
+ * and the web put **nothing** between one radio row and the next, because the class list
+ * for a column of rows had no `gap` in it at all. The four box numbers happened to be
+ * right, which is the state a guard exists to stop being luck.
+ */
+const CHIP = 'rounded-plate border border-stroke-signal min-h-target min-w-target px-s12 text-s14 font-title font-semibold';
 const CHIP_ON = 'border-b-tally border-b-working-mark text-ink';
 const CHIP_OFF = 'text-ink-secondary';
-const ROW = 'flex w-full items-center gap-2 rounded-none min-h-11 px-4 text-left text-s14 font-title font-semibold';
+const ROW = 'flex w-full items-center rounded-none min-h-target px-s16 text-left text-s14 font-title font-semibold';
 const ROW_ON = 'border-l-tally border-l-working-mark text-ink';
 const ROW_OFF = 'text-ink-secondary';
+/**
+ * The gap between one option and the next.
+ *
+ * The token spelling — `gap-s8`, `gap-s2` — rather than Tailwind's own scale, because the
+ * class name then *contains* the key, and `choice.test.ts` rebuilds it from
+ * `CHOICE_SIZE[density].gap` and compares. `gap-2` is also eight pixels and says nothing
+ * about where eight came from.
+ */
+const GAP = { chips: 'gap-s8', rows: 'gap-s2' } as const;
 
 export function Choice<T extends string | number>({
   name,
@@ -40,10 +59,10 @@ export function Choice<T extends string | number>({
          Tailwind's scanner reads source text, so a class built at runtime never compiles. */
       className={
         rows
-          ? 'flex flex-col'
+          ? `flex flex-col ${GAP.rows}`
           : scroll
-            ? 'flex flex-nowrap items-center gap-2 overflow-x-auto'
-            : 'flex flex-wrap items-center gap-2'
+            ? `flex flex-nowrap items-center ${GAP.chips} overflow-x-auto`
+            : `flex flex-wrap items-center ${GAP.chips}`
       }
     >
       {options.map((option) => {

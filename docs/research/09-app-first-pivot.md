@@ -13814,6 +13814,136 @@ fixtures happen to jump from tomorrow to a week out. Cheap to reach by moving a 
 date; three sprints of not doing it is now the more interesting fact about it.
 
 
+### 6.181 Three shared components, three shapes nobody had stated
+
+§6.180 named the debt it was leaving: `Poster`, `Choice` and `Key` came back identical on
+every keyword `behaviour.mjs` knows, which is weaker than "they agree" — the probe knows
+nine keywords and a component can carry a number outside all of them. All three were read by
+a person this sprint. All three had one.
+
+#### Key: the same arrow is a square on one platform and a rectangle on the other
+
+Measured in both browsers rather than read off the source: the d-pad's Up key is **80x80 on
+the web and 72x60 on the phone**.
+
+`key.ts` says why nobody noticed. It has a `KeySize` union — `pad | wide | centre` — and a
+paragraph explaining that it deliberately has no table, *"because the table had the same two
+numbers in all three rows: it looked like a decision and was not"*. That was true when it was
+written. A union with no table is a union each renderer interprets, and they did: the web
+branched on `pad` for `aspect-square`, and the phone gave **every** key `minWidth: 72` —
+typed again in `RemotePanel`'s `dpadGap`, so the grid's empty cells stayed in line with keys
+they knew nothing about. Two files agreeing by hand about a number in neither of them.
+
+`space.test.ts` could not see 72: `minWidth` is not one of the style keys its regex reads.
+The same blind spot as §6.180's `hitSlop`, which is a *prop*. Two sprints running, the number
+that had drifted was the one in a shape that guard does not look at.
+
+`key.test.ts` could not see it either, and its clause is called **"is the same size on both
+platforms"**. What it asserts is that both sources contain the string `KEY_HEIGHT`. A name
+check standing in for a size check — §6.121's shape, and precisely the one §6.180 caught in
+`CLAMP[lines]` a sprint earlier.
+
+`KEY_BOX` states what the union was implying: `pad` is square, `wide` spans its row, `centre`
+is neither. It is a **rule and not a width**, on purpose — the web's fascia is a 300pt drawer
+and the phone's is a 390pt screen, so the same rule lands on 80 there and 60 here, and that
+is the surface's business the way `SCREEN.edge` is. What was wrong was never that the numbers
+differed; it was that nothing said which of them was a decision, so a hand-typed 72 was
+indistinguishable from one. `14-remote.png` shows a square d-pad now.
+
+#### Poster: the monogram is clipped at 200% text, in the component built to stop that
+
+`mobile/smoke.mjs` states the rule from one side: *"the type grows and the poster does not"*.
+A mark sized as a proportion of a box that cannot grow has one outcome, and it was measured
+in the export rather than argued about — `KN` in a 44x66 plate:
+
+| text size | mark | plate |
+|---|---|---|
+| 100% | 23pt wide | 44pt |
+| 200% | **47pt** | 44pt |
+| 300% | **70pt** | 44pt |
+
+The plate is `overflow: hidden`, so at 200% the stems come off both letters and at 300% it is
+two vertical strokes. Which lands back on the failure this fallback exists to end: §6.137
+replaced the title with a monogram because *"a mark so thin it reads as a rendering fault
+rather than a stand-in"* is the thing to avoid.
+
+Nothing here could have seen it. `poster.test.ts` reads source; `mobile/smoke.mjs`'s 200%
+check measures **controls** and skips anything under `aria-hidden`, which the monogram is by
+design; and every design shot is taken at 100%.
+
+`POSTER_GLYPH_SCALES = false` is the decision and `poster.ts` carries the argument: this is a
+stand-in for *artwork*, artwork does not grow with a text setting, and the title it
+abbreviates is on the row beside it in a `Text` that scales normally. WCAG 1.4.4 asks that
+content be readable at 200%; the content is the row. The alternative on offer was never
+"bigger initials", it was "no legible initials". The phone's `padding: 2` went with it — a
+number the web's copy did not have and nothing stated, left over from when the plate printed
+a title that needed room to wrap.
+
+#### Choice: a comment saying the web reads the table, and a web that did not
+
+Both renderers carried it. The phone's is still in the file: *"From `CHOICE_SIZE` in the
+core, **which is where the web reads them too**"*. The web wrote five of the table's numbers
+as Tailwind literals with nothing binding them, and one had already parted: `rows.gap` is 2,
+and the class list for a column of radio rows had **no gap at all** — two points between one
+option and the next on the phone, none on the web. §6.106 again, on a comment that names the
+mechanism it is wrong about.
+
+The four box numbers happened to be right. The spelling is the token one now — `px-s12`,
+`min-h-target`, `gap-s8` — so the class *contains* the key and `choice.test.ts` rebuilds it
+from the table rather than from a second hand-written map. `gap-2` is also eight pixels and
+says nothing about why.
+
+#### And the branch four sprints called cheap
+
+`formatDay`'s 2–6 day case returns a bare weekday — *"Sunday"*, no date. §6.178 filed it
+unphotographed and §6.179 and §6.180 each carried it forward describing it as *"cheap to
+reach by moving a fixture's air date"*. Working out how is what showed why nobody had.
+
+It is not cheap on a weekly show; it is **impossible**. A weekly cadence puts every air date
+at `7n - startedDaysAgo` days out, so one show produces day offsets from a single residue
+class mod 7 — and this library has exactly one airing weekly show. The Long Dark, at 119,
+which is a multiple of seven, which is what buys the *Today* heading and next week's premiere
+that its own comment is about. Moving it trades one photographed state for another.
+
+A **drop** has no such arithmetic: its date is one number. Salt Flats moved from 341 to 361 —
+still landing on a day no weekly show uses, still eight episodes under one heading, now four
+days out instead of twenty-four. `09-calendar.png` shows **Today**, **Thursday** and **Sun,
+Sep 6** in one screen, which is three branches of `formatDay` in one photograph rather than
+the two that were there.
+
+`designLibrary.test.ts` went red on the change, which is the guard doing exactly its job:
+`design/library.mjs` keeps its own copy of the offset and the two must agree at the wire.
+
+#### Ten plants, all red
+
+Including the three that matter — the ones that keep `KEY_BOX[spec.size]` in both renderers
+while removing the shape: `square` mapped to nothing, every flag in the table set false, and
+`centre` made the square one instead of `pad`. Each satisfies "both platforms read the table"
+completely. The clause reads what the flags *are*, not that they are read.
+
+## What is not done, and why it is said here
+
+**Sixty-three shots are still unread**, of 137, unchanged for a third sprint — though the
+calendar and remote shots were re-taken and both now show something they could not before.
+
+**`behaviour.mjs` found none of this.** Worth stating plainly, because the probe was §6.180's
+own instrument and this sprint is its verdict: three components, three findings, and the
+probe reported all three as identical. Its nine keywords cover numbers with *behaviour*
+attached — clamps, timers, limits — and every one of these was a number attached to a **box**:
+`minWidth`, `aspectRatio`, `padding`, `allowFontScaling`, a Tailwind class. A tenth keyword
+would have caught `minWidth`; an eleventh would not have caught the others. The honest
+conclusion is that the probe is a filter for one shape and reading is what finds the rest, and
+the next sprint should not reach for it first.
+
+**The three findings were found by reading three files.** Twenty-five pairs went through the
+probe in §6.180 and produced two; three pairs went through a person here and produced three.
+That is the ratio worth acting on.
+
+**No screenshot was read this sprint either.** Two sprints of that now. The design harness is
+being used as a regression net and as a way to *photograph* a fixed state, which is what it
+did twice today, rather than as a place to look for defects.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -13899,6 +14029,13 @@ and which single claim in this document could not be checked at all:
   measured is the one underneath it — `tap`'s 24, which clears WCAG 2.5.8 without any slop
   at all, which is why the rule is that slop sits on top of a real height rather than
   standing in for one.
+
+  §6.181 adds a third, and this one the export *can* show — which is the point. The phone's
+  poster monogram was clipped at 200% text and `allowFontScaling={false}` stops it, and both
+  the defect and the fix were measured in `mobile/dist` in Chromium. What no check here can
+  say is whether iOS's Dynamic Type and Android's font scale honour that prop the way
+  react-native-web's `Text` does. The two mechanisms are different code; the export is
+  evidence about the decision and not about the platform.
 - **Offline here is a switch, not a bad connection.** §6.56 runs both apps with
   Playwright's offline mode, which is a clean break: every request fails at once and
   keeps failing. What that does not reproduce is the case people actually meet — a

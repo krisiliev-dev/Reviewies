@@ -176,7 +176,10 @@ describe('every workspace', () => {
     // the label rather than the box, and the two call sites that ask for it — plus the
     // `hitSlop` clause in `space.test.ts`, which is in the file that bans an unstated
     // number in a phone style and could not have seen a prop.
-    core: 928, app: 661, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 664, up three: §6.181's clause per component — the key's shape, the monogram
+    // held still against the reader's text setting, and the web's `Choice` literals bound
+    // to `CHOICE_SIZE`.
+    core: 928, app: 664, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
