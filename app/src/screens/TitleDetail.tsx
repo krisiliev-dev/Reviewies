@@ -31,6 +31,7 @@ import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
 import { episodeHeading, episodeName, episodeWhen } from '@reviewies/core/ui/episode';
+import { SCREEN } from '@reviewies/core/ui/screen';
 import {
   bySeason as seasonOrder,
   openSeason,
@@ -163,8 +164,24 @@ export function TitleDetail() {
              * the same field with no `numberOfLines` and always has, so this was §6.170's
              * shape — one field, two platforms, different halves — with the phone holding
              * the better version. §6.51: the better version wins whichever platform had it.
+             *
+             * ## And a measure of its own, which the column could not give it
+             *
+             * `SCREEN.measure` caps the column at 720 and was measured for a *row* — one
+             * line, scanned, whose two ends have to belong to each other. A paragraph is
+             * read line after line, and what a wide measure costs is finding the start of
+             * the next one, so the two questions do not have one answer. Measured at 1280
+             * before `SCREEN.prose` existed: this paragraph set **89 characters** to a line,
+             * against 44 in the same build at 420, and the convention puts a comfortable
+             * measure at 45–75. The table carries the number and the readings behind it.
+             *
+             * Inline, like the column's own cap in `App.tsx` and for the same reason: the
+             * number lives in the core and Tailwind cannot be handed one.
              */
-            <p className="mt-2 text-s16 font-prose font-regular leading-l143 text-ink-secondary">
+            <p
+              className="mt-2 text-s16 font-prose font-regular leading-l143 text-ink-secondary"
+              style={{ maxWidth: SCREEN.prose }}
+            >
               {title.overview}
             </p>
           )}
