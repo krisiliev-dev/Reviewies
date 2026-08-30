@@ -160,7 +160,9 @@ describe('every workspace', () => {
     // app 648, up three: §6.172's `announcedState.test.ts`.
     // app 650, up two: §6.173 gave that file the hidden-decoration pair — the absence rule
     // and the four sites it would otherwise be vacuously true about.
-    core: 925, app: 650, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 652, up two: §6.174's synopsis pair in `season.test.ts` — the clamp forbidden on
+    // both renderers, and the clause that the field is still drawn at all.
+    core: 925, app: 652, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

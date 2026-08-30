@@ -202,6 +202,44 @@ describe('a suggestion nothing in your library led to', () => {
     }
   });
 
+  it('draws the synopsis whole on both platforms, or clamps it on neither', () => {
+    /*
+     * §6.174. One field, two renderers, different halves — §6.170's shape.
+     *
+     * `TitleDetail.tsx` carried `line-clamp-3` with no comment and no entry behind it, and
+     * it was not the narrow-window rule it looks like: measured against the real-TMDB
+     * build, It's Always Sunny truncated mid-word at **both** photographed widths — the
+     * 1280 shot ends *"creating a myria…"*. Severance fits at 1280 and not at 420, which
+     * is what made the divergence look like a responsive decision instead of a cap.
+     *
+     * Nothing on either platform offers to expand it, so on the web the rest of the field
+     * was simply unreachable while the phone had been showing all of it for sprints.
+     *
+     * Written as an absence over **both** files rather than as a presence over one: a
+     * clause that only said "the web does not clamp" would go quiet the day somebody
+     * clamped the phone to match, which is the wrong repair and the one this is here to
+     * prevent. If a synopsis cap is ever wanted it is wanted on both, from one table.
+     */
+    for (const file of TITLES) {
+      expect(withoutProse(read(file)), `${file} truncates the synopsis`).not.toMatch(
+        /line-clamp|numberOfLines/,
+      );
+    }
+  });
+
+  it('still draws the synopsis at all, on both platforms', () => {
+    /*
+     * The absence above is satisfied by a screen with no synopsis on it, which is §6.121's
+     * shape — deleting the field passes the clause it exists to protect. Each renderer has
+     * to still reach for `overview`.
+     */
+    for (const file of TITLES) {
+      expect(withoutProse(read(file)), `${file} no longer shows the synopsis`).toContain(
+        'overview',
+      );
+    }
+  });
+
   it('never passes a label where a title belongs', () => {
     // The literal that caused it. A seed name is a title or it is nothing.
     expect(withoutProse(read('core/src/discover/recommend.ts'))).not.toContain("'Trending now'");

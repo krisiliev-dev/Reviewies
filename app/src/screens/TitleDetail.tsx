@@ -133,7 +133,18 @@ export function TitleDetail() {
           )}
           {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
           {title?.overview && (
-            <p className="mt-2 line-clamp-3 text-s16 font-prose font-regular leading-l143 text-ink-secondary">
+            /*
+             * Whole, as the phone has always drawn it. §6.174.
+             *
+             * This carried `line-clamp-3` — undocumented, unconditional, and not a
+             * narrow-window rule: measured against real TMDB it truncated It's Always
+             * Sunny mid-word at **both** photographed widths, 420 and 1280, and there was
+             * no control anywhere to reach the rest. `mobile/app/title/[id].tsx` renders
+             * the same field with no `numberOfLines` and always has, so this was §6.170's
+             * shape — one field, two platforms, different halves — with the phone holding
+             * the better version. §6.51: the better version wins whichever platform had it.
+             */
+            <p className="mt-2 text-s16 font-prose font-regular leading-l143 text-ink-secondary">
               {title.overview}
             </p>
           )}

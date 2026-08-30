@@ -12918,6 +12918,75 @@ been spent on what §6.171 could not settle, and the reading queue has not moved
 TalkBack then says the right sentence is the device question, unchanged and unrelated.
 
 
+### 6.174 Back to reading, and a cap nobody wrote down
+
+**#210.** Two sprints went entirely on the question §6.171 raised, and the reading queue did
+not move. This one reads, and the discipline it applies is the one §6.173 had to learn about
+its own comment: **read the renderer before writing the finding.** Six shots, three
+candidates examined against the source, one survived.
+
+#### The synopsis is capped on the web and whole on the phone
+
+`app/src/screens/TitleDetail.tsx` carried `line-clamp-3`. No comment beside it, no entry
+behind it, and it is not the responsive rule it looks like — there is no width condition on
+it at all. Measured against the real-TMDB build at both photographed widths:
+
+| | 420 | 1280 |
+| --- | --- | --- |
+| Severance | *"…their work and…"* | whole (it fits in three lines) |
+| It's Always Sunny | truncated | *"…creating a myria…"* |
+
+So a synopsis long enough is cut at **1280 as well**, mid-word, and Severance fitting at the
+wider size is exactly what made the cap read as a narrow-window decision instead of what it
+is. Nothing on the screen offers to expand it, so on the web the rest of that field was
+simply unreachable.
+
+`mobile/app/title/[id].tsx` renders the same field with no `numberOfLines`, and always has.
+§6.170's shape — one field, two platforms, different halves — and §6.51 settles which half
+wins: the phone had the better version, so the clamp is gone.
+
+#### The guard is an absence over both files, because the wrong repair is the tempting one
+
+A clause saying *"the web does not clamp"* would go quiet the day somebody clamped the phone
+to match, which is the cheaper-looking fix and the wrong one. So `season.test.ts` forbids
+`line-clamp` and `numberOfLines` in **both** renderers, and a second clause requires each to
+still reach for `overview` — because an absence is also satisfied by a screen with no
+synopsis on it, which is §6.121. All three plants went red, including the phone-clamping one.
+
+#### Two candidates that did not survive the source
+
+**The episode row's three marks.** §6.173 left this open: a watched episode is struck
+through *and* dimmed *and* ticked. `crossOff.ts` has it as a decision with a reason —
+*"a line through text is invisible to a screen reader and hard to see at a glance on a moving
+bus"* — and the reason holds better than the entry that raised it. Only the ring is announced;
+the line is what keeps the ink step legal under WCAG 1.4.1, where colour may not be the only
+carrier. Three channels is right, and the sprint-83 brief's citation of the notification
+defect was wrong twice over: that is **task** #169, not §6.169, and the defect there was
+*two* marks **seven hundred points apart** — a distance, not a count. The episode row's three
+are adjacent.
+
+That dimmed text is measured, not merely argued: the title page carries struck rows while
+`audit` runs, so `legible` reads their real colour against their real ground on every pass.
+
+**Stats' empty state with no way out.** The register says `stats.empty` *"says nothing
+watched in this period, with the way out of it"*, and `narrow-stats.png` shows one sentence
+and 1,400 points of nothing. `Stats.tsx` gates the button on
+`years.length > 0 && (window !== 'all' || year !== undefined)`, and the real-data library has
+nothing watched in any year — so there is no fuller period to offer and the screen correctly
+declines to promise one. Working as decided.
+
+## What is not done, and why it is said here
+
+**Seventy-two shots are unread**, of 134 — down from 86, which is the first movement in three
+sprints. Fourteen were read across §6.173's waits and this entry. Most of what remains is
+still `-foot` shots and `design/real-screens/`.
+
+**One finding in ten shots is a lower rate than §6.168's or §6.169's**, and that is worth
+recording rather than explaining away: the shots being read now are the ones earlier passes
+skipped as unpromising, and they are turning out to be unpromising. The rate to watch is not
+findings per shot but whether the survivors keep surviving — three examined, one shipped.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -13774,7 +13843,7 @@ and which single claim in this document could not be checked at all:
   and four sprints of building instruments without reading their output is how a live backend
   got into a pass whose own comment said it could not be there.
 
-- **Eighty-six shots have not been read**, of 134 — §6.170 and §6.171 each added two, all
+- **Seventy-two shots have not been read**, of 134 — §6.170 and §6.171 each added two, all
   four of states that had never had a picture. §6.165 states the scope: 130 files across
   `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
@@ -13783,8 +13852,9 @@ and which single claim in this document could not be checked at all:
   most of `design/real-screens/` are what is left. **Three sprints have now gone by without
   the number moving**: §6.171 filed a question a photograph could not settle, and §6.172 and
   §6.173 both spent themselves answering it. That was the right trade twice — a dead prop at
-  seventeen sites and a second family at four — but it is twice, and the queue is where it
-  was.
+  seventeen sites and a second family at three — but it was twice. **§6.174 moved it**, by
+  fourteen, and found the web capping a title's synopsis at three lines while the phone drew
+  it whole.
 
 - ~~**Discover's recommendation feed has never been photographed against real data.**~~ —
   **closed in §6.170, and it was not a fixture problem.** `seedTitles` read watch history
