@@ -266,7 +266,11 @@ export function ReactionStream({
 
   return (
     <div
-      className="pointer-events-none relative h-32 overflow-hidden"
+      /* The strip the lanes fly across: a component dimension, on no scale and with no
+         token name, so it is written as a measurement. `h-32` was 8rem — the swell got
+         taller for a reader with large text while the emoji in it, at `text-s30` and their
+         lanes at a fixed 26px apart, did not move at all. §6.186. */
+      className="pointer-events-none relative h-[128px] overflow-hidden"
       aria-label={COPY.watching.reactionsHeading}
     >
       {/* The only thing here that speaks. The emoji themselves are hidden from a screen

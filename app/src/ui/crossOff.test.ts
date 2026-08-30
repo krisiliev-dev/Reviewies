@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { stripComments } from '@reviewies/core/test/source';
+import { declarationOf, stripComments } from '@reviewies/core/test/source';
 import { RING, STRUCK, UNDO_MS } from '@reviewies/core/ui/crossOff';
 import { border, color, linger, size } from '@reviewies/core/tokens';
 
@@ -133,6 +133,48 @@ describe('the cross-off', () => {
       .filter((path) => /line-through/.test(read(path)))
       .map((path) => relative(ROOT, path));
     expect(elsewhere, 'a strike drawn outside the component').toEqual([]);
+  });
+
+  it('draws the ring at the size the table says, on the platform that cannot look it up', () => {
+    /*
+     * §6.185 fixed `Toggle`'s box and named this one as the next: *"`h-11 w-11` on
+     * `CrossOff` … are the same 44 arrived at twice, `space.test.ts`'s `UTILITY` regex
+     * covers none of `size`/`h`/`w`/`min-h`, and nothing sweeps any of them"*. The sweep
+     * exists now, and the first thing it found is that the two 44s were never the same
+     * number.
+     *
+     * The phone sets `width: RING.size` and `height: RING.size` and cannot be wrong about
+     * it. The web wrote `h-11 w-11`, and Tailwind's own numeric steps compile to
+     * `calc(var(--spacing) * n)` with `--spacing` at `0.25rem` — so the ring was 2.75rem:
+     * 44 CSS pixels only while the reader had not touched their browser's text size, and 88
+     * at 200%, on the control this whole product turns on. `size-target` is
+     * `var(--spacing-target)`, which is `size.target`, which is 44 always.
+     *
+     * Written out because Tailwind's scanner reads source text, and derived from the table
+     * here rather than typed — `ui/button#BOX_RADIUS`'s arrangement, the one this file
+     * already uses for the ring's colours.
+     */
+    expect(RING.size).toBe(size.target);
+    const named = Object.entries(size).find(([, px]) => px === RING.size)?.[0] ?? '?';
+    /*
+     * Per declaration and as a set, never `toContain` on the file. Both constants below
+     * carry a box; a clause reading the whole renderer for one of them passes when the
+     * other still has it, which is §6.109's finding, and `size-target h-11` contains the
+     * right utility while drawing at whichever Tailwind emits last — §6.184's `size-5`
+     * behind `h-[1em]`, one component over.
+     */
+    for (const [constant, expected] of [
+      ['RING_CLASS', [`size-${named}`]],
+      ['UNDO_CLASS', [`h-${named}`]],
+    ] as const) {
+      const declared = declarationOf(RENDERERS.web, constant);
+      expect(declared, `the web has no ${constant} to read`).toBeTruthy();
+      const box = [...new Set(declared?.match(/\b(?:size|w|h|min-w|min-h)-[\w.[\]]+/g) ?? [])];
+      expect(box, `${constant} does not state exactly one box`).toEqual(expected);
+    }
+    // And the phone reads the table for both of its two, rather than agreeing by hand.
+    expect((RENDERERS.phone.match(/RING\.size/g) ?? []).length, 'the phone types a box')
+      .toBeGreaterThan(2);
   });
 
   it('gives the undo window the same six seconds as the banner it replaces', () => {

@@ -89,6 +89,39 @@ describe('a poster', () => {
 
     // `ROW.lead` was the poster's box living in the row's table. It is gone, not unused.
     expect(Object.keys(ROW), 'the row is sizing posters again').not.toContain('lead');
+
+    /*
+     * And neither is the renderer, which is where this clause stopped looking.
+     *
+     * `app/src/ui/Poster.tsx` carried `{ row: 'h-[66px] w-11', detail: 'h-36 w-24' }` under
+     * a header saying *"the sizes are class literals because Tailwind v4 compiles from
+     * source text; `poster.test.ts` holds them to the table"*. It did not: every clause in
+     * this file reads `POSTER_SIZE`, and nothing anywhere read those four strings. The
+     * ninth answer to the question the table answers was inside the component itself.
+     *
+     * Two of the four were also wrong, in a way only `space.test.ts`'s box sweep could see.
+     * `w-11` and `w-24` are Tailwind's own numeric steps, which compile to
+     * `calc(var(--spacing) * n)` with `--spacing` at `0.25rem`, while `h-[66px]` is a plain
+     * pixel count — so the row plate was **66px tall and 2.75rem wide**. 44x66 and 2:3 at
+     * the default text size; 88x66 at 200%. The clause above proves 2:3 in a table, and the
+     * browser stopped drawing it that way the moment somebody enlarged their type — which
+     * is the same defect this file was written for, on the axis nobody had looked at.
+     *
+     * So there is no class to hold: the renderer reads the table, the way `Row` reads
+     * `ROW.minHeight` — the very number this poster's height has to equal — and the way the
+     * band beside it already read `POSTER_PLATE.band`. 66, 96 and 144 are on no scale and
+     * have no token name, so Tailwind had nothing to offer here in the first place.
+     */
+    const web = RENDERERS.web;
+    expect(web, 'the web sizes its plate by hand again')
+      .not.toMatch(/\b(?:size|w|h|min-w|min-h|max-w|max-h)-(?:\d|\[)/);
+    for (const dimension of ['width', 'height'])
+      expect(web, `the web does not read the plate's ${dimension} from the table`)
+        .toContain(`${dimension}: POSTER_SIZE[size].${dimension}`);
+    // Both elements, not one: the plate is drawn as an `<img>` or as a monogram `<div>`,
+    // and a box on one of them is a fallback that is a different shape from the artwork.
+    expect((web.match(/\.\.\.BOX\(size\)/g) ?? []).length, 'only one of the two plates is boxed')
+      .toBe(2);
   });
 
   it('is a plate with a band along its foot, in units that exist', () => {

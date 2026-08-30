@@ -49,9 +49,16 @@ export function StarRating({
           // with text — and written as `min-w-12` this doubled along with everything
           // else at 200%, making the control 480 wide and pushing four and a half
           // stars through five off the side of the screen.
+          //
+          // `min-h-[24px] min-w-[48px]` until §6.186, which is the same pixels and says
+          // nothing about which pixels. The token spelling is `var(--spacing-tap)` and
+          // `var(--spacing-s48)` — absolute in exactly the same way, and now the WCAG
+          // floor by name and two of it for the two half-targets each star carries. This
+          // was the only site in the tree that had found the rem problem; `space.test.ts`
+          // sweeps for the rest.
           /* The size class sits here now rather than on the glyph: the drawing is `1em`
              square, so the box that sets the text size is what sizes it. */
-          className={`relative flex min-h-[24px] min-w-[48px] items-center justify-center ${text}`}
+          className={`relative flex min-h-tap min-w-s48 items-center justify-center ${text}`}
         >
           {/* Two overlapping hit areas per star: left half sets x.5, right sets x. */}
           <button

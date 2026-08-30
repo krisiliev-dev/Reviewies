@@ -144,7 +144,7 @@ function Grid({
             // A grid of bare numbers: "3" says nothing about season or episode.
             aria-label={`${label}: ${value}`}
             // Big enough to hit one-handed; this is a grid of small numbers.
-            className="min-w-11 rounded-pill border border-stroke-signal px-3 py-3"
+            className="min-w-target rounded-pill border border-stroke-signal px-3 py-3"
           >
             <Data value={value} />
           </button>

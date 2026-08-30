@@ -14,14 +14,14 @@ import { Tick } from './Mark';
  * Tailwind's scanner reads source text, so a class assembled at runtime is never compiled.
  */
 const RING_CLASS =
-  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill border-icon active:border-mark';
+  'inline-flex size-target shrink-0 items-center justify-center rounded-pill border-icon active:border-mark';
 const RING_OFF = 'border-stroke-signal';
 const RING_ON = 'border-working-fill bg-working-fill text-working-on-fill';
 /** Unaired. A ring in the hairline reads as "not yet", where a fade reads as broken. */
 const RING_UNAVAILABLE = 'border-stroke-hairline';
 
 const UNDO_CLASS =
-  'inline-flex h-11 shrink-0 items-center justify-center rounded-pill border-icon border-mark-cross-off px-3 text-s12 font-title font-semibold text-ink';
+  'inline-flex h-target shrink-0 items-center justify-center rounded-pill border-icon border-mark-cross-off px-3 text-s12 font-title font-semibold text-ink';
 
 export function CrossOff({
   watched,

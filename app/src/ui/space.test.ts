@@ -203,6 +203,50 @@ const UTILITY =
 const ARBITRARY =
   /(?:^|[\s"'`{])(?:-?)(?:p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y|inset|inset-x|inset-y|top|bottom|left|right|scroll-m|scroll-p)-\[([^\]]+)\]/g;
 
+/**
+ * The box a thing is drawn in, which is a different question from the space around it —
+ * and the seven namespaces neither regex above has ever covered.
+ *
+ * Deliberately its own sweep rather than three more alternatives in `UTILITY`. `UTILITY`
+ * asks one question — is the number on the scale — and `h-11` **is** on it, at 44. The
+ * whole finding is that being on the scale is not enough for a box, so widening `UTILITY`
+ * would have added seven namespaces to a clause that had nothing to say about six of the
+ * seven sites in them.
+ */
+const BOX =
+  /(?:^|[\s"'`{])(size|w|h|min-w|min-h|max-w|max-h)-(\[[^\]]*\]|[\w.]+(?:\/\d+)?)/g;
+
+/**
+ * Not lengths, and so not this clause's business: Tailwind's intrinsic keywords and a
+ * fraction of the parent. `w-1/2` is half of whatever it is in, which no scale describes.
+ */
+const BOX_KEYWORD = new Set([
+  'auto', 'full', 'screen', 'min', 'max', 'fit', 'px',
+  'dvh', 'dvw', 'lvh', 'lvw', 'svh', 'svw',
+]);
+
+/**
+ * Every name the spacing namespace actually emits, read from the generated stylesheet
+ * rather than rebuilt from the tokens.
+ *
+ * §6.85's trap, which `poster.test.ts` records for `border-b-s4`: a class whose custom
+ * property is never generated produces no rule at all and looks exactly like a class. The
+ * two readings have to be the file Tailwind compiles against, not the table it came from.
+ */
+const SPACING_NAMES = new Set(
+  [...readFileSync(resolve(ROOT, 'app/src/tokens.generated.css'), 'utf8').matchAll(
+    /--spacing-([a-z0-9]+):/g,
+  )].map((m) => m[1]),
+);
+
+/**
+ * Points to the names the table has for them. 24 has two — a step of the scale and the
+ * WCAG 2.5.8 floor — and either spelling is a name, which is the whole of what is asked.
+ */
+const NAMES_FOR = new Map<number, string[]>();
+for (const [name, px] of [...Object.entries(size), ...Object.entries(space)])
+  NAMES_FOR.set(px, [...(NAMES_FOR.get(px) ?? []), name]);
+
 describe('the space scale, on the web', () => {
   it('reads a tree rather than nothing', () => {
     expect(WEB.length).toBeGreaterThan(40);
@@ -284,6 +328,168 @@ describe('the space scale, on the web', () => {
       });
     }
     expect(seen, 'the scan found no arbitrary values at all').toBeGreaterThan(0);
+    expect(off).toEqual([]);
+  });
+
+  /**
+   * The box, which no regex in this file could see until now.
+   *
+   * §6.185 fixed `Toggle`'s `size-5` because it was the one box in the product measured
+   * *wrong*, and said so in its own prose: `CrossOff`'s `h-11 w-11` and `Button`'s
+   * `min-h-12` are the same 44 and 48 arrived at twice, `UTILITY` above covers none of
+   * `size`/`h`/`w`/`min-h`, and nothing swept any of them. Widening the sweep found
+   * eighteen sites across eleven files — and a second fact that makes them worse than
+   * numbers nobody chose.
+   *
+   * ## Tailwind's own numeric steps are `rem`, and this app's type is not
+   *
+   * `--spacing` is `0.25rem` and the compiled sheet says so plainly:
+   *
+   * ```css
+   * .min-h-11{min-height:calc(var(--spacing) * 11)}     — 2.75rem
+   * .min-h-target{min-height:var(--spacing-target)}     — 44px
+   * ```
+   *
+   * So `min-h-11` is 44 only while the reader has not changed their browser's text size,
+   * and `min-h-target` is 44 whatever they have done. `docs/design/components.md` is
+   * explicit — *"24 and 44 are CSS-pixel counts and must not scale with text"* — and
+   * `poster.test.ts` says the same thing about artwork from the other side, quoting the
+   * phone's *"the type grows and the poster does not"*.
+   *
+   * Measured in Chromium against the built stylesheet at a 390 viewport, both spellings on
+   * the page at once, rather than reasoned about:
+   *
+   * | | root 16px | root 32px, was | root 32px, is |
+   * | --- | --- | --- | --- |
+   * | `CrossOff` ring | 44x44 | **88x88** | 44x44 |
+   * | `Button` page floor | 48 | **96** | 48 |
+   * | `Button` row floor | 44 | **88** | 48 |
+   * | poster row plate | 44x66 | **88x66** | 44x66 |
+   * | poster detail plate | 96x144 | **192x288** | 96x144 |
+   * | tab marker rule | 24 wide | **48** | 24 |
+   * | rating half-target | 24x48 | 24x48 | 24x48 |
+   *
+   * Every row agrees at the default size, which is why sixteen sprints of screenshots
+   * never showed it. The row that does not move in either column is `StarRating`, the one
+   * site that had already been repaired — and the poster row plate is the sharp one:
+   * 88x66 is not 2:3, on the component whose whole suite is named for being 2:3.
+   *
+   * The build had already found this **once**, at one call site, and written it down
+   * there: `StarRating` carries *"Pixels, not rem ... written as `min-w-12` this doubled
+   * along with everything else at 200%, making the control 480 wide and pushing four and
+   * a half stars through five off the side of the screen."* That is §6.139's shape — a
+   * finding repaired where it was found, with nothing sweeping for the seventeen others —
+   * and it is the whole argument for this clause being a sweep rather than a fix.
+   *
+   * ## So the test is not "on the scale". It is "named"
+   *
+   * Where the table has a name for the value, the class writes the name: `size-target` is
+   * 44 because `size.target` is, where `h-11` is 44 by Tailwind's arithmetic and by
+   * coincidence, and says nothing about which 44 it means. `Choice` (§6.181), `Field`
+   * (§6.182) and `Toggle` (§6.185) already spell it that way; this is the rest of the
+   * tree.
+   *
+   * Where the table has **no** name for it, the number is a component dimension rather
+   * than a step on a scale, and it is written as a measurement — `h-[128px]`, `w-[288px]`
+   * — which is exactly what the clause above says about `pb-[calc(var(--tabbar)…)]`: a
+   * dimension a scale cannot reach stays in its component. `rem` inside one of those is
+   * refused, because a box in `rem` is the finding restated in brackets.
+   *
+   * Both directions are checked, and the second half is not hypothetical: `min-h-[44px]`
+   * in `ImportFiles` and `min-h-[24px] min-w-[48px]` in `StarRating` were the two target
+   * floors spelled as bare pixel counts, in the one form the scale could not see either.
+   *
+   * Not swept: `min-w-0`, which is the flex idiom for "may shrink below your content" and
+   * is an absence rather than a length, and sixteen sites write it.
+   *
+   * ## What this clause cannot see, named rather than left to be discovered
+   *
+   * It asks whether a box is *named*. It cannot ask whether it is the **right** name, and a
+   * plant proves the gap rather than an argument for it. Three of these were planted after
+   * the migration, ran the whole `app` suite, and came back green:
+   *
+   * - `CatchUp`'s number grid at `min-w-tap` instead of `min-w-target` — a 24pt target
+   *   where the house standard says 44, on a grid of small numbers pressed one-handed;
+   * - Watching Mode's timecode column at `min-w-s2` instead of `min-w-s48`, which is the
+   *   whole point of that span — a fixed column so the clock does not jitter;
+   * - a content warning's verdict dot at `size-s48` instead of `size-s6`, eight times over.
+   *
+   * Two more were planted and **caught**, and by which clause is the shape worth keeping:
+   * `size-tap` on `CrossOff`'s ring and `min-h-tap` on `Button`'s row both walked straight
+   * through here — a name is a name — and failed in `crossOff.test.ts` and
+   * `button.test.ts`, where the utility is derived from `RING.size` and `SIZE[…].minHeight`
+   * and compared. That is the division this clause is built for: it makes every box in the
+   * tree *nameable*, and the component's own file says which name. It is not a substitute
+   * for the second half, and a component that acquires a box without acquiring a clause
+   * still gets one number nobody checked — three of them are listed above.
+   */
+  it('draws a box in a name, not in a number that is 44 at exactly one text size', () => {
+    /*
+     * Source files only, unlike the two clauses above. A guard that quotes a class as a
+     * needle — `value.includes('min-w-[48px]')` — is not a component drawing a box, and
+     * counting it would report this file's own siblings.
+     */
+    const drawn = WEB.filter((path) => !/\.test\.tsx?$/.test(path));
+    const off: string[] = [];
+    let seen = 0;
+    let named = 0;
+    for (const path of drawn) {
+      const text = read(path);
+      text.split('\n').forEach((line, index) => {
+        for (const match of line.matchAll(BOX)) {
+          const [, namespace, value] = match;
+          const where = `${relative(ROOT, path)}:${index + 1}  ${namespace}-${value}`;
+          const spell = (px: number) =>
+            (NAMES_FOR.get(px) ?? []).map((n) => `${namespace}-${n}`).join(' or ');
+          seen++;
+          // Not a length. `min-w-0` is "may shrink below your content", not a measurement.
+          if (value === '0') continue;
+          // A fraction of the parent, which no scale describes.
+          if (/^\d+\/\d+$/.test(value)) continue;
+
+          if (/^\d+(?:\.\d+)?$/.test(value)) {
+            const px = Number(value) * 4;
+            off.push(
+              NAMES_FOR.has(px)
+                ? `${where} — ${value} steps of 0.25rem, where the table has ${spell(px)}`
+                : `${where} — ${px}px written in rem; the table has no name for it, so write` +
+                  ` the component's own dimension as ${namespace}-[${px}px]`,
+            );
+            continue;
+          }
+
+          const arbitrary = /^\[(.+)\]$/.exec(value);
+          if (arbitrary) {
+            const body = arbitrary[1];
+            // `h-[1em]` is `Mark.tsx`'s rule and is deliberate: a mark is one em of the
+            // text it sits in. `rem` is the defect this clause is named for, in brackets.
+            if (/\drem\b/.test(body)) {
+              off.push(`${where} — a box in rem, which is what a bare number already was`);
+              continue;
+            }
+            const px = /^(\d+(?:\.\d+)?)px$/.exec(body);
+            if (px && NAMES_FOR.has(Number(px[1])))
+              off.push(`${where} — ${px[1]}px is ${spell(Number(px[1]))}, which says which floor it is`);
+            continue;
+          }
+
+          if (BOX_KEYWORD.has(value)) continue;
+          if (SPACING_NAMES.has(value)) {
+            named++;
+            continue;
+          }
+          off.push(`${where} — no --spacing-${value} is generated, so this class has no rule behind it`);
+        }
+      });
+    }
+    // A scan that stopped matching would report nothing and look like success. Seventy-five
+    // box utilities across the web tree when this landed; the floor is here to catch a
+    // regex that has stopped biting, not to ratchet.
+    expect(seen, 'the scan found no box at all').toBeGreaterThan(60);
+    // And the token spelling is reachable and reached, rather than being a namespace in
+    // the stylesheet with nothing naming it — which is what `coreWiring.test.ts` reports
+    // one layer up and §6.121 is about down here.
+    expect(named, 'nothing on the web boxes itself by name').toBeGreaterThan(15);
     expect(off).toEqual([]);
   });
 });

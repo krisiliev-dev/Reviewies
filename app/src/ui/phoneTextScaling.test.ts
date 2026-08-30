@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'node:fs';
+import { size, space } from '@reviewies/core/tokens';
 
 /**
  * The phone's only route to WCAG 1.4.4, guarded where it can be.
@@ -86,7 +87,38 @@ describe('text scaling on the phone', () => {
     const classNames = [...web.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)].map(
       ([, quoted, templated]) => quoted ?? templated,
     );
-    expect(classNames.some((value) => value.includes('min-w-[48px]'))).toBe(true);
-    expect(classNames.some((value) => /\bmin-[wh]-\d/.test(value))).toBe(false);
+    /*
+     * And now pinned to the property rather than to the spelling, which is the same lesson
+     * one turn further on.
+     *
+     * This read `value.includes('min-w-[48px]')`. `min-w-s48` is `var(--spacing-s48)` —
+     * 48 CSS pixels, the same absolute length, with the table's name on it — so the correct
+     * change failed this clause while a rem regression two lines below it would not have
+     * been caught by that line at all. A guard that fails on a right change is wrong in the
+     * same way as one that passes a wrong one; §6.143's note above says exactly this about
+     * the quoting style, and the spelling was the next thing it was nailed to.
+     *
+     * The two floors are built from the tokens: `size.tap` is the 24 WCAG 2.5.8 asks for,
+     * and the width is two of them — each star carries a left and a right half-target — so
+     * the 48 is derived rather than typed for the third time.
+     */
+    const nameOf = (table: Record<string, number>, px: number) =>
+      Object.entries(table).find(([, value]) => value === px)?.[0] ?? '?';
+    for (const floor of [
+      `min-h-${nameOf(size, size.tap)}`,
+      `min-w-${nameOf(space, size.tap * 2)}`,
+    ])
+      expect(classNames.some((value) => value.includes(floor)), `the rating lost ${floor}`)
+        .toBe(true);
+    /*
+     * Tailwind's own numeric steps are the rem this clause remembers: `--spacing` is
+     * `0.25rem`, so `min-w-12` is 3rem and became 480 across five stars at 200%. The
+     * bracketed form is absolute and would pass, and does not appear here any more —
+     * `space.test.ts`'s box sweep asks the whole tree for the name instead.
+     */
+    expect(
+      classNames.some((value) => /\bmin-[wh]-\d/.test(value)),
+      'a rating floor is back on Tailwind’s own numeric scale, which is rem',
+    ).toBe(false);
   });
 });
