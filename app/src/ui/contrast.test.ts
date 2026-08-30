@@ -152,19 +152,20 @@ describe('amber in light mode', () => {
   });
 });
 
-describe("Watching Mode's dim is a palette, not an opacity", () => {
-  const well = color.dark.groundWell;
-
-  it('every dimmed role still clears 4.5 on the well', () => {
-    for (const role of ['dimInk', 'dimInkSecondary', 'dimWorking'] as const) {
-      expect(contrast(color.dark[role], well), role).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-
-  it('has no dim for the two roles that cannot survive one', () => {
-    // At 75% the tertiary ink is 3.34 and trouble is 3.75, and 80% does not rescue
-    // either. They hold at full strength or they are not on that screen.
-    expect(color.dark).not.toHaveProperty('dimTertiary');
-    expect(color.dark).not.toHaveProperty('dimTrouble');
-  });
-});
+/*
+ * A describe block called "Watching Mode's dim is a palette, not an opacity" was here, and
+ * the palette it measured is gone — `core/src/tokens.ts` has the reasoning. Two things it
+ * did are worth keeping on the record, because both are shapes this file exists to refuse.
+ *
+ * It measured against `color.dark.groundWell`, on the spec's line that "Late Edition's
+ * Watching Mode ground is `ground.well`". Both Watching Modes paint `ground`. So the one
+ * guard in this file that named a screen was measuring the flattering ground of a screen
+ * that does not exist — the exact mistake the header above says this file was written to
+ * stop. It passed either way (9.31 / 4.96 / 5.59 on `ground`), which is why nothing caught
+ * it.
+ *
+ * And it read `color.dark` only, in a file whose every other clause loops `THEMES`. The
+ * light table carried the dark table's three hexes verbatim, so `dimInk` was **1.78:1** on
+ * the light ground and no clause anywhere looked at it. A one-theme guard on a two-theme
+ * table is a guard that has agreed to be right half the time.
+ */

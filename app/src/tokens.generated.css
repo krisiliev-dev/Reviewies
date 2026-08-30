@@ -24,9 +24,6 @@
   --trouble: #F2585C;
   --trouble-on: #131114;
   --mark-cross-off: #8A8079;
-  --dim-ink: #BAB6B1;
-  --dim-ink-secondary: #89827B;
-  --dim-working: #B78230;
   --focus-ring: #F4EFE7;
   --focus-inset: #131114;
   --label-0: #D9A521;
@@ -72,9 +69,6 @@
   --trouble: #B3272B;
   --trouble-on: #F5F0E8;
   --mark-cross-off: #2F3F86;
-  --dim-ink: #BAB6B1;
-  --dim-ink-secondary: #89827B;
-  --dim-working: #B78230;
   --focus-ring: #191419;
   --focus-inset: #F5F0E8;
   --label-0: #9A6E10;
@@ -106,9 +100,6 @@
   --color-trouble: var(--trouble);
   --color-trouble-on: var(--trouble-on);
   --color-mark-cross-off: var(--mark-cross-off);
-  --color-dim-ink: var(--dim-ink);
-  --color-dim-ink-secondary: var(--dim-ink-secondary);
-  --color-dim-working: var(--dim-working);
   --color-focus-ring: var(--focus-ring);
   --color-focus-inset: var(--focus-inset);
   --color-label-0: var(--label-0);
@@ -225,7 +216,6 @@
   --stagger-rule: 40ms;
   --linger-undo: 6000ms;
   --linger-prompt-dismiss: 6000ms;
-  --linger-dim-after: 8000ms;
   --linger-reaction: 4000ms;
   --ease-paper: cubic-bezier(0,0,.2,1);
   --ease-tape: linear;

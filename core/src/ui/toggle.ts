@@ -90,13 +90,16 @@ export const TOGGLE = {
    * colour it is, so both renderers reached for `dimInk` by hand — the agreement two files
    * make in private that the paragraph above `mark` warns about, one property over.
    *
-   * `dimInk` is not a disabled colour and `tokens.ts` says so out loud: it is *"Watching
+   * `dimInk` is not a disabled colour and `tokens.ts` said so out loud: it was *"Watching
    * Mode's auto-dim, as a palette rather than an opacity"*, and it is the wrong answer in
    * both directions at once. On the dark ground it measures 9.31:1 — a tick that shouts
    * *louder* than the tertiary ink beside it, for a control you cannot use — and in light
    * it is 1.78:1, which is a mark you cannot see at all. And the two hand-written lines it
    * replaces were, when this was written, the only mention of `dimInk` anywhere in either app outside
-   * `tokens.ts` itself — including in Watching Mode, whose palette it is.
+   * `tokens.ts` itself — including in Watching Mode, whose palette it was. The sprint after this
+   * one finished the thought and deleted all three dim roles: auto-dim had never been built on either
+   * platform, and a colour could not have dimmed that screen anyway, most of whose light is
+   * twenty colour emoji that no colour token reaches.
    *
    * The answer is `SURFACE_OFF.ink` — what "off" looks like on a surface, which `Key` and
    * `PadCell` already draw an unavailable control's contents in: 4.87:1 in dark and 5.11 in

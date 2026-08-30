@@ -144,6 +144,21 @@ describe('the reaction stream', () => {
 describe('over the length of an episode', () => {
   const view = { current: undefined as ReturnType<typeof render> | undefined };
 
+  /**
+   * These cases render twenty minutes of an episode a frame at a time, and Vitest's default
+   * five seconds is enough when the file runs alone and not enough when it runs alongside
+   * eighty-eight others on a busy machine.
+   *
+   * `coreWiring.test.ts` reached this exact conclusion in §6.82 and the sentence there is the
+   * one that applies: *an explicit budget rather than a faster check — the work is the point,
+   * and a guard that fails on timing teaches people to ignore it.* Measured here: `does not
+   * grow over an episode` is 1.8s on its own and went past 5s the moment an eighty-ninth test
+   * file joined the run, so what failed was the machine's scheduling and not the leak the
+   * case is looking for. A budget with no headroom is a guard that fails on a correct change,
+   * which is a guard that is wrong.
+   */
+  const SIMULATING_AN_EPISODE_IS_SLOW = 30_000;
+
   /** Distinct elements, not a count per frame: the same emoji sampled twice is one. */
   function playAndCount(reactions: Reaction[], seconds: number, density = 24) {
     const rendered = render(
@@ -198,7 +213,7 @@ describe('over the length of an episode', () => {
     const { peakMounted } = playAndCount(reactions, 300);
     expect(peakMounted).toBeLessThanOrEqual(24);
     vi.useRealTimers();
-  });
+  }, SIMULATING_AN_EPISODE_IS_SLOW);
 
   it('mounts nothing that has finished crossing', () => {
     // A reaction is visible for four seconds. At one a second, about five are in flight
@@ -208,7 +223,7 @@ describe('over the length of an episode', () => {
     const { peakMounted } = playAndCount(reactions, 300);
     expect(peakMounted).toBeLessThan(12);
     vi.useRealTimers();
-  });
+  }, SIMULATING_AN_EPISODE_IS_SLOW);
 
   it('does not grow over an episode', () => {
     // The same rate, four times as long: whatever is mounted at five minutes should be
@@ -218,7 +233,7 @@ describe('over the length of an episode', () => {
     expect(long.peakMounted).toBeLessThan(12);
     expect(long.shown).toBe(1200);
     vi.useRealTimers();
-  });
+  }, SIMULATING_AN_EPISODE_IS_SLOW);
 
   it('keeps what is on screen while it is held, rather than sweeping it away', () => {
     // WCAG 2.2.2's pause stops the animation where it stands. Retiring on schedule

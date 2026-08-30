@@ -102,17 +102,48 @@ const dark = {
   /** The pen. Pencil in dark, biro in light. */
   markCrossOff: '#8A8079',
 
-  /**
-   * Watching Mode's auto-dim, as a palette rather than an opacity.
+  /*
+   * There is no dim palette, and the reason is not that nobody used it.
    *
-   * An `opacity: 0.75` is invisible to a contrast test for ever; a named colour is not.
-   * There is deliberately no tertiary and no trouble here — at 75% they come out at 3.34
-   * and 3.75, and 80% does not rescue them either. Those two roles hold at full strength
-   * or they are not on that screen.
+   * `dimInk` `#BAB6B1`, `dimInkSecondary` `#89827B` and `dimWorking` `#B78230` sat here in
+   * both tables from the day this file was written, under the sentence *"Watching Mode's
+   * auto-dim, as a palette rather than an opacity"*, with every ratio computed. No renderer
+   * ever read one. The last thing that touched them was `TOGGLE.unavailable`, reaching for
+   * `dimInk` by mistake — 9.31 on this ground and 1.78 in light, wrong in both directions at
+   * once — and §6.185 pointed that at `inkTertiary` where it belonged.
+   *
+   * They are deleted rather than wired because **the mechanism cannot do the job on the one
+   * screen it names**, and that is a stronger reason than six sprints of silence.
+   *
+   * Auto-dim was never built. `app/src/screens/WatchingMode.tsx` and
+   * `mobile/app/watching/[targetId].tsx` have no idle timer, no opacity and no second colour
+   * between them. `linger.dimAfter` — the eight seconds this palette was to arrive after —
+   * was as unread as the colours, and went with them.
+   *
+   * And a colour could not have dimmed that screen. The direction's argument is physical: the
+   * phone should stop being a lit rectangle in your peripheral vision while the television is
+   * on. Most of Watching Mode's emitted light is the pad — twenty colour emoji at
+   * `PAD.glyph`, 30pt, four across. `PadCell` sets a `fontSize` on them and no colour, on
+   * both platforms, because it cannot: a colour emoji is a bitmap in the platform's own font
+   * and `color` does not reach it. So this palette would have dimmed the header, the labels
+   * and the notes — the small, already-dark half — and left the twenty brightest objects on
+   * the screen at full strength. Not a dimmer screen: the same screen with the pad relatively
+   * *more* prominent, which is the opposite of the reason it was chosen for.
+   *
+   * The three hexes are `mix(role, groundWell, 0.75)` to the byte, so what was on offer was
+   * the opacity after all, precomputed against a ground — `#0C0B0D` — that neither Watching
+   * Mode paints. Both draw `ground`.
+   *
+   * What dims a phone is the backlight, and the backlight belongs to the operating system.
+   * The phone already gets it, because nothing there holds a wake lock. The web asks for
+   * `navigator.wakeLock` for the length of an episode and offers nothing in its place — a
+   * product decision rather than a token one, and the live defect this dead layer was lying
+   * on top of.
+   *
+   * `app/src/wiring/paletteMembers.test.ts` is what stops the seventh of these: a colour is a
+   * meaning, and a meaning nothing reads is a claim about the product that nothing keeps
+   * true. It is pointed at 59b5d8d, where it has to find these three.
    */
-  dimInk: '#BAB6B1',
-  dimInkSecondary: '#89827B',
-  dimWorking: '#B78230',
 
   /**
    * Two rings, because one does not work. A near-white ring around a near-white pill is
@@ -154,9 +185,7 @@ const light = {
 
   markCrossOff: '#2F3F86',
 
-  dimInk: '#BAB6B1',
-  dimInkSecondary: '#89827B',
-  dimWorking: '#B78230',
+  /* The three dim roles were duplicated here too, at the dark table's values. See above. */
 
   focusRing: '#191419',
   focusInset: '#F5F0E8',
@@ -411,9 +440,16 @@ export const reducedStagger = { rule: 0 } as const;
  * `reaction` must equal `REACTION_VISIBLE_MS` in `core/src/watching/reactions.ts`. Not
  * imported — checked, the same shape as the copy guard checking `UPCOMING_DAYS` against
  * the words "two months".
+ *
+ * `dimAfter: 8000` was here — how long Watching Mode was to wait before dimming — and
+ * nothing had ever read it. It went with the palette it was the timer for; the reasoning is
+ * beside the colours above. Worth saying how it survived six sprints: `coreWiring` works at
+ * export granularity, and `linger` is reached, so a dead *member* of a live export is
+ * invisible to it. `promptDismiss` is in that position today and is the next question, not
+ * this one.
  */
 export const linger = {
-  undo: 6000, promptDismiss: 6000, dimAfter: 8000, reaction: 4000,
+  undo: 6000, promptDismiss: 6000, reaction: 4000,
 } as const;
 
 export const easing = {
