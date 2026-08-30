@@ -14790,6 +14790,73 @@ component work has been worth doing and this is now the longest-standing untouch
 record.
 
 
+### 6.186 A fact about this container, written down as a fact about the world
+
+Two corrections, both from the owner, both in one message, and the second is the more
+interesting of the two.
+
+#### The token
+
+I said the web deploy needed a Vercel token I did not have, and was asked whether it was
+already saved. Checked properly this time, in every place it could be: `.env` names four keys
+and none of them is a Vercel token; no environment variable holds one; and
+`~/.local/share/com.vercel.cli/config.json` exists but carries only telemetry scaffolding —
+`vercel whoami` answers **"Logged out."**
+
+So the answer stands and the method did not. I asserted it last turn from memory of a summary
+rather than from a check, on a question whose whole content was "have you got this", and got
+the right answer by luck. The four commands above take ten seconds.
+
+#### The phone
+
+**§7 said "no native build has still ever been made, and that is now the only thing standing
+between the phone and its first real run." The owner has had the app on their iPhone, installed
+through Xcode.**
+
+That is the personal-team route §6.81 costed out and doc 09 already describes — *"install this
+app on your own iPhone — Xcode gives any Apple ID a personal team — but only through Xcode on a
+Mac"*. It happened. `expo prebuild` output was never committed; `git log --all -- mobile/ios`
+returns nothing and no such directory has existed in any commit, and this container is a fresh
+clone. So nothing in here could have known.
+
+Nothing in here could have contradicted it either, and that is the finding. The claim was true
+of this container and was written as a claim about the world, in the section whose own preamble
+says *"Every item below was checked rather than carried forward"*. It survived several sprints
+of a §7 pass — including one I ran an hour ago — because a §7 pass re-reads the record against
+the repository, and the repository is not where the answer lived.
+
+This is §6.153's shape at the largest scale it has appeared: an instrument that can only return
+one answer. Every check available here reads files in here. A question of the form *"has this
+ever run on real hardware"* is not answerable by that instrument in either direction, so a
+confident "no" and a confident "yes" are equally unfounded — and the record only ever wrote the
+"no" because absence of evidence is what a file-reading instrument produces by default.
+
+**What it does not settle.** Roughly a dozen §7 entries rest on "nothing has run on a physical
+device": Dynamic Type against `allowFontScaling`, whether `hitSlop` really reaches eight points
+on a device where `react-native-web` ignores it, whether iOS synthesises a weight over a face
+that has one, whether `UIBackgroundModes: ["audio"]` survives a suspended session, whether the
+haptic that `surface.ts` leans on for press confirmation actually fires. **A device ran the app
+and none of those observations were written down.** They are now *unknown*, not *answered*, and
+the strikethrough in §7 says so in as many words — the failure mode to avoid here is trading a
+false negative for a false positive.
+
+The right next move is not a sprint. It is to ask the person who held the phone what they saw,
+which is the only instrument in this project that can reach those questions and has been sitting
+unused on the other side of the conversation the whole time.
+
+## What is not done, and why it is said here
+
+**No mechanism stops this recurring.** The lesson generalises past the one claim: any §7 entry
+whose subject is the world rather than the repository is unfalsifiable from here, and there are
+about a dozen of them. `docsReferences.test.ts` checks that every §-reference resolves; nothing
+checks that a *claim* is still true, which §7 already lists as a known gap and which this is now
+the sharpest instance of. A register of "claims only a human can confirm or deny", surfaced for
+review rather than left to be re-read, is the shape of a fix and is not written.
+
+**The observations from that install are lost unless somebody is asked.** Not recoverable from
+here by any means.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -15390,9 +15457,23 @@ and which single claim in this document could not be checked at all:
   mid-transaction sees either all of a write or none of it, and nothing measured which
   other screens read a table an import is in the middle of filling. It was found by
   watching a number change on a screen, which is not a method that scales.
-- **No native build has still ever been made, and that is now the only thing standing
-  between the phone and its first real run.** §6.81 found, by reading rather than
-  running, that every iOS build would have shipped with an empty configuration. The fix
+- ~~**No native build has still ever been made, and that is now the only thing standing
+  between the phone and its first real run.**~~ **Corrected in §6.186: a build was made,
+  and the app has been on a phone.** The owner reports installing it through Xcode on
+  their own iPhone — the personal-team route §6.81 described and priced. It is not in this
+  repository (`expo prebuild` output was never committed and no `mobile/ios` has ever
+  existed in any commit), and the container is a fresh clone, so nothing here could have
+  known. Nothing here could have *contradicted* it either, which is the point: the record
+  carried "still ever" through several sprints as a fact about the world when it was only
+  ever a fact about this container.
+
+  **What that does and does not settle.** The blocker is gone. The observations were not
+  written down, so every claim below that rested on "nobody has run this" is now
+  **unknown** rather than **false** — a device ran it, and what it showed is not in the
+  record. Do not read the strikethrough as "checked". The correct next step is to ask the
+  person who held the phone, which is the cheapest instrument this project has and the
+  only one that can answer the questions the export cannot. §6.81 found, by reading rather
+  than running, that every iOS build would have shipped with an empty configuration. The fix
   is guarded and the guard is proved by planting. Three of the four things that entry
   originally listed as unverifiable turned out to be checkable here after all — prebuild
   needs no Mac, and it confirms that it succeeds, that the Info.plist carries what the
