@@ -28,10 +28,24 @@ export function AccountPanel() {
   if (!configured) {
     return (
       <Block heading="Sync">
+        {/*
+          The spaces are typed, and `{' '}` is where a line has to break.
+
+          This was three lines with the names at the head of the second and third, and
+          JSX deletes a newline between a text run and an element — so the sentence
+          arrived as `setVITE_SUPABASE_URL andVITE_SUPABASE_ANON_KEY`, which is what the
+          clipboard and the accessible name still said. `mx-1` on each `<code>` covered it
+          for a sighted reader and only on the side that had lost its space, so the gap
+          after each name came out double the gap before it, and `and` was welded to the
+          name after it with no break opportunity: in `dark-10-settings.png` the line
+          `set VITE_SUPABASE_URL` stops at 180.5pt of a measure that runs to 387.5, which
+          leaves 56% of it blank. `Settings.tsx` types the same shape on one line and has
+          always rendered right. `note.test.ts` holds the rule now.
+        */}
         <Note>
-          Not configured. Reviewies works fully offline without it — set
-          <code className="mx-1">VITE_SUPABASE_URL</code> and
-          <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> to sync across devices.
+          Not configured. Reviewies works fully offline without it — set{' '}
+          <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to sync across
+          devices.
         </Note>
       </Block>
     );
