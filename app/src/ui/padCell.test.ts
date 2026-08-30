@@ -133,9 +133,104 @@ describe('a pad cell', () => {
     expect(PAD.ratio, 'a ratio that is not 1 cannot be spelled `aspect-square`').toBe(1);
     expect(WEB, 'the web cell is not square').toContain('aspect-square');
     expect(PHONE, 'the phone cell is not square').toContain('aspectRatio: PAD.ratio');
-    // 23% four times plus three gaps is the four-across the token describes; a bare
-    // number here would be the fifth place this count lives.
-    expect(PHONE).toContain('gap: PAD.gap');
+    /*
+     * There was a `toContain('gap: PAD.gap')` here, and it was the whole of what this file
+     * read about the phone's grid. It passed for as long as the pad has existed beside a
+     * hand-typed `width: '23%'` that wrapped to three across on a 320pt phone. The width
+     * and the gap are bound to the table in the clause below, which is where the count
+     * this clause names actually has to land.
+     */
+  });
+
+  it('fills the row on the narrowest phone the table reasons about', () => {
+    /*
+     * `core/src/ui/padCell.ts` says why the count is four: *"the widest grid whose cell
+     * still clears the 44pt comfortable-target floor on the narrowest phone this app
+     * supports (320pt less a 12pt gutter each side and three 8pt gaps leaves 68pt)"*, and
+     * *"the pad is tapped in the dark; scrolling to reach 'Popcorn' is the failure this
+     * avoids"*. Nothing checked either sentence, and the phone had not held them: 23% of
+     * the 296pt row a 320pt phone gives is 68.08, so four cells and three gaps come to
+     * 296.32 — a third of a point over, and the fourth wraps. Measured in the export at
+     * 320 before the repair: three cells to a row, seven rows of three where the design
+     * is five of four, and the last of them reachable only by scrolling.
+     * At 390 it did not wrap (84.17 where the row allows 85.5, 5.3pt of slack the web
+     * does not have), and 390 is the width every design pass and both smoke suites use —
+     * which is how a pad that wraps on the phone it was sized for was photographed twice
+     * and read as correct.
+     *
+     * A percentage cannot pay for a gap — Yoga and CSS both lay `gap` out *beside* the
+     * basis — so any percentage that fits at 390 overflows at some narrower width. The
+     * phone puts half a gap inside each column and takes it back at the row's own edges,
+     * which makes a column exactly `100 / PAD.columns` percent. Measured after the repair,
+     * both exports, both widths: four to a row, plates 68.0pt at 320 and 85.5 at 390 — the
+     * phone and the web to the point, where they used to agree on one device by luck.
+     */
+    const NARROW = 320;
+    const gutter = Number(/pad: \{ padding: (\d+) \}/.exec(PHONE_SCREEN)?.[1]);
+    expect(gutter, 'the watching screen no longer states the pad gutter here').toBeGreaterThan(0);
+    const cell = (NARROW - gutter * 2 - PAD.gap * (PAD.columns - 1)) / PAD.columns;
+    expect(cell, 'four across no longer clears the 44pt target on a 320pt phone')
+      .toBeGreaterThanOrEqual(44);
+    // The number the core's own prose states. 68pt, measured in the export at 320.
+    expect(cell, 'the core says four across leaves 68pt at 320 and it no longer does')
+      .toBe(68);
+
+    /*
+     * `stripComments`, because the renderer's header quotes the `23%` it replaced — the
+     * needle-in-a-comment trap the clause above this one already pays for once.
+     */
+    const phone = stripComments(PHONE);
+    /*
+     * The defect itself, at any value: a width typed rather than derived. `'100%'` is
+     * exempt and is the plate's — filling the column it was given says nothing about how
+     * many columns there are, which is the number that has to come from the table.
+     */
+    expect(phone, 'the phone types a cell width instead of deriving one')
+      .not.toMatch(/width: '(?!100%)[\d.]+%'/);
+    expect(phone, 'the phone column is not `100 / PAD.columns` percent')
+      .toContain('width: `${100 / PAD.columns}%`');
+    expect(phone, 'the column does not carry half of PAD.gap')
+      .toContain('padding: PAD.gap / 2');
+    expect(phone, 'the row does not take the outer half of PAD.gap back')
+      .toContain('margin: -PAD.gap / 2');
+    /*
+     * And the row must not spend the gap a second time. Four columns of a quarter fill it
+     * already, so a `gap` on the row is `23%` again with different arithmetic — and it is
+     * the plant that satisfies every clause above while wrapping to three at 320.
+     */
+    /*
+     * A style block is read to the last brace on its line, not to the first: `[^}]*` gave
+     * up inside `${100 / PAD.columns}` and left the column's own checks below matching an
+     * empty string, which passed a planted `marginRight: PAD.gap` that wraps 320 to three.
+     */
+    const block = (name: string) => new RegExp(`${name}: \\{.*\\}`).exec(phone)?.[0] ?? '';
+    const grid = block('grid');
+    // `wrap` written out rather than merely present: `flexWrap: 'nowrap'` satisfied a
+    // `toContain('flexWrap')` and put all twenty columns on one line, because React
+    // Native's `flexShrink` is 0 by default and nothing would have shrunk them.
+    expect(grid, 'the phone has no wrapping row to put the columns in')
+      .toContain("flexWrap: 'wrap'");
+    // Case-insensitively, because `columnGap: PAD.gap` is the same defect spelled to walk
+    // past a check for `gap:` — it was the first plant tried against this clause.
+    expect(grid, 'the row spends a gap the columns have already paid for')
+      .not.toMatch(/gap:/i);
+    // And the column may not add spacing beside the half-gap it already carries, which is
+    // the same overflow one level down: `marginRight: PAD.gap` wraps 320 to three again.
+    const slot = block('slot');
+    expect(slot, 'the column has no width to fill').toContain('width');
+    expect(slot, 'the column adds spacing beside the half-gap it carries')
+      .not.toMatch(/margin/i);
+    /*
+     * And the plate takes its width from the column rather than from a number of its own.
+     * `minWidth: 90` on the plate is the plant that survived the first version of this
+     * clause: four to a row, because the columns still fill it — and measured at 320, four
+     * 90pt plates in 76pt columns, overlapping by 14 and the last one 22pt past the screen.
+     * The clause is named for the row, so it has to hold the drawing as well as the count.
+     */
+    const plate = /cell: \{[\s\S]*?\n  \},/.exec(phone)?.[0] ?? '';
+    expect(plate, 'the phone has no plate style to read').toContain('aspectRatio');
+    expect(plate, 'the plate is sized by a number of its own rather than by its column')
+      .not.toMatch(/minWidth|maxWidth/i);
   });
 
   it('is announced by what it does, not by the glyph', () => {
