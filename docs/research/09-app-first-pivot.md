@@ -13288,6 +13288,24 @@ change rather than a copy change.
 **Seventy-one shots are unread.** Sprint 86 read none. Part 1 of its own brief took the whole
 sprint, and saying that is better than a hurried skim to make the count move.
 
+#### One more thing this sprint got wrong about its own instruments
+
+`npx tsc --noEmit -p app` was used four times across §6.175 and this entry as proof that a
+change compiled. It exits 0 unconditionally: `app/tsconfig.json` is a solution-style config
+with `"files": []` and nothing but `references`, so that command compiles **nothing**. Two
+files were missing their `COPY` import the whole time and it reported clean; the design pass
+caught them, by running `tsc -b` on the way to a build.
+
+§6.153's shape — an instrument that can only return one answer — and it was in the method
+rather than the product. `npm run verify` was right all along: it reaches the same code
+through `npm run build --workspace app`, which is `tsc -b && vite build`. The lesson is the
+one the design pass keeps teaching, one layer over: **a green check is only evidence if
+something has been shown to make it go red.** The right command for a single workspace here
+is `npx tsc -b app`.
+
+The design passes have run since: `design:phone`, `design:signedin` and `design:web`, all
+with no hollow shots, and `00-addtolist-empty` is on file with its foot.
+
 
 
 ## 7. What is still not known

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { COPY } from '@reviewies/core/copy';
 import { Note } from '../ui/Note';
 import {
   captureContribution,

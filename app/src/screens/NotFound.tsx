@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom';
+import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Masthead } from '../ui/Masthead';
