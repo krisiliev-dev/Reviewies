@@ -14112,6 +14112,74 @@ one taken here.
 fixed the instrument.
 
 
+### 6.183 A mechanism four files describe and the export does not do
+
+Sprint 93, and the first run where the *fixes* went in parallel rather than only the reading
+— three agents, three git worktrees, three branches, each planting defects in its own
+checkout. The objection §6.182 recorded against parallel fixing ("plant-and-restore mutates
+the working tree") stops being true the moment each agent has a tree of its own, which is
+what worktrees are for. What still does not fan out is this document and the `FLOOR` table:
+every fix appends near the same anchor in a fifteen-thousand-line file and every fix moves
+one global count, so both stay single-owner and the agents return their paragraphs as text.
+
+This entry is the half taken in the main tree while they worked.
+
+#### The claim
+
+Four files say a version of the same thing:
+
+> React Native's `lineHeight` is points, so a stored 20 holds while the glyphs double at 200%
+> Dynamic Type and the lines run into each other.
+
+with `leadingOf(size, ratio)` offered as the thing that avoids it — and the matching sentence
+for `tracking(size, em)`, which "stored in em and multiplied here, grows with them". They are
+in `mobile/src/ui/theme.ts` twice, `mobile/src/ui/Note.tsx`, `mobile/src/ui/Section.tsx` and
+`core/src/tokens.ts`, and §7 marked the concern **closed** on the strength of them: *"every
+one of the eleven call sites derives points from the scaled size"*.
+
+#### The measurement
+
+In the phone export, doubling every computed font size the way `mobile/smoke.mjs` does:
+
+| | 100% | 200% |
+|---|---|---|
+| a tab label's glyphs | 12 | **24** |
+| its line box | 17 | **17** |
+
+Seventeen is `leadingOf(text.s12, leading.l143)`. So the collision the sentence promises
+immunity from is what happens, in a call site that reads the function it credits.
+
+The reason is arithmetic rather than platform behaviour. Every call site passes token
+constants — checked, all of them — and every call sits inside a `StyleSheet.create` object
+literal, so it is evaluated once at module load: `leadingOf(14, 1.43)` **is** the stored 20 it
+was offered as the alternative to, byte for byte. `tracking(text.s12, track.t83)` is the
+constant 0.996. React Native does not scale `lineHeight` or `letterSpacing` by `fontScale`
+however they were arrived at, which is the fact the comments half-knew and drew the wrong
+conclusion from.
+
+What the pair actually buys is **derivability**: change `text.s14` and every line height
+follows at build time. `theme.ts`'s *second* paragraph said exactly that, correctly, directly
+beneath the sentence that was wrong — which is how it survived. A right reason and a wrong
+reason side by side, and only the wrong one was load-bearing for §7.
+
+The web is the half that was right all along: CSS takes an em and a ratio and computes
+against the rendered size.
+
+#### What is fixed here, and what is not
+
+The five sentences are corrected and §7 no longer says the concern is closed. **The behaviour
+is not changed**, and that is deliberate: whether the phone should compute leading and
+tracking against `useWindowDimensions().fontScale` is a decision across about twenty call
+sites with three defensible answers, and taking it in the same hour as the measurement is how
+§6.180's lesson about same-hour guards gets repeated one layer up. It is filed with the three
+options written out.
+
+`mobile/smoke.mjs`'s 200% check is where the guard belongs — it already doubles every font
+size and measures controls for overflow, and could assert that no line box is smaller than
+its font size. It cannot be added yet, because today it fails everywhere; the clause has to
+assert whatever the decision turns out to be.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -14123,10 +14191,19 @@ and which single claim in this document could not be checked at all:
   confirm they *arrive* runs in a browser, where the `@font-face` is served from the same
   origin and cannot really fail; the phone's `useFonts` gate has never executed outside the
   react-native-web export, which does not use it. Two further things are unmeasured and both
-  are the direction's own warnings. The first is closed: §6.113 made tracking a token in em
-  and every one of the eleven call sites derives points from the scaled size, so the tracked
-  caps this design is made of no longer stay put while the glyphs double — though *that* has
-  only been reasoned about, not seen at 200% on a device. The second stands: Japanese falls to
+  are the direction's own warnings. **The first was marked closed and is not**: §6.183 measured
+  it in the export and the phone's line box holds at 17 while a tab label's glyphs go from 12
+  to 24. The sentence here said the eleven call sites "derive points from the *scaled* size";
+  they derive from the **token** size. `tracking(text.s12, track.t83)` and
+  `leadingOf(text.s14, leading.l143)` take two constants each, sit inside a
+  `StyleSheet.create` literal, and are fixed at module load — so a point value computed that
+  way is the same point value it was offered as the alternative to, and React Native does not
+  scale `lineHeight` or `letterSpacing` by `fontScale` however they were arrived at. What
+  §6.113 actually bought is derivability, which is worth having and is a different claim. The
+  web is the half that was right, because CSS gets an em and a ratio and computes against the
+  rendered size. Whether the phone should compute against `useWindowDimensions().fontScale`
+  instead is a decision across roughly twenty call sites that nobody has taken. The second
+  warning stands: Japanese falls to
   the platform face by decision, which is a decision about how a mixed Latin/Japanese title
   looks that nobody has looked at.
 

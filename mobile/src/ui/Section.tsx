@@ -11,8 +11,9 @@ import { space, theme, tracking } from './theme';
  * the calendar's `sectionHeading` and its `dayHeading` — were byte-identical, which is
  * task #156 and the reason the table has two levels rather than one.
  *
- * `tracking()` rather than a stored point value: `letterSpacing` here is points, so a
- * literal holds still while the glyphs double at 200% Dynamic Type.
+ * `tracking()` rather than a stored point value, for derivability — not, as this comment
+ * used to say, because a literal "holds still while the glyphs double at 200% Dynamic Type".
+ * So does the computed one: it is a module-load constant. `theme.ts` has the measurement.
  */
 export function Section({
   children,

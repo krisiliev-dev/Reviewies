@@ -295,10 +295,14 @@ export const weight = {
  * most common value at each size. `l120` is the tight setting for a heading or a single-line
  * label, where a reading measure would look loose.
  *
- * A ratio rather than a number, for the same reason tracking is em rather than points: React
- * Native's `lineHeight` is points, so a stored 20 stays 20 while the glyphs double at 200%
- * Dynamic Type and the lines collide. The phone multiplies at the call site; the web emits
- * the ratio and lets CSS do it.
+ * A ratio rather than a number so that one change to a size moves every line height with it.
+ *
+ * The reason given here until §6.183 was that "a stored 20 stays 20 while the glyphs double at
+ * 200% Dynamic Type and the lines collide", with the phone's multiplication at the call site
+ * as the fix. Measured in the export: it is not. `leadingOf(size, ratio)` takes two constants
+ * and is evaluated once, so the phone's line box holds at 17 while a tab label's glyphs go
+ * from 12 to 24 — the collision, in the call site that claimed immunity from it. The web is
+ * the half that was right: CSS gets the ratio and computes against the rendered size.
  */
 export const leading = { l100: 1, l120: 1.2, l143: 1.43 } as const;
 

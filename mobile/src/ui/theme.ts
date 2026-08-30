@@ -98,9 +98,14 @@ export const REACH = { inline: 8, dark: 12 } as const;
  * Tracking, in points, from tracking in em.
  *
  * The one RN-specific derivation the token layer cannot do for itself. `letterSpacing` on
- * React Native is points, so a stored `1` holds still while the glyphs double at 200%
- * Dynamic Type and the tracked caps close into a block; stored in em and multiplied here,
- * it grows with them. CSS takes em directly, so the web never calls this.
+ * React Native is points, and the sentence that used to be here said storing em and
+ * multiplying at the call site makes the tracking "grow with them" at 200% Dynamic Type. It
+ * does not, for the reason set out under `leadingOf` below: `tracking(text.s12, track.t83)`
+ * is the constant 0.996, fixed at module load, and a point value does not answer `fontScale`.
+ *
+ * What it buys is derivability — one em figure in the token layer rather than a point value
+ * per size — and the paragraph below says so correctly. CSS takes em directly, so the web
+ * never calls this and the web's tracking really does scale.
  *
  * Always `tracking(text.sNN, track.tNN)` at the site, never a number: the pair is what
  * makes it derivable, and a lone product is a literal again.
@@ -112,9 +117,21 @@ export function tracking(size: number, em: number): number {
 /**
  * Line height, in points, from a ratio.
  *
- * The pair to `tracking()`, for the same reason: React Native's `lineHeight` is points, so a
- * stored 20 holds while the glyphs double at 200% Dynamic Type and the lines run into each
- * other. Rounded, because a fractional line height on a device is a fractional baseline.
+ * The pair to `tracking()` — and the reason given here was **wrong**, measured in the export
+ * at 200%: a tab label's glyphs go from 12 to 24 and its line box stays at 17, which is
+ * `leadingOf(text.s12, leading.l143)`. That is the collision the sentence claimed this
+ * function avoids.
+ *
+ * Both arguments are token constants and the call sits inside a `StyleSheet.create` object
+ * literal, so it is evaluated once at module load: `leadingOf(14, 1.43)` **is** the stored 20
+ * it was offered as the alternative to, byte for byte at runtime. React Native's `lineHeight`
+ * is a fixed point value and does not answer `fontScale` however it was computed.
+ *
+ * What it does buy is the paragraph below, which was right all along: derivability. Change
+ * `text.s14` and every line height follows at build time. That is worth having and it is not
+ * what the old sentence said. §6.183 has the measurement and the decision that is still open.
+ *
+ * Rounded, because a fractional line height on a device is a fractional baseline.
  *
  * Always `leadingOf(text.sNN, leading.lNNN)` at the site — the pair is what makes it
  * derivable, and a lone product is a literal again.

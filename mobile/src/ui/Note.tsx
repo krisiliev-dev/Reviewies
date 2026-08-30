@@ -7,9 +7,12 @@ import { leadingOf, theme } from './theme';
 /**
  * The React Native renderer of `core/src/ui/note.ts`. The decisions are there.
  *
- * `leadingOf` rather than a stored point value: `lineHeight` here is points, so a literal
- * 20 holds still while the glyphs double at 200% Dynamic Type and the lines collide. Six
- * different literals were what this component was extracted from.
+ * `leadingOf` rather than a stored point value, for **derivability** and not for the reason
+ * this comment used to give. It claimed a literal 20 "holds still while the glyphs double at
+ * 200% Dynamic Type and the lines collide", with `leadingOf` as the escape; `theme.ts` has
+ * the measurement showing the line box holds still either way, because both arguments are
+ * constants. Six different literals were what this component was extracted from, and one
+ * derived number is still the right answer — just not for that reason. §6.183.
  */
 export function Note({
   children,
