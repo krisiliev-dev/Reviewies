@@ -3,8 +3,10 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   BOX_RADIUS,
+  boxed,
   BUSY,
   LABEL_FACE,
+  MIN_WIDTH,
   PRESSED,
   SELECTED,
   SIZE,
@@ -53,6 +55,9 @@ export function Button({
 }: Props) {
   const shape = TONE[tone];
   const metrics = SIZE[size];
+  // One question, asked of the table rather than spelled against one tone's name. It
+  // decides the box, its inset, and where the label sits inside whatever width is left.
+  const box = boxed(tone);
   const fill = disabled ? shape.disabledFill : shape.fill;
   const stroke = disabled ? shape.disabledStroke : shape.stroke;
   const label_ = disabled ? shape.disabledLabel : shape.label;
@@ -62,7 +67,7 @@ export function Button({
   // "the thing worth pressing" rather than "the thing already chosen".
   // Boxed tones only: `quiet` has no box, so it has no box's rule to thicken. Nothing asks
   // for a quiet toggle today and the branch would be one nothing runs.
-  const on = !!selected && !disabled && tone !== 'quiet';
+  const on = !!selected && !disabled && box;
 
   return (
     <Pressable
@@ -75,9 +80,20 @@ export function Button({
         styles.base,
         {
           minHeight: metrics.minHeight,
-          paddingHorizontal: metrics.paddingX,
+          /*
+           * A boxless tone pays for its target in width rather than in indent.
+           *
+           * `paddingX` is the inset from a pill's edge to the words. With no pill it paints
+           * nothing and only moves the words in from the column — measured at 8pt on the web
+           * before `MIN_WIDTH` existed, which is the note in the core that carries the case
+           * and the two readings that decided against the alternatives.
+           */
+          paddingHorizontal: box ? metrics.paddingX : 0,
+          minWidth: box ? undefined : MIN_WIDTH,
+          // And the label at the leading edge of that width, or the min-width re-indents it.
+          justifyContent: box ? 'center' : 'flex-start',
           paddingVertical: metrics.paddingY,
-          borderRadius: tone === 'quiet' ? radius.none : BOX_RADIUS,
+          borderRadius: box ? BOX_RADIUS : radius.none,
           backgroundColor: fill ? theme[fill] : 'transparent',
           borderWidth: on ? SELECTED.rule : stroke ? border.hairline : 0,
           borderColor: on ? theme[SELECTED.colour] : stroke ? theme[stroke] : 'transparent',
@@ -134,7 +150,7 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
-  base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  base: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   label: { fontFamily: type.family[LABEL_FACE].name },
   underlined: { textDecorationLine: 'underline' },
 });

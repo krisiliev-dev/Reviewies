@@ -29,6 +29,8 @@ const UNREACHED: Record<string, string> = {
     'WCAG 1.4.3 AA, 4.5:1, spelled once instead of at each comparison. contrast.test.ts states that this system deliberately has no headroom above it, which is a fact to hold rather than a number to nudge, so a guard that typed 4.5 inline would be the second place somebody could nudge it.',
   'data/db#clearDatabase':
     'Test seam: unbinds the database so the proxy\'s "call setDatabase() first" error can be read. Its previous reason here said the suites that swap Dexie for SQLite need it — they do not, they call setDatabase, and nothing called this at all. §6.59 pointed the seam at the error it is good for rather than deleting it; core/src/data/db.test.ts drives it now, which this scan reads as test code.',
+  'ui/screen#PROSE_CHARACTERS':
+    'The claim `SCREEN.prose` exists to satisfy, in the unit the claim is made in. A width in points cannot be checked against a typographic convention — how many characters a width holds is a fact about a face and a text size that lives in a stylesheet — so the renderers apply the width and this is what the *measurement* compares against: `design/capture-web-real.mjs` counts the browser’s own line boxes on every real synopsis at 420 and 1280 and fails the pass over it. No renderer reads it, which is the point; `screen.test.ts` holds the number and the harness to each other. The `design/` tree is not one of this scan’s consumers, so a constant only the design pass reads looks unreached from here — the same arrangement `ui/screen#EMPTY_ALIGN` below already describes.',
   'ui/screen#EMPTY_ALIGN':
     'Where a screen puts its message when it has nothing else in it. A rule about alignment rather than a value a renderer reads — the three screens it governs simply stopped centring — so screen.test.ts is what holds them to it, and design/capture.mjs measures where the words actually land.',
   'ui/screen#FULL_SCREEN':
@@ -188,6 +190,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/button#PRESSED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#SELECTED': 'Tailwind needs a literal class; button.test.ts couples the two.',
   'mobile only: ui/button#LABEL_FACE': 'Tailwind needs a literal class; type.test.ts couples the two.',
+  'mobile only: ui/button#MIN_WIDTH':
+    'What a tone with no box is wide, instead of the horizontal padding it does not spend. The phone reads the number; the web writes `min-w-target`, because Tailwind’s scanner reads source text and a class built from a constant is never compiled — the arrangement `ui/button#BOX_RADIUS` already has. `button.test.ts` derives the utility name from the token whose value this is and fails the web if the number moves.',
   'mobile only: ui/section#SECTION_FACE': 'Tailwind needs a literal class; section.test.ts couples the two.',
   'mobile only: ui/attribution#ATTRIBUTION_SEPARATION':
     'Tailwind needs a literal class; attribution.test.ts couples the two.',
@@ -251,7 +255,14 @@ const LOPSIDED: Record<string, string> = {
     'The phone holds a background audio session and corrects for drift as it goes. The web takes one bounded capture with the microphone on only for those few seconds, which is a privacy decision rather than a missing feature.',
   'mobile only: ui/button#SIZE':
     'The two renderers of a shared component read its table differently, and only one of them reads it at runtime. React Native takes the numbers and colour names straight out of `core/src/ui/` and puts them in a `StyleSheet`; the DOM writes Tailwind class strings, because Tailwind\u2019s scanner reads *source text* \u2014 a class assembled from a token name at runtime is never compiled, so `bg-working-fill` has to appear literally in the file. `button.test.ts`, `choice.test.ts`, `crossOff.test.ts` and `key.test.ts` are what hold the web\u2019s written-out classes to the table instead. This was hidden until \u00a76.96 by a re-export in each web component \u2014 `BUTTON_SIZE = SIZE` and four more \u2014 that nothing anywhere imported: seven exports whose only effect was to make this scan count a read. Deleting them made the real asymmetry visible, which is the asymmetry described here.',
-  'mobile only: ui/button#TONE': 'The same divergence as `ui/button#SIZE`.',
+  /*
+   * `ui/button#TONE` was here, with the same reason as `SIZE`, and the stale clause below
+   * took it out — which is the property the header above claims and this is the second time
+   * it has been shown. `boxed(tone)` asks the table whether a tone paints anything, so the
+   * *core* reads `TONE` now, and a symbol its own module uses is not lopsided at all. The
+   * reason had not become wrong; it had become beside the point, which is the harder kind
+   * to notice by reading.
+   */
   'mobile only: ui/choice#CHOICE_SIZE': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/choice#CHOSEN': 'The same divergence as `ui/button#SIZE`.',
   'mobile only: ui/crossOff#RING': 'The same divergence as `ui/button#SIZE`.',

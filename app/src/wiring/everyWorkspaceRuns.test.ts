@@ -215,7 +215,11 @@ describe('every workspace', () => {
     // for a recovered DioCache, the phone's SQLite, and the guard that was looking one level
     // too high. Three workspaces moving at once is what a second person working on this
     // looks like, which had not happened before.
-    core: 936, app: 697, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 943, app 703, mobile 47: three settled decisions — a past date's words, a
+    // boxless tone's edge, and prose taking its own measure — plus the smoke probe that had
+    // been reading a sentinel through a negation, so "I did not find the sentence" and
+    // "this build has credentials" were the same answer and ~210 checks never ran.
+    core: 943, app: 703, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

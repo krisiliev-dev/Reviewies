@@ -298,12 +298,22 @@ describe('the space scale, on the web', () => {
      * and a reader cannot select.
      */
     /*
-     * 353, down four: the web half of the same migration. The country chips' `px-3`,
-     * `py-1.5` and the group's `gap-1.5` went into `CHOICE_SIZE`, and `Row`'s `gap-y-1`
-     * went with the `flex-wrap` it existed to space — a row that no longer wraps has no
-     * second line to hold off.
+     * 347, down ten across two migrations that landed in the same hour, and the count is the
+     * sum because both happened.
+     *
+     * Four from the web half of the country picker: the chips' `px-3`, `py-1.5` and the
+     * group's `gap-1.5` went into `CHOICE_SIZE`, and `Row`'s `gap-y-1` went with the
+     * `flex-wrap` it existed to space — a row that no longer wraps has no second line to
+     * hold off.
+     *
+     * Six from `Button`'s own padding, both axes, onto the token spelling. That was not
+     * tidying: Tailwind's numeric steps are `rem`, so `py-3` is 12 at the default text size
+     * and **24 at 200%**, while the phone reads `SIZE[size].paddingY` from a table whose
+     * header says *"the box, in absolute device-independent pixels"*. The two renderers
+     * disagreed about the box at every text setting but the default — the same defect the
+     * `min-h` clause in `button.test.ts` records for the floors, one property along.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(352);
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(346);
     expect(off).toEqual([]);
   });
 

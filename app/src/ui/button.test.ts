@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { declarationOf, stripComments } from '@reviewies/core/test/source';
-import { BOX_RADIUS, BUSY, LABEL_LINES, PRESSED, SELECTED, SIZE, TONE } from '@reviewies/core/ui/button';
+import {
+  BOX_RADIUS,
+  BUSY,
+  boxed,
+  LABEL_LINES,
+  MIN_WIDTH,
+  PRESSED,
+  SELECTED,
+  SIZE,
+  TONE,
+} from '@reviewies/core/ui/button';
 import { CLAMP } from './clamp';
 import { PRESS, PRESS_FILL } from '@reviewies/core/ui/surface';
 import { contrast, TEXT_FLOOR } from '@reviewies/core/ui/contrast';
@@ -422,5 +432,122 @@ describe('the button contract', () => {
     expect(BOX_RADIUS).toBe(radius.pill);
     expect(TONE.quiet.fill).toBeNull();
     expect(TONE.quiet.stroke).toBeNull();
+  });
+
+  it('asks whether a tone has a box, rather than naming the one that has not', () => {
+    /*
+     * Three spellings of one question: the web's `tone !== 'quiet'` for the pill and the
+     * toggle, the phone's `tone === 'quiet'` for the radius and again for the toggle. A
+     * fifth boxless tone would have had to be remembered at each of them.
+     */
+    expect(boxed('primary')).toBe(true);
+    expect(boxed('secondary')).toBe(true);
+    expect(boxed('destructive')).toBe(true);
+    expect(boxed('quiet')).toBe(false);
+    for (const source of [WEB, PHONE]) {
+      expect(source, 'a renderer still names the boxless tone instead of asking').not.toMatch(
+        /tone [!=]== 'quiet'/,
+      );
+    }
+  });
+
+  it('never spends a boxless tone’s target as a visible indent', () => {
+    /*
+     * The defect, and the number that decides the repair.
+     *
+     * `paddingX` is an inset on a boxed tone — the distance from the pill's edge to the
+     * words — and on a tone that paints nothing it is only an indent. Measured on the
+     * title page at 420pt: *Use a different poster*, a bare underlined `<button>`, starts
+     * at 16, the column every heading and row title starts on; *React* and *Talk*, two
+     * `size="inline" tone="quiet"` buttons in the same column, start at 24.
+     *
+     * The width has to come from somewhere, because dropping the padding alone measured
+     * *Talk* at 19pt of ink — under WCAG 2.5.8's 24. `MIN_WIDTH` is where it comes from,
+     * and it grows the box to the right of the words rather than pushing them off the
+     * column, which is also why it is not the negative margin that was filed: at
+     * `size="row"` that would slide a quiet `Cancel` 10pt into the filled `Save` beside it.
+     *
+     * Both halves are asserted, because either alone is a different control. Padding with
+     * no min-width is the indent again; min-width with no padding rule is 44pt of box with
+     * the words still 8pt inside it.
+     */
+    expect(MIN_WIDTH, 'the boxless width is not the thumb the height already is').toBe(
+      size.target,
+    );
+
+    /*
+     * The web writes the padding as a utility per size, out of `SIZE_CLASS` and into its
+     * own table, so that a boxless tone can be given *no* `px-*` rather than two.
+     *
+     * That is not tidiness. Tailwind emits by its own order, not by the order of a class
+     * string, so `px-2 px-0` on one element draws at whichever it emitted last — the trap
+     * this file already names twice, over `min-h-target min-h-11` and `size-5` behind
+     * `h-[1em]`. A conditional that appends `px-0` would have looked exactly like this fix
+     * and done nothing on some future build.
+     */
+    const pads = declarationOf(WEB, 'PAD_X') ?? '';
+    expect(pads, 'the web has no horizontal padding table to read').toContain('page:');
+    const nameOf = (px: number) =>
+      Object.entries(space).find(([, value]) => value === px)?.[0] ?? '?';
+    const sizes = declarationOf(WEB, 'SIZE_CLASS') ?? '';
+    for (const [name, metrics] of Object.entries(SIZE)) {
+      expect(pads, `${name} does not pad to what the table says`).toContain(
+        `${name}: 'px-${nameOf(metrics.paddingX)}'`,
+      );
+      /*
+       * And the other axis, in the same breath, because this is where the unit was wrong.
+       *
+       * The clause above about the *floors* records that Tailwind's numeric steps are `rem`
+       * and that a floor written as one is not a floor. The padding was written as `py-3`
+       * and `px-5` the whole time — 12 and 20 at the default text size, **24 and 40 at
+       * 200%** — while the phone read `metrics.paddingY` and `metrics.paddingX` from a table
+       * whose header says the box is absolute. Two renderers disagreeing about the box at
+       * every text setting but the default, in a component this file exists to hold together.
+       */
+      expect(sizes, `${name} pads vertically in a unit that moves with the text`).toMatch(
+        new RegExp(`\\b${name}: '[^']*\\bpy-${nameOf(metrics.paddingY)}\\b`),
+      );
+    }
+    // And no horizontal padding in the size table, so no element can carry two of them.
+    expect(sizes, 'a horizontal padding is back in the size table beside the one in PAD_X')
+      .not.toMatch(/\bpx-/);
+    /*
+     * One ternary: pad on the side that has a box, take the width on the side that has not.
+     * Written as one expression rather than two so neither half can be added without the
+     * other — padding with no width is the indent again, width with no padding rule is 44pt
+     * of box with the words still 8pt inside it.
+     */
+    expect(WEB, 'the web does not choose between padding and width in one place').toMatch(
+      new RegExp(
+        `\\? *\`[^\`]*\\$\\{PAD_X\\[size\\]\\}[^\`]*\` *: *'[^']*min-w-` +
+          `${Object.entries(size).find(([, v]) => v === MIN_WIDTH)?.[0]}`,
+      ),
+    );
+    expect(WEB, 'the web decides that by something other than the table').toContain('boxed(tone)');
+    /*
+     * And the words at the leading edge of that width. `justify-center` on a 44pt box
+     * holding 19pt of ink puts the ink back 12pt in — the indent again, bought a second
+     * way — so the centring belongs to the boxed branch rather than to the base.
+     */
+    const base = /'inline-flex[^']*'/.exec(WEB)?.[0] ?? '';
+    expect(base, 'the base still centres, so the min-width re-indents the words').not.toContain(
+      'justify-center',
+    );
+
+    // The phone, which reads the numbers rather than spelling them.
+    expect(PHONE, 'the phone pads a tone that has no box to pad').toMatch(
+      /paddingHorizontal: \w+ \? metrics\.paddingX : 0/,
+    );
+    // Named as the construct rather than as the word: `MIN_WIDTH` appears three times in
+    // that file — the import, the comment and the style — and `clauses.test.ts` is right
+    // that a needle a file carries three times is not a check on any one of them.
+    expect(PHONE, 'the phone gives a boxless tone no width of its own').toMatch(
+      /minWidth: \w+ \? undefined : MIN_WIDTH/,
+    );
+    expect(PHONE, 'the phone centres a boxless label inside its own target').toMatch(
+      /justifyContent: \w+ \? 'center' : 'flex-start'/,
+    );
+    expect(PHONE, 'a justification in the stylesheet beside the one in the style')
+      .not.toMatch(/base: \{[^}]*justifyContent/);
   });
 });

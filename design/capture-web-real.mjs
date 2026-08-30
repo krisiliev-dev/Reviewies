@@ -3,6 +3,7 @@ import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
 import { longerScreens, shoot } from './shoot.mjs';
+import { PROSE_CHARACTERS } from '../core/src/ui/screen.ts';
 
 /**
  * The **web** app, photographed against a snapshot of real TMDB.
@@ -38,9 +39,15 @@ import { longerScreens, shoot } from './shoot.mjs';
  * has looked at it.
  */
 
-const BASE = 'http://localhost:4206';
+/*
+ * Overridable, in the house style of `app/smoke.mjs`'s own `BASE`. The two ports are the
+ * ones `npm run design:web:real` serves on and stay the default; a worktree running beside
+ * others cannot take them, and a pass that can only run on two fixed ports is a pass that
+ * cannot be run twice at once.
+ */
+const BASE = process.env.BASE ?? 'http://localhost:4206';
 /** The snapshot server, which this build is *allowed* to reach and the fixture pass is not. */
-const SNAPSHOT = 'http://localhost:4203';
+const SNAPSHOT = process.env.SNAPSHOT ?? 'http://localhost:4203';
 const OUT = new URL('./web-real/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
@@ -144,6 +151,27 @@ for (const [label, width] of WIDTHS) {
         problems,
         scrolls,
       });
+
+      /*
+       * And the measure of the one paragraph in the product, which only this pass can read.
+       *
+       * `SCREEN.prose` is a width in points and the claim it exists to satisfy is in
+       * characters, so the arithmetic cannot check itself: how many characters a width holds
+       * depends on the face and the text size, and both are decided in a stylesheet. This is
+       * the half that measures — the browser's own line boxes, counted rather than estimated
+       * from an em, on real synopses at both photographed widths.
+       *
+       * It found the defect it exists for: before `SCREEN.prose`, Shōgun's synopsis set at
+       * **89 characters** here and at 44 in the same build at 420. The row's measure had
+       * been doing a paragraph's job because it was the only number in the table.
+       */
+      const longest = await longestProseLine(page);
+      if (longest > PROSE_CHARACTERS) {
+        problems.push(
+          `${show.name} at ${label}: the synopsis sets ${longest} characters to a line, ` +
+            `over the ${PROSE_CHARACTERS} SCREEN.prose is for`,
+        );
+      }
     } catch (e) {
       problems.push(`could not open ${show.name} at ${label}: ${e.message.split('\n')[0].slice(0, 80)}`);
     }
@@ -152,6 +180,45 @@ for (const [label, width] of WIDTHS) {
 
 function slug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24);
+}
+
+/**
+ * The longest line the longest paragraph on this page actually drew, in characters.
+ *
+ * Counted off the browser's own line boxes — a `Range` walked one character at a time, and
+ * a line ends where the top of that range moves — rather than divided out of a width by an
+ * assumed em. The em is the thing that would have to be guessed, and guessing it is how a
+ * measurement becomes an estimate wearing a number.
+ *
+ * `-1` when there is no prose on the page, so a title with no synopsis is not reported as a
+ * paragraph that passed. §6.57's distinction: nothing to read is not a good reading.
+ */
+async function longestProseLine(page) {
+  return page.evaluate(() => {
+    let longest = -1;
+    for (const el of document.querySelectorAll('p')) {
+      const node = el.firstChild;
+      if (!node || node.nodeType !== Node.TEXT_NODE || node.length < 120) continue;
+      const range = document.createRange();
+      const lines = [];
+      let start = 0;
+      let top = null;
+      for (let i = 1; i <= node.length; i++) {
+        range.setStart(node, i - 1);
+        range.setEnd(node, i);
+        const box = range.getBoundingClientRect();
+        if (top === null) top = box.top;
+        if (Math.abs(box.top - top) > 2) {
+          lines.push(i - 1 - start);
+          start = i - 1;
+          top = box.top;
+        }
+      }
+      lines.push(node.length - start);
+      longest = Math.max(longest, ...lines);
+    }
+    return longest;
+  });
 }
 
 const longer = longerScreens(scrolls);

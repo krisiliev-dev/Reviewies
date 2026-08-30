@@ -119,6 +119,57 @@ export const SIZE = {
 >;
 
 /**
+ * Whether a tone paints a box at all — a fill, or a stroke, or neither.
+ *
+ * Derived rather than spelled, and the reason is the `paddingX` above. Both renderers
+ * asked `tone === 'quiet'` — the web once for the pill and the toggle, the phone twice —
+ * so the question "does this tone draw a box" was a list of one tone's name in three
+ * places, and a fifth boxless tone would have had to be remembered at each.
+ */
+export const boxed = (tone: ButtonTone): boolean =>
+  TONE[tone].fill !== null || TONE[tone].stroke !== null;
+
+/**
+ * A boxless tone spends no horizontal padding, and takes its width from here instead.
+ *
+ * ## What the padding was doing
+ *
+ * `paddingX` is two things at once on a boxed tone: the inset from the pill's edge to the
+ * words — ink somebody sees — and the part of the target that is not the words. On a tone
+ * with nothing painted around it the first meaning is gone and only the second is left, so
+ * the padding stops being an inset and becomes an **indent**: it moves the words in from
+ * the column and paints nothing where they were.
+ *
+ * Measured on the title page at 420pt, before this existed. *Use a different poster* — a
+ * bare underlined `<button>` — starts at **16**, the column every heading, every row title
+ * and every line of the description starts on. *React* and *Talk*, two `Button`s at
+ * `size="inline" tone="quiet"` in the same column, start at **24**. Same underlined form,
+ * same column, two edges, on every episode row of every show.
+ *
+ * ## Why the width is a number here rather than a padding
+ *
+ * The obvious repair is to keep the padding and cancel it with an equal negative margin, so
+ * the ink returns to the column and the target does not shrink. It was measured and
+ * rejected: `TitleDetail`'s poster editor puts a quiet `Cancel` at `size="row"` — 16pt of
+ * padding each side — next to a filled `Save` with a 6pt gap between them, so a −16 margin
+ * slides two targets **10pt into each other**. A repair that overlaps a filled action with
+ * the control beside it to fix an indent is the worse defect.
+ *
+ * Dropping the padding alone was measured too, and is why this number exists rather than
+ * nothing: *Talk*'s ink is **19pt** wide at `inline`, which is under the 24 WCAG 2.5.8 asks
+ * for. The padding was buying a horizontal target the table had never stated — 42pt for
+ * *React* and 35 for *Talk*, neither of them 44 — by spending it where a reader can see it.
+ *
+ * So the box grows to the *right* of the words instead of pushing them off the column: the
+ * ink starts where the column starts, the target is `size.target` in both axes rather than
+ * in one, and the room it takes is room in the layout, which cannot land on a neighbour.
+ * `index.css`'s `.tap` already argues the same case for the controls that are only text —
+ * *"gives them the height without giving them a box"* — and this is that sentence's other
+ * axis.
+ */
+export const MIN_WIDTH = size.target;
+
+/**
  * Press is a thickening; the ground step is `PRESS` in `surface.ts`.
  *
  * Not an animation. §6.59's rule is that Reduce Motion substitutes rather than removes,

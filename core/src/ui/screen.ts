@@ -67,7 +67,87 @@ export const SCREEN = {
    * it, is a design question and is filed rather than guessed at.
    */
   measure: 720,
+  /**
+   * The widest a run of **prose** may set, which is not the same question as the one above.
+   *
+   * ## Why one number could not answer both
+   *
+   * `measure` was measured for a *row*: the note above it says so — the longest line the
+   * real library produces sets in roughly 600 points, and 720 "keeps a row's two ends close
+   * enough to belong to each other". That is a question about one line scanned left to
+   * right, and the answer to it is as wide as the row's own content.
+   *
+   * Prose asks the opposite question. A paragraph is read line after line, and what a long
+   * measure costs is the *return sweep* — finding the start of the next line. A row has no
+   * next line, so the failure `measure` guards against and the failure this guards against
+   * do not overlap at any width, and 720 inherited the second job by being the only number
+   * in the file.
+   *
+   * ## What that cost, measured
+   *
+   * The title page's synopsis is the one piece of running prose the product draws, and it
+   * is the only element in the app whose *reading* depends on the window. Measured against
+   * the real snapshot, counting the characters the browser actually put on each line rather
+   * than estimating from an em:
+   *
+   * - at **420** — the width every design pass had ever photographed — Shōgun's synopsis
+   *   sets in 276pt, seven lines, longest **44 characters**;
+   * - at **1280**, the window an ordinary desktop visitor gets, the same paragraph sets in
+   *   576pt, three lines, longest **89**.
+   *
+   * The convention puts a comfortable measure at 45–75 characters. One build of one app,
+   * one paragraph, doubling its measure between two widths, with the wide one outside the
+   * band and the narrow one at the bottom of it.
+   *
+   * ## 460, measured rather than picked — and measured on **all six**
+   *
+   * Every synopsis in the snapshot, capped at each candidate and re-counted at 1280. The
+   * longest line each one drew:
+   *
+   * ```
+   *                                     none  400  420  440  460  480  500
+   * It's Always Sunny in Philadelphia     85   60   63   66   68   69   73
+   * One Piece                             89   61   66   69   71   76   79
+   * Severance                             83   60   63   66   69   69   77
+   * The Bear                              82   59   60   65   66   70   73
+   * Shōgun                                89   61   64   69   69   72   76
+   * Everything Everywhere All at Once     86   61   60   63   63   72   72
+   * ```
+   *
+   * 460 is the widest round number that keeps **every** one of them at or under 75, with
+   * four characters in hand. The first version of this number was 480, chosen off two
+   * paragraphs — Shōgun's and It's Always Sunny's, which are the longest — and the harness
+   * below caught it on the third: One Piece sets 76 at 480. A worst case picked by reading
+   * is not the worst case, which is the argument for measuring the set rather than the
+   * example.
+   *
+   * The rows are not monotonic — *Everything Everywhere* draws a longer line at 400 than at
+   * 420 — because where a line breaks is a fact about that paragraph's words. That is why
+   * the ceiling is a measurement over the whole set and not an arithmetic conversion from
+   * points.
+   *
+   * `PROSE_CHARACTERS` below is the claim this number exists to satisfy, so the harness can
+   * check the rendering rather than the arithmetic.
+   *
+   * The phone does not take it, for the reason `WIDE` gives about `measure`: its window is
+   * the device, and at 390 the same paragraph sets at 44.
+   */
+  prose: 460,
 } as const;
+
+/**
+ * The claim `SCREEN.prose` is for, in the unit the claim is actually made in.
+ *
+ * A width in points is not checkable against a convention — the convention is about
+ * characters, and how many characters a width holds depends on the face and the text size.
+ * So the number above is what the renderers apply and this is what the design pass measures
+ * against, on real synopses at both photographed widths, in `design/capture-web-real.mjs`.
+ *
+ * 75 rather than 66: the band is 45–75 and the top of it is the honest ceiling for a
+ * *paragraph* of three to seven lines. A page of body text would want the middle of the
+ * band; this product has no page of body text.
+ */
+export const PROSE_CHARACTERS = 75;
 
 /**
  * What the web does with a window wider than the column. §6.159, #194.

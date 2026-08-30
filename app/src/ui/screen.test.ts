@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EDGE_EXEMPT, EMPTY_ALIGN, FULL_SCREEN, SCREEN, WIDE } from '@reviewies/core/ui/screen';
+import {
+  EDGE_EXEMPT,
+  EMPTY_ALIGN,
+  FULL_SCREEN,
+  PROSE_CHARACTERS,
+  SCREEN,
+  WIDE,
+} from '@reviewies/core/ui/screen';
 import { space } from '@reviewies/core/tokens';
 
 /**
@@ -176,6 +183,61 @@ describe('the screen edge', () => {
     expect(Object.keys(EDGE_EXEMPT)).toContain('WatchingMode');
   });
 
+  it('gives prose its own measure, narrower than the column of rows', () => {
+    /*
+     * Two questions that had one answer because there was one number.
+     *
+     * `SCREEN.measure` was measured for a **row** — the clause above says so, and the table
+     * says why: 720 "keeps a row's two ends close enough to belong to each other", which is
+     * about one line scanned left to right. The title page's synopsis is the only running
+     * prose in the product, and it inherited that number by being in the same column.
+     *
+     * Measured at 1280 against the real snapshot, counting the browser's own line boxes:
+     * every one of the six synopses set between **82 and 89 characters** to a line, against
+     * 44 for the same paragraph at 420 and a convention that puts a comfortable measure at
+     * 45–75. A paragraph is read line after line and what a wide measure costs is finding
+     * the start of the next one — a failure a row cannot have, because a row has no next
+     * line. One number could not answer both.
+     */
+    expect(SCREEN.prose, 'prose is as wide as the column, which is not a decision')
+      .toBeLessThan(SCREEN.measure);
+    expect(SCREEN.prose, 'prose is narrower than the edge it sits inside')
+      .toBeGreaterThan(SCREEN.edge);
+    /*
+     * And the claim, in the unit the convention is stated in. The width is what a renderer
+     * applies; this is what `design/capture-web-real.mjs` measures the rendering against, on
+     * every real synopsis at both photographed widths, because how many characters a width
+     * holds is a fact about a face and a text size that no arithmetic here can know.
+     */
+    expect(PROSE_CHARACTERS, 'the ceiling has left the 45–75 band it was taken from')
+      .toBeLessThanOrEqual(75);
+
+    /*
+     * Read from the table at the one place prose is drawn, not typed. The **construct**
+     * rather than the name, for `clauses.test.ts`'s reason: `SCREEN.prose` is also in the
+     * paragraph above the line that applies it.
+     */
+    const title = withoutProse(read('app/src/screens/TitleDetail.tsx'));
+    expect(title, 'the synopsis does not take its measure from the table').toMatch(
+      /maxWidth: SCREEN\.prose/,
+    );
+    expect(title, 'the synopsis picks its own width off Tailwind’s scale').not.toMatch(
+      /overview[\s\S]{0,200}max-w-/,
+    );
+    /*
+     * And the harness reads the same constant rather than a number beside it — the half
+     * that measures and the half that states have to be the same claim, or the pass records
+     * a disagreement instead of failing on one.
+     */
+    const pass = withoutProse(read('design/capture-web-real.mjs'));
+    expect(pass, 'the wide pass does not measure the prose at all').toMatch(
+      /longest > PROSE_CHARACTERS/,
+    );
+    expect(pass, 'the wide pass no longer photographs the window this is about').toContain(
+      '1280',
+    );
+  });
+
   it('gives the navigation the same measure as what it navigates', () => {
     /*
      * §6.159, #194. The web at 1280 scrolls exactly as far as at 420 — the width buys
@@ -206,20 +268,45 @@ describe('the screen edge', () => {
     expect(app, 'the bar stopped spanning the window').toMatch(/<nav[\s\S]{0,600}inset-x-0/);
   });
 
-  it('is capped in one place, with no screen deciding its own width', () => {
-    // The drift this exists to prevent is the one the edge itself had: fifteen screens
-    // each picking a number off Tailwind's default scale, in the one direction nothing
-    // photographs side by side.
-    const deciding = routedScreens()
-      .map((name) => `app/src/screens/${name}.tsx`)
-      .filter((path) => {
-        try {
-          return /\bmax-w-(?!full|none)|maxWidth:/.test(withoutProse(read(path)));
-        } catch {
-          return false;
-        }
-      });
-    expect(deciding, 'a screen caps its own width instead of the shell').toEqual([]);
+  it('lets no screen decide a width of its own', () => {
+    /*
+     * The drift this exists to prevent is the one the edge itself had: fifteen screens each
+     * picking a number off Tailwind's default scale, in the one direction nothing
+     * photographs side by side.
+     *
+     * ## The rule, corrected
+     *
+     * This read `maxWidth:` and failed on *any* of them, which is a check on the property
+     * rather than on the defect — and it duly failed a correct change. The synopsis on the
+     * title page needs a measure of its own, because `SCREEN.measure` was measured for a row
+     * and a paragraph is not one, and `SCREEN.prose` is that measure: a screen reading a
+     * number the table decided is the **opposite** of a screen deciding a number.
+     *
+     * So the rule is what the paragraph above always meant: **no width a screen chose**.
+     * Tailwind's own scale is banned outright, since a class is a number typed in the file;
+     * an inline `maxWidth` has to name the table. `App.tsx` still holds the column's cap and
+     * the argument against fifteen copies of it — this is about the widths a screen may
+     * read at all, not a licence to cap the column again.
+     */
+    const wrong: string[] = [];
+    let seen = 0;
+    for (const name of routedScreens()) {
+      const path = `app/src/screens/${name}.tsx`;
+      let source: string;
+      try {
+        source = withoutProse(read(path));
+      } catch {
+        continue;
+      }
+      seen++;
+      if (/\bmax-w-(?!full|none)/.test(source)) wrong.push(`${path}: a width off Tailwind's scale`);
+      for (const m of source.matchAll(/maxWidth: ([^,}\n]+)/g)) {
+        const value = m[1].trim();
+        if (!/^(SCREEN|WIDE)\.\w+$/.test(value)) wrong.push(`${path}: maxWidth: ${value}`);
+      }
+    }
+    expect(seen, 'no screens were read, so this proved nothing').toBeGreaterThan(10);
+    expect(wrong, 'a screen caps its own width to a number it chose').toEqual([]);
   });
 
   it('keeps no exemption for a full-screen state that no longer exists', () => {

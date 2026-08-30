@@ -205,3 +205,66 @@ describe('naming a day to a person', () => {
     expect(formatDay('2026-08-26', at(2026, 8, 26, 23, 59))).toBe(COPY.calendar.today);
   });
 });
+
+/**
+ * The other half of the number line, which nothing above ever looked at.
+ *
+ * Every case in the block above is today or later, because `formatDay` was written for
+ * the calendar and the calendar only looks forward. The title page lists an episode
+ * *history*, and pointing it at this formatter turned the 2005 premiere of *It's Always
+ * Sunny* into **"Thu, Aug 4"** — a weekday and a day-and-month for something twenty-one
+ * years old, which is a worse answer than the ISO string it replaced. The suite was green
+ * throughout: not one assertion above ever passed a past date in.
+ *
+ * So the rule this pins is **distance decides how much date, direction decides only the
+ * words that must have one**. "Yesterday" is the one past day English has a word for that
+ * cannot be misread; a bare weekday going backwards can be — "Friday" three days ago and
+ * "Friday" three days ahead are the same string — so the past does not get one. And the
+ * year is written down whenever it is not this one, in either direction, because an
+ * unqualified "Aug 4" is itself a claim: that the date is near enough not to need saying.
+ */
+describe('naming a day that has already happened', () => {
+  const now = at(2026, 8, 26, 15);
+
+  it('says Yesterday', () => {
+    expect(formatDay('2026-08-25', now)).toBe(COPY.calendar.yesterday);
+  });
+
+  it('does not name a past day by a weekday alone, which reads as the coming one', () => {
+    // Three days back. A bare "Sunday" here is the same string as three days forward.
+    expect(formatDay('2026-08-23', now)).toMatch(/\d/);
+  });
+
+  it('keeps the year on a date that is not in this one', () => {
+    // The photographed case: It's Always Sunny in Philadelphia, S1E1, 4 August 2005.
+    expect(formatDay('2005-08-04', now)).toContain('2005');
+    expect(formatDay('2025-12-31', now)).toContain('2025');
+  });
+
+  it('keeps it going forward too, where the same silence is the same lie', () => {
+    // A show announced for next year is as badly served by a bare "Sun, Jan 10".
+    expect(formatDay('2027-01-10', now)).toContain('2027');
+  });
+
+  it('does not spend the year on a date in the year we are in', () => {
+    // Both directions, so the rule is about the year and not about the past.
+    expect(formatDay('2026-01-04', now)).not.toContain('2026');
+    expect(formatDay('2026-12-20', now)).not.toContain('2026');
+  });
+
+  it('still says Today and Tomorrow, which are nearer than any rule about years', () => {
+    expect(formatDay('2026-08-26', now)).toBe(COPY.calendar.today);
+    expect(formatDay('2026-08-27', now)).toBe(COPY.calendar.tomorrow);
+  });
+
+  /**
+   * The boundary the year rule creates, in the one place it could surprise somebody.
+   *
+   * On the 1st of January, yesterday is in a different year — and the answer is still
+   * "Yesterday" rather than a year-stamped date, because a person standing on the 1st
+   * knows what yesterday was. The near words are nearer than any rule about years.
+   */
+  it('does not stamp a year onto Yesterday across New Year', () => {
+    expect(formatDay('2025-12-31', at(2026, 1, 1, 10))).toBe(COPY.calendar.yesterday);
+  });
+});

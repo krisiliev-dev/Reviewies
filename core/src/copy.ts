@@ -751,13 +751,21 @@ export const COPY = {
     /** The way out of that empty state, on both platforms since §6.50. */
     findSomething: 'Find something to watch',
     /**
-     * The two days a person does not want spelled as a date.
+     * The three days a person does not want spelled as a date.
      *
      * The web said "Today"; the phone printed `2026-08-26` and left you to work it out.
-     * Both go through `formatDay` in `core/src/time.ts` now. §6.66.
+     * All three go through `formatDay` in `core/src/time.ts` now. §6.66.
+     *
+     * "Yesterday" arrived last, with the title page's episode history — this group is
+     * named for the calendar and the calendar only ever looks forward, so the one past
+     * day English has a word for had never been needed. It lives here rather than in
+     * `title` because it is the same kind of thing as the two above it and comes out of
+     * the same formatter; the section name is where it was first wanted, not a claim
+     * about who may read it.
      */
     today: 'Today',
     tomorrow: 'Tomorrow',
+    yesterday: 'Yesterday',
     /**
      * The setting saved here but not there.
      *
@@ -820,6 +828,23 @@ export const COPY = {
     notYet: 'Not yet',
     /** An air date the provider does not have. Not "unknown": it has not been announced. */
     tba: 'TBA',
+    /**
+     * The date on an episode row that has not happened yet.
+     *
+     * One verb, typed identically into both title screens — `` `Airs ${episode.airDate}` ``
+     * on each — which is §6.98's shape in a template literal, where the duplication sweep in
+     * `copy.test.ts` cannot see it: `typedLiterals` reads quoted strings and JSX text, and a
+     * backtick is neither. Two copies that no guard could report.
+     *
+     * `when` comes from `formatDay`, like every other date this app shows, so this reads
+     * *"Airs Tomorrow"* and *"Airs Sun, Sep 6"* rather than *"Airs 2026-09-06"* — which is
+     * what both screens printed on every episode row of every show, while the calendar
+     * two tabs away said "Sun, Sep 6" for the same episode.
+     *
+     * The word stays a verb: the row already carries a *Not yet* tag, so the date does not
+     * have to say "not yet" again — it says *when*.
+     */
+    airs: (when: string) => `Airs ${when}`,
     /**
      * The title page, when the provider could not be reached and nothing is cached.
      *
