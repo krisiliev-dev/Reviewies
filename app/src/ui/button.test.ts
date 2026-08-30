@@ -7,7 +7,7 @@ import { CLAMP } from './clamp';
 import { PRESS, PRESS_FILL } from '@reviewies/core/ui/surface';
 import { contrast, TEXT_FLOOR } from '@reviewies/core/ui/contrast';
 import { CHOSEN } from '@reviewies/core/ui/choice';
-import { border, color, radius, size, text } from '@reviewies/core/tokens';
+import { border, color, radius, size, space, text } from '@reviewies/core/tokens';
 
 /**
  * One table, two renderers, and something that notices when they part.
@@ -118,6 +118,43 @@ describe('the button contract', () => {
     expect(SIZE.inline.minHeight).toBeGreaterThanOrEqual(size.target);
     for (const metrics of Object.values(SIZE)) {
       expect(Number.isInteger(metrics.minHeight)).toBe(true);
+    }
+
+    /*
+     * And the web half, which this clause was named for and did not have.
+     *
+     * Everything above is the table talking about itself: `SIZE.row.minHeight` is
+     * `size.target` in a file no browser reads. `SIZE_CLASS` wrote `min-h-12` and
+     * `min-h-11` twice, and Tailwind's own numeric steps are `rem` — `--spacing` is
+     * `0.25rem`, so the compiled rule is `calc(var(--spacing) * 11)`. The three floors this
+     * clause proves are absolute were 3rem and 2.75rem in the stylesheet: 48 and 44 at the
+     * default text size, 96 and 88 at 200%, and whatever the reader has set otherwise. The
+     * paragraph two lines up names that exact mistake and the file it left a suite behind,
+     * and it was live in this component the whole time.
+     *
+     * Derived from the table, not typed: the floors are read back as `--spacing-*` names,
+     * which compile to plain pixels. `ui/button#BOX_RADIUS`'s arrangement, because Tailwind
+     * cannot be handed a number.
+     */
+    const nameOf = (px: number) =>
+      Object.entries(size).find(([, value]) => value === px)?.[0]
+      ?? Object.entries(space).find(([, value]) => value === px)?.[0]
+      ?? '?';
+    const classes = declarationOf(WEB, 'SIZE_CLASS') ?? '';
+    expect(classes, 'the size table has no class list to read').toContain('page:');
+    for (const [name, metrics] of Object.entries(SIZE)) {
+      const written = new RegExp(`\\b${name}: '([^']*)'`).exec(classes)?.[1];
+      expect(written, `${name} has no class string`).toBeTruthy();
+      /*
+       * The set, not `toContain`. `min-h-target min-h-11` contains the right utility and
+       * draws at whichever of the two Tailwind emits last — which is precisely how §6.184's
+       * `size-5` sat inert behind `h-[1em]` for a sprint, and how the chevron sweep in
+       * `mark.test.ts` was walked through by `text-s16 text-s20`.
+       */
+      const floors = [...new Set(written?.match(/\bmin-h-[\w.[\]]+/g) ?? [])];
+      expect(floors, `${name} does not state exactly one floor`).toEqual([
+        `min-h-${nameOf(metrics.minHeight)}`,
+      ]);
     }
   });
 

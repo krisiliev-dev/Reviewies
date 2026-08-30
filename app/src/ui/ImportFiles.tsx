@@ -158,7 +158,7 @@ export function ImportFiles({
                 setRestoring(false);
               }}
               disabled={restoring}
-              className="mt-3 min-h-[44px] w-full rounded-pill border border-stroke-signal px-4 py-3 disabled:opacity-50"
+              className="mt-3 min-h-target w-full rounded-pill border border-stroke-signal px-4 py-3 disabled:opacity-50"
             >
               {restoring ? COPY.waiting.restoring : COPY.controls.restoreListsAndFollows}
             </button>

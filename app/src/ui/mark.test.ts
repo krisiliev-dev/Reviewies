@@ -159,6 +159,69 @@ describe('the marks a control draws', () => {
     expect(handles, `${HANDLE} no longer draws a chevron — delete its line`).toBe(1);
   });
 
+  it('is sized on the web by the font size of what it sits in, never by a box', () => {
+    /*
+     * §6.184's finding, and the sweep that came out of it. It lived in `toggle.test.ts`
+     * for a sprint, which is the §6.140 shape — a product-wide sweep under a name about
+     * one component — and its own prose said so: *"That sweep's proper home is
+     * `mark.test.ts`, which owns `Mark.tsx` — it is here because the defect was found here
+     * and a rule with no guard is a comment."* The guard exists, so the rule can go home.
+     * `Toggle`'s own half stays in `toggle.test.ts`, where the defect was.
+     *
+     * ## The finding only a browser could make
+     *
+     * `Tick` is `` h-[1em] w-[1em] shrink-0 ${className} ``: it sizes itself in `em` and
+     * takes the caller's class *after* its own. `size-5` and `h-[1em]` set the same two
+     * properties at the same specificity, so the winner is whichever Tailwind emits last,
+     * which is a fact about the compiled stylesheet and not about the call site. Measured
+     * in `app/dist`: `.size-5` at byte 10020, `.h-[1em]` at 10364. The `em` rule wins, and
+     * `Toggle`'s span carried no `text-*` class, so its `1em` was the inherited body 16px.
+     *
+     * | | on Settings, 390 viewport | expected |
+     * | --- | --- | --- |
+     * | web toggle tick | **16x16** | 20x20 |
+     * | phone toggle tick | 20x20 | 20x20 |
+     * | web `CrossOff` tick, `text-s20` | 20x20 | 20x20 |
+     *
+     * A tick a fifth smaller than every other tick in the product, on the only setting
+     * there is, passing a clause named for taking its mark from the tokens.
+     *
+     * ## The rule
+     *
+     * On the web a mark is sized by the **font size** of the thing it sits in, never by a
+     * box utility, because this renderer has already decided the mark is one em. Six of the
+     * seven call sites had it right; the toggle was the seventh.
+     *
+     * Broader than the clause above and deliberately overlapping it: that one asks what
+     * size a chevron *in a row* is, and answers `text-s16` exactly; this one asks every
+     * `Tick` and `Chevron` in the tree whether it names a font size at all and whether
+     * anything is fighting the `em`.
+     */
+    // The premise, read rather than remembered: if `Mark.tsx` stops sizing in `em` this
+    // whole clause is about a collision that no longer happens, and should be re-measured.
+    expect(RENDERERS.web, 'the mark no longer sizes itself in em').toContain('h-[1em] w-[1em]');
+
+    const offenders: string[] = [];
+    let sites = 0;
+    for (const file of filesUnder('app/src')) {
+      if (file.endsWith(join('ui', 'Mark.tsx')) || file.includes('.test.')) continue;
+      const source = stripComments(readFileSync(resolve(ROOT, file), 'utf8'));
+      for (const [tag] of source.matchAll(/<(?:Tick|Chevron)\b[^>]*\/>/g)) {
+        sites++;
+        const className = /className=(?:"([^"]*)"|\{`([^`]*)`\})/.exec(tag);
+        const classes = className?.[1] ?? className?.[2] ?? '';
+        if (/\b(?:size|w|h|min-w|min-h)-/.test(classes)) {
+          offenders.push(`${file}: a mark sized by a box, which \`h-[1em]\` outranks — ${classes}`);
+        }
+        if (!/\btext-s\d+\b/.test(classes)) {
+          offenders.push(`${file}: a mark with no font size, so it is one em of whatever it inherits`);
+        }
+      }
+    }
+    expect(sites, 'no mark call site was scanned, so this proved nothing').toBeGreaterThan(5);
+    expect(offenders).toEqual([]);
+  });
+
   it('strokes both marks at one weight, and that weight is on the scale', () => {
     /*
      * §6.183 filed it, §6.184 fixed it. `strokeWidth` was typed once per platform per mark and stated nowhere: 2 on

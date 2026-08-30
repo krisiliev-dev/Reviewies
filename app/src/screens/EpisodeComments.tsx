@@ -156,7 +156,11 @@ export function EpisodeComments() {
 
               {image && (
                 <div className="flex items-center gap-2">
-                  <img src={image} alt="" className="h-16 w-16 rounded-plate object-cover" />
+                  {/* A thumbnail is artwork, and artwork does not grow with the type —
+                      `poster.test.ts` states the same rule for the plate. 64 is on no
+                      scale and has no token name, so it is written as the measurement it
+                      is rather than as `size-16`, which is 4rem and doubles. */}
+                  <img src={image} alt="" className="size-[64px] rounded-plate object-cover" />
                   <button
                     type="button"
                     onClick={() => setImage(undefined)}
@@ -273,7 +277,10 @@ export function EpisodeComments() {
                     src={c.imageUrl}
                     alt=""
                     loading="lazy"
-                    className="mt-2 max-h-72 rounded-plate object-contain"
+                    // A cap on somebody's screenshot, in pixels for the same reason as the
+                    // thumbnail above: `max-h-72` was 18rem, so a reader with large type
+                    // got a taller picture rather than larger words.
+                    className="mt-2 max-h-[288px] rounded-plate object-contain"
                   />
                 )}
               </li>

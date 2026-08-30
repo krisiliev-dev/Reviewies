@@ -65,13 +65,15 @@ describe('a setting that is on or off', () => {
      * bare number that happens to equal it, and no width or height utility appears anywhere
      * in the web renderer.
      *
-     * Scoped to this component on purpose. `h-11 w-11` on `CrossOff` and `min-h-12` on
-     * `Button` are the same 44 and 48 arrived at twice, `space.test.ts`'s `UTILITY` regex
-     * covers none of `size`/`h`/`w`/`min-h`, and §6.182 reached only `Choice` — so nothing
-     * sweeps any of them and this clause does not pretend to. What is defensible about
-     * fixing one is that this is the control whose bare number was measured wrong: the
-     * others agree with the table, and this one drew a 16px mark under a clause named for
-     * taking its mark from the tokens.
+     * This was scoped to this component because nothing swept the rest: `h-11 w-11` on
+     * `CrossOff` and `min-h-12` on `Button` were the same 44 and 48 arrived at twice, and
+     * `space.test.ts`'s `UTILITY` regex covered none of `size`/`h`/`w`/`min-h`. §6.186
+     * widened it and the scope argument is spent — twenty-three sites in eleven files, and
+     * the sentence above that *"the others agree with the table"* was wrong about all of
+     * them: Tailwind's own numeric steps compile to `calc(var(--spacing) * n)` with
+     * `--spacing` at `0.25rem`, so `h-11` is 2.75rem and agrees with 44 at exactly one text
+     * size. The box clause in `space.test.ts` asks the whole tree for the name now; what is
+     * left here is this component's own two lines, which is what a component's file is for.
      */
     const web = withoutProse(read('app/src/ui/Toggle.tsx'));
     expect(web, 'the box is a bare number where the table has a name').toContain('size-target');
@@ -104,38 +106,22 @@ describe('a setting that is on or off', () => {
      * A tick a fifth smaller than every other tick in the product, on the only setting there
      * is, passing a clause named for taking its mark from the tokens.
      *
-     * The rule that comes out of it is the sweep below: on the web a mark is sized by the
-     * **font size** of the thing it sits in, never by a box utility, because `Mark.tsx` has
-     * already decided the mark is one em. Six of the seven call sites had it right; this is
-     * the seventh. That sweep's proper home is `mark.test.ts`, which owns `Mark.tsx` — it is
-     * here because the defect was found here and a rule with no guard is a comment.
+     * The rule that came out of it — on the web a mark is sized by the **font size** of the
+     * thing it sits in, never by a box utility, because `Mark.tsx` has already decided the
+     * mark is one em — was a sweep of every `Tick` and `Chevron` in the tree, sitting here.
+     * It is in `mark.test.ts` now, which owns `Mark.tsx`; this paragraph's own last line
+     * said that was where it belonged and that it was here because the defect was found
+     * here. Six of the seven call sites had it right, and the seventh is this one, so what
+     * stays behind is the assertion about *this* component. §6.186.
      */
     // The premise, read rather than remembered: if `Mark.tsx` stops sizing in `em` this
     // whole clause is about a collision that no longer happens, and should be re-measured.
+    // `mark.test.ts` reads it too — it is the premise of the sweep as much as of this line.
     expect(withoutProse(read('app/src/ui/Mark.tsx')), 'the mark no longer sizes itself in em')
       .toContain('h-[1em] w-[1em]');
     const web = withoutProse(read('app/src/ui/Toggle.tsx'));
     expect(web, 'the mark is sized by a box utility again, and `h-[1em]` will win')
       .toContain(`<Tick className="text-s${TOGGLE.mark}" />`);
-
-    const offenders: string[] = [];
-    let sites = 0;
-    for (const file of filesUnder('app/src')) {
-      if (file.endsWith('ui/Mark.tsx')) continue;
-      for (const m of withoutProse(read(file)).matchAll(/<(?:Tick|Chevron)\b[^>]*\/>/g)) {
-        sites++;
-        const className = /className=(?:"([^"]*)"|\{`([^`]*)`\})/.exec(m[0]);
-        const classes = className?.[1] ?? className?.[2] ?? '';
-        if (/\b(?:size|w|h|min-w|min-h)-/.test(classes)) {
-          offenders.push(`${file}: a mark sized by a box, which \`h-[1em]\` outranks — ${classes}`);
-        }
-        if (!/\btext-s\d+\b/.test(classes)) {
-          offenders.push(`${file}: a mark with no font size, so it is one em of whatever it inherits`);
-        }
-      }
-    }
-    expect(sites, 'no mark call site was scanned, so this proved nothing').toBeGreaterThan(5);
-    expect(offenders).toEqual([]);
   });
 
   it('says what an unavailable mark is drawn in, rather than letting each renderer pick', () => {

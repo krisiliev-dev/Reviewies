@@ -203,8 +203,8 @@ const LOPSIDED: Record<string, string> = {
   'mobile only: ui/poster#POSTER_GLYPH_SCALES':
     'allowFontScaling is an RN prop; the web is in px and never scaled. poster.test.ts holds both.',
   /*
-   * The active tab's rule is three numbers, and the web writes them as Tailwind's own
-   * utilities by decision — `w-6`, `gap-0.5`, `border-t-tally` — because a class assembled
+   * The active tab's rule is three numbers, and the web writes them as generated
+   * utilities by decision — `w-s24`, `gap-0.5`, `border-t-tally` — because a class assembled
    * at runtime is a class that never gets built. Same shape as the `button` entries above,
    * with the same requirement: `tabIcon.test.ts` derives those three class names *from*
    * `TAB_MARKER` and compares, so moving a number in the table fails the web until it

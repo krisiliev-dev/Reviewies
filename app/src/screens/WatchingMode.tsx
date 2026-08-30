@@ -223,7 +223,7 @@ export function WatchingMode() {
             </Note>
           )}
         </div>
-        <span className="min-w-12 text-right">
+        <span className="min-w-s48 text-right">
           <Data value={formatTimecode(clock.positionMs)} className="text-ink-secondary" />
         </span>
       </header>

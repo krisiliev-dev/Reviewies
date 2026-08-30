@@ -95,7 +95,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                       is not. `working-mark` is what the rest of the app already uses for
                       "affirmed" — it is `CHOSEN.colour` and the cross-off's pen. */}
                   <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-pill ${
+                    className={`size-s6 shrink-0 rounded-pill ${
                       s.verdict === 'yes'
                         ? 'bg-working-mark'
                         : s.verdict === 'contested'

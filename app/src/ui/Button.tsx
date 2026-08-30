@@ -77,9 +77,9 @@ const SELECTED_CLASS = 'border-tally border-working-mark text-ink';
  * cannot be handed a number. `type.test.ts` holds the two together.
  */
 const SIZE_CLASS = {
-  page: 'min-h-12 px-5 py-3 text-s16',
-  row: 'min-h-11 px-4 py-2 text-s14',
-  inline: 'min-h-11 px-2 py-1 text-s12',
+  page: 'min-h-s48 px-5 py-3 text-s16',
+  row: 'min-h-target px-4 py-2 text-s14',
+  inline: 'min-h-target px-2 py-1 text-s12',
 } as const;
 
 export function Button({
@@ -148,7 +148,7 @@ export function Button({
       {busy ? (
         <span
           aria-hidden="true"
-          className="ml-2 w-4 self-end border-t-mark border-working-mark"
+          className="ml-2 w-s16 self-end border-t-mark border-working-mark"
           style={{ height: BUSY.underline }}
         />
       ) : null}

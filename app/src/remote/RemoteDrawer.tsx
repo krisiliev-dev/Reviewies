@@ -92,8 +92,13 @@ export function RemoteDrawer() {
       <aside
         ref={drawer}
         // Always mounted so the connection is not torn down each time it closes.
+        /* `w-[288px]`, not `w-72`. A panel width is a component dimension — 288 is on no
+           scale and the token table has no name for it — and Tailwind's own numeric steps
+           are `calc(var(--spacing) * n)` at `0.25rem` each, so `w-72` was 18rem and the
+           drawer widened with the reader's text until `max-w-[85vw]` caught it. Written as
+           the measurement it is; `space.test.ts`'s box sweep asks for one or the other. */
         style={{ zIndex: 'var(--z-drawer)' }}
-        className={`safe-top safe-bottom fixed inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-stroke-hairline bg-ground p-4 transition-transform duration-200 outline-none ${
+        className={`safe-top safe-bottom fixed inset-y-0 right-0 flex w-[288px] max-w-[85vw] flex-col gap-4 overflow-y-auto border-l border-stroke-hairline bg-ground p-4 transition-transform duration-200 outline-none ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"

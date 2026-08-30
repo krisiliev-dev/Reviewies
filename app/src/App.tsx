@@ -239,10 +239,13 @@ function TabBar() {
               to={tab.to}
               end={tab.to === '/'}
               className={({ isActive }) =>
-                // Sized in rem. These labels were given a pixel size for a long time,
-                // which made them the one piece of text in the app that ignored the
-                // reader's setting entirely — while the icons beside them, sized in em,
-                // doubled. Exactly inverted.
+                // Sized in pixels, like every other piece of type on the web:
+                // `tokens-to-css.mjs` emits `--text-s12: 12px` and `text-s12` is that
+                // custom property. This said "sized in rem" and had not been true since
+                // the generated token layer landed — `poster.test.ts` states the same
+                // fact from the other side, that *"the web's type is in `px` and never
+                // answered the browser's font-size setting"*. The claim travelled: the
+                // 200% simulation in `app/smoke.mjs` was making it too. §6.186.
                 `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-l120 break-words ${
                   isActive ? 'text-ink' : 'text-ink-secondary'
                 }`
@@ -275,7 +278,7 @@ function TabBar() {
                 <>
                   <span
                     aria-hidden="true"
-                    className={`w-6 border-t-tally ${isActive ? 'border-ink' : 'border-transparent'}`}
+                    className={`w-s24 border-t-tally ${isActive ? 'border-ink' : 'border-transparent'}`}
                   />
                   <TabIcon name={tab.icon} />
                   {tab.label}

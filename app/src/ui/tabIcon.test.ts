@@ -175,13 +175,29 @@ describe('the tab bar’s marks', () => {
      * `space.test.ts` reads the same scale through `px-3`. Typing `gap-0.5` in this file
      * would make it the third copy of the number rather than the check on the second.
      */
+    /*
+     * The width is a **name** and the gap is still a quarter-step, and the difference is
+     * not an inconsistency somebody left — it is where `space.test.ts`'s box sweep reaches.
+     *
+     * Tailwind's own numeric steps compile to `calc(var(--spacing) * n)` with `--spacing`
+     * at `0.25rem`, so `w-6` was 1.5rem: 24 at the default text size and 48 at 200%, over a
+     * glyph that `TAB_ICON_SIZE` deliberately holds still at 22 because *"the drawing stays
+     * where it is and gets out of the way"*. A marker twice the width of the mark it marks.
+     * `w-s24` is `var(--spacing-s24)`, which is 24px at every text size.
+     *
+     * `gap-0.5` is the same rem arithmetic and is left alone on purpose: it is *space
+     * between* two things rather than the size of one, `space.test.ts`'s `UTILITY` clause
+     * governs it and passes it, and moving it here would be one site of a hundred and
+     * eighty. Recorded rather than fixed — the whole spacing scale being rem on the web is
+     * a finding of its own, and this file is not where it gets settled.
+     */
+    const nameOf = (table: Record<string, number>, px: number) =>
+      Object.entries(table).find(([, value]) => value === px)?.[0] ?? '?';
     const quarters = (px: number) => String(px / 4).replace(/^0\./, '0.');
-    const thickness =
-      Object.entries(border).find(([, px]) => px === TAB_MARKER.thickness)?.[0] ?? '?';
     for (const utility of [
-      `w-${quarters(TAB_MARKER.width)}`,
+      `w-${nameOf(space, TAB_MARKER.width)}`,
       `gap-${quarters(TAB_MARKER.gap)}`,
-      `border-t-${thickness}`,
+      `border-t-${nameOf(border, TAB_MARKER.thickness)}`,
     ])
       expect(BARS.web, `the web’s bar does not draw the rule as ${utility}`).toContain(utility);
   });

@@ -424,10 +424,25 @@ async function legible(screen) {
 /**
  * The same screen with the text at twice the size.
  *
- * WCAG 1.4.4 asks for 200% without loss of content or function. Everything here is
- * sized in rem, so doubling the root size is the honest simulation — and the shape this
- * app is full of, a fixed-width control beside text that grows, is exactly the one that
- * pushes a page sideways. A phone that scrolls horizontally has lost the layout.
+ * WCAG 1.4.4 asks for 200% without loss of content or function, and doubling the root
+ * font size is how a browser's own text setting reaches a page.
+ *
+ * This said *"everything here is sized in rem, so doubling the root size is the honest
+ * simulation"*, and half of that was already false when it was written and the other half
+ * is the reason this check keeps finding things. **The type is in pixels.**
+ * `scripts/tokens-to-css.mjs` emits `--text-s12: 12px` and every `text-*` class is one of
+ * those custom properties, so the words on the page do not move at all — `App.tsx` was
+ * making the same claim about its tab labels and `poster.test.ts` records the truth of it
+ * from the other side. §6.186.
+ *
+ * What *does* move is everything still written on Tailwind's own numeric scale: `--spacing`
+ * is `0.25rem`, so `px-3` and `gap-2` are `calc(var(--spacing) * n)` and double. That is
+ * the shape this check is really measuring — padding growing around type that does not —
+ * and it is how the star rating pushed off the side of the screen twice, the second time
+ * because a 48px floor had been written as `min-w-12`. §6.186 took the *boxes* off that
+ * scale onto the token spelling, which is plain pixels, so what remains under a doubled
+ * root is spacing. Worth stating plainly rather than leaving a sentence that promises this
+ * simulates a reader's text setting: for the type, it does not.
  */
 async function scaled(screen) {
   // Injected, measured, and then *removed*. It used to be left in place, so every
