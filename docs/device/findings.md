@@ -303,7 +303,39 @@ test around it.
 That entry now says what happened instead. It is the cheapest half of this finding and the
 only half a machine here could have carried.
 
-### Why the fix is not in this commit
+### Fixed in the commit after this one
+
+Written after all, at the owner's request, with the reason for the hesitation stated rather
+than pretended away: the native call cannot be guarded from here, and the device is the only
+test it has.
+
+`SQLite.deserializeDatabaseSync(bytes)` opens a database in memory, so nothing is written to
+disk and there is no temporary file to clean up after a failed import. The binding is about
+twenty-five lines in `mobile/src/platform.ts`.
+
+The half that *can* be guarded was split out. `mobile/src/sqlResult.ts` turns expo-sqlite's
+row objects into sql.js's columns-and-matrix, with five cases — including the two that would
+actually bite: `[]` for no rows rather than one empty table, because `readDioCache`
+destructures the first result and an empty table is truthy; and blobs passed through
+untouched, because the decode branch only fires on a `Uint8Array`.
+
+**The repository then caught its own stale reasoning, unprompted.** Binding the loader made
+`setSqlJsLoader` no longer app-only, and `coreWiring.test.ts` failed with *"does not keep
+reasons that have stopped being true"* — the same explanation corrected an hour earlier was
+now expired. That guard was right twice about one line in one session: first that the reason
+was false, then that it had stopped applying at all.
+
+Worth recording what the owner said about scope, because it is the argument against anyone
+generalising this later:
+
+> importing a database is not how data is usually imported… it is an exception because TV
+> Time shut down and this is the only way to retrieve the data. But normally when importing
+> data, we will be doing it from other popular apps.
+
+So this path is a rescue for a dead service, and JSON and CSV from services that still exist
+are the ordinary case. That is a reason for the binding to stay as small as it now is.
+
+### The original reasoning, kept because it was right until it was overruled
 
 `sql.js` is WebAssembly, and the phone's own engine has none — so the answer is not to bind
 the web's loader but to write a different one over `expo-sqlite`, which is already a
