@@ -113,8 +113,16 @@ export function Row({
           was a `tag`. Same size and ink as the meta line, on a line of its own. */}
       {count ? <Note level="footnote" as="span" className={`block ${CLAMP[ROW_LINES.count]}`}>{count}</Note> : null}
       {/* Two lines, because `ROW_LINES.note` is 2 and the phone has always drawn it that
-          way. This is the one slot holding a sentence rather than a label. §6.179. */}
-      {note ? <span className={`${CLAMP[ROW_LINES.note]} text-s12 font-prose font-regular italic text-ink-secondary`}>{note}</span> : null}
+          way. This is the one slot holding a sentence rather than a label. §6.179.
+
+          And two lines is why it is the one slot that states a leading. It had none, so it
+          took about 1.5 from the document while the phone took 1.000 from Newsreader's own
+          metrics — the same sentence set two ways in one component, which is the shape
+          §6.179 found in the line count. `ROW_LEADING` has the measurement. The class is a
+          literal for `CLAMP`'s reason: Tailwind generates what it can see, so a name built
+          at runtime is a name that does not exist, and `row.test.ts` binds it to the
+          table. */}
+      {note ? <span className={`leading-l143 ${CLAMP[ROW_LINES.note]} text-s12 font-prose font-regular italic text-ink-secondary`}>{note}</span> : null}
     </span>
   );
 

@@ -21,7 +21,7 @@
  * So `open.name` is a required string, and a row with no `open` is not pressable at all —
  * a card that navigates without saying where is worse than a card that does not navigate.
  */
-import { border, size, space } from '../tokens.ts';
+import { border, leading, size, space } from '../tokens.ts';
 
 /**
  * `listing` is the full-bleed row; `index` is the More screen's contents line.
@@ -185,6 +185,63 @@ export const ROW_LINES = {
   count: 1,
   note: 2,
 } as const;
+
+/**
+ * The one slot that states its own line box, and the measurement that says why.
+ *
+ * Every text in a row used to take whatever line height its **face** declares, because
+ * neither renderer said anything: the phone set no `lineHeight` at all and the web set no
+ * `leading-`. That is not "no line box" — `normal` is the font's own, ascent plus descent
+ * plus line gap — so the answer was being given four times over by four foundries. Measured
+ * out of the six `.ttf`s this app bundles, as a fraction of the em:
+ *
+ * | face | slot | its own line box |
+ * | --- | --- | --- |
+ * | Archivo Narrow SemiBold | `title`, `tag` | 1.347 em |
+ * | Archivo Regular | `meta`, `count` | 1.088 em |
+ * | Newsreader Italic | `note` | **1.000 em** |
+ * | IBM Plex Mono Medium | — | 1.300 em |
+ *
+ * For a slot `ROW_LINES` gives **one** line that is fine and this table deliberately says
+ * nothing about it: a one-line box only has to hold one line's glyphs, and all four faces
+ * do, with room. Measured in `design/measure.mjs`'s census on the export at 100% and at
+ * 357.1% — iOS's largest Dynamic Type step, `RCTAccessibilityManager.mm`'s 3.571 — where a
+ * title's ink clears the bottom of its box by 2.0pt and 10.0pt respectively (0.14 and 0.20
+ * em), and where nothing a row draws passes its box at either end. Read straight out of the
+ * font tables it is stronger still: **not one** of Archivo Narrow SemiBold's 657 mapped
+ * glyphs reaches below its own box, and not one of Newsreader Italic's 564.
+ *
+ * `note` is the exception because `ROW_LINES` gives it **two**, and a two-line box has a
+ * second job: keeping line 2's ascenders off line 1's descenders. Newsreader's box is
+ * exactly 1.000 em — 1470 up and 530 down on a 2000 unit em, which sums to the em itself —
+ * and its Latin-1 ink spans 1.1845 em from the top of `ĺ` to the foot of `f`. Set solid,
+ * consecutive lines overlap by up to **0.185 em**: 2.2pt at `s12`, and 7.9pt for a reader at
+ * the largest step, where it is the width of a stroke. It is the only multi-line run in
+ * either app with no leading of its own, and it is the slot that holds a **sentence** —
+ * Discover's *"Because you track…"*, the watchlist's *"why you saved it"* — which is exactly
+ * where two lines are ordinary rather than rare.
+ *
+ * ## Why a table and not a number at each site
+ *
+ * The same reason `ROW_LINES` above is one. The web inherited a leading of about 1.5 from
+ * the document and the phone inherited 1.000 from the face, so the identical italic sentence
+ * was set two different ways in one component and **nothing could notice**, because nothing
+ * said what the number was. That is §6.179's finding one property along from the one it
+ * fixed, and this is the statement that lets a clause hold the two renderers to it.
+ *
+ * ## And it may never go below the face's own box
+ *
+ * `l143` is above all four boxes above, which matters more than it looks. React Native sets
+ * `paragraphStyle.minimumLineHeight` **and** `maximumLineHeight` to the stated value
+ * (`RCTTextAttributes.mm:140–143`), so a leading *below* a face's own box does not loosen or
+ * tighten the setting — it clamps the line and iOS crops the glyphs that no longer fit,
+ * bottom first, by a fraction of the em that grows with the point size. `react-native-web`
+ * emits a CSS `line-height` and lets the glyphs overflow in plain sight, so the export every
+ * suite here drives cannot show it. `app/src/ui/lineBox.test.ts` is what does.
+ */
+export const ROW_LEADING = {
+  note: 'l143',
+} as const satisfies Record<string, keyof typeof leading>;
 
 export interface RowContract {
   title: string;

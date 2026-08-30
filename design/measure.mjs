@@ -55,11 +55,18 @@
  * `--lines` adds the census underneath: every run of words on the screen against the line box
  * and the tracking it was given, as ratios of the *rendered* size rather than as points. It
  * takes no name, because the question it answers — does a line box answer the reader's text
- * setting — belongs to every run on the screen and to none of them in particular.
+ * setting — belongs to every run on the screen and to none of them in particular. It reports
+ * the run's own **ink** against that box too, which is the half that says whether a box is
+ * shorter than the glyphs inside it; `runs` below has the argument and the citations.
  *
  * `--at` is the phone's route; the web's is `--web-at` when it differs, and `--reveal` names
  * a control to press first for anything behind a drawer or a sheet (`--web-reveal` and
  * `--phone-reveal` when the two platforms reach the state differently, which they often do).
+ * `--fill "box=words"` types into a field first, for the states a press cannot reach: the
+ * listing row exists on screen only where a library or a query has put one there, and search
+ * is the one screen that will draw a full row — poster, title, meta — from the fixture
+ * provider alone. Without it this file can only measure the rows that are on a screen at
+ * rest, which are all of one density, and a census of half the subject reads as a census.
  * Both builds have to exist already — `npm run design:phone` and `design:web` make them —
  * because building them here would make the instrument slower than the thing it replaces.
  *
@@ -76,6 +83,22 @@
  * that found none of the requested names is reported as unread rather than as a row of
  * zeroes, because those two are not the same answer and only one of them is about the
  * product.
+ *
+ * ## The second trap, which is this file's own and has to be read before its output is
+ *
+ * **`scaleTo` grows every run, including the ones a device deliberately holds still.**
+ * `allowFontScaling={false}` is a React Native prop; `react-native-web` does not forward it,
+ * so nothing survives into the export's DOM to say a run opted out — and this file scales by
+ * computed font size, which cannot tell the difference. So a run that the phone pins reads
+ * here as a run that grew, and if something clips it, the census reports a cut the device
+ * does not have.
+ *
+ * There is exactly one such run today and it is worth naming, because it is the loudest line
+ * this instrument prints: the poster's monogram. At 357% a search row's `QH` comes back *cut
+ * 17pt by div 44x66 (fixed)* — a real fixed-height clip, of a run that on a device is still
+ * 20pt in a 44x66 plate and is not clipped at all. `POSTER_GLYPH_SCALES` is `false` and
+ * `core/src/ui/poster.ts` has a page of argument for why. Reading that line as a defect would
+ * be §6.179's near-miss again, one prop along instead of one zoom level.
  */
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
@@ -94,6 +117,7 @@ function args(argv) {
   const out = {
     name: [], scale: [], at: '/', webAt: null,
     reveal: null, phoneReveal: undefined, webReveal: undefined,
+    fill: null,
     settle: 2500, lines: false,
   };
   for (let i = 0; i < argv.length; i += 2) {
@@ -110,6 +134,8 @@ function args(argv) {
     // a route and the web's is a drawer over every screen, which is §6.176's whole subject.
     else if (key === 'phone-reveal') out.phoneReveal = value;
     else if (key === 'web-reveal') out.webReveal = value;
+    // `box=words`, split at the first `=` so the words may contain one.
+    else if (key === 'fill') out.fill = [value.slice(0, value.indexOf('=')), value.slice(value.indexOf('=') + 1)];
     else if (key === 'settle') out.settle = Number(value);
   }
   if (!out.scale.length) out.scale = [1];
@@ -273,6 +299,48 @@ const boxes = (page, names) =>
  * reaches 3.5pt past that box at each end. `cut` is how far that content area passes the
  * nearest ancestor that clips, in points. It is a model and it is the right one — the
  * alternative is reading pixels, and a glyph's real ink depends on the face.
+ *
+ * ## `box`, `ink` and `over`, which is what this sprint had to add
+ *
+ * Everything above is about a run that **states** a line height, and that turned out to be
+ * the wrong half of the screen. §6.187 sent a sprint after text a real phone photographed
+ * clipped at the bottom of two kinds of row, and `Row.tsx` sets no `lineHeight` at all — so
+ * every text in the component under suspicion resolved to `line-height: normal`, came back
+ * from the reading above as `line: null`, and was dropped from `lead`, from `crowded`, and
+ * from the half-leading `cut` depends on. The first run of this file at the site reported
+ * *"28 runs, 7 with a line box"*: the twenty-one it could not speak about were the ones it
+ * had been sent to look at. An instrument that silently omits its own subject is worse than
+ * one that says it could not look, because it prints a table either way.
+ *
+ * `normal` is not the absence of a line box. It is the **font's own** — ascent plus descent
+ * plus line gap — and that is exactly the box iOS measures a line-limited `Text` to, since
+ * TextKit's used rect for a line fragment is built from the same metrics
+ * (`RCTTextLayoutManager.mm`, `size.height = enumeratedLinesHeight`). So it can be read, and
+ * a canvas is what reads it: `measureText` returns `fontBoundingBox{Ascent,Descent}` for the
+ * face at that size, which is the box, and `actualBoundingBox{Ascent,Descent}` for **these
+ * words**, which is the ink they actually put on the page.
+ *
+ * - `box` — the line box in points, from the stated `line-height` or, when that is `normal`,
+ *   from the face. Never null, which is the whole repair: `lead` now exists for every run.
+ * - `ink` — the same run's real ascender and descender, in points, for the words it holds
+ *   rather than for the alphabet. `Ñ` and `g` are what decide this and most runs have
+ *   neither.
+ * - `over` — how far the ink passes the box, at the bottom and at the top, in points, and
+ *   the number the question turns on. **A box shorter than its glyphs is what "clipped at
+ *   the bottom" means when nothing has an `overflow` and nothing has a height**: any renderer
+ *   that sizes a frame to the line box and then draws inside it — which is what `drawRect:`
+ *   does on iOS — crops the difference. It is a fraction of the em, so it is invisible at
+ *   100% and grows with the point size, which is the shape the device described.
+ *
+ * Reported as `em` as well as points for the same reason `lead` and `track` are ratios: the
+ * em figure is the property of the face and holds at every Dynamic Type step, and the points
+ * are what you compare against a threshold.
+ *
+ * Chromium's `fontBoundingBox` and CoreText's `CTFontGetAscent`/`Descent` are the same two
+ * numbers out of the same table for every face this app bundles — all six set
+ * `USE_TYPO_METRICS`, and in all six `hhea` and OS/2 `sTypo` are byte-identical, so the two
+ * engines cannot disagree about the box here even in principle. Stated rather than assumed,
+ * because a browser standing in for a phone is how §6.183 went wrong.
  */
 const runs = (page) =>
   page.evaluate(() => {
@@ -297,6 +365,14 @@ const runs = (page) =>
       }
       return null;
     };
+    /*
+     * One canvas for the whole census. `measureText` is the only thing in a browser that
+     * will report a face's own ascent and descent and a string's own ink in the same call,
+     * and it needs the face loaded — which it is, because the page has already drawn with
+     * it.
+     */
+    const ctx = document.createElement('canvas').getContext('2d');
+    const round = (v) => Math.round(v * 10) / 10;
     const out = [];
     for (const el of document.querySelectorAll('*')) {
       if (el.children.length) continue;
@@ -309,6 +385,47 @@ const runs = (page) =>
       if (!font) continue;
       const line = cs.lineHeight === 'normal' ? null : parseFloat(cs.lineHeight);
       const space = cs.letterSpacing === 'normal' ? 0 : parseFloat(cs.letterSpacing) || 0;
+      /*
+       * The face's own box and this run's own ink, both in points at the size it is drawn.
+       * Built from the parts rather than from `cs.font`, which a browser only returns as a
+       * shorthand when every sub-property was set that way and is empty on most of these.
+       */
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${font}px ${cs.fontFamily}`;
+      let box = line;
+      let ink = null;
+      try {
+        const m = ctx.measureText(words);
+        const faceBox = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+        if (box === null && Number.isFinite(faceBox) && faceBox > 0) box = round(faceBox);
+        if (Number.isFinite(m.actualBoundingBoxAscent)) {
+          /*
+           * Where the ink sits relative to the box, which needs the baseline. The content
+           * area is centred in the line box, so the baseline is half-leading plus the
+           * face's own ascent down from the top — the same placement `half` below uses,
+           * and the reason both numbers are computed from the face rather than from the
+           * rectangle.
+           */
+          const lead = (box ?? faceBox) - faceBox;
+          const top = lead / 2 + m.fontBoundingBoxAscent - m.actualBoundingBoxAscent;
+          const bottom = (box ?? faceBox) - (lead / 2 + m.fontBoundingBoxAscent + m.actualBoundingBoxDescent);
+          ink = {
+            asc: round(m.actualBoundingBoxAscent),
+            desc: round(m.actualBoundingBoxDescent),
+            faceAsc: round(m.fontBoundingBoxAscent),
+            faceDesc: round(m.fontBoundingBoxDescent),
+            // Positive means the glyphs reach past the box on that side, which is the crop.
+            overTop: round(-top),
+            overBottom: round(-bottom),
+            // The same two as a fraction of the em, which is the face's property and holds
+            // at every text size — so a threshold stated here is stated once.
+            emTop: Math.round((-top / font) * 10000) / 10000,
+            emBottom: Math.round((-bottom / font) * 10000) / 10000,
+          };
+        }
+      } catch {
+        // A face the canvas cannot resolve is not a measurement; the run keeps its box and
+        // says nothing about its ink, rather than reporting a zero overshoot it did not see.
+      }
       // Half-leading: the content area is `font` tall and sits centred in the line box, so
       // it reaches this far past the rectangle at the top and at the bottom.
       const half = line === null ? 0 : Math.max(0, (font - line) / 2);
@@ -327,10 +444,15 @@ const runs = (page) =>
         words: words.replace(/\s+/g, ' ').slice(0, 26),
         font: Math.round(font * 10) / 10,
         line: line === null ? null : Math.round(line * 10) / 10,
+        // The box the run is actually drawn in, stated or the face's own. Never null, so
+        // a run that says nothing about its leading is still in every count below.
+        box,
+        stated: line !== null,
+        ink,
         // How many lines the run actually drew, which is what turns a tight box into a
         // collision rather than a clip.
-        rows: line ? Math.max(1, Math.round(r.height / line)) : 1,
-        lead: line === null ? null : Math.round((line / font) * 1000) / 1000,
+        rows: box ? Math.max(1, Math.round(r.height / box)) : 1,
+        lead: box === null ? null : Math.round((box / font) * 1000) / 1000,
         track: Math.round((space / font) * 1000) / 1000,
         cut: cut !== null && cut > 0.5 ? cut : null,
         /*
@@ -354,7 +476,7 @@ const runs = (page) =>
     return out;
   });
 
-async function readOne(browser, base, { at, reveal, settle, name, scale, lines, native }) {
+async function readOne(browser, base, { at, reveal, fill, settle, name, scale, lines, native }) {
   const page = await browser.newPage({ viewport: VIEWPORT });
   const rows = {};
   try {
@@ -363,6 +485,17 @@ async function readOne(browser, base, { at, reveal, settle, name, scale, lines, 
     if (reveal) {
       await page.getByLabel(reveal).first().click({ timeout: 20000 });
       await page.waitForTimeout(1200);
+    }
+    if (fill) {
+      const [box, words] = fill;
+      // By placeholder first and then by label, because a search field is spelled the one
+      // way on this phone and the other on the web, and asking for both is cheaper than a
+      // per-platform flag for a field that is the same field.
+      const field = page.getByPlaceholder(box).or(page.getByLabel(box)).first();
+      await field.fill(words, { timeout: 20000 });
+      // Long enough for a query to answer and its rows to draw. A census taken while the
+      // screen is still empty is a census of an empty screen, and it prints the same.
+      await page.waitForTimeout(settle);
     }
     for (const factor of scale) {
       const applied = await scaleTo(page, factor, native);
@@ -434,11 +567,46 @@ for (const factor of opts.scale) {
     const cut = all.filter((x) => x.cut !== null);
     const range = (xs, k) =>
       xs.length ? `${Math.min(...xs.map((x) => x[k]))}–${Math.max(...xs.map((x) => x[k]))}` : '—';
+    /*
+     * Runs whose glyphs pass the box that holds them, at the bottom and at the top. A
+     * tenth of a point is the reporting floor: the overshoot is a fraction of the em, so
+     * anything smaller is the rounding rather than the face.
+     */
+    const inked = all.filter((x) => x.ink);
+    const over = (side) => inked.filter((x) => x.ink[side] > 0.05);
+    const worst = (side) =>
+      over(side).sort((a, b) => b.ink[side] - a.ink[side]);
     console.log(
-      `  ${platform.padEnd(6)} ${all.length} runs, ${led.length} with a line box: ` +
+      `  ${platform.padEnd(6)} ${all.length} runs, ${led.length} in a line box ` +
+        `(${all.filter((x) => x.stated).length} stated, ${led.length - all.filter((x) => x.stated).length} the face’s own): ` +
         `lead ${range(led, 'lead')}, track ${range(tracked, 'track')} (${tracked.length} runs), ` +
-        `${crowded.length} crowded, ${cut.length} cut`,
+        `${crowded.length} crowded, ${cut.length} cut, ` +
+        `${over('overBottom').length} past the box at the bottom, ${over('overTop').length} at the top ` +
+        `(of ${inked.length} measured)`,
     );
+    for (const side of ['overBottom', 'overTop']) {
+      /*
+       * The runs that pass their box, worst first — and when none do, the three that come
+       * closest to it. A count of zero is an answer and a bare zero is not: the margin the
+       * tightest run has left is the number that says whether a face is close to cropping
+       * or nowhere near it, and it is the same fraction of the em at every text size.
+       */
+      const shown = worst(side).slice(0, 6);
+      const near = shown.length
+        ? shown
+        : inked.sort((a, b) => b.ink[side] - a.ink[side]).slice(0, 3);
+      for (const x of near) {
+        const em = x.ink[side === 'overBottom' ? 'emBottom' : 'emTop'];
+        const where = side === 'overBottom' ? 'the bottom' : 'the top';
+        console.log(
+          `           "${x.words}" ${x.font}pt in a ${x.box}pt box (face ${x.ink.faceAsc}+${x.ink.faceDesc}), ` +
+            `ink ${x.ink.asc}+${x.ink.desc}, ` +
+            (x.ink[side] > 0.05
+              ? `PASSES ${where} by ${x.ink[side]}pt (${em} em)`
+              : `clears ${where} by ${Math.round(-x.ink[side] * 10) / 10}pt (${Math.round(-em * 10000) / 10000} em)`),
+        );
+      }
+    }
     for (const x of cut.sort((a, b) => b.cut - a.cut).slice(0, 8)) {
       console.log(
         `           "${x.words}" ${x.font}pt in ${x.line}, CUT ${x.cut}pt by ${x.clipper} (${x.why})`,
@@ -446,7 +614,7 @@ for (const factor of opts.scale) {
     }
     for (const x of crowded.sort((a, b) => a.lead - b.lead).slice(0, 8)) {
       console.log(
-        `           "${x.words}" ${x.font}pt in ${x.line} (lead ${x.lead}), ` +
+        `           "${x.words}" ${x.font}pt in ${x.box}${x.stated ? '' : ' (the face’s own)'} (lead ${x.lead}), ` +
           `${x.rows} row${x.rows === 1 ? '' : 's'}` +
           `${x.rows > 1 ? `, lines overlap ${Math.round((x.font - x.line) * 10) / 10}pt` : ''}` +
           `${x.cut !== null ? `, cut ${x.cut}pt by ${x.clipper}` : ''}`,
