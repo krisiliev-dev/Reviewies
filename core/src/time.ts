@@ -83,12 +83,43 @@ export function daysUntil(day: string, now: number = Date.now()): number {
 }
 
 /**
- * How a day is named to a person: "Today", "Tomorrow", "Friday", "Fri, 3 Sep".
+ * How a day is named to a person: "Today", "Tomorrow", "Yesterday", "Friday",
+ * "Fri, 3 Sep", "Thu, 4 Aug 2005".
  *
  * The web had this and the phone printed the raw `2026-08-26` — the same screen, two
  * different answers, which is the §6.51 shape again. Here so that both get the same one.
  * Anything further out than a week gets its date, because "Thursday" three weeks away
  * tells nobody anything.
+ *
+ * ## Going backwards
+ *
+ * This was written for the calendar, which only looks forward, and every test it had
+ * stood on today or later. The title page lists an episode *history*, and putting it
+ * through here unchanged turned a 2005 premiere into **"Thu, Aug 4"** — the same shape
+ * as an episode airing next month, for something twenty-one years old. That is a worse
+ * answer than the ISO string the title page used to print, which is why the reading pass
+ * that found it filed the date rather than fixing it: the repair needed a decision first.
+ *
+ * The decision is **distance decides how much date; direction decides only the words
+ * that must have one.**
+ *
+ * - The near words are the exception to everything, in both directions. Today, Tomorrow,
+ *   Yesterday.
+ * - A bare weekday is a *forward* name. "Friday" three days ago and "Friday" three days
+ *   ahead are the same string, and a person reading a list of episodes has no way to
+ *   tell which was meant — so the past does not get one and falls through to its date.
+ *   The forward branch keeps it: the week ahead is the case the branch was written for
+ *   and the ambiguity does not arise there.
+ * - **The year is written down whenever it is not this one**, in either direction. An
+ *   unqualified "Aug 4" is not neutral — it is a claim that the date is near enough that
+ *   the year does not need saying — and a premiere from 2005 and a season announced for
+ *   2027 are both badly served by it.
+ *
+ * Rejected: a second formatter for the past, which is a second answer to §6.66's question
+ * and would let the two drift; and "Last Friday", which reads well in English and becomes
+ * *"Last vendredi"* the moment `toLocaleDateString` is not returning English — the near
+ * words above are whole strings from `COPY`, not an English modifier glued to a localised
+ * one, and that is the difference.
  */
 export function formatDay(day: string, now: number = Date.now()): string {
   const start = startOfDay(day);
@@ -97,10 +128,19 @@ export function formatDay(day: string, now: number = Date.now()): string {
   const diff = daysUntil(day, now);
   if (diff === 0) return COPY.calendar.today;
   if (diff === 1) return COPY.calendar.tomorrow;
+  if (diff === -1) return COPY.calendar.yesterday;
 
   const date = new Date(start);
   if (diff > 1 && diff < 7) {
     return date.toLocaleDateString(undefined, { weekday: 'long' });
   }
-  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  // Compared against the *viewer's* year rather than a count of days, so the answer is
+  // the one a person would give: a date is in this year or it is not.
+  const thisYear = new Date(now).getFullYear() === date.getFullYear();
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    ...(thisYear ? {} : { year: 'numeric' }),
+  });
 }

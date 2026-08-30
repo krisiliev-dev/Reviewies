@@ -14,6 +14,9 @@
  * spelled at each site is a decision the seventh site gets to make again.
  */
 
+import { COPY } from '../copy.ts';
+import { dayHasArrived, formatDay } from '../time.ts';
+
 /** `S1E8`. Six screens built this string themselves. */
 export const episodeCode = (season: number, number: number): string => `S${season}E${number}`;
 
@@ -39,6 +42,30 @@ export function episodeName(name: string | undefined, number: number): string | 
 export function episodeHeading(number: number, name: string | undefined): string {
   const named = episodeName(name, number);
   return named ? `${number}. ${named}` : `Episode ${number}`;
+}
+
+/**
+ * When an episode happened, or will: `Sun, Sep 6`, `Yesterday`, `Airs Tomorrow`, `Airs TBA`.
+ *
+ * Both title screens printed `episode.airDate` **raw** — the row said `2026-09-06` while
+ * the calendar, three tabs away and reading the same field, said `Sun, Sep 6` through
+ * `formatDay`, whose docstring is "how a day is named to a person". Same date, same app,
+ * two tabs apart, on every episode row of every show — §6.51's shape, on the screen this
+ * product's whole episode list hangs off.
+ *
+ * It is one function rather than a `formatDay` call at each row because the row has two
+ * questions in it and only the second is about formatting: whether the episode has
+ * happened decides the *sentence*, and the day decides the *words*. Spelled at each site,
+ * the third site gets to answer the first question differently — which is exactly how
+ * these two came to be character-identical templates that no guard could compare.
+ *
+ * Not `hasAired` from `data/repo.ts`, which takes a whole `CachedEpisode` and lives behind
+ * the database: the same question of the same field, asked where there is no Dexie.
+ */
+export function episodeWhen(airDate: string | undefined, now: number = Date.now()): string {
+  if (!airDate) return COPY.title.airs(COPY.title.tba);
+  const named = formatDay(airDate, now);
+  return dayHasArrived(airDate, now) ? named : COPY.title.airs(named);
 }
 
 /**

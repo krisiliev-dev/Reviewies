@@ -30,7 +30,7 @@ import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
-import { episodeHeading, episodeName } from '@reviewies/core/ui/episode';
+import { episodeHeading, episodeName, episodeWhen } from '@reviewies/core/ui/episode';
 import {
   bySeason as seasonOrder,
   openSeason,
@@ -320,7 +320,10 @@ function EpisodeRow({
       // free to spell its own is a row free to pick a different colour.
       struck={watched}
       disabled={!aired && !watched}
-      meta={`${aired ? episode.airDate : `Airs ${episode.airDate ?? COPY.title.tba}`}${
+      // The day, named — `2026-09-06` on this row and `Sun, Sep 6` on the calendar was
+      // one episode with two answers, three tabs apart. `episodeWhen` owns both the
+      // naming and the verb in front of it.
+      meta={`${episodeWhen(episode.airDate)}${
         episode.runtimeMin ? ` · ${episode.runtimeMin}m` : ''
       }${
         // Rewatch counts: requested across r/Letterboxd, r/Simkl and r/Serializd.
