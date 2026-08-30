@@ -8,6 +8,10 @@ Answers to `docs/device/on-the-phone.md`. One heading per question, in order.
 heading left as `NOT YET CHECKED` is a true and useful statement. A heading quietly deleted is
 how this went wrong last time.
 
+**A sprint's worth of direction is sitting in question 10** — the information architecture
+notes, from the person holding the phone. It is not a device defect and not actionable as a
+bug; it is what the next design sprint should read first.
+
 Replace a status line when you have an answer. Say what you did, what you saw, and the number
 where there is one. Photographs go in `docs/device/shots/`, named for the question.
 
@@ -15,18 +19,84 @@ where there is one. Photographs go in `docs/device/shots/`, named for the questi
 
 ## 0. Did it build and launch at all
 
-**NOT YET CHECKED** — if this one fails, it is the most valuable line in the file. Write down
-exactly where it stopped and what it said.
+**Yes.** `** BUILD SUCCEEDED **` at 34,978 lines; installed over USB with `devicectl` and
+launched.
+
+Second time. The first needed six blockers cleared (6.82–6.84); this time nothing had to be
+fixed first. Every one of those fixes survived 127 commits of other people's work and applied
+on its own:
+
+- both `postinstall` patches re-applied on `npm install` — `expo-modules-jsi`'s
+  `RuntimeScheduler.h`, and `expo-network`'s `en0` read
+- `react-native-reanimated 4.5.1` / `react-native-worklets 0.10.1` still pinned by the root
+  `overrides`
+- `Reviewies.entitlements` still an empty `<dict/>` under `REVIEWIES_PERSONAL_TEAM=1`, so a free
+  personal team can still sign it
+
+Worth stating because no guard can: the guards fire on `npm install`, but nothing proves the
+result still *compiles* until it compiles.
+
+51 MB. All six faces reach the device at `Reviewies.app/assets/_assets/fonts/`, so question 4 has
+real faces to look at rather than a system fallback.
+
+Device: iPhone 13 Pro Max (iPhone14,3), iOS 26.5.2. Mac: macOS 26.1, Xcode 26.3 (Swift 6.2.4,
+iOS 26.2 SDK). Build `Release`, personal team `5F87J4VA23`.
+
+### One warning, which question 1 should be read against
+
+```
+» ios: userInterfaceStyle: The existing `userInterfaceStyle` property is preventing
+  splash screen from working properly. Remove it or disable dark mode splash screens.
+```
+
+`app.json` sets `userInterfaceStyle: "dark"`. It looked capable of causing exactly the white
+flash question 1 asks about. It did not — see below. Left unfixed: a one-line change with no
+guard behind it is the drift the brief says not to introduce, and it is now known not to matter
+for this symptom.
 
 ## 1. Cold start, and what the first paint is
 
-**NOT YET CHECKED** — seconds to a usable Up Next; whether the first frame is the app or a white
-flash. This is the first time `useFonts` has gated a first paint anywhere.
+**No white flash. The app is on Up Next instantly.**
+
+**No number.** Reported as immediate rather than timed — no stopwatch was used, so the "seconds"
+half of this question is still open and should not be read as "fast enough".
+
+What the question was really asking is answered: the first paint is the app, not a blank screen.
+`useFonts` gating a first paint has now executed on a device and costs nothing visible.
 
 ## 2. Dynamic Type at maximum
 
-**NOT YET CHECKED** — predicted: type grows, the poster plate does not. Rows, tab bar, the emoji
-pad, and the monogram specifically.
+**A defect, and it is not the one predicted.**
+
+> **Text is clipped at the bottom** — in Up Next rows, and in the More menu's navigation.
+
+The prediction was about *scaling*: type grows, the plate does not. What was found is *clipping*.
+Cut off at the bottom specifically is a fixed-height or line-height problem rather than a
+wrapping one — the glyphs are drawn and then cropped by a container that did not grow with them,
+which takes descenders and the last line first.
+
+It appears in a list row and in a navigation row, two unrelated screens, which points at shared
+components rather than at either screen.
+
+**Still NOT YET CHECKED, and not implied by the above:**
+
+- **The monogram — probably held, but this is not a clean observation.** Asked directly, the
+  answer was *"I am unsure which monogram you mean, but I only see text growing so I think the
+  answer is yes."*
+
+  Recorded as qualified rather than as a pass, for two reasons. It is an inference from not
+  noticing a change, not a check of the plate's width. And the monogram is the two-letter
+  stand-in shown **only where poster artwork is missing** — so a library with artwork
+  everywhere puts none on screen, and the question cannot be answered from that view at all.
+
+  What would settle it: find an Up Next row showing two letters instead of a poster, then set
+  text to maximum and watch that plate. If `POSTER_GLYPH_SCALES = false` is doing its job the
+  letters stay put while the title beside them grows. Failure looks like two enormous letters
+  with their stems cut off — which is what the browser export did at 200% before the flag
+  existed, and the reason the flag exists.
+- **The tab bar** at `TAB_BAR_HEIGHT` 60 — do labels clip or overlap the rule?
+- **Watching Mode's emoji pad** — does it reflow to fewer columns?
+- Whether Up Next titles *wrap*, as distinct from clip.
 
 ## 3. hitSlop, which nothing else can observe
 
@@ -62,4 +132,144 @@ sign out and back in.
 
 ## 10. Anything that simply looks wrong
 
-**NOT YET CHECKED** — you are the first person to see this on glass. Trust that over the record.
+### Buttons are off centre
+
+Reported plainly, with no screen named and no photograph. Not reproduced against a component, so
+it is not known whether this is one shared button or several screens. Next session should
+photograph it and name the component — until then this is a real observation and an unactionable
+one.
+
+### The information architecture does not match what a tracking app is expected to be
+
+The largest finding of the session, and not a defect in any one screen. In the words of the
+person holding the phone:
+
+- **Up Next should imitate what tracking apps actually do.** Previous episodes should live
+  *above* the current position, so scrolling up reveals what you have already watched, in the
+  order you watched it, already checked off. Up Next is currently forward-only and has no past.
+- **Future releases should be a tab on that same surface**, not a separate destination.
+- **"I am unsure what the difference between the Watchlist and Upcoming is."**
+
+  From the source they are genuinely different — `watchlist.tsx` is *things you mean to watch,
+  with a note saying why you added them*; `calendar.tsx` is *what is airing next, plus the
+  notification granularity control*. The finding stands anyway: one is a tab, one is under More,
+  and the difference is not recoverable from the interface. A distinction only legible in the
+  code is not one the user has.
+- **Search and Discover should be one page**, with the search field moved into Discover.
+- **Discover should be for discovering, not adding.** It is a list of shows with buttons. What is
+  wanted is browsable — large thumbnails carrying genre, release date and title, *"as if a person
+  is in a CD shop looking at the CD boxes"* — and tapping one turns the box over for the synopsis,
+  more information, and a trailer.
+- **Search should be the list.** The compact layout Discover has now is the right shape for
+  results and the wrong shape for browsing.
+- **Both need filters** — genre, runtime, seasons, rating, anything.
+
+Not built. The brief says to say it plainly rather than fix it, and this is a direction for a
+sprint rather than a device finding.
+
+---
+
+# Not a question in the brief
+
+## `npm run verify` is red at this tip, for three reasons, none of them the phone
+
+Found before any of the above, and worth more than several of them. Checked out at `59b5d8d` on
+a Mac, `npm run verify` exits 1. **All the failures are environment, not code** — each passes on
+the machine that wrote it and fails here, which is the same shape as the entry that prompted this
+brief: a fact about a container recorded as a fact about the world.
+
+Confirmed pre-existing by stashing this file and re-running.
+
+The sequence is the evidence: **four** failures on a cold checkout; after
+`npm run build --workspace app`, **two**. Each diagnosis below predicted which side of that line
+its failure would fall on.
+
+### 1. Two icon clauses that need a build `verify` has not run yet
+
+```
+points every icon at a file that is actually in the build
+  expected [ 'icon-192.png', 'icon-512.png' ] to deeply equal []
+paints its splash and its tint out of the token table
+  expected [ '#0B0B0F' ] to deeply equal []
+```
+
+`shipping.test.ts` reads the *built* web manifest from `app/dist` and says so in its own failure
+message — "run `npm run build --workspace app` first". But `verify` runs `test` before `build`,
+so on any checkout whose `dist` is absent or stale these fail, and on a machine that happened to
+build recently they pass.
+
+Verified: `npm run build --workspace app`, then the same file, **6 passed**. Nothing was wrong
+with the code at any point. The clause is right to read the build rather than the config — the
+plugin is what writes the file a phone fetches. The ordering inside `verify` is what makes it
+unreproducible.
+
+### 2. A date that is only correct in UTC
+
+```
+Kitchen Nightshift episode 1: expected '2025-11-23' to be '2025-11-22'
+```
+
+Off by one day. This Mac is `Europe/Sofia`, `EEST +0300`; the container is UTC.
+`designLibrary.test.ts` builds an expected day key from `today` minus a number of days, and at
++0300 that lands the other side of a boundary.
+
+The repository takes this class seriously enough to run a whole suite for it — `test:tz`, 877
+cases, which passes. This clause sits outside it.
+
+### 3. A directory the record reads and git has never held
+
+```
+ENOENT: no such file or directory, scandir '.../design/screens'
+```
+
+`design/unread.mjs` scans `design/screens` for `.png` files so `docsReferences.test.ts` can
+report how much of the design record is unread. `git ls-files design/screens` returns **nothing**
+— the directory exists only where the capture scripts have run. Anyone else gets a thrown
+`ENOENT` rather than a count.
+
+The record already named this defect once, in the commit saying `behaviour.mjs` was never
+committed. It recurred in a different file within the same sprint block.
+
+### What this file fixed on the way
+
+`docsReferences > names only paths that exist` failed at this tip because `on-the-phone.md` names
+`docs/device/findings.md` and nothing had written it — a brief referencing its own output. The
+skeleton this file was merged into closes that.
+
+## An App Store app's data cannot be read off an iPhone without a backup
+
+Tested rather than assumed, because it bears on the `DioCache.db` importer that
+`docs/research/08-second-reddit-sweep.md` calls the highest-value feature in the field.
+
+`devicectl` lists exactly one app on a connected, developer-mode iPhone:
+
+```
+Name        Bundle Identifier         Version   Bundle Version
+Reviewies   dev.krisiliev.reviewies   0.1.0     1
+```
+
+One. The development-signed one. iOS exposes a container to tooling only for apps you could
+attach a debugger to, so TV Time — App Store signed — is not addressable at all: not by
+`devicectl`, not by Xcode's container download, not by anything short of a backup.
+
+That is worth writing into the record because the importer's own comment says it runs on
+"whatever files the user managed to pull off their phone", which reads as though pulling them is
+the easy part. It is the hard part, and it has exactly one route: a full local backup, then
+extraction from it. Every published rescue tool works this way for the same reason.
+
+TV Time shut down in **July 2026**, so the on-device cache is now the only copy that exists. The
+practical consequence for anyone reading this: the file is only recoverable while the app remains
+installed and the phone has not been reset.
+
+**An iCloud backup is not a way round it.** Apple exposes no supported way to browse or download
+a device backup from iCloud — iCloud.com offers photos, contacts and Drive, not app containers.
+The tools that claim to do it authenticate against Apple's private backup API with an Apple ID
+password and a 2FA code, which is an unofficial endpoint and a credential worth more than the
+data being recovered.
+
+**The local backup is smaller than people expect, which is the useful half of this.** Apple
+documents that a computer backup excludes anything already synced to iCloud — iCloud Photos,
+iMessages, SMS and MMS — along with App Store content. For a phone with iCloud Photos on, the
+bulk of "storage used" is exactly the part that will not be copied, so the backup is largely app
+data and settings. Someone refusing the backup for want of disk space is usually estimating from
+the wrong number.
