@@ -274,6 +274,73 @@ bulk of "storage used" is exactly the part that will not be copied, so the backu
 data and settings. Someone refusing the backup for want of disk space is usually estimating from
 the wrong number.
 
+## What a cache can and cannot give back
+
+After the import worked on the phone, the owner asked the right question: the shows came in,
+but nothing was marked to where they had watched. Is that data in the file?
+
+**No, and it never was.** The cache holds **zero** occurrences of `watched_episode_count`,
+`aired_episode_count` or any other per-series progress field. Episode-level records exist
+only where TV Time had cached episodes near a viewing position: **216 of them, across 28
+shows out of 235**. For the remaining 207 there is nothing to recover, and no parser
+improves on that.
+
+So the recovery ceiling for this file is: every show and film in the library, the films'
+watched flags, and episode progress for the couple of dozen shows opened most recently.
+
+### The signal nobody is using yet
+
+**132 shows carry the `up_to_date` filter** — TV Time saying the owner was caught up at the
+moment it cached. Today that only sets a status. Once a show is matched to a provider and its
+episode list is known, "up to date as of July 2026" is enough to mark every episode aired by
+then as watched.
+
+That would recover most of a history from a flag rather than from history, and it is the
+highest-value thing left in this file. It is also **inferring watches nobody explicitly
+recorded**, which is a product decision rather than a parsing one, and is why it is written
+here rather than done. If it is taken, the derived watches should be visibly derived.
+
+## An empty list under a sentence saying there were too many
+
+Reported from the device: some shows prompt for a manual match, and a few of those offer
+nothing to pick.
+
+An ask with no candidates is a **miss**. `reconcile.ts` returns an empty `candidates` array
+whenever the provider found nothing or nothing scored above 0.3, and the phone rendered every
+ask the same way — `COPY.import.ambiguous`, "More than one show could be this", above an
+empty list whose only control was **"None of these"**. None of nothing.
+
+The web had already fixed exactly this, and its own comment names it:
+
+> A screen saying "more than one show could be this" above an empty list, whose only control
+> is "None of these", tells somebody the opposite of the truth and then offers them nothing
+> but giving up.
+
+The phone never got that branch. Both sides now read `COPY.import.notFound` and offer
+`COPY.controls.leaveForNow`, from the same constants rather than two copies of a sentence.
+
+### The guard that was looking one level too high
+
+`migrationParity.test.ts` exists for precisely this failure — its own words are "the one that
+mattered was a control the web had and the phone quietly did not". It compares
+`app/src/screens/UpNext.tsx` against `mobile/app/(tabs)/index.tsx`: the two **screens**. The
+drift was in the component both screens mount, one level down, where nothing was looking.
+
+It now reads both matchers too. Planting the phone's old version back fails it by name:
+
+```
+phone: does not branch on there being candidates
+phone: one label for both states
+```
+
+A parity guard that reads one pair of files proves nothing about the pair beside it.
+
+### Still not at parity
+
+On a miss the web offers a search box (`FindIt`) so somebody can find the show themselves.
+The phone only offers to skip. That is a feature rather than a branch and is left undone
+rather than half-built.
+
 ## The phone cannot read a database at all, and the record said it never needed to
 
 Third failure of the same import, after the encoding fix cleared the second. The screen was
