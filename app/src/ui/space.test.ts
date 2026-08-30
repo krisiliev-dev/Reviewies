@@ -291,7 +291,19 @@ describe('the space scale, on the web', () => {
      * migration that lowered it: a margin doing a space's job is spacing this scan counts
      * and a reader cannot select.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(356);
+    /*
+     * 351, down six: `Button`'s own padding, both axes, moved onto the token spelling —
+     * `px-s20`/`px-s16`/`px-s8` and `py-s12`/`py-s8`/`py-s4`.
+     *
+     * That was not tidying. Tailwind's numeric steps are `rem`, so `py-3` is 12 at the
+     * default text size and **24 at 200%**, while the phone reads `SIZE[size].paddingY`
+     * from a table whose header says *"the box, in absolute device-independent pixels"*.
+     * The two renderers disagreed about the box at every text setting but the default. It
+     * is the same defect the `min-h` clause in `button.test.ts` records for the floors,
+     * one property along, and the six that leave this scan are six numbers that are now
+     * pixels rather than multiples of the reader's font size.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(350);
     expect(off).toEqual([]);
   });
 

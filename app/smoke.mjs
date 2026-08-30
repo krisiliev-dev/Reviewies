@@ -35,6 +35,7 @@ import { join } from 'node:path';
  * something inside it reports a product defect about its own lateness.
  */
 import { linger } from '../core/src/tokens.ts';
+import { COPY } from '../core/src/copy.ts';
 
 const BASE = process.env.BASE ?? 'http://localhost:4173';
 const OUT = new URL('./screenshots/', import.meta.url).pathname;
@@ -972,7 +973,31 @@ try {
     /Sync across devices/i.test(accountText),
     accountText.replace(/\s+/g, ' ').slice(0, 90),
   );
-  const configured = !/not configured on this build/i.test(accountText);
+  /*
+   * The same defect the paragraph above records, a second time, and for the same reason.
+   *
+   * The sentinel was `not configured on this build` — a sentence typed here rather than read
+   * from the screen that prints it — and the screen has said *"Not configured. Reviewies works
+   * fully offline without it — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY"* for some
+   * time. So the regex matched nothing, `configured` was `true` on a credential-free build,
+   * and the run walked into the branch below and waited five seconds for a navigation that
+   * only happens when there is an account. Every check after it went unrun.
+   *
+   * A negation is what made it silent: **"I did not find the words" and "the build has
+   * credentials" are the same answer to `!test()` and are not the same fact** — §6.57's
+   * distinction, in a probe whose own header is about this. So both states are recognised
+   * positively and disagreeing is a failure rather than a default. Only the credential-free
+   * panel names the two environment variables; only the configured one offers a way in.
+   */
+  const credentialFree = /VITE_SUPABASE_URL/.test(accountText);
+  const offersAWayIn = new RegExp(`${COPY.controls.signIn}|${COPY.controls.createAccount}`, 'i')
+    .test(accountText);
+  check(
+    'the sync probe can tell the two builds apart',
+    credentialFree !== offersAWayIn,
+    accountText.replace(/\s+/g, ' ').slice(0, 120),
+  );
+  const configured = !credentialFree;
   console.log(`(build is ${configured ? 'configured for sync' : 'credential-free'})`);
   await page.goto(BASE, { waitUntil: 'networkidle' });
 
@@ -1585,6 +1610,73 @@ try {
   // --- Spoiler-free catch-up ---------------------------------------------------
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
+
+  /*
+   * The column, and the two controls that used to sit 8pt inside it.
+   *
+   * `SIZE.inline.paddingX` is 8, and on `tone="quiet"` — no fill, no stroke — that padding
+   * paints nothing: it only moves the words in from the edge every heading, row title and
+   * line of prose starts on. Measured at 420pt before the repair: the row's own link at
+   * **16**, *Catch up* and *Watch along* at **24**, same column, two edges.
+   *
+   * The rendered check rather than the source one, because `button.test.ts`'s clause can
+   * only say the class table is right. Whether the words land on the column is a question
+   * about a browser: `min-w-target` with `justify-center` still centres 19pt of ink in a
+   * 44pt box and re-indents it by 12, and no reading of the source would notice.
+   *
+   * Both axes of the target too, since the padding was buying a horizontal one — 42pt and
+   * 35pt, neither of them 44 — where a reader could see it.
+   */
+  const column = await page.evaluate(() => {
+    const row = document.querySelector('a[aria-label^="Open The Long Dark"]');
+    const quiet = [...document.querySelectorAll('button, a[href]')].filter((el) =>
+      /^(Catch up on|Watch along with) The Long Dark/.test(el.getAttribute('aria-label') ?? ''),
+    );
+    const left = (el) => Math.round(el.getBoundingClientRect().left);
+    return {
+      row: row ? left(row) : null,
+      found: quiet.length,
+      controls: quiet.map((el) => {
+        const box = el.getBoundingClientRect();
+        const ink = (el.querySelector('span') ?? el).getBoundingClientRect();
+        return {
+          name: el.getAttribute('aria-label'),
+          box: `${Math.round(box.width)}x${Math.round(box.height)}`,
+          left: Math.round(box.left),
+          inkLeft: Math.round(ink.left),
+        };
+      }),
+    };
+  });
+  /*
+   * The first one against the column, and every one against its own box.
+   *
+   * The first version of this asked every control to start on the column, which is a claim
+   * about a *flex row* rather than about the padding: the second control is 60pt along by
+   * design and failed a correct app. The defect is that the words sit inside their own box,
+   * so that is what the second half asks — a quiet tone paints no box, and any distance
+   * between the box's edge and the ink is an indent nothing accounts for.
+   */
+  check(
+    'the underlined control under a row starts on the row’s own column',
+    column.row !== null && column.found === 2 && column.controls[0].inkLeft === column.row,
+    JSON.stringify(column),
+  );
+  check(
+    'and none of them holds its words in from its own edge',
+    column.found === 2 && column.controls.every((c) => c.inkLeft === c.left),
+    JSON.stringify(column.controls),
+  );
+  check(
+    'and are a thumb wide as well as tall',
+    column.found === 2 &&
+      column.controls.every((c) => {
+        const [w, h] = c.box.split('x').map(Number);
+        return w >= 44 && h >= 44;
+      }),
+    JSON.stringify(column.controls),
+  );
+
   await page.getByRole('button', { name: 'Catch up on The Long Dark' }).click();
   // Two-season fixture, so the season step comes first.
   await page.waitForSelector('text=/^Season$/', { timeout: 5000 });

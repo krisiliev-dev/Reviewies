@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { BUSY, type ButtonContract } from '@reviewies/core/ui/button';
+import { BUSY, boxed, type ButtonContract } from '@reviewies/core/ui/button';
 import { CLAMP } from './clamp';
 
 /**
@@ -76,11 +76,37 @@ const SELECTED_CLASS = 'border-tally border-working-mark text-ink';
  * the scale — and they are spelled out here because Tailwind v4 reads source text and
  * cannot be handed a number. `type.test.ts` holds the two together.
  */
+/*
+ * The vertical padding is `py-s12`/`py-s8`/`py-s4` rather than Tailwind's own `py-3`/`py-2`/
+ * `py-1`, and it is the same correction the floors above got.
+ *
+ * Tailwind's numeric steps are `rem`: `--spacing` is `0.25rem`, so `py-3` compiles to
+ * `calc(var(--spacing) * 3)` and is 12 at the default text size and 24 at 200%. The core's
+ * header says the opposite in as many words — *"The box, in absolute device-independent
+ * pixels. The label scales with the reader's setting; the box does not"* — and the phone,
+ * which reads `SIZE[size].paddingY` straight, has always been absolute. So the two renderers
+ * disagreed about the box at every text size but the default, in both axes, and the clause
+ * that caught it for `min-h` did not look at the padding. `--spacing-s12` and its neighbours
+ * are plain pixels.
+ */
 const SIZE_CLASS = {
-  page: 'min-h-s48 px-5 py-3 text-s16',
-  row: 'min-h-target px-4 py-2 text-s14',
-  inline: 'min-h-target px-2 py-1 text-s12',
+  page: 'min-h-s48 py-s12 text-s16',
+  row: 'min-h-target py-s8 text-s14',
+  inline: 'min-h-target py-s4 text-s12',
 } as const;
+
+/**
+ * The horizontal padding, on its own, because a boxless tone gets none of it.
+ *
+ * It cannot stay in `SIZE_CLASS` with a `px-0` appended after it for `quiet`. Tailwind emits
+ * by its own order rather than by the order of a class string, so `px-2 px-0` on one element
+ * draws at whichever it emitted last — the trap `button.test.ts` already names over
+ * `min-h-target min-h-11` and over `size-5` behind `h-[1em]`. A conditional that appends
+ * would look exactly like the fix and do nothing.
+ *
+ * `MIN_WIDTH` in the core is what a boxless tone takes instead, and it says why.
+ */
+const PAD_X = { page: 'px-s20', row: 'px-s16', inline: 'px-s8' } as const;
 
 export function Button({
   label,
@@ -97,7 +123,7 @@ export function Button({
   className = '',
   children,
 }: Props) {
-  const boxed = tone !== 'quiet';
+  const box = boxed(tone);
   // On is drawn, not only announced. `aria-pressed` was here from the start and nothing
   // ever painted it, so a toggle looked identical held and unheld. The spelling is
   // `Choice`'s — `SELECTED` is its `CHOSEN` — because a rule and a weight step is how this
@@ -110,12 +136,18 @@ export function Button({
   //
   // Boxed tones only. `quiet` has no box, so it has no box's rule to thicken; nothing asks
   // for a quiet toggle today and writing the branch anyway would be a branch nothing runs.
-  const on = selected && !disabled && boxed;
+  const on = selected && !disabled && box;
   const classes = [
     // `font-title` is `LABEL_FACE` in the core, spelled out because Tailwind reads source
     // text. It carries the weight now — Archivo Narrow SemiBold is one file, not a slider.
-    'inline-flex items-center justify-center gap-2 text-center font-title',
-    boxed ? 'rounded-pill' : '',
+    //
+    // The centring is not here. It belongs to the boxed branch below: a boxless tone is
+    // `MIN_WIDTH` wide with no padding, so centring 19pt of ink in a 44pt box would put the
+    // words back 12pt in — the indent again, bought a second way.
+    'inline-flex items-center gap-2 text-center font-title',
+    // A box, its inset, and its centre are one decision; `MIN_WIDTH` in the core is what a
+    // tone with no box takes instead of the inset, and the note there measures why.
+    box ? `rounded-pill justify-center ${PAD_X[size]}` : 'min-w-target',
     SIZE_CLASS[size],
     disabled ? DISABLED_CLASS : TONE_CLASS[tone],
     on ? SELECTED_CLASS : '',
