@@ -36,6 +36,7 @@ import { join } from 'node:path';
  */
 import { linger } from '../core/src/tokens.ts';
 import { COPY } from '../core/src/copy.ts';
+import { TAB_BAR } from '../core/src/ui/tabIcon.ts';
 
 const BASE = process.env.BASE ?? 'http://localhost:4173';
 const OUT = new URL('./screenshots/', import.meta.url).pathname;
@@ -823,7 +824,11 @@ try {
   );
   check(
     'and only that one carries it',
-    tally.tabs >= 5 && tally.ruled.length === 1,
+    // `TAB_BAR.length`, not a typed 5. §6.188's architecture took the bar from five tabs to
+    // four — Search folded into Discover — and this clause failed on a decision rather than
+    // on a defect, because the number it compared against was written here instead of read
+    // from the table that owns it.
+    tally.tabs === TAB_BAR.length && tally.ruled.length === 1,
     `${tally.ruled.length} of ${tally.tabs} tabs ruled`,
   );
 
@@ -942,7 +947,8 @@ try {
   const missing = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('an unknown address says so', /Nothing at this address/i.test(missing), missing.slice(0, 110));
   check('and names the address that was asked for', /\/not-a-screen/.test(missing));
-  await audit('the not-found screen', 8);
+  // Seven, not eight: two buttons, the skip link and four tabs. The eighth was the fifth tab.
+  await audit('the not-found screen', 7);
   await noGhosts('the not-found screen');
   // And it leads somewhere, rather than being a dead end with a message on it.
   await page.getByRole('link', { name: 'Go to Up Next' }).click();
@@ -1528,7 +1534,16 @@ try {
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   const beforeScrobble = await page.locator('text=/more episodes/').first().textContent();
-  const nextUp = (await page.locator('body').innerText()).match(/S1E(\d+)/)?.[1];
+  /*
+   * From the *present*, not the first `S1E` on the page. §6.188 put a person's history above
+   * their next episode, so the text now opens with `ALREADY WATCHED` and the first match is
+   * something already crossed off. This scrobbled S1E1, which was watched, the count went
+   * 16 → 16, and the check reported the product broken when the screen had grown a section
+   * above the one it is about.
+   */
+  const upNextText = await page.locator('body').innerText();
+  const present = upNextText.slice(upNextText.indexOf(COPY.upNext.alreadyWatched) + 1);
+  const nextUp = present.match(/S1E(\d+)/)?.[1];
 
   await page.evaluate((episode) => {
     window.postMessage(
@@ -1576,7 +1591,7 @@ try {
 
   // --- Watchlist with notes --------------------------------------------------
   // Already out of Watching Mode: the scrobble section above left it to read Up Next.
-  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   await page.getByRole('button', { name: 'Add Quiet Harbour to your watchlist' }).click();
@@ -1607,7 +1622,7 @@ try {
   // --- Spoiler-free quick log --------------------------------------------------
   // Logging a film must not require opening its page, which is covered in other
   // people's ratings and its own synopsis.
-  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   const beforeUrl = page.url();
@@ -1760,7 +1775,7 @@ try {
   // --- A finished show completes itself ----------------------------------------
   // r/serializd, about a competitor: "I have over 100 shows stuck in Currently
   // Watching." Kitchen Nightshift is the ended fixture.
-  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('kitchen');
   await page.waitForSelector('text=Kitchen Nightshift', { timeout: 5000 });
   await page.getByRole('button', { name: 'Track Kitchen Nightshift' }).click();
@@ -1830,6 +1845,15 @@ try {
 
   // --- Discover --------------------------------------------------------------
   await page.getByRole('link', { name: /Discover/ }).click();
+  /*
+   * Empty the field first, because Discover has two states and the walk arrives in the wrong
+   * one. §6.188 folded Search into this surface: a query shows results, no query shows the
+   * shelf. Three earlier sections search here and leave "kitchen" typed, so the browse checks
+   * below measured a search — `0 suggested`, and then the *exclusion* check passing on those
+   * same zero rows, which is the green-on-nothing shape the paragraph above this one records
+   * happening to the identical pair of checks once already.
+   */
+  await page.getByPlaceholder('Shows, films, anime…').fill('');
   await page.waitForSelector('text=Nothing you have already watched', { timeout: 5000 });
   await page.waitForTimeout(800);
   // Check the suggested titles specifically, not the whole page: a tracked show
