@@ -241,9 +241,17 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
     return (
       <div className="rounded-plate bg-ground-raised p-3 text-s12 text-ink-secondary">
         <p>
+          {/*
+            Three states, three sentences, and the third is why this branch changed. §6.171:
+            "It will reconnect on its own" was said for a relay that had **refused** the
+            connection, which will refuse the next one for the same reason — a promise the
+            app cannot keep, made every five seconds. `useBridge` tells them apart now.
+          */}
           {bridge.status === 'connecting'
             ? 'Connecting to your bridge…'
-            : 'Bridge offline. It will reconnect on its own.'}
+            : bridge.status === 'refused'
+              ? 'The relay would not accept this connection. Check the address and token in your settings, then reload.'
+              : 'Bridge offline. It will reconnect on its own.'}
         </p>
         {/* The detail, under the sentence it belongs to rather than under the keys. */}
         {bridge.error && <p className="mt-1 text-ink-tertiary">{bridge.error}</p>}

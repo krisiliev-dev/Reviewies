@@ -443,6 +443,21 @@ export const COPY = {
      */
     yearInReview: 'Year in review',
     /**
+     * The headline over a chosen year, and the two platforms' only copy of it.
+     *
+     * The web drew a card here — `Your 2026`, the duration at s30, then *"across 50 episodes
+     * and 3 titles"* — and the phone drew nothing at all. §6.170 photographed the state for
+     * the first time and it showed the card repeating itself: those two counts are two of
+     * the four tiles sitting sixty points below it, in figures, and the card's own headline
+     * figure is a third.
+     *
+     * So the card is a headline and the tiles are the breakdown, and neither says the
+     * other's part: the prose line goes, and the `Watched` tile goes while the card is up.
+     * TV Time's REWIND is the thing this is — §6.138's note calls it among its most-loved
+     * features — and a review that opens by restating its own contents is not one.
+     */
+    yourYear: (year: number) => `Your ${year}`,
+    /**
      * "Period", not the phone's "window": the control offers *All time*, and all time
      * is not a window. The word has to be true of every choice the screen offers.
      */

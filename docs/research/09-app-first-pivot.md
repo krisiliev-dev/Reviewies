@@ -12613,6 +12613,140 @@ nobody chose — §6.166's own warning — so both are named with their evidence
 
 **Eighty-eight shots are unread**, and the two added here bring the total to 132.
 
+### 6.171 Three decisions the last entry filed, and the promise underneath one of them
+
+**#207.** §6.170 photographed three states nobody could reach and, rather than decide two
+things it had just seen at the end of a long sprint, filed them with their evidence. This is
+those, plus the gap that entry opened.
+
+#### A review that opened by reciting its own contents
+
+`dark-06-stats-year.png` — the first picture of a chosen year, taken by §6.170 — shows a card
+reading *"Your 2026 / 1.0 days / across 50 episodes and 3 titles"*, and directly beneath it
+four tiles reading *Watched 1.0 days*, *Episodes 50*, *Titles 3*, *Longest streak 2 days*.
+Three of the four are the card again, one screen apart, in two shapes. Read against the code
+rather than the picture: the card is inside `isYearReview`, the `<dl>` is unconditional, and
+both take `summary.minutes`, `summary.episodes` and `summary.distinctTitles`. It happens on
+every year.
+
+**And the phone had no card at all.** Twenty sprints of parity work and the platform this
+product pivoted to be was the one missing TV Time's REWIND — the feature §6.138's own copy
+note calls among its most-loved.
+
+So: a headline and a breakdown, and neither says the other's part. The card keeps `Your
+{year}` and the duration at s30 and loses the prose line, which was two tiles written out
+sixty points above them. The tiles lose `Watched` while the card is up, because a headline
+restated one size down is the same repetition a step quieter. The phone gets the card, which
+is §6.51's rule — the better version wins whichever platform had it.
+
+#### The edge tab, left alone on purpose
+
+The same shot has the web's remote handle over the *Longest streak* tile, and §6.167 kept
+that tab partly because it floats "over screens that are lists rather than grids". The
+argument holds on nine routes and not on this one. It is **not** changed here, and the reason
+is worth stating rather than leaving as silence: the phone's equivalent was moved because
+that drawer is mounted on exactly one screen and had nowhere to go; the web's is mounted
+app-wide and is the only route to the remote there, so moving it means giving the web a
+remote *screen* — a route this product does not have and should not gain in a paragraph. It
+stays on the list, now with a photograph attached.
+
+#### A promise the app could always have kept and did not
+
+`relay/src/server.ts` closes with **1008** and a reason when the pairing parameters are
+wrong. So the app has always been able to tell a relay that *declined* this connection from
+one that is merely down — the code and the reason both arrive in `onclose` — and it did not.
+The drawer said *"Bridge offline. It will reconnect on its own"* for both, and the loop
+dialled again every five seconds forever to keep making a promise it cannot keep, because
+the next attempt is refused for the reason the last one was.
+
+§6.43 found half of this. Its comment is still there: *"throwing that away left the drawer
+showing 'disconnected' and retrying every few seconds forever with nothing to act on."* It
+kept the reason and kept the loop — which is why both the sentence and the behaviour were
+still wrong two dozen sprints later, with a written note explaining one of them sitting
+directly above the other.
+
+`BridgeStatus` has `refused` now. The loop stops on 1008, nothing that could have succeeded
+is lost, and the drawer says a true sentence: *"The relay would not accept this connection.
+Check the address and token in your settings, then reload."*
+
+#### And the phone's year shot, which broke a walk forty lines away
+
+§6.170 gave the web pass the press and left `capture.mjs` walking Stats the way it always
+had. It has it now, through `reveal` — and the needle is the whole announced name,
+`/^\d{4} — your \d{4}$/`, because `announce` joins an option's label to its hint and either
+half alone matches nothing. Read out of the control rather than typed, so the shot does not
+start failing in January.
+
+**Where it goes turned out to be the interesting part.** The first version sat with the title
+page's reveals, and the run died forty lines later with `watching-mode-unreachable` — that
+walk ends on `/stats`, and the Watching Mode step clicks its way there from Up Next rather
+than deep-linking, because §6.130 established that a dynamic route cannot be deep-linked in
+the phone's web export. The comment directly above that step says it outright: *"the harness
+using the app has to leave the app in a state the next screen is still worth photographing
+in."*
+
+That is the second comment in two sprints to describe a defect precisely and be read past —
+§6.170's was §6.152's note about the trending fallback, and this one had been sitting above
+the throw it predicted. The difference is that this file **throws by name** rather than
+shooting whatever is on the screen, so the cost was one failed run rather than a wrong
+picture in the record. That is the design harness's own §6.153 working: an instrument that
+says which needle was bad.
+
+Two more corrections before it landed, and both were the same mistake twice. `reveal` looks
+for a `button` and `Choice` renders `role="radio"` — a note written into `capture-web.mjs` a
+sprint earlier and not carried across, which cost a run reporting *"nothing on the screen
+matches"*: a sentence that reads exactly like a control that is not there.
+
+#### And the check that fired: nothing on the phone announces which option is chosen
+
+The walk asserts the press became the *answer*, not merely a press. It failed, and the
+screenshot showed 2026 plainly chosen — bold, amber-underlined, with the headline card
+beside it. So the drawn state was right and the announced state was measured:
+
+```
+30 days           aria-checked: null   aria-selected: null
+This year         aria-checked: null   aria-selected: null
+All time          aria-checked: null   aria-selected: null
+2026 — your 2026  aria-checked: null   aria-selected: null
+2025 — your 2025  aria-checked: null   aria-selected: null
+2024 — your 2024  aria-checked: null   aria-selected: null
+```
+
+**All six**, including the one that is the answer on arrival. `mobile/src/ui/Choice.tsx`
+passes `accessibilityState={{ checked: on, selected: on }}` — the correct React Native API —
+and in the **react-native-web export** it reaches nothing. Somebody using a screen reader on
+that build is read six radio buttons and told which is chosen by none of them; the amber
+underline carries the entire answer.
+
+Two things follow, and the second is why this is filed rather than fixed. The first: no suite
+had ever asked. `app/smoke.mjs` checks `aria-checked` and it works there, because the web app
+renders real DOM; `mobile/smoke.mjs` has never checked it once, which is exactly what a
+property that has never worked looks like from the inside. The second: **this is measured in
+the export, which is not a device.** On a native build `accessibilityState` goes to the
+platform accessibility API and very likely works. §7's standing entry — nothing has run on a
+physical device — is precisely this boundary, and it is the reason the design pass now reads
+the *headline card* to know the press took, rather than an attribute that would be measuring
+the renderer instead of the screen.
+
+## What is not done, and why it is said here
+
+**There is no way to reconnect without reloading.** Stopping the doomed loop is right, and it
+leaves somebody who has just fixed their token with no control to press — the drawer's own
+sentence tells them to reload, which is honest and is not the same as good. A manual retry
+means lifting `connect` out of the effect closure, which is a change to the connection layer
+rather than to what a screen says, and this entry did not make it.
+
+**The web's edge tab now has a photograph and still has its decision.** See above.
+
+**Nothing announces the chosen option on the phone, and this cannot be settled here.** The
+measurement above is of the react-native-web export. `Choice` uses the right API; whether a
+device honours it is unmeasurable in this container, and until somebody runs one the honest
+statement is that the phone's *export* announces no chosen state and that no suite has ever
+asked it to.
+
+**Eighty-six shots are unread**, of 134 — this entry added the phone's year state in two
+themes.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12649,6 +12783,15 @@ and which single claim in this document could not be checked at all:
   weight on top of a file that has one — which no check in this repo can observe. The rule is
   right by the platform's documented behaviour and by the token file's own argument; it has
   not been *watched* being right.
+- **The phone's export announces no chosen option, and only a device can say whether the
+  phone does.** §6.171 measured all six radios on Stats reporting `aria-checked: null`,
+  including the one that is the answer on arrival. `mobile/src/ui/Choice.tsx` passes
+  `accessibilityState={{ checked, selected }}`, which is the correct React Native API and
+  which react-native-web drops; on a native build it goes to the platform accessibility API
+  and very likely works. Nothing here can tell. What *is* certain is that `app/smoke.mjs`
+  checks `aria-checked` and `mobile/smoke.mjs` never has — a property that has never worked
+  looks exactly like this from the inside.
+
 - **Nothing has run on a physical device, and §6.111 measured exactly how far short of
   one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
   Android SDK in this container, no `eas` CLI, no Apple or Google account, no device. What
@@ -13453,8 +13596,8 @@ and which single claim in this document could not be checked at all:
   and four sprints of building instruments without reading their output is how a live backend
   got into a pass whose own comment said it could not be there.
 
-- **Eighty-eight shots have not been read**, of 132 — §6.170 added two, both of states that
-  had never had a picture. §6.165 states the scope: 130 files across
+- **Eighty-six shots have not been read**, of 134 — §6.170 and §6.171 each added two, all
+  four of states that had never had a picture. §6.165 states the scope: 130 files across
   `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
   was written from a listing of one directory. §6.168 opened thirteen more and §6.169 six, and
@@ -13470,12 +13613,17 @@ and which single claim in this document could not be checked at all:
   *"that state is broken"* look identical from outside, and §6.146 only tells you to go and
   look.
 
-- **A promise the app cannot always keep.** The remote drawer says *"Bridge offline. It will
-  reconnect on its own"* for every non-connected status, and `useBridge` reports the same
-  status for a relay that rejected the token as for one that is merely down. §6.170 put the
-  transport detail back under that sentence instead of in red at the far end of the panel; it
-  did not make the sentence conditional, because nothing in the connection layer currently
-  distinguishes the two.
+- ~~**A promise the app cannot always keep.**~~ — **closed in §6.171, and the premise was
+  wrong.** `relay/src/server.ts` closes with **1008** and a reason on bad pairing, so the
+  connection layer could always distinguish the two: `BridgeStatus` has `refused` now, the
+  retry loop stops on it, and the drawer says a true sentence. What remains is smaller and
+  stated there — stopping the loop leaves nobody a control to press once they have fixed
+  their token, and the sentence tells them to reload.
+
+- **A guard that was written and never counted.** §6.43 fixed the *reporting* of a refused
+  connection and left the retry loop in place, with its own comment sitting directly above
+  explaining that the loop was the problem. That comment survived two dozen sprints being
+  read past. §6.171 is the entry that read it.
 
 - **Reading a picture is about half right, and that is now measured rather than felt.**
   Across §6.167, §6.168 and §6.169, **fourteen** things were filed or half-filed from

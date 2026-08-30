@@ -1118,6 +1118,62 @@ await reveal(page, {
 });
 
 /*
+ * Stats with a **year** chosen, which §6.170 gave the web pass and not this one.
+ *
+ * `08-stats` lands on the screen and leaves, so the second row of the period control has
+ * only ever been photographed holding no answer — and §6.167 restyled that row's label on
+ * the strength of exactly that shot, on both platforms. §6.171 also gave the phone the
+ * headline card the web has had since Stats shipped, so there is now something here that
+ * only this state shows.
+ *
+ * `announce` joins an option's label and hint — `2025 — your 2025` — so the needle is the
+ * whole name, not either half. Read out of the control rather than typed, because a
+ * hard-coded year is a shot that starts failing in January.
+ *
+ * **Here, not up with the title page's reveals, and that placement is the finding.** The
+ * first version of this sat after `15-title-rating`, and the run died forty lines later
+ * with `watching-mode-unreachable`: this walk ends on `/stats`, and the Watching Mode step
+ * clicks its way there from Up Next rather than deep-linking, because §6.130 established a
+ * dynamic route cannot be deep-linked in the phone's web export. The comment above that
+ * step says it in as many words — *"the harness using the app has to leave the app in a
+ * state the next screen is still worth photographing in"* — and adding a step in the middle
+ * of the sequence is how you find out it meant it. Last, where the reveals are, for the
+ * reason the file already gives them: nothing follows that a stray route can spoil.
+ *
+ * **And not through `reveal`.** That helper looks for a `button`; `Choice` renders
+ * `role="radio"`, so the needle could never match — which the pass then said by name,
+ * *"nothing on the screen matches"*, which reads exactly like a control that is not there.
+ * `capture-web.mjs` has the same note above the same walk, written a sprint earlier and
+ * not applied here.
+ */
+await page.goto('http://localhost:4200/stats', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(1800);
+const aYear = page.getByRole('radio', { name: /^\d{4} — your \d{4}$/ }).first();
+if (await aYear.count()) {
+  await aYear.click();
+  await page.waitForTimeout(1200);
+  await shot('08-stats-year');
+  /*
+   * The press became the **answer**, not merely a press — a chip that takes one without
+   * taking the other is §6.138's defect, and this state is the only one that can show it.
+   *
+   * Read off the headline card, which only renders when `year !== undefined`, rather than
+   * off `aria-checked`. §6.171 measured why: every radio in this export reports
+   * `aria-checked: null`, including the one that *is* the answer on arrival. React Native's
+   * `accessibilityState={{ checked }}` reaches nothing in the react-native-web build, so an
+   * assertion on it here would be measuring the renderer rather than the screen — and
+   * failing this pass over it would fail a design run for a property the record already
+   * knows is untestable outside a device. The finding is in §6.171 and §7; the check is
+   * this.
+   */
+  if (!/Your \d{4}/.test(await page.locator('body').innerText())) {
+    unshot.push('08-stats-year: the year was pressed and is not the answer');
+  }
+} else {
+  unshot.push('08-stats-year: the period control offers no year to choose');
+}
+
+/*
  * The caught-up library, in a context of its own. §6.163.
  *
  * Two of the states `core/src/ui/emptyStates.ts` registers are not about a screen at all —

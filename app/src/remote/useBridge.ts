@@ -39,7 +39,25 @@ export interface RemotePlayback {
   source?: string;
 }
 
-export type BridgeStatus = 'unconfigured' | 'connecting' | 'connected' | 'disconnected';
+/**
+ * `refused` is the one §6.171 added, and it is a different thing from `disconnected`.
+ *
+ * A relay that will not accept this connection closes with **1008** and a reason —
+ * `relay/src/server.ts` does exactly that when the pairing parameters are wrong — and that
+ * is not a connection that is down. It is one that has been declined, and it will be
+ * declined again on the next attempt and every attempt after.
+ *
+ * The drawer said *"Bridge offline. It will reconnect on its own"* for it, which is a
+ * promise the app cannot keep, and the loop below retried every five seconds forever to
+ * keep making it. §6.43 fixed the *reporting* of a 1008 and left the retry alone, which is
+ * why the sentence and the behaviour were both still wrong two dozen sprints later.
+ */
+export type BridgeStatus =
+  | 'unconfigured'
+  | 'connecting'
+  | 'connected'
+  | 'disconnected'
+  | 'refused';
 
 const PROTOCOL_VERSION = 1;
 const RECONNECT_MS = 5000;
@@ -148,7 +166,6 @@ export function useBridge(): BridgeConnection {
       socket.onclose = (event) => {
         socketRef.current = null;
         if (closed) return;
-        setStatus('disconnected');
         // Say why, when the relay says why. A refused connection closes with 1008 and a
         // reason — "role must be app or bridge" is the one this app spent its whole life
         // getting — and throwing that away left the drawer showing "disconnected" and
@@ -157,6 +174,21 @@ export function useBridge(): BridgeConnection {
         if (event.code !== 1000 && event.code !== 1001) {
           setError(event.reason || `Relay closed the connection (${event.code})`);
         }
+        /*
+         * And 1008 is not "down", it is **declined** — `relay/src/server.ts` closes with
+         * it when the pairing parameters are wrong. §6.43 kept the reason and kept the
+         * loop: the app went on dialling every five seconds while the drawer promised it
+         * would reconnect on its own, which it cannot, because the next attempt is refused
+         * for the reason the last one was.
+         *
+         * So the loop stops. Nothing is lost that could have succeeded, and what the
+         * person needs — the relay's own sentence about why — is already on the screen.
+         */
+        if (event.code === 1008) {
+          setStatus('refused');
+          return;
+        }
+        setStatus('disconnected');
         // The bridge is meant to run unattended, so reconnect rather than giving up.
         retryRef.current = setTimeout(connect, RECONNECT_MS);
       };

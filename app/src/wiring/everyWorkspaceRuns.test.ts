@@ -156,7 +156,8 @@ describe('every workspace', () => {
     // app 641, up three: §6.169's `screenMode.test.ts`.
     // core 925, up three, and app 642, up one: §6.170's seeding cases in
     // `recommend.test.ts`, and the remote drawer's one-place-one-register clause.
-    core: 925, app: 642, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 645, up three: §6.171's refused-connection pair and the year-in-review clause.
+    core: 925, app: 645, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -190,7 +191,9 @@ describe('every workspace', () => {
    * existing. A count would guard the wrong property.
    */
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
-    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 151 },
+    /* 152, up one: §6.171 added the other half of the year-in-review check — the headline
+       figure is not also a tile. */
+    'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 152 },
     'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 78 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
@@ -229,7 +232,8 @@ describe('every workspace', () => {
      * return `1.0x`. All twenty shots were exactly 1800px tall and the pass said "every shot
      * fits one screen" about every route of both themes, for sprints. §6.153.
      */
-    'design/capture.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 7 },
+    /* 8, up one: §6.171 gave the phone Stats-with-a-year, which §6.170 gave only the web. */
+    'design/capture.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 8 },
     'design/capture-signedin.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 4 },
     'design/capture-real.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 6 },
     'design/capture-web.mjs#folds': { pattern: /shoot\(page, \{/g, least: 1 },

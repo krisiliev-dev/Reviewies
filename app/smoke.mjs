@@ -1797,7 +1797,19 @@ try {
   check('a year can be picked', /Your \d{4}/.test(review), review.slice(0, 120));
   check(
     'and it puts the year in review at the top',
-    review.indexOf(`Your ${year}`) < review.indexOf('Watched'),
+    // Against `Episodes`, not `Watched`. §6.171 took the `Watched` tile out of this state —
+    // the headline card had just said the same figure at s30, and a review that opens by
+    // restating its own contents is not a review — so the old needle was comparing against
+    // something the screen deliberately no longer draws, and `indexOf` returned -1. The
+    // claim is unchanged: the headline comes before the breakdown.
+    review.indexOf(`Your ${year}`) < review.indexOf('Episodes'),
+    review.slice(0, 140),
+  );
+  // And the tile it replaced is gone rather than merely moved: this is the one state where
+  // the card says the figure, so a `Watched` tile beside it is the repetition §6.171 removed.
+  check(
+    'and does not repeat the headline figure as a tile',
+    !/Watched/.test(review),
     review.slice(0, 140),
   );
   await audit('Year in Review', 9);

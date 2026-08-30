@@ -151,8 +151,26 @@ export default function StatsScreen() {
 
         {summary && summary.episodes > 0 && (
           <>
+            {/*
+              The headline over a chosen year, which the phone did not have at all — the web
+              has drawn one since Stats shipped and §6.170 photographed it for the first
+              time, whereupon it turned out to be repeating the tiles under it. §6.171 made
+              it a headline and gave it here: this is TV Time's REWIND, and the platform the
+              product pivoted to be was the one without it. §6.51's rule — the better
+              version wins, whichever platform had it.
+            */}
+            {year !== undefined && (
+              <View style={styles.headline}>
+                <Note>{COPY.stats.yourYear(year)}</Note>
+                <Data value={formatDuration(summary.minutes)} size="s30" style={styles.figureValue} />
+              </View>
+            )}
+
             <View style={styles.figures}>
-              <Figure label="Watched" value={formatDuration(summary.minutes)} />
+              {/* Not while the card is up: it just said this at s30. */}
+              {year === undefined && (
+                <Figure label="Watched" value={formatDuration(summary.minutes)} />
+              )}
               <Figure label="Episodes" value={String(summary.episodes)} />
               <Figure label="Titles" value={String(summary.distinctTitles)} />
               <Figure
@@ -228,6 +246,12 @@ const styles = StyleSheet.create({
   content: { padding: SCREEN.edge, gap: 16, backgroundColor: theme.ground, flexGrow: 1 },
   loading: { marginTop: 32 },
 
+  headline: {
+    backgroundColor: theme.groundRaised,
+    borderRadius: radius.plate,
+    padding: 16,
+    gap: 4,
+  },
   figures: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   figure: {
     flexGrow: 1,

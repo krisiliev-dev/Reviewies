@@ -161,21 +161,25 @@ function Summary({
 
   return (
     <div className="flex flex-col gap-5">
-      {isYearReview && (
+      {/*
+        The headline. It used to carry a third line — "across 50 episodes and 3 titles" —
+        which is two of the tiles below it written out in prose, and the tiles then repeated
+        its figure as well. §6.171: a review that opens by restating its own contents is not
+        a review. Headline here, breakdown below, neither saying the other's part.
+      */}
+      {isYearReview && year !== undefined && (
         <div className="rounded-plate bg-ground-raised p-4">
-          <Note>Your {year}</Note>
+          <Note>{COPY.stats.yourYear(year)}</Note>
           <p className="mt-1">
             <Data value={formatDuration(summary.minutes)} size="s30" />
           </p>
-          <Note className="mt-1">
-            across {summary.episodes} episodes and {summary.distinctTitles}{' '}
-            {summary.distinctTitles === 1 ? 'title' : 'titles'}
-          </Note>
         </div>
       )}
 
       <dl className="grid grid-cols-2 gap-2">
-        <Tile label="Watched" value={formatDuration(summary.minutes)} />
+        {/* Not while the card is up: it just said this at s30, and a headline restated one
+            size down is the same repetition a step quieter. */}
+        {!isYearReview && <Tile label="Watched" value={formatDuration(summary.minutes)} />}
         <Tile label="Episodes" value={String(summary.episodes)} />
         <Tile label="Titles" value={String(summary.distinctTitles)} />
         <Tile
