@@ -140,7 +140,7 @@ function Box({
 
   if (over) {
     return (
-      <View style={[styles.back, { width }]}>
+      <View style={[styles.back, { width, minHeight: Math.round(width / BOX.ratio) }]}>
         <Text style={styles.title}>{item.name}</Text>
         <Text style={styles.under}>{boxFacts(item)}</Text>
         {/* The synopsis, which is the reason the back exists. Line-limited, because a box in
@@ -234,6 +234,20 @@ const styles = StyleSheet.create({
   shelf: { gap: 24 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: BOX.gap },
   front: { gap: 6 },
+  /*
+   * At least as tall as the artwork it replaced.
+   *
+   * `05-discover-back.png` is what asked for this: the turned-over box was shorter than its
+   * neighbours' fronts, so the row it sits in collapsed and the shelf jumped under the
+   * thumb that had just pressed it. The web gets this from the grid — a grid item stretches
+   * to its row and the back is `h-full` — and the phone lays its shelf out with
+   * `flexWrap`, which has no such thing, so the floor is stated.
+   *
+   * The plate's height rather than the whole front's: the title and the line under it are
+   * one and two lines of type that grow with the reader's setting, and a minimum computed
+   * from them would be a second guess at a number `Row` already owns. The artwork is the
+   * part that is fixed, and it is most of the box.
+   */
   back: {
     gap: 6,
     padding: 12,

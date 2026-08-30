@@ -197,7 +197,7 @@ function OutNow() {
   // somebody's first minute with the app.
   if (entries.length === 0 && libraryCount !== 0) {
     return (
-      <Present importing={importing}>
+      <Present writing={importing || unmatched}>
         <div className="pt-2">
         {/* Three states, not two. "Nothing here yet … until they are matched" plus a
             button was what somebody saw after importing years of history: an empty
@@ -291,7 +291,7 @@ function OutNow() {
   }
 
   return (
-    <Present importing={importing}>
+    <Present writing={importing || unmatched}>
       {/*
         Here too, and this is the whole point of the second copy.
         *
@@ -366,7 +366,14 @@ function OutNow() {
  * equivalent was unaffected. `docs/design/architecture.md` section 9 named this screen's
  * length as the risk to look at first; this is the first place it bit.
  */
-function Present({ importing, children }: { importing?: string; children: React.ReactNode }) {
+function Present({
+  writing,
+  children,
+}: {
+  /** Truthy while the library is still arriving: an import in flight, or rows to match. */
+  writing?: string | number;
+  children: React.ReactNode;
+}) {
   /*
    * The history is asked for here rather than inside `Past`, and it is one query rather
    * than two. The scroll has to wait for the rows it is scrolling past — `useLiveQuery`
@@ -375,7 +382,7 @@ function Present({ importing, children }: { importing?: string; children: React.
    * for ever. That is the same screen as not scrolling at all and considerably harder to
    * see, so the condition is the data rather than a timer.
    */
-  const past = useLiveQuery(async () => (importing ? [] : getHistory()), [importing], undefined);
+  const past = useLiveQuery(async () => (writing ? [] : getHistory()), [writing], undefined);
   const present = useRef<HTMLDivElement>(null);
   const arrived = useRef(false);
 

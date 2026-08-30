@@ -225,7 +225,7 @@ function OutNow({ column }: { column: Column }) {
 
   if (entries.length === 0) {
     return (
-      <Present column={column} importing={importing}>
+      <Present column={column} writing={importing || unmatched}>
         <View style={styles.empty}>
           {/* Three states, not two. This screen used to say "Nothing here yet. N shows
               came from an import and have no episode lists until they are matched" —
@@ -286,7 +286,7 @@ function OutNow({ column }: { column: Column }) {
   }
 
   return (
-    <Present column={column} importing={importing}>
+    <Present column={column} writing={importing || unmatched}>
       {/*
         Here too, and this is the whole point of the second copy.
 
@@ -354,11 +354,12 @@ function OutNow({ column }: { column: Column }) {
  */
 function Present({
   column,
-  importing,
+  writing,
   children,
 }: {
   column: Column;
-  importing?: string;
+  /** Truthy while the library is still arriving: an import in flight, or rows to match. */
+  writing?: string | number;
   children: ReactNode;
 }) {
   /*
@@ -368,7 +369,7 @@ function Present({
    * on a column with nothing above it and leave the screen at the top for ever — the same
    * screen as not scrolling at all, and considerably harder to notice.
    */
-  const past = useLive(async () => (importing ? [] : getHistory()), [importing]);
+  const past = useLive(async () => (writing ? [] : getHistory()), [writing]);
   const marker = useRef<View>(null);
   const arrived = useRef(false);
 

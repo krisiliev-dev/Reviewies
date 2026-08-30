@@ -522,7 +522,18 @@ const MUST_SHOW = {
    */
   '03-upnext': /(?=[\s\S]*The Long Dark)(?=[\s\S]*Kitchen Nightshift)/,
   '04-search': /Quiet Harbour/,
-  '05-discover': /Because you watched/,
+  /*
+   * Case-insensitive, and that is a fact about the treatment rather than a loosening.
+   *
+   * `docs/design/architecture.md` section 5 made the reason a **section head** over the
+   * group of boxes it is true of, and `SECTION.section.caps` draws a section head in
+   * tracked capitals — so the page reads `BECAUSE YOU WATCHED THE LONG DARK`. `innerText`
+   * returns what `text-transform` paints, so a case-sensitive needle fails on a screen
+   * behaving exactly as the direction specifies. The DOM text underneath keeps a show's own
+   * casing, which is what a screen reader is handed, and `app/smoke.mjs` asserts *that*
+   * rather than this; here the question is only whether the shot is of a populated shelf.
+   */
+  '05-discover': /because you watched/i,
   '07-more': /Watches\s+[1-9]/,
   '10-lists': /Lists/,
   '11-people': /People/,
@@ -627,6 +638,35 @@ const USE = {
     await box.click();
     await box.fill('Quiet');
   },
+
+  /*
+   * The back of a box, taken **before** this route's own shot rather than with the other
+   * reveals at the foot of the file. Two things empty the shelf and both happen later.
+   *
+   * `pressReadings` presses every control on the screen it has just photographed — §6.184
+   * removed its cap deliberately — so on a shelf it turns boxes over and presses the Track
+   * and Watchlist behind them, which is exactly what makes a suggestion leave the feed. And
+   * `THEN` below then parks the last film, because `00-discover-empty` needs an empty feed.
+   * By the time the reveal block at the foot of the file runs there is nothing to turn over,
+   * and it said so — correctly, about a state the harness itself had removed.
+   *
+   * So it is taken here, and the shelf is re-arrived at afterwards so that `05-discover`
+   * remains a photograph of the front of the boxes rather than of one of them open.
+   */
+  '05-discover': async () => {
+    await reveal(page, {
+      out: OUT,
+      name: '05-discover-back',
+      // A box is one control with two faces, named for the title it is about — a shelf of
+      // twenty of them is twenty controls, and §6.96 is what happens when they share a name.
+      control: /More about /i,
+      arrive: 'http://localhost:4200/discover',
+      problems: unshot,
+      scrolls,
+    });
+    await page.goto('http://localhost:4200/discover');
+    await page.waitForTimeout(1200);
+  },
 };
 
 const THEN = {
@@ -637,6 +677,30 @@ const THEN = {
    * app in a state the next screen is still worth photographing in.
    */
   '05-discover': async () => {
+    /*
+     * Off the watchlist first, and this is not belt-and-braces.
+     *
+     * `pressReadings` presses **every** control on every route it photographs — §6.184
+     * removed its cap of six deliberately — and on the results list that includes the row's
+     * Watchlist button and the Save beside the note it opens. So by the time this hook runs,
+     * Quiet Harbour may already be parked, with no note: the control below is then
+     * `disabled`, the click waits thirty seconds, and the phone's whole pass dies at route
+     * five. It did.
+     *
+     * The step's purpose is `06-watchlist`'s clause — a row that carries the reason it was
+     * saved — so what it needs is to be *idempotent*, not lucky. Removing first makes it so,
+     * and it is a walk a person takes: this is the control the watchlist row offers.
+     */
+    await page.goto('http://localhost:4200/watchlist');
+    await page.waitForTimeout(1200);
+    const parked = page
+      .getByRole('button', { name: /Remove Quiet Harbour from (your )?watchlist/i })
+      .first();
+    if (await parked.count()) {
+      await parked.click();
+      await page.waitForTimeout(600);
+    }
+
     await page.goto('http://localhost:4200/discover');
     await page.waitForTimeout(800);
     const box = page.getByPlaceholder(/Shows, films/i).first();
@@ -1246,19 +1310,16 @@ await reveal(page, {
   scrolls,
 });
 
-await reveal(page, {
-  out: OUT,
-  name: '05-discover-back',
-  /*
-   * A box is one control with two faces, so the thing to press is the box — named for the
-   * title it is about, because a shelf of twenty of them is twenty controls and §6.96 is
-   * what happens when they share a name.
-   */
-  control: /More about /i,
-  arrive: 'http://localhost:4200/discover',
-  problems: unshot,
-  scrolls,
-});
+/*
+ * `05-discover-back` is **not** here, and where it is says why.
+ *
+ * It is taken inside `THEN['05-discover']`, at the top, before that hook parks the last
+ * film on the watchlist. By the time this block runs the shelf is deliberately empty — the
+ * `00-discover-empty` shot below depends on it being empty — so a reveal that arrives at
+ * `/discover` this late finds no box to turn over and says so, correctly, about a state the
+ * harness itself removed. §6.146: a case a fixture cannot produce is a case nobody has
+ * judged, and the fix is to photograph it where it exists rather than to loosen the needle.
+ */
 
 // The control that opens the note is the one that saves: on this screen, saving and
 // saying why are one act. §6.148's finding was an empty state asking for a note the phone
