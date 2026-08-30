@@ -13683,6 +13683,15 @@ It had one bug worth recording, because it is §6.179's bug in the instrument bu
 §6.179's shape: it matched `line-clamp-N` and not `truncate`, so the web's one-line clamps
 were invisible to it. The same asymmetry, one level up.
 
+> **§6.182: it was never committed, and that is the answer to "retire or widen".** This
+> paragraph and two more describe `behaviour.mjs` in the present tense; there is no
+> `design/behaviour.mjs` in the repository and there never was. It lived in a scratchpad and
+> went the way of the five other probes §6.182 built `design/measure.mjs` to stop rebuilding.
+> §6.181 had already given the verdict on what it was worth — three findings in three
+> components, all of which it reported as identical — so nothing is lost. What the record
+> should not have done is keep naming an instrument a reader could not run, for two entries,
+> including one whose subject was guards that assert a name instead of a behaviour.
+
 #### The first: nineteen call sites agreeing by accident
 
 `mobile/src/ui/theme.ts` defines `tap` and explains at length that `hitSlop` sits **on top
