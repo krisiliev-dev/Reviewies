@@ -153,23 +153,21 @@ export const EMPTY_STATES: readonly EmptyState[] = [
     screens: ['app/src/screens/EpisodeComments.tsx', 'mobile/app/comments/[targetId].tsx'],
     says: 'the conversation is sealed until your watch has synced — not empty, withheld',
     /**
-     * Registered against `19-comments-sealed` until §6.175, and that shot is of the
-     * **other** sealed state: the capture script's own assertion beside it reads
-     * `/Hidden until you watch it/`, which is `comments.unwatched`. A register entry
-     * naming a photograph of a different screen is §6.139 — a claim about the product
-     * that was never checked against the product — and it is what led to reading the
-     * branch underneath.
+     * Three sprints, three different answers, and this is the third.
+     *
+     * §6.175 found it registered against `19-comments-sealed` — a photograph of the *other*
+     * sealed state, whose capture assertion reads `/Hidden until you watch it/`. Re-pointing
+     * it meant reading the branch, and the branch could not be reached: `fetchComments`
+     * returned `gated: comments.length === 0 && !hasWatched` while both screens render
+     * `gated ? sealed : empty` only inside their `watched ?` branch. So it became
+     * `shot: null` with "the product is what stands in the way" as the §6.146 reason.
+     *
+     * §6.177 removed that reason by giving the client the fact it was missing —
+     * `watchPending`, whether *this episode's* watch is still in the outbox — and the
+     * harness the ability to produce it, by holding the `watches` table's writes. So the
+     * state is reachable, photographed, and the register says so.
      */
-    shot: null,
-    why:
-      'The branch cannot be reached. `fetchComments` returns `gated: comments.length === 0 ' +
-      '&& !hasWatched` (core/src/social/comments.ts:65), and both screens only render ' +
-      '`gated ? sealed : empty` inside their `watched ?` branch — so `hasWatched` is true ' +
-      'wherever the sentence could be drawn, and `gated` is therefore false. The state it ' +
-      'describes is real (a local watch the server has not received, whose RLS gate is ' +
-      'still shut) but nothing on the client distinguishes it from an empty conversation, ' +
-      'so somebody in it is told "Nothing here yet. Be the first." — the exact mistake this ' +
-      'sentence was written to prevent. Filed, not fixed.',
+    shot: '00-comments-syncing',
   },
   {
     copy: 'comments.unwatched',

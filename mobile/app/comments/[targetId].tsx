@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
-import { watchCount } from '@reviewies/core/data/repo';
+import { watchCount, watchPending } from '@reviewies/core/data/repo';
+import { useLive } from '../../src/useLive';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   deleteComment,
@@ -61,18 +62,27 @@ export default function CommentsScreen() {
     });
   }, [targetId]);
 
+  /*
+   * Live, and that is the point rather than an implementation detail: this goes false the
+   * instant the queue drains, and the effect below re-asks. Without it the sealed sentence
+   * would be right when the screen opened and then stay after the write had landed — a
+   * "try again in a moment" that never stops asking. The web reads it through
+   * `useLiveQuery` for the same reason. §6.177.
+   */
+  const pending = useLive(() => watchPending(targetId), [targetId]) ?? false;
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const seen = (await watchCount(targetId)) > 0;
       setWatched(seen);
-      const result = await fetchComments(targetId, seen);
+      const result = await fetchComments(targetId, seen, pending);
       setComments(result.comments);
       setGated(result.gated);
     } finally {
       setLoading(false);
     }
-  }, [targetId]);
+  }, [targetId, pending]);
 
   useEffect(() => {
     void load();

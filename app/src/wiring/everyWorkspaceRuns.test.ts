@@ -166,7 +166,9 @@ describe('every workspace', () => {
     // sentence is typed twice, and the non-vacuity clause that it is reading prose at all.
     // app 656, up two: §6.176's `copy.test.ts` pair — the tab bar and the screen title
     // named the same thing, and the single-word ratchet past the space rule.
-    core: 925, app: 656, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // core 928, up three: §6.177's three answers to "does an empty conversation mean
+    // empty" — the branch that could not be reached, and the two either side of it.
+    core: 928, app: 656, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

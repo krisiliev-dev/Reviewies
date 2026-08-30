@@ -20,6 +20,7 @@ import {
   HARNESS_SUPABASE_URL,
   NO_ROWS,
   ONE_EMPTY_LIST,
+  ROWS,
   serverAdmits,
   signIn,
   stubBackend,
@@ -340,6 +341,43 @@ await shoot(page, {
   problems: hollow,
   scrolls,
 });
+
+/*
+ * The third answer on the comments screen, and the one nothing could photograph.
+ *
+ * `19-comments-sealed` is the spoiler gate before you have watched. `20-comments-in` is the
+ * conversation once the server knows you have. Between them sits a state the product only
+ * learned to say in §6.177: **watched here, and the write is still in the outbox**, so the
+ * server correctly sends nothing and the screen must not call that an empty conversation.
+ *
+ * Reached by holding the `watches` table's writes — which is what a queue that has not
+ * drained looks like from the client — then marking episode 2 watched and walking to its
+ * conversation. `serverAdmits` is deliberately **not** called: the whole point is a gate
+ * the server has not opened yet.
+ */
+await stubBackend(page, HARNESS_SUPABASE_URL, ROWS, { holdWrites: 'watches' });
+await toTitle();
+const markTwo = page.getByRole('checkbox', { name: /^Mark season 1 episode 2 watched$/i });
+if (await markTwo.count()) {
+  await markTwo.click();
+  await page.waitForTimeout(1500);
+  const talkTwo = page.getByRole('link', { name: /^Comments on season 1 episode 2$/i });
+  if (await talkTwo.count()) {
+    await talkTwo.click();
+    await page.waitForTimeout(2500);
+    await shoot(page, {
+      out: OUT,
+      name: '00-comments-syncing',
+      mustContain: 'has not synced yet',
+      problems: hollow,
+      scrolls,
+    });
+  } else {
+    hollow.push('00-comments-syncing: no way through to episode 2’s conversation');
+  }
+} else {
+  hollow.push('00-comments-syncing: episode 2 has no mark control, so the queued state is unreachable');
+}
 
 /*
  * The add-to-list picker, again, on an account with nothing in it.

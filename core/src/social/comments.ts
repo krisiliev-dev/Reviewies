@@ -26,14 +26,54 @@ export interface Comment {
 export interface CommentsResult {
   comments: Comment[];
   /**
-   * True when nothing came back because the episode is unwatched, rather than
-   * because nobody has commented. The UI must distinguish these — "no comments yet"
-   * and "hidden until you watch it" mean very different things.
+   * True when nothing came back because the server is still withholding it, rather than
+   * because nobody has commented. The UI must distinguish these — "no comments yet" and
+   * "the gate is still shut" mean very different things.
+   *
+   * Two ways the gate is shut: the episode is unwatched, or it is watched on this device
+   * and the write has not reached the server. The second is the one §6.177 made visible.
    */
   gated: boolean;
 }
 
-export async function fetchComments(targetId: string, hasWatched: boolean): Promise<CommentsResult> {
+/**
+ * The conversation, and whether an empty answer means empty or means withheld.
+ *
+ * `watchPending` is the third fact and §6.177 added it. Before that the return read
+ * `gated: comments.length === 0 && !hasWatched`, and both screens render `gated ? sealed :
+ * empty` **inside** their `watched ?` branch — so `hasWatched` was true wherever the
+ * sentence could be drawn, `gated` was therefore false, and `COPY.comments.sealed` could
+ * not be reached at all. Somebody who had just marked an episode watched, whose write was
+ * still in the outbox, was shown *"Nothing here yet. Be the first."* over a conversation
+ * the server was deliberately withholding.
+ *
+ * ## What the client can and cannot know
+ *
+ * It cannot distinguish "no rows because nobody commented" from "no rows because the gate
+ * is shut" — both are an empty array. What it *can* know is whether this device is still
+ * holding the watch that would open the gate, and while that is true the server's silence
+ * is not evidence of anything.
+ *
+ * So the imprecision runs one way on purpose: with a watch queued and no comments, this
+ * says **sealed** when the conversation may genuinely be empty. That is the safe side.
+ * `COPY.comments.sealed` says "Try again in a moment", which is true either way while the
+ * write is queued and stops being said the moment it is not; the other error — telling
+ * somebody to be the first in a conversation that already exists — is the one with a cost.
+ */
+export async function fetchComments(
+  targetId: string,
+  hasWatched: boolean,
+  /**
+   * Required, with no default, and that is the guard.
+   *
+   * It was written `watchPending = false` first, and a plant walked through it: a screen
+   * that stops passing the third argument compiles, runs, and silently returns the wrong
+   * answer for the exact case this exists to get right. A default is a decision made on
+   * behalf of a caller that has not thought about it, and here the un-thought answer is
+   * the defect. Two callers, both of which know the fact — so let the compiler ask.
+   */
+  watchPending: boolean,
+): Promise<CommentsResult> {
   const client = getClient();
   const session = await getSession();
   if (!client || !session) return { comments: [], gated: false };
@@ -46,7 +86,7 @@ export async function fetchComments(targetId: string, hasWatched: boolean): Prom
     .order('created_at', { ascending: false })
     .limit(200);
 
-  if (error || !data) return { comments: [], gated: !hasWatched };
+  if (error || !data) return { comments: [], gated: !hasWatched || watchPending };
 
   const comments: Comment[] = data.map((row) => {
     const profile = row.profiles as { handle?: string } | { handle?: string }[] | null;
@@ -62,7 +102,7 @@ export async function fetchComments(targetId: string, hasWatched: boolean): Prom
     };
   });
 
-  return { comments, gated: comments.length === 0 && !hasWatched };
+  return { comments, gated: comments.length === 0 && (!hasWatched || watchPending) };
 }
 
 /**

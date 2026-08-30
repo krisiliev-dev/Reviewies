@@ -47,7 +47,7 @@ export const SERIES_ID = 'tmdb:tv:2';
  * carrying only the two ids renders "Nobody yet" while looking like data. §6.43's rule at
  * the wire: a fixture that does not match the query proves the screen renders nothing.
  */
-const ROWS = {
+export const ROWS = {
   profiles: [
     /*
      * A handle, not the word "you". `20-comments-in` first read "you · you", because the
@@ -221,7 +221,21 @@ export const ONE_EMPTY_LIST = {
  *   exports over this one are the empty variants, and they are the whole of §6.163's
  *   signed-in half.
  */
-export async function stubBackend(page, baseUrl, rows = ROWS) {
+/**
+ * The backend, and optionally one table whose **writes** never land.
+ *
+ * `holdWrites` is §6.177's. A watch this device has recorded and the server has not
+ * received is a real state with its own sentence — `COPY.comments.sealed` — and the design
+ * record had no photograph of it, because every stub here answers a push with 200 and the
+ * outbox drains before a screenshot can be taken. `emptyStates.ts` carried it as
+ * `shot: null` with "the branch cannot be reached" as the reason, which was true of the
+ * *product* until this sprint and is now only true of the *harness*.
+ *
+ * Refusing the POST is what a queue holding a write actually looks like from the client's
+ * side: the row stays in the outbox, `watchPending` stays true, and the screen says the
+ * conversation is sealed rather than empty. §6.57's distinction, photographed.
+ */
+export async function stubBackend(page, baseUrl, rows = ROWS, { holdWrites } = {}) {
   await page.unroute(`${baseUrl}/**`).catch(() => {});
   await page.route(`${baseUrl}/**`, async (route) => {
     const url = new URL(route.request().url());
@@ -233,6 +247,16 @@ export async function stubBackend(page, baseUrl, rows = ROWS) {
 
     const table = /^\/rest\/v1\/([a-z_]+)/.exec(path)?.[1];
     if (!table) return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+
+    // A write this device cannot get rid of. Not an error the product shows anybody: the
+    // outbox retries, and the only visible consequence is what the gated screen says.
+    if (holdWrites === table && route.request().method() !== 'GET') {
+      return route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'held by the design harness' }),
+      });
+    }
 
     let out = rows[table] ?? [];
     // The policy first, then the query — which is the order Postgres applies them in.

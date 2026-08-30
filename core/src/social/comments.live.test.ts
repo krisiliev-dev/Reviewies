@@ -84,7 +84,9 @@ live('comments (live)', () => {
 
     await postComment(EPISODE, 'The pacing in the back half finally earns the slow start.');
 
-    const result = await fetchComments(EPISODE, true);
+    // Watched, and nothing of ours is queued — this pass talks to a real backend, so the
+    // question it asks is whether the server sends the row, not what the client guesses.
+    const result = await fetchComments(EPISODE, true, false);
     expect(result.comments).toHaveLength(1);
     expect(result.comments[0].mine).toBe(true);
     expect(result.comments[0].body).toMatch(/back half/);

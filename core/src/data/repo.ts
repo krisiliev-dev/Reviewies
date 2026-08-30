@@ -1,5 +1,5 @@
 import { db } from './db.ts';
-import { enqueue, queued } from '../sync/engine.ts';
+import { enqueue, isQueued, primaryKeyOf, queued } from '../sync/engine.ts';
 import type {
   CachedEpisode,
   InternalId,
@@ -217,6 +217,35 @@ export async function unwatchLatest(targetId: InternalId): Promise<boolean> {
 /** How many times a target has been watched. 0 means never. */
 export async function watchCount(targetId: InternalId): Promise<number> {
   return db.watches.where('targetId').equals(targetId).count();
+}
+
+/**
+ * Whether a watch for this episode is still sitting in the outbox.
+ *
+ * The one fact that separates *"nobody has said anything"* from *"the server will not tell
+ * you yet"*, and nothing in the product could ask it until §6.177.
+ *
+ * The spoiler gate on comments is enforced by the server's row-level security: it sends
+ * you an episode's conversation once it knows you have watched it. Mark an episode watched
+ * and the local row lands immediately — that is the whole point of the outbox — but the
+ * server has not heard yet, so it correctly sends nothing, and the screen has no way to
+ * tell that apart from an empty conversation. It said *"Nothing here yet. Be the first."*
+ * over a conversation that exists and is being withheld, which is the exact mistake
+ * `COPY.comments.sealed` was written to prevent, with that sentence sitting unreachable
+ * two lines away. §6.175 proved it unreachable; this is what makes it reachable.
+ *
+ * Watches are events, keyed by their own id rather than by the episode, so this is a
+ * lookup per event rather than one key. An episode watched five times is five rows, and
+ * any one of them still queued means the server's answer is not final.
+ */
+export async function watchPending(targetId: InternalId): Promise<boolean> {
+  const events = await db.watches.where('targetId').equals(targetId).toArray();
+  for (const event of events) {
+    if (await isQueued('watches', primaryKeyOf('watches', event as unknown as Record<string, unknown>))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** Every episode ID watched at least once in a series. */

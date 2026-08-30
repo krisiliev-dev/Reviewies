@@ -13307,6 +13307,113 @@ The design passes have run since: `design:phone`, `design:signedin` and `design:
 with no hollow shots, and `00-addtolist-empty` is on file with its foot.
 
 
+### 6.177 The sentence about a queued watch, made reachable and then photographed
+
+Filed by §6.175, deferred by §6.176, fixed here. Taken first this sprint rather than in the
+order the brief listed it, because deferring a live defect in a spoiler guarantee a third
+time would have been the worse call.
+
+#### The defect
+
+`COPY.comments.sealed` says *"Your watch has not synced yet, so comments are still sealed.
+Try again in a moment."* It could not be drawn. `fetchComments` returned
+
+```ts
+gated: comments.length === 0 && !hasWatched
+```
+
+and both screens render `gated ? sealed : empty` **inside** their `watched ?` branch — so
+`hasWatched` is true wherever the sentence could appear, `gated` is therefore false, and
+what a person actually saw was *"Nothing here yet. Be the first."* over a conversation the
+server was deliberately withholding. The sentence's own doc comment says it exists to stop
+exactly that, two lines above the expression that made it impossible.
+
+#### The fact the client was missing
+
+The gate is the server's row-level security: it sends an episode's conversation once it knows
+you have watched it. Mark an episode watched and the local row lands immediately — the point
+of the outbox — but the server has not heard, so it correctly sends nothing, and an empty
+array is an empty array either way.
+
+What the client *can* know is whether it is still holding the write. The outbox is keyed
+`table:pk`, the same key `enqueue` writes, so the exact question is answerable exactly:
+
+- `isQueued(table, pk)` in `sync/engine.ts` — about a **row**, where `pendingCount` is about
+  the **queue**. An unrelated rating waiting to go out would have made a queue-wide answer
+  say yes, and that is not the same question.
+- `watchPending(targetId)` in `data/repo.ts` — watches are events keyed by their own id, so
+  an episode watched five times is five rows and any one still queued means the server's
+  answer is not final.
+
+The imprecision runs one way on purpose. With a watch queued and no comments this says
+**sealed** when the conversation may genuinely be empty; "try again in a moment" is true
+either way while the write is outstanding, and the other error — telling somebody to be the
+first in a conversation that already exists — is the one with a cost.
+
+#### Three things hold it, and each was planted
+
+**A test, because two sprints of prose were an argument.** §6.139: an argument about the
+product is not a measurement of it. `comments.test.ts` now asserts all three answers —
+unwatched, watched-and-synced, watched-and-queued — and reverting the expression to
+`&& !hasWatched` turns the third red.
+
+**The type system, because a default hides the defect.** The third parameter was written
+`watchPending = false` first and a plant walked straight through it: a screen that stops
+passing it compiles, runs, and silently returns the wrong answer for the exact case the
+argument exists to get right. A default is a decision made for a caller who has not thought
+about it, and here the un-thought answer *is* the bug. It is required now, and dropping it
+from either screen is `TS2554: Expected 3 arguments, but got 2`.
+
+**A live query, because the sentence has to stop being said.** `pending` is `useLiveQuery`
+on the web and `useLive` on the phone, and it is in the fetch effect's dependencies — so the
+screen re-asks the moment the queue drains. Without it the sentence would be right on arrival
+and then sit there after the write had landed: a *"try again in a moment"* that never stops
+asking.
+
+#### And the harness can produce it now, so it is photographed
+
+`emptyStates.ts` carried this as `shot: null` with "the product is what stands in the way" —
+the strongest §6.146 reason there is, and no longer true. What stood in the way after the fix
+was the *harness*: every stub answers a push with 200, so the outbox drains before a
+screenshot can be taken.
+
+`stubBackend` takes `{ holdWrites }` now, refusing non-GET requests to one table with a 503 —
+which is what a queue that has not drained looks like from the client's side. The pass marks
+season 1 episode 2 watched with `watches` held, walks to its conversation, and files
+`00-comments-syncing` with `mustContain: 'has not synced yet'`. `serverAdmits` is deliberately
+not called: the point is a gate the server has not opened.
+
+Hashed against its three neighbours before claiming it, which is §6.176's lesson applied on
+the first try rather than the second: `510a7cc7…` against `00-comments-empty`'s `398d08f9…`,
+`19-comments-sealed`'s `27ecdb53…` and `20-comments-in`'s `2a8a6e19…`. Four different
+screens.
+
+#### One thing the photograph showed, judged rather than filed
+
+The two sealed states are furnished differently. The **unwatched** gate replaces the screen —
+no composer, no effort dial. The **queued** one keeps both: *"Say something"*, the three
+effort levels, and the sentence under them.
+
+That is right, and worth saying why rather than leaving it to look like an oversight. Unwatched
+is a hard gate — you should not be reading or writing about an episode you have not seen.
+Queued is a wait: you *have* watched it, posting works, and the only thing missing is other
+people's words. The distinction had never been looked at before because the branch had never
+rendered.
+
+## What is not done, and why it is said here
+
+**The 65 single words.** Part 1 of this sprint's brief, untouched: taking the product defect
+first was the right order and it took the sprint. The list and the argument are in
+§6.176 and `SINGLE_WORD_FLOOR` still holds at 65.
+
+**The phone's half is unphotographed.** `00-comments-syncing` is the web export, which is
+what `capture-signedin.mjs` drives. The phone runs the same `fetchComments` and the same
+`useLive` shape, and `copy.test.ts` holds the two screens to the same sentence — but that is
+an argument again, and this entry is about the difference between those.
+
+**Seventy-one shots are unread**, unchanged. Sprint 87 read one, and it was one it made.
+
+
 
 ## 7. What is still not known
 

@@ -3,7 +3,7 @@ import { Choice } from '../ui/Choice';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../data/db';
-import { watchCount } from '@reviewies/core/data/repo';
+import { watchCount, watchPending } from '@reviewies/core/data/repo';
 import { syncConfigured } from '@reviewies/core/sync/auth';
 import {
   EFFORT_LEVELS,
@@ -44,17 +44,24 @@ export function EpisodeComments() {
     [episode?.seriesId],
   );
   const watched = useLiveQuery(async () => (await watchCount(targetId)) > 0, [targetId], false);
+  /*
+   * Live, and that is the point rather than an implementation detail: this is false the
+   * instant the queue drains, and the effect below re-asks. Without it the sealed sentence
+   * would be right when the screen opened and then stay on the screen after the write had
+   * landed — a "try again in a moment" that never stops asking. §6.177.
+   */
+  const pending = useLiveQuery(() => watchPending(targetId), [targetId], false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await fetchComments(targetId, watched);
+      const result = await fetchComments(targetId, watched, pending);
       setComments(result.comments);
       setGated(result.gated);
     } finally {
       setLoading(false);
     }
-  }, [targetId, watched]);
+  }, [targetId, watched, pending]);
 
   useEffect(() => {
     void load();

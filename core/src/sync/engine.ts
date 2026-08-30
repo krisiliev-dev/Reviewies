@@ -217,6 +217,24 @@ export async function pendingCount(): Promise<number> {
   return outbox().count();
 }
 
+/**
+ * Whether one particular row is still waiting to go out.
+ *
+ * `pendingCount` answers about the **queue**; this answers about a **row**, and the
+ * difference is what §6.177 needed. A screen asking "has the server heard about this
+ * episode yet" cannot use a queue-wide number: an unrelated rating sitting in the outbox
+ * would make it say yes, and an empty queue with this row already sent says no for the
+ * wrong reason. The outbox is keyed `table:pk` — the same key `enqueue` writes — so the
+ * exact question is answerable exactly.
+ *
+ * A `false` here does **not** mean the server has the row. It means this device is not
+ * still holding it: a push that failed and was set aside lives in `rejected`, which is
+ * `rejectedCount`'s subject and a different sentence.
+ */
+export async function isQueued(table: SyncTable, pk: string): Promise<boolean> {
+  return (await outbox().get(`${table}:${pk}`)) !== undefined;
+}
+
 /** How many writes the server refused and this device is still holding. */
 export async function rejectedCount(): Promise<number> {
   return rejected().count();

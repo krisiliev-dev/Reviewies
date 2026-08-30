@@ -3,6 +3,7 @@ import {
   EFFORT_LEVELS,
   MAX_IMAGE_BYTES,
   commentBody,
+  fetchComments,
   filterByEffort,
   uploadCommentImage,
   type Comment,
@@ -23,6 +24,63 @@ const REVIEW = make({
   body: 'The pacing in the back half finally earns the slow start, and the reveal recontextualises the whole cold open. '.repeat(
     2,
   ),
+});
+
+/**
+ * The gate's three answers, and the branch that could not be reached.
+ *
+ * §6.175 read `gated: comments.length === 0 && !hasWatched` against two screens that render
+ * `gated ? sealed : empty` only inside a `watched ?` branch, and concluded the sealed
+ * sentence was unreachable. That was an argument, and §6.139 is that an argument about the
+ * product is not a measurement of it — so this is the measurement, and it is what says the
+ * §6.177 fix works rather than a paragraph saying so.
+ *
+ * `fetchComments` needs a client and a session, so both are stubbed. What is being checked
+ * is the three-way decision, not Supabase.
+ */
+describe('whether an empty answer means empty or withheld', () => {
+  const noRows = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) }),
+        }),
+      }),
+    }),
+  };
+
+  function stub() {
+    vi.spyOn(auth, 'getClient').mockReturnValue(noRows as unknown as ReturnType<typeof auth.getClient>);
+    vi.spyOn(auth, 'getSession').mockResolvedValue({
+      user: { id: 'u1' },
+    } as unknown as Awaited<ReturnType<typeof auth.getSession>>);
+  }
+
+  it('says withheld when the episode is unwatched', async () => {
+    stub();
+    expect((await fetchComments('e1', false, false)).gated).toBe(true);
+  });
+
+  it('says empty when it is watched and the server has heard', async () => {
+    stub();
+    // The invitation, not the status: nobody has said anything and that is the truth.
+    expect((await fetchComments('e1', true, false)).gated).toBe(false);
+  });
+
+  it('says withheld when it is watched here and the write is still queued', async () => {
+    stub();
+    /*
+     * The branch §6.175 proved unreachable. Before the third argument existed this
+     * returned `false` — "Nothing here yet. Be the first." over a conversation the
+     * server was deliberately withholding, which is the exact mistake
+     * `COPY.comments.sealed` was written to prevent.
+     *
+     * It errs towards *sealed* on purpose: with a watch queued the client cannot tell an
+     * empty conversation from a shut gate, and "try again in a moment" is true either
+     * way while the write is outstanding.
+     */
+    expect((await fetchComments('e1', true, true)).gated).toBe(true);
+  });
 });
 
 describe('effort filter', () => {
