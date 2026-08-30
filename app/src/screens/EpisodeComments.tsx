@@ -109,7 +109,10 @@ export function EpisodeComments() {
         Back
       </button>
 
-      <Masthead level="sub">{series?.name ?? 'Comments'}</Masthead>
+      {/* `page`, for the reason `TitleDetail.tsx` states at length: this screen's only
+          heading was a depth-2 one, and on the web there is no navigator above it holding
+          the screen's name at depth 1. */}
+      <Masthead level="page">{series?.name ?? 'Comments'}</Masthead>
       {episode && (
         <Note>
           {[episodeCode(episode.season, episode.number), episodeName(episode.name, episode.number)]
