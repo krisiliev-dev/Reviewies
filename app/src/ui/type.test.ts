@@ -194,12 +194,21 @@ describe('the type scale', () => {
     for (const file of [...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
       for (const m of read(file).matchAll(/letterSpacing: [^;\n]+/g)) {
         /*
-         * `tracking(<a size>, track.tNN)`. The size may be `text.s12` at a screen, or a
-         * component's own table entry — `SECTION.section.size`, which is `text.s12` one
-         * indirection along. Requiring the literal would have made `Section` illegal for
-         * doing the thing this clause is for.
+         * `tracking(<a size>, <a tracking>)`. Either may be a token — `text.s12`,
+         * `track.t83` — or a component's own table entry one indirection along:
+         * `SECTION.section.size` *is* `text.s12`, and `SECTION.section.track` *is*
+         * `track.t83`. Requiring the literal would have made `Section` illegal for doing
+         * the thing this clause is for.
+         *
+         * The second half of that was missing, and it is why `SECTION.section.track` and
+         * `SECTION.group.track` sat in the table for a sprint with no reader on either
+         * platform: `mobile/src/ui/Section.tsx` hardcoded `track.t83` beside the entry
+         * that states it, and a renderer that read the entry instead **failed this
+         * clause**. A guard written to stop a hand-typed `letterSpacing: 1` was, one
+         * argument along, requiring one. Same allowance as the size, for the same reason.
          */
-        if (!/tracking\((?:text\.s\d+|[A-Z][\w.]*\.size), track\.t\d+\)/.test(m[0])) {
+        const TRACKED = /tracking\((?:text\.s\d+|[A-Z][\w.]*\.size), (?:track\.t\d+|[A-Z][\w.]*\.track)\)/;
+        if (!TRACKED.test(m[0])) {
           phone.push(`${file}: ${m[0]}`);
         }
       }
@@ -304,10 +313,24 @@ describe('the type scale', () => {
      * swept `app/src/screens` and missed a screen title living in `app/src/ui`.
      */
     expect(read('app/src/ui/ErrorBoundary.tsx')).toContain('<Masthead level="page">');
-    const title = declarationOf(read('mobile/app/_layout.tsx'), 'title');
-    expect(title, 'the crash screen has no title style').toBeDefined();
-    expect(title).toContain('fontSize: text.s24');
-    expect(title).toContain('fontFamily: type.family.title.name');
+    /*
+     * And the phone, which this clause used to check as a `StyleSheet` entry: `title` was
+     * `theme.ink` at `text.s24` in the title face — `MASTHEAD.page`'s three facts, written
+     * out beside the table that states them, and dressing both takeover screens in the
+     * file. Holding the copy to the right numbers was the best a source clause could do
+     * while the copy existed; it also meant the two platforms agreed by transcription, and
+     * the `<Text>` carrying it announced as ordinary prose because nothing on this platform
+     * gives a heading its role for free.
+     *
+     * `masthead.test.ts`'s sweep found it the moment that sweep scanned this platform — it
+     * had said "either platform" while iterating `app/src` twice. The answer is the same
+     * component the web half of this clause names, so this half names it too.
+     */
+    const layout = read('mobile/app/_layout.tsx');
+    expect(layout, 'the phone crash screen stopped using the component')
+      .toContain('<Masthead level="page">');
+    expect(declarationOf(layout, 'title'), 'the hand-written title style is back')
+      .toBeUndefined();
   });
 
   it('has a call site for every step, so the web actually generates them', () => {

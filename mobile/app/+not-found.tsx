@@ -3,7 +3,6 @@ import { COPY } from '@reviewies/core/copy';
 import { Stack, usePathname } from 'expo-router';
 import { theme } from '../src/ui/theme';
 import { Button } from '../src/ui/Button';
-import { text, type } from '@reviewies/core/tokens';
 import { Note } from '../src/ui/Note';
 
 /**
@@ -17,14 +16,36 @@ import { Note } from '../src/ui/Note';
  *
  * The web app's equivalent is `app/src/screens/NotFound.tsx`, and the two say the same
  * thing on purpose.
+ *
+ * ## Where this screen's name is drawn, which took reading the export to settle
+ *
+ * The web draws it with `<Masthead level="page">` — a screen's own name, at depth 1 —
+ * and `app/smoke.mjs` requires exactly that: `arrivedAt` waits for a **level-1 heading**
+ * named "Nothing at this address", and it is the instrument the whole navigation half of
+ * that suite is calibrated against.
+ *
+ * This screen used to draw a second name under a first. Served the export and read the
+ * document: `/+not-found` rendered one heading, the navigator's
+ * `<h1 aria-level="1">Not found</h1>` at 20px in ArchivoNarrow-SemiBold, and
+ * "Nothing at this address" beneath it was a plain `<Text>` — announced as ordinary
+ * prose, in a hand-copy of `MASTHEAD.sub`'s size and face, on a screen whose whole job
+ * is to say what happened.
+ *
+ * So the `page` slot was already taken, and taken by the wrong words. On this platform a
+ * pushed screen's name is the navigator's title — `stats.tsx`, `lists.tsx` and the other
+ * seven all pass `COPY` straight to `Stack.Screen` and draw nothing in the body — and
+ * `_layout.tsx` already sets that header in `MASTHEAD.sub`'s face and size. The fix is to
+ * name it there, with the same constant the web names it with, and stop drawing it twice.
+ * `'Not found'` was a bare literal besides, the only screen name in the app not coming
+ * from `COPY`; measured, `COPY.app.notFound` sets 178px wide in a 390px header, so it
+ * fits with a back chevron and room over.
  */
 export default function NotFoundScreen() {
   const pathname = usePathname();
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ title: 'Not found' }} />
-      <Text style={styles.title}>{COPY.app.notFound}</Text>
+      <Stack.Screen options={{ title: COPY.app.notFound }} />
       <Note>
         <Text style={styles.path}>{pathname}</Text> is not a screen in this app. It may be
         an old link, or a typo.
@@ -47,6 +68,5 @@ export default function NotFoundScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ground, padding: 20, gap: 12 },
-  title: { color: theme.ink, fontSize: text.s20, marginTop: 8, fontFamily: type.family.title.name },
   path: { color: theme.ink },
 });
