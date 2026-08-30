@@ -202,7 +202,11 @@ describe('every workspace', () => {
     // box sweep, which is the one that pays — a sibling of `UTILITY` for the box a thing is
     // drawn in rather than the space between things, five defects deep including a 16px
     // WCAG target the old suite passed without a murmur.
-    core: 928, app: 688, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 689: §6.187 complete, six worktrees. The last one added a vertical-cut clause and
+    // took `type.test.ts`'s away, because §6.183's proposed "no line box smaller than its
+    // font size" becomes vacuous by construction once the simulation is faithful — a clause
+    // declined with its reason written down rather than added to make a number move.
+    core: 928, app: 689, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

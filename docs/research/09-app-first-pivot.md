@@ -14889,12 +14889,18 @@ did not grow with its glyphs — it takes descenders and the last line first —
 about wrapping. It appears in a list row and a navigation row, two unrelated screens, which points
 at shared machinery rather than at either screen.
 
-That is task #222's subject, arriving from the opposite direction. The oldest open item in the
-queue asked whether the phone's leading and tracking should answer `useWindowDimensions().fontScale`,
-and offered "leave it, and say why" as a live option on condition that somebody **measure** the
-point at which text actually collides. A device has now measured it: it clips at maximum Dynamic
-Type on the product's home screen. That option is closed by observation rather than by argument,
-and the agent working the question was told so mid-flight.
+I read that as task #222's subject and sent it to the agent working that question as evidence
+that its "leave it and say why" option was closed. **I was wrong, and the agent proved it.**
+`Row.tsx` is the shared component both screens import, and it sets **no `lineHeight` at all** —
+so the leading question could not have caused this and scaling the leading could not have fixed
+it. What remains after eliminating a `minHeight` (a minimum cannot crop) and an `overflow`
+(there is none in the file) is `numberOfLines`: iOS measures a line-limited `Text` as TextKit's
+*used* rect, a typographic line box rather than a glyph box, so a descender past it is cropped
+bottom-first by a margin that grows with point size.
+
+That is elimination plus a source path and **not a measurement**, and no repair was taken on it,
+because the obvious fix needs a threshold and nothing here measures where the threshold should
+be. What would settle it is one more device answer: which element, and at which step it starts.
 
 ### What the phone could not answer, and said so
 
@@ -15036,12 +15042,61 @@ A StyleSheet entry nothing wears is invisible to `tsc` and to `oxlint` both, so 
 going to say it either. `field.test.ts` had already learned this and written it down: *"And it has
 to be worn."* The clause checks declared **and** worn now, and both phone editors plant red.
 
+### The premise of the oldest question in the queue was false
+
+Task #222 has been open since §6.113 and §7 has carried its statement through a dozen entries:
+*"React Native does not scale `lineHeight` or `letterSpacing` by `fontScale` however they were
+arrived at."* The agent sent to decide it read React Native 0.86's own text layer in
+`node_modules` rather than the record, and the sentence is wrong.
+
+| | iOS (Paper and Fabric) | Android | react-native-web |
+| --- | --- | --- | --- |
+| `lineHeight` x fontScale | **yes** | **yes**, via `toPixelFromSP` | no — emitted as `px` |
+| `letterSpacing` x fontScale | no — raw `NSKernAttributeName` | **yes** | no |
+
+§6.183 measured `mobile/dist` in Chromium and wrote a fact about **react-native-web** down as a
+fact about **React Native**. `Dimensions.fontScale` is pinned to 1 there, which is also why the
+proposed fix would have been unobservable from here.
+
+**And the proposed fix was the damaging one.** Scaling at the call site ships `leadingOf(14,
+1.43)`'s 20 as 40, and the platform then draws it at **80** around 28pt glyphs. Every check in
+this repository would have stayed green, because every one of them runs against the renderer that
+does not scale. Three defensible options were on the table and the two that looked like work were
+both worse than doing nothing.
+
+Corrected in the instruments rather than only in the prose, which is the part that lasts:
+`design/measure.mjs` and `mobile/smoke.mjs` scale the line box with the type now, because a
+device's does. Measured through that correction, the phone's `lead` — line box over rendered
+size — holds at **1.417–1.429 at 100%, 200% and 300%**, zero crowded and zero cut across six
+routes, against a web control at 1.43–1.50. The two platforms agree. Uncorrected, which is what
+the export actually does, the same census reads **0.708 at 200%** and **0.472 at 300%**, with a
+`Note` at 42pt in a 20pt box overlapping its neighbour by 22 points — the number §6.183 saw.
+
+The one real gap is a platform wide: iOS hands `letterSpacing` to `NSKernAttributeName` raw, so
+a tracked eyebrow falls from 0.083em to 0.042 at 200%. Left alone with the argument written
+down, because the unconditional repair doubles it on Android.
+
+What *did* want repairing was a box rather than a line. `TAB_BAR_HEIGHT` is a sum of six terms
+and exactly one of them — the label's line box — is in a unit the reader can change, so the bar
+held at 62 while its contents wanted 79. That one term scales now.
+
+**Two guards were wrong on a correct change, again**, which is the third sprint running.
+`tabIcon.test.ts` was pinned to `const TAB_BAR_HEIGHT =` and went red on the repair; the rule was
+fixed rather than the file. And the agent's own first regex `[^,;}\n]+` **stopped at the comma
+inside `leadingOf(a, b)`** and passed a live plant, which a bracket-balancing scan replaced.
+
+**A third was found by re-planting it here.** The tab bar clause forbade three *named* terms from
+scaling; planting `space.s8 * fontScale` — a padding term the list does not name — scaled a second
+part of the bar and the clause passed. A guard that forbids by name permits everything it did not
+think of, on a sum whose terms a later sprint will change. It counts now: one `* fontScale` in the
+expression, and it is the label's.
+
 ## What is not done, and why it is said here
 
-**Two of the six worktrees have not landed as this is written** — task #222's `fontScale`
-decision, now carrying the device's clipping evidence, and the Tailwind box-utility sweep. This
-entry covers four agents and the phone. It will be extended rather than replaced; a §6.187 that
-silently grows is worse than one that says it is unfinished, so this paragraph is the marker.
+**All six worktrees landed, and this entry was written twice.** The paragraph here previously
+said two were outstanding and that the entry would be extended rather than replaced; it has been,
+and the marker is left in place rather than deleted, because an entry that grows silently is
+exactly what §6.186 is about.
 
 **Seven of the phone's eleven questions are still `NOT YET CHECKED`**, and the file says so at
 each heading rather than in a summary. `hitSlop`, the six faces, Watching Mode with the screen
@@ -15096,7 +15151,7 @@ and which single claim in this document could not be checked at all:
   confirm they *arrive* runs in a browser, where the `@font-face` is served from the same
   origin and cannot really fail; the phone's `useFonts` gate has never executed outside the
   react-native-web export, which does not use it. Two further things are unmeasured and both
-  are the direction's own warnings. **The first was marked closed and is not**: §6.183 measured
+  are the direction's own warnings. ~~**The first was marked closed and is not**: §6.183 measured
   it in the export and the phone's line box holds at 17 while a tab label's glyphs go from 12
   to 24. The sentence here said the eleven call sites "derive points from the *scaled* size";
   they derive from the **token** size. `tracking(text.s12, track.t83)` and
@@ -15104,10 +15159,29 @@ and which single claim in this document could not be checked at all:
   `StyleSheet.create` literal, and are fixed at module load — so a point value computed that
   way is the same point value it was offered as the alternative to, and React Native does not
   scale `lineHeight` or `letterSpacing` by `fontScale` however they were arrived at. What
-  §6.113 actually bought is derivability, which is worth having and is a different claim. The
-  web is the half that was right, because CSS gets an em and a ratio and computes against the
-  rendered size. Whether the phone should compute against `useWindowDimensions().fontScale`
-  instead is a decision across roughly twenty call sites that nobody has taken. The second
+  §6.113 actually bought is derivability, which is worth having and is a different claim.~~
+
+  **Retracted in §6.187, and it is the premise that was wrong rather than the arithmetic.**
+  React Native 0.86 **does** multiply a stored `lineHeight` by the reader's scale — iOS in
+  both renderers (`RCTTextAttributes.mm`, `RCTAttributedTextUtils.mm`), Android through
+  `toPixelFromSP` — so `leadingOf(14, 1.43)`'s 20 is 40 at 200% on a device and the collision
+  three files promised immunity from was never available to happen. What holds the line box at
+  17 is **`react-native-web`**, which emits the value as `px` and pins `Dimensions.fontScale`
+  to 1: the renderer §6.183 measured, and the renderer every suite and every design pass here
+  drives. A fact about a renderer, written down as a fact about the product, for the second
+  time in a fortnight.
+
+  The proposed repair would have been the damaging one. Scaling at the call site ships 40 and
+  the platform draws it at **80**, around 28pt glyphs — and every check in this repository
+  would have stayed green, because they all run against the renderer that does not scale.
+  Corrected in the instruments rather than only in the prose: `design/measure.mjs` and
+  `mobile/smoke.mjs` scale the line box with the type now, and the phone's leading holds at
+  1.417–1.429 through 300% exactly as the web's does.
+
+  **The residue is one platform wide and is left alone deliberately.** iOS hands
+  `letterSpacing` to `NSKernAttributeName` raw where Android scales it, so a tracked eyebrow
+  falls from 0.083em to 0.042 at 200% and 0.028 at 300%. The unconditional repair doubles it
+  on Android. The second
   warning stands: Japanese falls to
   the platform face by decision, which is a decision about how a mixed Latin/Japanese title
   looks that nobody has looked at.

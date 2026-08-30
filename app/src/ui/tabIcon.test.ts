@@ -243,12 +243,24 @@ describe('the tab bar’s marks', () => {
     for (const part of ['TAB_MARKER.thickness', 'TAB_MARKER.gap', 'TAB_ICON_SIZE', 'LABEL_LINE'])
       expect(height, `the bar’s height does not count ${part}`).toContain(part);
 
-    // The label's term answers the reader's setting; the four device-pixel terms do not.
+    /*
+     * The label's term answers the reader's setting, and **exactly one term does**.
+     *
+     * Written first as a denylist of the three named device-pixel terms, which §6.187
+     * re-planted after the merge and walked straight through: adding `space.s8 * fontScale`
+     * — a padding term the list does not name — scaled a second part of the bar and the
+     * clause passed. A guard that forbids by name permits everything it did not think of,
+     * and this height is a sum whose terms a later sprint will change.
+     *
+     * Counting instead. One `* fontScale` in the expression, and it is the label's. That
+     * states the rule the paragraph above states in prose, and it does not need a list.
+     */
     expect(height, 'the label’s line is not scaled, so the bar cannot hold it')
       .toMatch(/LABEL_LINE \* fontScale/);
-    for (const fixed of ['TAB_MARKER.thickness', 'TAB_MARKER.gap', 'TAB_ICON_SIZE'])
-      expect(height, `${fixed} is a device pixel and must not be scaled`)
-        .not.toMatch(new RegExp(`${fixed.replace('.', '\\.')} \\* fontScale`));
+    expect(
+      height.match(/\* fontScale/g) ?? [],
+      'more than the label’s line grows with the reader’s setting, so the bar grows twice',
+    ).toHaveLength(1);
   });
 
   it('is one mark, not a second name for the reader to arrow past', () => {
