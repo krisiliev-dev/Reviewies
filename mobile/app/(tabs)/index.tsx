@@ -225,7 +225,7 @@ function OutNow({ column }: { column: Column }) {
 
   if (entries.length === 0) {
     return (
-      <Present column={column}>
+      <Present column={column} importing={importing}>
         <View style={styles.empty}>
           {/* Three states, not two. This screen used to say "Nothing here yet. N shows
               came from an import and have no episode lists until they are matched" —
@@ -286,7 +286,7 @@ function OutNow({ column }: { column: Column }) {
   }
 
   return (
-    <Present column={column}>
+    <Present column={column} importing={importing}>
       {/*
         Here too, and this is the whole point of the second copy.
 
@@ -336,7 +336,31 @@ function OutNow({ column }: { column: Column }) {
  * layout event reports is already relative to the `ScrollView`'s content. `animated: false`
  * because an arrival that slides is a screen that moves while you are reading it.
  */
-function Present({ column, children }: { column: Column; children: ReactNode }) {
+/**
+ * ## Not while the library is being written
+ *
+ * `importing` is not a nicety and it is not only about cost. §6.80's third state is
+ * "still working", and a past drawn over an import is a list that reorders under you at
+ * three hundred rows a second — a *history* whose whole claim is that it is the order
+ * things happened in, redrawn faster than anybody can read it.
+ *
+ * The cost is real too, and it is the phone's. `useLive` re-runs **every** query in the
+ * app on any write, because expo-sqlite's change listener fires per statement — its own
+ * header says so — so a 266-row import ran `getHistory` a few hundred times, each walking
+ * forty watches and their titles. `mobile/smoke.mjs` measured the result: the import stopped
+ * landing inside the ten seconds that suite samples for, on a build where the web's
+ * equivalent was unaffected. `docs/design/architecture.md` section 9 named this screen's
+ * length as the risk to look at first; this is the first place it bit.
+ */
+function Present({
+  column,
+  importing,
+  children,
+}: {
+  column: Column;
+  importing?: string;
+  children: ReactNode;
+}) {
   /*
    * One query, here, rather than one inside `Past` and another to decide when to scroll.
    * The condition for the scroll is the data and not a timer: `useLive` answers on a later
@@ -344,7 +368,7 @@ function Present({ column, children }: { column: Column; children: ReactNode }) 
    * on a column with nothing above it and leave the screen at the top for ever — the same
    * screen as not scrolling at all, and considerably harder to notice.
    */
-  const past = useLive(() => getHistory(), []);
+  const past = useLive(async () => (importing ? [] : getHistory()), [importing]);
   const marker = useRef<View>(null);
   const arrived = useRef(false);
 

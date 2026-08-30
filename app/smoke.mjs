@@ -18,6 +18,16 @@
  * Screenshots land in ./screenshots.
  */
 import { chromium } from 'playwright';
+/*
+ * The bar's own table, read rather than counted by hand.
+ *
+ * `docs/design/architecture.md` section 2 took the bar from five tabs to four, and the
+ * clause below said `>= 5` — a floor written when five was the number, which is a check
+ * that cannot notice a tab going missing in either direction. Node strips the types, so
+ * this file can read the table both platforms draw from; `>= 5` was only ever a literal
+ * because nothing had tried.
+ */
+import { TAB_BAR } from '@reviewies/core/ui/tabIcon';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { strToU8, zipSync } from 'fflate';
@@ -822,7 +832,7 @@ try {
   );
   check(
     'and only that one carries it',
-    tally.tabs >= 5 && tally.ruled.length === 1,
+    tally.tabs === TAB_BAR.length && tally.ruled.length === 1,
     `${tally.ruled.length} of ${tally.tabs} tabs ruled`,
   );
 
@@ -941,7 +951,10 @@ try {
   const missing = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   check('an unknown address says so', /Nothing at this address/i.test(missing), missing.slice(0, 110));
   check('and names the address that was asked for', /\/not-a-screen/.test(missing));
-  await audit('the not-found screen', 8);
+  // Seven, not eight: the bar is four tabs rather than five since
+  // `docs/design/architecture.md` section 2, and this screen is the bar plus the skip link
+  // plus its own two controls. Lowered to the exact count, not to a number that passes.
+  await audit('the not-found screen', 7);
   await noGhosts('the not-found screen');
   // And it leads somewhere, rather than being a dead end with a message on it.
   await page.getByRole('link', { name: 'Go to Up Next' }).click();
@@ -975,12 +988,41 @@ try {
   // actually be on it, or the probe is reading a blank page again.
   await page.goto(new URL('settings', BASE + '/').href, { waitUntil: 'networkidle' });
   const accountText = await page.locator('body').innerText();
+  /*
+   * The same defect twice, and the second time it was wearing the first one's fix.
+   *
+   * `NotFound.tsx`'s header records what this probe used to do: ask an address the web does
+   * not have, read an empty body, find no "not configured on this build" in it, and answer
+   * **configured** on every build there has ever been. Three checks branch on it, and on a
+   * credential-free build they assert the wrong half of each and fail a correct app.
+   *
+   * The address was fixed and the sentence was not. `not configured on this build` is
+   * `COPY.comments.needsAccount` — it belongs to the *conversation* screen and has never
+   * been renderable here — so the answer was still "configured" unconditionally. And the
+   * non-vacuity clause added at the same time could not see that: `AccountPanel`'s
+   * unconfigured branch ends *"…to sync across devices"*, so a case-insensitive
+   * `/Sync across devices/i` matches the very branch it was meant to rule out. Both halves
+   * pointed the same way, which is why it read as green.
+   *
+   * Found on a worktree with no `.env`, where the app correctly declined to open a
+   * conversation it has no account for and the suite waited five seconds for a navigation
+   * it had talked itself into expecting.
+   *
+   * Stated as the two branches now, and as a claim that they are two: exactly one of them
+   * is on the screen, and which one is the answer. `Not configured.` is the unconfigured
+   * branch's own first sentence; the heading `Sync across devices` is the configured
+   * branch's, and a heading is not prose, so the phrase at the end of a sentence cannot
+   * answer for it.
+   */
+  const unconfigured = /Not configured\. Reviewies works fully offline/i.test(accountText);
+  const offersSignIn =
+    (await page.getByRole('heading', { name: 'Sync across devices' }).count()) > 0;
   check(
-    'the sync probe is reading the account panel',
-    /Sync across devices/i.test(accountText),
-    accountText.replace(/\s+/g, ' ').slice(0, 90),
+    'the sync probe can tell the two builds apart',
+    unconfigured !== offersSignIn,
+    `not-configured: ${unconfigured}, sign-in: ${offersSignIn} — ${accountText.replace(/\s+/g, ' ').slice(0, 90)}`,
   );
-  const configured = !/not configured on this build/i.test(accountText);
+  const configured = !unconfigured;
   console.log(`(build is ${configured ? 'configured for sync' : 'credential-free'})`);
   await page.goto(BASE, { waitUntil: 'networkidle' });
 
@@ -1503,7 +1545,33 @@ try {
   await page.getByRole('link', { name: /Up Next/ }).click();
   await page.waitForSelector('text=The Long Dark', { timeout: 5000 });
   const beforeScrobble = await page.locator('text=/more episodes/').first().textContent();
-  const nextUp = (await page.locator('body').innerText()).match(/S1E(\d+)/)?.[1];
+  /*
+   * Which episode is *next*, taken from the row's own control rather than from the page.
+   *
+   * This read the first `S1E` in `body.innerText`, and `docs/design/architecture.md`
+   * section 3 put the past above the present — so the first episode code on the screen is
+   * now the **oldest thing you have already watched**. The scrobble was posted for S1E1,
+   * the core recorded it correctly as a rewatch, `remaining` did not move, and the check
+   * read `16 → 16` as a broken extension channel.
+   *
+   * It was not: the channel is fine, and a walk that names the wrong episode gets the right
+   * answer to the wrong question. Established by posting for the episode the ring actually
+   * offers, which moves the count.
+   *
+   * The ring is the needle because it is the only thing on the screen that *is* the next
+   * episode — `Mark The Long Dark S1E2 watched`, from `CrossOff`'s accessible name. Page
+   * text is a claim about where you are looking; a control's name is a claim about what it
+   * does, which is §6.74's distinction and the reason `arrivedAt` reads a heading rather
+   * than a word.
+   */
+  const nextName = await page
+    .getByRole('checkbox', { name: /^Mark The Long Dark S\d+E\d+ watched$/ })
+    .first()
+    .getAttribute('aria-label');
+  const nextUp = nextName?.match(/S1E(\d+)/)?.[1];
+  // Non-vacuity, said out loud: `postMessage` with `episode: NaN` marks nothing at all and
+  // the count would not move either, which is the same reading as a channel that is dead.
+  check('the ring names the episode a scrobble should be about', Boolean(nextUp), nextName ?? 'no ring');
 
   await page.evaluate((episode) => {
     window.postMessage(
@@ -1551,7 +1619,8 @@ try {
 
   // --- Watchlist with notes --------------------------------------------------
   // Already out of Watching Mode: the scrobble section above left it to read Up Next.
-  await page.getByRole('link', { name: /Search/ }).click();
+  // `Discover`, because that is where the field is — `architecture.md` section 5.
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   await page.getByRole('button', { name: 'Add Quiet Harbour to your watchlist' }).click();
@@ -1582,7 +1651,7 @@ try {
   // --- Spoiler-free quick log --------------------------------------------------
   // Logging a film must not require opening its page, which is covered in other
   // people's ratings and its own synopsis.
-  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
   const beforeUrl = page.url();
@@ -1668,7 +1737,7 @@ try {
   // --- A finished show completes itself ----------------------------------------
   // r/serializd, about a competitor: "I have over 100 shows stuck in Currently
   // Watching." Kitchen Nightshift is the ended fixture.
-  await page.getByRole('link', { name: /Search/ }).click();
+  await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('kitchen');
   await page.waitForSelector('text=Kitchen Nightshift', { timeout: 5000 });
   await page.getByRole('button', { name: 'Track Kitchen Nightshift' }).click();
@@ -1737,7 +1806,21 @@ try {
   await page.screenshot({ path: OUT + '10-upcoming.png' });
 
   // --- Discover --------------------------------------------------------------
+  /*
+   * Cleared, first, and this is not tidying.
+   *
+   * `architecture.md` section 5 made the field and the shelf two states of one surface, and
+   * three sections above this one search from here and leave a query behind — so a walk that
+   * arrives and starts measuring is measuring **the results list** while every clause below
+   * it is written about the shelf. Nothing said so: the screen was correct, the checks were
+   * about a different half of it, and the failure read as "Discover suggests nothing".
+   *
+   * A state a harness carries in from an earlier step is the shape `THEN`'s own comment
+   * records in `design/capture.mjs` — "the harness using the app has to leave the app in a
+   * state the next screen is still worth photographing in" — arriving from the other end.
+   */
   await page.getByRole('link', { name: /Discover/ }).click();
+  await page.getByPlaceholder('Shows, films, anime…').fill('');
   await page.waitForSelector('text=Nothing you have already watched', { timeout: 5000 });
   await page.waitForTimeout(800);
   // Check the suggested titles specifically, not the whole page: a tracked show
@@ -1749,13 +1832,26 @@ try {
   // *exclusion* check went green on zero rows while the suggestion check went red. A
   // locator built out of styling classes breaks whenever the styling moves, and this one
   // broke into a pass. The name is what the row promises a reader; it is also stable.
-  const suggestedTitles = (await page.getByRole('link', { name: /^Open / }).all()).length
-    ? await Promise.all(
-        (await page.getByRole('link', { name: /^Open / }).all()).map(async (row) =>
-          ((await row.getAttribute('aria-label')) ?? '').replace(/^Open /, ''),
-        ),
-      )
-    : [];
+  /*
+   * A box, not a row, and a button rather than a link.
+   *
+   * `architecture.md` section 5 turned the feed into a shelf: a box is **one control with
+   * two faces**, named `More about {title}` — the front is a press that turns it over and
+   * the two verbs live on the back, because a shelf of twenty rows each carrying Track and
+   * Watchlist is forty controls with two names between them.
+   *
+   * So `Open {title}` names nothing here. The locator's own comment records this pair going
+   * green-on-zero once already, when a class-based locator stopped matching and the
+   * exclusion check passed because an empty list contains no tracked show. The shape is the
+   * same and the cause is new, which is why the non-vacuity below is now a check of its own
+   * rather than a clause inside the two that depend on it.
+   */
+  const boxes = await page.getByRole('button', { name: /^More about / }).all();
+  const suggestedTitles = await Promise.all(
+    boxes.map(async (box) =>
+      ((await box.getAttribute('aria-label')) ?? '').replace(/^More about /, ''),
+    ),
+  );
   // Stated before the exclusion, and the exclusion depends on it: "none of these is a
   // show you track" is not a claim you can make about no rows at all (§6.56).
   check('discover suggests something', suggestedTitles.length > 0, `${suggestedTitles.length} suggested`);
@@ -1764,11 +1860,39 @@ try {
     suggestedTitles.length > 0 && !suggestedTitles.includes('The Long Dark'),
     suggestedTitles.join(', '),
   );
-  check(
-    'discover explains why',
-    /Because you watched The Long Dark/.test((await page.locator('body').innerText()).replace(/\s+/g, ' ')),
-  );
-  await audit('Discover', 9);
+  /*
+   * Read off the heading, not out of the page, and `textContent` rather than `innerText`.
+   *
+   * The reason is a section head now — all three design directions arrived at that
+   * independently and `direction.md` records it as "verbatim the same fix" — and
+   * `SECTION.section.caps` draws a section head in tracked capitals. `innerText` returns
+   * what `text-transform` renders, so a case-sensitive needle against the page fails on a
+   * screen that is behaving exactly as the direction specifies.
+   *
+   * `textContent` is the text the DOM actually holds, which is also the text a screen
+   * reader is given: the capitals are a painting and the sentence underneath keeps a show's
+   * own casing. Asserting on that says the right thing about both — and would fail if the
+   * title were ever really uppercased, which is the defect worth catching.
+   */
+  const reason = await page
+    .getByRole('heading', { name: /Because you watched/i })
+    .first()
+    .textContent()
+    .catch(() => null);
+  check('discover explains why', reason?.includes('Because you watched The Long Dark') === true, reason ?? 'no reason heading');
+  /*
+   * Eight, and every one of them is accounted for: four tabs, the skip link, the filter
+   * row, and one box per suggestion. `docs/design/architecture.md` section 5 is the whole
+   * of the drop — a box is **one** control with two faces, where a row carried Track and
+   * Watchlist and an Open link, so the shelf offers fewer controls on purpose and
+   * `core/src/ui/box.ts` argues why: twenty rows each carrying both verbs is forty controls
+   * with two names between them.
+   *
+   * Lowered to what is there rather than to a number that passes. A floor is a claim that a
+   * screen has not quietly emptied itself, and a floor set above the count is a claim that
+   * is false about a correct screen — which is the same failure in the other direction.
+   */
+  await audit('Discover', 8);
   await noGhosts('Discover');
   await scaled('Discover');
   await page.screenshot({ path: OUT + '09-discover.png' });
@@ -1851,7 +1975,11 @@ try {
   // screen a suite passes through is not a screen a suite has looked at.
   await page.getByRole('link', { name: /^More$/ }).click();
   await page.waitForSelector('h1:text("More")', { timeout: 5000 });
-  await audit('More', 11);
+  // Nine, and the two that went are both deletions rather than losses: `MORE_INDEX` no
+  // longer carries Upcoming — what is airing is Up Next's second half since
+  // `architecture.md` section 4 — and the bar below is four tabs rather than five since
+  // section 2. 11 − 2 = 9, which is the arithmetic rather than a number that passes.
+  await audit('More', 9);
   await noGhosts('More');
   await scaled('More');
 
@@ -1872,7 +2000,12 @@ try {
   // Four when there is a session and a create box; the signed-out screen is a sentence
   // and the navigation, which is what it should be rather than a form that cannot work.
   // Signed out, the create box is not there, so there is one fewer control to name.
-  await audit('Lists', /Sign in .* to make lists/.test(listsText) ? 6 : 7);
+  //
+  // Both are one lower than they were, and neither is about this screen: the navigation
+  // each of them counts is the tab bar, and the bar is four tabs rather than five since
+  // `architecture.md` section 2. Every floor in this file that includes the bar moved by
+  // exactly one; these two are the ones that were tight enough to notice.
+  await audit('Lists', /Sign in .* to make lists/.test(listsText) ? 5 : 6);
   await noGhosts('Lists');
   await scaled('Lists');
   await page.screenshot({ path: OUT + '08c-lists.png' });
@@ -1921,7 +2054,20 @@ try {
   // Availability is per country, so answering for one silently would be confidently
   // wrong for most of the world.
   await page.getByRole('button', { name: /^Change country/ }).click();
-  await page.getByRole('radio', { name: 'Show availability in United Kingdom' }).click();
+  /*
+   * `GB — United Kingdom`, which is `announce()` and not a sentence somebody typed.
+   *
+   * The picker was hand-rolled radios named "Show availability in United Kingdom" until it
+   * moved onto `Choice`, and a `Choice` option announces `label — hint`: the code is what is
+   * drawn and the country is what disambiguates it. So the old name is gone and this walk
+   * waited thirty seconds for it, which ended the run and took every check after it with it.
+   *
+   * Matched on the two halves rather than on the whole string, because which half is the
+   * label is `WhereToWatch`'s decision and not this suite's: a locator that pins the
+   * separator is a locator about `announce`'s formatting. `Change country` above it is a
+   * `Choice` reveal and was already named the way it still is.
+   */
+  await page.getByRole('radio', { name: /GB.*United Kingdom/ }).click();
   await page.waitForTimeout(400);
   const afterRegion = await page.locator('section', { hasText: 'Where to watch' }).first().innerText();
   check('the country can be changed', /United Kingdom/.test(afterRegion), afterRegion.replace(/\s+/g, ' ').slice(0, 90));
@@ -2067,7 +2213,9 @@ try {
     configured ? /Sign in/i.test(peopleText) : /works without it/.test(peopleText),
     peopleText.slice(0, 140),
   );
-  await audit('People', 6);
+  // Five: the bar below is four tabs rather than five since `architecture.md` section 2,
+  // and every floor in this file that counts the navigation moved by exactly one.
+  await audit('People', 5);
   await noGhosts('People');
   await scaled('People');
   await page.screenshot({ path: OUT + '14-people.png' });
@@ -2754,9 +2902,33 @@ try {
     await first.getByRole('checkbox', { name: /^Mark Two Tabs Show S1E1/ }).first().click();
     await other.waitForSelector('text=S1E2', { timeout: 15000 }).catch(() => {});
     const moved = (await other.locator('body').innerText()).replace(/\s+/g, ' ');
+    /*
+     * "Moved on" is about what the screen **offers**, and it used to be spelled as an
+     * absence: `S1E2` present and `S1E1` nowhere on the page.
+     *
+     * `docs/design/architecture.md` section 3 put the past above the present, so S1E1 is on
+     * the page — struck, under *Already watched*, with a ring that takes it back. The
+     * absence clause therefore fails on a screen doing exactly what it is meant to, which is
+     * a guard stating the rule wrongly rather than a defect.
+     *
+     * Restated on the rings, which is where the claim actually lives: the other tab offers
+     * to mark **S1E2** and no longer offers to mark S1E1. That is the thing that would
+     * invite somebody to mark an episode twice, and it is what §6.64 raced two tabs to find.
+     *
+     * And the third clause is stronger than what it replaces: S1E1 has to be **there, as
+     * watched**. The old spelling could not tell "the row moved" from "the row vanished",
+     * and only one of those is the product.
+     */
+    const offers = async (name) =>
+      (await other.getByRole('checkbox', { name }).count()) > 0;
     check(
       'a watch in one tab moves the other on, with no reload',
-      /S1E2/.test(moved) && !/S1E1/.test(moved),
+      (await offers(/^Mark Two Tabs Show S1E2/)) && !(await offers(/^Mark Two Tabs Show S1E1/)),
+      moved.slice(0, 130),
+    );
+    check(
+      'and the episode it moved past is above it, already crossed off',
+      await offers(/^Unmark Two Tabs Show S1E1/),
       moved.slice(0, 130),
     );
 

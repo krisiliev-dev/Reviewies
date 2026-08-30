@@ -699,7 +699,23 @@ try {
      * off the edge of the card. One "and" at most, now that the sentence is shared.
      */
     if (tab === 'Discover') {
-      const reasons = (await text()).match(/Because you watched [^\n]+/g) ?? [];
+      /*
+       * Off the headings, and `textContent` rather than the rendered text.
+       *
+       * `docs/design/architecture.md` section 5 made the reason a **section head** over the
+       * group of boxes it is true of — all three design directions arrived at that
+       * independently — and `SECTION.section.caps` draws a section head in tracked capitals.
+       * The page therefore reads `BECAUSE YOU WATCHED THE LONG DARK`, and a case-sensitive
+       * sweep of the rendered text finds nothing on a screen behaving exactly as specified.
+       *
+       * `textContent` is what the DOM holds and what a screen reader is handed: the capitals
+       * are a painting, and the sentence under them keeps a show's own casing. Asserting on
+       * that says the right thing about both halves, and would still fail if a title were
+       * ever really uppercased.
+       */
+      const reasons = (
+        await page.getByRole('heading', { name: /Because you watched/i }).allTextContents()
+      ).map((line) => line.replace(/\s+/g, ' ').trim());
       const overlong = reasons.filter((line) => (line.match(/ and /g) ?? []).length > 1);
       check(
         'a suggestion names at most two things you watched',
@@ -718,11 +734,23 @@ try {
        * By the row's accessible name, and only when there are rows: "none of these is
        * something you track" is not a claim you can make about no suggestions at all.
        */
-      const tracked = (await text()).match(/Because you watched ([^\n]+)/)?.[1] ?? '';
-      const seeds = tracked.split(' and ').map((n) => n.trim()).filter(Boolean);
+      const seeds = (reasons[0]?.replace(/^Because you watched /, '') ?? '')
+        .split(' and ')
+        .map((n) => n.trim())
+        .filter(Boolean);
+      /*
+       * A box, not a row, and a button rather than a link. `architecture.md` section 5: a
+       * box is one control with two faces, named `More about {title}` — the front turns it
+       * over and both verbs live on the back, because a shelf of twenty rows each carrying
+       * Track and Watchlist is forty controls with two names between them.
+       *
+       * So `Open {title}` names nothing here, and the clause below already knows what an
+       * empty list would do to it: "none of these is something you track" is not a claim you
+       * can make about no suggestions at all, which is why the count is part of it.
+       */
       const suggested = await Promise.all(
-        (await page.getByRole('link', { name: /^Open / }).all()).map(async (row) =>
-          ((await row.getAttribute('aria-label')) ?? '').replace(/^Open /, ''),
+        (await page.getByRole('button', { name: /^More about / }).all()).map(async (box) =>
+          ((await box.getAttribute('aria-label')) ?? '').replace(/^More about /, ''),
         ),
       );
       const already = suggested.filter((name) => seeds.includes(name));
@@ -746,10 +774,12 @@ try {
   // gated: without an account Lists and People are a sentence explaining why, and
   // asserting they hold three controls would assert something untrue. What the audit
   // still catches there is a control that exists and has no name.
+  //
+  // Two rows, not three. `MORE_INDEX` no longer carries Upcoming — what is airing is Up
+  // Next's second half since `docs/design/architecture.md` section 4 — so there is no row
+  // here to tap and no `detail` line to name it by. It is walked below, from the chip a
+  // person actually reaches it with.
   for (const [detail, expect_, controls] of [
-    // 3, down from 4: §6.134 collapsed the notification panel, so the screen a person
-    // arrives at is a calendar with one settings row rather than three radio options.
-    ['What is airing, and what to be told about', /Tell me about/i, 3],
     ['Film and television in the same list', /list/i, 1],
     ['Your handle, following, blocking', /account|sync|following/i, 1],
   ]) {
@@ -767,7 +797,24 @@ try {
   // that could act on them. Under react-native-web there is still nothing — the web
   // build gets its notifications from the browser — so what must be true here is that
   // the screen says so rather than showing a control that does nothing.
-  await page.getByText('What is airing, and what to be told about').click();
+  /*
+   * Reached by the chip beside "Out now", which is how a person reaches it.
+   *
+   * It was a row on More and a tap on its `detail` line. `architecture.md` section 4 made it
+   * the second half of Up Next: the report that started that sprint was that nobody could
+   * tell Upcoming from the Watchlist, and leaving it reachable as a destination as well
+   * would have kept the finding alive for the convenience of this walk.
+   *
+   * A `radio`, because the segment is a `Choice` and `choice.ts`'s whole subject is that
+   * one-of-several is a radio and not a button.
+   */
+  // By its **role**, for the reason the tab loop above records at length: `getByText` finds
+  // the first thing on screen that says the word, and every tab screen stays mounted in the
+  // navigator — so "Up Next" resolved to the Up Next screen's own `<h1>`, sitting behind
+  // More's, and the click was intercepted for thirty seconds. A tab is a `tab`.
+  await page.getByRole('tab', { name: /Up Next/ }).first().click();
+  await page.waitForTimeout(1200);
+  await page.getByRole('radio', { name: /Upcoming/ }).first().click();
   await page.waitForSelector('text=/Tell me about/i', { timeout: 15000 });
   /*
    * Open it first. §6.134 gave this panel a collapsed state — it used to stand open above
@@ -816,7 +863,19 @@ try {
     others.length > 1 && others.every((v) => v === 'true' || v === 'false'),
     others.join(','),
   );
-  await page.goBack();
+  /*
+   * Back to More by naming it, not by `goBack`.
+   *
+   * This was a route change — More, then `/calendar` — and history took you back. Pressing
+   * the Upcoming chip changes a **parameter on the screen you are already on**
+   * (`architecture.md` section 4, `segments.ts`), so there is no destination to return from:
+   * `goBack` walked to whichever tab was open before this section and the next block, which
+   * needs More, waited thirty seconds for a row that was on a screen it had left.
+   *
+   * A walk that says where it is going survives a screen ceasing to be a place. This one
+   * did not, which is the same lesson from the other side.
+   */
+  await page.getByRole('tab', { name: /More/ }).first().click();
   await page.waitForTimeout(1000);
 
   // --- The watching preference -------------------------------------------------
