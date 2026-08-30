@@ -279,6 +279,25 @@ export const COPY = {
      */
     blurb: 'Nothing you have already watched or added.',
     /**
+     * What the screen says when the feed is the **fallback** rather than a recommendation.
+     *
+     * `getSuggestions` is all-or-nothing: it builds from your library, and only if that
+     * comes back empty does it fall back to a trending chart. So the screen has two modes
+     * and, until §6.169, said the same blurb in both — `blurb` above is true of a chart as
+     * well, so nothing on the screen told you which one you were looking at.
+     *
+     * `narrow-discover-foot.png` is what that looked like against real TMDB data: thirty
+     * rows, each carrying *Popular right now* under its title, in the slot the entry above
+     * calls "the line that separates a recommendation from an advert". A line that says the
+     * same thing on every row it appears on is not that line. It is the screen's mode, and
+     * a screen's mode is said once, at the top, where the screen says what it is showing.
+     *
+     * §6.104's rule one subject over: "nothing" and "I could not look" are different
+     * sentences, and so are "things like what you watch" and "things people are watching".
+     */
+    trendingBlurb:
+      'Nothing to recommend from your library yet, so these are what people are watching.',
+    /**
      * The web's, because it covers the case the phone's does not: you have tracked
      * plenty and there is still nothing new, which "Track something first" reads as a
      * non-sequitur to.

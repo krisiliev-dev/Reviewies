@@ -39,7 +39,14 @@ export function Discover() {
   return (
     <div className="p-s16">
       <Masthead className="px-1">Discover</Masthead>
-      <Note className="mb-4 px-1">{COPY.discover.blurb}</Note>
+      {/*
+        Two modes, said apart. `getSuggestions` builds from the library and only falls back
+        to a chart when that comes back empty, so the feed is entirely one or entirely the
+        other — and until §6.169 the screen said the same sentence for both.
+      */}
+      <Note className="mb-4 px-1">
+        {suggestions?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
+      </Note>
 
       {error && <p className="px-1 text-s14 text-trouble">{error}</p>}
       {suggestions === undefined && <Note className="px-1">Finding something…</Note>}
@@ -106,11 +113,19 @@ function SuggestionRow({
     <BaseRow
       title={suggestion.name}
       meta={`${suggestion.kind === 'show' ? 'Series' : 'Film'}${suggestion.year ? ` · ${suggestion.year}` : ''}`}
-      // Saying why is what separates a recommendation from an advert. In `note` because
-      // that is the slot for a sentence about the row rather than a fact about it.
-      // A trending row is not *because* of anything you watched, and saying it was is a
-      // false sentence on the one line of the card a person actually reads. §6.152.
-      note={suggestion.trending ? COPY.discover.trending : COPY.discover.because(suggestion.because)}
+      /*
+       * Saying why is what separates a recommendation from an advert. In `note` because
+       * that is the slot for a sentence about the row rather than a fact about it. A
+       * trending row is not *because* of anything you watched, and saying it was is a false
+       * sentence on the one line of the card a person actually reads. §6.152.
+       *
+       * And a trending row now says **nothing** here rather than *Popular right now*.
+       * §6.169 photographed thirty rows each carrying that same line: a sentence repeated
+       * on every row it appears on is not the line that distinguishes them, it is the
+       * screen's mode — and `getSuggestions` is all-or-nothing, so the mode belongs once at
+       * the top of the screen, which is where `trendingBlurb` puts it.
+       */
+      note={suggestion.trending ? undefined : COPY.discover.because(suggestion.because)}
       open={{ name: `Open ${suggestion.name}`, to: `/title/${encodeURIComponent(suggestion.id)}` }}
       lead={
         <Poster

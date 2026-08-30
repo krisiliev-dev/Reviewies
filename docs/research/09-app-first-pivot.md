@@ -12396,11 +12396,105 @@ which leaves the rest of `web-real` at both widths and most of the `-foot` shots
 year selected, and the web's remote edge tab still renders only when `bridgeConfigured()`,
 which no design pass configures.
 
-**The desktop shot raises a question this entry did not take.** At 1280 the measure is
+~~**The desktop shot raises a question this entry did not take.** At 1280 the measure is
 capped and centred, which is #194's decision, but inside it the poster is still 44×64 and
-the `CrossOff` ring sits four hundred points to the right of the words it belongs to. Both
-may be right and neither has been argued; filing them from one look is what §6.167 charged
-for.
+the `CrossOff` ring sits four hundred points to the right of the words it belongs to.~~ —
+**both halves retracted in §6.169**, and the second was wrong in the way this very entry
+warns about: the four hundred points was read off a screenshot's *displayed* coordinates
+rather than measured. The real gap between the words and the ring is **12 points, at 420
+and at 1280 alike**. Filing from one look is what §6.167 charged for, and this paragraph
+did it while saying so.
+
+### 6.169 Measuring the two questions, and finding the third
+
+**#205.** §6.168 ended by naming two things it had seen at 1280 and deliberately not taken.
+This entry measures both, retracts both — one of them wrong in exactly the way that entry
+warns about — and then finds the sprint's real finding at the bottom of a screen nobody had
+scrolled to.
+
+#### Both desktop questions dissolve, and one of them was mine
+
+Measured in the browser against the seeded build, not read off a screenshot:
+
+| | row | poster | words end | ring | **gap** |
+| --- | --- | --- | --- | --- | --- |
+| 420 | 0 → 420 | 16 → 60 (44) | 348 | 360 → 404 | **12** |
+| 1280 | 280 → 1000 (**720**) | 296 → 340 (44) | 928 | 940 → 984 | **12** |
+
+The gap between the words and the `CrossOff` ring is **twelve points at both widths** —
+`ROW.gap`, exactly. The words column stretches to fill; it does not leave a void beside the
+control. §6.168 wrote *"four hundred points"*, and that number came from reading displayed
+image coordinates on a 2560px shot shown at 2000px without converting either the display
+scale or the device pixel ratio. It is struck there and corrected here. Five sprints of
+writing "measure it" and the mistake was made in the paragraph that says so.
+
+The poster is genuinely still 44 × 64 at 1280 — and that is §6.159, not a defect.
+`SCREEN.measure` caps the column at 720 at every width, so **a row at 1280 is a row at
+720**, and nothing about a row is a desktop question at all. The only thing the window
+changes is margin, which is what that entry decided it should change.
+
+`WIDE.navMeasure` checks out in the same measurement: the tab bar's items run 280 → 1000,
+which is `SCREEN.measure` to the point.
+
+#### Discover has two feeds and says the same sentence for both
+
+`narrow-discover-foot.png`, at the bottom of a screen 2,179 points long: five rows, and
+every one of them carries **Popular right now** under its title.
+
+That slot is the one `copy.ts` describes as *"the line that separates a recommendation from
+an advert, and the one thing on the card a person actually reads"*. A sentence repeated on
+every row it appears on is not that line.
+
+Reading `getSuggestions` sharpens it: the trending feed is **all-or-nothing** —
+`if (merged.length > 0) return merged` — so the screen is either entirely recommendations or
+entirely a chart, never a mixture. Which means *Popular right now* was never a fact about a
+row. It was **the screen's mode**, written thirty times. And the screen's actual mode line,
+`blurb`, said *"Nothing you have already watched or added"* in both cases — true of a chart
+too, so nothing on the page told a person which feed they were reading.
+
+So the mode goes where a mode goes: once, at the top, in the sentence the screen already has
+for saying what it is showing. `trendingBlurb` reads *"Nothing to recommend from your library
+yet, so these are what people are watching."* — which is both halves of the truth, and the
+half that matters is the first: the reason you are looking at a chart is that your library
+had nothing to build from. A trending row's reason line is now empty, because it has no
+reason and saying so falsely was §6.152's whole finding.
+
+§6.104's rule, one subject over: *"nothing"* and *"I could not look"* are different
+sentences, and so are *"things like what you watch"* and *"things people are watching"*.
+
+`screenMode.test.ts` holds three things: that the two sentences differ, that both platforms
+choose between them **from the feed itself** rather than from a second piece of state
+(§6.138 is the entry about two things answering one question), and that neither screen puts
+`COPY.discover.trending` back into a row's `note`.
+
+#### Two more that were checked and left alone
+
+`wide-title-one-piece-foot.png` shows twenty-three seasons and a Specials row each reading
+*"50 episodes"* rather than *"9 of 12 watched"* as the fixture title page does.
+`summariseSeasons` says why: it prints a count when nothing in the season is watched and a
+progress line when something is, and on a freshly tracked One Piece nothing is. Specials sort
+last, with a reason already written. Working as decided.
+
+That brings the tally this entry can state: across §6.167, §6.168 and §6.169, **fourteen
+things were filed or half-filed from photographs and six did not survive a measurement.**
+Two of the six were retractions of claims made in these entries themselves. The instrument
+is worth using and is not worth trusting on its own.
+
+## What is not done, and why it is said here
+
+**Ninety shots are still unread**, and the six opened here were chosen for where a defect
+was most likely rather than by working through the directory.
+
+**The two harness gaps are unchanged**, and both are still about controls this record has
+decided without a photograph: Stats has never been shot with a year selected, and the web's
+remote edge tab renders only under `bridgeConfigured()`.
+
+**Discover's recommendation feed has never been photographed against real data.** Every
+`web-real` and `real-screens` shot of that screen is the *fallback*, because the seeded
+library's five titles produce no usable recommendations through the real provider. So the
+mode this entry just gave a sentence to is the only one the design record has ever seen, and
+the other one — the screen's normal state — is fixture-only. That is §6.146's rule pointing
+at the more important half of a screen.
 
 ## 7. What is still not known
 
@@ -13242,22 +13336,32 @@ and which single claim in this document could not be checked at all:
   and four sprints of building instruments without reading their output is how a live backend
   got into a pass whose own comment said it could not be there.
 
-- **Ninety-six shots have not been read.** §6.165 states the scope: 130 files across
+- **Ninety shots have not been read.** §6.165 states the scope: 130 files across
   `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
-  was written from a listing of one directory. §6.168 opened thirteen more — most of
-  `design/web/`, which photographs the app that actually deploys — and got two findings out of
-  them, so the rate has not fallen off. The rest of `design/web-real/` at both widths, and most
-  of the `-foot` shots, are where it stands.
+  was written from a listing of one directory. §6.168 opened thirteen more and §6.169 six, and
+  each got a finding out of them, so the rate has not fallen off. Most of the `-foot` shots and
+  most of `design/real-screens/` are what is left.
+
+- **Discover's recommendation feed has never been photographed against real data.** Every
+  real-data shot of that screen is the *fallback*: the seeded library's five titles produce no
+  usable recommendations through the real provider, so `getSuggestions` returns the trending
+  chart, which §6.169 found by reading the bottom of one. The screen's normal state is
+  fixture-only, which is §6.146's rule pointing at the more important half of a screen.
 
 - **Reading a picture is about half right, and that is now measured rather than felt.**
-  Across §6.167 and §6.168 eleven things were filed from photographs and **four did not
-  survive a measurement**: tracking that turned out to be a mono period no wider than the
-  body face's, two chip rows that turned out to be one radiogroup §6.138 had already made
-  one, a light-mode accent that turned out to be `workingMark` with its ratio written down,
-  and a double border that turned out to be `index.css`'s two-ring focus indicator. The
-  pattern in all four is the same: what looks wrong in a screenshot is very often the thing
-  somebody already reasoned about and left a comment on. Read the code before filing.
+  Across §6.167, §6.168 and §6.169, **fourteen** things were filed or half-filed from
+  photographs and **six did not survive a measurement**: tracking that turned out to be a
+  mono period no wider than the body face's, two chip rows that turned out to be one
+  radiogroup §6.138 had already made one, a light-mode accent that turned out to be
+  `workingMark` with its ratio written down, a double border that turned out to be
+  `index.css`'s two-ring focus indicator, a season summary behaving exactly as
+  `summariseSeasons` specifies, and a four-hundred-point gap that measured **twelve**. The
+  pattern in the first five is the same: what looks wrong in a screenshot is very often the
+  thing somebody already reasoned about and left a comment on. The sixth is worse and worth
+  keeping separate — it was a number read off a screenshot's *displayed* coordinates,
+  written into §6.168 by the same entry that says to measure. Read the code before filing,
+  and measure in the browser rather than in the picture.
 
 - **All nine of §6.165's findings are now taken, and one of them was wrong.** §6.166 closed
   the preference toggle; §6.167 took the other five and retracted one on measurement — the

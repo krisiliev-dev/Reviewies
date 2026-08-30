@@ -50,7 +50,8 @@ export default function DiscoverScreen() {
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <Masthead>Discover</Masthead>
-        <Note>{COPY.discover.blurb}</Note>
+        {/* Two modes, said apart. The web's copy of this has the reasoning. */}
+        <Note>{items?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}</Note>
 
         {items === undefined && !error && <ActivityIndicator color={theme.workingMark} />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -115,7 +116,9 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       // that is the slot for a sentence about the row rather than a fact about it.
       // A trending row is not *because* of anything you watched, and saying it was is a
       // false sentence on the one line of the card a person actually reads. §6.152.
-      note={item.trending ? COPY.discover.trending : COPY.discover.because(item.because)}
+      // The web's copy of this carries the reasoning: a trending row says nothing here,
+      // because the sentence it used to say was the screen's mode rather than the row's.
+      note={item.trending ? undefined : COPY.discover.because(item.because)}
       lead={<Poster url={item.posterUrl} name={item.name} />}
       open={{
         // §6.96: the poster and the title were separate links to the same route under the
