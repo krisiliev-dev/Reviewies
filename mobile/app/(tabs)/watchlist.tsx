@@ -133,6 +133,7 @@ function Row({
               placeholder={COPY.watchlist.notePlaceholder}
               autoFocus
               onSubmitEditing={save}
+              style={styles.grow}
             />
             <Button
               size="inline"
@@ -198,5 +199,20 @@ const styles = StyleSheet.create({
   act: { alignItems: 'flex-start', marginTop: 4 },
   note: { color: theme.ink, fontSize: text.s14, fontFamily: type.family.proseItalic.name },
   addNote: { color: theme.inkSecondary, fontSize: text.s14, textDecorationLine: 'underline', fontFamily: type.family.title.name },
-  editor: { gap: 6 },
+  /*
+   * A row, which is what `size="inline"` was asking for and could not get.
+   *
+   * This was `{ gap: 6 }`. React Native lays a bare `View` as a column and stretches its
+   * children, so the field and the Save beside it became two stacked full-width rows and
+   * the inline pill measured 358pt across — the loudest control on the screen, for storing
+   * a sentence, above a 63pt *Track* that starts the thing. `act` directly above already
+   * knew this ("so the pill is the width of its words, not the width of the row"); the
+   * editor never got the same sentence applied to it.
+   *
+   * The web's twin is `flex gap-1.5`, and `search.tsx`'s copy of this editor is a row with
+   * a growing field. `watchlistRow.test.ts` holds all three together now.
+   */
+  editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
+  /** A field that shares its row with a button. Layout, which the call site owns. */
+  grow: { flex: 1, minWidth: 0 },
 });
