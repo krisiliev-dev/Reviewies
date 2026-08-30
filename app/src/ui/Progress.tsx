@@ -8,7 +8,9 @@ import { progressPercent, type ProgressSize } from '@reviewies/core/ui/progress'
  * which is why this went unseen — the failure only exists under `data-theme="light"`.
  */
 
-const TRACK = 'w-full overflow-hidden border border-stroke-hairline';
+// A ground, not an outline. A 1pt border is 2pt off the height the fill measures against,
+// and `rule` is 2pt tall: see `core/src/ui/progress.ts`, which has the measurements.
+const TRACK = 'w-full overflow-hidden bg-stroke-hairline';
 const DONE = 'h-full bg-working-mark';
 
 const SIZE_CLASS = {
