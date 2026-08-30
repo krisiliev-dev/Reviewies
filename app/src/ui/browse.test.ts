@@ -133,6 +133,30 @@ describe('the browse shelf', () => {
     expect(web).toContain('COLUMNS[BOX_COLUMNS.phone]');
     expect(web).toContain('AT_WIDTH[BOX_COLUMNS.wide]');
 
+    /*
+     * And the table is *used*, not merely read.
+     *
+     * A plant walked through the four clauses above: keep `NARROW` and `WIDE` exactly as
+     * they are, and write the class names into the `className` by hand beside them. Every
+     * needle above is still in the file — the tables hold the literals, the lookups still
+     * read `BOX_COLUMNS` — and the grid draws whatever the hand-written string says. Only
+     * `oxlint` noticed, as a warning about two unused variables, and a warning does not fail
+     * `verify`.
+     *
+     * §6.139's shape: a clause easier to satisfy than its name. So the rule is stated the
+     * way it is meant: **the class names have one home**, which is the two tables, and a
+     * `className` may not contain one. Backticks as well as quotes, because the correct
+     * spelling here is a template literal and a plant would reach for one.
+     */
+    expect(
+      web,
+      'a column class is written into a className by hand, beside a table that says otherwise',
+    ).not.toMatch(/className=\{?[`"][^`"]*grid-cols/);
+    for (const literal of ["'grid-cols-", "'sm:grid-cols-"]) {
+      const home = (web.split(literal).length - 1);
+      expect(home, `${literal}… should live only in its lookup table`).toBe(2);
+    }
+
     const phone = read(BROWSE.phone);
     expect(phone, 'the phone guesses a percentage instead of measuring').toContain(
       'BOX_COLUMNS.phone',
