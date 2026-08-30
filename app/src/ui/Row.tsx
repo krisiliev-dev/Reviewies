@@ -42,8 +42,8 @@ const ROW_CLASS = 'flex items-center gap-3';
  */
 const TARGET =
   'flex min-w-0 flex-1 items-center gap-3 rounded-none text-left active:bg-ground-well';
-const TAG =
-  'shrink-0 rounded-plate border border-stroke-hairline px-1.5 py-0.5 text-s12 font-title font-semibold tracking-t83 text-ink-secondary';
+/** `ROW_TAG` in `core/src/ui/row.ts` says why there is no rule and no plate here. */
+const TAG = 'shrink-0 text-s12 font-title font-semibold tracking-t83 text-ink-secondary';
 
 interface Props extends RowContract {
   /**

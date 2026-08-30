@@ -138,7 +138,12 @@ describe('the space scale, on the phone', () => {
      * spacing belongs to `Button` now. One is a shape deleted and two are a shape moved
      * into a component, which is the same two reasons as every note above.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(177);
+    /*
+     * 177, down one: §6.168's two decisions each gave a phone style back. `Row`'s tag
+     * lost the padding it had as a box, and More's figure lost the plate it was painted
+     * on inside a card it was already on.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(176);
     expect(off).toEqual([]);
   });
 });
@@ -180,7 +185,9 @@ describe('the space scale, on the web', () => {
      * spelled their own `px-4 py-2`; `Button`'s size table spells it once.
      */
     /* 366, down six, for the same deletion. */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(366);
+    /* 364, down two: §6.168 — `Row`'s tag lost its `px-1.5 py-0.5` with its box, and
+       More's figure lost its `px-3 py-2` with the plate it did not need on a card. */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(363);
     expect(off).toEqual([]);
   });
 

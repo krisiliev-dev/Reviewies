@@ -126,6 +126,35 @@ export function rowTag(value: string | undefined): string | undefined {
   return value ? value.toUpperCase() : undefined;
 }
 
+/**
+ * And it is **not drawn in a box**, which is the other half of the same rule.
+ *
+ * Both renderers wrapped the tag in `rounded-plate` and a `strokeHairline` rule, so
+ * `SEASON FINALE` on the calendar was a hairline-outlined chip — the same shape as
+ * `Choice`'s unselected option and the same shape as a `secondary` `Button`. One drawn
+ * form for three different things: a **fact** about the row, a **choice** you can make,
+ * and an **action** you can take. What told them apart was `strokeHairline` against
+ * `strokeSignal`: one token, at 12px, in caps.
+ *
+ * That is precisely the failure the paragraph above quotes `section.ts` for — *"a
+ * single-channel difference is the one that gets flattened again by the next person tuning
+ * a value"* — with this file relying on the thing it cites as unreliable. §6.167 had
+ * already settled the principle one screen over, taking the box off a streaming service's
+ * name: **no box means no shape to be misread as a control**, because a box is `Choice`'s
+ * and `Button`'s. `light-05-calendar.png` is the picture that found the second instance.
+ *
+ * Nothing is lost by removing it. Upper case and `t83` already say "label, not prose" —
+ * that is what `rowTag` is for, and what `NEXT TWO MONTHS` and `MOST WATCHED` on the same
+ * two screens are drawn as, unboxed, and read perfectly well.
+ */
+export const ROW_TAG = {
+  /** Upper case and tracked, as `rowTag` applies. */
+  tracking: 't83',
+  ink: 'inkSecondary',
+  /** Written as an absence, the way `TOGGLE.off` is, so nobody re-adds it by accident. */
+  rule: null,
+} as const;
+
 export interface RowContract {
   title: string;
   /** `S02·E07`, or a year. Set through `Data` once that exists. */

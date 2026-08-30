@@ -157,7 +157,11 @@ describe('the flat rule', () => {
      * sprint running this has been the reason.
      */
     /* 49, down two: §6.133 deleted Settings' duplicate summary card and its People row. */
-    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(49);
+    /*
+     * 48, down one: §6.168 took the plate off `Row`'s tag. A fact drawn in the one shape
+     * this build reserves for controls was the finding; the radius went with the box.
+     */
+    expect(seen, 'the web writes no radius utility at all').toBeGreaterThan(47);
     expect(off, 'rounded-none | rounded-plate | rounded-pill').toEqual([]);
   });
 

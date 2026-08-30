@@ -110,15 +110,42 @@ describe('the section label', () => {
        */
       if (/textTransform: 'uppercase'/.test(src)) phone.push(`${file}: textTransform`);
       /*
-       * Tracked type *with nothing around it* is a label. `Row`'s tag is tracked at the
-       * same step and is not one — it sits inside a hairline plate, which is what makes it
-       * a chip rather than a heading. So the rule is the shape it is in, not a name on an
-       * exemption list: a style with a border or a fill is a box, and a box is not an
-       * eyebrow. §6.59 — a guard with a written excuse in it is not a guard.
+       * Tracked type is a label, and the question this clause answers is **who is allowed
+       * to draw one**.
+       *
+       * It used to answer *"anything in a box is a chip, not a label"*, because `Row`'s
+       * tag sat in a hairline plate and that was a shape rather than a name on an
+       * exemption list. §6.168 took the plate off — a fact drawn in the one shape this
+       * build reserves for controls was the whole finding — and the discriminator went
+       * with it. The guard failed on the next run and it was right to: the tag really is
+       * an eyebrow now.
+       *
+       * Which is fine, and the reason is worth stating rather than excusing. The eyebrow
+       * is this build's single treatment for *a short label rather than prose*, and both a
+       * section heading and a row's `SEASON FINALE` are that. Two labels sharing a label
+       * treatment is a type scale working; a label sharing a **box** with a control was
+       * the defect. What must not happen is a screen inventing one, which is what this
+       * clause has caught every time it has fired.
+       *
+       * So the rule is still a rule and still not a list of names: a **component whose
+       * treatment is declared in `core/src/ui/`** may draw an eyebrow — `Section.tsx` from
+       * `section.ts`, `Row.tsx` from `ROW_TAG` — and a screen may not. Checked by reading
+       * the import, so a file cannot join the club by being renamed.
        */
+      /*
+       * The three-file pattern is the test: `Row.tsx` renders `ui/row`, `Section.tsx`
+       * renders `ui/section`. Both halves are required — a screen that imports `ui/row`
+       * is not `Row.tsx`, and a file renamed `Row.tsx` that imports nothing is not the
+       * renderer of anything.
+       */
+      const renderer = /\/(Row|Section)\.tsx$/.exec(file)?.[1].toLowerCase();
+      const declares =
+        renderer !== undefined &&
+        new RegExp(`from '@reviewies/core/ui/${renderer}'`).test(src);
       for (const m of src.matchAll(/\n  (\w+): \{([^{}]*)\},/g)) {
         if (!/letterSpacing: tracking\(/.test(m[2])) continue;
         if (/border|backgroundColor/.test(m[2])) continue;
+        if (declares) continue;
         phone.push(`${file}: ${m[1]} is a hand-drawn label`);
       }
     }

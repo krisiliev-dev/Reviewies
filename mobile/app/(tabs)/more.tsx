@@ -122,7 +122,12 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: theme[SURFACE.card], borderRadius: radius.plate, padding: 16, gap: 12 },
   stats: { flexDirection: 'row', gap: 12 },
-  stat: { flex: 1, backgroundColor: theme.groundWell, borderRadius: radius.plate, padding: 12 },
+  /*
+   * A figure on the card, not a plate on a plate. The web's copy of this has the
+   * reasoning: the sunken ground painted inside `SURFACE.card` put every figure two
+   * steps below its own container, and Stats draws the same four the other way. §6.168.
+   */
+  stat: { flex: 1 },
   statLabel: { color: theme.inkSecondary, fontSize: text.s12, fontFamily: type.family.body.name },
   statValue: { color: theme.ink },
 

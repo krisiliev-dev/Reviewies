@@ -86,16 +86,23 @@ export const SURFACE = {
  * every other fact in this build is separated, and the eleven that remain are here with
  * their reasons.
  *
- * The shape is `bareControl.test.ts`'s: a table with a sentence per entry, so the twelfth
+ * The shape is `bareControl.test.ts`'s: a table with a sentence per entry, so the next one
  * has to be argued for rather than typed. Every one of these is a **well** — something
  * sits *in* it — which is what `SURFACE.sunk` says the fill is for. `sunkenFill.test.ts`
  * sweeps both platforms against it.
+ *
+ * ## The register found its own bad entry within a sprint, which is the point of writing one
+ *
+ * Two of the eleven were More's figure plates, excused here as *"a number set into the
+ * page"*. §6.168 photographed `light-09-more.png` and sampled it: the plates are
+ * `groundWell` inside a `SURFACE.card`, so they are not on the page at all — they are two
+ * steps below their own container, which is the very defect the provider chip was fixed
+ * for one screen earlier. Writing a reason down is what let the next reading check it
+ * against a picture. They are figures on the card now, and the register is nine.
  */
 export const SUNK_FILLS: Record<string, string> = {
   'app/src/ui/Poster.tsx': 'the well artwork sits in, and the ground behind a poster that has none',
   'mobile/src/ui/Poster.tsx': 'the well artwork sits in, and the ground behind a poster that has none',
-  'app/src/screens/More.tsx': 'the figure plate on the contents screen: a number set into the page',
-  'mobile/app/(tabs)/more.tsx': 'the figure plate on the contents screen: a number set into the page',
   'mobile/app/comments/[targetId].tsx': 'the well an attached image sits in, before it has loaded',
   'mobile/src/ui/CatchUp.tsx': 'the sheet is a well over the screen it covers',
   'mobile/src/social/AddToList.tsx': 'the sheet is a well over the screen it covers',

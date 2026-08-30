@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { ROW, ROW_INK, rowTag, type RowContract, type RowOpen } from '@reviewies/core/ui/row';
-import { border, radius, space, theme, tracking } from './theme';
+import { radius, space, theme, tracking } from './theme';
 import { crossedOff } from './CrossOff';
 import { text, type, track } from '@reviewies/core/tokens';
 
@@ -157,15 +157,11 @@ const styles = StyleSheet.create({
   meta: { color: theme[ROW_INK.meta], fontSize: text.s12, fontFamily: type.family.body.name },
   note: { color: theme[ROW_INK.meta], fontSize: text.s12, fontFamily: type.family.proseItalic.name },
   off: { color: theme[ROW_INK.disabled] },
+  /** `ROW_TAG` in `core/src/ui/row.ts` says why there is no rule and no plate here. */
   tag: {
     color: theme[ROW_INK.tag],
     fontSize: text.s12,
     letterSpacing: tracking(text.s12, track.t83),
-    borderWidth: border.hairline,
-    borderColor: theme.strokeHairline,
-    borderRadius: radius.plate,
-    paddingHorizontal: space.s6,
-    paddingVertical: space.s2,
     fontFamily: type.family.title.name,
   },
 });

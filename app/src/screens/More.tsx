@@ -93,9 +93,29 @@ export function More() {
   );
 }
 
+/**
+ * A figure inside the card, and not a plate of its own.
+ *
+ * It was `rounded-plate bg-ground-well px-3 py-2` — the **sunken** ground, painted inside
+ * a `SURFACE.card`, so every one of these sat two steps below its own container. That is
+ * the shape §6.167 filed against the provider chip and fixed one screen over, still alive
+ * here, on a screen `SUNK_FILLS` excused with a reason that was measurably wrong: "a
+ * number set into the page". It is not on the page, it is on a card.
+ *
+ * §6.168 found the sharper version by comparing screens rather than platforms: **the same
+ * four figures are drawn two ways**, `bg-ground-raised` on Stats and `bg-ground-well`
+ * here, with the two platforms agreeing with each other on each screen. Not drift between
+ * renderers, which is what every guard here looks for — drift between screens.
+ *
+ * Stats is the one that is right, and the reason is `surface.ts`: a card is "a summary or
+ * a form, one object taken in whole". On Stats a figure tile *is* that object, alone on
+ * the page. Here the object is the card around all four, so the figures are its contents
+ * — and a card inside a card is not a second object, it is a boundary nobody needs. The
+ * label-and-value pairing is what groups a figure; it does not also need a box.
+ */
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-plate bg-ground-well px-3 py-2">
+    <div>
       <Note level="footnote" as="dt">{label}</Note>
       <dd><Data value={value} size="s20" /></dd>
     </div>

@@ -12289,6 +12289,119 @@ never press a year.
 `bridgeConfigured()`, which no design pass configures, so the element this entry decided to
 *keep* is the one it has no photograph of.
 
+### 6.168 Opening the pictures nobody had opened
+
+**#204.** §6.165 counted 130 shots and read 21. This entry reads thirteen more — the web in
+both themes first, since `design/web/` photographs the app that actually deploys and had no
+design pass at all until §6.132 — and gets two findings and two retractions out of them,
+which is roughly §6.167's rate and for the same reason: **half of what looks wrong in a
+photograph is something somebody already reasoned about and wrote down.**
+
+#### One figure tile, two grounds, and the drift is between screens rather than platforms
+
+`light-09-more.png`, sampled rather than judged:
+
+| | plate | its container | the page |
+| --- | --- | --- | --- |
+| light | `#E9E2D6` `groundWell` | `#FFFDF8` `groundRaised` | `#F5F0E8` `ground` |
+| dark | `#0C0B0D` `groundWell` | `#1C191E` `groundRaised` | `#131114` `ground` |
+
+More's four figures — `Watches 122`, `Tracked 4` — are the **sunken** ground painted inside
+a `SURFACE.card`, so each sits two steps below its own container. That is the shape §6.167
+filed against the provider chip and fixed one screen over, still alive here, on a screen
+`SUNK_FILLS` excused one sprint ago with a reason that reads *"a number set into the page"*.
+It is not on the page. It is on a card. The register found its own bad entry within a
+sprint, which is the argument for writing reasons down rather than intentions.
+
+The sharper version came from comparing screens instead of platforms. `Watched 1.0 days` on
+Stats and `Watches 122` on More are the same object:
+
+| | the tile |
+| --- | --- |
+| Stats, web | `rounded-plate bg-ground-raised px-3 py-3` |
+| Stats, phone | `theme.groundRaised, radius.plate, padding: 16` |
+| More, web | `rounded-plate bg-ground-well px-3 py-2` |
+| More, phone | `theme.groundWell, radius.plate, padding: 12` |
+
+**The two platforms agree with each other on each screen.** This is not renderer drift, and
+every guard in this repo — `coreWiring`, `shape`, the parity sweeps, the three-file pattern
+itself — is built to find renderer drift and is blind to this by construction.
+
+Stats is right, for `surface.ts`'s stated reason: a card is *"a summary or a form, one
+object taken in whole"*, and on Stats a figure tile is that object, alone on the page. On
+More the object is the card around all four, so the figures are its contents — and a card
+inside a card is a boundary nobody needs. The label-and-value pairing is what makes a figure
+a figure; it does not also need a box. `SUNK_FILLS` is nine.
+
+#### A fact drawn in the one shape this build reserves for controls
+
+`light-05-calendar.png`: `SEASON FINALE`, `PREMIERE`, `SERIES FINALE`, each in a hairline
+plate at the right of its row. `Row`'s tag was `rounded-plate border border-stroke-hairline`
+on the web and the same four properties on the phone.
+
+The build has three boxed forms and all three mean *press me*: a filled pill (`Button`
+`primary`), an outlined pill (`secondary`), an outlined plate (`Choice`, unselected). What
+separated a fact from a control here was `strokeHairline` against `strokeSignal` — one
+token, at 12px, in caps. `row.ts` quotes `section.ts` on exactly this: *"a single-channel
+difference is the one that gets flattened again by the next person tuning a value"*. The
+file relied on the thing it cites as unreliable, four paragraphs apart.
+
+§6.167 had already settled the principle while taking the plate off a streaming service's
+name — **no box means no shape to be misread as a control** — so this is that decision
+applied where the picture found the second instance. Upper case and `t83` already say
+"label, not prose"; `NEXT TWO MONTHS` and `MOST WATCHED` are drawn unboxed on the same two
+screens and read perfectly well. `ROW_TAG` states the absence the way `TOGGLE.off` does.
+
+#### And a guard whose reasoning expired in the same commit
+
+`section.test.ts` swept the phone for hand-drawn eyebrows and skipped anything in a box,
+under a comment that named the case: *"`Row`'s tag is tracked at the same step and is not
+one — it sits inside a hairline plate, which is what makes it a chip rather than a heading.
+So the rule is the shape it is in, not a name on an exemption list."* Removing the plate
+removed the discriminator, and the guard failed on the next run. It was right to.
+
+The answer is not an exemption. The eyebrow is this build's single treatment for *a short
+label rather than prose*, and a section heading and a row's `SEASON FINALE` are both that —
+two labels sharing a label treatment is a type scale working, where a label sharing a *box*
+with a control was the defect. So the rule became the three-file pattern itself: **a
+component whose treatment is declared in `core/src/ui/` may draw an eyebrow, and a screen
+may not**, checked by requiring both halves — the file is `Row.tsx` or `Section.tsx` *and*
+it imports the core module that declares the treatment. A screen that imports `ui/row` is
+not `Row.tsx`, and a file renamed `Row.tsx` that imports nothing renders nothing.
+
+#### Two things that looked wrong and were not
+
+**The light theme's accent is not a different hue.** `light-06-stats.png` reads brown where
+the dark shot reads amber, and `tokens.ts` says `workingFill: '#F0A93B'` in *both* palettes
+— which looked like a generator bug. Sampled: the light pixels are `#8A5A08`, and that is
+`workingMark`, a second token `progress.ts` documents with its ratio (5.22:1 on the page).
+A fill and a mark, decided apart, resolving to the same amber in dark. Nothing to fix.
+
+**The search field's double border is the focus ring.** `narrow-search-film.png` shows the
+only double-stroked element in any shot; `index.css` draws a deliberate two-ring
+`:focus-visible` with the inner ring in the ground, because a near-white ring on a
+near-white fill is 1.00:1. The harness had typed into the field. Nothing to fix.
+
+Both were caught by reading the code before filing, which §6.167 is the entry about. The rate
+is worth stating plainly: across §6.167 and §6.168, **eleven things were filed from
+photographs and four did not survive contact with a measurement.**
+
+## What is not done, and why it is said here
+
+**Ninety-six shots are still unread.** Thirteen were opened here — `design/web/`'s upnext,
+stats, more, calendar, discover and settings-foot pairs, and three of `design/web-real/` —
+which leaves the rest of `web-real` at both widths and most of the `-foot` shots.
+
+**Neither of §6.167's two harness gaps is closed.** Stats still has no photograph with a
+year selected, and the web's remote edge tab still renders only when `bridgeConfigured()`,
+which no design pass configures.
+
+**The desktop shot raises a question this entry did not take.** At 1280 the measure is
+capped and centred, which is #194's decision, but inside it the poster is still 44×64 and
+the `CrossOff` ring sits four hundred points to the right of the words it belongs to. Both
+may be right and neither has been argued; filing them from one look is what §6.167 charged
+for.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -13129,11 +13242,22 @@ and which single claim in this document could not be checked at all:
   and four sprints of building instruments without reading their output is how a live backend
   got into a pass whose own comment said it could not be there.
 
-- **A hundred and nine shots have not been read.** §6.165 states its scope: 130 files across
+- **Ninety-six shots have not been read.** §6.165 states the scope: 130 files across
   `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
-  was written from a listing of one directory. Six of the nine findings came out of the first
-  eight shots, which is a rate worth taking seriously about the remaining hundred and nine.
+  was written from a listing of one directory. §6.168 opened thirteen more — most of
+  `design/web/`, which photographs the app that actually deploys — and got two findings out of
+  them, so the rate has not fallen off. The rest of `design/web-real/` at both widths, and most
+  of the `-foot` shots, are where it stands.
+
+- **Reading a picture is about half right, and that is now measured rather than felt.**
+  Across §6.167 and §6.168 eleven things were filed from photographs and **four did not
+  survive a measurement**: tracking that turned out to be a mono period no wider than the
+  body face's, two chip rows that turned out to be one radiogroup §6.138 had already made
+  one, a light-mode accent that turned out to be `workingMark` with its ratio written down,
+  and a double border that turned out to be `index.css`'s two-ring focus indicator. The
+  pattern in all four is the same: what looks wrong in a screenshot is very often the thing
+  somebody already reasoned about and left a comment on. Read the code before filing.
 
 - **All nine of §6.165's findings are now taken, and one of them was wrong.** §6.166 closed
   the preference toggle; §6.167 took the other five and retracted one on measurement — the

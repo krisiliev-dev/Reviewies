@@ -152,7 +152,8 @@ describe('every workspace', () => {
    */
   const FLOOR: Record<string, number> = {
     // app 635, up seven: §6.167's `sunkenFill.test.ts` (3) and `watchlistRow.test.ts` (4).
-    core: 922, app: 635, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 638, up three: §6.168's `factNotControl.test.ts`.
+    core: 922, app: 638, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
