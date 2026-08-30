@@ -21,7 +21,7 @@
     "whats-live": "node scripts/whats-live.mjs",
     "design:phone": "VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= VITE_SUPABASE_URL= EXPO_PUBLIC_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= EXPO_PUBLIC_SUPABASE_ANON_KEY= npm run export --workspace mobile && node scripts/portFree.mjs 4200 && node scripts/served.mjs 4200 \"npx serve mobile/dist -p 4200 --no-clipboard\" node design/capture.mjs",
     "design:signedin": "VITE_TMDB_TOKEN= EXPO_PUBLIC_TMDB_TOKEN= EXPO_PUBLIC_SUPABASE_URL=https://design-harness.invalid EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_designharness npm run export:signedin --workspace mobile && node scripts/portFree.mjs 4201 && node scripts/served.mjs 4201 \"npx serve mobile/dist-signedin -p 4201 --no-clipboard\" node design/capture-signedin.mjs",
-    "design:web": "VITE_TMDB_TOKEN= VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= npm run build --workspace app && node scripts/portFree.mjs 4202 && node scripts/served.mjs 4202 \"cd app && npx vite preview --port 4202 --strictPort\" node design/capture-web.mjs",
+    "design:web": "VITE_TMDB_TOKEN= VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_BRIDGE_RELAY=http://127.0.0.1:9/design VITE_BRIDGE_TOKEN=design npm run build --workspace app && node scripts/portFree.mjs 4202 && node scripts/served.mjs 4202 \"cd app && npx vite preview --port 4202 --strictPort\" node design/capture-web.mjs",
     "design": "p=0; npm run design:phone || p=1; npm run design:signedin || p=1; npm run design:web || p=1; exit $p",
     "smoke": "npm run smoke --workspace app && npm run smoke --workspace mobile && npm run smoke --workspace extension && npm run smoke --workspace bridge && npm run smoke:failures --workspace app",
     "design:snapshot": "node design/snapshot.mjs",

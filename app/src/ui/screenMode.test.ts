@@ -67,10 +67,45 @@ describe('the two feeds Discover can be showing', () => {
       if (/note=\{[^}]*COPY\.discover\.trending\b/.test(source)) {
         wrong.push(`${file} puts the screen's mode back on every row`);
       }
-      if (!/trending \? undefined :/.test(source)) {
+      // Whitespace-tolerant: the web's expression wraps across three lines once the second
+      // argument lands on it, and a needle that a reformat can break is a needle about
+      // formatting rather than about the fact. §6.109.
+      if (!/trending\s*\?\s*undefined\s*:/.test(source)) {
         wrong.push(`${file} does not leave a trending row's reason empty`);
       }
     }
     expect(wrong).toEqual([]);
+  });
+});
+
+describe('what the remote drawer says about its connection', () => {
+  /*
+   * §6.170, and the same defect one screen over: a panel that said *"It will reconnect on
+   * its own"* at the top and printed the raw transport error in `trouble` red nine hundred
+   * points below, under thirteen keys. Both conditions hold at once, and
+   * `dark-11-remote.png` — the drawer's first photograph in this project, because
+   * `bridgeConfigured()` had gated it out of every design pass — shows both at once.
+   *
+   * One place, one register. The error is a footnote under the sentence it qualifies.
+   */
+  it('says it in one place, and not in the trouble colour', () => {
+    const source = withoutProse(read('app/src/remote/RemoteDrawer.tsx'));
+    // The state is "reconnecting", which is not trouble — and the panel's own headline
+    // says so. A red line under the keys contradicting the sentence above them is the
+    // thing this holds shut.
+    expect(source, 'the remote drawer paints a connection state as trouble').not.toMatch(
+      /text-trouble/,
+    );
+    /*
+     * And the detail is drawn in the quiet ink, under the sentence it qualifies.
+     *
+     * The first draft sliced the file from `function Status(` and asked it to contain
+     * `bridge.error` — and `clauses.test.ts` refused it, correctly: that string occurs
+     * three times in the file, so the needle cannot say *which* of them it found. The
+     * line below occurs once and says the thing that matters, which is the register.
+     */
+    expect(source, 'the transport error is not with the sentence it qualifies').toMatch(
+      /text-ink-tertiary">\{bridge\.error\}/,
+    );
   });
 });

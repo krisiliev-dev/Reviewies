@@ -18,6 +18,16 @@ import type { SearchResult } from '../metadata/provider.ts';
 export interface Suggestion extends SearchResult {
   /** Titles from your library that led here, for "because you watched…". */
   because: string[];
+  /**
+   * Whether the titles in `because` are ones you have **watched** or only ones you track.
+   *
+   * The row says a different sentence for each, because only one of them is true: §6.170
+   * added tracked titles as seeds and the very first real-data photograph of the feed said
+   * *"Because you watched Shōgun"* about a show with no watches against it. True if **any**
+   * contributing seed was watched, since that is the stronger claim and the one the listed
+   * names then have to support — `mergeSuggestions` keeps the two apart.
+   */
+  becauseWatched: boolean;
   score: number;
   /**
    * Nothing in the library led here — this is the last-resort trending feed.
@@ -28,8 +38,16 @@ export interface Suggestion extends SearchResult {
    * is that saying *why* is what separates a recommendation from an advert.
    *
    * It had never been seen because it needs a library with nothing *watched* in it — seeds
-   * come from watch history, so tracking five shows and watching none of them is exactly
-   * the state that reaches it, and no fixture pass has ever been in that state. §6.152.
+   * came from watch history, so tracking five shows and watching none of them was exactly
+   * the state that reached it, and no fixture pass had ever been in that state. §6.152.
+   *
+   * **That sentence was a bug report and nobody read it as one.** §6.170 asked why *every*
+   * real-data screenshot of Discover was this fallback, and the answer was the state named
+   * two lines up: `design/realLibrary.mjs` tracks six titles and marks nothing watched,
+   * which is also somebody's first evening with the app. Five stated interests on file and
+   * the screen showed what was popular that week. `seedTitles` reads the library now, so
+   * this state is a recommendation feed and the fallback means what it says: nothing to
+   * build from at all.
    */
   trending?: boolean;
 }
@@ -95,9 +113,44 @@ export async function excludedNames(): Promise<Set<string>> {
   return names;
 }
 
-/** The titles worth seeding recommendations from: what you have given the most time to. */
-export async function seedTitles(limit = 5): Promise<Array<{ titleId: string; name: string }>> {
-  const watches = await db.watches.toArray();
+/**
+ * The titles worth seeding recommendations from: what you have given the most time to,
+ * and then what you have said you are watching.
+ *
+ * ## The half that was missing, and how it was found
+ *
+ * This read `db.watches` and nothing else, while `excludedTitleIds` twenty lines above
+ * reads **library, watchlist and watches**. Two functions in one file, answering the two
+ * halves of one question off different tables: Discover *excluded* everything you track
+ * and *learned* from none of it.
+ *
+ * What that costs is the first evening. Somebody arrives, tracks five shows, has not
+ * pressed the ring yet — and `seedTitles` returns nothing, `mergeSuggestions` comes back
+ * empty, and `getSuggestions` falls through to the trending chart. Five stated interests
+ * on file and the screen shows what is popular this week. §6.170 found it by asking why
+ * *every* real-data screenshot of Discover was the fallback: `design/realLibrary.mjs`
+ * tracks its six titles and never marks an episode, which is a perfectly ordinary way to
+ * use the app and turned out to be a way the feature does not work.
+ *
+ * It also made a sentence false. §6.169 had just written *"Nothing to recommend from your
+ * library yet"* for the fallback — and the library was not empty; the *watch history* was.
+ *
+ * ## The order
+ *
+ * Watched titles first, ranked by the time you have given them, which is the stronger
+ * signal and was the whole of this function's original argument. Tracked-but-unwatched
+ * after, newest first, because a show you added today is a better guess at what you want
+ * next than one you added a year ago and never started. A title that is both appears once,
+ * in the watched half.
+ */
+export async function seedTitles(
+  limit = 5,
+): Promise<Array<{ titleId: string; name: string; watched: boolean }>> {
+  const [watches, library, titleRows] = await Promise.all([
+    db.watches.toArray(),
+    db.library.toArray(),
+    db.titles.toArray(),
+  ]);
   const minutesByTitle = new Map<string, number>();
 
   for (const w of watches) {
@@ -105,12 +158,32 @@ export async function seedTitles(limit = 5): Promise<Array<{ titleId: string; na
     minutesByTitle.set(titleId, (minutesByTitle.get(titleId) ?? 0) + (w.runtimeMin ?? 30));
   }
 
-  const titles = new Map((await db.titles.toArray()).map((t) => [t.id, t.name]));
+  const titles = new Map(titleRows.map((t) => [t.id, t.name]));
+  const watched = [...minutesByTitle.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
 
-  return [...minutesByTitle.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([titleId]) => ({ titleId, name: titles.get(titleId) ?? 'something you watched' }));
+  const tracked = library
+    .filter((item) => !minutesByTitle.has(item.titleId))
+    .sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0))
+    .map((item) => item.titleId);
+
+  const seen = new Set(watched);
+  return [...watched, ...tracked].slice(0, limit).map((titleId) => ({
+    titleId,
+    // "something you watched" was the only fallback and it is not true of a tracked title
+    // nobody has started — `COPY.discover.because` prints this name in the row's one
+    // sentence, so a wrong word here is a false sentence on the card. §6.152.
+    name: titles.get(titleId) ?? 'something in your library',
+    /**
+     * Which sentence the row gets to say, carried rather than guessed at.
+     *
+     * *"Because you watched Shōgun"* is false about a show you have tracked and not
+     * started, and §6.170 photographed exactly that: the first real-data shot of the
+     * recommendation feed, produced by a library where nothing is watched, said "you
+     * watched" five times about five shows nobody had watched. The screen can only be
+     * truthful about this if the seed says which it was.
+     */
+    watched: seen.has(titleId),
+  }));
 }
 
 /**
@@ -120,7 +193,13 @@ export async function seedTitles(limit = 5): Promise<Array<{ titleId: string; na
  * different seeds is a stronger signal than one long list.
  */
 export function mergeSuggestions(
-  lists: Array<{ seedName: string; results: SearchResult[]; trending?: boolean }>,
+  lists: Array<{
+    seedName: string;
+    results: SearchResult[];
+    trending?: boolean;
+    /** Whether this seed is a title you watched rather than one you only track. §6.170. */
+    seedWatched?: boolean;
+  }>,
   excluded: Set<string>,
   limit = 30,
   /** Names of library rows that have no provider ID yet — see `excludedNames`. */
@@ -128,7 +207,7 @@ export function mergeSuggestions(
 ): Suggestion[] {
   const merged = new Map<string, Suggestion>();
 
-  for (const { seedName, results, trending } of lists) {
+  for (const { seedName, results, trending, seedWatched = true } of lists) {
     // Position matters: the top of each list is a stronger signal than the tail.
     results.forEach((result, index) => {
       if (excluded.has(result.id)) return;
@@ -141,12 +220,19 @@ export function mergeSuggestions(
       if (existing) {
         existing.score += weight;
         if (!existing.because.includes(seedName)) existing.because.push(seedName);
+        // Any watched seed makes the stronger sentence true, and `because` lists the names
+        // it is true of: a watched seed is unshifted to the front so the two agree.
+        if (seedWatched && !existing.becauseWatched) {
+          existing.becauseWatched = true;
+          existing.because = [seedName, ...existing.because.filter((n) => n !== seedName)];
+        }
       } else {
         merged.set(result.id, {
           ...result,
           // A trending row is not *because* of anything, so it carries no seed at all
           // rather than a seed that is not a title.
           because: trending ? [] : [seedName],
+          becauseWatched: !trending && seedWatched,
           score: weight,
           ...(trending ? { trending: true } : {}),
         });
@@ -173,11 +259,15 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
     seedTitles(),
   ]);
 
-  const lists: Array<{ seedName: string; results: SearchResult[] }> = [];
+  const lists: Array<{ seedName: string; seedWatched: boolean; results: SearchResult[] }> = [];
 
   for (const seed of seeds) {
     try {
-      lists.push({ seedName: seed.name, results: await getProvider().getRecommendations(seed.titleId) });
+      lists.push({
+        seedName: seed.name,
+        seedWatched: seed.watched,
+        results: await getProvider().getRecommendations(seed.titleId),
+      });
     } catch {
       // One failed seed should not empty the whole feed.
     }
@@ -189,7 +279,7 @@ export async function getSuggestions(limit = 30): Promise<Suggestion[]> {
   try {
     const trending = await getProvider().getTrending();
     return mergeSuggestions(
-      [{ seedName: '', results: trending, trending: true }],
+      [{ seedName: '', results: trending, trending: true, seedWatched: false }],
       excluded,
       limit,
       names,

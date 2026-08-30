@@ -222,6 +222,65 @@ describe('seeding', () => {
   it('returns nothing to seed from an empty library', async () => {
     expect(await seedTitles()).toEqual([]);
   });
+
+  /*
+   * §6.170. `seedTitles` read `db.watches` alone while `excludedTitleIds` reads library,
+   * watchlist *and* watches — so Discover excluded everything you tracked and learned from
+   * none of it. Somebody who tracks five shows and has not pressed the ring yet got the
+   * trending chart, which is the first evening of using this app.
+   *
+   * Found by asking why every real-data screenshot of Discover was the fallback:
+   * `design/realLibrary.mjs` tracks six titles and marks nothing watched.
+   */
+  it('seeds from a show you track but have not started', async () => {
+    await db.library.add({ titleId: 'tmdb:tv:9', kind: 'show', status: 'watching', addedAt: 5 });
+    await db.titles.add({ id: 'tmdb:tv:9', kind: 'show', name: 'Tracked', fetchedAt: 0 });
+
+    // `watched: false` is the load-bearing half: the row's sentence turns on it, and
+    // "Because you watched Shōgun" about a show with no watches is what §6.170 photographed.
+    expect(await seedTitles()).toEqual([
+      { titleId: 'tmdb:tv:9', name: 'Tracked', watched: false },
+    ]);
+  });
+
+  it('puts what you have watched ahead of what you have only tracked', async () => {
+    // The order is the argument: time given is the stronger signal, and a stated interest
+    // is a real one. Both, in that order, rather than one or the other.
+    await db.library.bulkAdd([
+      { titleId: 'tmdb:tv:9', kind: 'show', status: 'watching', addedAt: 5 },
+      { titleId: 'tmdb:tv:8', kind: 'show', status: 'watching', addedAt: 1 },
+    ]);
+    await db.titles.bulkAdd([
+      { id: 'tmdb:tv:9', kind: 'show', name: 'Newer', fetchedAt: 0 },
+      { id: 'tmdb:tv:8', kind: 'show', name: 'Older', fetchedAt: 0 },
+      { id: 'tmdb:tv:7', kind: 'show', name: 'Watched', fetchedAt: 0 },
+    ]);
+    await db.watches.add({
+      id: 'w1',
+      targetId: 'tmdb:tv:7:s1e1',
+      seriesId: 'tmdb:tv:7',
+      watchedAt: 1,
+      runtimeMin: 60,
+      source: 'manual' as const,
+    });
+
+    expect((await seedTitles()).map((s) => s.name)).toEqual(['Watched', 'Newer', 'Older']);
+  });
+
+  it('does not seed the same title twice when it is both tracked and watched', async () => {
+    await db.library.add({ titleId: 'tmdb:tv:7', kind: 'show', status: 'watching', addedAt: 5 });
+    await db.titles.add({ id: 'tmdb:tv:7', kind: 'show', name: 'Both', fetchedAt: 0 });
+    await db.watches.add({
+      id: 'w1',
+      targetId: 'tmdb:tv:7:s1e1',
+      seriesId: 'tmdb:tv:7',
+      watchedAt: 1,
+      runtimeMin: 60,
+      source: 'manual' as const,
+    });
+
+    expect(await seedTitles()).toEqual([{ titleId: 'tmdb:tv:7', name: 'Both', watched: true }]);
+  });
 });
 
 describe('feed', () => {

@@ -322,8 +322,24 @@ export const COPY = {
      * pushes it to a second line for no added meaning: the point is that this comes from
      * something you liked, not an audit of which things.
      */
-    because: (titles: string[]) =>
-      `Because you watched ${titles.slice(0, 2).join(' and ')}`,
+    /**
+     * `watched` is not a nicety — it is the difference between a true sentence and a false
+     * one.
+     *
+     * §6.170 made a tracked-but-unstarted title a seed, because `seedTitles` read watch
+     * history while `excludedTitleIds` read the library as well, so Discover excluded what
+     * you tracked and learned from none of it. The first real-data photograph of the feed
+     * that produced said **"Because you watched Shōgun"** five times, about five shows with
+     * no watches against them — the exact defect this file's `trending` entry below was
+     * written about, arriving from the other side.
+     *
+     * So the verb comes from the seed. *Watched* where there is watch time, *track* where
+     * there is only a library row. `mergeSuggestions` sets the flag true if **any**
+     * contributing seed was watched and puts that seed's name first, so the stronger
+     * sentence is only ever said about names it is true of.
+     */
+    because: (titles: string[], watched: boolean) =>
+      `Because you ${watched ? 'watched' : 'track'} ${titles.slice(0, 2).join(' and ')}`,
     /**
      * What the last-resort feed says instead.
      *

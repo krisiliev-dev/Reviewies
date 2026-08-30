@@ -154,7 +154,9 @@ describe('every workspace', () => {
     // app 635, up seven: §6.167's `sunkenFill.test.ts` (3) and `watchlistRow.test.ts` (4).
     // app 638, up three: §6.168's `factNotControl.test.ts`.
     // app 641, up three: §6.169's `screenMode.test.ts`.
-    core: 922, app: 641, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // core 925, up three, and app 642, up one: §6.170's seeding cases in
+    // `recommend.test.ts`, and the remote drawer's one-place-one-register clause.
+    core: 925, app: 642, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -279,7 +281,10 @@ describe('every workspace', () => {
      * address rather than by walking, but its ten routes are a table inside a function and
      * the thing that could vanish quietly is a check, not a row.
      */
-    'design/capture-web.mjs': { pattern: /problems\.push\(/g, least: 7 },
+    /* 9, up two: §6.170 gave the web pass Stats-with-a-year and the remote drawer, and
+       each names the way it can fail to reach the state rather than shooting whatever is
+       there — a year that will not press, and a control that is not on the screen. */
+    'design/capture-web.mjs': { pattern: /problems\.push\(/g, least: 9 },
   };
 
   it('keeps every check the suites that are not vitest files were holding', () => {

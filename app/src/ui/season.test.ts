@@ -173,7 +173,9 @@ describe('a suggestion nothing in your library led to', () => {
     );
     expect(row.trending).toBe(true);
     expect(row.because).toEqual([]);
-    expect(COPY.discover.because(row.because)).not.toBe(COPY.discover.trending);
+    // Both verbs, because §6.170 made the sentence turn on which kind of seed it came from.
+    expect(COPY.discover.because(row.because, true)).not.toBe(COPY.discover.trending);
+    expect(COPY.discover.because(row.because, false)).not.toBe(COPY.discover.trending);
     expect(COPY.discover.trending).not.toMatch(/because you watched/i);
   });
 

@@ -197,12 +197,34 @@ export function RemoteDrawer() {
           <Key spec={HOME} disabled={!bridge.selected} onPress={press} />
         </div>
 
-        {bridge.error && <p className="text-s12 text-trouble">{bridge.error}</p>}
       </aside>
     </>
   );
 }
 
+/**
+ * What the drawer says about its connection — in **one** place, in one register.
+ *
+ * The panel used to say it twice. This block, at the top, read `bridge.status` and said
+ * *"Bridge offline. It will reconnect on its own."* in secondary ink; and nine hundred
+ * points below, under thirteen keys, `{bridge.error && ...}` printed the raw transport
+ * error in `trouble` red. Both conditions hold at once, and `dark-11-remote.png` — the
+ * first photograph this drawer has ever had, because `bridgeConfigured()` gated it out of
+ * every design pass — shows exactly that: *"It will reconnect on its own"* at the top and
+ * *"Relay closed the connection (1006)"* in red at the bottom. §6.104's shape: the screen
+ * telling you it is fine and telling you it is not.
+ *
+ * The calm sentence is the one somebody decided and it is the true headline — this
+ * connection does retry. The error is not deleted, because a person whose bridge will not
+ * come up has this one screen to work it out on, and *"relay closed the connection"* and
+ * *"could not reach the relay"* point at different halves of their network. It is a
+ * footnote under the sentence it qualifies, in the ink of the state it is part of.
+ *
+ * What is **not** decided here, and is said in §6.170 rather than papered over: a relay
+ * that rejects a token will not reconnect on its own, and this component cannot tell that
+ * apart from a relay that is merely down. The headline is optimistic in a case it cannot
+ * currently detect.
+ */
 function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
   if (bridge.status === 'connected' && bridge.devices.length === 0) {
     return (
@@ -217,11 +239,15 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
 
   if (bridge.status !== 'connected') {
     return (
-      <p className="rounded-pill bg-ground-raised p-3 text-s12 text-ink-secondary">
-        {bridge.status === 'connecting'
-          ? 'Connecting to your bridge…'
-          : 'Bridge offline. It will reconnect on its own.'}
-      </p>
+      <div className="rounded-plate bg-ground-raised p-3 text-s12 text-ink-secondary">
+        <p>
+          {bridge.status === 'connecting'
+            ? 'Connecting to your bridge…'
+            : 'Bridge offline. It will reconnect on its own.'}
+        </p>
+        {/* The detail, under the sentence it belongs to rather than under the keys. */}
+        {bridge.error && <p className="mt-1 text-ink-tertiary">{bridge.error}</p>}
+      </div>
     );
   }
 

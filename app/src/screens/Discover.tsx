@@ -125,7 +125,11 @@ function SuggestionRow({
        * screen's mode — and `getSuggestions` is all-or-nothing, so the mode belongs once at
        * the top of the screen, which is where `trendingBlurb` puts it.
        */
-      note={suggestion.trending ? undefined : COPY.discover.because(suggestion.because)}
+      note={
+        suggestion.trending
+          ? undefined
+          : COPY.discover.because(suggestion.because, suggestion.becauseWatched)
+      }
       open={{ name: `Open ${suggestion.name}`, to: `/title/${encodeURIComponent(suggestion.id)}` }}
       lead={
         <Poster

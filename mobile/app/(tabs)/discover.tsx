@@ -118,7 +118,7 @@ function Row({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       // false sentence on the one line of the card a person actually reads. §6.152.
       // The web's copy of this carries the reasoning: a trending row says nothing here,
       // because the sentence it used to say was the screen's mode rather than the row's.
-      note={item.trending ? undefined : COPY.discover.because(item.because)}
+      note={item.trending ? undefined : COPY.discover.because(item.because, item.becauseWatched)}
       lead={<Poster url={item.posterUrl} name={item.name} />}
       open={{
         // §6.96: the poster and the title were separate links to the same route under the

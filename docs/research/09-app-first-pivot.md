@@ -12496,6 +12496,123 @@ mode this entry just gave a sentence to is the only one the design record has ev
 the other one — the screen's normal state — is fixture-only. That is §6.146's rule pointing
 at the more important half of a screen.
 
+### 6.170 Three states nobody could photograph, and the bug one of them was hiding
+
+**#206.** §6.169 listed three states the record had **decided** without ever seeing:
+Discover's recommendation feed against real data, Stats with a year chosen, and the web's
+remote edge tab. All three are photographed now. The first turned out not to be a harness
+gap at all.
+
+#### Discover excluded what you track and learned from none of it
+
+The question was why *every* real-data shot of Discover was the trending fallback. §6.169
+guessed the seeded titles produced no usable recommendations. Measured instead: the snapshot
+holds **twenty recommendations for every one of the six titles**, and the snapshot server —
+which logs every URL it cannot answer — reported no misses on a full run. They were never
+requested.
+
+They were never requested because of this, twenty lines apart in one file:
+
+| | reads |
+| --- | --- |
+| `excludedTitleIds` | library **+** watchlist **+** watches |
+| `seedTitles` | watches **only** |
+
+Discover **excluded** everything you track and **learned from** none of it. What that costs
+is the first evening: somebody arrives, tracks five shows, has not pressed the ring yet, and
+`seedTitles` returns nothing, `mergeSuggestions` comes back empty, and the screen shows a
+chart of what is popular this week. Five stated interests on file, ignored.
+
+`design/realLibrary.mjs` tracks six titles and marks nothing watched, which is why the
+harness could only ever reach the fallback — it was in that state, and the state was a bug.
+
+**The comment above `Suggestion.trending` had described it exactly**, in §6.152, and nobody
+read it as a bug report: *"it needs a library with nothing watched in it — seeds come from
+watch history, so tracking five shows and watching none of them is exactly the state that
+reaches it, and no fixture pass has ever been in that state."* That sentence names the
+defect, the cause and the reason nothing had caught it, and files it as the definition of
+the fallback.
+
+`seedTitles` reads the library now: watched titles first, ranked by time given, then tracked
+titles newest-first, each appearing once. The first re-shoot produced the feature's real
+screen for the first time — *Band of Brothers* from Shōgun, *Shameless* from The Bear,
+*Emergence* from Severance, *Space Pirate Captain Harlock* from One Piece, *Platonic* from
+It's Always Sunny.
+
+And that photograph immediately showed the next thing: **"Because you watched Shōgun"**, five
+times, about five shows with no watches against them. §6.152's own subject — a false sentence
+in the one slot the card exists for — arriving from the other side of the same change. The
+seed carries `watched` now and `COPY.discover.because` takes it, so the verb is *watched*
+where there is watch time and *track* where there is only a library row.
+`mergeSuggestions` sets the flag true if **any** contributing seed was watched and puts that
+seed's name first, so the stronger sentence is only ever said about names it is true of.
+
+It also made yesterday's sentence false: §6.169 wrote *"Nothing to recommend from your library
+yet"* for the fallback, and for this person the library was not empty — the watch history was.
+It is true again now, because the state it describes is now genuinely nothing to build from.
+
+#### The two that were harness gaps
+
+**Stats with a year chosen** is on file as `{theme}-06-stats-year`. Not through `reveal`,
+which clicks a `button`: `Choice` renders `role="radio"`, so the helper's needle would have
+missed and reported *"nothing on the screen matches"* — a miss that reads like an absent
+control. The year is read out of the control rather than typed, because a hard-coded 2025 is
+a shot that starts failing in January, and the pass then checks `aria-checked` rather than
+trusting the click, because a chip that takes the press without taking the answer is §6.138's
+defect and this state exists to watch for it.
+
+**The web's remote drawer** is on file as `{theme}-11-remote`. `RemoteDrawer` returns `null`
+unless `bridgeConfigured()`, which reads two build-time `VITE_` variables, so the web's only
+route to the remote had never appeared in any screenshot — and §6.167 decided to *keep* that
+tab on the argument that it is the web's only route. `design:web` now builds with a
+deliberately dead relay (port 9 is discard, and the pass aborts everything off-origin
+anyway); nothing is connected to, and the affordance and the panel are what get photographed.
+
+#### And what that first photograph showed
+
+`dark-11-remote.png` says two things about one fact, in two registers, nine hundred points
+apart. At the top, in secondary ink: *"Bridge offline. It will reconnect on its own."* At the
+bottom, under thirteen keys, in **trouble red**: *"Relay closed the connection (1006)."* Two
+independent renderings of one condition — `bridge.status` and `bridge.error` — both true at
+once. §6.104's shape: the screen telling you it is fine and telling you it is not.
+
+One place, one register. The calm sentence is the decided one and it is the headline; the
+transport detail is a footnote beneath it in tertiary ink, because a person whose bridge will
+not come up has this one screen to work on and *"relay closed the connection"* and *"could
+not reach the relay"* point at different halves of their network. Not deleted, not in red.
+
+## What is not done, and why it is said here
+
+**The headline is optimistic in a case it cannot detect.** A relay that rejects a token will
+not reconnect on its own, and `useBridge` reports the same `status` for that as for a relay
+that is merely down. This entry moved the two sentences into one place; it did not teach the
+component to tell a temporary failure from a permanent one, and saying "it will reconnect on
+its own" to somebody with a bad token is a promise the app cannot keep.
+
+**The phone's Stats has no year shot either.** `capture.mjs` walks that screen the same way
+the web's did, and only the web pass gained the press.
+
+**And the new shot immediately shows two things, filed rather than decided.** Taking a
+decision badly at the close of a long sprint is how the record gets a picture of something
+nobody chose — §6.166's own warning — so both are named with their evidence and left:
+
+- `dark-06-stats-year.png` prints **the same three numbers twice**. The Year in Review card
+  reads *"Your 2026 / 1.0 days / across 50 episodes and 3 titles"*, and the four tiles
+  directly beneath it read *Watched 1.0 days*, *Episodes 50*, *Titles 3* — the card and three
+  of the four tiles are `summary.minutes`, `summary.episodes` and `summary.distinctTitles`,
+  rendered twice in two shapes, one screen apart. Only the streak is new. Checked in
+  `app/src/screens/Stats.tsx`, not inferred: the card is inside `isYearReview` and the `<dl>`
+  is unconditional, so this happens on every year.
+- The same shot has **the remote's edge tab floating over the "Longest streak" tile**, at
+  `top-1/2 right-0`. That is not new behaviour — it is newly *visible*, because configuring
+  the bridge is what put the handle in a screenshot at all. §6.167 kept the web's tab partly
+  on the argument that it floats "over screens that are lists rather than grids", and the
+  first picture of it has it over a card. The argument survives on nine routes and not on
+  this one; whether that is enough to move it is a decision, and this entry is not the place
+  to take it in passing.
+
+**Eighty-eight shots are unread**, and the two added here bring the total to 132.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -13336,18 +13453,29 @@ and which single claim in this document could not be checked at all:
   and four sprints of building instruments without reading their output is how a live backend
   got into a pass whose own comment said it could not be there.
 
-- **Ninety shots have not been read.** §6.165 states the scope: 130 files across
+- **Eighty-eight shots have not been read**, of 132 — §6.170 added two, both of states that
+  had never had a picture. §6.165 states the scope: 130 files across
   `design/screens/`, `design/real-screens/`, `design/web/` and `design/web-real/`, of which
   twenty-one were opened. The task that commissioned the reading said "forty-eight" because it
   was written from a listing of one directory. §6.168 opened thirteen more and §6.169 six, and
   each got a finding out of them, so the rate has not fallen off. Most of the `-foot` shots and
   most of `design/real-screens/` are what is left.
 
-- **Discover's recommendation feed has never been photographed against real data.** Every
-  real-data shot of that screen is the *fallback*: the seeded library's five titles produce no
-  usable recommendations through the real provider, so `getSuggestions` returns the trending
-  chart, which §6.169 found by reading the bottom of one. The screen's normal state is
-  fixture-only, which is §6.146's rule pointing at the more important half of a screen.
+- ~~**Discover's recommendation feed has never been photographed against real data.**~~ —
+  **closed in §6.170, and it was not a fixture problem.** `seedTitles` read watch history
+  while `excludedTitleIds` read the library as well, so Discover excluded everything you
+  tracked and learned from none of it: track five shows, watch none yet, and the screen shows
+  a popularity chart. The harness could only reach the fallback because it was standing in
+  the bug. The lesson worth keeping is the shape — *"the fixture cannot reach that state"* and
+  *"that state is broken"* look identical from outside, and §6.146 only tells you to go and
+  look.
+
+- **A promise the app cannot always keep.** The remote drawer says *"Bridge offline. It will
+  reconnect on its own"* for every non-connected status, and `useBridge` reports the same
+  status for a relay that rejected the token as for one that is merely down. §6.170 put the
+  transport detail back under that sentence instead of in red at the far end of the panel; it
+  did not make the sentence conditional, because nothing in the connection layer currently
+  distinguishes the two.
 
 - **Reading a picture is about half right, and that is now measured rather than felt.**
   Across §6.167, §6.168 and §6.169, **fourteen** things were filed or half-filed from

@@ -35,7 +35,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { CSV } from './library.mjs';
-import { longerScreens, shoot } from './shoot.mjs';
+import { longerScreens, reveal, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4202';
 const OUT = new URL('./web/', import.meta.url).pathname;
@@ -239,6 +239,59 @@ async function pass(theme) {
    * may be much longer — and the list below is which of them have more underneath, with a
    * `-foot` shot on file for each. §6.141's retracted defect came from not knowing which.
    */
+  /*
+   * Stats with a **year** chosen, which nothing had ever photographed.
+   *
+   * The routes loop lands on `/stats` and leaves, so the second row of the period control
+   * has only ever been seen holding no answer — and §6.167 restyled that row's label from a
+   * `Section` to a footnote on the strength of exactly that shot. §6.146: a fixture that
+   * cannot produce the case has an opinion about the screen.
+   *
+   * Not `reveal`, which clicks a `button`: `Choice` renders `role="radio"`, so the helper's
+   * needle would never match and the miss would be reported as "nothing on the screen
+   * matches" rather than as a year that will not press. The year is read out of the control
+   * rather than typed here, because a hard-coded 2025 is a shot that starts failing in
+   * January. §6.146 again, from the other end.
+   */
+  await page.goto(`${BASE}/stats`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1200);
+  // `announce` joins the label and the hint: `2025 — your 2025`, not either half.
+  const years = page.getByRole('radio', { name: /^\d{4} — your \d{4}$/ });
+  if (await years.count()) {
+    await years.first().click();
+    await page.waitForTimeout(900);
+    await shoot(page, { out: OUT, name: `${name}-06-stats-year`, problems, scrolls });
+    // The mark, not merely the click: `aria-checked` is what the row announces, and a chip
+    // that took the press without taking the answer is the §6.138 defect this state exists
+    // to keep an eye on.
+    if ((await years.first().getAttribute('aria-checked')) !== 'true') {
+      problems.push(`${name}-06-stats-year: the year was pressed and is not the answer`);
+    }
+  } else {
+    problems.push(`${name}-06-stats-year: the period control offers no year to choose`);
+  }
+
+  /*
+   * The remote drawer, and the edge tab that opens it.
+   *
+   * `RemoteDrawer` returns `null` unless `bridgeConfigured()`, which reads two build-time
+   * `VITE_` variables — so the web's only route to the remote had **never been in a
+   * screenshot**, and §6.167 decided to *keep* that tab, on the argument that it is the
+   * web's only route, without a picture of it. §6.146.
+   *
+   * The npm script sets a deliberately dead relay: port 9 is discard, and `page.route`
+   * aborts anything off this origin anyway. Nothing is being connected to. What is being
+   * photographed is the affordance and the panel, which is what the decision was about.
+   */
+  await reveal(page, {
+    out: OUT,
+    name: `${name}-11-remote`,
+    control: 'Open remote',
+    arrive: `${BASE}/`,
+    problems,
+    scrolls,
+  });
+
   const longer = longerScreens(scrolls);
   console.log(
     longer
