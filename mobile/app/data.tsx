@@ -111,7 +111,7 @@ export default function DataScreen() {
           <Pressable
             style={styles.toggleRow}
             accessibilityRole="switch"
-            accessibilityState={toggleState(openComments)}
+            {...toggleState(openComments)}
             accessibilityLabel="Open the conversation after marking watched"
             accessibilityHint="How TV Time worked. Needs an account."
             onPress={() => {

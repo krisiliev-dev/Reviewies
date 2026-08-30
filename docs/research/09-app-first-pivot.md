@@ -12747,6 +12747,76 @@ asked it to.
 **Eighty-six shots are unread**, of 134 — this entry added the phone's year state in two
 themes.
 
+### 6.172 A dead prop at seventeen sites, and the guard that would have caught it
+
+**#208.** §6.171 measured every radio on the phone's Stats reporting `aria-checked: null`,
+including the one that is the answer on arrival, and filed it as a thing only a device could
+settle. It was settled in ten minutes by reading `node_modules`.
+
+#### It was not the renderer's limit; it was a prop the renderer stopped reading
+
+| | what it does |
+| --- | --- |
+| `react-native-web@0.21` `createDOMProps` | maps a **flat** `aria-checked` (or the deprecated `accessibilityChecked`) to the DOM |
+| the same file, on `accessibilityState` | nothing — the name does not appear in it |
+| `isDisabled.js`, the only module that mentions it | reads `props.disabled` and the long-dead **`accessibilityStates`** *plural* |
+| React Native 0.86's own view types | declare `'aria-checked'?: boolean \| 'mixed'` |
+
+So the flat spelling is the one that reaches **both** renderers, and
+`accessibilityState={{ … }}` reached neither in the export. Not `checked`, not `selected`,
+not `expanded`, not `busy`, and not even `disabled` — `isDisabled` reads a different prop
+with a different name.
+
+**Seventeen sites, nine components**: `CrossOff`, `Choice`, `Button`, `Key`, `PadCell`,
+`Row`, `WhereToWatch`, `ContentWarnings`, `RemotePanel`, and two screens. Every piece of
+state the phone has ever announced went nowhere in the export that the design track, the
+smoke suite and every accessibility check in this repository all drive.
+
+Measured before and after, in the built export, on the same screen:
+
+```
+before   30 days null   This year null   All time null   2026 null   2025 null   2024 null
+after    30 days false  This year false  All time false  2026 true   2025 false  2024 false
+```
+
+`toggleState` moved with it. It returned `{ checked: value }` — the `accessibilityState`
+shape — which the phone spread into a prop nothing read while the web reached into it for
+`.checked`: one object, two spellings, one of them arriving. It returns the **prop** now and
+both platforms spread it.
+
+#### The suite that would have caught it had never asked
+
+`app/smoke.mjs` has checked `aria-checked` for sprints and passes, because the web app
+renders real DOM. `mobile/smoke.mjs` had **never checked a chosen state once** in eighty
+checks — which is exactly what a property that has never worked looks like from inside the
+suite that would have found it. §6.88's shape: what is reported green because nothing runs
+it, one layer along — here, what is never asserted because it would never have passed.
+
+It has three now, and they are the proof rather than a precaution: two on the calendar's
+notification options and one on the watching preference, all three impossible yesterday.
+That suite is 205 checks, up from 202.
+
+#### Where this leaves the device question
+
+Narrower and more honest. §7 said the phone's export announces no chosen state and only a
+device could say whether the phone does. Both halves are now wrong: the export announces it,
+and the reason it did not was a prop React Native's own types no longer document as the way
+to say this. On a native build `aria-checked` is what RN 0.86 reads too, so the fix is not
+web-only — which is the part that could not have been known from the screenshot.
+
+What a device is still needed for is unchanged and unrelated: whether VoiceOver and TalkBack
+say the right sentence, which no static export can answer.
+
+## What is not done, and why it is said here
+
+**`aria-busy` and `aria-expanded` are converted and unmeasured.** The before-and-after above
+is `aria-checked` on one screen. The other three keys were changed by the same sweep and by
+the same argument, and only `checked` has a photograph and a suite check behind it. The
+guard holds the *spelling* everywhere; the *arrival* is measured in one place.
+
+**Eighty-six shots are unread**, unchanged — this sprint spent itself on the thing the last
+one could not settle.
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
@@ -12783,14 +12853,18 @@ and which single claim in this document could not be checked at all:
   weight on top of a file that has one — which no check in this repo can observe. The rule is
   right by the platform's documented behaviour and by the token file's own argument; it has
   not been *watched* being right.
-- **The phone's export announces no chosen option, and only a device can say whether the
-  phone does.** §6.171 measured all six radios on Stats reporting `aria-checked: null`,
-  including the one that is the answer on arrival. `mobile/src/ui/Choice.tsx` passes
-  `accessibilityState={{ checked, selected }}`, which is the correct React Native API and
-  which react-native-web drops; on a native build it goes to the platform accessibility API
-  and very likely works. Nothing here can tell. What *is* certain is that `app/smoke.mjs`
-  checks `aria-checked` and `mobile/smoke.mjs` never has — a property that has never worked
-  looks exactly like this from the inside.
+- ~~**The phone's export announces no chosen option, and only a device can say whether the
+  phone does.**~~ — **closed in §6.172, and both halves were wrong.** It was not the
+  renderer's limit and not a device question: `accessibilityState` is a prop
+  react-native-web 0.21 does not read at all, dead at seventeen sites across nine
+  components, and React Native 0.86 declares the flat `aria-checked` in its own view types.
+  One spelling reaches both. Measured before and after in the export, and
+  `mobile/smoke.mjs` now makes three checks about a chosen state that were impossible the
+  day before.
+
+  What survives is smaller: `aria-busy` and `aria-expanded` were converted by the same sweep
+  and only `aria-checked` has a measurement behind it, and whether VoiceOver and TalkBack
+  read the right *sentence* is still a device question — a different one.
 
 - **Nothing has run on a physical device, and §6.111 measured exactly how far short of
   one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no

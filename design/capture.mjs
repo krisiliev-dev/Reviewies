@@ -1157,17 +1157,17 @@ if (await aYear.count()) {
    * The press became the **answer**, not merely a press — a chip that takes one without
    * taking the other is §6.138's defect, and this state is the only one that can show it.
    *
-   * Read off the headline card, which only renders when `year !== undefined`, rather than
-   * off `aria-checked`. §6.171 measured why: every radio in this export reports
-   * `aria-checked: null`, including the one that *is* the answer on arrival. React Native's
-   * `accessibilityState={{ checked }}` reaches nothing in the react-native-web build, so an
-   * assertion on it here would be measuring the renderer rather than the screen — and
-   * failing this pass over it would fail a design run for a property the record already
-   * knows is untestable outside a device. The finding is in §6.171 and §7; the check is
-   * this.
+   * Both halves, because §6.172 turned the second one from untestable into the point.
+   * §6.171 wrote that `aria-checked` was null on every radio in this export and filed it
+   * as a device-only unknown; it was `accessibilityState`, a prop react-native-web 0.21
+   * does not read, dead at seventeen sites. The flat spelling reaches both renderers and
+   * this now measures it.
    */
   if (!/Your \d{4}/.test(await page.locator('body').innerText())) {
     unshot.push('08-stats-year: the year was pressed and is not the answer');
+  }
+  if ((await aYear.getAttribute('aria-checked')) !== 'true') {
+    unshot.push('08-stats-year: the year is the answer and the phone does not say so');
   }
 } else {
   unshot.push('08-stats-year: the period control offers no year to choose');

@@ -28,7 +28,7 @@ export function PadCell({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={padName(label)}
-      accessibilityState={{ disabled: !!disabled }}
+      aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.cell,
         disabled && styles.off,

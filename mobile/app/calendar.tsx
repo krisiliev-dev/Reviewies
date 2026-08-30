@@ -134,7 +134,7 @@ export default function CalendarScreen() {
               <>
                 <Button
                   label={registered ? 'Notifications on' : 'Notify this device'}
-                  // It had `accessibilityState={{ selected }}` and no name at all, so a
+                  // It had `aria-selected={}` and no name at all, so a
                   // reader got the state and the printed words and nothing saying which
                   // device. `selected` is drawn as well as announced now.
                   name={

@@ -123,7 +123,7 @@ export function Settings() {
         <button
           type="button"
           role="switch"
-          aria-checked={toggleState(openComments).checked}
+          {...toggleState(openComments)}
           aria-label="Open the conversation after marking watched"
           aria-description="How TV Time worked. Needs an account."
           onClick={() => {

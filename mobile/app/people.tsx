@@ -119,7 +119,7 @@ export default function PeopleScreen() {
                 disabled={!me}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityState={{ disabled: !me }}
+                aria-disabled={!me}
               >
                 <Text style={styles.link}>Change your handle</Text>
               </Pressable>

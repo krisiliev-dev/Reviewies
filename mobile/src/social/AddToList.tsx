@@ -67,7 +67,7 @@ export function AddToList({ titleId, kind }: { titleId: string; kind: MediaKind 
         hitSlop={8}
         style={tap}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
       >
         <Text style={styles.toggle}>{open ? 'Cancel' : 'Add to list'}</Text>
       </Pressable>

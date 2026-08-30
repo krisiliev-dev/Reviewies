@@ -21,7 +21,7 @@ export function Key({ spec, disabled, onPress }: KeyContract) {
       // "▲" read aloud is "up-pointing triangle", and "OK" is not obviously a button that
       // selects. Every key on the fascia carries a spoken name for that reason.
       accessibilityLabel={spec.name}
-      accessibilityState={{ disabled: !!disabled }}
+      aria-disabled={!!disabled}
       style={({ pressed }) => [
         styles.key,
         spec.size === 'wide' && styles.wide,

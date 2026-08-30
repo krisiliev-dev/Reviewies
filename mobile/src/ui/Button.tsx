@@ -68,7 +68,7 @@ export function Button({
       disabled={disabled}
       accessibilityRole={to ? 'link' : 'button'}
       accessibilityLabel={name}
-      accessibilityState={{ disabled: !!disabled, busy: !!busy, selected: !!selected }}
+      aria-disabled={!!disabled} aria-busy={!!busy} aria-selected={!!selected}
       style={({ pressed }) => [
         styles.base,
         {

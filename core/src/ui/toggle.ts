@@ -97,5 +97,13 @@ export interface ToggleContract {
  * The mark below is `aria-hidden`; this is what the control around it announces. Named here
  * so the two platforms cannot reach different answers about which way round it goes — which
  * is not hypothetical, since the entire subject of this file is exactly that.
+ *
+ * It returns the **prop**, not the value, and both platforms spread it. That was
+ * `{ checked: value }` until §6.172, which is React Native's `accessibilityState` shape —
+ * and react-native-web 0.21 does not read `accessibilityState` at all. The phone spread it
+ * there and announced nothing; the web reached into it for `.checked`. One object, two
+ * spellings, and only one of them arriving. `aria-checked` is read by react-native-web's
+ * `createDOMProps` *and* declared by React Native 0.86's own view types, so a single
+ * spelling now serves both.
  */
-export const toggleState = (value: boolean) => ({ checked: value });
+export const toggleState = (value: boolean) => ({ 'aria-checked': value });

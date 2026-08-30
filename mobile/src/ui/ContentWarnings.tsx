@@ -70,7 +70,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
         onPress={() => setOpen(!open)}
         style={styles.toggle}
         accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
+        aria-expanded={open}
       >
         <Text style={styles.toggleText}>
           {open ? 'Hide content warnings' : 'Content warnings'}
@@ -119,7 +119,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
             onPress={() => setVoting(!voting)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityState={{ expanded: voting }}
+            aria-expanded={voting}
             accessibilityLabel={voting ? 'Done flagging' : 'Flag something'}
           >
             <Text style={styles.link}>{voting ? COPY.controls.done : 'Flag something'}</Text>
@@ -135,7 +135,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                     onPress={() => vote(warning.id, true)}
                     style={[styles.vote, own === true && styles.voteOn]}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: own === true }}
+                    aria-selected={own === true}
                     // Twelve warnings, twelve pairs of these. Read aloud in order,
                     // "Yes button, No button, Yes button" says nothing about what is
                     // being voted on.
@@ -149,7 +149,7 @@ export function ContentWarnings({ titleId }: { titleId: string }) {
                     onPress={() => vote(warning.id, false)}
                     style={[styles.vote, own === false && styles.voteOn]}
                     accessibilityRole="button"
-                    accessibilityState={{ selected: own === false }}
+                    aria-selected={own === false}
                     accessibilityLabel={`No, this does not have ${warning.label.toLowerCase()}`}
                   >
                     <Text style={[styles.voteText, own === false && styles.voteTextOn]}>No</Text>

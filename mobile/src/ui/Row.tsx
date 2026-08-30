@@ -104,7 +104,7 @@ export function Row({
             // neighbours: a screen of rows is the same two words down the page, and a
             // screen reader reads the control rather than what is above it.
             accessibilityLabel={open.name}
-            accessibilityState={{ disabled: !!disabled }}
+            aria-disabled={!!disabled}
             style={({ pressed }) => [styles.target, pressed && styles.pressed]}
           >
             {inside}

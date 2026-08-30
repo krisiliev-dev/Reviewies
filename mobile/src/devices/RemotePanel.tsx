@@ -83,7 +83,7 @@ export function RemotePanel({ remote }: { remote: Remote }) {
               onPress={() => remote.select(found)}
               style={[styles.device, remote.device?.id === found.id && styles.deviceOn]}
               accessibilityRole="button"
-              accessibilityState={{ selected: remote.device?.id === found.id }}
+              aria-selected={remote.device?.id === found.id}
               accessibilityLabel={`Use ${found.name} at ${found.address}`}
             >
               <Text style={styles.deviceName}>{found.name}</Text>

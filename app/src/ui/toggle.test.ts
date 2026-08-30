@@ -56,8 +56,11 @@ describe('a setting that is on or off', () => {
   });
 
   it('says the same thing about its state on both platforms', () => {
-    expect(toggleState(true)).toEqual({ checked: true });
-    expect(toggleState(false)).toEqual({ checked: false });
+    // The **prop**, not the value: §6.172 found that `{ checked }` is React Native's
+    // `accessibilityState` shape and that react-native-web 0.21 does not read it, so the
+    // phone spread it and announced nothing. `aria-checked` is read by both.
+    expect(toggleState(true)).toEqual({ 'aria-checked': true });
+    expect(toggleState(false)).toEqual({ 'aria-checked': false });
     // Both call sites read it rather than spelling `{ checked: … }` themselves, which is the
     // one thing two platforms must not answer separately — and the reason this file exists.
     for (const file of ['app/src/screens/Settings.tsx', 'mobile/app/data.tsx']) {

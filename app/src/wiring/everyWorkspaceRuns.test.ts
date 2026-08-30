@@ -157,7 +157,8 @@ describe('every workspace', () => {
     // core 925, up three, and app 642, up one: §6.170's seeding cases in
     // `recommend.test.ts`, and the remote drawer's one-place-one-register clause.
     // app 645, up three: §6.171's refused-connection pair and the year-in-review clause.
-    core: 925, app: 645, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // app 648, up three: §6.172's `announcedState.test.ts`.
+    core: 925, app: 648, mobile: 42, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
@@ -194,7 +195,10 @@ describe('every workspace', () => {
     /* 152, up one: §6.171 added the other half of the year-in-review check — the headline
        figure is not also a tile. */
     'app/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 152 },
-    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 78 },
+    /* 81, up three: §6.172 gave this suite the first checks it has ever made about a
+       *chosen* state — two on the calendar's options, one on the watching preference.
+       They could not have passed before, which is why they were never written. */
+    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 81 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },

@@ -60,7 +60,7 @@ export function Choice<T extends string | number>({
             onPress={() => onChange(option.key)}
             accessibilityRole="radio"
             accessibilityLabel={announce(option)}
-            accessibilityState={{ checked: on, selected: on }}
+            aria-checked={on} aria-selected={on}
             style={({ pressed }) => [
               {
                 minHeight: metrics.minHeight,

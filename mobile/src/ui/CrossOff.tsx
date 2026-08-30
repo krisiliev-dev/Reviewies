@@ -41,7 +41,7 @@ export function CrossOff({
         // that cannot carry it.
         accessibilityRole="checkbox"
         accessibilityLabel={name}
-        accessibilityState={{ checked: watched, disabled: !!disabled }}
+        aria-checked={watched} aria-disabled={!!disabled}
         style={({ pressed }) => [
           styles.ring,
           {

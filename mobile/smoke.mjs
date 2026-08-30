@@ -628,6 +628,29 @@ try {
     'and says which reason applies',
     /browser|simulator|project id/i.test(upcoming),
   );
+  /*
+   * And the chosen option **says** it is chosen — the first time this suite has ever asked.
+   *
+   * §6.172: `accessibilityState={{ checked }}` is a prop react-native-web 0.21 does not
+   * read, so every `checked`, `selected` and `expanded` the phone announced went nowhere,
+   * at seventeen sites. `app/smoke.mjs` has checked `aria-checked` for sprints and passes;
+   * this file had never checked it once, which is exactly what a property that has never
+   * worked looks like from inside the suite that would have caught it.
+   */
+  const chosen = page.getByRole('radio', { name: /Premieres & finales/i }).first();
+  check(
+    'the chosen notification option announces that it is chosen',
+    (await chosen.count()) > 0 && (await chosen.getAttribute('aria-checked')) === 'true',
+    `count ${await chosen.count()}, aria-checked ${await chosen.getAttribute('aria-checked')}`,
+  );
+  const others = await page
+    .getByRole('radio')
+    .evaluateAll((els) => els.map((e) => e.getAttribute('aria-checked')));
+  check(
+    'and the ones that are not say so rather than saying nothing',
+    others.length > 1 && others.every((v) => v === 'true' || v === 'false'),
+    others.join(','),
+  );
   await page.goBack();
   await page.waitForTimeout(1000);
 
@@ -640,6 +663,14 @@ try {
   check(
     'the phone offers the open-the-conversation preference',
     (await page.getByText('Open the conversation after marking watched').count()) > 0,
+  );
+  // And says which way it is set. `toggleState` is the one owner of that answer and it
+  // returned the `accessibilityState` shape until §6.172, so the row announced nothing.
+  const preference = page.getByRole('switch').first();
+  check(
+    'and says whether it is on',
+    ['true', 'false'].includes(await preference.getAttribute('aria-checked')),
+    `aria-checked ${await preference.getAttribute('aria-checked')}`,
   );
   // Walked through for a toggle since it shipped, and never once read. §6.40.
   await audit('Your data', 5);
