@@ -260,3 +260,16 @@ extraction from it. Every published rescue tool works this way for the same reas
 TV Time shut down in **July 2026**, so the on-device cache is now the only copy that exists. The
 practical consequence for anyone reading this: the file is only recoverable while the app remains
 installed and the phone has not been reset.
+
+**An iCloud backup is not a way round it.** Apple exposes no supported way to browse or download
+a device backup from iCloud — iCloud.com offers photos, contacts and Drive, not app containers.
+The tools that claim to do it authenticate against Apple's private backup API with an Apple ID
+password and a 2FA code, which is an unofficial endpoint and a credential worth more than the
+data being recovered.
+
+**The local backup is smaller than people expect, which is the useful half of this.** Apple
+documents that a computer backup excludes anything already synced to iCloud — iCloud Photos,
+iMessages, SMS and MMS — along with App Store content. For a phone with iCloud Photos on, the
+bulk of "storage used" is exactly the part that will not be copied, so the backup is largely app
+data and settings. Someone refusing the backup for want of disk space is usually estimating from
+the wrong number.
