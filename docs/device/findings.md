@@ -274,6 +274,54 @@ bulk of "storage used" is exactly the part that will not be copied, so the backu
 data and settings. Someone refusing the backup for want of disk space is usually estimating from
 the wrong number.
 
+## The phone cannot read a database at all, and the record said it never needed to
+
+Third failure of the same import, after the encoding fix cleared the second. The screen was
+honest about it:
+
+> **DioCache.db — TV Time cache — 0 watch(es), 0 show(s)**
+> Could not read that as a TV Time cache: Reading a TV Time cache needs SQLite, which this
+> app has not set up. Call `setSqlJsLoader()` from your entry point.
+
+Nothing in `mobile/` calls `setSqlJsLoader`. The web binds it in `app/src/data/platform.ts`
+and the node suites bind it in their setup files, so every context that has ever run this
+code had a loader and the phone has never had one.
+
+### The part that matters more than the bug
+
+`coreWiring.test.ts` keeps a written reason for every export one app uses and the other does
+not — the mechanism exists so an asymmetry is a decision rather than an accident. The reason
+recorded for this one read:
+
+> The phone has expo-sqlite compiled in and **never asks for one**.
+
+It asks. It asked the first time anybody tried, and the error names the exact function the
+explanation was excusing. The guard was working perfectly: it required an explanation, got
+one, and the explanation was false. A justification nobody can check is a comment with a
+test around it.
+
+That entry now says what happened instead. It is the cheapest half of this finding and the
+only half a machine here could have carried.
+
+### Why the fix is not in this commit
+
+`sql.js` is WebAssembly, and the phone's own engine has none — so the answer is not to bind
+the web's loader but to write a different one over `expo-sqlite`, which is already a
+dependency and does expose the synchronous surface this interface needs
+(`openDatabaseSync`, `getAllSync`, `execSync`). Perhaps sixty lines, in
+`mobile/src/platform.ts`.
+
+What stops it being written here is that **no guard for it can run here.** The thing it binds
+exists only on a device; a node suite would be testing a mock of the thing that broke. That
+is the exact shape the brief warns about, and the third finding in a row where the instrument
+could not reach the defect — the fixtures had a shape real data does not, the suites run on a
+JS engine the app does not use, and now the binding only exists somewhere no suite runs.
+
+### So the import still has not happened on the phone
+
+Web: 235 titles, 115 watches, 2 watchlist items. Phone: nothing, three times, for three
+unrelated reasons. Two are fixed. The third is understood and open.
+
 ## Every import was broken on the phone, and no suite here could see it
 
 The import failed on the device with:
