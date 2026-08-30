@@ -119,10 +119,27 @@ describe('a watchlist row', () => {
       if (!/flexDirection:\s*'row'/.test(editor)) {
         stacked.push(`${file} stacks its note editor, so an inline Save stretches full width`);
       }
-      // And the field takes the room the button does not, rather than both being content-
-      // sized: `minWidth: 0` because a flex child will not shrink below its text without it.
+      /*
+       * And the field takes the room the button does not, rather than both being content-
+       * sized: `minWidth: 0` because a flex child will not shrink below its text without it.
+       *
+       * **Declared and worn, which is two checks and was one.** The first spelling asked only
+       * that the StyleSheet contain a `grow` entry, and §6.187 re-planted it in the main
+       * checkout after merging: deleting `style={styles.grow}` from the call site left the
+       * declaration sitting in the sheet, unused and unreferenced, and the clause passed. A
+       * StyleSheet entry nothing wears is invisible to `tsc` and to `oxlint` both, so nothing
+       * else was going to say it either.
+       *
+       * `field.test.ts` had already learned this one — *"And it has to be worn"* — which is
+       * why the lesson is cited rather than re-derived. A guard that reads a table and not
+       * the call site is checking that somebody wrote a number down.
+       */
       if (!/grow:\s*\{[^}]*flex:\s*1[^}]*minWidth:\s*0/.test(source)) {
         stacked.push(`${file} gives the note field no room to grow beside its Save`);
+      }
+      const wears = /<Field[^>]*style=\{styles\.grow\}/s.test(source);
+      if (!wears) {
+        stacked.push(`${file} declares a growing field and does not put it on the Field`);
       }
     }
     expect(stacked).toEqual([]);
