@@ -56,7 +56,17 @@ describe('the remote fascia', () => {
      */
     expect(KEY_HEIGHT).toBeGreaterThan(size.target);
     for (const [platform, source] of BOTH) {
-      expect(source, `${platform} types its own key height`).toContain('KEY_HEIGHT');
+      /*
+       * The height, not the name. §6.182: §6.181 filed *this clause* as the offender — its
+       * own name is "is the same size on both platforms" — added a second clause for the
+       * shape, and left this line exactly as it was. `KEY_HEIGHT` is now read twice in the
+       * phone renderer (`minWidth` as well as `minHeight`, since §6.181), so a renderer
+       * could hand-type its height and keep the string alive. Naming a defect is not fixing
+       * it, and the entry that named it is the one that proves so.
+       */
+      expect(source, `${platform} types its own key height`).toMatch(
+        /minHeight:\s*KEY_HEIGHT/,
+      );
     }
   });
 

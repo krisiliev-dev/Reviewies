@@ -87,7 +87,16 @@ describe('the first run, on both platforms', () => {
     expect(COPY.upNext.allCaughtUp).toContain('All caught up');
     for (const [name, source] of [['web', web()], ['phone', phone()]] as const) {
       expect(source, name).toContain('COPY.upNext.allCaughtUp');
-      expect(source, name).toContain('unmatched');
+      /*
+       * Behind the test, not merely in the same file. §6.182: `unmatched` was guaranteed
+       * present by this file's own sibling clause — which requires `unmatched && !importing ?
+       * <MatchImports` in both renderers — so the second assertion could not fail whatever
+       * the caught-up branch did. Collapsing the ternary to `importing ? … : allCaughtUp`
+       * left both strings in place and put "All caught up" over a library with three shows
+       * still unmatched, which is the sentence this clause is named for.
+       */
+      expect(source, `${name} reaches the caught-up sentence without asking about unmatched`)
+        .toMatch(/unmatched[\s\S]{0,400}COPY\.upNext\.allCaughtUp/);
     }
   });
 

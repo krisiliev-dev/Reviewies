@@ -134,11 +134,20 @@ describe('a progress bar', () => {
     expect(progressPercent(5, 0), 'a zero maximum divided by zero').toBe(0);
 
     const offenders: string[] = [];
+    let seen = 0;
     for (const file of [...filesUnder('app/src'), ...filesUnder('mobile/app'), ...filesUnder('mobile/src')]) {
       for (const m of read(file).matchAll(/<Progress\b[\s\S]*?\/>/g)) {
+        seen++;
         if (!/\blabel=/.test(m[0])) offenders.push(`${file}: a bar with no name`);
       }
     }
+    /*
+     * §6.182: the sweep collected offenders and asserted `[]`, which a run finding no bars
+     * at all satisfies — a drifted regex or a wrong file list would have passed quietly.
+     * Its sibling twenty lines up counts (`nothing named the fill, so this proved nothing`)
+     * and this did not, which makes the omission an oversight rather than a decision.
+     */
+    expect(seen, 'no bar was scanned, so this proved nothing').toBeGreaterThan(2);
     expect(offenders).toEqual([]);
   });
 

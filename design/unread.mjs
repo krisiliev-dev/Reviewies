@@ -44,8 +44,27 @@ export function shots() {
   );
 }
 
+/**
+ * Named, meaning the whole basename appears — not a prefix of a longer one.
+ *
+ * `doc.includes(basename)` was the first spelling and it **under-counts**, because a longer
+ * shot name credits every shorter one it starts with. Four shots were reported as read on
+ * that basis alone: `dark-06-stats` because the doc writes `dark-06-stats-year` twice and
+ * the plain stats screen never; `dark-10-settings`, `narrow-discover` and
+ * `wide-title-one-piece` because their `-foot` shots are named and their heads are not.
+ *
+ * The asymmetry is the tell: naming a foot silently credits its head, and naming a head
+ * never credits its foot. Four of 137 is not a large error, but it is one in the direction
+ * that flatters — and this file's own header already says the proxy over-counts reading,
+ * so a second over-count on top of it is the one to remove. §6.182.
+ */
 export function unnamed(doc = readFileSync(resolve(ROOT, 'docs/research/09-app-first-pivot.md'), 'utf8')) {
-  return shots().filter((p) => !doc.includes(p.split('/').pop().replace(/\.png$/, '')));
+  return shots().filter((p) => {
+    const name = p.split('/').pop().replace(/\.png$/, '');
+    // Not followed by another name character, so `dark-06-stats-year` does not answer for
+    // `dark-06-stats`. A trailing `.png`, a backtick, a space or a full stop all count.
+    return !new RegExp(`${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![-A-Za-z0-9])`).test(doc);
+  });
 }
 
 if (process.argv[1] === import.meta.filename) {

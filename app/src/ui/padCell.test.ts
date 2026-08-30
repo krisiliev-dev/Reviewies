@@ -124,6 +124,14 @@ describe('a pad cell', () => {
     // check is that the written class and the token agree rather than that the class is
     // derived. A `grid-cols-3` with `PAD.columns` still 4 fails here.
     expect(WEB, 'the web grid disagrees with PAD.columns').toContain(`grid-cols-${PAD.columns}`);
+    /*
+     * The web's square too. §6.182: the clause is named for both platforms and checked one.
+     * The web's squareness is `aspect-square` in `CELL`, which nothing touched, so deleting
+     * it left `PAD.ratio` at 1, `grid-cols-4` present, and web pad cells whatever height
+     * their content happened to want.
+     */
+    expect(PAD.ratio, 'a ratio that is not 1 cannot be spelled `aspect-square`').toBe(1);
+    expect(WEB, 'the web cell is not square').toContain('aspect-square');
     expect(PHONE, 'the phone cell is not square').toContain('aspectRatio: PAD.ratio');
     // 23% four times plus three gaps is the four-across the token describes; a bare
     // number here would be the fifth place this count lives.

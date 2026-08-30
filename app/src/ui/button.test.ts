@@ -54,8 +54,16 @@ describe('the button contract', () => {
      * honoured by one platform is the drift this file exists for, and it is invisible to
      * a name check because the phone's renderer is generic.
      */
+    /*
+     * `shape.<field>`, not the bare word. §6.182: three of these keys — `fill`, `stroke`,
+     * `label` — are also local names in the phone renderer (`const fill =`, `PRESSED.fill`,
+     * the `label` prop, `styles.label`, `metrics.label`), so `toContain('label')` was four
+     * times true while the renderer read the table for none of them. Replacing `shape.label`
+     * with a hardcoded `'ink'` — every tone painting one colour, `destructive` no longer red
+     * — kept this green, which is exactly the drift the clause is named for.
+     */
     for (const field of Object.keys(TONE.primary)) {
-      expect(PHONE, `phone ignores ${field}`).toContain(field);
+      expect(PHONE, `phone ignores ${field}`).toMatch(new RegExp(`shape\\.${field}\\b`));
     }
     // And both must take their metrics from the table rather than retyping them.
     for (const source of [WEB, PHONE]) {

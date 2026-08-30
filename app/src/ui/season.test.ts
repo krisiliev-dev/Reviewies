@@ -233,9 +233,16 @@ describe('a suggestion nothing in your library led to', () => {
      * shape — deleting the field passes the clause it exists to protect. Each renderer has
      * to still reach for `overview`.
      */
+    /*
+     * Rendered, not mentioned. §6.182: `overview` also appears as a style key, a type, a
+     * destructure and a `title?.overview &&` guard, so swapping `{title.overview}` for
+     * `{title.tagline}` on the web and dropping the phone's `<Text>` while leaving
+     * `styles.overview` behind kept this green with the synopsis gone from both screens —
+     * which is the §6.121 shape this clause was written to close, inside the clause.
+     */
     for (const file of TITLES) {
-      expect(withoutProse(read(file)), `${file} no longer shows the synopsis`).toContain(
-        'overview',
+      expect(withoutProse(read(file)), `${file} no longer shows the synopsis`).toMatch(
+        /\{title\.overview\}/,
       );
     }
   });

@@ -114,6 +114,16 @@ describe('the cross-off', () => {
     expect(RENDERERS.phone).toContain('export const crossedOff');
     expect(RENDERERS.phone).toContain('theme[STRUCK.text.on]');
     expect(RENDERERS.phone).toContain('theme[STRUCK.pen]');
+    /*
+     * And the third channel, which was asserted only as a value on the contract. §6.182:
+     * `RING.fill === 'workingFill'` says nothing about either renderer painting it, and
+     * dropping `bg-working-fill` from the web's `RING_ON` left every other assertion here
+     * true while the ring stopped filling. Three channels, three assertions, in the files
+     * that draw them.
+     */
+    expect(RENDERERS.web, 'the web ring does not fill').toMatch(/RING_ON =[^;]*bg-working-fill/);
+    expect(RENDERERS.phone, 'the phone ring does not fill')
+      .toMatch(/backgroundColor:[^,\n]*theme\[RING\.fill\]/);
 
     // And nothing else draws the line. Exporting the pair is only half of it — a row that
     // spells out its own is a row free to pick a different colour, which is how three

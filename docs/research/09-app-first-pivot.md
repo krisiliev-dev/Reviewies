@@ -13634,6 +13634,13 @@ second is a measurement lesson:
 
 **Sixty-three shots are unread**, of 137. `node design/unread.mjs` prints them.
 
+> **§6.182 corrects this number, and the sentence after it.** The instrument printed **70**,
+> not 63. 63 is 73 − 10 — this entry's own "ten shots read", subtracted from §6.178's figure
+> — and the two are not the same quantity: `unread.mjs` counts shots *named in the prose*,
+> and this entry named only four new ones, five of its eight having been named already at
+> sprint 88. So the real movement was 74 → 70. The clause "`node design/unread.mjs` prints
+> them" is the part that should not have survived: the command was not run.
+
 **The rate is one finding in ten, and the finding was in the source rather than the shot.**
 Said plainly because the brief asked for the judgement: the design backlog is no longer
 finding design defects. Both of the last two entries' findings came from *reading code the
@@ -13793,7 +13800,11 @@ has no shorter honest substitute for a change to a guard.
 
 **No screenshots were read this sprint**, so sixty-three remain unread of 137 — unchanged
 from §6.179, though `15-title-addtolist` and `00-addtolist-empty` were re-taken and one of
-them now shows something it could not before. That was the intended trade and it is said plainly rather than buried: the
+them now shows something it could not before.
+
+> **§6.182: the count was 70, not 63.** "Unchanged" was the one true word in the sentence —
+> the instrument printed 70 at §6.179 and 70 here — but the number it was attached to was
+> carried from an arithmetic slip rather than re-measured. That was the intended trade and it is said plainly rather than buried: the
 reading went to renderer pairs, and two findings came out of twenty-five pairs against one
 finding out of the previous ten shots.
 
@@ -13926,6 +13937,12 @@ completely. The clause reads what the flags *are*, not that they are read.
 **Sixty-three shots are still unread**, of 137, unchanged for a third sprint — though the
 calendar and remote shots were re-taken and both now show something they could not before.
 
+> **§6.182: wrong twice.** The instrument printed **69** here, not 63 — and this was the one
+> sprint where it *did* move, because this entry's own sentence "`14-remote.png` shows a
+> square d-pad now" named a shot for the first time and took it from 70 to 69. So the
+> number was stale and the word "unchanged" was false, in the same clause, in an entry whose
+> subject is guards that assert a name instead of a behaviour.
+
 **`behaviour.mjs` found none of this.** Worth stating plainly, because the probe was §6.180's
 own instrument and this sprint is its verdict: three components, three findings, and the
 probe reported all three as identical. Its nine keywords cover numbers with *behaviour*
@@ -13942,6 +13959,148 @@ That is the ratio worth acting on.
 **No screenshot was read this sprint either.** Two sprints of that now. The design harness is
 being used as a regression net and as a way to *photograph* a fixed state, which is what it
 did twice today, rather than as a place to look for defects.
+
+
+### 6.182 Ten guards that could not fail, and a number that was never measured
+
+The first sprint run in parallel: five readers at once — three on renderer pairs, one
+sweeping every clause in the repository for the §6.121 shape, one on a stale number. The
+method note is worth recording before the findings, because it changed what a sprint can
+cover. Twenty-one component files and 1651 clauses were read in about ten minutes of
+wall-clock, and the reading produced roughly fifteen findings against the two or three a
+serial sprint has been managing. What does **not** parallelise is the writing: every fix
+here touches a core table, two renderers, a guard, the FLOOR count and this document, and
+the plant-and-restore method mutates the working tree, so the fixes stayed serial and most
+of what the reading found is queued rather than taken.
+
+#### The number: 63 was never what the instrument printed
+
+Three consecutive entries said "sixty-three shots are unread, of 137" and two of them said
+"unchanged". `node design/unread.mjs` says **69**, and none of that is what it looks like.
+
+63 is 73 − 10 — §6.178's figure minus §6.179's "ten shots read". Those are not the same
+quantity. `unread.mjs` counts shots **named in the prose**, and §6.179 named only four new
+ones, five of its eight having been named already at sprint 88. So the instrument would have
+printed 70 there, 70 at §6.180, and 69 at §6.181. Reconstructed by re-running the matching
+rule against the document at each commit; the "became unnamed" set is empty at every step, so
+nothing moved — the arithmetic was simply on the wrong thing, and the sentence "`node
+design/unread.mjs` prints them" sat directly beneath it, unrun.
+
+§6.181's version is wrong twice: the number was stale *and* "unchanged for a third sprint"
+was false, because that entry's own sentence "`14-remote.png` shows a square d-pad now" named
+a shot for the first time and took 70 to 69. An entry whose subject is guards that assert a
+name instead of a behaviour, carrying a count that asserted an arithmetic instead of a
+measurement.
+
+**And the instrument under-counts.** `doc.includes(basename)` lets a longer shot name credit
+every shorter one it starts with: `dark-06-stats-year` answered for `dark-06-stats` — a
+different screen — and three `-foot` shots answered for their heads. The asymmetry is the
+tell, because naming a head never credits its foot. With a whole-name match the real figure
+is **73 of 137**, which is where §6.178 was five sprints ago. The three claims now carry
+inline corrections.
+
+#### The sweep: ten clauses, and each one demonstrated twice
+
+1651 clauses across 172 files. **Ten** could be kept green while the behaviour their names
+promise was broken — about 1 in 165, which is the more useful half of the result: the suite
+is in better shape than §6.180 and §6.181 each finding one in their own subject suggested,
+and almost every offender is in `app/src/ui`.
+
+Each was proved the same way, and the order matters. First **plant the defect** and watch the
+clause pass, which is what makes "vacuous" a measurement rather than a reading. Then repair
+the clause with the defect still planted and watch it fail. Then restore and watch it pass.
+Five were planted simultaneously — the phone's focus ring never applied, every button tone
+painting one ink, the cross-off ring not filling, the web's pad cell not square, both marks
+drawn at the wrong scale — and **all 37 checks in those five files passed**.
+
+| clause | what it asserted | what stayed green |
+|---|---|---|
+| `migrationParity` "does not promise a caught-up library it has not matched" | that two words appear in a file | "All caught up" over three unmatched shows |
+| `field` "shows the phone where focus is" | `onFocus`, `onBlur` and a style *existing* | the focus ring never applied to the element |
+| `button` "has both renderers consume the whole shape" | `toContain('label')`, `toContain('fill')` | `shape.label` replaced by a hardcoded ink |
+| `crossOff` "carries the mark on three channels" | the third channel's *value on the contract* | the ring no longer filling |
+| `season` "still draws the synopsis at all" | that `overview` appears anywhere | the synopsis gone from both screens |
+| `padCell` "is four across and square" | the phone's square only | the web's cell no longer square |
+| `mark` "draws every path inside the box the table declares" | `toContain('MARK_BOX')` | `viewBox="0 0 20 20"` |
+| `compose` "reveals a settings panel too" | that a copy key is spelled | Done no longer closing the panel |
+| `key` "is the same size on both platforms" | `toContain('KEY_HEIGHT')` | a hand-typed height |
+| `progress` "never renders as empty" | offenders `[]` over a sweep | a sweep that found no bars |
+
+The general shape is one sentence: **`toContain` on an identifier is evidence that a symbol
+is mentioned, not that a behaviour holds.** It is honest under a clause named for wiring —
+"reads the table rather than typing its own" — and misleading under one named for a size, a
+state, a colour or a limit. Three of the ten had a second identifier keeping the string alive
+after the first was removed, which is what made them survivable.
+
+`key.test.ts:51` deserves its own line. §6.181 **named this exact clause** as the offender,
+wrote a new clause beside it for the shape, and left the line untouched — and §6.181's own
+change made it weaker, because `KEY_HEIGHT` is now read twice in the phone renderer. Naming
+a defect is not fixing it, and the entry that named it is the proof.
+
+#### `design/measure.mjs`, because five throwaway probes is enough
+
+§6.180 wrote two and §6.181 wrote two more, every one deleted the same hour, every one
+re-deriving the same twenty lines: launch the pinned Chromium, open both builds, find an
+element by its accessible name, read a rectangle. That is the duplication §6.160 collapsed
+for `shoot`/`reveal` and gave the argument for.
+
+It measures named controls on both platforms at any text scale and prints them on one line,
+because §6.181's key finding was 80x80 against 72x60 and only became obvious written side by
+side. It reproduces that measurement exactly, which is how it was checked — §6.153's rule
+that an instrument which can only return one answer is not returning one.
+
+It carries the trap that caught two sprints running, in its own header: **`app/dist` is
+whatever was built last, and what is in it depends on the environment.** `RemoteDrawer`
+returns `null` unless two `VITE_` variables are set at build time; `design:web` sets them and
+`verify` does not, so measuring after a `verify` reports every key as absent. A platform that
+finds none of the requested names is now reported as *"that is not a measurement"* rather
+than as a row of zeroes — §6.57's distinction, in the instrument.
+
+## What is not done, and why it is said here
+
+**Twelve findings are queued, not taken.** The reading found far more than one sprint can
+land well, and §6.180's own lesson — a guard written in the same hour as the thing it guards
+is the most likely to be vacuous — is the argument for stopping. Writing fifteen guards today
+would have been the surest way to add to the table above. What is queued, worst first:
+
+- **`Progress`'s `rule` fill is zero points tall.** Both renderers draw the track as a 1pt
+  border *inside* the stated height, and both are border-box, so `rule` — stated at
+  `space.s2` — has `2 − 1 − 1 = 0` left for the fill. Its one call site is the phone's
+  network scan, which therefore draws a static hairline and never shows progress. `bar` has
+  the same shape and survives it: 4pt of fill inside a 6pt outline, where the core chose 6
+  because a tally bar "needs enough body to be comparable".
+- **The reaction pad wraps to three across on a 320pt phone.** `width: '23%'` four times plus
+  three 8pt gaps needs 300pt of content box; a 320pt device gives 296. `padCell.ts` reasons
+  explicitly about the 320pt case and about scrolling being "the failure this avoids".
+- **`splitFigure` puts filenames in the prose face.** Its branch is decided by "does the
+  string contain a digit", so `letterboxd.csv` comes back all-unit and both platforms draw it
+  in the body face — beside the mono the core's own doc says a filename gets. Not a parity
+  defect: both platforms are identically wrong, which is why it lives in the core.
+- **A button presses down on the web and up on the phone**, and `button.test.ts` asserts both
+  sides of it — the web against `PRESS` (sunken) and the table against `groundRaised`. A
+  guard holding a defect in place, which §7 already lists as a category with three instances.
+- **`CrossOff`'s ring thickens to 2 on the web and 3 on the phone**, the phone's comment
+  citing `Button`'s reasoning on the line above and then not using `PRESSED.stroke`.
+- **`Field`'s `FIELD_LINES` is four rows on the web and four × the 44pt target on the phone**
+  — a 176pt comment box against roughly 100.
+- **The Not Found title is 24pt on the web and 20 on the phone**, and both phone titles are
+  `MASTHEAD.sub`'s three facts hand-copied with no heading role — which is the defect
+  `Masthead` exists to make impossible. The clause named "on either platform" scans `app/src`
+  twice and never `mobile`.
+- **`PadCell` presses at 0.90 on the web and 0.94 on the phone**, when the build has twice
+  written down that press feedback is never a transform.
+- Plus the Lists chevron at 16 against 20; `Section`'s `caps` and `track` with no reader on
+  either platform; `Toggle`'s unstated `dimInk` and its `size-5`/`h-[1em]` collision; a false
+  Dynamic Type claim about `leadingOf` repeated in four files; and the phone's remote keys
+  not growing at 200% text where the web's do.
+
+**Two clauses that can pass against an empty set are still open** — `field.test.ts:103` and
+three absence-sweeps in `bareControl`, `section` and `masthead`. `progress.test.ts` was the
+one taken here.
+
+**No screenshot was read this sprint either**, a third running. The count is 73 rather than
+63, so the backlog is where §6.178 left it — and stating that plainly is the point of having
+fixed the instrument.
 
 
 ## 7. What is still not known
@@ -14498,6 +14657,13 @@ and which single claim in this document could not be checked at all:
   here. And the success paths of `deploy-web.mjs`, `apply-migrations.mjs` and
   `deploy-functions.mjs` have never run in this container — only their refusals, which are
   clear and exit non-zero.
+- **A number in this record can be arithmetic wearing a measurement's clothes.** §6.182
+  found "sixty-three shots unread" carried through three entries with `node design/unread.mjs`
+  printed beside it as though it had produced the figure. `docsReferences.test.ts` checks that
+  every § points somewhere; nothing checks that a number beside a command is what the command
+  says. The instrument's own under-count — four shots credited to longer siblings — went the
+  same way: nothing re-derives a stated figure, so a wrong one survives exactly as long as
+  nobody re-runs the tool by hand.
 - **Nothing checks that a claim in the record is still *true*, only that its references
   resolve.** §6.79 gave the documents a guard for dangling sections, dead file paths and
   stale references in source comments, and that catches drift in the *scaffolding* of a

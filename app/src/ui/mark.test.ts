@@ -87,8 +87,14 @@ describe('the marks a control draws', () => {
         expect(Math.abs(value), `${name} leaves the ${MARK_BOX} box`).toBeLessThanOrEqual(MARK_BOX);
       }
     }
+    /*
+     * The `viewBox` itself, not the name. §6.182: `MARK_BOX` is read twice in each renderer
+     * — once for the box and once for the rotation's centre — so hardcoding
+     * `viewBox="0 0 20 20"` left the string present, this clause green, and both marks drawn
+     * at the wrong scale beside the arithmetic above that had just proved the paths fit it.
+     */
     for (const [platform, source] of Object.entries(RENDERERS)) {
-      expect(source, `${platform} writes its own viewBox`).toContain('MARK_BOX');
+      expect(source, `${platform} writes its own viewBox`).toMatch(/viewBox=[^\n]*MARK_BOX/);
     }
   });
 

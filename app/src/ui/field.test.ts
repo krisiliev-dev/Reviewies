@@ -162,6 +162,14 @@ describe('a field', () => {
     expect(phone).toContain('onBlur');
     const focused = /\n {2}focused: \{([^{}]*)\},/.exec(phone)?.[1] ?? '';
     expect(focused, 'no focused style to read').toBeTruthy();
+    /*
+     * And it has to be *worn*. §6.182: everything above is satisfied by a `styles.focused`
+     * nothing references — delete `focused ? styles.focused : null` from the element's style
+     * array and `onFocus`, `onBlur` and both tokens are still here, with no focus ring on the
+     * one platform whose framework does not draw one for you.
+     */
+    expect(phone, 'the focused style is declared and never worn')
+      .toMatch(/style=\{\[[\s\S]{0,400}focused \? styles\.focused/);
     expect(focused).toContain('FIELD_BOX.strokeFocused');
     expect(focused).toContain('FIELD_BOX.colourFocused');
   });

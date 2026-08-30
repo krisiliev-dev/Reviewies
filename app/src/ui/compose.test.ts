@@ -112,7 +112,15 @@ describe('a composer on a reading screen', () => {
       // The row says what the setting is, rather than only that there is one.
       expect(source, `${name}'s collapsed row does not name the current choice`)
         .toMatch(/meta=\{NOTIFY_OPTIONS\.find\(\(o\) => o\.key === preference\)\?\.label\}/);
-      expect(source, `${name} cannot be closed again`).toContain('COPY.controls.done');
+      /*
+       * The word beside the thing that closes it. §6.182: `COPY.controls.done` appears as
+       * both `label=` and inside `name=`, so replacing the Done handler with a no-op left
+       * the panel open for ever with this clause green — a message promising a state
+       * transition and a body checking that a copy key is spelled.
+       */
+      expect(source, `${name} cannot be closed again`).toMatch(
+        /COPY\.controls\.done[\s\S]{0,300}setTuning\(false\)|setTuning\(false\)[\s\S]{0,300}COPY\.controls\.done/,
+      );
     }
   });
 
