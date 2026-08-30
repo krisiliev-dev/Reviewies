@@ -55,11 +55,55 @@ export function fromDisk(root: string): Tree {
  * one of them is a guess; this one is run against the real thing on every test run.
  */
 export function fromGitRef(root: string, ref: string): Tree {
-  const git = (...args: string[]) =>
-    execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const git = (args: string[], input?: string) =>
+    execFileSync('git', args, { cwd: root, input, maxBuffer: 256 * 1024 * 1024 });
+
+  const paths = git(['ls-tree', '-r', '--name-only', ref])
+    .toString('utf8')
+    .split('\n')
+    .filter(Boolean);
+
+  /**
+   * The whole tree in one subprocess, read on first use.
+   *
+   * This was a `git show` per file, and the cost stopped being only this check's own
+   * problem. Two guards now scan history — this one and `paletteMembers` — so a tree of
+   * 274 source files was 548 process spawns, and on a loaded machine the *other* suites
+   * started failing: `reactionStream` and `assertions.test.ts` timed out at Vitest's
+   * five seconds while these two held the CPU. A guard that makes an unrelated guard fail
+   * is worse than a slow one, and the comment in `coreWiring.test.ts` about an explicit
+   * budget was already the sound of this being paid for rather than fixed.
+   *
+   * `cat-file --batch` answers every path down one pipe: a `<oid> <type> <size>` line, the
+   * bytes, a newline. Read as a Buffer and sliced by the declared size rather than split on
+   * newlines, because a source file contains newlines and a size does not lie.
+   */
+  let contents: Map<string, string> | undefined;
+  const load = () => {
+    if (contents) return contents;
+    contents = new Map();
+    const out = git(['cat-file', '--batch'], paths.map((path) => `${ref}:${path}`).join('\n') + '\n');
+    let at = 0;
+    for (const path of paths) {
+      const newline = out.indexOf(0x0a, at);
+      if (newline === -1) break;
+      const [, type, size] = out.subarray(at, newline).toString('utf8').split(' ');
+      at = newline + 1;
+      // `missing` and `ambiguous` come back without a body; a submodule is a commit, not a blob.
+      if (type !== 'blob') continue;
+      contents.set(path, out.subarray(at, at + Number(size)).toString('utf8'));
+      at += Number(size) + 1;
+    }
+    return contents;
+  };
+
   return {
-    list: () => git('ls-tree', '-r', '--name-only', ref).split('\n').filter(Boolean),
-    read: (path) => git('show', `${ref}:${path}`),
+    list: () => paths,
+    read: (path) => {
+      const found = load().get(path);
+      if (found === undefined) throw new Error(`${ref}:${path} is not a blob in that tree`);
+      return found;
+    },
   };
 }
 

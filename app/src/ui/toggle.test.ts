@@ -148,10 +148,15 @@ describe('a setting that is on or off', () => {
      * *the border*. A setting that is on and unavailable still draws a tick, nothing stated
      * its colour, and both renderers reached for `dimInk`: `text-dim-ink` on the web and
      * `theme[disabled ? 'dimInk' : …]` on the phone. Those two lines were the only mention of
-     * `dimInk` anywhere in either app outside `tokens.ts`, and `tokens.ts` calls it *"Watching
+     * `dimInk` anywhere in either app outside `tokens.ts`, and `tokens.ts` called it *"Watching
      * Mode's auto-dim, as a palette rather than an opacity"* — not a disabled colour, and
      * wrong in both directions: 9.31:1 on the dark ground, which is a *louder* mark than the
      * ink beside it for a control you cannot use, and 1.78:1 in light, which is no mark at all.
+     *
+     * There is no `dimInk` at all now. A later sprint read Watching Mode on both platforms, found no
+     * auto-dim of any kind to belong to, and deleted the three dim roles and `linger.dimAfter`
+     * with them. The two clauses below are kept as memory rather than retired: a name that has
+     * been wrong once is the name somebody reaches for again.
      *
      * The build's off ink is `SURFACE_OFF.ink`, which is what `Key` and `PadCell` already draw
      * an unavailable control's contents in. Read, not copied.

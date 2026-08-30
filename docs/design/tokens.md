@@ -158,7 +158,16 @@ so the guard asserts dark ∈ L[0.53, 0.77] / C ≤ 0.16 and light ∈ L[0.44, 0
 
 I also measured hue spacing, because a hash into eight colours is only navigable-by-memory if the eight are distinguishable. Dark hues sorted: 26, 56, 84, 146, 205, 256, 261, 344. Blue (261) and slate (256) are **5° apart** — but slate's chroma is 0.021, i.e. it is grey and its hue is noise. Excluding it, the minimum gap is **28°**. So the rule is: *any two labels with C ≥ 0.05 sit ≥25° apart*. That is a real property of the set, discovered by measuring it, and it is the guard that stops someone "improving" orange into yellow's neighbourhood.
 
-### Dim — Watching Mode auto-dim (graft 9), and why it is a palette
+### Dim — Watching Mode auto-dim (graft 9) — **deleted, §6.187**
+
+> **Superseded. The three dim roles and `linger.dimAfter` are gone from `core/src/tokens.ts`.** Six sprints, both themes, every ratio below computed, and no renderer ever read one; the last thing that touched them was `TOGGLE.unavailable` reaching for `dimInk` by mistake (§6.185). Three findings, in the order they change the answer:
+>
+> 1. **Auto-dim was never built.** `app/src/screens/WatchingMode.tsx` and `mobile/app/watching/[targetId].tsx` have no idle timer, no opacity and no second colour between them. The timer this palette was to arrive after — `linger.dimAfter`, 8000 — was equally unread, and survived because `coreWiring` works at export granularity: `linger` is reached, so a dead *member* of it is invisible there. (`linger.promptDismiss` is in that position today.)
+> 2. **A colour could not have dimmed that screen anyway,** which is why this is a deletion rather than a wiring. Most of Watching Mode's emitted light is the pad: twenty colour emoji at `PAD.glyph` = 30pt, four across. `PadCell` sets a `fontSize` on them and no colour, on both platforms, because it cannot — a colour emoji is a bitmap in the platform's own font and `color` does not reach it. The palette would have dimmed the header, the labels and the notes, the small and already-dark half, and left the twenty brightest objects at full strength: the same screen with the pad relatively *more* prominent, which inverts the physical reason it was chosen for.
+> 3. **The section below measured a ground the product does not paint.** It reads `ground.well` `#0C0B0D` as "Late Edition's Watching Mode ground"; both Watching Modes paint `ground` `#131114`, where the three come out 9.31 / 4.96 / 5.59. And the three hexes are `mix(role, groundWell, 0.75)` to the byte — so what a palette bought over an opacity here was an opacity, precomputed against the wrong ground.
+>
+> The light table carried the dark table's three hexes verbatim and the guard only ever read `color.dark`, so light `dimInk` was **1.78:1** and nothing anywhere looked at it. What actually dims a phone is the backlight, which belongs to the operating system: the phone gets it already because nothing there holds a wake lock, and the web asks for `navigator.wakeLock` for the length of an episode and offers nothing in its place. That is the live defect this layer was lying on top of, and it is a product decision rather than a token one. The reasoning below is kept because it is still the right reasoning about opacity and contrast — it was simply asked about the wrong screen. `app/src/wiring/paletteMembers.test.ts` is the guard that stops the next one.
+
 Graft 9 raises Bias Light's dim from 55% to 75% on the strength of numbers computed over `#000000` with *Bias Light's* colours. Late Edition's Watching Mode ground is `ground.well` = `#0C0B0D`. Recomputed against the palette that will actually ship:
 
 | at | `ink` | `ink.secondary` | `ink.tertiary` | `working` | `trouble` |
@@ -284,7 +293,7 @@ stagger   rule 40
 easing    paper = Easing.out(Easing.cubic) / cubic-bezier(0,0,.2,1)
           tape  = Easing.linear
 reduced   tick 100 · rule 0 · spine 100 · drawer 0 · crossOff 0 · stagger.rule 0
-linger    undo 6000 · promptDismiss 6000 · dimAfter 8000 · reaction 4000
+linger    undo 6000 · promptDismiss 6000 · reaction 4000          (dimAfter 8000 deleted, §6.187)
 ```
 
 **Reduced motion is a parallel table with the same keys, not a ternary.** `RemoteDrawer.tsx:36` currently writes `duration: reduced ? 0 : 200`, which puts the accessibility decision at every call site — and a site that forgets it is invisible until someone with the setting on opens that screen, which is the identical failure mode `phoneTextScaling.test.ts` was written for. A parallel table plus a `useMotion()` that returns the right one makes forgetting impossible. The guard asserts every key in `duration` has a key in `reduced`.
@@ -373,7 +382,7 @@ No raw `zIndex:` numeric literal outside `tokens.ts`; every value in `z` distinc
 
 1. `stroke` at 1.42:1 cannot carry the empty slot, the crosshair, the hatch, the outlined button or the field border — five state-bearing marks below the 3:1 floor. Fixed by aliasing the signal stroke to `ink.tertiary`, at zero new colours.
 2. Light-mode amber fails as a **mark** (1.77:1), not only as text, so graft 4's `working` job needs a separate light value. Not stated anywhere in the three documents.
-3. The 75% auto-dim breaks `ink.tertiary` (3.34) and `trouble` (3.75) against Late Edition's actual Watching Mode ground. The graft's numbers are Bias Light's palette over `#000000`.
+3. The 75% auto-dim breaks `ink.tertiary` (3.34) and `trouble` (3.75) against Late Edition's actual Watching Mode ground. The graft's numbers are Bias Light's palette over `#000000`. **§6.187:** and mine were over `ground.well`, which is not the ground either Watching Mode paints — both draw `ground`. The whole dim palette is deleted; see the Dim section above.
 4. The label set was checked against `ground`; spines sit on `raised`, where the floor is blue at **3.47** — still passing, but by less than advertised.
 5. Light amber-on-ink is **9.04:1**, not the 9.34 Late Edition prints (that is the dark row's number).
 6. "17.17:1 either way" for the action pill is TEST CARD's hex on TEST CARD's ink. On Late Edition's grounds: 16.41 / 16.02.
