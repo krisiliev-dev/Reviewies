@@ -81,13 +81,39 @@ export const TOGGLE = {
    */
   off: { border: 'strokeSignal' },
   on: { border: 'workingFill', fill: 'workingFill', mark: 'workingOnFill' },
-  /** The border when the setting cannot be changed: "not available", never "broken". */
-  unavailable: 'strokeHairline',
+  /**
+   * Unavailable: "not available", never "broken" — and **both** channels of it.
+   *
+   * This was the single string `'strokeHairline'`, and its own comment said *the border*.
+   * A setting that is on and unavailable still draws a tick, and nothing here said what
+   * colour it is, so both renderers reached for `dimInk` by hand — the agreement two files
+   * make in private that the paragraph above `mark` warns about, one property over.
+   *
+   * `dimInk` is not a disabled colour and `tokens.ts` says so out loud: it is *"Watching
+   * Mode's auto-dim, as a palette rather than an opacity"*, and it is the wrong answer in
+   * both directions at once. On the dark ground it measures 9.31:1 — a tick that shouts
+   * *louder* than the tertiary ink beside it, for a control you cannot use — and in light
+   * it is 1.78:1, which is a mark you cannot see at all. And the two hand-written lines it
+   * replaces were, when this was written, the only mention of `dimInk` anywhere in either app outside
+   * `tokens.ts` itself — including in Watching Mode, whose palette it is.
+   *
+   * The answer is `SURFACE_OFF.ink` — what "off" looks like on a surface, which `Key` and
+   * `PadCell` already draw an unavailable control's contents in: 4.87:1 in dark and 5.11 in
+   * light. Written out as the role name rather than imported, because every other value in
+   * this table is a role name and one import would make this the odd entry; `toggle.test.ts`
+   * asserts the two are the same value, which is the arrangement `ui/button#SIZE` uses for
+   * every literal Tailwind forces. The border keeps the value it had.
+   */
+  unavailable: { border: 'strokeHairline', mark: 'inkTertiary' },
 } as const;
 
 export interface ToggleContract {
   value: boolean;
-  /** Drawn in the hairline rather than faded: "not available", never "broken". */
+  /**
+   * Drawn in the hairline and the off ink rather than faded: "not available", never
+   * "broken". Both channels are in `TOGGLE.unavailable`, because a mark whose colour is
+   * not stated is a mark two renderers will each invent.
+   */
   disabled?: boolean;
 }
 

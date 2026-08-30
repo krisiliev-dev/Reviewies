@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { TOGGLE, toggleState } from '@reviewies/core/ui/toggle';
-import { border, radius, size } from '@reviewies/core/tokens';
+import { SURFACE_OFF } from '@reviewies/core/ui/surface';
+import { border, color, radius, size, text } from '@reviewies/core/tokens';
 
 /**
  * The one setting in the product is drawn by this build, not by the platform.
@@ -48,10 +49,137 @@ describe('a setting that is on or off', () => {
     // cannot read an interpolated class and StyleSheet has no reason to — so this is what
     // holds the literal and the token together.
     expect(TOGGLE.mark).toBe(20);
+    expect(TOGGLE.mark, 'the mark is no longer a type size the build has').toBe(text.s20);
+
+    /*
+     * Both halves of that, per renderer, and this clause used to make neither.
+     *
+     * It asserted `TOGGLE.size === size.target` — a statement about the table about itself,
+     * in which no renderer participates — and then swept both renderers for
+     * `size-5|size={TOGGLE.mark}`. The web's `size-5` is 20px *as a rule*, so the clause read
+     * as an agreement; the rendered mark measures **16x16**, because `Tick` sizes
+     * itself in `em` and the winner between two utilities setting the same property is
+     * Tailwind's emission order, not the order they are written in. See the clause below.
+     *
+     * So: the box is the token's name (`--spacing-target`, which is `size.target`) and not a
+     * bare number that happens to equal it, and no width or height utility appears anywhere
+     * in the web renderer.
+     *
+     * Scoped to this component on purpose. `h-11 w-11` on `CrossOff` and `min-h-12` on
+     * `Button` are the same 44 and 48 arrived at twice, `space.test.ts`'s `UTILITY` regex
+     * covers none of `size`/`h`/`w`/`min-h`, and §6.182 reached only `Choice` — so nothing
+     * sweeps any of them and this clause does not pretend to. What is defensible about
+     * fixing one is that this is the control whose bare number was measured wrong: the
+     * others agree with the table, and this one drew a 16px mark under a clause named for
+     * taking its mark from the tokens.
+     */
+    const web = withoutProse(read('app/src/ui/Toggle.tsx'));
+    expect(web, 'the box is a bare number where the table has a name').toContain('size-target');
+    expect(web, 'a Tailwind number stands where a token name belongs')
+      .not.toMatch(/\b(?:size|w|h|min-w|min-h)-\d/);
+
+    const phone = withoutProse(read('mobile/src/ui/Toggle.tsx'));
+    expect(phone, 'the phone stopped reading the box out of the table').toContain('TOGGLE.size');
+    expect(phone, `${'mobile/src/ui/Toggle.tsx'} does not draw the mark at TOGGLE.mark`)
+      .toContain('size={TOGGLE.mark}');
+  });
+
+  it('draws the mark at the size the table says, which on the web is a font size', () => {
+    /*
+     * The finding only a browser could make.
+     *
+     * `Tick` is `h-[1em] w-[1em] shrink-0 ${className}` — it sizes itself in `em` and takes
+     * the caller's class *after* its own. `size-5` and `h-[1em]` set the same two properties
+     * at the same specificity, so the winner is whichever Tailwind emits last, which is a
+     * fact about the compiled stylesheet and not about this file. Measured in `app/dist`:
+     * `.size-5` at byte 10020, `.h-[1em]` at 10364. The `em` rule wins, and the toggle's span
+     * carries no `text-*` class, so its `1em` is the inherited body 16px.
+     *
+     * | | on Settings, 390 viewport | expected |
+     * | --- | --- | --- |
+     * | web toggle tick | **16x16** | 20x20 |
+     * | phone toggle tick | 20x20 | 20x20 |
+     * | web `CrossOff` tick, `text-s20` | 20x20 | 20x20 |
+     *
+     * A tick a fifth smaller than every other tick in the product, on the only setting there
+     * is, passing a clause named for taking its mark from the tokens.
+     *
+     * The rule that comes out of it is the sweep below: on the web a mark is sized by the
+     * **font size** of the thing it sits in, never by a box utility, because `Mark.tsx` has
+     * already decided the mark is one em. Six of the seven call sites had it right; this is
+     * the seventh. That sweep's proper home is `mark.test.ts`, which owns `Mark.tsx` — it is
+     * here because the defect was found here and a rule with no guard is a comment.
+     */
+    // The premise, read rather than remembered: if `Mark.tsx` stops sizing in `em` this
+    // whole clause is about a collision that no longer happens, and should be re-measured.
+    expect(withoutProse(read('app/src/ui/Mark.tsx')), 'the mark no longer sizes itself in em')
+      .toContain('h-[1em] w-[1em]');
+    const web = withoutProse(read('app/src/ui/Toggle.tsx'));
+    expect(web, 'the mark is sized by a box utility again, and `h-[1em]` will win')
+      .toContain(`<Tick className="text-s${TOGGLE.mark}" />`);
+
+    const offenders: string[] = [];
+    let sites = 0;
+    for (const file of filesUnder('app/src')) {
+      if (file.endsWith('ui/Mark.tsx')) continue;
+      for (const m of withoutProse(read(file)).matchAll(/<(?:Tick|Chevron)\b[^>]*\/>/g)) {
+        sites++;
+        const className = /className=(?:"([^"]*)"|\{`([^`]*)`\})/.exec(m[0]);
+        const classes = className?.[1] ?? className?.[2] ?? '';
+        if (/\b(?:size|w|h|min-w|min-h)-/.test(classes)) {
+          offenders.push(`${file}: a mark sized by a box, which \`h-[1em]\` outranks — ${classes}`);
+        }
+        if (!/\btext-s\d+\b/.test(classes)) {
+          offenders.push(`${file}: a mark with no font size, so it is one em of whatever it inherits`);
+        }
+      }
+    }
+    expect(sites, 'no mark call site was scanned, so this proved nothing').toBeGreaterThan(5);
+    expect(offenders).toEqual([]);
+  });
+
+  it('says what an unavailable mark is drawn in, rather than letting each renderer pick', () => {
+    /*
+     * The second finding, and the one this file had already written the warning for:
+     * *"the same size as the other mark is exactly the sort of agreement two files reach by
+     * hand and then lose"* — one property over.
+     *
+     * `TOGGLE.unavailable` was the single string `'strokeHairline'` and its own comment said
+     * *the border*. A setting that is on and unavailable still draws a tick, nothing stated
+     * its colour, and both renderers reached for `dimInk`: `text-dim-ink` on the web and
+     * `theme[disabled ? 'dimInk' : …]` on the phone. Those two lines were the only mention of
+     * `dimInk` anywhere in either app outside `tokens.ts`, and `tokens.ts` calls it *"Watching
+     * Mode's auto-dim, as a palette rather than an opacity"* — not a disabled colour, and
+     * wrong in both directions: 9.31:1 on the dark ground, which is a *louder* mark than the
+     * ink beside it for a control you cannot use, and 1.78:1 in light, which is no mark at all.
+     *
+     * The build's off ink is `SURFACE_OFF.ink`, which is what `Key` and `PadCell` already draw
+     * an unavailable control's contents in. Read, not copied.
+     */
+    expect(TOGGLE.unavailable.border).toBe('strokeHairline');
+    expect(TOGGLE.unavailable.mark).toBe(SURFACE_OFF.ink);
+    expect(TOGGLE.unavailable.mark, "Watching Mode's dim is not a disabled colour")
+      .not.toBe('dimInk');
+    // Named colours, not invented ones — the `transparent` trap this table already records.
+    for (const role of [TOGGLE.unavailable.border, TOGGLE.unavailable.mark]) {
+      expect(color.dark, `${role} is a name that looks like a token`).toHaveProperty(role);
+    }
+
+    /*
+     * And neither renderer names a colour of its own. The web's literal is held to the token
+     * by spelling rather than by hand: Tailwind needs a written-out class, so the class is
+     * derived from the table here and compared, which is `ui/button#SIZE`'s arrangement.
+     */
+    const kebab = (name: string) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+    const web = withoutProse(read('app/src/ui/Toggle.tsx'));
+    expect(web).toContain(`text-${kebab(TOGGLE.unavailable.mark)}`);
+    expect(web).toContain(`border-${kebab(TOGGLE.unavailable.border)}`);
+    const phone = withoutProse(read('mobile/src/ui/Toggle.tsx'));
+    expect(phone).toContain('TOGGLE.unavailable.mark');
+    expect(phone).toContain('TOGGLE.unavailable.border');
     for (const file of RENDERERS) {
-      expect(withoutProse(read(file)), `${file} does not draw the mark at TOGGLE.mark`).toMatch(
-        /size-5|size=\{TOGGLE\.mark\}/,
-      );
+      expect(withoutProse(read(file)), `${file} names a colour the table does not state`)
+        .not.toMatch(/dimInk|dim-ink/);
     }
   });
 

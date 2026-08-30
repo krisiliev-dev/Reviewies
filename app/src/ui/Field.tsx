@@ -13,11 +13,24 @@ import { FIELD_LINES, type FieldSize } from '@reviewies/core/ui/field';
  * text; `field.test.ts` holds them to the table.
  */
 
-const BOX = 'w-full rounded-none border border-stroke-signal bg-transparent text-ink';
+/*
+ * `leading-l143` is the half of this that took a browser to notice.
+ *
+ * A textarea's height is `rows` line boxes plus its padding, so `rows={FIELD_LINES}` says
+ * nothing about how tall the box is until something says how tall a line is — and nothing
+ * here did. It inherited Tailwind's preflight `1.5`, which is 24pt against the table's 23,
+ * and `tokens.ts` names *"the web set no line-height at all"* as the census defect the
+ * type layer exists to fix. `leading-l143` reads `--leading-l143` out of the generated
+ * theme, so the ratio has one owner and CSS computes against the rendered size.
+ *
+ * `min-h-target` rather than `min-h-11`: the same 44, read by the name the table gives it.
+ */
+const BOX =
+  'w-full rounded-none border border-stroke-signal bg-transparent text-ink leading-l143';
 
 const SIZE_CLASS = {
-  page: 'min-h-11 px-s16 py-s12 text-s16',
-  row: 'min-h-11 px-s12 py-s8 text-s14',
+  page: 'min-h-target px-s16 py-s12 text-s16',
+  row: 'min-h-target px-s12 py-s8 text-s14',
 } as const satisfies Record<FieldSize, string>;
 
 export function Field({
