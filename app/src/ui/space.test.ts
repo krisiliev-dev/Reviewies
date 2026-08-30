@@ -240,7 +240,14 @@ describe('the space scale, on the web', () => {
      * thing it is for — a file deleted, or a scan that stops matching — and a floor that
      * only ever ratchets up would have to be relaxed by hand every time anyway.
      */
-    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(358);
+    /*
+     * 357, down two: §6.187 — `AccountPanel`'s sync paragraph had two `mx-1`s standing in
+     * for word spaces JSX had eaten, and they went with the repair. The direction of travel
+     * named above holds, and this is the first time it has been a *prose* fix rather than a
+     * migration that lowered it: a margin doing a space's job is spacing this scan counts
+     * and a reader cannot select.
+     */
+    expect(seen, 'the scan found no spacing at all').toBeGreaterThan(356);
     expect(off).toEqual([]);
   });
 
