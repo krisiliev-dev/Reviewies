@@ -14,6 +14,44 @@ import { text, type, track } from '@reviewies/core/tokens';
  * The row is a `Pressable` only when it has somewhere to go, and then the whole row is
  * that one target — poster and words together, named once. `trailing` and `under` sit
  * outside it, so a row is never a control inside a control.
+ *
+ * ## The one thing a real phone has clipped, and what it is not
+ *
+ * The first device session, on an iPhone 13 Pro Max at maximum Dynamic Type: *"Text is
+ * clipped at the bottom — in Up
+ * Next rows, and in the More menu's navigation."* Two screens with nothing in common except
+ * this file: `(tabs)/index.tsx` and `(tabs)/more.tsx` both draw their rows with it, More's at
+ * `density="index"`. So the shared component is this one, read rather than guessed.
+ *
+ * What it is **not**, ruled out here rather than assumed, because the sprint that went
+ * looking was sent after a different mechanism:
+ *
+ * - **Not a `lineHeight`.** There is not one in this file. `title`, `meta`, `note` and `tag`
+ *   state size, ink and face and stop; `leadingOf` is never called here. The theory that sent
+ *   this sprint looking — a line box computed at module load and unable to grow — cannot be the
+ *   fault at the site the device photographed, because the site has no line box of its own.
+ *   (And on a device it would not be a fault anyway: React Native scales a stored
+ *   `lineHeight` with the glyphs. `theme.ts` has the citations.)
+ * - **Not the row's height.** `ROW.minHeight` is a *minimum*, on both densities. A minimum
+ *   cannot crop; the row grows past it.
+ * - **No `overflow: 'hidden'` anywhere in this file**, so no View here clips its children.
+ *
+ * What is left is `numberOfLines`, from `ROW_LINES`, on all four texts. iOS measures a
+ * line-limited `Text` as TextKit's *used* rect for the enumerated lines
+ * (`RCTTextLayoutManager.mm`, the `maximumNumberOfLines` branch that ends
+ * `size.height = enumeratedLinesHeight`), and a used rect is a typographic line box rather
+ * than a glyph bounding box — so a descender that reaches past it is drawn outside the
+ * measured frame and cropped, bottom first, by exactly the margin that grows with the point
+ * size. That matches the photograph and it matches nothing else in this file.
+ *
+ * **Stated as elimination plus a source path, not as a measurement.** Nothing here can run
+ * iOS, and the device report names two screens without naming an element or a Dynamic Type
+ * step. No repair is taken on that basis: `ROW_LINES` is a cross-platform contract with a
+ * deliberate argument behind every number (`core/src/ui/row.ts`), the obvious repair — let
+ * the row reflow above some scale, which is what `phoneTextScaling.test.ts` already says to
+ * do instead of capping — needs a threshold, and there is no measurement anywhere in this
+ * repository that says what it should be. What would settle it is one more device answer:
+ * which element, and at which step it starts.
  */
 export function Row({
   title,

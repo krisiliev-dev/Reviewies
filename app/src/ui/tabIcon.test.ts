@@ -221,12 +221,34 @@ describe('the tab bar’s marks', () => {
      * What this cannot see: a budget is not a measurement. `tabBarStyle.paddingBottom` could
      * eat the room back and React Navigation has spacing of its own inside the item; only
      * `design/measure.mjs` answers that, and it is not a guard.
+     *
+     * ## And one of the five parts is in a unit the reader can change
+     *
+     * This sprint. Four of them are device pixels; `LABEL_LINE` is a `lineHeight`, which React
+     * Native scales by the font scale on both shipping platforms (iOS by
+     * `effectiveFontSizeMultiplier`, Android through `toPixelFromSP`). A `height` is not a
+     * unit anything scales, so the label's term has to be scaled here for the bar to hold
+     * what it is budgeting for — and only that term, because scaling the padding and the
+     * glyph as well would be a second defect wearing the first one's face.
+     *
+     * This clause read `/const TAB_BAR_HEIGHT =([^;]+);/` and went **red on that repair**,
+     * because the sum became a function of the scale and stopped being a `const` of that
+     * name. It was pinned to a spelling rather than to the fact it is named for — the shape
+     * §6.139 wrote down, and the second time this file has made it. The rule is that the bar
+     * states its height once from the parts; how it is spelled is not the rule.
      */
-    const height = /const TAB_BAR_HEIGHT =([^;]+);/.exec(BARS.phone)?.[1] ?? '';
+    const height = /const \w*[Tt]ab[Bb]ar[Hh]eight\w* =[^;]*?=?>?([^;]+);/.exec(BARS.phone)?.[1] ?? '';
     expect(height, 'the bar states no height').not.toBe('');
     expect(height, 'the bar budgets the 24pt tap floor for a 22pt glyph').not.toContain('size.tap');
     for (const part of ['TAB_MARKER.thickness', 'TAB_MARKER.gap', 'TAB_ICON_SIZE', 'LABEL_LINE'])
       expect(height, `the bar’s height does not count ${part}`).toContain(part);
+
+    // The label's term answers the reader's setting; the four device-pixel terms do not.
+    expect(height, 'the label’s line is not scaled, so the bar cannot hold it')
+      .toMatch(/LABEL_LINE \* fontScale/);
+    for (const fixed of ['TAB_MARKER.thickness', 'TAB_MARKER.gap', 'TAB_ICON_SIZE'])
+      expect(height, `${fixed} is a device pixel and must not be scaled`)
+        .not.toMatch(new RegExp(`${fixed.replace('.', '\\.')} \\* fontScale`));
   });
 
   it('is one mark, not a second name for the reader to arrow past', () => {

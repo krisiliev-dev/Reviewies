@@ -19,14 +19,61 @@ import { size, space } from '@reviewies/core/tokens';
  * guard is the thing that would silently switch the feature off: React Native scales
  * text only while `allowFontScaling` stays on, and one component opting out is invisible
  * until someone with large text opens that screen.
+ *
+ * There are three ways to break it and this file used to know two. Off, capped — and
+ * **twice**, which is this sprint's finding and the clause at the bottom of this file.
  */
 const ROOT = resolve(__dirname, '../../..');
 
-function phoneSources(): Array<{ path: string; source: string }> {
-  return globSync('mobile/{app,src}/**/*.tsx', { cwd: ROOT }).map((path) => ({
-    path,
-    source: readFileSync(resolve(ROOT, path), 'utf8'),
-  }));
+function phoneSources(extension = 'tsx'): Array<{ path: string; source: string }> {
+  return globSync(`mobile/{app,src}/**/*.${extension}`, { cwd: ROOT })
+    .filter((path) => !path.includes('.test.'))
+    .map((path) => ({ path, source: readFileSync(resolve(ROOT, path), 'utf8') }));
+}
+
+/**
+ * Every phone source, screens and plain modules alike.
+ *
+ * The two clauses above read `.tsx` because a component is the only thing that can carry an
+ * `allowFontScaling` prop. The clause at the bottom cannot: `mobile/src/ui/theme.ts` is where
+ * `leadingOf` and `tracking` live, it has no JSX in it, and it is the one file where a single
+ * line breaks every call site at once.
+ */
+const allPhoneSources = () => [...phoneSources('ts'), ...phoneSources('tsx')];
+
+/**
+ * A style property's whole value, to the end of it.
+ *
+ * Not a regex, and the reason is that the first draft of the clause below **was** one —
+ * `/(?:lineHeight|letterSpacing):[^,;}\n]+/` — which gives up at the first comma, and the
+ * first comma in `lineHeight: leadingOf(text.s14, leading.l143) * fontScale` is inside the
+ * call. The clause read `lineHeight: leadingOf(text.s14`, found no scale in it, and passed
+ * a live plant. §6.183 caught `padCell`'s repair the same way, one brace along: a guard's
+ * own pattern is the last thing anybody plants against, and the only way to find it is to
+ * plant.
+ *
+ * So the value is read by balancing brackets and stopping at the comma that actually ends
+ * the property. Newlines are not an end — a value may be wrapped — which is why depth is
+ * the thing being tracked rather than a line.
+ */
+function valuesOf(source: string, at: RegExp): string[] {
+  const out: string[] = [];
+  for (const match of source.matchAll(at)) {
+    let depth = 0;
+    let end = match.index + match[0].length;
+    for (; end < source.length; end++) {
+      const c = source[end];
+      if ('([{'.includes(c)) depth++;
+      else if (')]'.includes(c)) depth--;
+      else if (c === '}') {
+        if (depth === 0) break;
+        depth--;
+      } else if ((c === ',' || c === ';') && depth === 0) break;
+      if (depth < 0) break;
+    }
+    out.push(source.slice(match.index, end));
+  }
+  return out;
 }
 
 describe('text scaling on the phone', () => {
@@ -64,6 +111,124 @@ describe('text scaling on the phone', () => {
       .map(({ path }) => path);
 
     expect(capped, 'let the layout reflow rather than capping the type').toEqual([]);
+  });
+
+  /**
+   * The third way, and the one that looks like the fix.
+   *
+   * ## The fact this rests on
+   *
+   * A `lineHeight` handed to React Native is **already in the unit the platform scales**.
+   * In the version this repo depends on:
+   *
+   * - iOS, both renderers: `lineHeight * effectiveFontSizeMultiplier`, which is the very
+   *   same multiplier that grows the glyphs — `Libraries/Text/RCTTextAttributes.mm` and
+   *   `ReactCommon/.../RCTAttributedTextUtils.mm`.
+   * - Android: `toPixelFromSP(lineHeight)` whenever `allowFontScaling` is on, `sp` being
+   *   the font-scaled unit — `TextAttributeProps.kt`, which puts `letterSpacing` through
+   *   the same conversion.
+   *
+   * So multiplying a leading by `useWindowDimensions().fontScale` does not make it answer
+   * the reader's setting. It makes it answer twice: at 200% a `leadingOf(14, 1.43)` of 20
+   * ships as 40 and the platform draws it at 80, around 28pt glyphs. The lines do not
+   * collide, they drift a line apart, which is a worse failure than the one it was meant to
+   * repair and a much quieter one.
+   *
+   * ## Why a source clause and not a measurement
+   *
+   * Because there is nothing here to measure. `react-native-web` hardcodes
+   * `Dimensions.fontScale` to 1 and `PixelRatio.getFontScale()` reads it, so the double
+   * would be exactly 1x in the export every suite and every design pass drives — green
+   * everywhere, wrong on both devices. That asymmetry is the whole reason this belongs in a
+   * clause rather than in `mobile/smoke.mjs`.
+   *
+   * ## And it would not have fixed the one thing a phone has actually clipped
+   *
+   * The first device session found text cropped at the bottom of Up Next rows and the More
+   * menu's rows at maximum Dynamic Type — the only text-scaling defect anything has observed
+   * on real glass. Both screens draw those rows with `mobile/src/ui/Row.tsx`, and that file
+   * sets **no `lineHeight` at all**. So the repair this clause forbids would have rewritten
+   * eleven call sites, none of them the one that clips, and broken the leading on both
+   * platforms on the way past. The fault at that site is argued out in `Row.tsx` itself.
+   *
+   * ## What is deliberately still allowed
+   *
+   * A font scale read for a **box**. `TAB_BAR_HEIGHT` is a module-load constant built from
+   * a label's line box, and a bar sized for 17pt of label at 100% holds 17pt of label at
+   * 300%; a `height` is not a unit React Native scales, so multiplying one is the correct
+   * repair rather than a double. The rule is about the two properties the platform already
+   * scales, and it is written that way so that fixing the boxes does not have to fight it —
+   * §6.183's other lesson, that a guard which goes red on a repair is as wrong as one that
+   * stays green on a defect.
+   *
+   * A scale reaching a `letterSpacing` **under an explicit `Platform.OS === 'ios'`** is
+   * allowed too, and that is not a loophole, it is the one place the two shipping platforms
+   * genuinely disagree: Android runs tracking through `toPixelFromSP` and iOS hands it to
+   * `NSKernAttributeName` raw, so on iOS alone the tracking really does hold at 0.996pt
+   * while the glyphs double — measured in the export at 0.083em, 0.042em and 0.028em across
+   * 100/200/300%. Unconditionally multiplying it would fix iOS and double Android. Nobody
+   * has taken that repair; if somebody does, this clause requires them to name the platform
+   * they are taking it for.
+   */
+  it('never scales a leading or a tracking twice', () => {
+    const files = allPhoneSources();
+    expect(files.length).toBeGreaterThan(15);
+    // Non-vacuous: the two properties have to be in the corpus for the sweep to mean anything.
+    expect(files.filter(({ source }) => /lineHeight:/.test(source)).length).toBeGreaterThan(4);
+    expect(files.filter(({ source }) => /letterSpacing:/.test(source)).length).toBeGreaterThan(1);
+
+    const doubled: string[] = [];
+    for (const { path, source } of files) {
+      /*
+       * The bindings a font scale can be sitting in, not the spelling `fontScale` — a plant
+       * that reads `const { fontScale } = useWindowDimensions()` and then writes `* s` is
+       * the same defect and the obvious next spelling of it. Both destructured and plain
+       * assignments, because `PixelRatio.getFontScale()` arrives as neither.
+       */
+      const names = new Set(['fontScale']);
+      for (const [, inner] of source.matchAll(/(?:const|let)\s*\{([^}]*)\}\s*=[^;\n]*/g)) {
+        if (!/\bfontScale\b/.test(inner)) continue;
+        for (const part of inner.split(',')) {
+          const [from, to] = part.split(':').map((x) => x.trim());
+          if (from === 'fontScale') names.add(to || from);
+        }
+      }
+      for (const [, name] of source.matchAll(
+        /(?:const|let)\s+(\w+)\s*=[^;\n]*(?:\bfontScale\b|getFontScale\s*\()/g,
+      )) {
+        names.add(name);
+      }
+
+      const scaled = new RegExp(`\\b(?:${[...names].join('|')})\\b|getFontScale\\s*\\(`);
+      for (const declaration of valuesOf(source, /\b(?:lineHeight|letterSpacing):/g)) {
+        if (!scaled.test(declaration)) continue;
+        // Named above: iOS is the one platform that does not scale a kern for itself.
+        const iosOnly =
+          /letterSpacing:/.test(declaration) && /Platform\.OS === 'ios'/.test(declaration);
+        if (!iosOnly) doubled.push(`${path}: ${declaration.trim()}`);
+      }
+
+      /*
+       * And the same rule one layer in, because the tempting version of this is one line in
+       * `theme.ts` rather than twenty at the sites — and a call site that says only
+       * `leadingOf(text.s14, leading.l143)` is invisible to the sweep above. `note.test.ts`
+       * and `type.test.ts` seal these two bodies by substring, which both of this sprint's plants
+       * kept while breaking the behaviour: `Math.round(size * ratio) * getFontScale()` still
+       * contains `Math.round(size * ratio)`.
+       */
+      if (path.endsWith('mobile/src/ui/theme.ts') || path === 'mobile/src/ui/theme.ts') {
+        for (const [body] of source.matchAll(
+          /export function (?:leadingOf|tracking)\([^)]*\)[^{]*\{[^}]*\}/g,
+        )) {
+          if (scaled.test(body)) doubled.push(`${path}: the derivation itself`);
+        }
+      }
+    }
+
+    expect(
+      doubled,
+      'React Native already scales these by the font scale; multiplying scales them twice',
+    ).toEqual([]);
   });
 
   it('keeps the rating targets in absolute units', () => {
