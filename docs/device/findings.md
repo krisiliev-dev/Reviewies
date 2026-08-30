@@ -288,3 +288,291 @@ iMessages, SMS and MMS — along with App Store content. For a phone with iCloud
 bulk of "storage used" is exactly the part that will not be copied, so the backup is largely app
 data and settings. Someone refusing the backup for want of disk space is usually estimating from
 the wrong number.
+
+## What a cache can and cannot give back
+
+After the import worked on the phone, the owner asked the right question: the shows came in,
+but nothing was marked to where they had watched. Is that data in the file?
+
+**No, and it never was.** The cache holds **zero** occurrences of `watched_episode_count`,
+`aired_episode_count` or any other per-series progress field. Episode-level records exist
+only where TV Time had cached episodes near a viewing position: **216 of them, across 28
+shows out of 235**. For the remaining 207 there is nothing to recover, and no parser
+improves on that.
+
+So the recovery ceiling for this file is: every show and film in the library, the films'
+watched flags, and episode progress for the couple of dozen shows opened most recently.
+
+### The signal nobody is using yet
+
+**132 shows carry the `up_to_date` filter** — TV Time saying the owner was caught up at the
+moment it cached. Today that only sets a status. Once a show is matched to a provider and its
+episode list is known, "up to date as of July 2026" is enough to mark every episode aired by
+then as watched.
+
+That would recover most of a history from a flag rather than from history, and it is the
+highest-value thing left in this file. It is also **inferring watches nobody explicitly
+recorded**, which is a product decision rather than a parsing one, and is why it is written
+here rather than done. If it is taken, the derived watches should be visibly derived.
+
+## An empty list under a sentence saying there were too many
+
+Reported from the device: some shows prompt for a manual match, and a few of those offer
+nothing to pick.
+
+An ask with no candidates is a **miss**. `reconcile.ts` returns an empty `candidates` array
+whenever the provider found nothing or nothing scored above 0.3, and the phone rendered every
+ask the same way — `COPY.import.ambiguous`, "More than one show could be this", above an
+empty list whose only control was **"None of these"**. None of nothing.
+
+The web had already fixed exactly this, and its own comment names it:
+
+> A screen saying "more than one show could be this" above an empty list, whose only control
+> is "None of these", tells somebody the opposite of the truth and then offers them nothing
+> but giving up.
+
+The phone never got that branch. Both sides now read `COPY.import.notFound` and offer
+`COPY.controls.leaveForNow`, from the same constants rather than two copies of a sentence.
+
+### The guard that was looking one level too high
+
+`migrationParity.test.ts` exists for precisely this failure — its own words are "the one that
+mattered was a control the web had and the phone quietly did not". It compares
+`app/src/screens/UpNext.tsx` against `mobile/app/(tabs)/index.tsx`: the two **screens**. The
+drift was in the component both screens mount, one level down, where nothing was looking.
+
+It now reads both matchers too. Planting the phone's old version back fails it by name:
+
+```
+phone: does not branch on there being candidates
+phone: one label for both states
+```
+
+A parity guard that reads one pair of files proves nothing about the pair beside it.
+
+### Still not at parity
+
+On a miss the web offers a search box (`FindIt`) so somebody can find the show themselves.
+The phone only offers to skip. That is a feature rather than a branch and is left undone
+rather than half-built.
+
+## The phone cannot read a database at all, and the record said it never needed to
+
+Third failure of the same import, after the encoding fix cleared the second. The screen was
+honest about it:
+
+> **DioCache.db — TV Time cache — 0 watch(es), 0 show(s)**
+> Could not read that as a TV Time cache: Reading a TV Time cache needs SQLite, which this
+> app has not set up. Call `setSqlJsLoader()` from your entry point.
+
+Nothing in `mobile/` calls `setSqlJsLoader`. The web binds it in `app/src/data/platform.ts`
+and the node suites bind it in their setup files, so every context that has ever run this
+code had a loader and the phone has never had one.
+
+### The part that matters more than the bug
+
+`coreWiring.test.ts` keeps a written reason for every export one app uses and the other does
+not — the mechanism exists so an asymmetry is a decision rather than an accident. The reason
+recorded for this one read:
+
+> The phone has expo-sqlite compiled in and **never asks for one**.
+
+It asks. It asked the first time anybody tried, and the error names the exact function the
+explanation was excusing. The guard was working perfectly: it required an explanation, got
+one, and the explanation was false. A justification nobody can check is a comment with a
+test around it.
+
+That entry now says what happened instead. It is the cheapest half of this finding and the
+only half a machine here could have carried.
+
+### Fixed in the commit after this one
+
+Written after all, at the owner's request, with the reason for the hesitation stated rather
+than pretended away: the native call cannot be guarded from here, and the device is the only
+test it has.
+
+`SQLite.deserializeDatabaseSync(bytes)` opens a database in memory, so nothing is written to
+disk and there is no temporary file to clean up after a failed import. The binding is about
+twenty-five lines in `mobile/src/platform.ts`.
+
+The half that *can* be guarded was split out. `mobile/src/sqlResult.ts` turns expo-sqlite's
+row objects into sql.js's columns-and-matrix, with five cases — including the two that would
+actually bite: `[]` for no rows rather than one empty table, because `readDioCache`
+destructures the first result and an empty table is truthy; and blobs passed through
+untouched, because the decode branch only fires on a `Uint8Array`.
+
+**The repository then caught its own stale reasoning, unprompted.** Binding the loader made
+`setSqlJsLoader` no longer app-only, and `coreWiring.test.ts` failed with *"does not keep
+reasons that have stopped being true"* — the same explanation corrected an hour earlier was
+now expired. That guard was right twice about one line in one session: first that the reason
+was false, then that it had stopped applying at all.
+
+Worth recording what the owner said about scope, because it is the argument against anyone
+generalising this later:
+
+> importing a database is not how data is usually imported… it is an exception because TV
+> Time shut down and this is the only way to retrieve the data. But normally when importing
+> data, we will be doing it from other popular apps.
+
+So this path is a rescue for a dead service, and JSON and CSV from services that still exist
+are the ordinary case. That is a reason for the binding to stay as small as it now is.
+
+### The original reasoning, kept because it was right until it was overruled
+
+`sql.js` is WebAssembly, and the phone's own engine has none — so the answer is not to bind
+the web's loader but to write a different one over `expo-sqlite`, which is already a
+dependency and does expose the synchronous surface this interface needs
+(`openDatabaseSync`, `getAllSync`, `execSync`). Perhaps sixty lines, in
+`mobile/src/platform.ts`.
+
+What stops it being written here is that **no guard for it can run here.** The thing it binds
+exists only on a device; a node suite would be testing a mock of the thing that broke. That
+is the exact shape the brief warns about, and the third finding in a row where the instrument
+could not reach the defect — the fixtures had a shape real data does not, the suites run on a
+JS engine the app does not use, and now the binding only exists somewhere no suite runs.
+
+### So the import still has not happened on the phone
+
+Web: 235 titles, 115 watches, 2 watchlist items. Phone: nothing, three times, for three
+unrelated reasons. Two are fixed. The third is understood and open.
+
+## Every import was broken on the phone, and no suite here could see it
+
+The import failed on the device with:
+
+> **Unknown encoding: latin1 (normalized: latin1)**
+
+`core/src/data/archiveImport.ts` decided whether a dropped file was a database by decoding
+its first sixteen bytes:
+
+```js
+new TextDecoder('latin1').decode(bytes.subarray(0, 16)) === SQLITE_MAGIC
+```
+
+Every browser accepts `latin1`. Node accepts it. **Hermes implements UTF-8 and nothing
+else.**
+
+That sniff is the first thing *every* import runs, so this was not a `DioCache.db` problem:
+zip, CSV, Reviewies export and database alike failed on the phone and passed everywhere the
+suites look, because all five suites run on Node.
+
+This is the sharpest example this record has of the thing the brief was written about. The
+code was exercised, by tests, on real inputs, and the tests were run on a JS engine the
+application does not use.
+
+### The fix, and why a behavioural test cannot hold it
+
+Comparing bytes. A magic number *is* bytes; decoding them to text to compare them to text
+was a detour whose only contribution was an encoding to get wrong.
+
+A behavioural guard is useless here — Node decodes `latin1` happily, so the broken version
+passes on the machine running the test. The guard reads the source instead, and scans **all
+of `core/`** rather than the one file that got it wrong, because the constraint belongs to
+Hermes and therefore to everything shipped to the phone. Planting the exact original back
+fails it, alone:
+
+```
+expected [ 'data/archiveImport.ts: latin1' ] to deeply equal []
+```
+
+### What is still not covered
+
+The guard catches `TextDecoder`. It does not catch the general case — any Web or Node API
+that a browser and Node implement more fully than Hermes does. `Intl`, `RegExp` flags and
+`toLocaleString` are the usual next offenders. Nothing here knows which of those the code
+already leans on, and finding out needs a device, not a scan.
+
+## The DioCache importer silently drops every series
+
+Found by importing a **real** `DioCache.db`, recovered from a phone — the first time that
+code has run on anything but fixtures. `docs/research/08-second-reddit-sweep.md` calls
+accepting this file "the highest-value unbuilt feature we have found". It works for films
+and loses the television.
+
+### The numbers
+
+| | in the cache | after `parseDioCache` | landed in the app |
+|---|---|---|---|
+| series | **235** | **0** | 6 (only those an episode mentioned) |
+| movies | 125 | 125 | 85 watches (the ones marked watched) |
+| episodes | — | 83 | 30 |
+
+The screen said **"Imported 115 watches."** Nothing said that 235 shows had been read and
+skipped.
+
+### Why
+
+`parseDioCache` reads the two kinds from two different places:
+
+- **movies** — `data.objects[]` where `entity_type === 'movie'`
+- **series** — a top-level `payload.shows` array, from TV Time's progress endpoint
+
+This cache contains **0** payloads with a `shows` array and **940** objects (235 distinct)
+with `entity_type === 'series'`, sitting in `data.objects` right beside the movies the
+parser does read. The series branch is looking at an endpoint this cache never held.
+
+A real one, keys intact:
+
+```
+{ uuid, type: 'follow', entity_type: 'series', created_at, updated_at,
+  meta: { id, name: 'Elite', country, day_of_week, is_ended, images, … },
+  extended: { rating, rating_count, follower_count, comment_count },
+  filter: ['all', 'stopped'] }
+```
+
+`meta.id` and `meta.name` are exactly what `DioSeries` wants. Nothing is missing from the
+data; the branch that would read it does not exist.
+
+### Why no count reports it
+
+`unrecognised` counts *payloads* that yielded nothing, not entities that were skipped. The
+payload holding those 940 series objects also holds movies, so the movie branch sets
+`used = true` and the payload is counted as recognised. A library that is 65% series comes
+back as films only, and every number on the screen agrees that it went well.
+
+That is this record's oldest theme, in the feature that most depends on not having it: a
+confident report over a partial result, with nothing able to say which.
+
+### Fixed, guard first
+
+Six cases in `diocacheParse.test.ts`, from a fixture with the real cache's keys and
+invented names, so nobody's library goes into the repository. All six fail on the old
+parser — the first as `expected [] to deeply equal [ 'Quiet Harbour: The Series', … ]` —
+and pass on the new one. The change is one loop beside the movie loop, reading
+`entity_type === 'series'` out of `data.objects`.
+
+Two decisions worth stating, because both could have been made carelessly:
+
+- **`watchedEpisodes: 0` means "not stated", not "none watched".** A follow object carries
+  no progress. The importer only reads `archived`, `upToDate` and `forLater` for a show's
+  status, so nothing downstream reads those zeros as a claim — but the next person to touch
+  it should know they are absence rather than measurement.
+- **The progress endpoint still wins where a cache has one.** Some caches hold both shapes;
+  the listing knows less than the endpoint that counts episodes, so a count already found is
+  never lowered.
+
+Measured on the real cache, before and after, through the actual import UI rather than the
+parser alone:
+
+| | before | after |
+|---|---|---|
+| series parsed | 0 | **235** |
+| titles in the library | 6 | **235** |
+| library items | 6 | **235** |
+| watches | 115 | 115 |
+| watchlist | 0 | 2 |
+
+### Still open, and deliberately not done here
+
+**A skipped entity is still invisible.** `unrecognised` counts payloads that yielded
+nothing, so a payload whose movies parsed and whose series did not was counted as fine.
+That is what let this hide. The fix makes the series parse; it does not make a future
+mismatch announce itself. Whatever reads these shapes should be able to say how many
+objects it saw and could not use — that is a separate change with its own guard.
+
+**`not_started_yet` lands as `watching`.** The real filter values across this cache were
+`all` (940), `up_to_date` (528), `not_started_yet` (292), `continuing` (108), `watch_later`
+(8) and `stopped` (4). Only `up_to_date` and `watch_later` map to anything the importer
+reads, so roughly 73 shows the owner has never begun are filed as in progress. Arguably
+they belong on the watchlist. That is a product decision about what a followed-but-unstarted
+show *is*, not a bug, and a device session is the wrong place to settle it.

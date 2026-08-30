@@ -153,10 +153,7 @@ export function MatchImports({
             <Note className="mb-2">{COPY.import.ambiguous}</Note>
           ) : (
             <>
-              <Note className="mb-2">
-                Nothing came back under that name — it may be listed differently, or be a
-                show the provider has never had. You know what it is; search for it.
-              </Note>
+              <Note className="mb-2">{COPY.import.notFound} You know what it is; search for it.</Note>
               <FindIt ask={ask} onChosen={(id) => void choose(ask, id)} />
             </>
           )}
@@ -187,7 +184,7 @@ export function MatchImports({
             aria-label={`Leave ${ask.name} unmatched`}
             className="tap mt-2 text-s12 text-ink-secondary underline"
           >
-            {ask.candidates.length > 0 ? COPY.controls.noneOfThese : 'Leave it for now'}
+            {ask.candidates.length > 0 ? COPY.controls.noneOfThese : COPY.controls.leaveForNow}
           </button>
         </div>
       ))}

@@ -211,7 +211,11 @@ describe('every workspace', () => {
     // hand-rolled radio outside `Choice`. That sweep found the two renderers and no third
     // offender — a lock on an empty room, and worth having only because a plant first
     // watched the old clauses shake the defect's hand.
-    core: 928, app: 694, mobile: 42, relay: 24, bridge: 24, extension: 21,
+    // core 936, app 697, mobile 47: the device session's own work merged in — a byte-sniff
+    // for a recovered DioCache, the phone's SQLite, and the guard that was looking one level
+    // too high. Three workspaces moving at once is what a second person working on this
+    // looks like, which had not happened before.
+    core: 936, app: 697, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

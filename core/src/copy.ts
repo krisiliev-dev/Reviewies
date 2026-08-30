@@ -412,6 +412,8 @@ export const COPY = {
     findToWatch: 'Find something to watch',
     findSomething: 'Find something',
     noneOfThese: 'None of these',
+    /** For a miss rather than an ambiguity: there is nothing to be none of. */
+    leaveForNow: 'Leave it for now',
     openJustWatch: 'Open on JustWatch',
   },
 
@@ -1176,5 +1178,17 @@ export const COPY = {
     ambiguous:
       'More than one show could be this. Picking the wrong one would move your history ' +
       'onto it.',
+    /**
+     * The third state, and the one that was missing.
+     *
+     * An ask with no candidates is not an ambiguity — it is a miss. Saying "more than one
+     * show could be this" above an empty list tells somebody the opposite of the truth and
+     * then offers them nothing but giving up. The web separated the two; the phone kept
+     * showing the ambiguous sentence to an empty list until a real import on a device put
+     * it in front of somebody. Doc 10 §5, and 6.86.
+     */
+    notFound:
+      'Nothing came back under that name — it may be listed differently, or be a show ' +
+      'the provider has never had.',
   },
 } as const;
