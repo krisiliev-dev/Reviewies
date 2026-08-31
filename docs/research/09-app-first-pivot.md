@@ -15457,8 +15457,28 @@ and which single claim in this document could not be checked at all:
   from a device and from nobody in the export. What survives is only the device question:
   whether VoiceOver and TalkBack read the right *sentence*, which no static export answers.
 
-- **Nothing has run on a physical device, and §6.111 measured exactly how far short of
-  one this gets.** `expo prebuild` succeeds here and is the end of the road: there is no
+- ~~**Nothing has run on a physical device**~~ — **it has, twice, and this entry's first
+  sentence was false for a fortnight before anyone said so.** The build is `docs/device/findings.md`:
+  `** BUILD SUCCEEDED **`, installed over USB with `devicectl`, on an iPhone 13 Pro Max running
+  iOS 26.5.2. Not in *this* container — none of the paragraph below about the container is
+  wrong — but on a Mac the user has, driven by an agent, which is a distinction the sentence
+  never made. It said "nothing has run on a physical device" and meant "nothing can run on a
+  physical device *from here*", and the user had to correct it in as many words. Three of eleven
+  questions are answered and the other eight are still `NOT YET CHECKED` by design: §6.57's rule
+  is that a heading left unanswered is a true statement and a heading quietly deleted is not.
+
+  **What the device changed, and it is not a formality.** The `useFonts` gate — named two
+  bullets up as never having executed outside the export — has now executed, costs nothing
+  visible, and there is no white flash. All six faces reach the device. And question 2 found a
+  defect that is *not the one predicted*: text **clipped at the bottom**, in Up Next rows and in
+  the More menu, which is a container that did not grow rather than the scaling failure sixteen
+  sprints of export work was watching for. The two remaining candidates are the tab bar's labels
+  at `TAB_BAR_HEIGHT` 60 and the row's own words, and one photograph settles it. This is the
+  clearest return the device has paid: the export could not have produced that finding, and the
+  prediction it falsified was written from the export.
+
+  **The container's limit stands, and §6.111 measured exactly how far short of one it gets.**
+  `expo prebuild` succeeds here and is the end of the road: there is no
   Android SDK in this container, no `eas` CLI, no Apple or Google account, no device. What
   that first prebuild found — a declared dark mode with nothing implementing it, a white
   splash, Expo's scaffold navy on every native ripple, and the template icon shipping under
@@ -15466,7 +15486,10 @@ and which single claim in this document could not be checked at all:
   because every suite here drives the react-native-web export and none of them reads
   `app.json`. There is a guard on the manifest now. There is still nothing between it and a
   home screen.
-- **Nothing has run on a physical device.** The phone's smoke suite drives the
+- **Every check in this repository still runs on the export, and the export is not a phone.**
+  (This entry led with "nothing has run on a physical device" until the bullet above corrected
+  it. A device exists now; not one of the mechanisms below is under test by anything here, which
+  is what the entry was always actually about.) The phone's smoke suite drives the
   react-native-web export, which is a real build and not a real phone. Its 200% text
   check (§6.38) doubles every computed font size rather than using the system setting,
   which is the same property and not the same mechanism. `getExpoPushTokenAsync`
@@ -16273,6 +16296,20 @@ and which single claim in this document could not be checked at all:
   never the defect they name; but a state the product reached once and a probe cannot reach
   at all is a thing nobody understands, and it is written here rather than closed.
 
+  **And the count was not four either — §6.189 found two more, in a suite §6.161 never
+  looked at.** `app/src/wiring/assertions.test.ts` has two clauses that read every test file
+  in the repository and parse roughly a thousand `it()` bodies. Together they take 6.45s on an
+  idle machine against vitest's 5,000ms default, so they passed alone and failed whenever a
+  parallel sweep was running — which is the same defect as the four, arrived at from the
+  opposite direction: not a probe sampling too early, but a check whose own work outgrew a
+  budget it never set. §6.161's sweep read the browser suites, because that is where the
+  flakes had been seen; it did not ask which vitest clauses were near the default. Both now
+  carry `READS_EVERY_TEST_FILE = 30_000` and a banner saying what they read and why the
+  number is that. **The operational consequence is larger than the fix**: `npm run verify`
+  reported green on several runs this fortnight where these two won a race, and it is not
+  trustworthy at all while a parallel sweep loads the machine. Close-out runs on an unloaded
+  machine from here.
+
 - **One clause still samples a transient at a flat constant.** `a hanging search says it is
   working` in `app/failures.mjs` reads the screen 3000ms after typing. A hung provider leaves
   "Searching…" up indefinitely, so there is no upper edge to fall off — but 3000 is a
@@ -16368,12 +16405,48 @@ and which single claim in this document could not be checked at all:
   heading drawn inside that group. Both were filed by reading a picture and settled by
   measuring one.
 
-- **Two states the design harness cannot reach, both about controls §6.167 decided.** Stats
+- ~~**Two states the design harness cannot reach, both about controls §6.167 decided.** Stats
   has never been photographed with a *year* selected — the capture scripts walk the period
   control and never press one — so the second row's chosen state is reasoned about rather
   than seen, which is §6.146's rule. And the **web's** remote handle renders only when
   `bridgeConfigured()`, which no design pass configures: §6.167 decided to keep that edge
-  tab, on the platform where it is the only route to the remote, without a photograph of it.
+  tab, on the platform where it is the only route to the remote, without a photograph of it.~~
+
+  **Both are reachable now, and each took a different kind of work.** The year is
+  `08-stats-year` in `design/capture.mjs` — the web got it in §6.170, the phone later — and it
+  is pressed by role and name rather than by index, so the shot cannot silently become a shot
+  of the wrong chip; three `unshot` clauses say so out loud if the press lands on nothing, if
+  the figures do not follow, or if the control is pressed and does not mark itself chosen. The
+  remote handle is `${name}-11-remote` in `design/capture-web.mjs`, taken against a
+  deliberately dead relay on port 9 with everything off-origin aborted: nothing is connected
+  to, and what is photographed is the affordance and the panel, which is what §6.167's
+  decision was actually about.
+
+  **What is closed is the photograph, not the judgement.** Both shots exist and are in the
+  register; neither has been read by anyone against what it claims, and they sit inside the 78
+  unread of 146 that #225 is the queue for. §6.146's rule is that a decision made without a
+  picture is reasoning, and the rule one layer along — §6.150's — is that an unread picture
+  is not evidence either.
+
+- **The year shot asserted the heading and never the figures, and the defect lived in the
+  gap.** This is the same entry one layer in, and it is worth its own line because the
+  instrument was *there*. `08-stats-year` presses a year and then checks two things: that the
+  body contains `/Your \d{4}/`, and that the pressed radio reports `aria-checked="true"`.
+  Both are about the **control**. Neither reads a number. `COPY.stats.yourYear(year)` renders
+  from `mobile/app/stats.tsx`'s own `year` state and `Choice` marks itself from `chosen`, so
+  both clauses were satisfied by state that never reached `getSummary` — and on the phone
+  2026, 2025 and 2024 reported the same fifty episodes under three different headings over a
+  library of 122. The shot was taken, the assertions ran, they passed, and the screen was
+  wrong.
+
+  Repaired in `core/src/stats/compute.ts` rather than at the call site: `askedFor` makes a
+  named year win over whatever window chip was last pressed, in the one place both platforms
+  go through. **The instrument is the part still open.** A clause that reads a figure across
+  two different years and requires them to differ would have caught this and does not exist;
+  writing one means deciding what a fixture guarantees about its own distribution, which is
+  §6.146's question and is not a line of code. Filed, not fixed. It is the third instance this
+  fortnight of a check that names a state and measures its label — after §6.148's control
+  names and §6.150's three rows — and the shape is now specific enough to sweep for.
 
 - **The settings *row* is still a surface with no component.** §6.166 drew the mark and left
   the row, on both platforms, in `bareControl.test.ts`'s exemption table with that as its
@@ -16395,6 +16468,17 @@ and which single claim in this document could not be checked at all:
   is a gesture conflict on a real touch device, and this repository has never run on one
   (see the first bullet). The `scroll` prop is off for the other four `Choice` call sites,
   so the risk is scoped to one control on one screen.
+
+  **There is a device now, and this was not among the eleven questions put to it.** The brief
+  in `docs/device/on-the-phone.md` asked about cold start, Dynamic Type, `hitSlop`, the faces,
+  a locked screen, haptics, the press step, sign-in, notifications, and anything that looks
+  wrong — every one of them a thing the export *renders differently*, and not one of them a
+  thing the export cannot render at all. A nested scroller is the second kind. The brief was
+  written from the list of known asymmetries rather than from the list of open §7 items, which
+  is how a question that has been sitting here since §6.109 missed the one occasion it could
+  have been answered. Goes in the next brief, phrased as a gesture and not as a screenshot:
+  swipe the years sideways, then swipe the screen down from inside the row, and say which one
+  moved.
 - **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
   rather than structure precisely because they are — the direction's `radius.none` is for
   full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those
