@@ -12,6 +12,13 @@ coverage/
 # A mutation run that was killed outright leaves one of these behind.
 *.mutant-backup
 
+# The scratch directory every agent is told to point TMPDIR at, because /tmp/metro-cache
+# is shared across checkouts and silently poisons an export. It was untracked and
+# unignored, which is one `git add -A` away from §6.158's mistake — 38 files and 6.3 MB
+# committed because a convention existed and nothing wrote it down. Playwright and Metro
+# both live in here during a run.
+.tmp/
+
 # `tsc -b` writes these beside each tsconfig; they are a build cache.
 *.tsbuildinfo
 mobile/dist-signedin

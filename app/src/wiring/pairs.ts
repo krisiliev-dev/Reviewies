@@ -78,14 +78,33 @@ export function phoneScreenFiles(): string[] {
   const walk = (dir: string, prefix: string, out: string[] = []): string[] => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) walk(join(dir, entry.name), `${prefix}${entry.name}/`, out);
-      else if (entry.name.endsWith('.tsx') && entry.name !== '_layout.tsx') out.push(prefix + entry.name);
+      // `.test.` for the same reason `webScreenFiles` excludes it: a test beside a route
+      // file is not a route.
+      else if (
+        entry.name.endsWith('.tsx') &&
+        entry.name !== '_layout.tsx' &&
+        !entry.name.includes('.test.')
+      ) {
+        out.push(prefix + entry.name);
+      }
     }
     return out;
   };
   return walk(base, '');
 }
 
-/** Every web screen file. */
+/**
+ * Every web screen file.
+ *
+ * `.test.tsx` is not a screen. This filtered on the extension alone, so the first render
+ * test written beside the screen it renders — `screens/searchRowWatchlist.test.tsx` —
+ * arrived in `offers.test.ts` as an unpaired screen with no twin on the phone, and the
+ * pairing clause failed on a change that was correct. `docs/design/agents.md` §4: fix the
+ * rule, not the file. Every other sweep in this repository already excludes `.test.`;
+ * this one had simply never met a test file in this directory.
+ */
 export function webScreenFiles(): string[] {
-  return readdirSync(resolve(ROOT, 'app/src/screens')).filter((f) => f.endsWith('.tsx'));
+  return readdirSync(resolve(ROOT, 'app/src/screens')).filter(
+    (f) => f.endsWith('.tsx') && !f.includes('.test.'),
+  );
 }

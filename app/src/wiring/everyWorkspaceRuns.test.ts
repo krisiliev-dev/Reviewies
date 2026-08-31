@@ -256,7 +256,15 @@ describe('every workspace', () => {
     // app 763, up one: the box's press clause in `browse.test.ts`, which asks whether the
     // shelf box has a press rule at all rather than whether the one it has goes the right
     // way — the phone's had none.
-    core: 1030, app: 763, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 768, up five: the watchlist-promise pass. Three in `watchlistPromise.test.ts`,
+    // which reads the six controls announced *"Add {name} to your watchlist"* and asks
+    // whether each one's own `onPress` reaches the writer — two of the six did not — plus
+    // the non-vacuity clause and the one that keeps the note composer on the watchlist row.
+    // Two in `searchRowWatchlist.test.tsx`, which does not read source at all: it renders
+    // the screen, presses the control by its announced name and asks the database. That
+    // split is deliberate and measured — a plant with the write behind a dead branch
+    // satisfies all three source clauses and fails both of these.
+    core: 1030, app: 768, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

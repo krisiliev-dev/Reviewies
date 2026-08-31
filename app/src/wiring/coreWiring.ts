@@ -35,7 +35,25 @@ export interface Tree {
 export function fromDisk(root: string): Tree {
   const walk = (dir: string, out: string[] = []): string[] => {
     for (const entry of readdirSync(dir)) {
-      if (entry === 'node_modules' || entry === 'dist' || entry === '.git' || entry === '.expo') {
+      /*
+       * `.tmp` with the rest of them, and it is the one that bites.
+       *
+       * `docs/design/agents.md` §6 tells every agent to run with `TMPDIR=<worktree>/.tmp`,
+       * because `/tmp/metro-cache` is shared across checkouts. That puts Playwright's
+       * per-run profile directories *inside the tree this walks* — and a suite that
+       * launches a browser is deleting one while another suite enumerates it, so
+       * `statSync` hits a `SingletonCookie` that existed a millisecond ago. Twice in this
+       * sprint that took `paletteMembers` and `coreWiring` red on a working tree, which is
+       * §9's shape from the other side: not an instrument that alters its subject, but one
+       * whose subject includes the instrument's own scratch space.
+       */
+      if (
+        entry === 'node_modules' ||
+        entry === 'dist' ||
+        entry === '.git' ||
+        entry === '.expo' ||
+        entry === '.tmp'
+      ) {
         continue;
       }
       const path = join(dir, entry);

@@ -720,16 +720,12 @@ const THEN = {
       process.exitCode = 1;
       return;
     }
+    // The press is the whole act on both platforms now. It opened a note composer on the
+    // web and saved straight away on the phone — two behaviours behind one announced name,
+    // filed by §6.191's scent pass and settled since: the control adds at all six of the
+    // places it is drawn, and the note is written on the watchlist row it describes.
     await add.click();
-    await page.waitForTimeout(600);
-    const note = page.getByPlaceholder(/Why did you save/i).first();
-    if (await note.count()) await note.fill('Ana recommended');
-    // The web opens a note composer here and the phone saves straight away — also filed.
-    const save = page
-      .getByRole('button', { name: /Save Quiet Harbour to (your )?watchlist/i })
-      .first();
-    if (await save.count()) await save.click();
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(900);
   },
 };
 
@@ -1500,12 +1496,24 @@ await reveal(page, {
  * judged, and the fix is to photograph it where it exists rather than to loosen the needle.
  */
 
-// The control that opens the note is the one that saves: on this screen, saving and
-// saying why are one act. §6.148's finding was an empty state asking for a note the phone
-// had no way to write; this is the shot of the way it writes one.
+/*
+ * A search row with the press already made.
+ *
+ * This was `04-search-noting`, and what it photographed was the defect. The press opened a
+ * note field with a Save behind it, and the shot showed the row's other two controls —
+ * Track, Seen it — and Add to list *gone*, with no Cancel offered: a control announced
+ * "Add {name} to your watchlist" that wrote nothing, and two ways out of the state it put
+ * you in. Four of the six controls drawn with that name added on the press; these two did
+ * not. The old file is kept in the record rather than overwritten, because the argument for
+ * the change is that photograph.
+ *
+ * What is worth photographing here now is the *answer*: the row after the press, which is
+ * the state a person actually lands in. `reveal` presses the control it is given, so the
+ * needle is unchanged and only the name and the reason are.
+ */
 await reveal(page, {
   out: OUT,
-  name: '04-search-noting',
+  name: '04-search-added',
   control: /to (your )?watchlist/i,
   problems: unshot,
   scrolls,

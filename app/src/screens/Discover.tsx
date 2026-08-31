@@ -264,8 +264,6 @@ export function Discover() {
 function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
   const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
   const shelf = added ?? shelfFor(result, have);
-  const [note, setNote] = useState('');
-  const [noting, setNoting] = useState(false);
 
   /**
    * Cache the full title, not just the search result.
@@ -338,6 +336,28 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
     if (result.kind === 'show') void getEpisodesCached(result.id).catch(() => {});
   }
 
+  /**
+   * Adds on the press, which is what the control has always been called.
+   *
+   * This opened a note field instead. Six controls in the product are announced
+   * `COPY.controls.addToWatchlist(name)` — *"Add {name} to your watchlist"* — and four of
+   * them wrote the row when you pressed them; the two search rows, this one and the
+   * phone's, wrote nothing. Measured on a real build and photographed in
+   * `design/screens/04-search-noting.png`: the press replaced Track, Seen it and Add to
+   * list with a field and a Save, offered **no Cancel**, and left the row with two ways
+   * out — commit a watchlist entry you may not have wanted, or leave the screen.
+   *
+   * Two things internal to this row convicted it rather than a preference. `AddToList` sat
+   * on the same row as a *reversible* disclosure (`label={open ? 'Cancel' : ...}`), so one
+   * row carried two disclosures and only one could be backed out of. And `TitleDetail.tsx`
+   * had already taken this decision and written down why: *"the field is one press away
+   * where it belongs rather than a third state"*.
+   *
+   * The note is not lost, because it was never this screen's to hold. It is *why you saved
+   * it*, and §6.167 gave the watchlist row its own "Add a note…" — so `watchlist.empty`'s
+   * promise, *"Add something from Discover, then say why you saved it"*, is kept by the two
+   * screens it names rather than by a third state on the first of them.
+   */
   async function saveToWatchlist() {
     await db.titles.put({
       id: result.id,
@@ -348,9 +368,8 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
       genres: result.genres,
       fetchedAt: Date.now(),
     });
-    await addToWatchlist(result.id, result.kind, note.trim() || undefined);
+    await addToWatchlist(result.id, result.kind);
     setAdded('watchlist');
-    setNoting(false);
   }
 
   return (
@@ -378,58 +397,40 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
       }
       under={
         <>
-          {noting ? (
-            <div className="flex gap-1.5">
-              <Field
-                size="row"
-                label={COPY.controls.noteFor(result.name)}
-                value={note}
-                onChange={setNote}
-                placeholder={COPY.watchlist.notePlaceholder}
-                className="min-w-0 flex-1"
-                autoFocus
-              />
+          {/* Three actions, each naming its own row. The direction's "one action" is a
+              naming rule rather than a counting one — see `Row`'s `under` — and these
+              three were each added deliberately for a reason doc 4 records. */}
+          <div className="flex flex-wrap gap-1.5">
+            <Button
+              onPress={track}
+              disabled={shelf === 'library'}
+              tone="primary"
+              label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
+              name={COPY.controls.trackTitle(result.name)}
+            />
+            {/* Adds, rather than revealing a field that then adds. `saveToWatchlist` above
+                has the argument and the photograph. */}
+            <Button
+              onPress={saveToWatchlist}
+              disabled={shelf === 'watchlist'}
+              tone="secondary"
+              label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
+              name={COPY.controls.addToWatchlist(result.name)}
+            />
+            {/* Films only: "watched" is not a thing you can say about a whole series
+                in one tap without lying about which episodes. */}
+            {result.kind === 'film' && (
               <Button
-                tone="primary"
-                label="Save"
-                name={COPY.controls.saveToWatchlist(result.name)}
-                onPress={saveToWatchlist}
-              />
-            </div>
-          ) : (
-            /* Three actions, each naming its own row. The direction's "one action" is a
-               naming rule rather than a counting one — see `Row`'s `under` — and these
-               three were each added deliberately for a reason doc 4 records. */
-            <div className="flex flex-wrap gap-1.5">
-              <Button
-                onPress={track}
-                disabled={shelf === 'library'}
-                tone="primary"
-                label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
-                name={COPY.controls.trackTitle(result.name)}
-              />
-              <Button
-                onPress={() => setNoting(true)}
-                disabled={shelf === 'watchlist'}
+                onPress={log}
+                disabled={added === 'logged'}
                 tone="secondary"
-                label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
-                name={COPY.controls.addToWatchlist(result.name)}
+                label={added === 'logged' ? COPY.controls.logged : COPY.controls.seenIt}
+                name={`Log that you have seen ${result.name}`}
               />
-              {/* Films only: "watched" is not a thing you can say about a whole series
-                  in one tap without lying about which episodes. */}
-              {result.kind === 'film' && (
-                <Button
-                  onPress={log}
-                  disabled={added === 'logged'}
-                  tone="secondary"
-                  label={added === 'logged' ? COPY.controls.logged : COPY.controls.seenIt}
-                  name={`Log that you have seen ${result.name}`}
-                />
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
-          {!noting && <AddToList titleId={result.id} kind={result.kind} />}
+          <AddToList titleId={result.id} kind={result.kind} />
         </>
       }
     />
