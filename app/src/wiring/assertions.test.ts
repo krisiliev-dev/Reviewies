@@ -113,6 +113,36 @@ function cases(source: string): Case[] {
   return found;
 }
 
+/**
+ * One file, read and parsed once.
+ *
+ * It was read and parsed *per clause* and blanked **per test case** — `asserts(one.body,
+ * blankLiterals(source))` inside the loop over a file's own cases, so a suite of forty
+ * clauses blanked its own source forty times. Across 1,200 cases that is 1,200 passes over
+ * the whole tree instead of ninety-odd, and the cost grows with every test anybody adds:
+ * this clause spent 5.8s of a 5s budget and began timing out on a loaded machine the sprint
+ * two test files were added to `app` and `core`.
+ *
+ * That is a guard failing on a correct change, which is the shape this repository has now
+ * found six times in four sprints, and the rule rather than the file is what is wrong: a
+ * check whose cost is quadratic in the thing it is counting will always eventually fail on
+ * somebody who did nothing but write tests. Same reading, one parse.
+ *
+ * **A budget was tried first and was the wrong repair.** §6.189's close-out gave both clauses
+ * an explicit 30,000ms and a banner arguing that the default was itself a false claim — that
+ * reading a thousand test bodies is fast. The claim was false and the reasoning was sound, and
+ * it was still treating the symptom: six times the measured cost is slack against a busy
+ * machine, and a quadratic clause eats slack on a schedule. Parsing once took the same work
+ * from 5,858ms to 12ms, which no budget would ever have had to accommodate. Recorded here
+ * rather than quietly replaced, because "the check is too slow" and "the check is wrong" look
+ * identical from a red run and lead to opposite repairs.
+ */
+interface Parsed {
+  file: string;
+  blanked: string;
+  cases: Case[];
+}
+
 /** Does this body assert — directly, or through a helper in the same file that does? */
 function asserts(body: string, whole: string): boolean {
   if (/\bexpect\s*\(/.test(body)) return true;
@@ -125,6 +155,23 @@ function asserts(body: string, whole: string): boolean {
 
 describe('every test', () => {
   const files = WORKSPACES.flatMap((name) => testFiles(join(ROOT, name)));
+  /*
+   * Once, at collection, for all three clauses. `blankLiterals` is the expensive half and
+   * every clause below wants the same answer from it — see `Parsed` above for what reading
+   * it three times per file and blanking it once per *case* was costing.
+   */
+  const parsed: Parsed[] = files.map((file) => {
+    const source = readFileSync(join(ROOT, file), 'utf8');
+    return { file, blanked: blankLiterals(source), cases: cases(source) };
+  });
+
+  /** Every case that does not assert, keyed the way `ASSERTS_NOTHING` keys them. */
+  const silent = (): string[] =>
+    parsed.flatMap((one) =>
+      one.cases
+        .filter((each) => !asserts(each.body, one.blanked))
+        .map((each) => `${one.file} :: ${each.name}`),
+    );
 
   it('is found, in every workspace, rather than an empty list being cleared', () => {
     expect(files.length).toBeGreaterThan(50);
@@ -133,52 +180,15 @@ describe('every test', () => {
     }
     // And the bodies parse. A brace matcher that gives up returns nothing, which would
     // read as "no test asserts nothing" just as loudly as a clean sweep.
-    const total = files.reduce((n, f) => n + cases(readFileSync(join(ROOT, f), 'utf8')).length, 0);
-    expect(total).toBeGreaterThan(1000);
+    expect(parsed.reduce((n, one) => n + one.cases.length, 0)).toBeGreaterThan(1000);
   });
 
-/*
- * The two clauses below read and parse **every test file in every workspace** — about a
- * thousand `it()` bodies across ninety files, with a regex sweep over each. That is
- * legitimately slow: alone they take six and a half seconds of test time.
- *
- * §6.189 gave them an explicit budget, because vitest's default is 5,000ms and the pair had
- * been **failing under full-suite load and passing alone** — a check that answers differently
- * depending on what else the machine is doing. This session reported `verify` green several
- * times on runs where they happened to win the race, which is the whole problem: a clause
- * nobody can rely on is worse than one that is simply absent, because it is still consulted.
- * §6.161 fixed four checks of exactly this kind and this pair was not among them.
- *
- * The budget is not a loosening. What each clause asserts is unchanged; the default was a
- * claim that reading a thousand test bodies is fast, and that claim was false. Thirty seconds
- * is six times the measured cost under load, which is slack against a busy machine rather
- * than against a slow clause — if either ever approaches it, the sweep has grown a real
- * problem and should be read rather than re-budgeted.
- */
-const READS_EVERY_TEST_FILE = 30_000;
-
   it('asserts something', () => {
-    const silent: string[] = [];
-    for (const file of files) {
-      const source = readFileSync(join(ROOT, file), 'utf8');
-      for (const one of cases(source)) {
-        if (asserts(one.body, blankLiterals(source))) continue;
-        const key = `${file} :: ${one.name}`;
-        if (!(key in ASSERTS_NOTHING)) silent.push(key);
-      }
-    }
-    expect(silent).toEqual([]);
-  }, READS_EVERY_TEST_FILE);
+    expect(silent().filter((key) => !(key in ASSERTS_NOTHING))).toEqual([]);
+  });
 
   it('keeps no exemption for a test that asserts after all', () => {
-    const live = new Set(
-      files.flatMap((file) => {
-        const source = readFileSync(join(ROOT, file), 'utf8');
-        return cases(source)
-          .filter((one) => !asserts(one.body, blankLiterals(source)))
-          .map((one) => `${file} :: ${one.name}`);
-      }),
-    );
+    const live = new Set(silent());
     expect(Object.keys(ASSERTS_NOTHING).filter((key) => !live.has(key))).toEqual([]);
-  }, READS_EVERY_TEST_FILE);
+  });
 });

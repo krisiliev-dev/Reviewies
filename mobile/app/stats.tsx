@@ -5,7 +5,9 @@ import {
   availableYears,
   DEFAULT_STATS_WINDOW,
   formatDuration,
+  getSpine,
   getSummary,
+  type SpineYear,
   type StatsSummary,
   type Window,
 } from '@reviewies/core/stats/compute';
@@ -20,6 +22,7 @@ import { Button } from '../src/ui/Button';
 import { Data } from '../src/ui/Data';
 import { Note } from '../src/ui/Note';
 import { Progress } from '../src/ui/Progress';
+import { YearSpine } from '../src/ui/YearSpine';
 
 /**
  * Stats, weighted by runtime rather than by episode count.
@@ -42,10 +45,12 @@ export default function StatsScreen() {
   const [window, setWindow] = useState<Window>(DEFAULT_STATS_WINDOW);
   const [year, setYear] = useState<number>();
   const [years, setYears] = useState<number[]>([]);
+  const [spine, setSpine] = useState<SpineYear[]>();
   const [summary, setSummary] = useState<StatsSummary>();
 
   useEffect(() => {
     void availableYears().then(setYears);
+    void getSpine().then(setSpine);
   }, []);
 
   useEffect(() => {
@@ -67,6 +72,14 @@ export default function StatsScreen() {
     <>
       <Stack.Screen options={{ title: COPY.screens.stats }} />
       <ScrollView contentContainerStyle={styles.content}>
+        {/*
+         * The record, above the question about it — see the web's copy of this screen for
+         * the argument. The spine is all-time by construction, so it sits outside the
+         * period control, and it renders on an empty history too: one row for this year
+         * with one cell open in it is `docs/design/calm.md` arriving on day one.
+         */}
+        {spine ? <YearSpine years={spine} /> : null}
+
         {/*
          * One question, drawn on two rows — see the web's copy of this screen for the
          * measurements §6.109 chose the arrangement on. It split the drawing, and split

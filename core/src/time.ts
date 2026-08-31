@@ -144,3 +144,25 @@ export function formatDay(day: string, now: number = Date.now()): string {
     ...(thisYear ? {} : { year: 'numeric' }),
   });
 }
+
+/**
+ * A month's name, in the viewer's own language: "January", "août".
+ *
+ * The year spine draws twelve blocks per row and announces none of them (see
+ * `COPY.stats.spineYear`); the one month a screen reader is told about is the busiest, and
+ * this is the only place in the product that has ever needed a month on its own.
+ *
+ * Built on a fixed year and the **fourth** of the month rather than on today's date, and
+ * both halves of that are load-bearing. `new Date(now)` with the month replaced carries
+ * today's day-of-month into a month that may not have one — 31 January becomes 2 or 3 March
+ * when the month is set to February, because the Date constructor normalises rather than
+ * refusing — so a formatter reading it would name the wrong month for three days a year. A
+ * fixed year keeps it from depending on when the app is opened at all.
+ *
+ * `toLocaleDateString(undefined, …)` is the same call `formatDay` above makes, for the same
+ * reason: the viewer's locale is the viewer's, and an English month glued into a localised
+ * sentence is the *"Last vendredi"* defect that function's header rejects.
+ */
+export function monthName(month: number): string {
+  return new Date(2001, month, 4).toLocaleDateString(undefined, { month: 'long' });
+}

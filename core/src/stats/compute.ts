@@ -201,3 +201,76 @@ export function formatDuration(minutes: number): string {
   const days = hours / 24;
   return `${days.toFixed(1)} days`;
 }
+
+/**
+ * One row per year, twelve counts each — the year spine.
+ *
+ * `core/src/ui/spine.ts` holds the drawing decisions and the argument; this is the data
+ * behind them, and it is deliberately made of **counts**. `docs/design/direction.md` graft 2
+ * cut TEST CARD's per-watch strip down to this for a reason it verified in
+ * `core/src/data/diocache.ts`: the import deposits episode watches with no ratings at all,
+ * so a strip keyed to rating is flat grey on the day a decade arrives, and a row made of
+ * counts reads correctly.
+ *
+ * Three rules, all of which a test can state:
+ *
+ * 1. **The current year is always a row**, watched or not. Somebody who has never marked
+ *    anything still gets an almanac with one cell open in it, which is the whole object
+ *    saying what it is for. It is also what stops the open cell landing on 2019 because 2019
+ *    is the newest year with anything in it.
+ * 2. **Newest first**, because the row you are adding to is the row you want at the top, and
+ *    because a spine that grows downward puts tonight further away every year.
+ * 3. **The open cell is in the data, not in the renderer.** It would be two lines in each
+ *    `YearSpine.tsx` — `new Date(Date.now()).getMonth()` — and that is two clocks: the one
+ *    this function read to decide which year gets a row, and the one a component reads a few
+ *    milliseconds later. They agree every night of the year except one, and on that night the
+ *    renderer would look for the open cell in a year the data has no row for and draw
+ *    nothing. One clock, read here, carried on the row it belongs to.
+ *
+ * Local time throughout — `getFullYear` and `getMonth` read the viewer's own calendar, which
+ * is `core/src/time.ts`'s standing rule and the one `availableYears` above already follows.
+ * A watch at 11pm on 31 December belongs to the year the person was in when they watched it.
+ */
+export interface SpineYear {
+  year: number;
+  /** Twelve counts, January first. */
+  months: number[];
+  episodes: number;
+  minutes: number;
+  /**
+   * The month, 0–11, whose block carries the open cell. Present on exactly one row — the
+   * current year — and `undefined` on every other.
+   */
+  open?: number;
+}
+
+export function spineYears(events: WatchEvent[], now: number = Date.now()): SpineYear[] {
+  const rows = new Map<number, SpineYear>();
+  const row = (year: number): SpineYear => {
+    const existing = rows.get(year);
+    if (existing) return existing;
+    const made: SpineYear = { year, months: Array(12).fill(0), episodes: 0, minutes: 0 };
+    rows.set(year, made);
+    return made;
+  };
+
+  // Rules 1 and 3, both before the loop so they hold on an empty history as well as a full
+  // one, and off one reading of one clock.
+  const today = new Date(now);
+  row(today.getFullYear()).open = today.getMonth();
+
+  for (const event of events) {
+    const at = new Date(event.watchedAt);
+    const year = row(at.getFullYear());
+    year.months[at.getMonth()]++;
+    year.episodes++;
+    year.minutes += event.runtimeMin ?? DEFAULT_RUNTIME_MIN;
+  }
+
+  return [...rows.values()].sort((a, b) => b.year - a.year);
+}
+
+/** The spine, read from the database. All-time by definition — a year is the window. */
+export async function getSpine(now: number = Date.now()): Promise<SpineYear[]> {
+  return spineYears(await db.watches.toArray(), now);
+}

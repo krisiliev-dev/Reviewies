@@ -725,6 +725,43 @@ export const COPY = {
     longestStreak: 'Longest streak',
     mostWatched: 'Most watched',
     /**
+     * The year spine, named for what it is rather than for what it is made of.
+     *
+     * `docs/design/direction.md` calls the object a spine and `docs/design/calm.md` argues
+     * for it; neither word belongs on the screen. A person arrives at Stats asking *what
+     * have I watched*, and the heading over a stack of years answers that in two words.
+     * "Year spine" is the name of a drawing, and a heading that names its own construction
+     * is the same mistake as `Density  8  24  60` one screen over (§6.55).
+     */
+    yourYears: 'Your years',
+    /**
+     * One row, said out loud.
+     *
+     * The twelve blocks are drawn and not announced — twelve elements per year is a
+     * screen reader reading a bar chart bar by bar, which is the shape of the data and not
+     * the sense of it. So the row carries one sentence with the three facts a sighted
+     * reader takes off it: which year, how much, and where the weight of it fell. The
+     * busiest month is the peak, and a year is remembered by its peak rather than by its
+     * total — which is the one thing Kahneman's rule is safe to be used *for* here, per
+     * `docs/design/calm.md`.
+     *
+     * `duration` arrives from `formatDuration`, so this sentence never spells a unit and
+     * cannot disagree with the figure printed beside it.
+     */
+    spineYear: (year: number, episodes: number, duration: string, busiest: string) =>
+      `${year}: ${episodes} ${episodes === 1 ? 'episode' : 'episodes'}, ${duration}, busiest in ${busiest}.`,
+    /** The same row, in the year nothing has been watched in yet. */
+    spineYearNothing: (year: number) => `${year}: nothing marked yet.`,
+    /**
+     * The open cell — the one sentence in this product that is about tonight.
+     *
+     * It is a **fact and not an offer**. "The next episode you mark goes here" says what
+     * the box is; "mark an episode to fill it" would be the app asking, which is the whole
+     * thing `docs/design/calm.md` refuses. The difference is one clause and it is the
+     * difference between a record and a streak.
+     */
+    openSlot: 'One space still open this month. The next episode you mark goes here.',
+    /**
      * What the whole period control is called — one name, because it is one question.
      *
      * The two rows named themselves separately, "Which stretch of time these figures cover"
