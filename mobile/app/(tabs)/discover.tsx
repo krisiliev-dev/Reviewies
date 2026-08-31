@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { QUERY_PARAM, queryFrom } from '@reviewies/core/ui/segments';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
+import { boxFacts } from '@reviewies/core/ui/box';
 import {
   applyFilters,
   genresOf,
@@ -368,7 +369,18 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
   return (
     <BaseRow
       title={result.name}
-      meta={`${result.kind === 'show' ? COPY.kinds.show : COPY.kinds.film}${result.year ? ` · ${result.year}` : ''}`}
+      /*
+        `boxFacts`, not a fifth hand-written copy of it.
+
+        This composed `kind` and `year` inline, and so did the phone's twin, character for
+        character — one line, two platforms, punctuated twice, which is exactly the defect
+        `boxUnder` was extracted to prevent and which went unnoticed only because the two
+        copies happened to agree. `core/src/ui/box.ts` owns the composition; a search result
+        carries neither `seasonCount` nor `runtimeMin` — `architecture.md`'s second refusal
+        is that a list endpoint does not return them — so the function's tail is empty here
+        and the line reads exactly as it did.
+      */
+      meta={boxFacts(result)}
       lead={
         <Poster url={result.posterUrl} name={result.name} />
       }

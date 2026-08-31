@@ -273,6 +273,23 @@ describe('every workspace', () => {
    * and the suites that depend on a particular fixture already fail by name when it stops
    * existing. A count would guard the wrong property.
    */
+  /**
+   * A shot this pass takes, whether or not it keeps the number the shot returns.
+   *
+   * The three phone passes were each counted by `^\s*(?:await )?shot\(`, and `capture-real.mjs`
+   * now keeps two of its returns — `r4-discover` and `r4-discover-back` — so it can say whether
+   * turning a box over moved the shelf, which is the one thing two photographs of the same
+   * shelf cannot show. That pattern read the count as five where seven shots are taken, and
+   * this clause went red on a change that added a measurement and removed no picture.
+   *
+   * §6.183's rule, from the side that is easier to miss: a guard that fails on a repair is as
+   * wrong as one that stays green on a defect, and the answer is the rule rather than the file.
+   * What is counted is *shots taken*; what the old pattern counted was *shots whose value is
+   * thrown away*. One spelling for all three passes, because three copies of a rule is how the
+   * next one comes to disagree.
+   */
+  const SHOT_TAKEN = /^\s*(?:const \w+ = )?(?:await )?shot\(/gm;
+
   const SUITE_FLOOR: Record<string, { pattern: RegExp; least: number }> = {
     /* 152, up one: §6.171 added the other half of the year-in-review check — the headline
        figure is not also a tile. */
@@ -330,9 +347,9 @@ describe('every workspace', () => {
      * fits one screen" about every route of both themes, for sprints. §6.153.
      */
     /* 8, up one: §6.171 gave the phone Stats-with-a-year, which §6.170 gave only the web. */
-    'design/capture.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 8 },
-    'design/capture-signedin.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 4 },
-    'design/capture-real.mjs#folds': { pattern: /^\s*(?:await )?shot\(/gm, least: 6 },
+    'design/capture.mjs#folds': { pattern: SHOT_TAKEN, least: 8 },
+    'design/capture-signedin.mjs#folds': { pattern: SHOT_TAKEN, least: 4 },
+    'design/capture-real.mjs#folds': { pattern: SHOT_TAKEN, least: 6 },
     'design/capture-web.mjs#folds': { pattern: /shoot\(page, \{/g, least: 1 },
     'design/capture-web-real.mjs#folds': { pattern: /shoot\(page, \{/g, least: 2 },
     /*
@@ -386,6 +403,22 @@ describe('every workspace', () => {
        each names the way it can fail to reach the state rather than shooting whatever is
        there — a year that will not press, and a control that is not on the screen. */
     'design/capture-web.mjs': { pattern: /problems\.push\(/g, least: 9 },
+    /*
+     * And the two **real-data** passes, by their clauses, which nothing counted at all.
+     *
+     * These are the passes that read a snapshot of TMDB rather than the fixture, so they are
+     * the only two that have ever seen a paragraph in a browse box, an artwork in a plate or
+     * a thousand-episode season list. Every clause in them was added because a run had
+     * already produced a photograph that showed none of what it was taken for — and until
+     * this entry, deleting one left both passes still filing the same pictures.
+     *
+     * Sprint 103 added three to each: the shelf must not move when a box turns over, the
+     * ground under a cut synopsis must be less than a line, and a clamped paragraph's box
+     * must be the lines it shows. All three are readings a photograph cannot carry, which is
+     * exactly the kind of clause that goes missing quietly.
+     */
+    'design/capture-real.mjs': { pattern: /problems\.push\(/g, least: 7 },
+    'design/capture-web-real.mjs': { pattern: /problems\.push\(/g, least: 11 },
   };
 
   it('keeps every check the suites that are not vitest files were holding', () => {

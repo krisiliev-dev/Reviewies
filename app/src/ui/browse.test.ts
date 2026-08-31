@@ -183,7 +183,6 @@ describe('the browse shelf', () => {
     for (const [what, n] of [
       ['title', BOX.lines.title],
       ['under', BOX.lines.under],
-      ['synopsis', BOX.backLines],
     ] as const) {
       expect(web, `the web clamps the ${what} to something other than ${n}`).toContain(
         `line-clamp-${n}`,
@@ -195,9 +194,97 @@ describe('the browse shelf', () => {
     expect(phone, 'the phone writes its second line clamp by hand').toContain(
       'numberOfLines={BOX.lines.under}',
     );
-    expect(phone, 'the phone writes its synopsis clamp by hand').toContain(
-      'numberOfLines={BOX.backLines}',
-    );
+  });
+
+  it('clamps the synopsis to the ground rather than to a number', () => {
+    /*
+     * The two clamps above are constants and this one cannot be, which is the whole of
+     * `backLines`' argument in `core/src/ui/box.ts`: a title is clamped so that a long name
+     * cannot make a box taller, and the synopsis is clamped so that it fills the panel — and
+     * the panel is 304 points on a phone, 333 at a 420 window and 383 at 1280.
+     *
+     * `BOX.backLines: 6` was the same number for all three. Measured against real TMDB it
+     * overran the phone's row by 26 points and left 40 to 90 points of the web's panel
+     * empty while truncating, which is one constant wrong in both directions at once.
+     *
+     * So the rule this holds is that **neither renderer states a synopsis clamp**. What a
+     * clause like this cannot see is where the number came from once it is a variable, so
+     * it is written against the two spellings a fixed one would have to take: a
+     * `line-clamp-n` on the web that is not one of the front's two, and a `numberOfLines`
+     * on the phone whose value is not a call.
+     */
+    const web = read(BROWSE.web);
+    const phone = read(BROWSE.phone);
+
+    for (const [platform, source] of [
+      ['web', web],
+      ['phone', phone],
+    ] as const) {
+      expect(source, `${BROWSE[platform]} does not measure the ground the synopsis has`).toContain(
+        'backLines(',
+      );
+    }
+
+    /*
+     * The web's only `line-clamp-n` classes are the front's, and they are the front's
+     * numbers. Written as a set rather than as a count so that the failure names the class
+     * that appeared rather than saying a total moved.
+     */
+    const clamps = [...web.matchAll(/line-clamp-(\w+)/g)].map((m) => m[1]);
+    expect(
+      [...new Set(clamps)].sort(),
+      `a synopsis clamp is written into ${BROWSE.web} by hand — core/src/ui/box.ts owns it now`,
+    ).toEqual([String(BOX.lines.under), String(BOX.lines.title)].sort());
+
+    /*
+     * And the phone's synopsis takes a computed count. `numberOfLines={BOX.lines.…}` is the
+     * front's two and is checked above; anything else on this file must be an expression.
+     */
+    for (const [, value] of phone.matchAll(/numberOfLines=\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g)) {
+      const front = /^BOX\.lines\./.test(value.trim());
+      expect(
+        front || /backLines\(/.test(value),
+        `${BROWSE.phone} clamps a synopsis to ${value.trim()} — a number where the ground ` +
+          `belongs; core/src/ui/box.ts owns it`,
+      ).toBe(true);
+    }
+  });
+
+  it('lets one function say what a title is and when it is from', () => {
+    /*
+     * The fourth surface, and the one that had no owner.
+     *
+     * The same title read four ways: `Drama · 2001` on a box's front, `Series` on its back,
+     * `Series · 2005` on a search row and `2022` on the title page. Three of those are
+     * decisions and `core/src/ui/box.ts` now carries all three arguments; the search row was
+     * not one. It composed the kind and the year into a `meta` prop **in each screen**, the
+     * same characters on both platforms, which is the defect `boxUnder` exists to prevent
+     * and which nothing caught because the two copies agreed.
+     *
+     * So the rule is that neither screen builds that line itself. Written against the
+     * spelling rather than the output, because the output is what the two copies already got
+     * right — this is about where it comes from.
+     */
+    const screens = {
+      web: 'app/src/screens/Discover.tsx',
+      phone: 'mobile/app/(tabs)/discover.tsx',
+    } as const;
+    for (const file of Object.values(screens)) {
+      const source = read(file);
+      expect(source.length, `${file} could not be read`).toBeGreaterThan(1000);
+      expect(source, `${file} does not read the fact line from the box`).toContain(
+        'boxFacts(result)',
+      );
+      /*
+       * And it does not also keep a copy. `COPY.kinds` is legitimate elsewhere on these
+       * screens — the kind filter's two labels are exactly that — so the needle is the
+       * ternary that turns a `kind` into a word, which is the composition itself.
+       */
+      expect(
+        source,
+        `${file} still turns a kind into a word by hand beside the function that does it`,
+      ).not.toMatch(/kind === 'show' \? COPY\.kinds\.show : COPY\.kinds\.film/);
+    }
   });
 
   it('groups the reason rather than repeating it on every box', () => {

@@ -26,7 +26,63 @@ import { radius, ratio, space, text } from '../tokens.ts';
 
 export type PosterSize = 'row' | 'detail';
 
-/** Width in points; the height follows from the ratio and cannot disagree with it. */
+/**
+ * Width in points; the height follows from the ratio and cannot disagree with it.
+ *
+ * ## 96, which this file used to admit it had only inherited
+ *
+ * The header above says where the two numbers came from — *"one [call site] passed 96 /
+ * 144"* — and that is an account of a provenance, not an argument. The first reading with
+ * real artwork asked the obvious question of it: the browse shelf draws the **same** poster
+ * at 173 points on a phone, 188 at a 420 window and 221 at 1280, and `box.ts` argues in its
+ * own words that *"three across is 110pt, which is a thumbnail, and a thumbnail is what
+ * Discover already had"*. So the title page draws a title's artwork below the size the
+ * shelf refused, and the page is the place you went to *look at it*.
+ *
+ * ## Refused, and refused on a measurement rather than on taste
+ *
+ * Two things are wrong with that reading, and the second is the one that settles it.
+ *
+ * The first is that 110 is a floor for a **shelf**, not for artwork. `box.ts`'s sentence is
+ * about how large a box has to be before looking along a row of them is browsing rather
+ * than scanning a contact sheet; the same file's `row` poster is 44 and nobody calls that a
+ * defect, because a row's lead is a lead. `direction.md` refuses the poster-wall register
+ * outright and keeps *"browsing is reading, not shopping"* as the rule that survives — the
+ * shelf's large artwork is the one argued exception, and the exception does not generalise
+ * back over the page it leads to.
+ *
+ * The second is what a larger plate costs, which is not space in general but **the measure
+ * of the one paragraph this product sets**. On the title page the synopsis sits in the
+ * column beside this plate, so every point the plate takes comes off the line length of the
+ * only running prose in the app — and `SCREEN.prose` has already measured that this page is
+ * the tight one: the convention puts a comfortable measure at 45–75 characters and at 420
+ * it is *below* the band. Three candidates, built and photographed, all six titles in the
+ * snapshot, characters counted off the browser's own line boxes:
+ *
+ * ```
+ *                          plate      420pt window     1280pt window
+ * detail: 96  (today)      96x144     39–44 chars      63–71 chars
+ * detail: 128              128x192    35–37            63–71
+ * detail: 173 (the shelf)  173x260    29–32            63–71
+ * ```
+ *
+ * The wide column is flat because `SCREEN.prose` caps the paragraph at 460 before the plate
+ * can reach it. The narrow one is the whole answer: the page is already 39–44 and every
+ * enlargement moves it further from the band, in the direction it is already failing. A
+ * plate the size of a shelf box buys a bigger picture on the screen whose subject is a
+ * paragraph, an episode list and where to watch it, and pays for it in the only place this
+ * product asks anybody to read.
+ *
+ * ## What it does not settle
+ *
+ * The phone draws its synopsis full-width **below** the header rather than in the column
+ * beside the plate, so on that platform the trade above does not exist and this number is
+ * unopposed. Freeing the web's paragraph the same way would take its 420 measure from
+ * 39–44 into the band and leave the plate free to grow — a real improvement, on a screen
+ * §6.174 laid out deliberately one sprint ago, and a decision about *the synopsis* rather
+ * than about this table. It is written down here rather than taken, because a poster size
+ * is not the altitude to re-lay-out a page from.
+ */
 const WIDTH = { row: 44, detail: 96 } as const satisfies Record<PosterSize, number>;
 
 export const POSTER_SIZE = {

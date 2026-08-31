@@ -192,6 +192,20 @@ export function TitleDetail() {
               className="mt-2"
             />
           )}
+          {/*
+            The year alone, and **not** the genre beside it.
+
+            The same title reads `Drama · 2001` on a browse box's front, `Series · 2001` on
+            its back and in a search row, and `2001` here — four surfaces, and
+            `core/src/ui/box.ts` argues all four. This one is the only one of them that
+            draws the synopsis whole, so the sentence saying what sort of thing it is is
+            already on the screen at length; a one-word summary of a paragraph two lines
+            below it is §6.169's defect at a smaller altitude. And this line is a `Data` —
+            tabular mono, a figure — which a genre is not.
+
+            `CachedTitle.genres` asks that **a box** built from a cached title say the same
+            three things as one built from a search result. This page does not build a box.
+          */}
           {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
           {title?.overview && (
             /*

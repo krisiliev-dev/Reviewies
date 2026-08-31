@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import type { Suggestion } from '@reviewies/core/discover/recommend';
-import { BOX, BOX_COLUMNS, boxFacts, boxUnder } from '@reviewies/core/ui/box';
+import { BOX, BOX_COLUMNS, backLines, boxFacts, boxUnder } from '@reviewies/core/ui/box';
 import { POSTER_PLATE, posterInitials } from '@reviewies/core/ui/poster';
 import { Button } from './Button';
 import { Note } from './Note';
@@ -139,13 +139,15 @@ function Box({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       <div className="flex h-full flex-col gap-2 rounded-plate bg-ground-raised p-3">
         <p className="text-s14 font-title font-semibold text-ink">{item.name}</p>
         <Note level="footnote">{boxFacts(item)}</Note>
-        {/* The synopsis, which is the reason the back exists. Clamped, because a box in a
-            grid whose height is its neighbours' cannot take a paragraph of any length. */}
-        {item.overview ? (
-          <Note level="footnote" className="line-clamp-6">{item.overview}</Note>
-        ) : null}
-        {/* The two actions, here rather than on the front — `box.ts` has the argument. */}
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+        {/* The synopsis, which is the reason the back exists. Clamped to the ground the
+            panel has, because a box in a grid whose height is its neighbours' cannot take a
+            paragraph of any length — `backLines` carries what that used to be spelled as. */}
+        {item.overview ? <Synopsis>{item.overview}</Synopsis> : null}
+        {/* The two actions, here rather than on the front — `box.ts` has the argument.
+            No `mt-auto`: the synopsis above takes the ground now, so there is none left to
+            push these down with, and a margin that can never bind is a line that says the
+            layout does something it does not. */}
+        <div className="flex flex-wrap gap-1.5 pt-2">
           <Button
             onPress={track}
             disabled={added === 'library'}
@@ -223,6 +225,103 @@ function Box({ item, onActed }: { item: Suggestion; onActed: () => void }) {
           the composition so the phone cannot punctuate it differently. */}
       <span className="line-clamp-1 text-s12 text-ink-secondary">{boxUnder(item)}</span>
     </button>
+  );
+}
+
+/**
+ * The synopsis, clamped to the ground rather than to a number.
+ *
+ * `core/src/ui/box.ts`'s `backLines` has the measurements and the argument; the short form
+ * is that this was `line-clamp-6` and the panel it clamps into is 333 points at a 420
+ * window and 383 at 1280, so six lines truncated *and* left 40 to 90 points of the panel
+ * empty underneath. A third of a box, on the half of the shelf no design pass had ever
+ * photographed with a real paragraph in it.
+ *
+ * `flex-1 min-h-0` is what makes the ground a measurable thing: the panel is `h-full`, so
+ * this child is handed whatever the title, the fact line and the four controls did not
+ * take, and its own height is therefore the answer rather than an estimate of it. The
+ * clamp then goes on inline, because Tailwind compiles from source text and cannot be
+ * handed a number — the trap `COLUMNS` above records, and `Choice.tsx`'s `GAP` before it.
+ *
+ * ## Why the paragraph is taken out of the flow
+ *
+ * `h-full` is 100% of a grid row, and a grid row is as tall as its tallest item — so a back
+ * that grows makes the row it is measuring against grow with it, and "the ground the panel
+ * has" is not a quantity at all. The first build of this measured 396-point panels on a
+ * 333-point shelf: the paragraph pushed the row out, the observer read the pushed-out row,
+ * and the clamp obligingly agreed to every line.
+ *
+ * `absolute` breaks that. The words contribute **nothing** to what the panel asks for, so the
+ * row is set by the fronts exactly as it was, `h-full` hands the panel that height, `flex-1`
+ * hands this wrapper the remainder, and the remainder is a number that was decided before
+ * the paragraph was consulted. It is also what makes the back safe: there is no synopsis
+ * long enough to move the shelf.
+ *
+ * ## `top-0`, and not `inset-0`, which drew half a line
+ *
+ * The first spelling of that was `absolute inset-0`, which pins the bottom as well and so
+ * gives the paragraph the wrapper's whole height — 143 points — while the clamp shows eight
+ * lines of 17, which is 137. `-webkit-line-clamp` hides what is past the eighth line by
+ * clipping at the element's own box, and the element's box was six points taller than the
+ * text it was clipping, so the **top of the ninth line printed** under the ellipsis.
+ * Photographed at six times scale before it was believed: *"condition worsens and long-…"*
+ * with *"hidden family secrets come to"* half-drawn beneath it.
+ *
+ * Which is the failure this whole clamp exists to avoid, arrived at down a different road —
+ * `poster.ts` says it about a monogram, in the same words: a mark so thin it reads as a
+ * rendering fault rather than as a stand-in. Pinning only the top leaves the height to the
+ * clamped content, so there is no box for a ninth line to be drawn in.
+ *
+ * A `ResizeObserver` and not a one-off read: the shelf reflows at `sm`, the window resizes,
+ * and the panel's height is its row's. `useLayoutEffect` so the first count lands before
+ * the browser paints, and `overflow-hidden` so the frame in between could not have spilled
+ * either.
+ */
+function Synopsis({ children }: { children: string }) {
+  const ground = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<number>();
+
+  useLayoutEffect(() => {
+    const el = ground.current;
+    if (!el) return;
+    /*
+     * The leading is read off the paragraph itself and not off this wrapper, so that the
+     * wrapper carries no type at all: `note.test.ts` owns every line height on this platform
+     * and a `leading-…` written here to make a measurement convenient would be the fifth
+     * hand-written one it was extracted to end.
+     */
+    const read = () => {
+      const line = parseFloat(getComputedStyle(el.firstElementChild ?? el).lineHeight);
+      if (line > 0) setLines(backLines(el.clientHeight, line));
+    };
+    read();
+    const watch = new ResizeObserver(read);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+
+  return (
+    <div ref={ground} className="relative min-h-0 flex-1 overflow-hidden">
+      {/*
+        The four properties `line-clamp-n` is, written out, rather than that utility with the
+        count overridden beside it. The front two lines above genuinely are `line-clamp-2`
+        and `line-clamp-1` — they clamp to `BOX.lines`, which are constants — so a
+        `line-clamp-…` here as well would be a fixed number and a measured one wearing the
+        same spelling, and nothing reading the file could tell them apart.
+      */}
+      <Note
+        level="footnote"
+        className="absolute inset-x-0 top-0"
+        style={{
+          display: '-webkit-box',
+          WebkitBoxOrient: 'vertical',
+          WebkitLineClamp: lines,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </Note>
+    </div>
   );
 }
 

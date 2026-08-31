@@ -154,6 +154,98 @@ export async function shoot(page, { out, name, mustContain, problems, scrolls, s
 }
 
 /**
+ * Every turned-over box on the shelf: what its synopsis showed, what it wanted, and how much
+ * of the ground it was given went unused.
+ *
+ * The ground is the flex child's own box — the panel is `h-full`, so that child is handed
+ * whatever the title, the fact line and the four controls did not take, and its height is
+ * therefore the answer rather than an estimate built out of the furniture above it.
+ *
+ * `wants` is measured by cloning the paragraph without the clamp at the same width, not by
+ * dividing a character count by an assumed em. `capture-web-real.mjs` argues that
+ * distinction at length one function down from where this used to live: the em is the thing
+ * that would have to be guessed, and guessing it is how a measurement becomes an estimate
+ * wearing a number.
+ *
+ * Here rather than in either pass, for §6.160's reason. Both platforms draw this box and
+ * `react-native-web` renders `numberOfLines` as the same `-webkit-line-clamp` the web writes,
+ * so the reading is one act; the two capture scripts that had copies of one act are what that
+ * section is about.
+ */
+export async function unusedGround(page) {
+  return page.evaluate(() => {
+    const out = [];
+    /*
+     * The ground, found by what it *is* rather than by the markup around it: the element that
+     * clips its overflow and whose first child is a clamped paragraph. The first version of
+     * this walked `document.querySelectorAll('li')`, which is the web's shelf and not the
+     * phone's — `react-native-web` draws a `View` as a `div` — so the phone pass reported
+     * that it could find nothing and refused to hand back a clean run, which is what that
+     * branch is for.
+     */
+    for (const ground of document.querySelectorAll('*')) {
+      if (getComputedStyle(ground).overflowY !== 'hidden' || !(ground.clientHeight > 0)) continue;
+      const p = ground.firstElementChild;
+      if (!p || ground.children.length !== 1) continue;
+      const clamp = getComputedStyle(p).webkitLineClamp;
+      if (!clamp || clamp === 'none') continue;
+      const line = parseFloat(getComputedStyle(p).lineHeight);
+      if (!(line > 0)) continue;
+
+      const clone = p.cloneNode(true);
+      Object.assign(clone.style, {
+        webkitLineClamp: 'unset',
+        display: 'block',
+        /*
+         * `inset: auto` and not only `position: absolute`.
+         *
+         * The web draws this paragraph `absolute inset-0` so that it contributes nothing to
+         * what its panel asks for, and a clone of it keeps that class — which pins top *and*
+         * bottom and so makes the copy exactly as tall as the box it was cut out of. The
+         * first version of this measure read `wants` equal to `shown` on every box on the
+         * shelf and reported a clean pass on a build where the clamp did nothing at all.
+         */
+        inset: 'auto',
+        position: 'absolute',
+        height: 'auto',
+        visibility: 'hidden',
+        width: `${p.getBoundingClientRect().width}px`,
+      });
+      p.parentElement.appendChild(clone);
+      const full = clone.getBoundingClientRect().height;
+      clone.remove();
+
+      const drawn = Math.min(ground.clientHeight, Math.round(clamp) * line);
+      out.push({
+        name: (ground.parentElement?.firstElementChild?.textContent ?? '').slice(0, 40),
+        line,
+        shown: Math.round(drawn / line),
+        wants: Math.round(full / line),
+        truncated: full - drawn > 1,
+        spare: Math.round(ground.clientHeight - drawn),
+        /*
+         * How much taller the paragraph's own box is than the lines it is showing.
+         *
+         * `-webkit-line-clamp` hides what is past line N by clipping at the element's box,
+         * so an element given a height of its own — `absolute inset-0` pins top *and* bottom
+         * — clips six points lower than the text it is clamping and the **top of line N+1
+         * prints** under the ellipsis. Photographed at six times scale on the first build of
+         * the measured clamp: *"condition worsens and long-…"* with *"hidden family secrets
+         * come to"* half-drawn beneath it, which is the rendering-fault register this clamp
+         * exists to avoid.
+         *
+         * Nothing else here can see it: the ground is the right size, the shelf holds still,
+         * the line count is right, and the extra ink is inside the box every other reading
+         * is about.
+         */
+        overhang: Math.round(p.getBoundingClientRect().height - Math.round(clamp) * line),
+      });
+    }
+    return out;
+  });
+}
+
+/**
  * Which shots are the top of a longer screen, as one printable phrase — or null.
  *
  * The measurement's meaning lives with the instrument that took it; the wording and the
