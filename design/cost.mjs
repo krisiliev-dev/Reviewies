@@ -487,6 +487,28 @@ const TASKS = [
        * back-and-retype the web needed and the phone did not, and there is nothing left to
        * branch on.
        */
+      /*
+       * **Two sprints removed steps from this walk for two different reasons, and both
+       * removals are right.** The merge is recorded here because the second one's prose is
+       * the only surviving account of a defect that is fixed.
+       *
+       * The title page gained a Track control, so the walk presses it there and the
+       * go-back-to-the-results half is gone entirely. That is what these two steps are.
+       *
+       * The other branch removed only the *retype* — two steps reading `notice the search is
+       * gone, and retrieve the name again` and a second `type`. Their note: the walk used to
+       * stop with `/discover` showing the shelf rather than the results, because
+       * `Discover.tsx` held the query in `useState` and a back navigation remounted the
+       * screen with an empty field. The query is in the address now (`?q=`,
+       * `core/src/ui/segments.ts`), so Back returns to `/discover?q=long` with the results
+       * still on screen. `design/look.mjs` walks that back-navigation on a browser and reads
+       * the field, which is where that repair is now proved.
+       *
+       * `webSteps` is gone with both. It existed only to spell out a back-and-retype the web
+       * needed and the phone did not; the first change removed the going back and the second
+       * removed the retyping, and there is nothing left to branch on. A step whose
+       * justification has been retracted is a charge against a cost nobody pays.
+       */
       { think: 'decide, now that the page has told you what it is' },
       { press: /^Track /, as: 'Track, on the page' },
     ],

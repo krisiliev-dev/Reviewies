@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
+import { QUERY_PARAM, queryFrom } from '@reviewies/core/ui/segments';
 import { getSuggestions, type Suggestion } from '@reviewies/core/discover/recommend';
 import {
   applyFilters,
@@ -48,7 +50,22 @@ import { Masthead } from '../../src/ui/Masthead';
  * of why anybody searches after importing a decade of history.
  */
 export default function DiscoverScreen() {
-  const [query, setQuery] = useState('');
+  /**
+   * The query is in the address, not in this component.
+   *
+   * `core/src/ui/segments.ts` owns the spelling and the argument. This side did not have the
+   * bug the web had — expo-router keeps a tab screen mounted under a pushed title, so going
+   * back has always shown your results here — and it changes anyway, for two reasons. It was
+   * right by **accident**: nothing decided that the results survive, the navigator did, and
+   * `docs/research/11-what-a-task-costs.md` §7.2 says so in as many words. And accident or
+   * not, it never survived a reload or a link somebody sent you, which the address does.
+   *
+   * The same file for the same reason as `?on=`: two platforms writing their own version of
+   * one screen's state is how they drift, and this one is now written once.
+   */
+  const params = useLocalSearchParams<{ q?: string }>();
+  const query = queryFrom(params[QUERY_PARAM]);
+  const setQuery = (next: string) => router.setParams({ [QUERY_PARAM]: next });
   const [filters, setFilters] = useState<FilterSet>(NO_FILTERS);
 
   const [items, setItems] = useState<Suggestion[]>();

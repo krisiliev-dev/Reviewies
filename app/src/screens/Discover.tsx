@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '../data/db';
 import { alreadyHave, shelfFor, type AlreadyHave } from '@reviewies/core/data/already';
@@ -27,6 +28,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Attribution } from '../ui/Attribution';
 import { Masthead } from '../ui/Masthead';
+import { QUERY_PARAM, queryFrom } from '@reviewies/core/ui/segments';
 
 /**
  * One surface for *find me something*, in the two shapes that question has.
@@ -51,7 +53,27 @@ import { Masthead } from '../ui/Masthead';
  * looking something up.
  */
 export function Discover() {
-  const [query, setQuery] = useState('');
+  /**
+   * The query is in the address, not in this component.
+   *
+   * `core/src/ui/segments.ts` owns the spelling and the whole argument; the short version is
+   * that a `useState` here is a search react-router throws away. Opening a result pushes the
+   * title page, which unmounts this screen, and coming back remounted it with an empty field
+   * and the shelf where the results had been — measured at four characters, a press and a
+   * mental operation in `docs/research/11-what-a-task-costs.md` §7.2. The phone survived the
+   * same trip only because expo-router happens to keep a tab screen mounted, which is luck
+   * rather than a decision, and neither side survived a reload or a shared link.
+   *
+   * `replace`, on every keystroke, for the reason `segments.ts` gives: a history entry per
+   * character would make Back a backspace key. And the key is *dropped* when the field is
+   * emptied, so clearing a search leaves `/discover` rather than a bookmark of nothing —
+   * `queryFrom` reads the two addresses as the same screen, which is the property that has
+   * to hold across the platforms.
+   */
+  const [params, setParams] = useSearchParams();
+  const query = queryFrom(params.get(QUERY_PARAM));
+  const setQuery = (next: string) =>
+    setParams(next ? { [QUERY_PARAM]: next } : {}, { replace: true });
   const [filters, setFilters] = useState<FilterSet>(NO_FILTERS);
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>();

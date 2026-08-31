@@ -195,9 +195,15 @@ no way to keep it.** Read from the files, not inferred: the walk stopped on both
 control on this screen carries that name".
 
 The cost, measured: looking before committing is **9.19s against 6.04s on the phone (+3.16s, two
-extra presses) and 18.47s against 9.94s on the web (+8.53s, three extra presses and a second
-search)**. Needs a design decision — where the control goes and what it displaces — so it is
-filed rather than made.
+extra presses) and ~~18.47s against 9.94s on the web (+8.53s, three extra presses and a second
+search)~~ 13.82s against 9.94s on the web (+3.88s, two extra presses)**. Needs a design decision —
+where the control goes and what it displaces — so it is filed rather than made.
+
+The web figure is restated because §7.2 below has been repaired, and most of what it used to carry
+was §7.2's defect rather than this one's: the retype is gone and the two platforms now cost the
+same **actions** on this task, 5 presses / 4 chars / 5 M each. What is left is this finding, whole
+and the same size on both — you still have to open the page, discover it cannot keep anything, and
+go back.
 
 ### 7.2 The web loses your search when you come back from a title
 
@@ -212,7 +218,34 @@ So the phone is right by accident rather than by design, and the durable fix is 
 the query belongs in the address, the way `segments.ts` already puts Up Next's view there for
 exactly this reason (§6.157 — "a state reachable only by pressing is a state the design record
 loses"). It is also the one that survives a deep link and a reload, which the phone's version does
-not. **`app/src/screens` is owned by another agent this sprint**, so it is filed.
+not. ~~**`app/src/screens` is owned by another agent this sprint**, so it is filed.~~
+
+**Taken.** `QUERY_PARAM` and `queryFrom` are in `core/src/ui/segments.ts` beside `?on=`, and both
+Discovers read and write `?q=` through them — the web with `replace`, because a pushed entry per
+keystroke would turn Back into a backspace key. Re-walked on this instrument, same seed, same
+ports:
+
+| `findAndTrackViaTitle` | phone | web |
+| --- | --- | --- |
+| before | 5 presses, 4 chars, 5 M — 9.19s | 8 chars, 6 M — 18.47s |
+| after | 5 presses, 4 chars, 5 M — 9.19s | 5 presses, 4 chars, 5 M — **13.82s** |
+
+The two platforms now cost the *same actions* on this task, which is the number this section was
+about; the 4.63s that remain between them are the mouse's homing and pointing and not lost state.
+`design/cost.mjs`'s `webSteps` lost the two steps that priced the retype, because a model that
+charges for a cost nobody pays is not a model of the task.
+
+Two things this repair is worth saying about, both measured rather than reasoned:
+
+- **The source guard cannot see it.** `app/src/wiring/addressState.test.ts` sweeps both platforms
+  for a screen carrying the search field and requires it to read and write the address. Planted
+  with a correct `queryFrom` beside a private `useState('')` mirror that the field is actually
+  bound to, it reported nothing wrong on a build that lost the search exactly as before. The
+  question a source guard can ask is *is the address wired up*; the reader's question is *is my
+  search still there*, and that one needs a browser. `design/look.mjs` now types, opens a result,
+  presses Back and reads the field — `"long"` where `""` was the defect.
+- **It is read off the field, not off the address bar.** `/discover?q=long` proves the browser came
+  back to the right URL and proves nothing at all about the screen.
 
 ### 7.3 The phone's back control is 30x30pt and announces itself as "(tabs), back"
 
