@@ -236,4 +236,95 @@ describe('shouldCorrect', () => {
     expect(shouldCorrect(60_000, 60_000 + 15 * 60_000)).toBe(true);
     expect(shouldCorrect(60_000, 60_001 + 15 * 60_000)).toBe(false);
   });
+
+  /**
+   * The twelve-minute jump, which both of the bounds above accept.
+   *
+   * `docs/research/12-what-a-match-knows.md`, measured: a probe landing in a stretch of
+   * verbatim-repeated audio is placed 725,995ms — twelve minutes and six seconds — from
+   * where it actually is, at up to 93% sure. Twelve minutes is inside fifteen and the
+   * confidence bar is passed comfortably, so every check this function had accepted it
+   * and Watching Mode jumped the viewer twelve minutes on what is arithmetically a coin
+   * toss. The first two clauses of this describe cannot see it; that is the point of it.
+   *
+   * The bound is not the mistake and must not be tightened — a recap skip is a real
+   * fifteen-minute jump. What was missing was a *third opinion*, and the clock is one: it
+   * moves continuously, so it cannot have been in two places, and when the audio names
+   * two it can say which of them it has been watching.
+   */
+  const TWELVE_MINUTES = 725_995;
+
+  it('refuses an ambiguous jump whose other place is where the clock already is', () => {
+    // The measured failure, exactly: playing at 10:00, matched twelve minutes later, and
+    // the runner-up offset points back at 10:00. The clock contradicts the winner.
+    expect(
+      shouldCorrect(600_000, 600_000 + TWELVE_MINUTES, {
+        ambiguous: true,
+        alternativeGapMs: -TWELVE_MINUTES,
+      }),
+    ).toBe(false);
+  });
+
+  it('refuses it in the other direction too, since which copy wins is arbitrary', () => {
+    // Playing at 15:00 and matched twelve minutes *earlier*. Which of the two copies the
+    // vote reports is decided by a rounding difference, so the guard has to hold either
+    // way round or it only covers half the failure.
+    expect(
+      shouldCorrect(900_000, 900_000 - TWELVE_MINUTES, {
+        ambiguous: true,
+        alternativeGapMs: TWELVE_MINUTES,
+      }),
+    ).toBe(false);
+  });
+
+  it('still follows a recap skip taken during a title sequence', () => {
+    /*
+     * The cost of the clause above, and the reason it is a tiebreak rather than a bar on
+     * ambiguous matches. Somebody skips ninety seconds of recap while the theme — which
+     * plays twice in the episode — is going. The match is ambiguous, and refusing every
+     * ambiguous match would refuse this, which is the feature's whole purpose.
+     *
+     * The clock decides it: ninety seconds to the winner against twelve and a half
+     * minutes to the runner-up is not a close question.
+     */
+    expect(
+      shouldCorrect(30_000, 120_000, { ambiguous: true, alternativeGapMs: -TWELVE_MINUTES }),
+    ).toBe(true);
+  });
+
+  it('corrects ordinary drift during repeated audio rather than freezing', () => {
+    // Four seconds of drift while the title sequence plays. Ambiguous, but the winner is
+    // four seconds from the clock and the other place is twelve minutes away, so this is
+    // still the position the clock has been watching and following it is right.
+    expect(
+      shouldCorrect(60_000, 64_000, { ambiguous: true, alternativeGapMs: TWELVE_MINUTES }),
+    ).toBe(true);
+  });
+
+  it('refuses when the clock is no nearer one place than the other', () => {
+    // Genuinely undecidable: the two candidates straddle the clock at equal distance, so
+    // nothing here knows which. Staying put is the conservative reading, and being
+    // briefly behind is a smaller harm than being confidently twelve minutes out.
+    expect(
+      shouldCorrect(600_000, 600_000 + 60_000, { ambiguous: true, alternativeGapMs: -120_000 }),
+    ).toBe(false);
+  });
+
+  it('refuses an ambiguous match that cannot say where the other place is', () => {
+    // A caller that reports ambiguity without the gap has given this nothing to decide
+    // with. Accepting would be acting on a signal it did not receive.
+    expect(shouldCorrect(60_000, 120_000, { ambiguous: true })).toBe(false);
+  });
+
+  it('leaves an unambiguous match exactly as it was', () => {
+    // The regression that matters most: 267 of the 300 measured probes were unambiguous
+    // and placed exactly, and none of them may start being refused. A gap is passed here
+    // as it always will be — every match has a runner-up somewhere — and it must make no
+    // difference at all when the flag is false.
+    expect(shouldCorrect(30_000, 120_000, { ambiguous: false, alternativeGapMs: -1000 })).toBe(true);
+    expect(shouldCorrect(60_000, 60_400, { ambiguous: false, alternativeGapMs: -1000 })).toBe(false);
+    expect(
+      shouldCorrect(60_000, 60 * 60_000, { ambiguous: false, alternativeGapMs: -1000 }),
+    ).toBe(false);
+  });
 });

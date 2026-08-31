@@ -42,6 +42,22 @@ export interface ContinuousMatch {
   score: number;
   /** Frame index of the last frame in the window, so callers can age a result. */
   atFrame: number;
+  /**
+   * The window's audio occurs in more than one place and the vote did not choose.
+   *
+   * Carried through from `matchSample` rather than recomputed, because it is a property
+   * of the vote and not of the position. See its doc comment, and doc 12.
+   */
+  ambiguous: boolean;
+  /**
+   * How far the runner-up placement sits from this one, signed, when there is one.
+   *
+   * A *gap* rather than a second position, because a match is aged forward to now
+   * before it is used — `positionNow` — and both placements age by exactly the same
+   * amount. The gap is therefore still true whenever it is read, while a second absolute
+   * position would quietly go stale and would have to be aged in step by every caller.
+   */
+  alternativeGapMs?: number;
 }
 
 /**
@@ -170,6 +186,16 @@ export class ContinuousMatcher {
       confidence: match.confidence,
       score: match.score,
       atFrame,
+      ambiguous: match.ambiguous,
+      ...(match.alternative
+        ? {
+            alternativeGapMs: framesToMs(
+              match.alternative.offsetFrames - match.offsetFrames,
+              this.hopSize,
+              this.sampleRate,
+            ),
+          }
+        : {}),
     };
     this.onMatch?.(result);
     return result;
@@ -185,21 +211,68 @@ export class ContinuousMatcher {
 /**
  * Decide whether a reported position is worth acting on.
  *
- * Two separate reasons to ignore a match, and conflating them would be a bug:
+ * Three separate reasons to ignore a match, and conflating any two would be a bug:
  *
  *  - it agrees with the clock already, so correcting would only jitter the timecode;
- *  - it disagrees so wildly that it is more likely a bad match than a real skip.
+ *  - it disagrees so wildly that it is more likely a bad match than a real skip;
+ *  - it names two places rather than one, and the one it picked is not the one the
+ *    clock has been watching.
  *
  * The upper bound is deliberately generous rather than tight. Skipping a recap or
  * scrubbing back to rewatch a scene is a real, large, legitimate jump, and refusing to
  * follow one would make the feature useless exactly when it is most wanted.
+ *
+ * **That generosity is what the third reason exists to make safe, and it took a
+ * measurement to see.** `docs/research/12-what-a-match-knows.md` put 300 probes through
+ * the real matcher: every probe that landed in a stretch of verbatim-repeated audio was
+ * placed 725,995ms — twelve minutes and six seconds — away from where it actually was,
+ * at up to 93% sure. Twelve minutes is comfortably inside fifteen, and confidence was
+ * *high*, so both of the checks that existed here accepted it and this function jumped
+ * the viewer twelve minutes on a coin toss. A recap skip and a repeated-audio mismatch
+ * were the same event to everything this product could see.
+ *
+ * The third check is not a tighter bound — a tighter bound is the repair that breaks the
+ * feature, and the comment above says why. It is a different question, asked of a signal
+ * that did not used to be reported: when the matcher says *this could be here or there*,
+ * the clock is asked which of the two it has been watching. That is a third opinion,
+ * arriving from outside the audio, and it settles the case cleanly in both directions.
+ *
+ *  - A twelve-minute mismatch: the runner-up is exactly where the clock already is, so
+ *    the clock contradicts the jump and it is refused.
+ *  - A real recap skip inside a title sequence: the runner-up is twelve minutes from the
+ *    clock and the winner is ninety seconds from it, so the clock corroborates the jump
+ *    and it is followed, ambiguity and all.
+ *
+ * What it costs: a genuinely ambiguous match that is also genuinely a large jump — the
+ * viewer skips *into* the second copy of the repeated audio — is refused, and the
+ * position stays wrong until the audio stops repeating and an unambiguous match arrives.
+ * That case is undecidable from the audio, and being briefly behind is a smaller harm
+ * than being confidently twelve minutes out.
  */
 export function shouldCorrect(
   clockMs: number,
   matchMs: number,
-  opts: { minDriftMs?: number; maxJumpMs?: number } = {},
+  opts: {
+    minDriftMs?: number;
+    maxJumpMs?: number;
+    /** The match named two places. `MatchResult.ambiguous`, carried through. */
+    ambiguous?: boolean;
+    /** Signed distance from this placement to the other one. `ContinuousMatch.alternativeGapMs`. */
+    alternativeGapMs?: number;
+  } = {},
 ): boolean {
   const drift = Math.abs(matchMs - clockMs);
   if (drift < (opts.minDriftMs ?? 1500)) return false;
-  return drift <= (opts.maxJumpMs ?? 15 * 60_000);
+  if (drift > (opts.maxJumpMs ?? 15 * 60_000)) return false;
+  if (!opts.ambiguous) return true;
+
+  // Ambiguous, so the audio has abstained and the clock is asked to break the tie: it
+  // moves continuously and cannot have been in two places, so whichever candidate is
+  // nearer to it is the one that fits the last few minutes of watching.
+  //
+  // No runner-up to compare against means nothing can break the tie. Refusing is the
+  // conservative reading and the honest one — a caller that flagged a match ambiguous
+  // and then could not say what the other place was has not given this enough to decide.
+  if (opts.alternativeGapMs === undefined) return false;
+  return drift < Math.abs(matchMs + opts.alternativeGapMs - clockMs);
 }

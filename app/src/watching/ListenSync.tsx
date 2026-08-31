@@ -62,7 +62,17 @@ export function ListenSync({
       }
 
       onSynced(result.positionMs);
-      setNote(COPY.watching.listenPlaced(Math.round(result.confidence * 100)));
+      // Placed either way. A one-shot capture in a title sequence is exactly when
+      // somebody reaches for this, and answering "could not place that" when it plainly
+      // did would be a worse lie than naming the doubt. What changes is the sentence, and
+      // the sentence is the only thing here that can do anything about it — there is no
+      // clock of our own to check the placement against, the way the phone has.
+      const sure = Math.round(result.confidence * 100);
+      setNote(
+        result.ambiguous
+          ? COPY.watching.listenPlacedTwice(sure)
+          : COPY.watching.listenPlaced(sure),
+      );
     } catch (err) {
       setNote(err instanceof Error ? err.message : 'Listening failed.');
     } finally {

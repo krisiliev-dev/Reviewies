@@ -165,7 +165,18 @@ export function useListenSync({
       return;
     }
 
-    if (shouldCorrect(positionRef.current, now)) correctionRef.current(now, match.confidence);
+    // Both new fields are passed rather than the flag alone: `ambiguous` says the audio
+    // did not decide, and the gap is the only thing the clock can be compared against to
+    // decide it instead. Handing over the first without the second would refuse every
+    // ambiguous match, which is the whole title sequence.
+    if (
+      shouldCorrect(positionRef.current, now, {
+        ambiguous: match.ambiguous,
+        alternativeGapMs: match.alternativeGapMs,
+      })
+    ) {
+      correctionRef.current(now, match.confidence);
+    }
   }, []);
 
   // Ask for the analysis rate and mono directly: when the hardware agrees, the

@@ -54,6 +54,15 @@ export { CAPTURE_MS, FFT_SIZE, HOP_SIZE, SAMPLE_RATE };
 export interface CaptureResult {
   positionMs: number;
   confidence: number;
+  /**
+   * The audio heard occurs in more than one place, and this is only one of them.
+   *
+   * The one-shot path has no clock to break the tie with — that is what makes it the
+   * one-shot path — so unlike the phone's continuous session it cannot check the
+   * placement against where playback already was. All it can do is place the sample and
+   * say that it might be the other one, which is what the screen then does.
+   */
+  ambiguous: boolean;
 }
 
 export function micSupported(): boolean {
@@ -250,6 +259,7 @@ export async function syncByListening(
   return {
     positionMs: framesToMs(match.offsetFrames, HOP_SIZE, SAMPLE_RATE) + sampleMs,
     confidence: match.confidence,
+    ambiguous: match.ambiguous,
   };
 }
 
