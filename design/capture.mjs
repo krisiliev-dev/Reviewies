@@ -726,6 +726,42 @@ const THEN = {
     // places it is drawn, and the note is written on the watchlist row it describes.
     await add.click();
     await page.waitForTimeout(900);
+
+    /*
+     * And the reason, on the row that holds it now.
+     *
+     * `06-watchlist`'s clause asks for the **note** rather than the affordance to write
+     * one, and its own comment says why: *"a clause naming the note is the strongest thing
+     * this screen can be asked for — it can only pass if a row exists, was saved through
+     * the app, and kept what was said about it."* Until the composer went, the note was
+     * typed into the field the search row opened; the commit that removed that composer
+     * removed the two lines that typed it and left the clause standing, so the pass went
+     * red with a correct app in front of it — `06-watchlist (/watchlist) does not show
+     * /Ana recommended/`, measured on this build before this block existed.
+     *
+     * §6.190's rule from the other side: when a guard fails on a correct change the answer
+     * is to fix the rule, and the rule here is right — what was wrong is the walk. So the
+     * walk moves to where the note moved. `watchlist.empty` names two screens on purpose —
+     * *"Add something from Discover, then say why you saved it"* — and this is a person
+     * doing exactly that, which is also the claim the removing commit made about it.
+     *
+     * The field is announced `Your note about {name}` and the button `Save note for {name}`
+     * — `watchlist.tsx` names both by title because every row on the screen otherwise says
+     * the same two words. Named rather than reached by placeholder for that reason.
+     */
+    await page.goto('http://localhost:4200/watchlist');
+    await page.waitForTimeout(1200);
+    const write = page.getByRole('button', { name: /^Add a note for Quiet Harbour$/i }).first();
+    if (!(await write.count())) {
+      console.error('05-discover: the watchlist row offers nowhere to say why, so 06 has no note.');
+      process.exitCode = 1;
+      return;
+    }
+    await write.click();
+    await page.waitForTimeout(600);
+    await page.getByLabel(/^Your note about Quiet Harbour$/i).fill('Ana recommended');
+    await page.getByRole('button', { name: /^Save note for Quiet Harbour$/i }).click();
+    await page.waitForTimeout(900);
   },
 };
 

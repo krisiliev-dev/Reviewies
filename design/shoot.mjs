@@ -52,35 +52,6 @@ export const FOOT = 120;
 /**
  * The one scroller the shot is of, and the two facts worth knowing about it.
  *
- * ## The fourth condition
- *
- * Three were here and there is a fourth: taller than its box, tall enough to be a screen
- * rather than a strip, not `overflow: visible` — **and in the picture**.
- *
- * `app/src/remote/RemoteDrawer.tsx` is the case that found it. Its panel is
- * `fixed inset-y-0 right-0 w-[288px] overflow-y-auto`, mounted on every screen of the web
- * app whether or not it is open — deliberately, so the bridge connection is not torn down
- * each time it closes — and when closed it is pushed off the right-hand edge by
- * `translate-x-full` rather than unmounted. So it is exactly as tall as the window, its
- * `overflowY` is `auto`, and its fascia of remote keys overflows it by 3891pt. It passed
- * all three of the old conditions on **every route of the web app**, which means whether a
- * screen was reported as scrolling has depended on whether the remote happened to be
- * configured in the build being photographed.
- *
- * What that did is not only a wrong number. `shoot` files a second photograph when the
- * overflow clears `FOOT`, so `dark-01-upnext` — two rows and nothing below the fold — was
- * reported *"scrolls 3891pt, foot on file"* and handed the record a `-foot.png` that is the
- * same screen again, because what moved was a panel nobody can see. Measured on this build
- * before the condition was added: `dark-01-upnext +3891pt (at 3795pt)` and `dark-11-remote
- * +3891pt (at 3795pt)` — identical numbers on the screen where the drawer is open and on
- * the one where it is shut, which is the tell.
- *
- * Off the right edge is not the only way to be absent, but a predicate that tests the
- * rectangle covers `display: none` and a zero-sized box too. It deliberately does **not**
- * test opacity or stacking: a panel faded to nothing is still in the picture in the sense
- * this cares about, and guessing at what covers what is how a measurement becomes an
- * estimate wearing a number.
- *
  * ## Why one reading and not two
  *
  * `overflow` says how far the screen could travel; `at` says where it was standing when the
@@ -90,10 +61,36 @@ export const FOOT = 120;
  * for reading a shot taken at scroll 0 as a clipped row and one for citing `scrollTop 450`
  * on a page whose `maxScroll` was also 450.
  *
- * They are read in one traversal, off **one** element, because two traversals can answer
- * about two different elements and then the pair means nothing: `450 of 450` is a page at
- * its end only if both numbers are the same page's. The first draft of this took the
- * largest `scrollTop` anywhere in the document, and the drawer above is what it returned.
+ * They are read in one traversal, off **one** element, and that is the load-bearing part.
+ * The first draft asked the two questions separately and took the largest `scrollTop`
+ * anywhere in the document, which can answer about a different element than `overflow` did
+ * — and then `450 of 450` means nothing, because a pair of numbers is only a pair if it is
+ * one page's. This is the same defect the file's own header catalogues under *"three
+ * answers to one question"*, committed while adding the second question.
+ *
+ * ## The fourth condition, and what is **not** claimed for it
+ *
+ * A candidate must also be in the picture. The three older conditions — taller than its
+ * box, tall enough to be a screen rather than a strip, not `overflow: visible` — say
+ * nothing about whether the thing is on screen, and a scroller the shot is not of is not
+ * the shot's scroller. That much is right on its own terms.
+ *
+ * It is **not** the explanation of the reading that prompted it, and this paragraph exists
+ * so that nobody later reads it as one. `dark-01-upnext` and `light-01-upnext` both report
+ * `+3891pt (at 3795pt)` — the same pair as `dark-11-remote`, the shot where the remote
+ * drawer is open — on a screen carrying two rows and nothing below the fold. The obvious
+ * suspect was `app/src/remote/RemoteDrawer.tsx`: `fixed inset-y-0 right-0 w-[288px]
+ * overflow-y-auto`, mounted on every route so the bridge is not torn down, and merely
+ * translated off the edge when shut. Measured instead of assumed, against the same
+ * `app/dist` at 420: the closed panel's box is `left 420, right 708` of a 420pt window —
+ * so this condition does exclude it — and its `scrollHeight` **equals** its `clientHeight`,
+ * so it was never a candidate for `overflow` in the first place. On a fresh load of that
+ * build no element in the document overflows at all.
+ *
+ * So the 3891 belongs to something the pass's walk creates and this has not found it, and
+ * the same is true of the phone's `03-upnext at 3484 of 3500`. Recorded as an open
+ * question, because *"an instrument measures what somebody thought to measure"* and a
+ * plausible story attached to a number nobody has traced is how the 2-of-7 happened.
  *
  * `at` is reported and never refused. `reveal` presses controls that Playwright scrolls
  * into view, so a reveal below the fold is legitimately not at the top, and a rule that
