@@ -15485,6 +15485,78 @@ project, users recombining services — is a genuine research programme and is n
 The criterion is taken and the agenda is left, and saying which half of a framework is in use is
 the point of writing it down.
 
+#### Two of the three agents are in, and the re-plant earned its place again
+
+**Calm technology** (Weiser & Brown 1996; Case's principles) came back with the misfit stated
+before use — their periphery is *ambient* and this product is one screen held deliberately, so
+"use the periphery" does not translate; what does is smallest possible attention. It refused more
+than it took. **SDT half accepted**: cognitive evaluation theory's informational/controlling split
+earns the document's one test — *is this a fact about what happened, or a response to what you
+did?* — while the three needs **as a checklist** are refused, because a needs list justifies
+badges under "competence" and leaderboards under "relatedness", which is why gamification vendors
+cite it. A theory that licenses both sides has not decided anything. **Peak–end accepted as
+description, refused as prescription**: it earns *a year is better drawn than totalled*, and its
+prescriptive form — the 1993 paper is titled *Adding a Better End* — is refused, because
+manufacturing a peak onto somebody's evening is editing their memory of their own life.
+
+Eight refusals, each with its cost named: no running streak (the category's most reliable
+retention device, and no DAU story), no badges or levels, no notification whose purpose is to
+reopen the app, no infinite feed, no public score on a title page, no "you are behind", no stats
+at the moment of marking, and no ambient display invented to satisfy the frame. And the thing
+they exist *instead of* was built rather than promised — the year spine with one open cell,
+`direction.md`'s grafts 2 and 3, unbuilt until now. Refusal 1 needed something to exist instead
+of it or it would have been a subtraction dressed as a principle.
+
+**The reading pass found three defects in a rework two hours old, and two of them were in the
+instruments.** The box front was centred on the web and flush left on the phone, because `.tap`
+buys its 24pt floor with `align-items: center` and that is a cross-axis rule on a `flex-col` —
+title at left 47 where the phone draws 0, and `text-left` could not win because `.tap` is
+unlayered. Discover's blurb was drawn over an empty shelf, which is the sentence `NOT_AN_EMPTY_STATE`
+excuses *in its own words* as standing "above a full screen", caught in the shot the register
+itself cites. And **neither design walk had ever started**: both resolved Chromium from
+`process.env.CHROME`, which nothing sets — the only 2 of 12 launches in the repo that do not ask
+`scripts/browser.mjs` — so the two instruments `architecture.md` calls the only things that have
+seen the new architecture died before their first navigation.
+
+It also measured the backlog properly and found the number was the wrong shape: of 78 unread
+shots, **38 are of a build that no longer exists**, captured at 06:34 and superseded at 21:22.
+They photograph five tabs, a Search destination and Discover as rows. A count of unread shots is
+not a count of unread *screens* unless somebody checks when each was taken.
+
+**And the re-plant caught the fifth finding walking through its own guard.** `screenMode.test.ts`
+had been loosened from `?.[0]?.trending` to `[0]?.trending` — correctly, because the leading `?.`
+had begun failing on a correct change, the **seventh** of those in four sprints. But
+`shelf[0]?.trending` matches too, and is a defect: the condition above the sentence is
+`shownShelf.length > 0` and the boxes drawn are `shownShelf`, so reading the mode off the
+unfiltered array puts the trending blurb over a filtered shelf — the exact thing `Discover.tsx`'s
+own comment says the arrangement is for. Not `?.[0]`, too tight; not `[0]`, too loose. The needle
+names the array now, and is green on the correct code and red on both plants. **Second time in
+three sprints that a re-plant has caught a guard the agent that wrote it called correct**, which
+is the entire reason the step exists.
+
+#### And a retraction in a document written this session
+
+`architecture.md` cited **`scrollTop 450`** as proof that Up Next reaches the present, in a
+paragraph whose own subject is that no source guard can say whether a screen arrived where it
+meant to. `maxScroll` is **also 450**. The column cannot scroll further, so 450 is precisely the
+number a screen that ignored the request entirely would produce; the clause that read it could not
+have failed. A figure that happened to be positive, read as a measurement — and the picture that
+contradicted it had been on disk since the night before.
+
+What is true: `scrollIntoView({ block: 'start' })` is honoured only while a frame of content
+remains below the target, and Up Next's present is a few rows. The first live row sits **615pt
+down an 844pt frame** under seven struck ones, and the phone's caught-up arrival lands 47pt short
+of its own bottom, clipping "Find something to watch" under the tab bar. `design/look.mjs` fails
+on the clamp now rather than passing on it, and currently exits 1 with exactly this one problem,
+which is the honest state of that section.
+
+This is the fourth instrument in this document to omit its own subject, after the `--lines` census
+that dropped every run it was sent to measure, `pressReadings` that never pressed a Button, and
+the sync probe that answered "configured" on every build there has ever been. The shape is now
+specific enough to name: **a measurement with one number is not a measurement.** It needs the
+bound it is being compared against, in the same breath, or it is a figure that happened to come
+out positive.
+
 
 ## 7. What is still not known
 
