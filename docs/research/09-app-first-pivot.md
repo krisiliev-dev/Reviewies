@@ -16596,6 +16596,32 @@ read, seven things looked at and left alone.**
 - **Two agents of this sprint ran in the main checkout rather than a worktree**, because I did not
   force isolation on the launch. One spent real time chasing a "finding" that was the other's
   uncommitted work, and caught it only by checking `git show HEAD:` against the working file.
+
+#### And the two smoke failures both agents called pre-existing were mine
+
+Reported twice this sprint as failing before the work and proven so by `git stash` — which was
+true, and true for the wrong reason. They were **failing because of §6.191's change**, three
+commits earlier the same day, and "pre-existing" meant "not caused by *this* branch". Nobody was
+wrong; the phrase just stopped meaning what it usually means once four passes land in a day.
+
+Both clauses demanded the defect §6.191 removed:
+
+- `app/smoke.mjs` asserted `/Tracking/` on a **disabled** button. The page now draws **Stop
+  tracking**, enabled, because the undo is the control. The locator had to move too, and that is
+  the part worth recording: it was `getByRole('button', { name: 'Track {name}' })`, and the
+  *announced name* changes with the press — so after the press it matched nothing and the failure
+  read **"no label"**, an absent control rather than a changed one.
+- `mobile/smoke.mjs` had the same assertion on the title page.
+
+And **my first repair made a third clause wrong**: I changed the *search row's* wait from
+`Tracking` to `Stop tracking` on the assumption both screens had moved. They have not, deliberately
+— §6.191 left a feed of rows showing the disabled `Tracking` because a row in a list is not where
+you undo something — so the phone smoke timed out at 33/34 waiting for a word that screen never
+draws. Reverted, with the distinction written into the clause.
+
+**Web 285/285, phone 215/215, `npm run verify` exit 0.** The lesson is the one this record keeps
+relearning from the other side: a guard that fails on a correct change is wrong, *and* a guard
+"fixed" by assuming the change was wider than it was is wrong in the mirror.
 - **`npx serve` silently falls back to a random port when its port is taken**, so a pass can appear
   to run and photograph somebody else's build. One run did exactly that. `scripts/portFree.mjs`
   reports a held port and does not free it.

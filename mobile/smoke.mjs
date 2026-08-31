@@ -546,6 +546,13 @@ try {
    * and this is the only place in this suite where anything is disabled — the Track button
    * becomes `Tracking` and unavailable the moment the show is in the library.
    *
+   * **This is the search row and not the title page**, and the difference is now load-bearing:
+   * §6.191 gave the *title page* a second face — `Stop tracking`, live — and deliberately left
+   * a feed of rows showing the disabled `Tracking`, because a row in a list is not where you
+   * undo something. I changed this clause to `Stop tracking` on the assumption that both had
+   * moved, and the phone smoke timed out at 33/34 waiting for a word this screen never draws.
+   * A guard made wrong by a correct reading of the *other* screen.
+   *
    * The `disabled` attribute is asserted beside it because they are different promises from
    * different layers: react-native-web's `isDisabled` reads `props.disabled` and writes the
    * DOM attribute, which is what stops the click; the flat `aria-disabled` is what this
@@ -1040,20 +1047,25 @@ try {
    * detour at **+2 presses and +3.16s here**, +3 presses and +8.53s on the web.
    *
    * Reached from an Up Next row, this show is already in the library — so what is checked
-   * is the *spent* face: the word says `Tracking` rather than `Track`, and the control is
-   * unavailable. The untracked face is the one this suite cannot reach and
+   * is the *tracked* face. That used to mean `Tracking`, drawn on a disabled button; since
+   * §6.191 it means **Stop tracking**, live, because the page now offers the way out it
+   * never had. The untracked face is the one this suite cannot reach and
    * `app/src/wiring/screenStates.ts` says so in as many words rather than leaving it off
    * the list; the web's walk covers it from the shelf.
+   *
+   * The announced name is the handle rather than the drawn word, for §6.98's reason — one
+   * owner — and because `COPY.controls.stopTrackingTitle` carries the title, so a screen of
+   * repeated verbs still says *which* show each one is about.
    */
-  const spent = await page.getByRole('button', { name: 'Track The Long Dark' });
+  const spent = await page.getByRole('button', { name: 'Stop tracking The Long Dark' });
   check(
     'the title page says whether you are tracking this show',
     (await spent.count()) === 1,
-    `${await spent.count()} for “Track The Long Dark”`,
+    `${await spent.count()} for “Stop tracking The Long Dark”`,
   );
   check(
-    'and says it is already tracked rather than offering it again',
-    /Tracking/.test(title),
+    'and offers the way out rather than only saying it is in',
+    /Stop tracking/i.test(title) && (await spent.isEnabled().catch(() => false)),
     title.slice(0, 120),
   );
   // Eighteen episodes, each with React, Talk and Mark; plus the stars, the poster

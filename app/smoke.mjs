@@ -2090,15 +2090,28 @@ try {
     /*
      * The label, because the label is the read.
      *
-     * `Tracking` is drawn from `shelf === 'library'`, and `shelf` comes from a live query on
-     * `db.library` — so the word changing is the library row existing, observed through the
-     * screen rather than by reaching into IndexedDB behind it. The button also goes
-     * disabled, which is the same fact said the way a screen reader hears it.
+     * What the label *is* changed in §6.191 and this clause did not, so it failed on a
+     * correct change and stayed failing for a sprint. It looked for **Tracking** on a
+     * **disabled** button, which is what the page drew when a tracked title had no way back
+     * out. It now draws **Stop tracking**, enabled, because `stopTracking` exists and the
+     * undo is the control — so the old assertion demanded the defect.
+     *
+     * The locator had to move too, and that is the part worth recording: it is
+     * `getByRole('button', { name: 'Track {name}' })`, and the *announced name* changes with
+     * the press, so after the press it matched nothing and the failure read **"no label"** —
+     * an absent control rather than a changed one. Two locators, one per face, and the read
+     * is that the second is there and live.
+     *
+     * Still the label rather than a peek into IndexedDB: the word changing is the library
+     * row existing, observed through the screen. And still `isEnabled`, which now carries
+     * the opposite meaning and the more useful one — a tracked title you cannot untrack is
+     * the §6.191 defect, so a *disabled* control here would be the regression.
      */
-    const after = live ? (await track.innerText().catch(() => '')).trim() : '';
+    const stop = decide.getByRole('button', { name: `Stop tracking ${named}` });
+    const after = live ? (await stop.innerText().catch(() => '')).trim() : '';
     check(
       'and pressing it tracks the show without leaving the page',
-      live && /Tracking/.test(after) && (await track.isDisabled().catch(() => false)),
+      live && /Stop tracking/i.test(after) && (await stop.isEnabled().catch(() => false)),
       live ? `${after || 'no label'} at ${decide.url()}` : 'not pressed: no live control to press',
     );
   } finally {
