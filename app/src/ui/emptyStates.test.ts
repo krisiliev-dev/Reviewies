@@ -156,4 +156,53 @@ describe('a screen with nothing on it', () => {
       expect(why.length, `${path} is excused without a reason`).toBeGreaterThan(30);
     }
   });
+
+  /**
+   * Discover's blurb describes the shelf, so it is drawn only where there is a shelf.
+   *
+   * `NOT_AN_EMPTY_STATE` excuses `discover.blurb` in its own words — *"a description of what
+   * Discover excludes, drawn above a **full** screen too"* — and that excuse is the whole
+   * reason it is not in the register. `00-discover-empty.png` is what it looked like when
+   * the renderers did not keep it. Two sentences, in the same treatment, one under the
+   * other, on a screen with nothing on it:
+   *
+   *     Nothing you have already watched or added.
+   *     Nothing new to suggest yet. Track a few things and come back.
+   *
+   * The first is not an empty state, and on that screen it reads as one — a claim about the
+   * contents of a shelf that is not there, in front of the sentence that is actually the
+   * screen's message. The same `Note` is drawn over *Loading…* for the same reason, which is
+   * a claim about a feed that has not arrived. §6.57's distinction, one altitude down: "here
+   * is what this list leaves out" and "there is no list" are different sentences and only one
+   * of them was asked for.
+   *
+   * Read by proximity rather than by parsing JSX: the condition has to be within the two
+   * hundred characters before the sentence, which is the enclosing expression on both
+   * platforms and is stated here so nobody reads it as more than it is.
+   */
+  it('draws Discover’s blurb only where there is a shelf for it to describe', () => {
+    const SHELF = /shownShelf\.length/;
+    const missing: string[] = [];
+    for (const screen of [
+      'app/src/screens/Discover.tsx',
+      'mobile/app/(tabs)/discover.tsx',
+    ]) {
+      const source = withoutProse(read(screen));
+      let found = 0;
+      for (const m of source.matchAll(/COPY\.discover\.(?:trendingB|b)lurb/g)) {
+        found += 1;
+        if (!SHELF.test(source.slice(Math.max(0, m.index - 200), m.index))) {
+          missing.push(`${screen}: ${source.slice(Math.max(0, m.index - 60), m.index + 30).replace(/\s+/g, ' ').trim()}`);
+        }
+      }
+      // §6.121: every clause here passes against a file that stopped drawing the blurb.
+      expect(found, `${screen} no longer draws the blurb at all`).toBeGreaterThan(0);
+    }
+    expect(
+      missing,
+      'the blurb is drawn without asking whether the shelf has anything on it — and over an ' +
+        'empty one it reads as a second empty state, which is what NOT_AN_EMPTY_STATE excuses ' +
+        'it from being',
+    ).toEqual([]);
+  });
 });

@@ -241,7 +241,12 @@ export const NOT_AN_EMPTY_STATE: Record<string, string> = {
   'lists.signInToMake': 'The same gate with the destination in it.',
 
   // Not about absence at all.
-  'discover.blurb': 'A description of what Discover excludes, drawn above a full screen too.',
+  'discover.blurb':
+    'A description of what the shelf excludes, drawn above a full screen — and only above ' +
+    'a full one. It was unconditional, so `00-discover-empty.png` ' +
+    'is two sentences beginning "Nothing" with the real empty state second, and the same ' +
+    'sentence stood over "Loading…" as a claim about a feed that had not arrived. ' +
+    '`emptyStates.test.ts` holds both renderers to the word "full" in this excuse.',
   'discover.allFiltered':
     'Absence caused by a control the person moved, which is exactly `comments.allFiltered`\u2019s ' +
     'reason one screen over. The shelf is not empty — it has been narrowed — and saying ' +

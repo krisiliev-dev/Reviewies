@@ -514,4 +514,72 @@ describe('the space scale, on the web', () => {
     expect(named, 'nothing on the web boxes itself by name').toBeGreaterThan(15);
     expect(off).toEqual([]);
   });
+
+  /**
+   * `.tap` is a **row**, and nothing may lay a column out with it.
+   *
+   * `index.css` gives `.tap` a target height without giving it a box — *"a text button that
+   * is still a target"* — and it does that with three properties, of which only two are
+   * about height: `display: inline-flex`, `min-height: 24px`, and **`align-items: center`**.
+   * On the one line of text the class was written for, that third property is what centres
+   * the glyphs against the 24 points. Put the same class on a `flex-col` and it is a
+   * *cross-axis* rule instead, and it centres every child horizontally.
+   *
+   * That is not hypothetical and it is not a warning. `Browse.tsx`'s box front carried
+   * `tap flex w-full flex-col gap-1.5 text-left`, and the box front is what
+   * `architecture.md` section 5 calls the spine of a CD case: title, genre, year, read down
+   * the left edge. Measured against the served build at 390pt — box left 0, width 173 — the
+   * plate spanned the full 173 and the two lines under it sat at **47** and **51**, each
+   * centred at its own width, on an element whose computed `text-align` was `left`. The
+   * phone's twin is a `View` with `alignItems` left at `stretch` and drew both at 0. Two
+   * platforms, one component, and the file that was wrong said in its own class list which
+   * one it meant to be.
+   *
+   * Specificity is why `text-left` did not save it and why `items-start` would not either:
+   * `.tap` is written **outside** Tailwind's `@layer`, and unlayered CSS beats every layered
+   * utility no matter what the source order is. So the rule is stated as *do not combine
+   * them* rather than as *override it afterwards* — the override is the thing that does not
+   * work.
+   */
+  it('lays nothing out in a column with `.tap`, which centres what it holds', () => {
+    // The premise, read rather than remembered: the class really does centre, and it is
+    // really unlayered. A rule about a property the stylesheet has stopped setting is a
+    // rule about nothing, and §6.121's shape is exactly a clause that passes on an empty
+    // string.
+    const css = readFileSync(resolve(ROOT, 'app/src/index.css'), 'utf8');
+    const rule = /\.tap\s*\{([^}]*)\}/.exec(css);
+    expect(rule, 'index.css no longer defines .tap').not.toBeNull();
+    expect(rule?.[1], '.tap no longer centres, so this clause guards nothing').toMatch(
+      /align-items:\s*center/,
+    );
+    expect(
+      css.slice(0, rule?.index ?? 0).replace(/\/\*[\s\S]*?\*\//g, ''),
+      '.tap has been moved inside a @layer, where a utility could beat it',
+    ).not.toMatch(/@layer[^;]*\{[\s\S]*$/);
+
+    const COLUMN = /(?:^|[\s"'`])flex-col(?:-reverse)?(?![-\w])/;
+    const TAP = /(?:^|[\s"'`{])tap(?![-\w])/;
+    const columns: string[] = [];
+    let wearing = 0;
+    for (const path of WEB.filter((p) => !/\.test\.tsx?$/.test(p))) {
+      const text = read(path);
+      text.split('\n').forEach((line, index) => {
+        for (const [, list] of line.matchAll(/className=[{]?[`"]([^`"]*)[`"]/g)) {
+          if (!TAP.test(list)) continue;
+          wearing += 1;
+          if (COLUMN.test(list)) {
+            columns.push(`${relative(ROOT, path)}:${index + 1}  ${list.trim()}`);
+          }
+        }
+      });
+    }
+    // Non-vacuity from the other side: the class is worn, so the scan is looking at
+    // something. Eleven sites when this landed.
+    expect(wearing, 'nothing on the web wears .tap, so the scan found no subject').toBeGreaterThan(6);
+    expect(
+      columns,
+      'a column laid out with `.tap` — its `align-items: center` centres every child, and no' +
+        ' utility can undo it because `.tap` is unlayered',
+    ).toEqual([]);
+  });
 });

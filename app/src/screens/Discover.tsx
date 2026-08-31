@@ -199,10 +199,20 @@ export function Discover() {
             Two modes, said apart. `getSuggestions` builds from the library and only falls
             back to a chart when that comes back empty, so the feed is entirely one or
             entirely the other — and until §6.169 the screen said the same sentence for both.
+
+            And only where there is a shelf. `emptyStates.ts` excuses this sentence from the
+            register on the grounds that it is "drawn above a **full** screen"; drawn above
+            an empty one it is a claim about the contents of a list that is not there, and
+            `00-discover-empty.png` is two sentences beginning "Nothing" with the real one
+            second. Read off `shownShelf` rather than off `suggestions`, so the condition and
+            the sentence are about the same boxes — a shelf narrowed to nothing by a filter
+            has nothing to describe either, and `allFiltered` below is what that state says.
           */}
-          <Note className="mb-4 px-1">
-            {suggestions?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
-          </Note>
+          {shownShelf.length > 0 && (
+            <Note className="mb-4 px-1">
+              {shownShelf[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
+            </Note>
+          )}
 
           {shelfError && <p className="px-1 text-s14 text-trouble">{shelfError}</p>}
           {suggestions === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}

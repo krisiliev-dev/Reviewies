@@ -10,21 +10,24 @@
  * can be run beside another pass without either of them taking the other's port.
  */
 import { chromium } from 'playwright';
+import { chromiumOptions } from '../scripts/browser.mjs';
 
 const BASE = process.argv[2] ?? 'http://localhost:4320';
 const problems = [];
 const note = (line) => console.log(`  ${line}`);
 
 /*
- * The channel is named rather than left to the bundled default.
+ * The browser comes from `scripts/browser.mjs`, as it does for the other ten launches here.
  *
- * This checkout's `playwright-core` asks for a `chrome-headless-shell` build that is not on
- * the machine — the browsers under `/opt/pw-browsers` are a version behind. The full
- * chromium *is* there, so the walk uses it: a pass that cannot start is not evidence, and
- * §6.187's finding was exactly this shape from the other end — `verify` red on a fresh
- * checkout for three reasons, none of them the code.
+ * The paragraph this replaces had the diagnosis exactly right — this checkout's
+ * `playwright-core` asks for a `chrome-headless-shell` build that is not on the machine,
+ * the full chromium under `/opt/pw-browsers` is, and *"a pass that cannot start is not
+ * evidence"* — and then read the answer from `process.env.CHROME`, which nothing in
+ * `package.json` sets. So `npm run design:look` died on `chromium.launch` before its first
+ * navigation, every time, on the walk `architecture.md` section 8 calls the only thing here
+ * that has seen the new architecture. §6.46 wrote that answer down once; this asks for it.
  */
-const browser = await chromium.launch({ executablePath: process.env.CHROME ?? undefined });
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => problems.push(`page error: ${e.message.split('\n')[0]}`));
 
@@ -156,10 +159,72 @@ else {
      * is laid out above and the column is scrolled past it once. Measured off the scroller
      * `App.tsx` owns — a number, because "it looked fine" is not an answer to a question
      * about a scroll position.
+     *
+     * ## Why one number was the wrong number
+     *
+     * This asked `scrollTop > 0` and reported **450**, and `architecture.md` section 8 wrote
+     * that figure down as the proof. Read again with the scroller's own range beside it, 450
+     * is also the **maximum** — `scrollHeight - clientHeight` exactly — so the column did not
+     * stop at the present, it stopped at the end of itself, and the number would have been
+     * the same had `scrollIntoView` asked for the bottom of the document. A clause that
+     * passes on the clamp cannot fail for the reason it was written, which is §6.157's rule
+     * about an instrument that can only return one answer.
+     *
+     * `scrollIntoView({ block: 'start' })` is a *request*: it is honoured only while there
+     * is a frame of content below the target. Up Next's present is one screen at most and
+     * usually a few rows, so the request is refused almost always — measured on this walk,
+     * the first live row sits 615 points down an 844 point frame with seven struck rows above
+     * it. So the honest reading is where the present **landed**, and the clamp is reported as
+     * itself rather than as an arrival.
      */
-    const scrolled = await page.evaluate(() => document.querySelector('main')?.scrollTop ?? -1);
-    note(`arrived at scrollTop ${scrolled}`);
-    if (scrolled <= 0) problems.push(`the screen arrived at the top of the past (scrollTop ${scrolled})`);
+    const arrival = await page.evaluate(() => {
+      const main = document.querySelector('main');
+      if (!main) return null;
+      const frame = main.getBoundingClientRect();
+      // The first row that is not crossed off: the present, as somebody sees it.
+      for (const li of document.querySelectorAll('li')) {
+        const box = li.getBoundingClientRect();
+        if (box.top < frame.top) continue;
+        const struckOut = [...li.querySelectorAll('*')].some((e) =>
+          /line-through/.test(getComputedStyle(e).textDecorationLine),
+        );
+        if (struckOut) continue;
+        return {
+          scrolled: Math.round(main.scrollTop),
+          most: Math.round(main.scrollHeight - main.clientHeight),
+          frame: Math.round(main.clientHeight),
+          present: Math.round(box.top - frame.top),
+        };
+      }
+      return {
+        scrolled: Math.round(main.scrollTop),
+        most: Math.round(main.scrollHeight - main.clientHeight),
+        frame: Math.round(main.clientHeight),
+        present: null,
+      };
+    });
+    if (!arrival) problems.push('there is no scroller on Up Next to measure');
+    else {
+      note(
+        `arrived at scrollTop ${arrival.scrolled} of a possible ${arrival.most}; the present ` +
+          `begins ${arrival.present}pt down a ${arrival.frame}pt frame`,
+      );
+      if (arrival.scrolled <= 0) {
+        problems.push(`the screen arrived at the top of the past (scrollTop ${arrival.scrolled})`);
+      } else if (arrival.present === null) {
+        problems.push('nothing unstruck is on Up Next, so where it arrived cannot be read');
+      } else if (arrival.present > 0 && arrival.scrolled >= arrival.most) {
+        // Not "it did not scroll" — it scrolled all it could and the present still is not at
+        // the top. Reported rather than repaired: the repair is a screenful of trailing room
+        // under the present, which is a decision about what the bottom of the longest screen
+        // in the product looks like, and this file takes no design decisions.
+        problems.push(
+          `the screen ran out of column before it reached the present: scrollTop ` +
+            `${arrival.scrolled} is the whole range, and the present is still ${arrival.present}pt ` +
+            `down an ${arrival.frame}pt frame`,
+        );
+      }
+    }
   }
 }
 
