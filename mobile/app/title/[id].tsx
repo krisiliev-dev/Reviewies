@@ -4,14 +4,18 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { db } from '@reviewies/core/data/db';
 import {
+  addToLibrary,
+  addToWatchlist,
   clearRating,
   hasAired,
   markWatched,
   rate,
   setPosterOverride,
+  startWatching,
   unwatchLatest,
   watchedEpisodeIds,
 } from '@reviewies/core/data/repo';
+import type { Shelf } from '@reviewies/core/data/already';
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { Poster } from '../../src/ui/Poster';
@@ -55,8 +59,44 @@ export default function TitleScreen() {
   const watched = useLive(() => watchedEpisodeIds(titleId), [titleId]);
   const rating = useLive(() => db.ratings.get(titleId), [titleId]);
   const libraryItem = useLive(() => db.library.get(titleId), [titleId]);
+  const savedItem = useLive(() => db.watchlist.get(titleId), [titleId]);
   /** `undefined` means not editing; a string means the field is open with that draft. */
   const [posterDraft, setPosterDraft] = useState<string>();
+
+  /*
+   * Which shelf this title is already on — `already.ts`'s two values, read from the two
+   * rows rather than from a `useState` set by this session's presses.
+   *
+   * `alreadyHave()`/`shelfFor()` is not used here and the difference is the whole reason
+   * that module exists: it resolves a *search result* against the library by name as well
+   * as by ID, because an imported row is `local:tv:…` and a result is `tmdb:tv:…` and the
+   * two never meet. This screen is already at one ID — whichever the row that opened it
+   * carried — so `get` is the exact question, and asking the wider one would scan two
+   * tables on the store `already.test.ts` records as the slow one under load.
+   *
+   * The library wins when both rows exist, which is `shelfFor`'s own rule: *"Tracking is
+   * the stronger statement, and a watchlist entry for something you are already watching
+   * is the leftover rather than the fact."*
+   */
+  const shelf: Shelf | undefined = libraryItem ? 'library' : savedItem ? 'watchlist' : undefined;
+
+  /**
+   * Start tracking, from the page that told you what it is.
+   *
+   * `startWatching` when it was on the watchlist, `addToLibrary` when it was not, which is
+   * `repo.ts`'s distinction rather than a new one: the first is *"track it and take it off
+   * the list, one act, not two"* and it enqueues a watchlist tombstone, so calling it for a
+   * title that was never saved would send a deletion for a row that never existed.
+   *
+   * No `getEpisodesCached` behind it, unlike the search row and the shelf's box. This
+   * screen's own effect has already asked for the episodes and is rendering them; the two
+   * call sites that fetch here do so because nothing else on those screens ever will.
+   */
+  async function track() {
+    if (!title) return;
+    if (shelf === 'watchlist') await startWatching(titleId, title.kind);
+    else await addToLibrary(titleId, title.kind);
+  }
 
   /** Rewatch counts, which is the whole reason watches are events and not booleans. */
   const counts = useLive(async () => {
@@ -161,6 +201,68 @@ export default function TitleScreen() {
             Captioned, and after the description rather than before it: the phone asked
             you to rate the thing above the sentence that says what it is. §6.62. */}
         {title && <AddToList titleId={titleId} kind={title.kind} />}
+
+        {/*
+          The decision, on the page you opened to make it.
+
+          ## The hole
+
+          `Track`, `addToLibrary` and `watchlist` appeared nowhere on either title screen.
+          You could read the synopsis, the seasons, where to watch it and what it warns you
+          about — everything the product knows that would change your mind — and then had
+          to leave and find the row again to act on it. `design/cost.mjs` walked both
+          routes and priced the detour against tracking from the search row: **+2 presses
+          and +3.16s here**, **+3 presses, +4 retyped characters and +8.53s on the web**.
+          The phone is the cheaper of the two only because `expo-router` keeps the results
+          screen in the stack, so going back does not lose the query; it still costs a
+          press on a 30x30pt back control, which is under the target floor and is its own
+          finding.
+
+          ## Why it is these two controls and not a new one
+
+          They are the search row's, moved: same tones, same labels, same announced names,
+          same `shelf` conditional. That is the point rather than laziness — a page reached
+          *from* that row should not offer a differently-shaped version of the same
+          decision, and `copy.ts` records what happens when two screens each write their
+          own words for one act.
+
+          ## Where it sits, and what is refused
+
+          Under the synopsis, above the rating: the back of a browse box puts its two verbs
+          after the blurb for the same reason — `box.ts`'s *"the front of the box sells
+          nothing; the back is where you decide"* — and this screen is the long form of
+          that back. `flexWrap`, because at twice the text size two controls are wider than
+          a phone; the Discover row has carried that comment since it was written.
+
+          **Refused: a third control.** `docs/research/09-app-first-pivot.md` §6.178 is
+          about a row that grew to eight, and this screen already carries a rating, a
+          poster override, Add to list, Where to watch, content warnings and a season list.
+          Two is what the decision needs. In particular there is no *stop tracking* —
+          `repo.ts` has no such writer, and inventing one on the screen that would need to
+          explain what happens to your watch history is a bigger decision than this one.
+        */}
+        {title && (
+          <View style={styles.decide}>
+            <Button
+              onPress={track}
+              disabled={shelf === 'library'}
+              tone="primary"
+              label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
+              name={COPY.controls.trackTitle(title.name)}
+            />
+            {/* No note composer behind this one, unlike the search row's. The note is *why
+                you saved it*, and the watchlist row itself offers "Add a note…" — so the
+                field is one press away where it belongs rather than a third state on the
+                longest screen in the product. §6.167 gave the row that control. */}
+            <Button
+              onPress={() => void addToWatchlist(titleId, title.kind)}
+              disabled={shelf === 'watchlist'}
+              tone="secondary"
+              label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
+              name={COPY.controls.addToWatchlist(title.name)}
+            />
+          </View>
+        )}
 
         <View style={styles.ratingBlock}>
           <Section>{COPY.title.yourRating}</Section>
@@ -414,6 +516,8 @@ const styles = StyleSheet.create({
   headerBody: { flex: 1, gap: 6 },
   year: { color: theme.inkSecondary },
   overview: { color: theme.inkSecondary, fontSize: text.s16, lineHeight: leadingOf(text.s16, leading.l143), fontFamily: type.family.prose.name },
+  /** The two verbs. Wraps, because at 200% text two controls are wider than a phone. */
+  decide: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   ratingBlock: { gap: 6 },
   loading: { marginTop: 24 },
 

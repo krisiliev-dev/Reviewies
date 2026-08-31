@@ -443,57 +443,52 @@ const TASKS = [
       { press: /^Open /, as: 'the row' },
       { settle: 1800 },
       /*
-       * And then back, because **the title page cannot track a show** — on either platform.
+       * And then Track, **on the page**, which is new and is the whole reason this task is
+       * worth keeping in the table.
        *
-       * This step was `press: Track` and the walk stopped dead on both builds: "no control
-       * on this screen carries that name". Read rather than assumed, which is the rule
-       * `direction.md` had to write down after three directions described a drawer handle
-       * none of them had opened the file for. `mobile/app/title/[id].tsx` offers a rating, a
-       * poster override and per-episode React / Talk / Rate, and `Track` appears nowhere in
-       * it; `app/src/screens/TitleDetail.tsx` has no `Track`, `addToLibrary` or `watchlist`
-       * either. The page you open to decide whether to keep something has no way to keep it.
+       * ## What this step used to be
        *
-       * So the honest route is search, open, **back**, track — and that is what is priced.
+       * It was `press: Track` when the task was written, and the walk stopped dead on both
+       * builds: *"no control on this screen carries that name"*. Read rather than assumed,
+       * which is the rule `direction.md` had to write down after three directions described
+       * a drawer handle none of them had opened the file for. `mobile/app/title/[id].tsx`
+       * offered a rating, a poster override and per-episode React / Talk / Rate, and `Track`
+       * appeared nowhere in it; `app/src/screens/TitleDetail.tsx` had no `Track`,
+       * `addToLibrary` or `watchlist` either. The page you opened to decide whether to keep
+       * something had no way to keep it.
+       *
+       * So the step became **back, find the row again, track** — search, open, back, track —
+       * and the two routes to one end were priced at:
+       *
+       *     phone  3 presses / 6.04s   ->  5 presses / 9.19s   (+2 presses, +3.16s)
+       *     web    3 presses / 9.94s   ->  6 presses / 18.47s  (+3 presses, +4 typed
+       *                                    characters, +8.53s, and one press off the page)
+       *
+       * The web was worse than the platform's own constants explain because going back
+       * there also lost the query: `Discover.tsx` holds it in `useState`, so a back
+       * navigation remounted the screen on the shelf and the name had to be typed again,
+       * where `expo-router` keeps the phone's results screen in the stack. That was a second
+       * finding inside the first and it is recorded here rather than lost with the steps
+       * that found it.
+       *
+       * ## What it is now
+       *
+       * `docs/design/architecture.md` §8b put the search row's own two controls on the title
+       * page, so the detour is gone and this route is the direct one plus the press that
+       * opens the page. Re-walked on both builds after the change:
+       *
+       *     phone  4 presses / 7.40s   (+1 press, +1.37s over the search row)
+       *     web    4 presses / 12.48s  (+1 press, +2.54s)
+       *
+       * What is left is the press that opens the page and the deliberation the page is for.
+       * That is not overhead this instrument should want to see go: a route called *looking
+       * at the page first* that cost the same as not looking would mean the page was not
+       * being looked at. `webSteps` is gone with it — it existed only to spell out a
+       * back-and-retype the web needed and the phone did not, and there is nothing left to
+       * branch on.
        */
-      { think: 'realise the page cannot do it, and go back' },
-      // The phone has a back control in the header — 30x30 points, named "(tabs), back",
-      // and both of those are findings in their own right. The web has none, so the walk
-      // uses the browser's, which is off the page and therefore unpriced. `webSteps` below
-      // is not a platform branch in the model; it is two different products.
-      { press: /back/i, as: 'back' },
-      { settle: 1500 },
-      { think: 'find the row again in the results' },
-      { press: /^Track /, as: 'Track' },
-    ],
-    webSteps: [
-      { think: 'decide to go looking, and where' },
-      { press: 'Discover', sel: TAB_SELECTOR, as: 'the Discover tab' },
-      { settle: 900 },
-      { think: 'retrieve the name you are looking for' },
-      { type: 'Long', into: /^Search for a/, as: 'the search field' },
-      { settle: 2000 },
-      { think: 'find the right result among what came back' },
-      { press: /^Open /, as: 'the row' },
-      { settle: 1800 },
-      { think: 'realise the page cannot do it, and go back' },
-      { back: 'the browser’s own Back, above the viewport' },
-      { settle: 1500 },
-      /*
-       * And then type the query again, because going back on the web loses it.
-       *
-       * The walk stopped here with `/discover` reading "Nothing to recommend from your
-       * library yet, so these are what people are watching" — the *shelf*, not the results.
-       * `Discover.tsx` holds the query in `useState`, so a back navigation remounts the
-       * screen with an empty field; the phone's `expo-router` keeps the screen in the stack
-       * and its results with it, which is why the same three steps work there and these do
-       * not. One product remembers where you were and the other does not, and the whole of
-       * that difference is four characters and a press.
-       */
-      { think: 'notice the search is gone, and retrieve the name again' },
-      { type: 'Long', into: /^Search for a/, as: 'the search field, again' },
-      { settle: 2000 },
-      { think: 'find the row again in the results' },
-      { press: /^Track /, as: 'Track' },
+      { think: 'decide, now that the page has told you what it is' },
+      { press: /^Track /, as: 'Track, on the page' },
     ],
   },
   {
@@ -813,8 +808,15 @@ async function walk(browser, base, platform, task, { origin, settle, seeded }) {
     await page.waitForTimeout(settle);
 
     // A task may describe the web differently, and where it does it is because the two
-    // builds are two products at that point rather than one product with a flag. See
-    // `findAndTrackViaTitle`, whose back step exists on one platform and not the other.
+    // builds are two products at that point rather than one product with a flag.
+    //
+    // Nothing in `TASKS` uses it today. `findAndTrackViaTitle` did — going back on the web
+    // lost the query and the phone kept it, so the same task was four characters and a
+    // press longer there — and that branch went away when §8b put the Track control on the
+    // title page and removed the back step from both. The machinery stays because the
+    // *reason* for it has not gone away: `back:` below is still the only honest way to
+    // count a press this instrument cannot measure, and the next divergence will want both.
+
     for (const step of (platform === 'web' && task.webSteps) || task.steps) {
       if (step.settle) {
         await page.waitForTimeout(step.settle);

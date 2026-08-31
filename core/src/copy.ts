@@ -309,6 +309,24 @@ export const COPY = {
     turnOver: (name: string) => `More about ${name}`,
     turnBack: (name: string) => `Turn ${name} back over`,
     /**
+     * The way off the shelf and onto the title's own page.
+     *
+     * Before `docs/design/architecture.md`'s rework a Discover row opened `/title/:id`
+     * (`e09ac85^:app/src/screens/Discover.tsx:143`). The box that replaced it turns over,
+     * and the back it turns over to carries the synopsis and two verbs — so where to watch
+     * it, what it warns you about, its seasons and its cast became unreachable from the
+     * shelf while staying one press away from a search result for the same title. None of
+     * that document's eight refusals says so and the commit does not mention it.
+     *
+     * **Drawn `Details`, announced `Open {name}`.** The two differ on purpose, which is
+     * what `ButtonContract` requires both to be written for. *Open* is the word every
+     * other route to this page announces — six call sites, all `Open ${name}` — so a
+     * screen reader hears one sentence for one destination whether it came off the shelf
+     * or out of the results. *Open* drawn would be the wrong word in a box that is already
+     * open: the front's press is the turning-over and its name is already *More about*.
+     */
+    details: 'Details',
+    /**
      * The announced name of a field, which is not its placeholder.
      *
      * `Field` requires a label because every input in the app had none: each relied on a
