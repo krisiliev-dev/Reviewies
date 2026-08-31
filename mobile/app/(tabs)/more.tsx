@@ -25,12 +25,19 @@ import { Masthead } from '../../src/ui/Masthead';
  * opened, not by how interesting it is to build.
  */
 /**
- * Two rows this platform has and the web does not, then the five it shares.
+ * Two rows this platform has and the web does not, then the four it shares.
  *
- * The shared five are `MORE_INDEX`'s — labels and descriptions both, which were typed out
- * on each platform separately until §6.176. The two above them stay here on purpose: the
- * web reaches its account panel from another screen and its remote from a control in the
- * masthead, so putting them in a shared table would claim a parity that does not exist.
+ * The shared four are `MORE_INDEX`'s — labels and descriptions both, which were typed out
+ * on each platform separately until §6.176. The two above them stay here on purpose, and
+ * for a different reason each: the web reaches its account panel from another screen, and
+ * the web has **no row for the remote anywhere** — `App.tsx` mounts `RemoteDrawer` at the
+ * root, so it is a fixed tab on the right edge of every screen rather than a destination.
+ * Putting either in the shared table would claim a parity that does not exist.
+ *
+ * That second sentence used to read "its remote from a control in the masthead", which is
+ * not where it is and never was. §6.178 corrected it in `moreIndex.ts` and not in this
+ * copy of it, so the wrong reason went on shipping in the file the table was extracted
+ * from — §6.106's lesson landing on the very sprint that quoted it.
  */
 const LINKS = [
   { href: '/account', label: 'Account', detail: 'Optional — adds sync and the shared layer' },
