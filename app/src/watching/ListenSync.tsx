@@ -67,6 +67,26 @@ export function ListenSync({
       // did would be a worse lie than naming the doubt. What changes is the sentence, and
       // the sentence is the only thing here that can do anything about it — there is no
       // clock of our own to check the placement against, the way the phone has.
+      /*
+       * **The residual `ambiguousMatch.test.ts` names, and it is smaller than that file
+       * thinks.** Its closing note says a source-level check cannot see
+       * `ambiguous: match.ambiguous && false`, and that closing it needs a behavioural test
+       * of `syncByListening`, which needs a microphone.
+       *
+       * Half right. Planted in the main checkout, all ten of that file's clauses pass and
+       * `npx tsc -b` is clean — but **oxlint sees it**, as `no-constant-condition`, and has
+       * all along. What was true is that nothing *failed* on it: `verify` ended in a bare
+       * `npx oxlint`, which prints warnings and exits 0.
+       *
+       * So `verify` now runs `oxlint -D no-constant-condition`. One rule promoted rather than
+       * the whole set, because there are two dozen standing warnings here that are judgements
+       * rather than defects, and turning them all red would be a different decision made by
+       * accident. This one is not a judgement: a condition that cannot vary is a branch that
+       * cannot run, which is the shape of every wiring defect this sprint found.
+       *
+       * The larger residual stands, and is genuinely microphone-shaped: nothing here can see
+       * `ambiguous: someOtherBoolean`. What is closed is the constant.
+       */
       const sure = Math.round(result.confidence * 100);
       setNote(
         result.ambiguous

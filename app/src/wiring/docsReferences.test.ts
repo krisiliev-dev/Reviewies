@@ -533,4 +533,73 @@ describe('cross-references in the source', () => {
       rmSync(between, { force: true });
     }
   });
+
+  /**
+   * An artboard that says it is built from current values must be built from current values.
+   *
+   * `design/canvas/README.md` stated its own truth-condition — *"built from the real values in
+   * `mobile/src/ui/theme.ts` rather than from memory… If the shipping design changes, that file
+   * is stale and the comparison quietly stops being true"* — and then went stale four and a half
+   * hours later, when "fills become rules" replaced the palette. It stayed that way for four
+   * days, and nothing in the build referenced `design/canvas/` at all.
+   *
+   * The sentence knew the failure and could not check itself. This is that sentence with a
+   * clause under it: **read the README for any artboard it describes as built from current
+   * values, and hold that one to the palette.**
+   *
+   * Only files the README makes that claim about. The other artboards are *proposals* —
+   * `After.dc.html` is 11 of 16 in-palette and `Watching.dc.html` 9 of 22, which is what
+   * proposing a direction looks like and is not a defect. A rule that held every artboard to
+   * the shipping palette would forbid the thing this directory is for.
+   */
+  it('holds every artboard that claims to be built from current values', () => {
+    const at = (rel: string) => readFileSync(resolve(ROOT, rel), 'utf8');
+    const readme = at('design/canvas/README.md');
+    /*
+     * The claim is a sentence, so the needle is the sentence's shape rather than a filename:
+     * a backticked `.dc.html` file within the same paragraph as "built from the real values".
+     *
+     * **Struck-through spans are removed first, and that had to be a separate step.** The first
+     * version tried to express "not inside a retraction" as `[^~]` between the filename and the
+     * phrase — which fails, because in `~~…claim…~~` the tildes are outside the span and there
+     * are none between the two halves. It matched the retired sentence and reported the drift it
+     * had just been told about. A retraction is a region, not a character class.
+     */
+    const live = readme.replace(/~~[\s\S]*?~~/g, '');
+    const claims = [...live.matchAll(/`([\w.]+\.dc\.html)`[\s\S]{0,200}?built from the real\s+values/g)]
+      .map((m) => m[1]);
+
+    const palette = at('core/src/tokens.ts') + at('mobile/src/ui/theme.ts');
+    const drifted: string[] = [];
+    for (const file of claims) {
+      const used = new Set(
+        [...at(`design/canvas/${file}`).matchAll(/#[0-9a-fA-F]{6}/g)].map((m) =>
+          m[0].toLowerCase(),
+        ),
+      );
+      const absent = [...used].filter((c) => !palette.toLowerCase().includes(c));
+      if (absent.length) drifted.push(`${file}: ${absent.length} of ${used.size} — ${absent.join(', ')}`);
+    }
+
+    /*
+     * And the non-vacuity half, which is the whole reason this file exists. A regex that stopped
+     * matching would report no drift over an artboard that had drifted completely — the shape
+     * §6.121 is about, and the one this very sweep found four times in one sprint. So the
+     * README must still be making the claim about *something*, or saying in as many words that
+     * it no longer makes it about anything.
+     */
+    const retired = /Retired, and the sentence above predicted exactly how/.test(readme);
+    expect(
+      claims.length > 0 || retired,
+      'design/canvas/README.md neither claims an artboard is built from current values nor ' +
+        'records that the claim was retired — so this clause is reading a sentence that has ' +
+        'changed shape, and is measuring nothing',
+    ).toBe(true);
+
+    expect(
+      drifted,
+      'an artboard the README says is built from current values uses colours no token table ' +
+        'holds, so the comparison it exists for is not true any more',
+    ).toEqual([]);
+  });
 });

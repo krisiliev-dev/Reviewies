@@ -237,7 +237,10 @@ describe('every workspace', () => {
     // core 995, app 745: sprint 101's three branches — the title page's Track control and
     // the shelf's route out, the census that tells stale from unread, and Up Next's floor
     // with the search in the address.
-    core: 995, app: 745, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 1011, app 751: sprint 102 — the matcher's ambiguity flag and its determinism
+    // clauses, the harness sweep's four denominators, and the artboard's claim held rather
+    // than trusted.
+    core: 1011, app: 751, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
