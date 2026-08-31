@@ -77,7 +77,25 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   star: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
   half: { position: 'absolute', top: 0, bottom: 0, left: 0, width: MIN_HALF },
-  right: { left: undefined, right: 0 },
+  /**
+   * The second half is placed, not un-placed.
+   *
+   * This was `{ left: undefined, right: 0 }` — cancel the first half's `left` and pin to the
+   * other edge — and it laid out correctly on a device and wrongly in every measurement this
+   * repository takes. React Native flattens the array, Yoga reads the undefined edge as
+   * unset and honours `right`; `react-native-web` compiles each style object to atomic CSS
+   * and **omits** a declaration whose value is `undefined`, so the `left: 0` above survived
+   * and the box ended up with `left: 0; right: 0; width: 24`, which CSS resolves against
+   * `right`. `design/cost.mjs` read the result: five pairs of 24x28 targets stacked two to a
+   * rectangle at x = 16, 66, 116, 166, 216, where the web app's ten sit at 16, 40, 66, 90,
+   * 116, 140, 166, 190, 216, 240. The later button in the document wins the tap, so the half
+   * values — the whole reason this component exists — could not be pressed on that build.
+   *
+   * `MIN_HALF` is where the second half starts, because the box is `MIN_HALF * 2` wide. It
+   * means the same thing to Yoga and to CSS and depends on no renderer's treatment of
+   * `undefined`. `app/src/ui/phoneStyleUnset.test.ts` holds the rule.
+   */
+  right: { left: MIN_HALF },
   value: { color: theme.inkSecondary, marginLeft: 6 },
 });
 
