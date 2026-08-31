@@ -94,6 +94,114 @@ describe('the real-data pass', () => {
     expect(read('design/serveSnapshot.mjs')).toContain('snapshot has no answer for');
   });
 
+  /**
+   * Every question the provider always asks, asked by the snapshot too.
+   *
+   * ## What this found
+   *
+   * `TmdbProvider.genres()` fetches `/genre/tv/list` and `/genre/movie/list` once per
+   * provider and holds the id → name table for its life, because a *list* endpoint returns
+   * `genre_ids: [18, 10765]` and only that table turns them into words. `design/snapshot.mjs`
+   * never fetched either. It is written to degrade quietly — a failure there is not a search
+   * failure, so the table comes back empty and every result carries no genres — so nothing
+   * broke, nothing logged in the app, and the two 404s scrolled past in the capture output
+   * among two hundred lines of Metro.
+   *
+   * The consequence is a hole in the design record that neither pass could show on its own.
+   * `boxUnder` in `core/src/ui/box.ts` composes the line under a box's title as **genre, then
+   * year**, and `box.ts` argues at length for those being the two facts a spine carries
+   * besides the name. The fixture pass photographs *Drama · 2024* under a blank monogram
+   * plate; the real pass photographs a real poster under *2001*. Thirty sprints of design
+   * review, two passes, and a box with both an image and its own second fact has never been
+   * photographed once.
+   *
+   * ## Why fixed paths only
+   *
+   * `/tv/${id}/season/${n}` cannot be checked this way and should not be: which titles the
+   * snapshot holds is `LIBRARY`'s decision, and a clause insisting on every possible id
+   * would be asserting a different thing badly. What is checkable is the set of endpoints the
+   * provider asks for **whatever the library is** — the ones written as literals — and those
+   * are exactly the ones a snapshot can silently omit for ever, because no title being
+   * missing is what makes them noticeable.
+   *
+   * One direction only. The snapshot fetching `/configuration`, which the provider does not,
+   * costs one response and answers a question somebody may add.
+   */
+  it('copies every question the provider asks at a fixed address', () => {
+    const provider = read('core/src/metadata/tmdb.ts');
+    const asked = [
+      ...new Set([...provider.matchAll(/this\.get<[^>]*>\(\s*'(\/[^']+)'/g)].map((m) => m[1])),
+    ];
+    // The clause has to be able to fail for its own subject: a regex that stopped matching
+    // would pass an empty set against anything. §6.121's shape, which this file's neighbours
+    // have three entries about.
+    expect(asked.length, 'nothing in TmdbProvider looks like a fixed endpoint any more')
+      .toBeGreaterThan(2);
+    expect(asked, 'the genre table is the endpoint this clause was written for')
+      .toContain('/genre/tv/list');
+
+    const snapshot = read('design/snapshot.mjs');
+    for (const path of asked) {
+      /*
+       * The **call**, not the string. `design/snapshot.mjs` is a file of paragraphs about
+       * which questions it copies and why, so a bare `toContain(path)` would be answered by
+       * a comment describing the endpoint it forgot to fetch — which is the failure one
+       * altitude up from the one this whole clause is about.
+       */
+      expect(
+        snapshot,
+        `design/snapshot.mjs never fetches ${path}, which TmdbProvider asks for on every run — ` +
+          'so the real-data design passes photograph a screen the product would not draw',
+      ).toMatch(new RegExp(`api\\(\\s*'${path.replace(/\//g, '\\/')}'`));
+    }
+  });
+
+  /**
+   * The shutter puts the **pointer** back, for the reason it already puts the scroll back.
+   *
+   * ## What it photographed
+   *
+   * `narrow-title-severance.png` showed four filled stars under the heading *Your rating*, on
+   * a title the harness had tracked and never rated. `wide-title-severance.png`, same build,
+   * same data, same run, showed five empty ones. The difference is where the mouse was:
+   * `capture-web-real.mjs` reaches a title page by clicking the show's name in Up Next, the
+   * cursor stays at that coordinate through the navigation, and `StarRating` paints
+   * `hover ?? value ?? 0` — so on the narrow layout the title's block lands over the fourth
+   * star and the shot is of a rating nobody gave. At 1280 the same block centre lands past
+   * the fifth star and the control draws empty.
+   *
+   * A design record whose shots show state the product is not in is the failure the whole
+   * `mustContain` clause above exists to refuse, arriving through a different door. And it is
+   * `design/shoot.mjs`'s own precedent, one axis over: that file already scrolls every element
+   * back to the top after a foot shot, and says why — *"a shot taken at somebody else's scroll
+   * position is #172"*. A shot taken at somebody else's **pointer** position is the same
+   * sentence.
+   *
+   * ## Why the order is the assertion
+   *
+   * Moving the pointer *after* the screenshot satisfies any check for the call and fixes
+   * nothing, which is the plant this clause was widened against. So the two are located in the
+   * source and compared: the move has to come first.
+   */
+  it('puts the pointer somewhere harmless before the shutter, not after', () => {
+    const source = read('design/shoot.mjs');
+    // `await page.mouse.move(` rather than the bare phrase: this file is mostly prose about
+    // what it does, and a paragraph describing the move would otherwise answer for it.
+    const moved = source.indexOf('await page.mouse.move(');
+    expect(
+      moved,
+      'design/shoot.mjs never moves the pointer, so every shot is taken wherever the last click ' +
+        'left it and any control under it is photographed in its hover state',
+    ).toBeGreaterThan(-1);
+    const shutter = source.indexOf('page.screenshot');
+    expect(shutter, 'design/shoot.mjs no longer takes a screenshot').toBeGreaterThan(-1);
+    expect(
+      moved,
+      'design/shoot.mjs moves the pointer after the shutter, which photographs the hover state ' +
+        'and then tidies up',
+    ).toBeLessThan(shutter);
+  });
+
   it('answers the preflight the provider forces', () => {
     /*
      * `Authorization: Bearer …` makes every request non-simple, so the browser asks
