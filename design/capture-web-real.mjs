@@ -136,6 +136,37 @@ for (const [label, width] of WIDTHS) {
     await shoot(page, { out: OUT, name: `${label}-${shot}`, mustContain: want, problems, scrolls });
   }
 
+  /*
+   * The box turned over, which is the half of the shelf no real-data pass has ever seen.
+   *
+   * `design/screens/05-discover-back.png` is the only photograph of a back in the record and
+   * it is a fixture one: `FixtureProvider`'s overviews are **one sentence**, so `BOX.backLines`
+   * — a six-line clamp, written for a paragraph — has never had a paragraph put in it. Nor
+   * has `boxFacts`, whose whole argument is that it says *less* when `seasonCount` and
+   * `runtimeMin` are not cached, and which the fixture always feeds.
+   *
+   * At both widths, because the back is `h-full` in the grid and what it stretches to is its
+   * row — a fact the narrow shelf and the wide one answer differently.
+   *
+   * `More about …` is `COPY.controls.turnOver`, so the press is named by the contract the
+   * renderer is built from rather than by a class or a position on the page.
+   */
+  try {
+    await page.goto(`${BASE}/discover`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2000);
+    await page.getByRole('button', { name: /^More about / }).first().click({ timeout: 15000 });
+    await page.waitForTimeout(700);
+    await shoot(page, {
+      out: OUT,
+      name: `${label}-discover-back`,
+      mustContain: 'Track',
+      problems,
+      scrolls,
+    });
+  } catch (e) {
+    problems.push(`could not turn a box over at ${label}: ${e.message.split('\n')[0].slice(0, 80)}`);
+  }
+
   // A title page each: the episode list is where real names, real counts and §6.156's
   // collapsed seasons land, and it is the screen #191 was about.
   for (const show of SHOWS) {

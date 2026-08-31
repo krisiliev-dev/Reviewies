@@ -101,6 +101,31 @@ await page.goto(`${BASE}/(tabs)/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(3000);
 await shot('r4-discover');
 
+/*
+ * And the box turned over, which is the half of the shelf no real-data pass has ever seen.
+ *
+ * `design/screens/05-discover-back.png` is the only photograph of a back in the record and
+ * it is a fixture one: `FixtureProvider`'s overviews are **one sentence**, so `BOX.backLines`
+ * — a six-line clamp, written for a paragraph — has never had a paragraph put in it. Nor has
+ * `boxFacts`, whose whole argument is that it says *less* when `seasonCount` and `runtimeMin`
+ * are not cached, and which the fixture always feeds.
+ *
+ * The front is the same shape either way, so a back beside its neighbours' fronts is the
+ * only shot that can answer whether it reads as the other side of one object.
+ *
+ * `More about …` is `COPY.controls.turnOver`, so the press is named by the contract the
+ * renderer is built from rather than by a class or a position on the page.
+ */
+await page.goto(`${BASE}/(tabs)/discover`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(3000);
+try {
+  await page.getByRole('button', { name: /^More about / }).first().click({ timeout: 15000 });
+  await page.waitForTimeout(700);
+  await shot('r4-discover-back', 'Track');
+} catch (e) {
+  problems.push(`could not turn a box over: ${e.message.split('\n')[0].slice(0, 80)}`);
+}
+
 await page.goto(`${BASE}/?on=coming`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(3000);
 await shot('r5-calendar');
