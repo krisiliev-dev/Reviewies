@@ -166,6 +166,15 @@ a revelation with no action.
 
 The extent would pass. *"Following along, within about two seconds"* tells you whether to nudge.
 
+> **MEASURED, and the answer is worse than this section supposed.** `design/calibrate.mjs` ran
+> 300 probes through the real matcher; `docs/research/12-what-a-match-knows.md` has it. Confidence
+> and positional error are **orthogonal** — noise moves the number and leaves the position alone,
+> self-similar audio destroys the position and leaves the number alone. Every confidence band
+> carries the same worst error (725,995ms), r = 0.030, and a match reported **93% sure while
+> twelve minutes wrong**. So the extent is not merely underivable: mapping this number to a bound
+> would be *anti-correlated with the truth in the case that matters*. The paragraphs below reasoned
+> to the right decision from an incomplete argument, and are kept as written.
+
 **And this repository cannot currently produce that number, which is the honest finding.**
 `confidence` is the share of landmark votes the winning offset took (`core/src/fingerprint/`), not
 a positional error. The only positional bound derivable today is the frame resolution —
@@ -271,10 +280,14 @@ Three, each with what it would take.
 
 1. **The confidence vocabulary has no owner.** Two platforms, two nouns, neither in `COPY`. Small
    and mechanical.
-2. **Confidence is not an extent, and the extent is not derivable.** Needs a calibration nobody has
-   run: matches at known offsets across a range of confidences, positional error recorded, before
-   any tolerance in seconds can honestly be shown. Until then the percentage stays, because a
-   fabricated tolerance is worse.
+2. ~~**Confidence is not an extent, and the extent is not derivable.**~~ **Run, and closed as a
+   refusal with a measurement behind it.** `docs/research/12-what-a-match-knows.md`: the two
+   quantities are orthogonal, and a derived tolerance would be confidently wrong exactly when the
+   match is. The percentage stays — and what the calibration turned up instead is a live defect in
+   the flagship, not a copy question: `shouldCorrect` accepts a drift up to 15 minutes, the
+   measured wrong placement is 12.1 minutes, and confidence is *high* in that case, so nothing in
+   the product can tell a repeated-audio mismatch from a legitimate recap skip. Filed there with
+   the honest repair named (the runner-up offset, which `matchSample` computes and discards).
 3. **The bridge's three sentences belong in `COPY`, and the missing tenth seam belongs in More.**
    Both are edits to files three agents are working in as this is written; deferred to after the
    merge rather than raced.
