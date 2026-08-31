@@ -269,7 +269,13 @@ describe('every workspace', () => {
     // and of stats, and the tail-implies-head clause. The two passes above landed in
     // parallel and each raised this line; the number below is counted from the merged tree
     // rather than added up from the two reports, which is the whole rule.
-    core: 1030, app: 774, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 775, up one: `docsReferences.test.ts`'s clause that every capture script prints its
+    // census after the last shot it files. `capture.mjs` did not — it read `scrolls` with
+    // eight of its thirty-three shots still to come, so four of the fourteen with anything
+    // below the fold, and two of the three not taken at the top of their screen, were absent
+    // from the two lines a design reviewer is told to read before opening any image. Counted
+    // from the tree rather than added to the number above.
+    core: 1030, app: 775, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

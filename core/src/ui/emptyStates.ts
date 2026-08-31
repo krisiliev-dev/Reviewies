@@ -269,5 +269,8 @@ export const NOT_AN_EMPTY_STATE: Record<string, string> = {
     'that you were already up to date.',
   'catchUp.nothingAired':
     'The show has not started. `NOT_AN_EMPTY_STATE` rather than an entry because the sheet ' +
-    'is a reveal and `reveals.ts` owns the shot of it.',
+    'is a reveal and `reveals.ts` owns the shot of it — `03-upnext-catchup`, named here so ' +
+    'the hand-off is to something a reader can go and find. It was not, for as long as this ' +
+    'sentence has stood: `reveals.ts` had no catch-up entry and no pass had ever pressed the ' +
+    'control, so both registers deferred to each other and the sheet went unphotographed.',
 };

@@ -1465,18 +1465,6 @@ if (await drawer.count()) {
 }
 
 /*
- * What each shot is a shot *of*. A reader of `design/screens/` cannot tell a whole screen
- * from the top of a long one, and §6.141 is what happens when nobody can: a defect filed
- * from the fold of a screen that was simply scrolling.
- */
-const longer = longerScreens(scrolls);
-console.log(
-  longer ? `shots that are the top of a longer screen: ${longer}` : 'every shot is a whole screen',
-);
-const off = offTheTop(scrolls);
-if (off) console.log(`shots not taken at the top of their screen: ${off}`);
-
-/*
  * The other three, each on the screen that owns it. §6.158.
  *
  * Separate navigations rather than hooks in `USE`, because `USE` runs *before* the route's
@@ -1502,6 +1490,33 @@ await reveal(page, {
   arrive: 'http://localhost:4200/?on=coming',
   problems: unshot,
   scrolls,
+});
+
+/*
+ * The catch-up sheet, photographed for the first time.
+ *
+ * `core/src/ui/reveals.ts` carries the finding: two registers each recorded that the other
+ * owned this shot, so nothing did, and *Catch up* — one of exactly two controls under every
+ * row of Up Next — had never been pressed by any pass.
+ *
+ * The control is named for the show, because a shelf of rows each offering "Catch up" is
+ * `row.ts`'s naming rule broken once per row; `COPY.controls.catchUpOn` is what builds it,
+ * and the needle is the shape rather than a hand-typed instance of it. §6.189's 2-of-7 is
+ * what a spelled-out name would be risking here.
+ *
+ * `arrive` navigates home first rather than inheriting whatever the calendar reveal above
+ * left on screen — the `THEN` table's rule, and the reveal before this one ends on a
+ * different segment of this very screen.
+ */
+await reveal(page, {
+  out: OUT,
+  name: '03-upnext-catchup',
+  control: /^Catch up on /i,
+  arrive: 'http://localhost:4200/',
+  problems: unshot,
+  scrolls,
+  // The sheet mounts over the list and its two grids are built from the season it reads.
+  settle: 900,
 });
 
 /*
@@ -1818,6 +1833,46 @@ try {
 } finally {
   await finished.close();
 }
+
+/*
+ * What each shot is a shot *of*. A reader of `design/screens/` cannot tell a whole screen
+ * from the top of a long one, and §6.141 is what happens when nobody can: a defect filed
+ * from the fold of a screen that was simply scrolling.
+ *
+ * ## Last in the file, and that is the whole of it
+ *
+ * This block used to sit immediately after `24-watching-remote`, which was the end of the
+ * file when it was written. The four reveals and the three empty-state walks were then
+ * moved *below* it — deliberately, and the comment above them still gives the reason: they
+ * leave the app on a screen the next step could not be photographed from, so they have to
+ * be the step with nothing after them. Nothing moved the census down with them.
+ *
+ * So for as long as both decisions were true, `scrolls` was read **eight shots early** and
+ * this pass reported a census of the first twenty-five of its thirty-three shots. What it
+ * left out is not a tail of uninteresting ones: `09-calendar-tuning +1087pt`,
+ * `08-stats-year +275pt`, `00-caughtup-upnext +3500pt` and `00-caughtup-finished +1176pt`
+ * are four of the fourteen shots with anything below the fold, and **two of the three in
+ * this pass that are not taken at the top of their screen** — `00-caughtup-upnext at
+ * 3484pt` and `00-caughtup-finished at 1160pt` — were absent from the one line that exists
+ * to name them.
+ *
+ * That line is the instrument a design reviewer is told to read before opening any image,
+ * because §6.172, §6.174 and §6.175 were all retracted for writing about what a shot cut
+ * off without knowing where it was standing. An omission here is that failure with the
+ * warning label removed: `00-caughtup-upnext.png` is a photograph of the foot of a long
+ * screen and the close-out described it as a whole one.
+ *
+ * `agents.md` practice 9 — *an instrument that alters or omits its own subject* — and this
+ * is the omitting kind, produced by a correct change to one half of a file whose other half
+ * had a position rather than a rule. `docsReferences.test.ts` now holds every capture
+ * script to the ordering, so the next correct change cannot quietly do it again.
+ */
+const longer = longerScreens(scrolls);
+console.log(
+  longer ? `shots that are the top of a longer screen: ${longer}` : 'every shot is a whole screen',
+);
+const off = offTheTop(scrolls);
+if (off) console.log(`shots not taken at the top of their screen: ${off}`);
 
 await browser.close();
 if (unseen.length) {

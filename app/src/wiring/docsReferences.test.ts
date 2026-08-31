@@ -11,7 +11,7 @@ import {
   staleBefore,
   unnamed,
 } from '../../../design/unread.mjs';
-import { stripMarkdownComments } from '@reviewies/core/test/source';
+import { stripComments, stripMarkdownComments } from '@reviewies/core/test/source';
 
 /**
  * A cross-reference has to point at a section that exists.
@@ -357,6 +357,86 @@ describe('cross-references in the source', () => {
     expect(left.length, 'every shot is named, which has never been true').toBeGreaterThan(0);
     expect(left.length, 'no shot has ever been named, so the proxy is broken')
       .toBeLessThan(all.length);
+  });
+
+  /**
+   * Every shot a pass files is in the census that pass prints about itself.
+   *
+   * ## The defect, which was live in `capture.mjs` when this was written
+   *
+   * `shoot.mjs` gathers `{ name, overflow, at }` for each shot into a `scrolls` array, and
+   * each capture script ends by printing two lines off it: which shots are the top of a
+   * longer screen, and — since the sprint before this one — which were **not taken at the
+   * top of their screen**. That second line is the one a design reviewer is told to read
+   * before opening any image, because §6.172, §6.174 and §6.175 were every one of them
+   * retracted for writing about what a shot cut off without knowing where it was standing.
+   *
+   * `capture.mjs` printed both lines with **eight of its thirty-three shots still to
+   * come**. The census sat where it had been written, at what was then the end of the file;
+   * the four reveals and the three empty-state walks were later moved below it, for the
+   * reason their own comment gives — they leave the app on a screen nothing else can be
+   * photographed from, so they must be last. Two correct decisions, in one file, that
+   * nobody had to reconcile because neither was written as a rule.
+   *
+   * What the omission cost is specific. Four of the fourteen shots with anything below the fold
+   * were missing from the first line, and **two of the three shots not taken at the top of
+   * their screen were missing from the second** — `00-caughtup-upnext at 3484pt` and
+   * `00-caughtup-finished at 1160pt`, both photographs of the foot of a long screen that
+   * the close-out described as whole ones.
+   *
+   * `agents.md` practice 9 names the class: *an instrument that alters or omits its own
+   * subject*. Nine of the ten entries in its table alter; this one omits, which is quieter,
+   * because a census that is missing a row looks exactly like a census with nothing to say.
+   *
+   * ## What this checks, and what it cannot
+   *
+   * Source order: in each `design/capture*.mjs`, nothing that files a shot may appear after
+   * the call that reads `scrolls`. It is a **position** rule standing in for a *happens
+   * before* one, and the substitution is stated rather than glossed, because the plant that
+   * defeats it is easy to write: move the trailing walks into a function declared above the
+   * census and call it below, and every shot is still filed late while the text order is
+   * innocent. That plant was built and it does pass this clause.
+   *
+   * It is kept anyway, and the reason is what the real defect looked like. Nobody wrote a
+   * helper; somebody moved a block of top-level `await`s to the end of a 1,830-line file and
+   * did not scroll past the console.log they had stepped over. Source order is the exact
+   * shape of the mistake that has actually happened here, and a rule that catches the real
+   * one and admits what it misses beats a rule nobody can write.
+   *
+   * The four other capture scripts already satisfy it, which is what makes the one that did
+   * not a defect rather than a convention nobody had adopted.
+   */
+  it('prints its census after the last shot it files, in every capture script', () => {
+    const scripts = readdirSync(resolve(ROOT, 'design')).filter((f) => /^capture.*\.mjs$/.test(f));
+    expect(scripts.length, 'no capture scripts, so nothing files shots').toBeGreaterThan(3);
+
+    /*
+     * Comments stripped, for §6.72's reason: every one of these files explains at length
+     * what it photographs and when, and `capture.mjs`'s new header for this very defect
+     * quotes `shoot(` and `reveal(` in prose. A guard that fired on that would be the
+     * fifth instance in the list that helper's own header keeps.
+     */
+    const late: string[] = [];
+    for (const file of scripts) {
+      const source = stripComments(readFileSync(resolve(ROOT, 'design', file), 'utf8'));
+      // The call that reads `scrolls`, not the import that names it.
+      const census = source.search(/\blongerScreens\(\s*scrolls/);
+      expect(census, `${file} never prints a census of its own shots`).toBeGreaterThan(-1);
+
+      /*
+       * The three ways a shot gets filed. `shoot` and `reveal` come from `shoot.mjs`; the
+       * third is the local one-line `shot` helper four of the five scripts define, and it
+       * is matched on a word boundary so `shoot(` does not answer for it. The page handle
+       * is deliberately not part of the needle: `capture.mjs`'s last three shots are of
+       * `done` and `over`, two second browser contexts, and a needle spelled `shoot(page`
+       * would have missed exactly the shots this clause exists to find.
+       */
+      for (const m of source.matchAll(/\b(?:shoot|reveal|shot)\(/g)) {
+        if (m.index > census) late.push(`${file}: ${m[0]} at ${m.index}, after the census`);
+      }
+    }
+    expect(late, 'a shot is filed after the pass has already said what it photographed')
+      .toEqual([]);
   });
 
   /**

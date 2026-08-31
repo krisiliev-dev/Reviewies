@@ -127,6 +127,58 @@ export const REVEALS: readonly Reveal[] = [
   },
   {
     /**
+     * The catch-up sheet, which two registers each believed the other was holding.
+     *
+     * `emptyStates.ts` excuses two of this sheet's sentences by name — `catchUp.nothingToMark`
+     * and `catchUp.nothingAired` — and the reason it gives for both is *"`NOT_AN_EMPTY_STATE`
+     * rather than an entry because the sheet is a reveal and `reveals.ts` owns the shot of
+     * it."* It did not. There was no entry here, no capture script pressed the control, and
+     * across the 158 shots the design record held when this was found there was **no
+     * photograph of the sheet in any state**. One register pointed at another, the other had
+     * never heard of it, and the gap read from either side as somebody else's coverage.
+     *
+     * It is not a minor state to have lost. *Catch up* is one of exactly two controls under
+     * every row of Up Next — the screen `docs/design/direction.md` stakes the product on —
+     * and the sheet behind it is where somebody who binged away from the app puts six
+     * episodes back. `COPY.catchUp` holds seven sentences for it and none had ever been seen.
+     *
+     * ## Why the sweep did not catch it, which is the part worth keeping
+     *
+     * `reveals.test.ts`'s third clause is the half that is supposed to make this register
+     * self-maintaining — *"a screen reveals something the register has never heard of"* — and
+     * its needle is
+     *
+     *     const [name, setName] = useState<…>(false | SOMETHING_OPEN)
+     *
+     * an initialiser of `false` or a `*_OPEN` constant. This sheet's closed state is not
+     * `false`; it is **absent**. `const [catchingUp, setCatchingUp] = useState<{ seriesId:
+     * string; seriesName: string }>()` holds the series the sheet is *for*, so closed is
+     * `undefined` and the needle has nothing to match. Every other reveal in this register
+     * happens to be a boolean, which is why the clause has looked complete for as long as it
+     * has existed.
+     *
+     * Broadening it was tried and measured rather than assumed, and the measurement is why
+     * the needle is unchanged. Matching `useState()` with no argument at all finds **49**
+     * names across the two apps, of which roughly forty-five are data — `error`, `items`,
+     * `lists`, `summary`, `providers`, `results`, `session` — so `NOT_A_REVEAL` would grow by
+     * forty-five excuses and become the thing practice 4 warns about, a rule people route
+     * around. A tighter one — no initialiser, setter called from an `onPress`, state gating a
+     * block — finds 8, of which none is a reveal and **`catchingUp` is not among them**: its
+     * setter is handed down as the `onCatchUp` prop and pressed a component away, so the
+     * press and the gate are never in one file.
+     *
+     * So the honest state of it: the sweep covers reveals whose closed state is a boolean,
+     * and an object-shaped reveal has to be put here by hand. That sentence is in this header
+     * rather than nowhere, because a clause that looks exhaustive and is not is how this one
+     * was missed for as long as the sheet has existed.
+     */
+    states: ['catchingUp', 'catchingUp'],
+    screens: ['app/src/screens/UpNext.tsx', 'mobile/app/(tabs)/index.tsx'],
+    shows: 'the catch-up sheet — the season grid and the last episode you watched in it',
+    shot: '03-upnext-catchup',
+  },
+  {
+    /**
      * The browse box's other face, and the only reveal in the register whose *content* is
      * the reason it exists rather than a panel attached to it.
      *
@@ -148,10 +200,42 @@ export const REVEALS: readonly Reveal[] = [
      * `compose.ts`'s rule, sixth application, and every previous application cost the design
      * track a shot — which is the whole reason this register exists. Registered the same hour
      * the panel was written rather than three sprints later.
+     *
+     * ## What the shot shows is two of the three, and `shows` said three
+     *
+     * `05-discover-filters.png` carries **KIND** and **STANDING**. There is no **GENRE**
+     * group in it, and this entry claimed there was for as long as it has existed — the
+     * register asserting a thing about a photograph nobody had put beside it, which is
+     * §6.157's own defect at one remove: that sprint found a reveal registered and shot
+     * closed; this is one registered and shot incomplete.
+     *
+     * The cause is in `Filters.tsx` and it is correct behaviour: the genre group draws only
+     * `genres.length > 1`, because *"a single-option radiogroup is a control that cannot do
+     * anything"*. The fixture shelf cannot clear that bar. It offers **one** box —
+     * `05-discover.png` is the picture — carrying one genre, so the group is hidden on a full
+     * fixture shelf and hidden again on the emptied one this reveal is actually taken over,
+     * the walk having parked the last film so `00-discover-empty` has something to
+     * photograph. Two independent reasons, either of them enough.
+     *
+     * So the state is not merely unphotographed, it is **unreachable by the pass that owns
+     * the shot**, and §6.146's rule is that this must be a written line rather than a gap:
+     * the shelf that has more than one genre on it is the *real* one, and the real passes do
+     * not open reveals. `shows` now says what the picture has in it, and the sentence below
+     * says what is missing and why, so nobody reads the two-group photograph as the whole
+     * panel again.
+     *
+     * The genre group is the one worth reaching, which is what makes this worth writing down
+     * rather than trimming: it is the only `Choice` in the product besides Stats' years that
+     * takes `scroll`, and `core/src/ui/choice.ts` argues that decision at length —
+     * *"long is not the same as data-shaped"* — against a control no photograph in the design
+     * record shows. Reaching it means a filters reveal in `capture-real.mjs`, where the shelf
+     * is TMDB's and carries a dozen genres; that is not done.
      */
     states: ['open', 'open'],
     screens: ['app/src/ui/Filters.tsx', 'mobile/src/ui/Filters.tsx'],
-    shows: 'the three groups Discover can be narrowed by, and what each one offers',
+    shows:
+      'the kind and standing groups Discover can be narrowed by — not genre, which needs ' +
+      'more than one genre on the shelf and so cannot appear on the fixture pass at all',
     shot: '05-discover-filters',
   },
   {
