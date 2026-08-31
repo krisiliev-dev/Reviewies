@@ -245,7 +245,11 @@ describe('every workspace', () => {
     // and `decide.test.ts`'s way-out-of-tracking clause.
     // app 754, up two: §6.191's merge of the scent pass — `listNames.test.ts`'s omission
     // clause and the required-name clause under it.
-    core: 1024, app: 754, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 760, up six: §6.191's merge of the mid-press pass — `whyNever.test.ts` (3), which
+    // reads a `never`'s reason instead of only requiring one, and `tabPress.test.ts` (3),
+    // which asks whether a control has a press rule rather than whether its press goes the
+    // right way.
+    core: 1024, app: 760, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

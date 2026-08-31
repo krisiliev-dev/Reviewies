@@ -185,7 +185,23 @@ for (const screen of SCREENS) {
     const said = ((await el.getAttribute('aria-label')) || (await el.innerText().catch(() => '')) || '')
       .replace(/\s+/g, ' ')
       .trim();
-    if (said) names.push(said.slice(0, 40));
+    /*
+     * The whole name, not a slice of it.
+     *
+     * This read `names.push(said.slice(0, 40))`, and the matcher below asks for
+     * `{ name: said, exact: true }` — so every control whose accessible name ran past 40
+     * characters was looked up under a string that could not equal it, failed, and was
+     * filed as *"was there a moment ago and is not now"*. That line reads as a finding
+     * about the app and is a fact about this file. `/more` contributed **zero** measured
+     * interactions for that reason alone, and the run reported 18 rather than the 24 the
+     * screens actually offer.
+     *
+     * Found by the mid-press instrument (§6.191) rather than by this file, which is the
+     * point: nothing here could see it, because a control that is silently dropped leaves
+     * no trace in a count of the controls that were not dropped. Truncation is for
+     * printing, and printing happens at the bottom.
+     */
+    if (said) names.push(said);
   }
 
   for (const said of names) {
@@ -197,7 +213,7 @@ for (const screen of SCREENS) {
       page.getByRole('link', { name: said, exact: true }),
     ).or(page.getByRole('radio', { name: said, exact: true })).first();
     if (!(await target.count())) {
-      unreachable.push(`${screen.on}: "${said}" was there a moment ago and is not now`);
+      unreachable.push(`${screen.on}: "${said.slice(0, 60)}" was there a moment ago and is not now`);
       continue;
     }
     const pressedAt = Date.now();
@@ -233,7 +249,7 @@ for (const screen of SCREENS) {
     const events = await page.evaluate(() => window.__events ?? []);
     const pointer = events.filter((e) => /pointer|click|mouse/.test(e.name));
     if (pointer.length === 0) {
-      unreachable.push(`${screen.on}: "${said}" was pressed and the browser reported no interaction`);
+      unreachable.push(`${screen.on}: "${said.slice(0, 60)}" was pressed and the browser reported no interaction`);
       continue;
     }
     const worst = pointer.reduce((a, b) => (b.duration > a.duration ? b : a));

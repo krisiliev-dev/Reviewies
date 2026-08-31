@@ -16095,6 +16095,96 @@ root-level single-file runs are sums over checkouts, which is one more instance 
 sprint is otherwise about: **an instrument that quietly includes something other than its subject.**
 Run per workspace.
 
+#### The second agent is in, and it found a defect in the instrument I shipped this sprint
+
+`design/between.mjs` (1,015 lines) measures the interval `response.mjs` brackets and never looks
+inside: layout shift, intermediate painted states, and how long a press takes to look pressed.
+
+Its bounds come from this repository rather than from a blog. The shift bound is **20.02px** —
+`text.s14 × leading.l143`, read from `tokens.ts`, because the unit of losing your place is a line.
+And it **refused CLS's 0.1** for a reason harder than `response.mjs`'s: a `layout-shift` entry
+within 500ms of an input carries `hadRecentInput`, and CLS discards every one of those. Measured:
+**7 of 7 shifts on the web and 6 of 6 on the phone carry the flag.** The interval smoothness lives
+in is scored zero by CLS *by construction*. The instrument prints the flag rather than filtering
+on it.
+
+**Four findings, three of them confirmed here by reading and two repaired.**
+
+**The web tab bar had no press state.** 7 of 24 sampled presses never changed colour in 250ms and
+every one was a tab. `app/src/App.tsx`'s `NavLink` carried `isActive ? 'text-ink' :
+'text-ink-secondary'` and **no `active:` rule at all** — confirmed by grep, zero occurrences in the
+file. `surface.ts` says a press sinks *"one direction, for every control on both platforms"*, and
+the eight controls the product is navigated with, the highest-frequency gesture in it, were not in
+that set.
+
+Why no guard caught it, and this is the transferable half: `surface.test.ts`'s press sweep is
+well-built and **not** vacuous — it counts what it saw. But it iterates the controls that *already
+have* a press rule and asks whether each goes the right way. **A control with no rule is not in the
+set being swept, so it is not wrong; it is invisible.** Absence is not a value a sweep over values
+can return.
+
+Repaired with `active:bg-ground-well` — the nav is drawn on `bg-ground`, so `ground.well` is the
+1.046 step every other web press was measured making — and `tabPress.test.ts` asks the other
+question. Three plants: the rule removed (red), the rule made to *rise* instead of sink (red, the
+§6.122 shape), and **the rule moved off the `NavLink` onto the `<li>` around it** (red), which is
+the one a looser needle would have missed.
+
+And the new guard was itself caught, by this repository, on the first full run: `clauses.test.ts`
+refused `expect(source).toContain('NavLink')` because **`NavLink` occurs three times in that file**
+— the import, the opening tag and the closing one — so a whole-file `toContain` says nothing about
+which one it found. Tightened to `<NavLink`, which occurs once. A guard written against loose
+needles catching a loose needle in a guard written the same afternoon is the cheapest possible
+demonstration that the practice pays.
+
+**`screenStates.ts` was wrong twice, identically, for the life of the file.** `loading` on
+`/watchlist` and on `/stats` filed `never`, because *"Dexie resolves before the first paint
+locally"*. `useLiveQuery(fn, deps)` with no initial value returns `undefined` on the first render
+and resolves in a microtask — it cannot beat the paint — and `Watchlist.tsx` carries
+`if (items === undefined) return <Note>{COPY.waiting.loading}</Note>` **ten lines from the query**.
+The state is not merely reachable; it is the guaranteed first frame. `between.mjs` measured nine of
+24 interactions painting it.
+
+`screenStates.test.ts` requires every `never` to carry a `why`. **It does not read the `why`** — a
+reason is a string, and a wrong string is indistinguishable from a right one. `whyNever.test.ts`
+asks the narrow question that fails here: *a state the renderer has an explicit branch for is not a
+state nothing has ever produced.* Scoped to `loading` on purpose — most `never`s in that file are
+`NO_ACCOUNT`, whose reachability is a property of the environment rather than the renderer, and
+widening the clause would make it fail on entries it has no business judging. Planted both ways;
+the two-route plant names both routes and both files.
+
+Two more findings filed as **#235** and **#236**: the single-frame `Loading…` (16–66ms, a word
+nobody can read — and the remedy is not a longer state), and the title page growing its head after
+painting its tail (109px on the web, 174px on the phone, where the *waiting* is honest and the
+*ordering* is noise).
+
+#### And the instrument I shipped four commits ago was dropping a screen
+
+`response.mjs`'s control discovery did `names.push(said.slice(0, 40))` and then looked each name up
+with `{ name: said, exact: true }`. **Every control whose accessible name ran past 40 characters was
+searched for under a string that could not equal it**, failed, and was filed as *"was there a moment
+ago and is not now"* — a line that reads as a finding about the app and is a fact about the file.
+
+Measured, before and after removing the truncation, on the same build:
+
+| | interactions | `/more` |
+| --- | --- | --- |
+| as shipped | 18 | **0** |
+| truncation removed | **24–25** | **3** |
+
+The three are `Lists — Film and television in the same list`, `People — Your handle, following,
+blocking` and `Stats — Runtime-weighted, and your year in review` — the same long rows the scent
+pass filed as #234, arrived at from the opposite direction.
+
+Nothing in `response.mjs` could have found this: a control that is silently dropped leaves no trace
+in a count of the controls that were not dropped. It took an instrument built to look at something
+else. **That is nine catalogued instances of this family and it is the tenth**, committed by the
+person cataloguing it, in the commit that added the catalogue.
+
+One number moved that I cannot account for: *controls offered* went 70 → 54 between the two runs.
+It is a per-screen count taken at a moment, and what a screen has painted when it is taken varies;
+that is a plausible cause and not an established one, and it is written here as unexplained rather
+than explained away. The 16–24ms answer and 155–254ms settle are unchanged.
+
 #### What is not done
 
 - **`paused` still has no writer**, named in `NO_WRITER_YET` rather than quietly left. Three readers
@@ -16112,6 +16202,18 @@ Run per workspace.
 - **The scent pass's two filed findings** (#233, #234) are untouched here, deliberately: the third
   agent is editing `Discover.tsx`, `Browse.tsx` and `Note.tsx` on both platforms as this is written,
   and finding B lives in exactly those files.
+- **The phone's shelf box still draws no press.** `mobile/src/ui/Browse.tsx` passes a static
+  `style={[styles.front, { width }]}` with no `({ pressed })` branch where its web twin has
+  `active:bg-ground-well` — the same component, one platform drawing the press. Confirmed by
+  reading and left alone for the same reason: that file is open in another checkout.
+- **#235 and #236**, the single-frame `Loading…` and the title page's head arriving after its tail.
+  Both are decisions with a real tension in them — §6.104 requires *nothing* to be distinguishable
+  from *I could not look*, so the loading branch cannot simply be deleted — and taking them quickly
+  to empty a list would be the wrong reason to take them.
+- **`between.mjs`'s `--phone` measures react-native-web.** Only the *state count* crosses to a
+  device; shift and press-feedback are properties of that renderer, and the file says so on every
+  run. The phone tab bar reads 1.000 there and **no claim is made about the device**, where
+  expo-router's `Tabs` draws its own press.
 
 
 ## 7. What is still not known

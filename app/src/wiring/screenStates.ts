@@ -90,7 +90,21 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'empty', verdict: 'suite' },
       { name: 'populated, with a note', verdict: 'suite' },
       { name: 'editing a note', verdict: 'suite' },
-      { name: 'loading', verdict: 'never', why: 'Dexie resolves before the first paint locally' },
+      /*
+       * `never`, because *"Dexie resolves before the first paint locally"* — for the life of
+       * this file, and false. `useLiveQuery(fn, deps)` with no initial value returns
+       * `undefined` on the first render and resolves in a microtask afterwards; it cannot
+       * beat the paint. The screen it describes has an explicit branch for it four lines
+       * from the query — `if (items === undefined) return <Note>{COPY.waiting.loading}</Note>`
+       * — so the state is not merely reachable, it is the guaranteed first frame.
+       *
+       * §6.191 measured it in a browser: nine of 24 interactions painted it, each for
+       * 16–66ms. `suite` is the literal truth by this file's own definition — an end-to-end
+       * run renders it, on every run — with the caveat that nothing *asserts* it, which is
+       * the distinction this vocabulary does not carry and `whyNever.test.ts` now guards
+       * the other half of.
+       */
+      { name: 'loading', verdict: 'suite' },
     ],
   },
   {
@@ -207,7 +221,21 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'nothing watched in this period', verdict: 'suite' },
       { name: 'a rolling window', verdict: 'suite' },
       { name: 'Year in Review', verdict: 'suite' },
-      { name: 'loading', verdict: 'never', why: 'Dexie resolves before the first paint locally' },
+      /*
+       * `never`, because *"Dexie resolves before the first paint locally"* — for the life of
+       * this file, and false. `useLiveQuery(fn, deps)` with no initial value returns
+       * `undefined` on the first render and resolves in a microtask afterwards; it cannot
+       * beat the paint. The screen it describes has an explicit branch for it four lines
+       * from the query — `if (items === undefined) return <Note>{COPY.waiting.loading}</Note>`
+       * — so the state is not merely reachable, it is the guaranteed first frame.
+       *
+       * §6.191 measured it in a browser: nine of 24 interactions painted it, each for
+       * 16–66ms. `suite` is the literal truth by this file's own definition — an end-to-end
+       * run renders it, on every run — with the caveat that nothing *asserts* it, which is
+       * the distinction this vocabulary does not carry and `whyNever.test.ts` now guards
+       * the other half of.
+       */
+      { name: 'loading', verdict: 'suite' },
     ],
   },
   {

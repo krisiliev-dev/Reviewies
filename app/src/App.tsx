@@ -247,7 +247,20 @@ function TabBar() {
                 // fact from the other side, that *"the web's type is in `px` and never
                 // answered the browser's font-size setting"*. The claim travelled: the
                 // 200% simulation in `app/smoke.mjs` was making it too. §6.187.
-                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-l120 break-words ${
+                // `active:bg-ground-well` is the press, and it was missing for the life of
+                // the product. §6.191 measured the interval between press and settle and
+                // found 7 of 24 sampled presses never changed colour at all — every one of
+                // them one of these eight. `surface.ts` says a press sinks *"one direction,
+                // for every control on both platforms"*, and the controls the app is
+                // navigated with, the most-pressed things in it, were not in that set.
+                // The nav's ground is `bg-ground`, so the sink is `ground.well` — the same
+                // 1.046 step every other web press was measured making.
+                //
+                // Not caught by `surface.test.ts`, which sweeps presses well and asks *does
+                // every press go the right way* rather than *does every control have one*.
+                // Absence is invisible to a sweep over the things that already have the
+                // property. `tabPress.test.ts` asks the other question.
+                `flex flex-col items-center gap-0.5 px-1 pt-2 pb-3 text-center text-s12 leading-l120 break-words active:bg-ground-well ${
                   isActive ? 'text-ink' : 'text-ink-secondary'
                 }`
               }
