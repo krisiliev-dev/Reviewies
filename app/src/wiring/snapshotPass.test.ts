@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { stripComments } from '@reviewies/core/test/source';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { queryKey } from '../../../design/tmdbKey.mjs';
 import { TMDB_BASE, TMDB_IMAGE } from '@reviewies/core/metadata/tmdb';
@@ -162,6 +162,96 @@ describe('the real-data pass', () => {
         `design/snapshot.mjs never fetches ${path}, which TmdbProvider asks for on every run — ` +
           'so the real-data design passes photograph a screen the product would not draw',
       ).toMatch(new RegExp(`api\\(\\s*'${path.replace(/\//g, '\\/')}'`));
+    }
+  });
+
+  /**
+   * And the snapshot **on disk** answers them, which the clause above cannot see.
+   *
+   * ## Measured, not asserted
+   *
+   * The clause above reads `design/snapshot.mjs` and checks it *asks*. That fix was merged.
+   * Then a checkout was handed a `design/real/` taken before it — no `api/genre/` directory
+   * at all — and the whole clause above passed, seven of seven, while every real-data box in
+   * the run that followed drew **year only** because `TmdbProvider.genres()` swallowed two
+   * 404s and handed back an empty map. The photographs were of a screen the product would
+   * not draw, which is the one thing this whole file exists to refuse.
+   *
+   * So the source clause was green for the defect it was written for. That is not a
+   * criticism of it — it is the right clause, one file short. A snapshot is a copy of the
+   * questions, and a copy taken before a question was added does not have the answer.
+   *
+   * ## Why only the endpoints asked with no parameters
+   *
+   * `queryKey` files an answer under the path *and* the query, so `/search/multi` lives at
+   * `api/search/multi__include_adult=false&query=….json` and a fixed path alone does not
+   * name a file. `/tv/{id}` is `LIBRARY`'s decision and the clause above says why not to
+   * assert on it. What is left is the set a snapshot can silently omit for ever **and** whose
+   * filename is fully determined: a literal path asked with `{}`. Today that is the two genre
+   * lists. It is derived from the provider rather than typed here, so a third one is covered
+   * the day somebody writes it.
+   *
+   * ## Skipped, not passed, when there is no snapshot
+   *
+   * `design/real/` is gitignored and 534 MB, so most checkouts do not have it. A missing
+   * directory is not zero missing answers — §6.187 and `design/unread.mjs`'s
+   * `missingShotDirs` are the same distinction — so this reports as **skipped** in the run
+   * rather than as another green tick. "I cannot look" and "there is nothing wrong" are
+   * different answers and only one of them is about the snapshot.
+   */
+  const SNAPSHOT = resolve(ROOT, 'design/real');
+  it.skipIf(!existsSync(SNAPSHOT))('has an answer on disk for the questions it cannot miss', () => {
+    const provider = read('core/src/metadata/tmdb.ts');
+    const fixed = [
+      ...new Set(
+        [...stripComments(provider).matchAll(/this\.get<[^>]*>\(\s*'(\/[^']+)',\s*\{\}/g)].map(
+          (m) => m[1],
+        ),
+      ),
+    ];
+    // The clause has to be able to fail for its own subject. §6.121, and the clause above
+    // carries the same guard against a regex that has quietly stopped matching.
+    expect(fixed, 'nothing in TmdbProvider is asked at a fixed address with no parameters')
+      .toContain('/genre/tv/list');
+
+    for (const path of fixed) {
+      const file = queryKey(path);
+      const where = resolve(SNAPSHOT, file);
+      expect(
+        existsSync(where),
+        `design/real/${file} is not in the snapshot, and TmdbProvider asks for ${path} on ` +
+          'every run — so `genres()` catches the 404, hands back an empty map, and the ' +
+          'real-data passes photograph boxes with no genre on them. Re-take it with ' +
+          '`npm run design:snapshot`, or fetch that one answer; the snapshot on disk is ' +
+          'older than `design/snapshot.mjs`.',
+      ).toBe(true);
+
+      /*
+       * And the answer says something.
+       *
+       * Existence alone is not the property. Planted and measured: `{"genres":[]}` in place
+       * of the real table passes an existence check and draws **the identical screen** to
+       * the 404 — `for (const g of list.genres ?? [])` iterates nothing, the map comes back
+       * empty, `toResult` filters every id to nothing and returns `undefined` rather than
+       * `[]` on purpose, and `boxUnder` composes the year alone. An empty envelope is a 404
+       * wearing a 200, and a guard that cannot tell them apart is not guarding the screen.
+       *
+       * The rule is *at least one populated array*, rather than the word `genres`, for the
+       * same reason the path list is derived rather than typed: this clause should not know
+       * which endpoint it is looking at. Every list answer TMDB gives is an object with an
+       * array in it, and no library decision is being asserted — which titles the snapshot
+       * holds is still entirely `LIBRARY`'s, and this says nothing about them.
+       */
+      const populated = (value: unknown): boolean =>
+        Array.isArray(value)
+          ? value.length > 0
+          : !!value && typeof value === 'object' && Object.values(value).some(populated);
+      expect(
+        populated(JSON.parse(readFileSync(where, 'utf8'))),
+        `design/real/${file} holds no rows, and an empty answer draws the same screen a 404 ` +
+          `does: \`genres()\` builds an empty map either way. Re-take the snapshot rather ` +
+          'than leaving a file that only looks like an answer.',
+      ).toBe(true);
     }
   });
 
