@@ -177,7 +177,16 @@ function Box({ item, onActed }: { item: Suggestion; onActed: () => void }) {
       type="button"
       onClick={() => setOver(true)}
       aria-label={COPY.controls.turnOver(item.name)}
-      className="tap flex w-full flex-col gap-1.5 text-left active:bg-ground-well"
+      /*
+       * No `tap`. That class is `index.css`'s floor for *"a text button that is still a
+       * target"* — a line of words with nothing else to give it height — and it buys that
+       * height with `align-items: center` alongside the `min-height`. On one line in a row
+       * that centres the glyphs; on this column it centred the title and the line under it
+       * against the plate, each at its own width, while `text-left` right here said
+       * otherwise and the phone's twin drew both flush left. A box 173 points wide and 311
+       * tall has never needed a 24-point floor. `space.test.ts` holds the general rule.
+       */
+      className="flex w-full flex-col gap-1.5 text-left active:bg-ground-well"
     >
       <Art url={item.posterUrl} name={item.name} />
       <span className="line-clamp-2 text-s14 font-title font-semibold text-ink">

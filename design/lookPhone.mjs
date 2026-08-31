@@ -13,12 +13,15 @@
  * source guard. Ports are the caller's.
  */
 import { chromium } from 'playwright';
+import { chromiumOptions } from '../scripts/browser.mjs';
 
 const BASE = process.argv[2] ?? 'http://localhost:4321';
 const problems = [];
 const note = (line) => console.log(`  ${line}`);
 
-const browser = await chromium.launch({ executablePath: process.env.CHROME ?? undefined });
+// From `scripts/browser.mjs`, like every other launch here — `look.mjs` has the paragraph.
+// This took `process.env.CHROME`, which nothing sets, and so could not start at all.
+const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => problems.push(`page error: ${e.message.split('\n')[0]}`));
 

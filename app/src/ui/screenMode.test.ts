@@ -63,11 +63,22 @@ describe('the two feeds Discover can be showing', () => {
       expect(source, `${file} says the same thing for both feeds`).toContain(
         'COPY.discover.trendingBlurb',
       );
-      // Read off the suggestions themselves. A separate piece of state saying which mode
-      // the screen is in is a second answer to a question the feed already answers, and
-      // §6.138 is the entry about what happens when two things answer one question.
+      /*
+       * Read off the suggestions themselves — the first item of the feed being drawn. A
+       * separate piece of state saying which mode the screen is in is a second answer to a
+       * question the feed already answers, and §6.138 is the entry about what happens when
+       * two things answer one question.
+       *
+       * The needle is `[0]?.trending` and not `?.[0]?.trending`, which is the seventh guard
+       * in this repository to fail on a correct change and the second in this file — its own
+       * header is the entry about the last one. The blurb moved behind
+       * `shownShelf.length > 0`, so the array it reads is the one the shelf actually draws
+       * and is no longer optional; `shownShelf[0]?.trending` is the same rule spelled
+       * without a `?.` that now has nothing to guard. What is asserted is *which* thing the
+       * mode is read from, and a leading question mark was never part of that.
+       */
       expect(source, `${file} decides its mode from something other than the feed`).toMatch(
-        /\?\.\[0\]\?\.trending/,
+        /\[0\]\?\.trending/,
       );
     }
   });

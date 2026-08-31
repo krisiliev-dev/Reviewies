@@ -125,4 +125,44 @@ describe('the code nothing else runs', () => {
     const missing = resolve(ROOT, 'core/src/fingerprint/notAFile');
     expect([missing, `${missing}.ts`, join(missing, 'index.ts')].some(existsSync)).toBe(false);
   });
+
+  /**
+   * Every script that opens a browser asks `scripts/browser.mjs` where one is.
+   *
+   * That file exists because of §6.46: three suites hardcoded `/opt/pw-browsers/...`, and on
+   * a machine without it the run died with a path the reader had never heard of. Its answer
+   * is *use the pinned build when it is actually there, and otherwise say nothing and let
+   * Playwright resolve its own* — one decision, in one place, that ten of the twelve browser
+   * launches in this repository read.
+   *
+   * The two that did not were `design/look.mjs` and `design/lookPhone.mjs`, which take
+   * `process.env.CHROME ?? undefined` — an environment variable no script in `package.json`
+   * sets. So on this checkout they resolved to Playwright's own default, which is a
+   * `chrome-headless-shell` build that is not installed, and both died before their first
+   * navigation with *"Executable doesn't exist"*. `architecture.md` section 8 calls those two
+   * walks **the only thing here that has seen the new architecture**; they were the only two
+   * that could not be started. §6.187's shape exactly — a pass red for a reason that is not
+   * the code — one directory over, and it was found by trying to run one.
+   *
+   * The scan is the whole repository rather than `scripts/`, because the file this clause is
+   * about is the one place the answer lives and the launches are everywhere else.
+   */
+  it('opens no browser except through scripts/browser.mjs', () => {
+    const trees = ['scripts', 'design', 'app', 'mobile', 'extension', 'bridge', 'relay'];
+    const launchers = trees
+      .flatMap((tree) => filesUnder(resolve(ROOT, tree), '.mjs'))
+      .filter((path) => /chromium\.launch/.test(readFileSync(path, 'utf8')));
+    // Twelve when this landed. A scan that stopped matching would report nothing and read
+    // as success — §6.121, and the reason every clause in this file has a floor.
+    expect(launchers.length, 'nothing in the tree launches a browser at all').toBeGreaterThan(8);
+
+    const byHand = launchers.filter(
+      (path) => !/chromiumOptions|chromiumPath/.test(stripComments(readFileSync(path, 'utf8'))),
+    );
+    expect(
+      byHand.map((p) => relative(ROOT, p)),
+      'a script picks its own browser instead of asking scripts/browser.mjs, which is how a ' +
+        'pass ends up red for a reason that is not the code',
+    ).toEqual([]);
+  });
 });

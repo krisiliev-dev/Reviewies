@@ -203,8 +203,16 @@ export default function DiscoverScreen() {
           </>
         ) : (
           <>
-            {/* Two modes, said apart. The web's copy of this has the reasoning. */}
-            <Note>{items?.[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}</Note>
+            {/* Two modes, said apart, and only where there is a shelf to describe. The
+                web's copy of this has the reasoning; the short version is that
+                `emptyStates.ts` excuses this sentence on the grounds that it is drawn above
+                a *full* screen, and above an empty one it is the first of two sentences
+                beginning "Nothing". */}
+            {shownShelf.length > 0 && (
+              <Note>
+                {shownShelf[0]?.trending ? COPY.discover.trendingBlurb : COPY.discover.blurb}
+              </Note>
+            )}
 
             {/* The spinner *and* the sentence, as the search branch above already does and
                 as this one did not. §6.104: a state has to be legible as words rather than
