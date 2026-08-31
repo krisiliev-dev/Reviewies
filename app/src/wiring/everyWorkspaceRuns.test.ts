@@ -256,7 +256,11 @@ describe('every workspace', () => {
     // app 763, up one: the box's press clause in `browse.test.ts`, which asks whether the
     // shelf box has a press rule at all rather than whether the one it has goes the right
     // way — the phone's had none.
-    core: 1030, app: 763, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 769, up six: `waiting.test.tsx`'s six clauses — the threshold's two independent
+    // bounds, the hook's silence-then-speech-then-silence-again, the first frame of the
+    // watchlist and of stats, and the tail-implies-head clause on the title page and on
+    // stats. Counted, not added up: the file has six `it(` blocks and the workspace has 769.
+    core: 1030, app: 769, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

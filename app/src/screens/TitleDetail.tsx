@@ -35,6 +35,7 @@ import { Data } from '../ui/Data';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
+import { useWaitedLongEnough } from '../ui/waiting';
 import { episodeHeading, episodeName, episodeWhen } from '@reviewies/core/ui/episode';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import {
@@ -165,6 +166,18 @@ export function TitleDetail() {
   const summaries = summariseSeasons(seasons, watched);
   const open = chosen === undefined ? openSeason(summaries) : chosen;
 
+  /**
+   * Whether the head of this page has been decided, either way.
+   *
+   * Three outcomes and not two, which is §6.104's shape: a name, no name because the look
+   * finished without finding one, and **not looked yet**. `title` alone cannot tell the
+   * first from the third — `useLiveQuery` returns `undefined` both before it has run and
+   * for an id no row matches — so the effect's own `loading` supplies the difference. The
+   * tail below waits on this and on nothing else.
+   */
+  const headKnown = title !== undefined || failed || !loading;
+  const headWaited = useWaitedLongEnough(!headKnown);
+
   return (
     <div className="p-s16">
       <div className="mb-5 flex gap-4">
@@ -194,9 +207,25 @@ export function TitleDetail() {
 
             The phone keeps `sub`, because there the sentence above is true.
           */}
-          <Masthead level="page">
-            {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
-          </Masthead>
+          {/*
+            Drawn when it has something to say, which for the first 200ms it does not.
+
+            `design/between.mjs` measured this placeholder standing for **25ms** on a press
+            from Up Next — one frame and a half, too brief for the eye to have landed on it
+            at all, so what it delivered was a flicker in the place a name was about to be.
+            `core/src/ui/waiting.ts` has the threshold and why it is not Google's 200.
+
+            The condition rather than an empty `<Masthead>`: this is the web's only
+            depth-1 heading on this screen — `masthead.test.ts` is explicit that the phone's
+            navigator supplies one here and the web has nothing to supply it — and a
+            heading rendered with no accessible name is worse than a heading not yet
+            rendered. `headWaited` is the same clock the tail waits on.
+          */}
+          {(title !== undefined || failed || !loading || headWaited) && (
+            <Masthead level="page">
+              {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
+            </Masthead>
+          )}
           {!title && (failed || !loading) && (
             <Button
               onPress={() => {
@@ -332,119 +361,154 @@ export function TitleDetail() {
         </div>
       )}
 
-      {/* Its own line, not beside the poster. Ten targets at 24px each is 240 wide and
-          does not bend: in the column left of the poster it was pushed off the right of
-          the screen once the text around it grew, taking two stars through five with
-          it. A rating you cannot reach is a rating you cannot give. */}
-      {/* Labelled, because five grey stars in an empty band read as a divider rather
-          than a control. §6.61 looked at the screenshot and could not tell what the row
-          was; the screen reader always could, which is exactly the gap a picture finds
-          and an assertion does not. The word also says whose rating it is — this is
-          yours, not an average, which is the whole difference from every site that shows
-          you a crowd score. */}
-      {/* Stacked, not beside. On one line the label ate the width the stars need and
-          pushed two of them off the screen at 200% text — the exact failure the comment
-          above describes, reproduced by adding four words, and caught by the check that
-          was written after it happened the first time. */}
-      <div className="mb-5">
-        <Section as="span" className="block">
-          {COPY.title.yourRating}
-        </Section>
-        <StarRating
-          of={title?.name ?? 'this title'}
-          value={rating?.value}
-          onChange={(value) =>
-            value === undefined ? clearRating(titleId) : rate(titleId, value)
-          }
-        />
-      </div>
+      {/*
+        The tail, and the ordering finding that put it behind a condition.
 
-      {/* Poster override. From r/Serializd and r/Letterboxd: people resent being at
-          the mercy of TMDB moderation deleting artwork they liked. */}
-      {libraryItem && (
+        `design/between.mjs` pressed a row on Up Next and watched this page paint its
+        **local half first** — the rating, Where to watch, the season list — and then insert
+        its head above them: the name, the year, the overview, `AddToList` and the two
+        decision buttons, arriving 25ms later and pushing everything already on the screen
+        **109px down**. Against the bound that file derives from this product's own type —
+        `text.s14 × leading.l143` = 20.02px, one line of body text, the unit of losing your
+        place — that is five lines. On the phone the same press measured 174px.
+
+        It is not a disclosure. `between.mjs` distinguishes those and reports four of them
+        here without failing any: a control pressed, and what it opened appearing below the
+        control, on the route you were already on. Nobody pressed anything for this. It is
+        the ordinary case — open a title — and the reader is looking at the top of a page
+        that then grows a head.
+
+        **The waiting is honest and is not what changed.** This page's metadata is genuinely
+        remote for a title nothing has cached, and `docs/design/seams.md` is clear that a
+        screen may take as long as the thing it is waiting for. What was noise is the
+        *order*: nothing is gained by painting the second half of a page before the first,
+        and what it costs is the reader's place in it.
+
+        So the head paints before the tail, or neither does. `headKnown` is true as soon as
+        there is a name — one Dexie microtask, for anything already in the library — or as
+        soon as the fetch behind it has finished or failed, which is the case where there
+        will never be one. Reserving a height was the other candidate and is refused: an
+        overview is prose of unknown length, `SCREEN.prose` caps its measure and not its
+        lines, and a reserved box that guesses wrong shifts by the difference — the same
+        defect with an extra constant to keep in step.
+      */}
+      {headKnown && (
+        <>
+        {/* Its own line, not beside the poster. Ten targets at 24px each is 240 wide and
+            does not bend: in the column left of the poster it was pushed off the right of
+            the screen once the text around it grew, taking two stars through five with
+            it. A rating you cannot reach is a rating you cannot give. */}
+        {/* Labelled, because five grey stars in an empty band read as a divider rather
+            than a control. §6.61 looked at the screenshot and could not tell what the row
+            was; the screen reader always could, which is exactly the gap a picture finds
+            and an assertion does not. The word also says whose rating it is — this is
+            yours, not an average, which is the whole difference from every site that shows
+            you a crowd score. */}
+        {/* Stacked, not beside. On one line the label ate the width the stars need and
+            pushed two of them off the screen at 200% text — the exact failure the comment
+            above describes, reproduced by adding four words, and caught by the check that
+            was written after it happened the first time. */}
         <div className="mb-5">
-          {posterDraft === undefined ? (
-            <button
-              onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-              className="tap text-s12 text-ink-secondary underline"
-            >
-              {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
-            </button>
-          ) : (
-            <div className="flex gap-1.5">
-              <Field
-                size="row"
-                type="url"
-                label={COPY.fields.posterUrl}
-                value={posterDraft}
-                onChange={setPosterDraft}
-                placeholder={COPY.fields.posterUrlPlaceholder}
-                className="min-w-0 flex-1"
-                autoFocus
-              />
-              <Button
-                tone="primary"
-                label="Save"
-                name={COPY.controls.savePoster}
-                onPress={async () => {
-                  await setPosterOverride(titleId, posterDraft.trim() || undefined);
-                  setPosterDraft(undefined);
-                }}
-              />
-              <Button
-                tone="quiet"
-                onPress={() => setPosterDraft(undefined)}
-                label="Cancel"
-                name={COPY.controls.cancelPoster}
-              />
-            </div>
-          )}
+          <Section as="span" className="block">
+            {COPY.title.yourRating}
+          </Section>
+          <StarRating
+            of={title?.name ?? 'this title'}
+            value={rating?.value}
+            onChange={(value) =>
+              value === undefined ? clearRating(titleId) : rate(titleId, value)
+            }
+          />
         </div>
-      )}
 
-      <WhereToWatch titleId={titleId} />
-
-      {/* Asked for repeatedly on r/Letterboxd and r/tvtime: a doesthedogdie-style
-          heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
-      <ContentWarnings titleId={titleId} />
-
-      {loading && episodes.length === 0 && <Note>{COPY.title.loadingEpisodes}</Note>}
-
-      {seasons.map(([season, eps], index) => {
-        const summary = summaries[index];
-        const expanded = open === season;
-        return (
-          <section key={season} className="mb-6">
-            {/* The heading is the control. A `Section` above a button would be the same
-                words twice, and the row already says everything the heading did. */}
-            <BaseRow
-              density="index"
-              title={summary.label}
-              meta={summary.progress}
-              open={{
-                name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
-                run: () => setChosen(expanded ? null : season),
-              }}
-              trailing={
-                <Chevron points={disclosure(expanded)} className="shrink-0 text-s16 text-ink-secondary" />
-              }
-            />
-            {expanded && (
-              <ul className="flex flex-col gap-1.5">
-                {eps.map((e) => (
-                  <EpisodeRow
-                    key={e.id}
-                    episode={e}
-                    seriesId={titleId}
-                    watched={watched.has(e.id)}
-                    rewatches={counts.get(e.id) ?? 0}
-                  />
-                ))}
-              </ul>
+        {/* Poster override. From r/Serializd and r/Letterboxd: people resent being at
+            the mercy of TMDB moderation deleting artwork they liked. */}
+        {libraryItem && (
+          <div className="mb-5">
+            {posterDraft === undefined ? (
+              <button
+                onClick={() => setPosterDraft(libraryItem.posterOverride ?? '')}
+                className="tap text-s12 text-ink-secondary underline"
+              >
+                {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
+              </button>
+            ) : (
+              <div className="flex gap-1.5">
+                <Field
+                  size="row"
+                  type="url"
+                  label={COPY.fields.posterUrl}
+                  value={posterDraft}
+                  onChange={setPosterDraft}
+                  placeholder={COPY.fields.posterUrlPlaceholder}
+                  className="min-w-0 flex-1"
+                  autoFocus
+                />
+                <Button
+                  tone="primary"
+                  label="Save"
+                  name={COPY.controls.savePoster}
+                  onPress={async () => {
+                    await setPosterOverride(titleId, posterDraft.trim() || undefined);
+                    setPosterDraft(undefined);
+                  }}
+                />
+                <Button
+                  tone="quiet"
+                  onPress={() => setPosterDraft(undefined)}
+                  label="Cancel"
+                  name={COPY.controls.cancelPoster}
+                />
+              </div>
             )}
-          </section>
-        );
-      })}
+          </div>
+        )}
+
+        <WhereToWatch titleId={titleId} />
+
+        {/* Asked for repeatedly on r/Letterboxd and r/tvtime: a doesthedogdie-style
+            heads-up in the tracker itself. Collapsed, so it spoils nothing unasked. */}
+        <ContentWarnings titleId={titleId} />
+
+        {loading && episodes.length === 0 && <Note>{COPY.title.loadingEpisodes}</Note>}
+
+        {seasons.map(([season, eps], index) => {
+          const summary = summaries[index];
+          const expanded = open === season;
+          return (
+            <section key={season} className="mb-6">
+              {/* The heading is the control. A `Section` above a button would be the same
+                  words twice, and the row already says everything the heading did. */}
+              <BaseRow
+                density="index"
+                title={summary.label}
+                meta={summary.progress}
+                open={{
+                  name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
+                  run: () => setChosen(expanded ? null : season),
+                }}
+                trailing={
+                  <Chevron points={disclosure(expanded)} className="shrink-0 text-s16 text-ink-secondary" />
+                }
+              />
+              {expanded && (
+                <ul className="flex flex-col gap-1.5">
+                  {eps.map((e) => (
+                    <EpisodeRow
+                      key={e.id}
+                      episode={e}
+                      seriesId={titleId}
+                      watched={watched.has(e.id)}
+                      rewatches={counts.get(e.id) ?? 0}
+                    />
+                  ))}
+                </ul>
+              )}
+            </section>
+          );
+        })}
+        </>
+      )}
     </div>
   );
 }

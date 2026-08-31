@@ -24,6 +24,7 @@ import { Row as BaseRow } from './Row';
 import { Chevron } from './Mark';
 import { Section } from './Section';
 import { Note } from './Note';
+import { useWaitedLongEnough } from './waiting';
 import { Button } from './Button';
 import { SETTINGS_OPEN } from '@reviewies/core/ui/compose';
 import { episodeName, runCode } from '@reviewies/core/ui/episode';
@@ -59,6 +60,7 @@ export function Coming() {
   // Why the screen is empty, not only that it is. An imported show has no air dates
   // until matching gives it a provider ID.
   const unmatched = useLiveQuery(() => unmatchedImportCount(), [], undefined);
+  const waited = useWaitedLongEnough(entries === undefined);
 
   // Opening the calendar is the one moment somebody definitely wants it current. The
   // refresh is throttled in the core, so arriving here repeatedly costs nothing, and
@@ -186,7 +188,10 @@ export function Coming() {
       </section>
       )}
 
-      {entries === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}
+      {/* The same 200ms of silence every loading branch in the app now takes before it
+          speaks — `core/src/ui/waiting.ts`. `entries?.length === 0` below is the claim
+          this branch exists to keep off the screen until it has been checked. */}
+      {entries === undefined && waited && <Note className="px-1">{COPY.waiting.loading}</Note>}
       {entries?.length === 0 && (
         <div className="flex flex-col items-start gap-3 px-1">
           {/* Doc 10 §8: this said nothing was on and stopped, with Discover a tap away.

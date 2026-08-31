@@ -75,11 +75,24 @@ describe('a state filed as never', () => {
    * And the mirror, so the clause cannot pass by the list quietly emptying. `/watchlist` and
    * `/stats` are the two entries §6.191 corrected; both must still be filed, and filed as
    * something other than `never`, or this file is describing a screen that has moved.
+   *
+   * **`unit` and no longer `suite`, and the change is the screens' rather than the list's.**
+   * §6.191 filed them `suite` because a browser rendered the word on every run, which was
+   * true and was the defect: `design/between.mjs` measured those renders at 13–44ms, too
+   * brief to be read, and `core/src/ui/waiting.ts` now makes every loading branch wait
+   * 200ms before it speaks. No end-to-end walk takes that long to read a local table, so
+   * nothing in a browser paints it any more and `unit` is what is left — a test renders it,
+   * by holding the clock, and `app/src/ui/waiting.test.tsx` is that test.
+   *
+   * Asserted as an exact pair rather than as "not never", because the interesting failure
+   * is the quiet one in the other direction: a screen that goes back to painting the word
+   * immediately would make `suite` true again, and a clause that accepted anything except
+   * `never` would sit there agreeing with it.
    */
-  it('still has the two entries it was written about, no longer as never', () => {
+  it('still has the two entries it was written about, now as unit', () => {
     const found = SCREEN_STATES.filter(
       (s) => ['/watchlist', '/stats'].includes(s.route) && s.platform === 'web',
     ).flatMap((s) => s.states.filter((st) => st.name === 'loading').map((st) => st.verdict));
-    expect(found.sort()).toEqual(['suite', 'suite']);
+    expect(found.sort()).toEqual(['unit', 'unit']);
   });
 });

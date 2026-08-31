@@ -20,6 +20,7 @@ import { requestFill } from '@reviewies/core/calendar/refresh';
 import { getUpcoming } from '@reviewies/core/calendar/upcoming';
 import { formatDay } from '@reviewies/core/time';
 import { syncConfigured } from '@reviewies/core/sync/auth';
+import { useWaitedLongEnough } from '../ui/waiting';
 import { useImporting } from '../useImporting';
 import { COPY } from '@reviewies/core/copy';
 import { Button } from '../ui/Button';
@@ -133,12 +134,21 @@ function OutNow() {
     undefined,
   );
 
+  const waited = useWaitedLongEnough(entries === undefined);
+
   useEffect(() => {
     void requestFill();
   }, []);
 
+  /*
+   * Silence first, then the word — `core/src/ui/waiting.ts` has the argument and the
+   * measurement. This branch was the most-pressed one in the app: `design/between.mjs`
+   * landed on it from /discover, /watchlist, /lists and from *Out now* on the calendar,
+   * and it painted for 17, 19, 32, 33 and 44ms. Five of the nine flickers the run found
+   * were this one line.
+   */
   if (entries === undefined) {
-    return <Note className="p-6">{COPY.waiting.loading}</Note>;
+    return waited ? <Note className="p-6">{COPY.waiting.loading}</Note> : null;
   }
 
   /**

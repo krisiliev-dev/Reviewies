@@ -9,6 +9,7 @@ import { text, type } from '@reviewies/core/tokens';
 import { Section } from './Section';
 import { Data } from './Data';
 import { Note } from './Note';
+import { useWaitedLongEnough } from './waiting';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -57,6 +58,7 @@ export function CatchUp({
   }
 
   const chosen = seasons?.find((s) => s.season === season);
+  const waited = useWaitedLongEnough(seasons === undefined);
 
   return (
     <Modal
@@ -105,7 +107,12 @@ export function CatchUp({
             {marked === 0 ? COPY.catchUp.nothingToMark : COPY.catchUp.marked(marked)}
           </Text>
         ) : seasons === undefined ? (
-          <Note>{COPY.waiting.loading}</Note>
+          /* The web's twin measured this sheet flashing the word for 19ms on its way open;
+             the query behind it is `airedSeasonSizes` over the local store on both
+             platforms, and this is the same three lines. Applied on the strength of the
+             shared source — no phone was measured, and `design/between.mjs` is explicit
+             that its `--phone` mode reads `react-native-web` rather than a device. */
+          waited ? <Note>{COPY.waiting.loading}</Note> : null
         ) : seasons.length === 0 ? (
           <Note>{COPY.catchUp.nothingAired}</Note>
         ) : (
