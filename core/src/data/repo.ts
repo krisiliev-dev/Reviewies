@@ -569,6 +569,39 @@ export async function startWatching(titleId: InternalId, kind: MediaKind): Promi
   await removeFromWatchlist(titleId);
 }
 
+/**
+ * Stop tracking a show, without losing the part of it you watched.
+ *
+ * `LibraryStatus` has had four values since the schema was written and the product could
+ * only ever produce two of them. `Track` writes `watching`; Discover's *seen it* writes
+ * `completed`; nothing anywhere — on either platform, on any screen — has ever written
+ * `paused` or `dropped`. Three readers already honour them and were written to:
+ * `syncSeriesStatus` above skips them entirely with the comment *"Those are decisions the
+ * user made, and overriding them is not housekeeping"*, `getUpNext` asks only for
+ * `watching`, and `calendar/refresh.ts` filters to `watching` or `completed`. Careful
+ * handling of a decision the interface gave nobody a way to make: the title page's button
+ * disabled itself, read **Tracking**, and stayed that way for the life of the row.
+ *
+ * `dropped` rather than a deleted row, and the difference is what happens to the history.
+ * A watch is an event keyed by `targetId`; it does not belong to the library row and is
+ * not deleted with it. But the row carries `addedAt` and any poster override, and it is
+ * what `alreadyHave` and `recommend` read to know you have met this show before. Dropping
+ * keeps all of that and answers the actual sentence — *"I am not watching this any more"*
+ * — while deleting would answer a different one, *"I have never seen this"*, which is not
+ * true and would put the show back in Discover's feed to be suggested at you again.
+ *
+ * No confirmation, because there is nothing to confirm: `addToLibrary` on an existing row
+ * is an `update` to `watching`, so the same button that stopped it starts it again, and
+ * the episodes you had marked are all still marked. A reversible act that destroys nothing
+ * does not get a dialog. §6.191.
+ */
+export async function stopTracking(titleId: InternalId): Promise<void> {
+  await queued(db.library, async () => {
+    await db.library.update(titleId, { status: 'dropped' });
+    await queueLibrary(titleId);
+  });
+}
+
 export async function removeFromWatchlist(titleId: InternalId): Promise<void> {
   const existing = await db.watchlist.get(titleId);
   await queued(db.watchlist, async () => {

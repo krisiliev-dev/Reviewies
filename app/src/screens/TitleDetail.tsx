@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import {
   addToLibrary,
+  stopTracking,
   addToWatchlist,
   clearRating,
   markWatched,
@@ -13,7 +14,7 @@ import {
   unwatchLatest,
   watchedEpisodeIds,
 } from '@reviewies/core/data/repo';
-import type { Shelf } from '@reviewies/core/data/already';
+import { shelfOf, type Shelf } from '@reviewies/core/data/already';
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
@@ -74,8 +75,13 @@ export function TitleDetail() {
    * The library wins when both rows exist, which is `shelfFor`'s own rule: *"Tracking is
    * the stronger statement, and a watchlist entry for something you are already watching
    * is the leftover rather than the fact."*
+   *
+   * `shelfOf` rather than the ternary both platforms used to type, because the rule stopped
+   * being *is there a row*: a dropped row is still a library row, and reading it as
+   * `library` would leave the button saying **Stop tracking** for a show already stopped.
+   * §6.191.
    */
-  const shelf: Shelf | undefined = libraryItem ? 'library' : savedItem ? 'watchlist' : undefined;
+  const shelf: Shelf | undefined = shelfOf(libraryItem, savedItem);
 
   /**
    * Start tracking, from the page that told you what it is.
@@ -93,6 +99,17 @@ export function TitleDetail() {
     if (!title) return;
     if (shelf === 'watchlist') await startWatching(titleId, title.kind);
     else await addToLibrary(titleId, title.kind);
+  }
+  /**
+   * And the way back out, which for the life of this product did not exist.
+   *
+   * `addToLibrary` on a dropped row is an `update` to `watching`, so `track` above is
+   * already the resume path and needs no branch for it — the same two presses go back and
+   * forth, and every episode you had marked stays marked because a watch is an event and
+   * does not live in this row. `repo.ts`'s header has the rest of that argument.
+   */
+  async function stop() {
+    await stopTracking(titleId);
   }
   /** Which season is open: `undefined` follows the rule, `null` is closed. §6.156. */
   const [chosen, setChosen] = useState<number | null>();
@@ -264,18 +281,28 @@ export function TitleDetail() {
         **Refused: a third control.** `docs/research/09-app-first-pivot.md` §6.178 is about
         a row that grew to eight, and this screen already carries a rating, a poster
         override, Add to list, Where to watch, content warnings and a season list. Two is
-        what the decision needs. In particular there is no *stop tracking* — `repo.ts` has
-        no such writer, and inventing one on the screen that would need to explain what
-        happens to your watch history is a bigger decision than this one.
+        what the decision needs.
+
+        Still two. The first one now has two faces rather than a face and a disabled state:
+        **Track** when you are not, **Stop tracking** when you are. The excuse that stood
+        here — *"there is no stop tracking; `repo.ts` has no such writer, and inventing one
+        on the screen that would need to explain what happens to your watch history is a
+        bigger decision than this one"* — was true and is spent. §6.191 made the decision it
+        was deferring: `dropped`, not a deleted row, so the history is not the question. It
+        also found that `repo.ts` and `calendar/refresh.ts` had been honouring `dropped` and
+        `paused` for their whole existence, for a person who could not write either.
       */}
       {title && (
         <div className="mb-5 flex flex-wrap gap-1.5">
           <Button
-            onPress={track}
-            disabled={shelf === 'library'}
-            tone="primary"
-            label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
-            name={COPY.controls.trackTitle(title.name)}
+            onPress={shelf === 'library' ? stop : track}
+            tone={shelf === 'library' ? 'secondary' : 'primary'}
+            label={shelf === 'library' ? COPY.controls.stopTracking : COPY.controls.track}
+            name={
+              shelf === 'library'
+                ? COPY.controls.stopTrackingTitle(title.name)
+                : COPY.controls.trackTitle(title.name)
+            }
           />
           {/* No note composer behind this one, unlike the search row's. The note is *why
               you saved it*, and the watchlist row itself offers "Add a note…" — so the

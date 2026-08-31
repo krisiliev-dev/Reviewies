@@ -224,6 +224,51 @@ describe('the tracking decision, and the page that informs it', () => {
     expect(deadEnds, 'a surface that can act on a title but cannot open it').toEqual([]);
   });
 
+  /**
+   * And the way out, which is the same hole one level down.
+   *
+   * The two holes in this file's header were both *"the product cannot do this anywhere"*,
+   * invisible to `offers.test.ts` because both platforms were missing the same thing. This
+   * is a third of exactly that shape and it outlived them: the title page could track, and
+   * once it had, its button disabled itself, read **Tracking**, and there was no press on
+   * any screen of either platform that undid it. `LibraryStatus` carried `dropped` the whole
+   * time and three readers honoured it — `core/src/data/stopTracking.test.ts` has the
+   * measurement — so the data layer was written correctly around a decision the interface
+   * offered nobody.
+   *
+   * Absolute rather than comparative, for the same reason the rules above are: two renderers
+   * that agree say nothing about whether either is right.
+   *
+   * The name rather than `stopTracking(`: a writer can be imported and called from somewhere
+   * nothing presses, which is `TRACK_NAME`'s argument above, and it is the argument that
+   * matters most here because a writer with no control is the exact defect. And the *page*
+   * only — a Discover box and a search row keep the disabled **Tracking**, because a feed of
+   * rows is not where you undo something and the page about the show is one press away.
+   */
+  it('offers a way out of tracking on the page that offers the way in', () => {
+    const STOP_NAME = 'COPY.controls.stopTrackingTitle';
+    const silent = TITLE_PAGE.filter((file) => !stripComments(read(file)).includes(STOP_NAME)).map(
+      (file) => `${file} — can start tracking and offers no way to stop`,
+    );
+    expect(silent, 'a title you can track for ever and never stop').toEqual([]);
+
+    /*
+     * And the writer behind it, because the clause above would be satisfied by a control
+     * announced as *Stop tracking Ted Lasso* that presses nothing — which is `TRACKS`'s
+     * argument one line of this file up, and the plant that had to be constructed against
+     * the clause before it could be believed.
+     *
+     * `\bstopTracking\s*\(` and not `stopTracking` alone: the label constant is
+     * `COPY.controls.stopTracking` and the announced name is `stopTrackingTitle(…)`, so the
+     * loose spelling would match the very thing it is checking is *not* enough — a needle
+     * that finds its own subject. The `(` immediately after the `g` excludes both.
+     */
+    const unwired = TITLE_PAGE.filter(
+      (file) => !/\bstopTracking\s*\(/.test(stripComments(read(file))),
+    ).map((file) => `${file} — announces Stop tracking and presses nothing that stops`);
+    expect(unwired, 'a Stop tracking control that does not stop').toEqual([]);
+  });
+
   it('holds the rules over more than one surface each', () => {
     /*
      * The floor, at the exact count, so that a clause passing because the set it reads has

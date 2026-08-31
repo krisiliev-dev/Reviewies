@@ -240,7 +240,10 @@ describe('every workspace', () => {
     // core 1011, app 751: sprint 102 — the matcher's ambiguity flag and its determinism
     // clauses, the harness sweep's four denominators, and the artboard's claim held rather
     // than trusted.
-    core: 1011, app: 751, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 1024, up thirteen, and app 752, up one: §6.191's `stopTracking.test.ts` — the
+    // writer, the shelf rule, the Search label and the every-status-has-a-writer clause —
+    // and `decide.test.ts`'s way-out-of-tracking clause.
+    core: 1024, app: 752, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

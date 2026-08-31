@@ -12,10 +12,11 @@ import {
   rate,
   setPosterOverride,
   startWatching,
+  stopTracking,
   unwatchLatest,
   watchedEpisodeIds,
 } from '@reviewies/core/data/repo';
-import type { Shelf } from '@reviewies/core/data/already';
+import { shelfOf, type Shelf } from '@reviewies/core/data/already';
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import type { CachedEpisode } from '@reviewies/core/domain/types';
 import { Poster } from '../../src/ui/Poster';
@@ -78,7 +79,10 @@ export default function TitleScreen() {
    * the stronger statement, and a watchlist entry for something you are already watching
    * is the leftover rather than the fact."*
    */
-  const shelf: Shelf | undefined = libraryItem ? 'library' : savedItem ? 'watchlist' : undefined;
+  // `shelfOf` rather than the ternary this file and the web's twin each typed, because the
+  // rule stopped being *is there a row*: `stopTracking` writes `dropped` and a dropped row
+  // is still a library row. §6.191.
+  const shelf: Shelf | undefined = shelfOf(libraryItem, savedItem);
 
   /**
    * Start tracking, from the page that told you what it is.
@@ -237,18 +241,25 @@ export default function TitleScreen() {
           **Refused: a third control.** `docs/research/09-app-first-pivot.md` §6.178 is
           about a row that grew to eight, and this screen already carries a rating, a
           poster override, Add to list, Where to watch, content warnings and a season list.
-          Two is what the decision needs. In particular there is no *stop tracking* —
-          `repo.ts` has no such writer, and inventing one on the screen that would need to
-          explain what happens to your watch history is a bigger decision than this one.
+          Two is what the decision needs.
+
+          Still two. The first now has two faces rather than a face and a disabled state:
+          **Track** when you are not, **Stop tracking** when you are. The excuse that stood
+          here — *"there is no stop tracking; `repo.ts` has no such writer"* — was true and
+          is spent. §6.191 took the decision it deferred: `dropped`, not a deleted row, so
+          what happens to your watch history is not the question. Nothing happens to it.
         */}
         {title && (
           <View style={styles.decide}>
             <Button
-              onPress={track}
-              disabled={shelf === 'library'}
-              tone="primary"
-              label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
-              name={COPY.controls.trackTitle(title.name)}
+              onPress={shelf === 'library' ? () => void stopTracking(titleId) : track}
+              tone={shelf === 'library' ? 'secondary' : 'primary'}
+              label={shelf === 'library' ? COPY.controls.stopTracking : COPY.controls.track}
+              name={
+                shelf === 'library'
+                  ? COPY.controls.stopTrackingTitle(title.name)
+                  : COPY.controls.trackTitle(title.name)
+              }
             />
             {/* No note composer behind this one, unlike the search row's. The note is *why
                 you saved it*, and the watchlist row itself offers "Add a note…" — so the

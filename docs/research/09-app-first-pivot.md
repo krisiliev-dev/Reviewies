@@ -15848,7 +15848,202 @@ correct token, red on `raised` (naming both grounds) and on `base`.
   log interleaved with another's and read like a build resolving into someone else's worktree.
 - **The matcher's second signal** (#230), which is the honest repair for a 12-minute wrong placement
   reported at 93% sure.
-- **Stop-tracking has no writer**, so the title page offers no way to undo what its new control does.
+- ~~**Stop-tracking has no writer**, so the title page offers no way to undo what its new control
+  does.~~ **Done in §6.191**, and it turned out to be the larger finding: `dropped` and `paused` had
+  three readers each and no writer at all, so the data layer had been carefully honouring a decision
+  the interface offered nobody. `paused` still has none, and is now named in a clause rather than
+  carried in a list.
+
+### 6.191 A status with three readers and no writer, and what turns an agent into a designer
+
+Two things, one asked for and one found while looking for it. The user's request was *"a fully
+smooth app experience… as much ease of use as possible. Research the best design frameworks and
+also find the best ways to turn a Claude agent into a design professional. Do a pass over the
+design and find what can be improved."* §6.190 had already established that **latency is not this
+app's smoothness problem** — 16–24ms to answer a press, 154–240ms to settle, measured over 18
+interactions on 7 screens — so smoothness is a question about steps, states and clarity. This is
+the largest of those that anything has found.
+
+#### A title could enter the library and never leave it
+
+`LibraryStatus` has carried four values since the schema was written:
+`'watching' | 'completed' | 'paused' | 'dropped'`. Counted rather than remembered — a `grep` over
+`app/src`, `mobile/app` and `mobile/src` for either of the last two returns **nothing that writes
+them**, on either platform, on any screen. `Track` writes `watching`; Discover's *seen it* writes
+`completed`; the other half of the union has never been produced by a press.
+
+Three readers honour them, and were written carefully to:
+
+| reader | what it does with `dropped` / `paused` |
+| --- | --- |
+| `repo.ts` `syncSeriesStatus` | returns early, with the comment *"Those are decisions the user made, and overriding them is not housekeeping"* |
+| `repo.ts` `getUpNext` | asks the index only for `'watching'` |
+| `calendar/refresh.ts` | filters to `watching` or `completed` before refreshing anything |
+
+So the data layer was written correctly around a decision the interface gave nobody a way to make.
+On the title page, both platforms:
+
+```tsx
+disabled={shelf === 'library'}
+label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
+```
+
+Press *Track* and the button greys out, reads **Tracking**, and stays that way for the life of the
+row. There is no press anywhere in the product that undoes it. `db.library.delete` appears exactly
+once in the whole repository — `reconcile.ts:312`, the migration merging duplicate IDs — and it is
+not a person's action.
+
+This had been on the carried queue for four sprints as *"stop-tracking has no writer"*, and the
+screen carried its own excuse for it: *"there is no stop tracking — `repo.ts` has no such writer,
+and inventing one on the screen that would need to explain what happens to your watch history is a
+bigger decision than this one."* True when written. The decision it deferred is one paragraph.
+
+#### `dropped`, not a deleted row, and no dialog in front of it
+
+**A watch is an event keyed by `targetId`.** It does not live in the library row and is not deleted
+with it, so *"what happens to your watch history"* has an answer and the answer is *nothing*. The
+row itself carries `addedAt` and any poster override, and it is what `alreadyHave` and
+`discover/recommend.ts` read to know you have met this show before. Dropping keeps all of it and
+answers the sentence somebody actually means — *"I am not watching this any more"*. Deleting would
+answer a different one, *"I have never seen this"*, which is untrue and would put the show back in
+Discover's feed to be suggested at you again.
+
+**No confirmation**, and that is a design decision rather than an omission. `addToLibrary` on an
+existing row is an `update` back to `watching`, so the same button that stopped it starts it again
+and every episode you had marked is still marked. A reversible act that destroys nothing does not
+get a dialog; the undo *is* the control.
+
+One control with two faces rather than two controls, because the row of decisions on that page is
+what §6.178 spent a sprint cutting from eight to two, and this is the same two.
+
+#### What the change touches, and the one rule that had to move into core
+
+`stopTracking` in `repo.ts`, queued to the outbox like every other library write — a row changed
+locally and never queued exists on one device and no other.
+
+Then `shelfOf` in `already.ts`, which is the part worth naming. Both title pages had this inline
+and identical:
+
+```ts
+const shelf = libraryItem ? 'library' : savedItem ? 'watchlist' : undefined;
+```
+
+That is §6.98's *"two platforms each typing the same sentence"* — harmless until the sentence
+changes, and it changed: **a dropped row is still a library row**, so the ternary would have gone on
+answering `library` for a show somebody had just stopped, and the button would have read *Stop
+tracking* for ever while writing `dropped` over `dropped`. One function, both platforms, and
+`paused` deliberately still answers `library` because it means *not right now*, not *not any more*.
+
+And `alreadyHave` skips dropped rows when building the library set, or Search would have gone on
+labelling a stopped show **Tracking** with the button disabled — the exact state `stopTracking`
+exists to get out of, with no way back in from the screen you found it on.
+
+#### The clauses, and the six plants they were proved with
+
+`core/src/data/stopTracking.test.ts`, 13 clauses. Every one proved by planting the violation it
+names and watching it go red, then restoring:
+
+| plant | what went red |
+| --- | --- |
+| writes `'paused'` instead of `'dropped'` | 5 of 13 |
+| deletes the row instead of updating it | 4 of 13 |
+| skips `queueLibrary`, so nothing reaches the outbox | exactly 1 |
+| `shelfOf` back to the old ternary | 2 of 13 |
+| `alreadyHave` stops skipping dropped rows | exactly 1 |
+| the writer disappears, so `dropped` has readers and nothing produces it | 6 of 13 |
+
+Restored: 13 passed.
+
+The last clause is the general one and the reason this is filed as a class rather than a bug. **A
+union value the code branches on and nothing can produce is a branch that has never run and a
+feature nobody can reach — and it reads, in review, exactly like a feature that works.** So every
+`LibraryStatus` value must be written by something outside a test, with the exceptions *named*:
+
+```ts
+const NO_WRITER_YET: LibraryStatus[] = ['paused'];
+```
+
+**`paused` is still unreachable and this says so.** The readers were written for a pause the
+interface does not offer, and what a pause means to somebody — as against a stop — has not been
+decided. The mirror clause fails if a status named there gains a writer, so the exception cannot
+outlive its reason, which is §6.106's whole subject.
+
+#### The clause in `decide.test.ts`, and the plant that had to be constructed against it
+
+`decide.test.ts` exists because `offers.test.ts` could not see its two findings: **it is a parity
+guard, and both platforms were missing the same thing.** This is a third of exactly that shape and
+it outlived both — the file that was written for *"the product cannot do this anywhere"* did not
+have a clause for the way back out.
+
+Added there, absolute rather than comparative. Planted twice: the web page reverted to
+`disabled={shelf === 'library'}` fails naming `app/src/screens/TitleDetail.tsx`; the phone reverted
+fails naming `mobile/app/title/[id].tsx`. Both restore green.
+
+Then the harder half of the method — **construct the plant that satisfies the new clause while
+breaking the behaviour.** It exists and it is easy: announce the control as *Stop tracking Ted
+Lasso* and have it press nothing. So the clause gained the wiring half, and one needle detail is
+worth recording because it is this document's favourite defect. `stopTracking` alone would have
+matched `COPY.controls.stopTracking` and `stopTrackingTitle(…)` — **a needle that finds its own
+subject**, satisfied by the very label it is checking is not sufficient. `\bstopTracking\s*\(`
+requires the `(` immediately after the `g` and excludes both. Planted by replacing the writer's body
+with `await Promise.resolve()` while leaving the announced name in place: red, naming the file.
+
+#### What actually turns an agent into a design professional
+
+The other half of the request, written as `docs/design/agents.md` — 332 lines, grounded in this
+repository's record rather than in advice about prompting.
+
+Two published studies have scored a model in a designer's chair. Guerino et al. (*Can GPT-4o
+Evaluate Usability Like Human Experts?*, INTERACT 2025) gave GPT-4o **screenshots and Nielsen's
+ten**: **21.2%** of the human experts' issues, plus 27 the experts had not found, plus false
+positives from hallucination and from predicting issues rather than observing them. Duan et al.
+(CHI 2024) built the Figma plugin version over 51 UIs with 12 expert designers, and found feedback
+*"useful for catching subtle errors, improving text, and considering UI semantics, but feedback also
+decreased in utility over iterations."*
+
+Read the setups rather than the scores. **Both hand the model a static picture and a list of
+principles.** Neither tests a model that can *run* the interface, which is what `design/`'s 19
+programs and 7,834 lines exist to provide — so neither is evidence against the configuration used
+here, and the baseline they establish is the one this project spent a year escaping. The decay over
+iterations is the sharper finding: it is what a design track running every sprint would produce if
+nothing new were ever measured.
+
+The same failure is in this repository, in my own hand, three times, and the document leads with
+them rather than with the practices: `response.mjs` v2's seven hand-written control names, of which
+**two matched**; a brief premise from `grep -l` that was zero occurrences rather than nine files;
+and a task marked complete on an agent's report about images that were worktree-local.
+
+Nine practices, each with the evidence and what it cost. The one that changed the most is
+plant-first — *run the new check's violation against the check as it existed before your change*,
+because a check that cannot fail looks exactly like a check that passes, and planting turns
+"vacuous" from a worry into a measurement. The others: give it an instrument before an opinion; read
+the renderer before naming the control; a check that fails on a correct change is also wrong; name
+the denominator; check the provenance of the number you are about to design to; let it refuse and
+record the refusal; re-verify what a subagent hands you by re-planting it yourself; and fear the
+instrument that changes what it measures — **nine catalogued instances, three of them in one file**.
+
+Nielsen's own result turns out to be the argument for the parallel sweep: one evaluator finds 20–51%
+of problems and the method's yield comes from aggregating three to five. Three agents on the same
+screens with *different frames* is that, not throughput.
+
+Four things it does not fix are written down, including that **`design/` is 7,834 lines with zero
+tests** — the least-guarded code in the repository, which is precisely why nine of its programs were
+caught measuring the wrong thing, every one by inspection and none by a suite.
+
+#### What is not done
+
+- **`paused` still has no writer**, named in `NO_WRITER_YET` rather than quietly left. Three readers
+  branch on it. The decision — what a pause offers somebody that a stop does not, and whether a
+  third face on that button is worth it — has not been taken, and inventing it to empty a list would
+  be the wrong reason to take it.
+- **The wiring clause can still be satisfied dishonestly.** `stopTracking(` anywhere in the file
+  passes it, connected to the button or not. That is `TRACKS`'s limit one clause up as well, and
+  closing it needs a parse rather than a needle.
+- **Nothing has photographed the stopped state.** The design harness has no seeded library with a
+  dropped row in it, so the button's second face has never been in a screenshot. `design/library.mjs`
+  is where that would go.
+- **Neither renderer was run against the change in a browser.** The clauses and the compiler agree;
+  a walk has not been done, and §6.190's lesson is that those are different.
 
 
 ## 7. What is still not known
@@ -16246,6 +16441,14 @@ and which single claim in this document could not be checked at all:
   is on the checklist. The sweep is part of the sprint close-out now, and §6.155 is the first
   sprint to run it as one: three entries amended, none left stale. Two sprints is still not a
   habit, and the sprint that runs late is still the test.
+- **Only one union in the product has been swept for values nothing can produce.** §6.191 found
+  `LibraryStatus`'s `dropped` and `paused` with three readers each and no writer anywhere on either
+  platform — a branch that had never run, reading in review exactly like a feature that works. The
+  clause it left behind is keyed to that one type. Nothing has asked the same question of the
+  others: the bridge's status, the sync engine's states, `MediaKind`, the ask-flow's outcomes. The
+  general check would have to relate a union's members to the writes that produce them, which is a
+  parse rather than a needle, and the one clause that exists is a hand-written list of four strings.
+
 - **Nothing sweeps the fixtures for cases they cannot produce.** §6.146 fixed one — the
   calendar could not show two shows — and the way it was found was a screenshot that looked
   wrong, not a check. `designLibrary.test.ts` now names the calendar's cases, and §6.149

@@ -1,4 +1,5 @@
 import { db } from './db.ts';
+import type { LibraryStatus } from '../domain/types.ts';
 
 /**
  * What you already have of a thing, for the screens that offer to give it to you.
@@ -56,7 +57,17 @@ export async function alreadyHave(): Promise<AlreadyHave> {
     have.ids[shelf].add(titleId);
   };
 
-  for (const row of library) add('library', row.titleId);
+  // A dropped show is not one you are tracking, and Search's button is the place that
+  // sentence is drawn. Without this, stopping a show from its title page left Search
+  // still labelling it **Tracking** with the button disabled — the state `stopTracking`
+  // exists to get out of, and no way back into it from the screen you found it on.
+  //
+  // Only `dropped`. `paused` is still a show you are tracking; it is Up Next that should
+  // leave it alone, and Up Next asks the database directly. §6.191.
+  for (const row of library) {
+    if (row.status === 'dropped') continue;
+    add('library', row.titleId);
+  }
   for (const row of watchlist) add('watchlist', row.titleId);
   return have;
 }
@@ -77,5 +88,32 @@ export function shelfFor(
   for (const shelf of ['library', 'watchlist'] as const) {
     if (have.ids[shelf].has(result.id) || have.names[shelf].has(name)) return shelf;
   }
+  return undefined;
+}
+
+/**
+ * Which shelf a title is on, for the page that holds both of its rows.
+ *
+ * The title page had this inline on both platforms and they agreed, which is the state
+ * §6.98 calls *"two platforms each typing the same sentence"* — fine until the sentence
+ * changes. It changed: `stopTracking` writes `dropped`, and a dropped row is still a
+ * library row, so `libraryItem ? 'library' : …` went on answering **library** for a show
+ * somebody had just stopped. The button would have said *Stop tracking* for ever and the
+ * press would have written `dropped` over `dropped`.
+ *
+ * `paused` is deliberately still `library`. It means *not right now*, not *not any more*;
+ * Up Next and the calendar leave a paused show alone by asking the database themselves,
+ * and the title page should still say you are tracking it.
+ *
+ * The library wins when both rows exist — `shelfFor`'s rule above, for the same reason.
+ * A dropped title that is also on the watchlist falls through to `watchlist`, which is
+ * the honest answer: you stopped watching it and you still mean to.
+ */
+export function shelfOf(
+  libraryItem: { status: LibraryStatus } | undefined,
+  savedItem: unknown,
+): Shelf | undefined {
+  if (libraryItem && libraryItem.status !== 'dropped') return 'library';
+  if (savedItem) return 'watchlist';
   return undefined;
 }

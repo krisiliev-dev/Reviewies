@@ -292,6 +292,12 @@ export const COPY = {
     catchUpOn: (name: string) => `Catch up on ${name}`,
     track: 'Track',
     trackTitle: (name: string) => `Track ${name}`,
+    /**
+     * Its inverse, named the same way and for the same reason: a screen reader reads the
+     * control rather than the heading above it, and *"Stop tracking"* alone does not say
+     * what would stop. §6.191.
+     */
+    stopTrackingTitle: (name: string) => `Stop tracking ${name}`,
     addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
     saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
@@ -467,6 +473,27 @@ export const COPY = {
      * version wins, and these are the words it wins with.
      */
     tracking: 'Tracking',
+    /**
+     * The way out of tracking, from the page about the thing.
+     *
+     * `tracking` above is a *state*, drawn on a disabled button, and for the life of this
+     * product it was the last state a title could reach: `LibraryStatus` carried `paused`
+     * and `dropped`, three readers in `repo.ts` and `calendar/refresh.ts` honoured them,
+     * and no screen on either platform could write either one. The title page's button
+     * said **Tracking**, disabled, and there was no press anywhere that undid the press
+     * that got you there.
+     *
+     * The verb rather than the state, matching every other control on the page — *Track*,
+     * *Watchlist*, *Remove*, *Save* — and naming what it does rather than what it leaves
+     * behind. **Stop tracking**, not *Dropped*: `dropped` is the status the database
+     * stores and `Dropped` is a label about the row, which is the wrong subject. Nobody
+     * drops a show; they stop watching it.
+     *
+     * It is drawn on the title page only. The same title in a Discover box or a search row
+     * keeps the disabled **Tracking** — a feed of rows is not where you undo something,
+     * and the page about the show is one press away. §6.191.
+     */
+    stopTracking: 'Stop tracking',
     watchlist: 'Watchlist',
     findToWatch: 'Find something to watch',
     findSomething: 'Find something',
