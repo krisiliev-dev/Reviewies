@@ -34,7 +34,16 @@ import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
 const OUT = new URL('./real-screens/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
-const BASE = 'http://localhost:4204';
+/*
+ * Overridable, exactly as `capture-web-real.mjs`'s own `BASE` is and for the reason that
+ * file states: *"a worktree running beside others cannot take them, and a pass that can only
+ * run on two fixed ports is a pass that cannot be run twice at once."* The default stays the
+ * port `npm run design:real` serves on, so the npm script is unchanged.
+ *
+ * This one was the last of the real-data passes still pinned. Two agents on one machine each
+ * needing 4204 is not a hypothetical — it is what a sprint of three worktrees is.
+ */
+const BASE = process.env.BASE ?? 'http://localhost:4204';
 
 const browser = await chromium.launch(chromiumOptions());
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
