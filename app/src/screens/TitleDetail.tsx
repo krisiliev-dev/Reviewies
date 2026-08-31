@@ -253,42 +253,87 @@ export function TitleDetail() {
             three things as one built from a search result. This page does not build a box.
           */}
           {title?.year && <p><Data value={title.year} className="text-ink-secondary" /></p>}
-          {title?.overview && (
-            /*
-             * Whole, as the phone has always drawn it. §6.174.
-             *
-             * This carried `line-clamp-3` — undocumented, unconditional, and not a
-             * narrow-window rule: measured against real TMDB it truncated It's Always
-             * Sunny mid-word at **both** photographed widths, 420 and 1280, and there was
-             * no control anywhere to reach the rest. `mobile/app/title/[id].tsx` renders
-             * the same field with no `numberOfLines` and always has, so this was §6.170's
-             * shape — one field, two platforms, different halves — with the phone holding
-             * the better version. §6.51: the better version wins whichever platform had it.
-             *
-             * ## And a measure of its own, which the column could not give it
-             *
-             * `SCREEN.measure` caps the column at 720 and was measured for a *row* — one
-             * line, scanned, whose two ends have to belong to each other. A paragraph is
-             * read line after line, and what a wide measure costs is finding the start of
-             * the next one, so the two questions do not have one answer. Measured at 1280
-             * before `SCREEN.prose` existed: this paragraph set **89 characters** to a line,
-             * against 44 in the same build at 420, and the convention puts a comfortable
-             * measure at 45–75. The table carries the number and the readings behind it.
-             *
-             * Inline, like the column's own cap in `App.tsx` and for the same reason: the
-             * number lives in the core and Tailwind cannot be handed one.
-             */
-            <p
-              className="mt-2 text-s16 font-prose font-regular leading-l143 text-ink-secondary"
-              style={{ maxWidth: SCREEN.prose }}
-            >
-              {title.overview}
-            </p>
-          )}
-
-          {title && <AddToList titleId={titleId} kind={title.kind} />}
         </div>
       </div>
+
+      {title?.overview && (
+        /*
+         * Whole, as the phone has always drawn it. §6.174.
+         *
+         * This carried `line-clamp-3` — undocumented, unconditional, and not a
+         * narrow-window rule: measured against real TMDB it truncated It's Always
+         * Sunny mid-word at **both** photographed widths, 420 and 1280, and there was
+         * no control anywhere to reach the rest. `mobile/app/title/[id].tsx` renders
+         * the same field with no `numberOfLines` and always has, so this was §6.170's
+         * shape — one field, two platforms, different halves — with the phone holding
+         * the better version. §6.51: the better version wins whichever platform had it.
+         *
+         * ## And a measure of its own, which the column could not give it
+         *
+         * `SCREEN.measure` caps the column at 720 and was measured for a *row* — one
+         * line, scanned, whose two ends have to belong to each other. A paragraph is
+         * read line after line, and what a wide measure costs is finding the start of
+         * the next one, so the two questions do not have one answer. Measured at 1280
+         * before `SCREEN.prose` existed: this paragraph set **89 characters** to a line,
+         * against 44 in the same build at 420, and the convention puts a comfortable
+         * measure at 45–75. The table carries the number and the readings behind it.
+         *
+         * Inline, like the column's own cap in `App.tsx` and for the same reason: the
+         * number lives in the core and Tailwind cannot be handed one.
+         *
+         * ## Its own line, and not the column beside the poster
+         *
+         * The cap was the whole rule and it is only half of one: `SCREEN.prose` stops the
+         * measure being too **wide**, which is a 1280 problem, and says nothing about it
+         * being too narrow — which is what a poster does to a column at 420. Measured by
+         * `design/found/measure-title-synopsis.mjs` against the snapshot, all six titles,
+         * both photographed widths:
+         *
+         *   420   in the column   x 128, 276px, **36 characters a line**  (One Piece: 15 lines)
+         *   420   on its own line x  16, 388px, **50**                    (One Piece: 11 lines)
+         *   1280  either way            460px,     59                     (`SCREEN.prose` binds)
+         *
+         * 36 against a band of 45–75, on every title in the snapshot, at the width this
+         * product is mostly opened at. The poster ends after three of One Piece's fifteen
+         * lines and the other twelve kept an indent past nothing.
+         *
+         * This is not an invention. `mobile/app/title/[id].tsx:203` has drawn this field on
+         * its own line since it was written, and the comment on the control below it gives
+         * the reason in as many words — *"in a column narrowed by a poster … the last stars
+         * fall off the end"* — applied there to the rating and to `AddToList` and not to the
+         * paragraph. §6.51 again: the better version wins whichever platform had it.
+         *
+         * ## What it costs, which is not nothing
+         *
+         * At 1280 the measure does not move — 59 either way, because the cap binds first —
+         * so what the move buys there is alignment: the paragraph starts at the content
+         * column's own left edge (x 296) instead of 112px inside it, hanging off the poster.
+         * What it costs there is **height**: the poster row no longer has a paragraph
+         * holding it open, so it collapses to the poster and the paragraph is added below
+         * it. Measured on this build, five of the six titles' pages grow by 84px at 1280
+         * (11277→11361 on One Piece, 2090→2174 on Shōgun); the film's page is shorter than
+         * one window and does not move. At 420 the change is between −21 and +39px.
+         *
+         * `AddToList` travels with it and stays **underneath** it, which is the other half
+         * of the phone's arrangement and a decision the record already made: §6.62, *"the
+         * phone asked you to rate the thing above the sentence that says what it is"*. It
+         * renders `null` unless `syncConfigured()`, so it is in none of the measurements
+         * above and in no photograph the design harness takes — leaving it behind in the
+         * column would have put it over the synopsis in every build where it is not null,
+         * which is a defect nothing here could have seen.
+         *
+         * `mb-5` here and `mt-5` on the row of decisions below: adjacent siblings' margins
+         * collapse, so the gap is 20 whether `AddToList` draws anything between them or not.
+         */
+        <p
+          className="mb-5 text-s16 font-prose font-regular leading-l143 text-ink-secondary"
+          style={{ maxWidth: SCREEN.prose }}
+        >
+          {title.overview}
+        </p>
+      )}
+
+      {title && <AddToList titleId={titleId} kind={title.kind} />}
 
       {/*
         The decision, on the page you opened to make it.
@@ -336,7 +381,7 @@ export function TitleDetail() {
         `paused` for their whole existence, for a person who could not write either.
       */}
       {title && (
-        <div className="mb-5 flex flex-wrap gap-1.5">
+        <div className="mb-5 mt-5 flex flex-wrap gap-1.5">
           <Button
             onPress={shelf === 'library' ? stop : track}
             tone={shelf === 'library' ? 'secondary' : 'primary'}
