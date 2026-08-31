@@ -236,21 +236,37 @@ describe('the real-data pass', () => {
        * `[]` on purpose, and `boxUnder` composes the year alone. An empty envelope is a 404
        * wearing a 200, and a guard that cannot tell them apart is not guarding the screen.
        *
-       * The rule is *at least one populated array*, rather than the word `genres`, for the
-       * same reason the path list is derived rather than typed: this clause should not know
-       * which endpoint it is looking at. Every list answer TMDB gives is an object with an
-       * array in it, and no library decision is being asserted — which titles the snapshot
-       * holds is still entirely `LIBRARY`'s, and this says nothing about them.
+       * The rule was first written as *at least one populated array anywhere in the object*,
+       * on the reasoning that this clause should not need to know which endpoint it is
+       * looking at. **A re-plant in the main checkout walked through that**:
+       * `{"results":[{"id":18,"name":"Drama"}]}` is a populated array, passes, and draws the
+       * same empty screen — because `genres()` reads `list.genres`, not any array it can
+       * find. Generality reached one step past the thing that matters.
+       *
+       * So the key is **derived from the provider** rather than typed here, the same way the
+       * path list is. `TmdbProvider` declares `type List = { genres?: … }` beside the call,
+       * and that annotation is the name of the property it will actually destructure — so a
+       * snapshot answer is only an answer if it is populated **under that key**. If somebody
+       * renames the field, this clause follows them; if somebody deletes the annotation, the
+       * fallback below is the old any-array rule and the comment says so rather than the
+       * clause silently widening.
        */
+      const keyed = provider.match(/type\s+List\s*=\s*\{\s*(\w+)\?/)?.[1];
       const populated = (value: unknown): boolean =>
         Array.isArray(value)
           ? value.length > 0
           : !!value && typeof value === 'object' && Object.values(value).some(populated);
+      const answers = (parsed: unknown): boolean => {
+        if (!keyed) return populated(parsed);
+        const under = (parsed as Record<string, unknown> | null)?.[keyed];
+        return Array.isArray(under) && under.length > 0;
+      };
       expect(
-        populated(JSON.parse(readFileSync(where, 'utf8'))),
-        `design/real/${file} holds no rows, and an empty answer draws the same screen a 404 ` +
-          `does: \`genres()\` builds an empty map either way. Re-take the snapshot rather ` +
-          'than leaving a file that only looks like an answer.',
+        answers(JSON.parse(readFileSync(where, 'utf8'))),
+        `design/real/${file} holds no rows under \`${keyed ?? 'any key'}\`, and an answer the ` +
+          `provider cannot read draws the same screen a 404 does: \`genres()\` builds an ` +
+          'empty map either way. Re-take the snapshot rather than leaving a file that only ' +
+          'looks like an answer.',
       ).toBe(true);
     }
   });
