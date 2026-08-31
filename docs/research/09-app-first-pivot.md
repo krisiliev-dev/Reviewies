@@ -16476,9 +16476,10 @@ and which single claim in this document could not be checked at all:
   thing the export cannot render at all. A nested scroller is the second kind. The brief was
   written from the list of known asymmetries rather than from the list of open §7 items, which
   is how a question that has been sitting here since §6.109 missed the one occasion it could
-  have been answered. Goes in the next brief, phrased as a gesture and not as a screenshot:
-  swipe the years sideways, then swipe the screen down from inside the row, and say which one
-  moved.
+  have been answered. It is question D of `docs/device/on-the-phone-2.md`, phrased as a gesture
+  and not as a screenshot: swipe the years sideways, then swipe the screen down from inside the
+  row, and say which one moved. That brief is organised by which open §7 entry each answer
+  closes, which is the correction to how the first one was written.
 - **The rows are still inset cards with gutters.** §6.89 classified 42 of them as plates
   rather than structure precisely because they are — the direction's `radius.none` is for
   full-bleed rows separated by a hairline, and nothing here is full-bleed yet. Those

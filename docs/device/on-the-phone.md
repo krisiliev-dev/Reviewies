@@ -132,3 +132,13 @@ functions have never been typechecked, and they are Deno, which is not installed
 The last four sprints of design work were judged in a desktop Chromium at 390x844 with a fake
 device pixel ratio. You are the first person to see it on glass. Trust that over anything in the
 record — including anything this document just predicted.
+
+---
+
+## There is a second brief now
+
+`docs/device/on-the-phone-2.md`. It picks up the eight questions above that are still
+`NOT YET CHECKED` and adds six this one did not think to ask — because this brief was written
+from the list of known *rendering* asymmetries, and the right list was the open §7 items. The
+difference cost a question that had been waiting since §6.109. Do question **A** of that brief
+first: one photograph settles the largest open thing on the list.
