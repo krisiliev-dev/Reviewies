@@ -92,8 +92,28 @@ function Body({ on }: { on: UpNextView }) {
    * anybody mounts two of them.
    */
   const column = useRef<ScrollView>(null);
+  /*
+   * How tall the column is, which is how much trailing room the present needs under it.
+   *
+   * `Present`'s header carries the decision; this is the measurement it needs, and it is
+   * taken here because this is the component that owns the view being measured. A number
+   * rather than `Dimensions.get('window')`: the tab bar, the header and both safe areas are
+   * outside this `ScrollView`, so its own layout height is the only figure that is a
+   * *screenful of this column* rather than a screenful of the device.
+   *
+   * `onLayout` is safe for this where it was not safe for the arrival, and the difference is
+   * exactly the one `Present` records below: on `react-native-web` a layout event is a
+   * `ResizeObserver`, which reports a **size** faithfully and a position never. This asks it
+   * for a size. React bails out of a re-render when the value is unchanged, so a layout that
+   * repeats costs nothing.
+   */
+  const [frame, setFrame] = useState(0);
   return (
-    <ScrollView ref={column} contentContainerStyle={styles.content}>
+    <ScrollView
+      ref={column}
+      contentContainerStyle={styles.content}
+      onLayout={(event) => setFrame(event.nativeEvent.layout.height)}
+    >
       <Masthead>{COPY.screens.upNext}</Masthead>
       <Choice<UpNextView>
         name={COPY.upNext.showing}
@@ -104,7 +124,7 @@ function Body({ on }: { on: UpNextView }) {
         // for one state. `segments.ts` owns the spelling for both.
         onChange={(next) => router.setParams({ [VIEW_PARAM]: next })}
       />
-      {on === 'coming' ? <Coming /> : <OutNow column={column} />}
+      {on === 'coming' ? <Coming /> : <OutNow column={column} frame={frame} />}
     </ScrollView>
   );
 }
@@ -112,7 +132,7 @@ function Body({ on }: { on: UpNextView }) {
 type Column = RefObject<ScrollView | null>;
 
 /** The half this screen opens on: what you have watched, what is next, and how to mark it. */
-function OutNow({ column }: { column: Column }) {
+function OutNow({ column, frame }: { column: Column; frame: number }) {
   const entries = useLive(() => getUpNext(), []);
   const libraryCount = useLive(() => db.library.count(), []);
   // Owned by the screen rather than by the row that opens it. A catch-up completes by
@@ -225,7 +245,7 @@ function OutNow({ column }: { column: Column }) {
 
   if (entries.length === 0) {
     return (
-      <Present column={column} writing={importing || unmatched}>
+      <Present column={column} frame={frame} writing={importing || unmatched}>
         <View style={styles.empty}>
           {/* Three states, not two. This screen used to say "Nothing here yet. N shows
               came from an import and have no episode lists until they are matched" —
@@ -286,7 +306,7 @@ function OutNow({ column }: { column: Column }) {
   }
 
   return (
-    <Present column={column} writing={importing || unmatched}>
+    <Present column={column} frame={frame} writing={importing || unmatched}>
       {/*
         Here too, and this is the whole point of the second copy.
 
@@ -352,12 +372,55 @@ function OutNow({ column }: { column: Column }) {
  * equivalent was unaffected. `docs/design/architecture.md` section 9 named this screen's
  * length as the risk to look at first; this is the first place it bit.
  */
+/**
+ * ## The trailing room, which is what makes the arrival possible at all
+ *
+ * `scrollTo` does not fail when it is asked for more than the column has; it clamps, and a
+ * clamp reads exactly like an arrival if you only look at the number it left behind. Up
+ * Next's past is capped but long and its present is a few rows, so the ask was almost always
+ * past the end and the screen came to rest at the bottom of itself with the present still
+ * most of a screen down.
+ *
+ * Measured on the export, and the bound is quoted with it because the whole reason this is
+ * being repaired is that once it was not: **`scrollTop 359` of a possible `359`** — the
+ * entire range — with ten struck rows above the first one that could be marked. The web's
+ * twin read `450 of a possible 450, the present 615pt down an 844pt frame`.
+ * `architecture.md` section 8 had recorded that first figure alone as proof the screen
+ * arrived; a number without the bound it is being compared against cannot tell an arrival
+ * from an end-stop, and this one was an end-stop.
+ *
+ * ## A floor, not a spacer
+ *
+ * What the arrival needs is that the present be at least as tall as the frame it is being
+ * scrolled to the top of. Spelled as a trailing **spacer** that would add an empty screen to
+ * every Up Next, including the fifty-row one `architecture.md` section 9 names as the thing
+ * to watch; spelled as a **floor** it is inert exactly there, because a present that already
+ * fills the frame needs nothing added. The three states, and the price of each:
+ *
+ * - **Many rows** — inert, nothing added, nothing to scroll past.
+ * - **One live row** — the row lands at the top with about a screen of quiet under it. That
+ *   is the cost, and the thing it buys is the row not being two thirds of the way down a
+ *   screen of things already crossed off.
+ * - **Caught up** — a repair rather than a cost. This state arrived 47pt short of its own
+ *   bottom and clipped *Find something to watch* under the tab bar; against a floor there is
+ *   nothing left to clip.
+ *
+ * No past, no floor: nothing is being scrolled past, so there is no arrival to make room for,
+ * and a floor there would only make a short screen scrollable for nothing.
+ *
+ * The frame is `Body`'s measurement of its own `ScrollView` rather than the window, because
+ * the tab bar, the header and both safe areas are outside it. The web writes the same
+ * decision as `min-h-dvh`, which is the nearest thing that renderer has to "a screenful".
+ */
 function Present({
   column,
+  frame,
   writing,
   children,
 }: {
   column: Column;
+  /** One screenful of *this column*, measured by `Body` off the `ScrollView` it owns. */
+  frame: number;
   /** Truthy while the library is still arriving: an import in flight, or rows to match. */
   writing?: string | number;
   children: ReactNode;
@@ -412,7 +475,14 @@ function Present({
    * by. `arrived` is what keeps it to one.
    */
   const arrive = () => {
-    if (arrived.current || !past?.length) return;
+    /*
+     * `!frame` is the third condition and it is the same rule as `!past?.length`: do not
+     * spend the one arrival before the thing it depends on exists. The room under the
+     * present is `frame` tall, so a scroll taken before the first layout would be a scroll
+     * into a column that has not been given anywhere to go — and `arrived` would then refuse
+     * the one that could have worked.
+     */
+    if (arrived.current || !past?.length || !frame) return;
     const node = column.current;
     const view = marker.current;
     if (!node || !view) return;
@@ -439,7 +509,13 @@ function Present({
   return (
     <>
       <Past entries={past} />
-      <View ref={marker}>{children}</View>
+      {/*
+        The floor, and only where there is a past to scroll past — see the header. This is
+        what turns a `scrollTo` that used to clamp into one the column can actually honour.
+      */}
+      <View ref={marker} style={past?.length ? { minHeight: frame } : undefined}>
+        {children}
+      </View>
     </>
   );
 }

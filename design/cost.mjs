@@ -479,19 +479,27 @@ const TASKS = [
       { back: 'the browser’s own Back, above the viewport' },
       { settle: 1500 },
       /*
-       * And then type the query again, because going back on the web loses it.
+       * And then the row is simply there, which it was not.
        *
-       * The walk stopped here with `/discover` reading "Nothing to recommend from your
-       * library yet, so these are what people are watching" — the *shelf*, not the results.
-       * `Discover.tsx` holds the query in `useState`, so a back navigation remounts the
-       * screen with an empty field; the phone's `expo-router` keeps the screen in the stack
-       * and its results with it, which is why the same three steps work there and these do
-       * not. One product remembers where you were and the other does not, and the whole of
-       * that difference is four characters and a press.
+       * Two steps used to stand here — `notice the search is gone, and retrieve the name
+       * again` and a second `type` — and the note beside them read: the walk stopped with
+       * `/discover` showing "Nothing to recommend from your library yet, so these are what
+       * people are watching", the *shelf* rather than the results, because `Discover.tsx`
+       * held the query in `useState` and a back navigation remounted the screen with an
+       * empty field. That was true and it has been repaired: the query is in the address
+       * (`?q=`, `core/src/ui/segments.ts`), so Back returns to `/discover?q=long` and the
+       * results are still on the screen.
+       *
+       * They are removed rather than left in as history. This file is a **model of a task**
+       * and every step in it is priced; a step whose justification has been retracted is a
+       * charge against a cost nobody pays any more, and `design/look.mjs` now walks the
+       * back-navigation on a browser and reads the field. The measurement the removal is
+       * worth is in the sprint note, not in the model.
+       *
+       * The phone's three steps below are unchanged, and were always these three — the
+       * difference between the two platforms on this task is now zero rather than four
+       * characters, one press and one `M`.
        */
-      { think: 'notice the search is gone, and retrieve the name again' },
-      { type: 'Long', into: /^Search for a/, as: 'the search field, again' },
-      { settle: 2000 },
       { think: 'find the row again in the results' },
       { press: /^Track /, as: 'Track' },
     ],

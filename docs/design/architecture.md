@@ -222,9 +222,41 @@ content remains *below* the target, and Up Next's present is a few rows. The fir
 
 The repair is a screenful of trailing room under the present, which is a decision about the bottom
 of the longest screen in the product — and §9 below already names that as the thing to watch, so
-it is filed there rather than taken here. `design/look.mjs` reports both numbers now and **fails
-on the clamp rather than passing on it**; it currently exits 1 with exactly this one problem, which
-is the honest state of this section.
+it is taken there rather than here. ~~`design/look.mjs` reports both numbers now and **fails on the
+clamp rather than passing on it**; it currently exits 1 with exactly this one problem, which is the
+honest state of this section.~~ **Made.** §9 carries the decision and what it costs; the readings
+after it, each with the bound it is compared against:
+
+| | before | after |
+| --- | --- | --- |
+| web, `scrollTop` of its own maximum | 450 of 450 | 1065 of 1161 |
+| web, where the present begins in an 844pt frame | 615pt | **0pt**, bound 133pt (one row) |
+| phone, `scrollTop` of its own maximum | 359 of 359 | 994 of 1010 |
+| phone, where the present begins in a 784pt frame | not measured | **19pt**, bound 83pt (one row) |
+
+3. **And the phone's half of this section never got the retraction.** The paragraph above was
+written about `look.mjs` and `lookPhone.mjs` had the identical clause — `scrollTop > 0` — which is
+why the phone number in the row above reads *not measured*. Run at HEAD against the defect this
+section describes, it printed `arrived at scrollTop 359` and **exited 0**: on a screen with a past
+above it, any scroll at all is positive, so that clause returned the same answer for an arrival and
+for an end-stop and could not have failed. A retraction that repairs one of two identical clauses
+is half a retraction. Both now read where the present *landed* against a bound measured off the
+screen's own rows, and both name the file they are complaining about.
+
+Two further plants sized what those clauses can and cannot see, because a guard's width is a
+measurement rather than an assumption:
+
+- With the marker moved 300pt above the row it names — the screen scrolls, and stops short with
+  room to spare — the *previous* clause printed `the present begins 300pt down a 844pt frame` and
+  exited 0. It asked whether the column had run out, which is a question about the **cause**; the
+  claim being made is about the **position**.
+- With the `arrived` ref removed, so the scroll re-fires on every write, the new clause found
+  nothing: arrival is correct in that build and what breaks is what happens afterwards. That gap
+  is closed by a second clause, which reads the past from the top, takes a mark back from there,
+  and requires the column not to move — 0pt on a correct build against 974pt planted. Its first
+  version asked for `scrollTop` unchanged *at the arrival* and failed on a correct build, because
+  Chromium scroll-anchors a row inserted above the fold; `scrollTop` is the reader's position plus
+  whatever the browser did to preserve it, and the two are not the same number.
 
 ## 9. What this costs, said plainly
 
@@ -233,3 +265,34 @@ already the longest screen in the product. If it becomes the screen everything i
 is this document's failure and the place to look first. The mitigation is that only one of
 the three is ever unbounded, and it is capped; the risk that remains is judgement, not
 arithmetic, and only a device can settle it.
+
+### 9.1 The bottom of it: a floor under the present, not a spacer after it
+
+§8 filed one decision here, and this is it. `scrollIntoView` and `scrollTo` are both
+*requests* — one is refused past the end of the column and the other clamps at it — so the
+screen arriving at the present requires a screenful of room underneath the present for it to
+be scrolled to the top *of*. There are two ways to spell that, and the difference is the
+whole of this section's subject.
+
+A trailing **spacer** — an empty screen after the last row — is the obvious one, and it adds
+a screenful to Up Next in every state, including the fifty-row state this section names as
+the thing to watch. It makes the longest screen in the product longer to fix a problem that
+screen does not have.
+
+A **floor** — the present is at least as tall as the frame — is the same repair where it is
+needed and inert where it is not. What it costs, in the three states:
+
+| state | what the floor does | what it costs |
+| --- | --- | --- |
+| **many live rows** | nothing; the present is already taller than the frame | nothing. The screen §9 is about is untouched |
+| **one live row** | the row lands at the top, about a screen of quiet under it | that quiet. Bought against the row sitting two thirds down under a wall of things already crossed off |
+| **caught up** | the sentence and its button land at the top | nothing — it is a repair. This state used to arrive 47pt short of its own bottom and clip *Find something to watch* under the tab bar |
+
+And where there is **no past** there is no floor, because there is no arrival to make room
+for: an unconditional floor would make a short screen scrollable for nothing. The room exists
+exactly when the thing it exists for does.
+
+The two renderers spell it in the units each has — `min-h-dvh` on the web, and on the phone
+the `ScrollView`'s own measured height, because the tab bar, the header and both safe areas
+are outside it and the window is not the column. Neither is a guess: `design/look.mjs` and
+`design/lookPhone.mjs` read the result back off a browser, with the bound beside it.

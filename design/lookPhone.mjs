@@ -126,32 +126,94 @@ else {
      * its own overflow on this export and has no stable selector, so the measurement asks
      * the document which element has actually been scrolled — which is also the only
      * question worth asking.
+     *
+     * ## This clause used to ask `scrollTop > 0`, and that is the defect it exists to catch
+     *
+     * The web's twin had exactly this clause and `architecture.md` section 8 wrote its
+     * output down as proof the screen arrived; the retraction in that section is what a
+     * number with no bound beside it is worth. **This side never got the retraction.**
+     * Measured at HEAD, on the build before this sprint's repair: `scrollTop 359` of a
+     * possible **359** — the entire range, the column stopped at the end of itself with the
+     * first markable row still most of a screen down — and this walk printed
+     * `arrived at scrollTop 359` and **exited 0**. It could not have failed: on a screen with
+     * a past above it, any scroll at all is positive, so the clause returned the same answer
+     * for an arrival and for an end-stop.
+     *
+     * Planted afterwards to size the repair rather than argue for it: with the arrival
+     * deliberately landing 300pt short, this clause printed `arrived at scrollTop 694` and
+     * exited 0 again.
+     *
+     * ## What it asks now
+     *
+     * Where the present **landed**, against the bound it has to land inside, in the same
+     * breath — and `scrollTop` against its own maximum, so a failure says whether the column
+     * ran out or the scroll stopped short. Those are different repairs.
+     *
+     * The instrument is the first ring named `Mark …` rather than `Unmark …`: the first thing
+     * on this screen you can act on, which is the whole of what "arrives at the present"
+     * means, and the one element here with a name stable enough to find. The bound is one
+     * row, measured off the pitch of the struck rows above rather than chosen — a ring sits
+     * somewhere inside its row, so "within one row of the top of the frame" is the tightest
+     * honest reading of a ring's position.
      */
-    const report = await page.evaluate(() => {
-      const rows = [];
+    const arrival = await page.evaluate(() => {
+      const scrollers = [];
       for (const el of document.querySelectorAll('*')) {
-        if (el.scrollHeight - el.clientHeight > 8) {
-          rows.push({
-            tag: el.tagName,
-            cls: (el.className || '').toString().slice(0, 40),
-            top: el.scrollTop,
-            over: el.scrollHeight - el.clientHeight,
-          });
-        }
+        if (el.scrollHeight - el.clientHeight > 8) scrollers.push(el);
       }
+      // The column is the deepest thing that actually scrolls; the document does not here.
+      const column = scrollers.sort(
+        (a, b) => b.scrollHeight - b.clientHeight - (a.scrollHeight - a.clientHeight),
+      )[0];
+      if (!column) return null;
+      const frame = column.getBoundingClientRect();
+      const named = [...document.querySelectorAll('[aria-label]')];
+      const struck = named.filter((e) => (e.getAttribute('aria-label') ?? '').startsWith('Unmark '));
+      const live = named.find((e) => (e.getAttribute('aria-label') ?? '').startsWith('Mark '));
+      const pitch =
+        struck.length > 1
+          ? Math.abs(
+              struck[1].getBoundingClientRect().top - struck[0].getBoundingClientRect().top,
+            )
+          : null;
       return {
-        doc: document.documentElement.scrollTop,
-        docOver: document.documentElement.scrollHeight - window.innerHeight,
-        rows: rows.slice(0, 6),
+        what: `${column.tagName}.${(column.className || '').toString().slice(0, 40)}`,
+        scrolled: Math.round(column.scrollTop),
+        most: Math.round(column.scrollHeight - column.clientHeight),
+        frame: Math.round(column.clientHeight),
+        present: live ? Math.round(live.getBoundingClientRect().top - frame.top) : null,
+        row: pitch ? Math.round(pitch) : null,
       };
     });
     // The scroller is named as well as measured: "nothing scrolled" and "there was nothing
     // to scroll" are two different answers and only one of them is a defect. §6.57's rule,
     // on an instrument rather than on a screen.
-    note(`what scrolls: ${JSON.stringify(report)}`);
-    const scrolled = Math.max(report.doc, ...report.rows.map((r) => r.top));
-    note(`arrived at scrollTop ${scrolled}`);
-    if (scrolled <= 0) problems.push(`the screen arrived at the top of the past (scrollTop ${scrolled})`);
+    if (!arrival) problems.push('nothing on Up Next scrolls, so where it arrived cannot be read');
+    else if (arrival.present === null || arrival.row === null) {
+      note(`what scrolls: ${JSON.stringify(arrival)}`);
+      problems.push(
+        'the past and the present cannot both be found by name, so the arrival cannot be read',
+      );
+    } else {
+      note(`what scrolls: ${arrival.what}`);
+      note(
+        `arrived at scrollTop ${arrival.scrolled} of a possible ${arrival.most}; the present ` +
+          `begins ${arrival.present}pt down a ${arrival.frame}pt frame, against a bound of ` +
+          `${arrival.row}pt (one row of the past)`,
+      );
+      if (arrival.present > arrival.row) {
+        problems.push(
+          `mobile/app/(tabs)/index.tsx: the screen did not arrive at the present. It begins ` +
+            `${arrival.present}pt down a ${arrival.frame}pt frame, past the ${arrival.row}pt bound ` +
+            `(one row) — and scrollTop ${arrival.scrolled} of a possible ${arrival.most} says ` +
+            (arrival.scrolled >= arrival.most
+              ? `the column ran out before it got there, so the present needs more trailing room ` +
+                `under it`
+              : `the column still had ${arrival.most - arrival.scrolled}pt of range left, so the ` +
+                `scroll stopped short of the present rather than being clamped`),
+        );
+      }
+    }
   }
 }
 

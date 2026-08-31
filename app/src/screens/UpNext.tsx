@@ -351,6 +351,57 @@ function OutNow() {
  * default — an animated scroll on arrival is a screen that moves while you are reading it.
  */
 /**
+ * ## The trailing room, which is what makes the arrival possible at all
+ *
+ * `scrollIntoView({ block: 'start' })` is a **request**, not an assignment. A browser
+ * honours it only while a frame of content remains *below* the target; past that it scrolls
+ * as far as the column goes and stops. Up Next's past is capped but long, and its present is
+ * a few rows — so the request was refused almost every time, and the screen came to rest at
+ * the bottom of itself with the present still most of a screen down.
+ *
+ * That was measured, and the first measurement of it was wrong in a way worth keeping here.
+ * `architecture.md` section 8 recorded `scrollTop 450` as proof the screen had arrived.
+ * Read with the scroller's own range beside it, **`maxScroll` was also 450** — 450 is
+ * exactly what a screen that ignored the request entirely would have produced, and a number
+ * with no bound beside it could not have said which had happened. The reading that replaced
+ * it: `scrollTop 450 of a possible 450; the present begins 615pt down an 844pt frame`, with
+ * ten struck rows above it. Every number in this comment carries what it was compared
+ * against, because the defect being repaired *is* the habit of writing down the one that
+ * flatters.
+ *
+ * ## Why a floor and not a spacer
+ *
+ * The repair is a screenful of room under the present, and there are two ways to spell it.
+ * A trailing **spacer** — `pb-dvh`, a screenful of nothing after the last row — is the
+ * obvious one and it is wrong on the screen this document is most worried about:
+ * `architecture.md` section 9 names Up Next's length as the risk to look at first, and a
+ * spacer adds a whole empty screen to the *fifty-row* case, where there was never a problem
+ * to fix. A **floor** costs nothing there. What the arrival actually needs is that the
+ * present block be at least as tall as the frame it is being scrolled to the top of; where
+ * the present is already that tall, `min-height` is inert.
+ *
+ * So the three states, and what this costs in each:
+ *
+ * - **Many rows.** The floor is inert. No dead space, nothing to scroll past, unchanged.
+ * - **One live row.** The row lands at the top and roughly a screen of quiet follows it.
+ *   That quiet is the cost, and it is the right one: the alternative on offer is the row
+ *   sitting two thirds of the way down under a wall of things already crossed off.
+ * - **Caught up.** The same, and here it is a repair rather than a price — on the phone this
+ *   state arrived 47pt short of its own bottom and clipped *Find something to watch* under
+ *   the tab bar. Nothing can clip against a floor.
+ *
+ * And where there is **no past**, no floor: nothing is scrolled past, so there is no arrival
+ * to make room for, and an unconditional floor would only make a short screen scrollable for
+ * no reason. The room exists to make the arrival possible and is present exactly when the
+ * arrival is.
+ *
+ * `dvh` rather than a measurement of `<main>`: the floor only has to be *at least* the
+ * frame, the viewport is never smaller than the scroller inside it, and reaching three
+ * components up for `<main>`'s `clientHeight` is the selector coupling the paragraph above
+ * refuses. The phone cannot spell `dvh` and measures its own `ScrollView` instead — same
+ * decision, in the units each renderer has.
+ */
+/**
  * ## Not while the library is being written
  *
  * `importing` is not a nicety and it is not only about cost. §6.80's third state is
@@ -395,7 +446,12 @@ function Present({
   return (
     <>
       <Past entries={past} />
-      <div ref={present}>{children}</div>
+      {/*
+        The floor, and only where there is a past to scroll past. See the header: a screenful
+        of trailing room is what turns `scrollIntoView`'s request into one the browser can
+        honour, and `min-height` is the spelling of it that costs nothing on a long screen.
+      */}
+      <div ref={present} className={past?.length ? 'min-h-dvh' : undefined}>{children}</div>
     </>
   );
 }
