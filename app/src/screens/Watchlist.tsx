@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { Note } from '../ui/Note';
 import { Field } from '../ui/Field';
 import { Masthead } from '../ui/Masthead';
+import { useWaitedLongEnough } from '../ui/waiting';
 
 /**
  * Uncapped, deliberately. Trakt limiting free watchlists and doubling its price is
@@ -25,8 +26,27 @@ export function Watchlist() {
     [],
     undefined,
   );
+  const waited = useWaitedLongEnough(items === undefined);
 
-  if (items === undefined) return <Note className="p-6">{COPY.waiting.loading}</Note>;
+  /*
+   * Nothing, and then the word — rather than the word straight away.
+   *
+   * `design/between.mjs` measured this branch painting for **17ms** on a press from
+   * /lists, which is one frame: too brief to fixate, so what it delivered was a flicker
+   * and not a message. The branch itself is not the defect and is not removed —
+   * `emptyStates.ts` has the rule it serves, *"'I could not look' is not 'there is
+   * nothing'"*, and the empty sentence four lines down is a claim about somebody's own
+   * watchlist that must not be made before the query has answered. Silence makes no claim
+   * either way, which is why it is what the first 200ms get.
+   *
+   * `core/src/ui/waiting.ts` argues the threshold. The phone has drawn this state exactly
+   * so since it shipped — `mobile/app/(tabs)/watchlist.tsx` renders its Masthead and then
+   * nothing at all while `useLive` is undefined — so this is §6.51 once more: the better
+   * version wins, whichever platform already had it.
+   */
+  if (items === undefined) {
+    return waited ? <Note className="p-6">{COPY.waiting.loading}</Note> : null;
+  }
 
   if (items.length === 0) {
     return (

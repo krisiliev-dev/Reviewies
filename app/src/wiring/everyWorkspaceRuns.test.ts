@@ -264,7 +264,12 @@ describe('every workspace', () => {
     // the screen, presses the control by its announced name and asks the database. That
     // split is deliberate and measured — a plant with the write behind a dead branch
     // satisfies all three source clauses and fails both of these.
-    core: 1030, app: 768, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 774, up six more: `waiting.test.tsx` — the threshold's two independent bounds,
+    // the hook's silence-then-speech-then-silence-again, the first frame of the watchlist
+    // and of stats, and the tail-implies-head clause. The two passes above landed in
+    // parallel and each raised this line; the number below is counted from the merged tree
+    // rather than added up from the two reports, which is the whole rule.
+    core: 1030, app: 774, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

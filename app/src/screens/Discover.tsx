@@ -29,6 +29,7 @@ import { Row as BaseRow } from '../ui/Row';
 import { Note } from '../ui/Note';
 import { Attribution } from '../ui/Attribution';
 import { Masthead } from '../ui/Masthead';
+import { useWaitedLongEnough } from '../ui/waiting';
 import { QUERY_PARAM, queryFrom } from '@reviewies/core/ui/segments';
 
 /**
@@ -167,6 +168,7 @@ export function Discover() {
    * whichever half is showing. `genresOf` says why the list is derived rather than fixed: a
    * fixed list is thirty-four chips that empty the screen.
    */
+  const waited = useWaitedLongEnough(suggestions === undefined);
   const shelf = suggestions ?? [];
   const genres = genresOf(searching ? results : shelf);
   const shownResults = applyFilters(filters, results);
@@ -238,7 +240,12 @@ export function Discover() {
           )}
 
           {shelfError && <p className="px-1 text-s14 text-trouble">{shelfError}</p>}
-          {suggestions === undefined && <Note className="px-1">{COPY.waiting.loading}</Note>}
+          {/* 13ms, measured, on a press from /lists — one frame, and a word cannot be read
+              in one. `core/src/ui/waiting.ts` has the threshold; the branch stays because
+              a shelf that has not been asked for yet is not a shelf that came back empty,
+              and `COPY.discover.empty` on the next line is the sentence that would
+              otherwise be making that claim. */}
+          {suggestions === undefined && waited && <Note className="px-1">{COPY.waiting.loading}</Note>}
           {suggestions?.length === 0 && !shelfError && (
             <Note className="px-1">{COPY.discover.empty}</Note>
           )}

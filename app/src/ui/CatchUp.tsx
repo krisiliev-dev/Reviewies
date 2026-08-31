@@ -5,6 +5,7 @@ import { useDialog } from './useDialog';
 import { Section } from './Section';
 import { Data } from './Data';
 import { Note } from './Note';
+import { useWaitedLongEnough } from './waiting';
 
 /**
  * Catch up to a point in a series without seeing anything you have not watched.
@@ -48,6 +49,7 @@ export function CatchUp({
   }
 
   const chosen = seasons?.find((s) => s.season === season);
+  const waited = useWaitedLongEnough(seasons === undefined);
 
   return (
     <div
@@ -82,7 +84,12 @@ export function CatchUp({
             {marked === 0 ? COPY.catchUp.nothingToMark : COPY.catchUp.marked(marked)}
           </p>
         ) : seasons === undefined ? (
-          <Note>{COPY.waiting.loading}</Note>
+          /* 19ms, measured — `design/between.mjs` pressed *Catch up on …* on Up Next and
+             caught this sheet flashing the word for one frame on its way open. The branch
+             stays: `nothingAired` on the next line is a claim about a series, and a sheet
+             that has not asked yet must not make it. `core/src/ui/waiting.ts` has the
+             threshold. */
+          waited ? <Note>{COPY.waiting.loading}</Note> : null
         ) : seasons.length === 0 ? (
           <Note>{COPY.catchUp.nothingAired}</Note>
         ) : (

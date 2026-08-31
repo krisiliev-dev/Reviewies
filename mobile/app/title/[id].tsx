@@ -29,6 +29,7 @@ import { REACH, leadingOf, tap, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type, leading } from '@reviewies/core/tokens';
 import { useLive } from '../../src/useLive';
+import { useWaitedLongEnough } from '../../src/ui/waiting';
 import { COPY } from '@reviewies/core/copy';
 import { CrossOff } from '../../src/ui/CrossOff';
 import { Row as BaseRow } from '../../src/ui/Row';
@@ -157,6 +158,18 @@ export default function TitleScreen() {
   const summaries = useMemo(() => summariseSeasons(seasons, watched ?? new Set()), [seasons, watched]);
   const open = chosen === undefined ? openSeason(summaries) : chosen;
 
+  /**
+   * Whether the head of this page has been decided, either way — the web's twin word for
+   * word, and for the same reason.
+   *
+   * Three outcomes and not two: a name, no name because the look finished without finding
+   * one, and **not looked yet**. `title` alone cannot tell the first from the third, since
+   * `useLive` returns `undefined` both before it has run and for an id no row matches, so
+   * the effect's own `loading` supplies the difference.
+   */
+  const headKnown = title !== undefined || failed || !loading;
+  const headWaited = useWaitedLongEnough(!headKnown);
+
   return (
     <>
       <Stack.Screen options={{ title: title?.name ?? 'Title' }} />
@@ -178,9 +191,14 @@ export default function TitleScreen() {
              * poster in a header block, and on this platform the navigator's own title
              * above it is already the screen's name at depth 1.
              */}
-            <Masthead level="sub">
-              {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
-            </Masthead>
+            {/* Drawn when it has something to say. `core/src/ui/waiting.ts` has the
+                threshold: a placeholder that stands for less than one fixation is a
+                flicker in the place a name is about to be, not a message. */}
+            {(title !== undefined || failed || !loading || headWaited) && (
+              <Masthead level="sub">
+                {title?.name ?? (failed || !loading ? COPY.title.loadFailed : COPY.waiting.loading)}
+              </Masthead>
+            )}
             {!title && (failed || !loading) && (
               <Button
                   onPress={() => {
@@ -279,114 +297,133 @@ export default function TitleScreen() {
           </View>
         )}
 
-        <View style={styles.ratingBlock}>
-          <Section>{COPY.title.yourRating}</Section>
-          <StarRating
-            of={title?.name ?? 'this title'}
-            value={rating?.value}
-            onChange={(value) =>
-              value === undefined ? clearRating(titleId) : rate(titleId, value)
-            }
-          />
-        </View>
+        {/*
+          The tail, and the ordering finding that put it behind a condition.
 
-        {/* Only for something you are tracking: an override is stored on the library
-            row, so there is nowhere to put one otherwise. */}
-        {libraryItem && (
-          <View style={styles.posterEdit}>
-            {posterDraft === undefined ? (
-              <Pressable
-                onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')}
-                hitSlop={REACH.inline}
-                accessibilityRole="button"
-                style={tap}
-              >
-                <Text style={styles.posterToggle}>
-                  {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
-                </Text>
-              </Pressable>
-            ) : (
-              <View style={styles.posterRow}>
-                <Field
-                size="row"
-                label={COPY.fields.posterUrl}
-                value={posterDraft}
-                onChange={setPosterDraft}
-                placeholder={COPY.fields.posterUrlPlaceholder}
-                keyboardType="url"
-                autoFocus
-                autoCapitalize="none"
-                style={styles.grow}
-              />
-                <Button
-                  tone="primary"
-                  label="Save"
-                  name={COPY.controls.savePoster}
-                  onPress={async () => {
-                    await setPosterOverride(titleId, posterDraft.trim() || undefined);
-                    setPosterDraft(undefined);
-                  }}
-                />
+          The web's twin carries the full argument. In short: `design/between.mjs` pressed a
+          row and watched this page paint its **local half first** — the rating, Where to
+          watch, the season list — and then insert its head above them, pushing everything
+          already on the screen down. The waiting is honest; the order was noise.
+
+          **The number in that finding is the web's and is not restated here.** That file's
+          own header says `--phone` reads a `react-native-web` export, so its shift channel
+          measures that renderer rather than this app on glass. What crosses is the source:
+          the head of this screen is conditional on `title` and the tail was not, on both
+          platforms, in the same shape. That is what is repaired, and it is repaired here
+          because it is the same defect and not because a phone was measured.
+        */}
+        {headKnown && (
+          <>
+          <View style={styles.ratingBlock}>
+            <Section>{COPY.title.yourRating}</Section>
+            <StarRating
+              of={title?.name ?? 'this title'}
+              value={rating?.value}
+              onChange={(value) =>
+                value === undefined ? clearRating(titleId) : rate(titleId, value)
+              }
+            />
+          </View>
+
+          {/* Only for something you are tracking: an override is stored on the library
+              row, so there is nowhere to put one otherwise. */}
+          {libraryItem && (
+            <View style={styles.posterEdit}>
+              {posterDraft === undefined ? (
                 <Pressable
-                  onPress={() => setPosterDraft(undefined)}
+                  onPress={() => setPosterDraft(libraryItem.posterOverride ?? '')}
                   hitSlop={REACH.inline}
                   accessibilityRole="button"
-                  accessibilityLabel={COPY.controls.cancelPoster}
+                  style={tap}
                 >
-                  <Text style={styles.posterCancel}>Cancel</Text>
+                  <Text style={styles.posterToggle}>
+                    {libraryItem.posterOverride ? COPY.controls.changePoster : COPY.controls.differentPoster}
+                  </Text>
                 </Pressable>
+              ) : (
+                <View style={styles.posterRow}>
+                  <Field
+                  size="row"
+                  label={COPY.fields.posterUrl}
+                  value={posterDraft}
+                  onChange={setPosterDraft}
+                  placeholder={COPY.fields.posterUrlPlaceholder}
+                  keyboardType="url"
+                  autoFocus
+                  autoCapitalize="none"
+                  style={styles.grow}
+                />
+                  <Button
+                    tone="primary"
+                    label="Save"
+                    name={COPY.controls.savePoster}
+                    onPress={async () => {
+                      await setPosterOverride(titleId, posterDraft.trim() || undefined);
+                      setPosterDraft(undefined);
+                    }}
+                  />
+                  <Pressable
+                    onPress={() => setPosterDraft(undefined)}
+                    hitSlop={REACH.inline}
+                    accessibilityRole="button"
+                    accessibilityLabel={COPY.controls.cancelPoster}
+                  >
+                    <Text style={styles.posterCancel}>Cancel</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Above the episode list on purpose. Someone who has decided what to watch and
+              not how is asking one question, and it should not be below a hundred rows. */}
+          <WhereToWatch titleId={titleId} />
+
+          {/* Asked for repeatedly: a doesthedogdie-style heads-up inside the tracker.
+              Collapsed, so it spoils nothing unasked. */}
+          <ContentWarnings titleId={titleId} />
+
+          {loading && seasons.length === 0 && (
+            <>
+              <ActivityIndicator color={theme.workingMark} style={styles.loading} />
+              <Note accessibilityLiveRegion="polite">{COPY.title.loadingEpisodes}</Note>
+            </>
+          )}
+
+          {seasons.map(([season, list], index) => {
+            const summary = summaries[index];
+            const expanded = open === season;
+            return (
+              <View key={season} style={styles.season}>
+                {/* The heading is the control. A `Section` above a button would be the same
+                    words twice, and the row already says everything the heading did. */}
+                <BaseRow
+                  density="index"
+                  title={summary.label}
+                  meta={summary.progress}
+                  open={{
+                    name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
+                    run: () => setChosen(expanded ? null : season),
+                  }}
+                  trailing={
+                    <Chevron points={disclosure(expanded)} color={theme.inkSecondary} />
+                  }
+                />
+                {expanded &&
+                  list.map((episode) => (
+                    <EpisodeRow
+                      key={episode.id}
+                      episode={episode}
+                      seriesId={titleId}
+                      watched={watched?.has(episode.id) ?? false}
+                      rewatches={counts?.get(episode.id) ?? 0}
+                    />
+                  ))}
               </View>
-            )}
-          </View>
-        )}
-
-        {/* Above the episode list on purpose. Someone who has decided what to watch and
-            not how is asking one question, and it should not be below a hundred rows. */}
-        <WhereToWatch titleId={titleId} />
-
-        {/* Asked for repeatedly: a doesthedogdie-style heads-up inside the tracker.
-            Collapsed, so it spoils nothing unasked. */}
-        <ContentWarnings titleId={titleId} />
-
-        {loading && seasons.length === 0 && (
-          <>
-            <ActivityIndicator color={theme.workingMark} style={styles.loading} />
-            <Note accessibilityLiveRegion="polite">{COPY.title.loadingEpisodes}</Note>
+            );
+          })}
           </>
         )}
-
-        {seasons.map(([season, list], index) => {
-          const summary = summaries[index];
-          const expanded = open === season;
-          return (
-            <View key={season} style={styles.season}>
-              {/* The heading is the control. A `Section` above a button would be the same
-                  words twice, and the row already says everything the heading did. */}
-              <BaseRow
-                density="index"
-                title={summary.label}
-                meta={summary.progress}
-                open={{
-                  name: `${summary.label}, ${summary.progress}, ${expanded ? 'showing' : 'hidden'}`,
-                  run: () => setChosen(expanded ? null : season),
-                }}
-                trailing={
-                  <Chevron points={disclosure(expanded)} color={theme.inkSecondary} />
-                }
-              />
-              {expanded &&
-                list.map((episode) => (
-                  <EpisodeRow
-                    key={episode.id}
-                    episode={episode}
-                    seriesId={titleId}
-                    watched={watched?.has(episode.id) ?? false}
-                    rewatches={counts?.get(episode.id) ?? 0}
-                  />
-                ))}
-            </View>
-          );
-        })}
       </ScrollView>
     </>
   );

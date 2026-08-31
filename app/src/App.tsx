@@ -162,7 +162,15 @@ const TABS = TAB_BAR;
  * screen — the break harness below, and whatever comes after it — applies to every
  * screen rather than to the ones somebody edited.
  */
-const ROUTES: Array<{ path: string; screen: () => React.JSX.Element }> = [
+/*
+ * `| null` because a screen is allowed to draw nothing.
+ *
+ * `core/src/ui/waiting.ts` gave every loading branch in the app 200ms of silence before it
+ * says it is waiting — `design/between.mjs` measured nine of twenty-four interactions
+ * flashing a word for 13–44ms, which is too brief to fixate and therefore not a message —
+ * and a screen whose whole body is that branch has nothing else to return meanwhile.
+ */
+const ROUTES: Array<{ path: string; screen: () => React.JSX.Element | null }> = [
   { path: '/', screen: UpNext },
   { path: '/watchlist', screen: Watchlist },
   { path: '/title/:id', screen: TitleDetail },

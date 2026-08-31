@@ -19,6 +19,7 @@ import { Progress } from '../ui/Progress';
 import { Masthead } from '../ui/Masthead';
 import { Button } from '../ui/Button';
 import { YearSpine } from '../ui/YearSpine';
+import { useWaitedLongEnough } from '../ui/waiting';
 
 /**
  * Stats and Year in Review.
@@ -39,13 +40,37 @@ export function Stats() {
   const [window, setWindow] = useState<Window>(DEFAULT_STATS_WINDOW);
   const [year, setYear] = useState<number>();
 
-  const years = useLiveQuery(() => availableYears(), [], []);
+  const years = useLiveQuery(() => availableYears(), [], undefined);
   const spine = useLiveQuery(() => getSpine(), [], undefined);
   const summary = useLiveQuery(
     () => (year ? getSummary('year', { year }) : getSummary(window)),
     [window, year],
     undefined,
   );
+
+  /**
+   * The two queries that draw **above** the figures, and why they are one condition.
+   *
+   * `design/between.mjs` measured a press on *Stats* from /more shifting the period
+   * control **283px down** at +187ms — the largest genuine shift in the app, and not a
+   * disclosure: the reader had asked for a screen, not for a banner to arrive over the
+   * top of the one they were reading. The mechanism is the ordering. Both queries are
+   * local and both answer in a microtask, but the render does not wait for them: the
+   * period control and the figures paint first, and then the spine — a decade of
+   * television, 283px of it — is inserted above them and pushes everything down.
+   *
+   * `years` is the same defect one size smaller and was invisible next to it: its default
+   * was `[]`, so the second row of the period control was absent, then present, which
+   * moves the figures under a reader for the same reason. `undefined` is the honest
+   * initial value — *not asked yet* — and `yearList` is what the render uses.
+   *
+   * So: the head paints before the tail, or neither does. The wait is the same wait
+   * either way; what it no longer does is spend it drawing an answer in the wrong order.
+   */
+  const headKnown = spine !== undefined && years !== undefined;
+  const yearList = years ?? [];
+  const headWaited = useWaitedLongEnough(!headKnown);
+  const summaryWaited = useWaitedLongEnough(summary === undefined);
 
   /*
    * The windows and the years as one list of options, because they are one choice: picking
@@ -59,7 +84,24 @@ export function Stats() {
    * neither — which is exactly what `getSummary` takes below.
    */
   const chosen = year === undefined ? (window as string) : String(year);
-  const YEARS = years.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` }));
+  const YEARS = yearList.map((y) => ({ key: String(y), label: String(y), hint: `your ${y}` }));
+
+  /*
+   * The head, alone, until it is a head.
+   *
+   * Not `null`: the screen's name is not a query result and there is no honest reason to
+   * withhold it — a press that lands on a page with no name has not been answered, which
+   * is the other bound `design/response.mjs` measures. What waits is everything whose
+   * arrival could move something already on the screen.
+   */
+  if (!headKnown) {
+    return (
+      <div className="p-s16">
+        <Masthead level="page" className="px-1">{COPY.screens.stats}</Masthead>
+        {headWaited && <Note>{COPY.waiting.loading}</Note>}
+      </div>
+    );
+  }
 
   return (
     <div className="p-s16">
@@ -79,7 +121,10 @@ export function Stats() {
        * it, which is `docs/design/calm.md`'s whole argument arriving on day one instead of
        * in year two.
        */}
-      {spine !== undefined && <div className="mb-5"><YearSpine years={spine} /></div>}
+      {/* Unconditional now. `headKnown` above is what decides whether this screen has a
+          body at all, so a second `spine !== undefined` here would be a guard against a
+          state this line can no longer be reached in. */}
+      <div className="mb-5"><YearSpine years={spine} /></div>
 
       {/*
        * One question, drawn on two rows.
@@ -141,15 +186,18 @@ export function Stats() {
         )}
       </div>
 
+      {/* The figures are the last thing on the screen, so their arrival appends rather
+          than inserts and moves nothing. This one only has to not flicker — see
+          `core/src/ui/waiting.ts` for why the word waits 200ms for its turn. */}
       {summary === undefined ? (
-        <Note>{COPY.waiting.loading}</Note>
+        summaryWaited ? <Note>{COPY.waiting.loading}</Note> : null
       ) : summary.episodes === 0 ? (
         <div className="flex flex-col items-start gap-3">
           <Note>{COPY.stats.empty}</Note>
           {/* There is history, just not in this window. Saying "nothing" to somebody
               with ten years in the app reads as a lost library rather than an empty
               period, and the years above are not an obvious answer to it. §6.54. */}
-          {years.length > 0 && (window !== 'all' || year !== undefined) && (
+          {yearList.length > 0 && (window !== 'all' || year !== undefined) && (
             <Button
               onPress={() => {
                 setYear(undefined);

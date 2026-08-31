@@ -91,20 +91,27 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'populated, with a note', verdict: 'suite' },
       { name: 'editing a note', verdict: 'suite' },
       /*
-       * `never`, because *"Dexie resolves before the first paint locally"* — for the life of
-       * this file, and false. `useLiveQuery(fn, deps)` with no initial value returns
-       * `undefined` on the first render and resolves in a microtask afterwards; it cannot
-       * beat the paint. The screen it describes has an explicit branch for it four lines
-       * from the query — `if (items === undefined) return <Note>{COPY.waiting.loading}</Note>`
-       * — so the state is not merely reachable, it is the guaranteed first frame.
+       * Three verdicts in three sprints, and each move was a measurement rather than an
+       * opinion. It read `never`, because *"Dexie resolves before the first paint
+       * locally"* — false for the life of the file: `useLiveQuery(fn, deps)` with no
+       * initial value returns `undefined` on the first render and resolves in a microtask
+       * afterwards, so it cannot beat the paint. §6.191 corrected it to `suite` on a
+       * browser measurement: nine of 24 interactions painted it, 16–66ms each.
        *
-       * §6.191 measured it in a browser: nine of 24 interactions painted it, each for
-       * 16–66ms. `suite` is the literal truth by this file's own definition — an end-to-end
-       * run renders it, on every run — with the caveat that nothing *asserts* it, which is
-       * the distinction this vocabulary does not carry and `whyNever.test.ts` now guards
-       * the other half of.
+       * It is `unit` now, and the reason is that the screen changed rather than that the
+       * reading did. `design/between.mjs` re-measured those flashes at 13–44ms and the
+       * judgement filed with them was that a word that brief is neither honest nor useful
+       * — so `core/src/ui/waiting.ts` gave every loading branch 200ms of silence before it
+       * speaks. Nothing an end-to-end run does takes 200ms to read a local table, so no
+       * browser renders this any more; `app/src/ui/waiting.test.tsx` does, by holding the
+       * clock, and that is exactly what `unit` means here.
+       *
+       * **The state is still reachable and is deliberately still here.** §6.104's rule is
+       * that *"I could not look"* must be distinguishable from *"there is nothing"*, and
+       * the empty sentence on this screen is a claim about somebody's own watchlist. A
+       * genuinely slow read still says so; a fast one has nothing to say.
        */
-      { name: 'loading', verdict: 'suite' },
+      { name: 'loading', verdict: 'unit', why: 'no browser waits the 200ms it now takes to speak' },
     ],
   },
   {
@@ -222,20 +229,27 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'a rolling window', verdict: 'suite' },
       { name: 'Year in Review', verdict: 'suite' },
       /*
-       * `never`, because *"Dexie resolves before the first paint locally"* — for the life of
-       * this file, and false. `useLiveQuery(fn, deps)` with no initial value returns
-       * `undefined` on the first render and resolves in a microtask afterwards; it cannot
-       * beat the paint. The screen it describes has an explicit branch for it four lines
-       * from the query — `if (items === undefined) return <Note>{COPY.waiting.loading}</Note>`
-       * — so the state is not merely reachable, it is the guaranteed first frame.
+       * Three verdicts in three sprints, and each move was a measurement rather than an
+       * opinion. It read `never`, because *"Dexie resolves before the first paint
+       * locally"* — false for the life of the file: `useLiveQuery(fn, deps)` with no
+       * initial value returns `undefined` on the first render and resolves in a microtask
+       * afterwards, so it cannot beat the paint. §6.191 corrected it to `suite` on a
+       * browser measurement: nine of 24 interactions painted it, 16–66ms each.
        *
-       * §6.191 measured it in a browser: nine of 24 interactions painted it, each for
-       * 16–66ms. `suite` is the literal truth by this file's own definition — an end-to-end
-       * run renders it, on every run — with the caveat that nothing *asserts* it, which is
-       * the distinction this vocabulary does not carry and `whyNever.test.ts` now guards
-       * the other half of.
+       * It is `unit` now, and the reason is that the screen changed rather than that the
+       * reading did. `design/between.mjs` re-measured those flashes at 13–44ms and the
+       * judgement filed with them was that a word that brief is neither honest nor useful
+       * — so `core/src/ui/waiting.ts` gave every loading branch 200ms of silence before it
+       * speaks. Nothing an end-to-end run does takes 200ms to read a local table, so no
+       * browser renders this any more; `app/src/ui/waiting.test.tsx` does, by holding the
+       * clock, and that is exactly what `unit` means here.
+       *
+       * **The state is still reachable and is deliberately still here.** §6.104's rule is
+       * that *"I could not look"* must be distinguishable from *"there is nothing"*, and
+       * `COPY.stats.empty` is a claim about somebody's own history. A genuinely slow read
+       * still says so; a fast one has nothing to say.
        */
-      { name: 'loading', verdict: 'suite' },
+      { name: 'loading', verdict: 'unit', why: 'no browser waits the 200ms it now takes to speak' },
     ],
   },
   {

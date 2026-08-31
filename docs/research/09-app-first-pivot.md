@@ -16306,6 +16306,156 @@ arriving after the document was written.
   run. The phone tab bar reads 1.000 there and **no claim is made about the device**, where
   expo-router's `Tabs` draws its own press.
 
+### 6.192 Two passes on what "smooth" means, and three corrections to my own briefs
+
+Sprint 104's first two agents. Both were sent after the same word in the request — *"a fully smooth
+app experience"* — from opposite ends: one on what a control **promises**, one on what the screen
+**does between the press and the answer**.
+
+#### A control announced "Add {name} to your watchlist" that added nothing, at two of six sites
+
+**Six, not five.** My brief said five and then listed four. Re-counted:
+`grep -rn "name={COPY.controls.addToWatchlist(" app/src mobile/src mobile/app` returns **6** render
+call sites — `app/src/ui/Browse.tsx`, `app/src/screens/Discover.tsx`, `app/src/screens/TitleDetail
+.tsx`, `mobile/src/ui/Browse.tsx`, `mobile/app/title/[id].tsx`, `mobile/app/(tabs)/discover.tsx`.
+Four added on the press. **The two search rows ran `() => setNoting(true)`**, which opened a note
+composer, hid Track and *Seen it*, and offered no Cancel on either platform. The only exits were
+Save — committing a row you may not have wanted — or leaving the screen.
+
+One nuance the agent corrected in the photograph rather than accepting from me: `AddToList` returns
+`null` when `!syncConfigured()`, so on the build `04-search-noting.png` was taken from it was
+already absent. **The trap on that build is Track and *Seen it*, not three controls.**
+
+Decision taken: the press adds, and the composer goes. That is the decision `TitleDetail.tsx` had
+already argued in its own comment for its own button, and §6.167 put "Add a note…" on the watchlist
+row, so the note is not lost — it moves to where the row already offers it. Accessible names before
+and after: `["Track","Watchlist"]` → `["Track","On watchlist"]`.
+
+**The before-run is the measurement that matters.** Against the defect in its shipping state, the
+entire existing suite — **core 1030, app 803, mobile 47: 1,880 checks — convicted nothing.**
+
+Two guards rather than one, and the split is measured rather than asserted.
+`watchlistPromise.test.ts` reads source and asks whether each of the six controls' own `onPress`
+reaches the writer. `searchRowWatchlist.test.tsx` reads no source at all: it renders the screen,
+presses the control **by its announced name**, and asks the database. Re-planted here:
+
+| plant | source guard | behavioural guard |
+| --- | --- | --- |
+| a press that does nothing (`() => void saveToWatchlist`, type-clean) | passes | **red** — *"the press wrote no watchlist row: expected +0 to be 1"* |
+| the write behind a dead branch (`String(result.id).length > 9999`, type-clean) | **passes all three** | **red on both** |
+
+The second is the constructed plant — the one that satisfies the new guard while breaking the
+behaviour — and it is why the second file exists. A source guard cannot see a dead condition. Both
+files carry that limit in writing.
+
+#### Three guards that failed on a correct change, and the rule fixed each time
+
+- `pairs.ts` counted any `.tsx` under `app/src/screens` as a screen, so a new *render test* arrived
+  in `offers.test.ts` as an unpaired screen.
+- `watchlistRow.test.ts` hardcoded two phone note editors while its own comment claimed it *"reads a
+  list of editors rather than a list of screens"*. Now derived, with a floor.
+- `coreWiring.ts` walked `.tmp` — the directory `docs/design/agents.md` §6 *mandates* for `TMPDIR` —
+  and tripped over Playwright profiles deleted mid-walk. **This is the one that cost me an hour**: it
+  took `paletteMembers` and `coreWiring` red on a clean tree, twice, and I read it as a broken merge
+  before it was diagnosed.
+
+#### The More rows: refused, and the refusal found the larger thing
+
+I recommended amending two `MORE_INDEX` detail lines. The agent refused, with three reasons, and I
+think it is right:
+
+1. **The row is correct in two of its destination's three states.** Configured and signed in: true.
+   Configured and signed out: `signInToMake` names a place. Unconfigured: `needsAccount` names
+   nowhere. A `detail` line is one unconditional string, so any edit honest in the third makes it
+   wrong in the first two.
+2. **Conditioning the table is worse than the defect.** `navigationLabels.test.ts` and
+   `offers.test.ts` read `MORE_INDEX` at module scope *precisely* to be build-independent, and
+   `agents.md` §9 lists "a sync probe that answered configured on every build" among its nine.
+3. **The premise was narrower than it read.** `package.json`'s `design:phone` explicitly blanks
+   `EXPO_PUBLIC_SUPABASE_URL` and `_ANON_KEY`; `design:signedin` exists to shoot the configured
+   build; this checkout's `.env` has both set. So `07-more.png` photographs a build the harness
+   *deliberately* unconfigures. Still a supported build, but a different population than the
+   deployed app — and my brief had treated the screenshot as the product.
+
+What it found underneath is build-independent and it could not take it either:
+**`COPY.app.localFirst` ("Nothing here needs an account") and `COPY.lists.needsAccount` ("Lists need
+an account") contradict each other on every build, 653 lines apart in one file.** Any honest detail
+line has to agree with whichever is the product's position, and that is a question about what
+*"here"* means. Filed rather than guessed at.
+
+#### The word nobody could read: 12 sites, not 2
+
+Second correction to my own brief. I said the single-frame `Loading…` was at two sites.
+`git grep -l "COPY.waiting.loading"` at the merge base returns **12 web files and 6 phone files, 18
+in all**. Five of the nine measured flickers were Up Next's one line; `CatchUp` was nearly missed
+because the instrument names the *route*, not the sheet.
+
+Third correction: I told it to fix "the phone twins". **They do not exist** — `mobile/app/(tabs)/
+watchlist.tsx` and `mobile/app/stats.tsx` have **zero** occurrences and render silence while waiting,
+which is what the web now does. §6.51 again, with the phone holding the better version.
+
+The decision: `core/src/ui/waiting.ts`, `SAY_WE_ARE_LOOKING = 200`, argued from the fixation cycle —
+a word on screen for less than one fixation cannot have been fixated — and **explicitly not** from
+Google's INP 200ms. Same digits, different kind of number, and the file says so because §6.190 was
+burned by exactly that collision over Doherty's 400. §6.104 survives because the delay renders
+*silence*, which makes no claim; the empty-state sentence still waits for the query to answer.
+
+Gated, counted from the tree rather than from the report — `Discover` 2→5 references, `Stats` 0→5,
+`TitleDetail` 1→5, `UpNext` 0→3, `Watchlist` 0→3, `CatchUp` 0→3, `Coming` 0→3. Five refused as
+genuinely remote waits: `EpisodeComments`, `Lists`, `People`, `AddToList`, `ContentWarnings`.
+
+**And my counting instrument was wrong on its first run.** `grep -c "waited"` reported `Stats.tsx`
+ungated both before and after; the gate is spelled `headWaited` and `summaryWaited`, with a capital
+W. A case-sensitive needle, reported as a fact about the file. Third instance today, and the third
+different disguise.
+
+#### The plant that only an independently derived bound could catch
+
+`SAY_WE_ARE_LOOKING = 1` — the value that makes the delay meaningless — **passes five of the six
+clauses**, including the hook clause, because that one advances the fake clock by
+`SAY_WE_ARE_LOOKING - 1` and so moves with the constant it is testing. `wrongWay`'s shape exactly
+(§6.190). Re-planted here: **1 failed, 5 passed**, and the one that fails is
+`expect(SAY_WE_ARE_LOOKING).toBeGreaterThanOrEqual(200)` — a bound derived from the fixation
+literature rather than from the constant. A guard that reads its subject for its own expectation is
+saved only by a second opinion from outside.
+
+#### What the instrument says now, run here rather than taken from the report
+
+`design/between.mjs` against a fresh build of the merged tree — **25 interactions, 7 screens, 54
+controls offered**:
+
+- **7 layout shifts, and all 7 carry `hadRecentInput`.** The structural finding reproduces exactly:
+  the interval smoothness lives in is scored **zero by CLS by construction**.
+- The three shifts that remain are the ones classified *asked for* — 243px on the calendar's
+  "Tell me about", 167px on Discover's filters, 123px on Stats' year — each wholly below the control
+  pressed, on the route already open. Reported, not failed.
+- **`between.mjs` still exits 1**, and the agent predicted it: the intermediate *state count* is
+  unchanged, because a client-side route change paints a frame between two screens whatever that
+  frame holds. `EXTRA_STATES = 0` is not reachable by making a word wait. Holding the previous route
+  until the next is ready would fix the count **and make presses look unanswered** against
+  `response.mjs`'s bound — refused, in writing.
+
+What changed is what those frames *say*, not how many there are. That distinction is the sprint.
+
+#### What is not done
+
+- **The `localFirst` / `needsAccount` contradiction** is filed and untaken. It is a question about
+  what the product's position is, not a wording fix.
+- **`MORE_INDEX`'s detail lines are unchanged**, deliberately. The cheapest fix that needs no
+  position is not in that file at all: `More.tsx` already draws
+  `{!bridgeConfigured() && <Note>{COPY.watching.bridgeAbsent}</Note>}` (seams.md §10), and the same
+  shape would serve here.
+- **`between.mjs`'s `--phone` was run after only**, and its 17 interactions never press a title row,
+  so it says nothing about the title-page repair on the phone. No device claim is made from it.
+- **Two smoke clauses are red on both platforms and were red before this sprint** — proven by
+  `git stash`, not asserted: web 283–284/285, phone 213/215, identical on the stashed tree.
+- **One agent ran in the main checkout rather than a worktree**, because I did not force isolation on
+  the launch. It collided with nothing in the end, but for two hours the working tree held a
+  half-finished change that I could not commit and could not merge over, and a mid-flight run of the
+  suites read as a broken merge. Pass `isolation: "worktree"`.
+- **One agent killed another's server** with `pkill -f "serve dist"`, which matched
+  `serve dist-real -p 4492`. Reported it itself. Ports are per-agent; process patterns are not.
+
 
 ## 7. What is still not known
 
