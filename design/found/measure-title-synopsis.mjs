@@ -45,9 +45,6 @@ const OPENS = /Years ago, the fearsome Pirate King/;
 const BASE = process.env.BASE ?? 'http://localhost:4472';
 const OUT = new URL('./', import.meta.url).pathname;
 
-const paragraph = () =>
-  [...document.querySelectorAll('p')].find((e) => /Years ago, the fearsome Pirate King/.test(e.textContent));
-
 const browser = await chromium.launch(chromiumOptions());
 for (const width of WIDTHS) {
   const page = await browser.newPage({ viewport: { width, height: 900 }, deviceScaleFactor: 2 });
