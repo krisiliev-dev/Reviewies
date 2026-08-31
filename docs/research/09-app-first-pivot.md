@@ -15647,6 +15647,122 @@ percentage and appends a tolerance beside it.
   photograph and settles the largest open thing on the list.
 
 
+### 6.190 Product work, and three guards that were wrong about the defect they imagined
+
+**This entry is open.** One of three agents is still out — Up Next's arrival and the web's lost
+search. It grows rather than being replaced; §6.186 is why the marker is here.
+
+Sprint 101 turned from instruments to the product. The last four sprints built the means to see,
+and an interaction-cost pass then found two holes that had been there the whole time.
+
+#### The title page could not track the show it was describing
+
+`Track`, `addToLibrary` and `watchlist` appeared **nowhere** on either title screen. You could read
+a synopsis, the seasons, the cast, where to watch and the content warnings, and there was no way to
+start tracking it from that page — you went back out to search and pressed Track on the row. Priced
+before and after:
+
+| route | presses | typed | M | modelled |
+| --- | --- | --- | --- | --- |
+| phone, from the search row | 3 | 4 | 3 | 6.04s |
+| phone, via the page — before | 5 | 4 | 5 | 9.19s (+3.16s) |
+| phone, via the page — after | 4 | 4 | 4 | **7.40s (+1.37s)** |
+| web, from the search row | 3 | 4 | 3 | 9.94s |
+| web, via the page — before | 6 + 1 unpriced | 8 | 6 | 18.47s (+8.53s) |
+| web, via the page — after | 4 | 4 | 4 | **12.48s (+2.54s)** |
+
+The web was worse than its own constants explain, and the reason was a second finding inside the
+first: **going back loses the query**, so the eight typed characters are the search typed twice.
+
+The control is the search row's own two, moved — same tones, labels, announced names, read from
+`db.library` and `db.watchlist` rather than session state. Nothing invented, so nothing new to keep
+in step. Refused: a third control, a stop-tracking (`repo.ts` has no writer that removes a library
+row, and inventing one on the screen that would have to explain what happens to your history is a
+larger decision), and a note composer the watchlist row already offers.
+
+#### The shelf was a dead end, and the only record of the decision was an inference
+
+A Discover box had one press — turn over — and its back offered Track, Watchlist, Done. From the
+shelf there was **no route** to where-to-watch, warnings, seasons or cast; from a search result
+there still was. Before the rework a Discover row opened `/title/:id`.
+
+It was an accident of `e09ac85`. `box.ts`'s argument is about twenty boxes each repeating two verbs;
+`architecture.md`'s eight refusals do not contain it; the commit does not mention it; and the search
+half of the same screen kept its route throughout. **The one place it was written down was a comment
+in `app/smoke.mjs` explaining an audit count — *"the shelf offers fewer controls on purpose"*.** An
+inference about a decision nobody made, which had then been read back as the decision. The route is
+on the back beside `Done`, drawn *Details* and announced *Open {name}* — the sentence the other six
+routes to that page already use.
+
+#### The census could not tell a backlog from a photograph of the past
+
+38 of the 78 "unread" shots were of a build that no longer exists: `design/web-real` captured at
+06:34, the architecture rework landed at 21:22, and all 38 photograph a five-tab bar and a Search
+destination. `design/unread.mjs` reports **stale separately from unread** now — 152 shots, 45 unread,
+55 stale, 52 read and current.
+
+The derivation is the careful part. The shot→script map is parsed out of each `capture*.mjs`'s own
+`OUT` literal rather than typed, so a fifth script joins the census the day it is written; where two
+scripts file into one directory the cutoff is the **earliest**, because the only claim a `.png`
+supports is *this predates every script that could have taken it*, and the census prints that 61
+shots are judged that way rather than burying it. Staleness is the last **commit** to the script
+rather than a file mtime, because an mtime rule calls a fresh clone entirely stale — §6.187's shape
+again — and the cost of the choice (a shot taken with an edited-but-uncommitted script is not yet
+called stale) is written at the line. It under-reports; it never accuses.
+
+#### Two things the shelf could not show until the snapshot was fixed
+
+**The snapshot never fetched the genre table.** `TmdbProvider.genres()` asks for `/genre/tv/list`
+and `/genre/movie/list` once per provider; `design/snapshot.mjs` fetched neither. The provider does
+not treat that as a search failure, so it swallowed both 404s and returned an empty map, and every
+real-data box drew **year only**. `boxUnder` composes *genre · year*. So the fixture pass photographs
+*Drama · 2024* under a blank monogram and the real pass photographed a real poster under *2001*:
+two passes, thirty sprints, and a box carrying both facts had never been photographed once.
+
+**And the shutter photographed a rating nobody gave.** `narrow-title-severance.png` showed four
+filled stars under *Your rating*; the same build at 1280 showed five empty. `StarRating` paints
+`hover ?? value ?? 0`, and Playwright leaves the cursor where it clicked — at 420 that lands on star
+4. `design/shoot.mjs` already resets scroll and says why; it moves the pointer now too, before the
+shutter.
+
+With both fixed and the shelf re-shot, **it reads**: two boxes fill a 390pt screen, plates dominate,
+the title and the genre·year line sit under them at caption weight. Nothing filed against either
+renderer.
+
+#### Three guards, and each was wrong about the defect it imagined
+
+The re-plant caught all three, and the shape is the same every time: the author defended against the
+failure they pictured rather than the one that happens.
+
+- **`snapshotPass.test.ts` requires a *call*, not a string** — its comment says so, and defends
+  against a paragraph naming an endpoint the file forgot to fetch. It reads raw source, so
+  `// await api('/genre/tv/list');` still matches. A commented-out call is still a call to a regex,
+  and that is the likelier real form: somebody silences a fetch to debug and the line stays.
+  `stripComments` first, which every other file here already does.
+- **`decide.test.ts` cannot evaluate a render condition**, which the agent found itself and moved to
+  the browser. Verifying that claim needed a better plant than my first: gating the control on
+  `shelf === 'library'` **does not compile**, because tsc narrows the union and flags the later
+  `shelf === 'watchlist'` comparisons as impossible. A plant that cannot compile is not a plant, and
+  stopping there would have recorded "smoke catches it" without having asked smoke anything.
+  Re-planted with `String(title.id).length > 9999`, which compiles, passes the source guard exactly
+  as predicted, and fails the browser check by name.
+- **The agent's own plant C passed and found nothing**, because it planted into the first
+  single-script directory only. Widened to plant into every one, the same plant failed. Reported as
+  a miss rather than quietly fixed, which is the behaviour the step exists to produce.
+
+#### And three clauses that were failing on correct screens
+
+All the same shape — a clause keyed to the *configured* build's wording, evaluated on a
+credential-free one. `people screen explains what it needs` looked for `works without it`; §6.72 had
+found that sentence false and rewritten it, one letter apart. The `Lists` floor branched only on one
+of two sign-in sentences. The `Your data` floor was an unconditional 11 against a screen that
+correctly has 9 without credentials. **A floor that passes on both builds checks neither**, so both
+numbers are kept and branched rather than merged.
+
+That is most of the standing "`verify` is red on a credential-free checkout" item, closed from the
+smoke side.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
