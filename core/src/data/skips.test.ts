@@ -83,6 +83,13 @@ const SKIPS: Record<string, Waiting> = {
     needs: 'SB_SECRET',
     covers: 'that two people hearing the same thing is what promotes a reference, server-side',
   },
+  'app/src/wiring/snapshotPass.test.ts': {
+    needs: 'design/real, the 534 MB snapshot of TMDB, which is gitignored and taken by hand',
+    covers:
+      'that the snapshot on disk holds an answer for every question the provider asks at a ' +
+      'fixed address — the clause beside it reads design/snapshot.mjs and can only say the ' +
+      'script asks, which was green while every real-data box drew year only',
+  },
 };
 
 /** Every test file in every workspace, as a path relative to the repository root. */
