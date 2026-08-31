@@ -50,26 +50,95 @@
 export const FOOT = 120;
 
 /**
- * How far the page can scroll, whichever element does the scrolling.
+ * The one scroller the shot is of, and the two facts worth knowing about it.
  *
- * A real scroller: taller than its box, tall enough to be a screen rather than a strip, and
- * not `overflow: visible`. The document is the fallback, for a page that scrolls normally.
+ * ## The fourth condition
+ *
+ * Three were here and there is a fourth: taller than its box, tall enough to be a screen
+ * rather than a strip, not `overflow: visible` — **and in the picture**.
+ *
+ * `app/src/remote/RemoteDrawer.tsx` is the case that found it. Its panel is
+ * `fixed inset-y-0 right-0 w-[288px] overflow-y-auto`, mounted on every screen of the web
+ * app whether or not it is open — deliberately, so the bridge connection is not torn down
+ * each time it closes — and when closed it is pushed off the right-hand edge by
+ * `translate-x-full` rather than unmounted. So it is exactly as tall as the window, its
+ * `overflowY` is `auto`, and its fascia of remote keys overflows it by 3891pt. It passed
+ * all three of the old conditions on **every route of the web app**, which means whether a
+ * screen was reported as scrolling has depended on whether the remote happened to be
+ * configured in the build being photographed.
+ *
+ * What that did is not only a wrong number. `shoot` files a second photograph when the
+ * overflow clears `FOOT`, so `dark-01-upnext` — two rows and nothing below the fold — was
+ * reported *"scrolls 3891pt, foot on file"* and handed the record a `-foot.png` that is the
+ * same screen again, because what moved was a panel nobody can see. Measured on this build
+ * before the condition was added: `dark-01-upnext +3891pt (at 3795pt)` and `dark-11-remote
+ * +3891pt (at 3795pt)` — identical numbers on the screen where the drawer is open and on
+ * the one where it is shut, which is the tell.
+ *
+ * Off the right edge is not the only way to be absent, but a predicate that tests the
+ * rectangle covers `display: none` and a zero-sized box too. It deliberately does **not**
+ * test opacity or stacking: a panel faded to nothing is still in the picture in the sense
+ * this cares about, and guessing at what covers what is how a measurement becomes an
+ * estimate wearing a number.
+ *
+ * ## Why one reading and not two
+ *
+ * `overflow` says how far the screen could travel; `at` says where it was standing when the
+ * shutter opened. The house rule for writing a finding about what a shot cuts off is *"hash
+ * the file and check the scroll position"*, and until `at` existed the second half of that
+ * could not be done — three findings in the record were retracted over exactly this, one
+ * for reading a shot taken at scroll 0 as a clipped row and one for citing `scrollTop 450`
+ * on a page whose `maxScroll` was also 450.
+ *
+ * They are read in one traversal, off **one** element, because two traversals can answer
+ * about two different elements and then the pair means nothing: `450 of 450` is a page at
+ * its end only if both numbers are the same page's. The first draft of this took the
+ * largest `scrollTop` anywhere in the document, and the drawer above is what it returned.
+ *
+ * `at` is reported and never refused. `reveal` presses controls that Playwright scrolls
+ * into view, so a reveal below the fold is legitimately not at the top, and a rule that
+ * convicted those would be the overfiring guard §6.190 corrected three of.
  */
-const OVERFLOW = () => {
+const READING = () => {
+  const inThePicture = (el) => {
+    const r = el.getBoundingClientRect();
+    return (
+      r.width > 0 && r.height > 0 &&
+      r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight
+    );
+  };
+  let best = null;
   let most = 0;
   for (const el of document.querySelectorAll('*')) {
     const over = el.scrollHeight - el.clientHeight;
-    if (over > most && el.clientHeight > 200 && getComputedStyle(el).overflowY !== 'visible') {
+    if (
+      over > most &&
+      el.clientHeight > 200 &&
+      getComputedStyle(el).overflowY !== 'visible' &&
+      inThePicture(el)
+    ) {
       most = over;
+      best = el;
     }
   }
-  if (most > 4) return Math.round(most);
+  if (most > 4 && best) return { overflow: Math.round(most), at: Math.round(best.scrollTop) };
   const doc = document.documentElement;
-  return Math.round(Math.max(0, doc.scrollHeight - doc.clientHeight));
+  return {
+    overflow: Math.round(Math.max(0, doc.scrollHeight - doc.clientHeight)),
+    at: Math.round(window.scrollY),
+  };
 };
 
-export function overflowOf(page) {
-  return page.evaluate(OVERFLOW);
+/**
+ * The scroller this shot is of, as `{ overflow, at }`.
+ *
+ * One export where there were two. `overflowOf` was exported and read by exactly one
+ * caller — `shoot`, twelve lines down — and a second export beside it would have been a
+ * second way to ask half the question, which is how the two numbers come to be about two
+ * different elements again.
+ */
+export function readingOf(page) {
+  return page.evaluate(READING);
 }
 
 /**
@@ -116,18 +185,37 @@ export async function shoot(page, { out, name, mustContain, problems, scrolls, s
    */
   await page.mouse.move(0, 0);
 
-  const overflow = await overflowOf(page);
+  // Read before the shutter and not after, for `mouse.move`'s reason one paragraph up: a
+  // reading taken after the foot shot would be a reading of where the instrument left the
+  // page, which is the one number it cannot be.
+  const { overflow, at } = await readingOf(page);
   await page.screenshot({ path: `${out}${name}.png` });
-  scrolls?.push({ name, overflow });
+  scrolls?.push({ name, overflow, at });
 
   if (overflow > FOOT) {
+    // The same element `READING` measured, found by the same four conditions — the foot
+    // shot has to be of the scroller the overflow was reported for or it is a photograph of
+    // something else. It scrolled a hidden drawer for as long as the picture test was
+    // missing from here too.
     await page.evaluate(() => {
       const doc = document.documentElement;
+      const inThePicture = (el) => {
+        const r = el.getBoundingClientRect();
+        return (
+          r.width > 0 && r.height > 0 &&
+          r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight
+        );
+      };
       let best = null;
       let most = 0;
       for (const el of document.querySelectorAll('*')) {
         const over = el.scrollHeight - el.clientHeight;
-        if (over > most && el.clientHeight > 200 && getComputedStyle(el).overflowY !== 'visible') {
+        if (
+          over > most &&
+          el.clientHeight > 200 &&
+          getComputedStyle(el).overflowY !== 'visible' &&
+          inThePicture(el)
+        ) {
           most = over;
           best = el;
         }
@@ -145,11 +233,11 @@ export async function shoot(page, { out, name, mustContain, problems, scrolls, s
     });
   }
 
-  console.log(
-    'shot',
-    name,
-    overflow ? `(scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''})` : '',
-  );
+  const said = [
+    overflow ? `scrolls ${overflow}pt${overflow > FOOT ? ', foot on file' : ''}` : '',
+    at ? `taken at ${at}pt down` : '',
+  ].filter(Boolean);
+  console.log('shot', name, said.length ? `(${said.join('; ')})` : '');
   return overflow;
 }
 
@@ -260,7 +348,23 @@ export async function unusedGround(page) {
  */
 export function longerScreens(scrolls) {
   const partial = scrolls.filter((s) => s.overflow > 0);
-  return partial.length ? partial.map((s) => `${s.name} +${s.overflow}pt`).join(', ') : null;
+  return partial.length
+    ? partial.map((s) => `${s.name} +${s.overflow}pt${s.at ? ` (at ${s.at}pt)` : ''}`).join(', ')
+    : null;
+}
+
+/**
+ * The shots that are not of the top of their screen, which is a different sentence from the
+ * one above and is the one a finding about a cut-off row has to be checked against.
+ *
+ * Separate rather than folded into `longerScreens`, because the two answer different
+ * questions and a pass may want to say one without the other: *how much is below this* and
+ * *where was this taken from*. A shot with no overflow can still be off the top — that is
+ * exactly the state a page left scrolled by a previous step is in.
+ */
+export function offTheTop(scrolls) {
+  const moved = scrolls.filter((s) => s.at > 0);
+  return moved.length ? moved.map((s) => `${s.name} at ${s.at}pt`).join(', ') : null;
 }
 
 /**

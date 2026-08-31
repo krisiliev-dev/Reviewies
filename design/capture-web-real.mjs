@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
-import { longerScreens, shoot, unusedGround } from './shoot.mjs';
+import { longerScreens, offTheTop, shoot, unusedGround } from './shoot.mjs';
 import { PROSE_CHARACTERS } from '../core/src/ui/screen.ts';
 
 /**
@@ -404,6 +404,8 @@ async function longestProseLine(page) {
 
 const longer = longerScreens(scrolls);
 if (longer) console.log(`\nshots that are the top of a longer screen: ${longer}`);
+const off = offTheTop(scrolls);
+if (off) console.log(`shots not taken at the top of their screen: ${off}`);
 
 /*
  * The prose reading, as a number on every run rather than as silence on a good one.
