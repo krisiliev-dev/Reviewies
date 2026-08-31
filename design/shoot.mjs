@@ -93,6 +93,29 @@ export async function shoot(page, { out, name, mustContain, problems, scrolls, s
     }
   }
 
+  /*
+   * The pointer, out of the way — the same act as putting the scroll back, one axis over.
+   *
+   * `narrow-title-severance.png` photographed **four filled stars** under the heading *Your
+   * rating*, on a title this harness tracks and never rates. `wide-title-severance.png` — same
+   * build, same snapshot, same run — showed five empty ones. Nothing about the product
+   * differed: `capture-web-real.mjs` reaches a title page by clicking the show's name in Up
+   * Next, Playwright leaves the cursor there, and `StarRating` paints `hover ?? value ?? 0`.
+   * On the 420 layout the row title's block centres over the fourth star; at 1280 the same
+   * centre lands past the fifth, so the control drew empty and the two shots disagreed.
+   *
+   * Which is #172 again, and this file already argues the case for the other axis eight lines
+   * below: *"a shot taken at somebody else's scroll position is #172"*. A shot taken at
+   * somebody else's pointer position is the same sentence, and it is worse in one way — a
+   * wrong scroll offset looks wrong, while a hover state looks like data.
+   *
+   * `(0, 0)` rather than off-screen, because Playwright clamps a move to the viewport anyway
+   * and the corner is the one coordinate every layout in this repository leaves empty: the
+   * screens all begin with a title inset by `SCREEN.edge`. Before the shutter, not after —
+   * after is a tidy-up that photographs the hover and then removes it.
+   */
+  await page.mouse.move(0, 0);
+
   const overflow = await overflowOf(page);
   await page.screenshot({ path: `${out}${name}.png` });
   scrolls?.push({ name, overflow });

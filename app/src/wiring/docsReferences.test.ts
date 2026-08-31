@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
-import { SHOT_DIRS, missingShotDirs, shots, unnamed } from '../../../design/unread.mjs';
+import {
+  SHOT_DIRS,
+  census,
+  filedBy,
+  missingShotDirs,
+  scriptChangedAt,
+  shots,
+  staleBefore,
+  unnamed,
+} from '../../../design/unread.mjs';
 import { stripMarkdownComments } from '@reviewies/core/test/source';
 
 /**
@@ -348,5 +357,180 @@ describe('cross-references in the source', () => {
     expect(left.length, 'every shot is named, which has never been true').toBeGreaterThan(0);
     expect(left.length, 'no shot has ever been named, so the proxy is broken')
       .toBeLessThan(all.length);
+  });
+
+  /**
+   * The census has two categories, and this makes it show them apart **on demand**.
+   *
+   * ## What went wrong
+   *
+   * Fifty-five shots — thirty-eight in `design/web-real`, seventeen in
+   * `design/real-screens` — photographed the five-tab bar, a Search destination, `/calendar`
+   * and Discover as a list of rows with two buttons. The information-architecture rework
+   * deleted all four the same evening. `unread.mjs` had no way to tell a shot nobody has read
+   * from a shot of a build nobody can reach, so all thirty-eight of the web-real ones sat
+   * inside the reported backlog. The number was not merely large; it was the wrong shape,
+   * and it had been reported that way for a sprint. Task 228, written without a § because
+   * the section that will hold it is not in the document yet and the sigil is a citation.
+   *
+   * ## Why the check plants rather than reads
+   *
+   * Because asserting *the current numbers* is the failure this file already has three
+   * entries about. `expect(stale).toBe(0)` goes red the next time somebody fixes a comment
+   * in a `capture*.mjs` — a correct change — and a rule that fires on correct changes is a
+   * rule people learn to route around. `expect(stale).toBeGreaterThan(0)` is worse: it goes
+   * red the moment the design record is *healthy*, which is the state this is all for.
+   *
+   * Neither number is the property. The property is that the census can **separate its two
+   * categories**, and the only way to see that is to hand it one of each and look. So two
+   * files are written into a real shot directory — one stamped before the last commit that
+   * touched the capture script filing there, one stamped now — and both are named. A census
+   * that puts them in the same bucket is the defect it was written to fix, whatever its
+   * totals happen to be that day.
+   *
+   * The plant is removed in a `finally`. Both live in a gitignored directory and both are
+   * named for what they are, so the worst case of a hard crash mid-run is two obvious files.
+   */
+  it('tells a photograph of a deleted architecture from a shot nobody has read', () => {
+    /*
+     * Named first, and by file. A census with no second category fails this clause on a
+     * `TypeError` from whichever line happens to call it, and the reader is left with
+     * "filedBy is not a function" and a line number in a *test*. The defect is in
+     * `design/unread.mjs`, so the message says so.
+     */
+    for (const [name, fn] of Object.entries({ census, filedBy, staleBefore })) {
+      expect(
+        typeof fn,
+        `design/unread.mjs exports no ${name}(), so it cannot tell a shot of a deleted architecture from one nobody has read`,
+      ).toBe('function');
+    }
+    shots();
+    const here = SHOT_DIRS.filter((d) => !missingShotDirs().includes(d));
+    if (!here.length) return; // §6.187: no design run in this checkout, nothing to plant into.
+
+    /*
+     * A directory exactly one capture script files into, so the cutoff is the exact one and
+     * not the conservative earliest-of-several `staleBefore` falls back to. `design/screens`
+     * takes shots from two scripts and is deliberately not the fixture: a check should be run
+     * against the case it can state precisely.
+     */
+    const by = filedBy();
+
+    /*
+     * And the map is the scripts' own, re-derived here rather than trusted.
+     *
+     * This is the half that a hand-written table passes silently. `design/screens` is filed
+     * into by **two** scripts — `capture.mjs` and `capture-signedin.mjs` — and a census that
+     * lists only the first is not obviously broken: it still separates stale from unread, on
+     * every directory, including the one the plant below uses. It simply judges sixty-one
+     * shots against the wrong script and says so with a straight face. So the mapping is read
+     * out of `design/capture*.mjs` a second time, by a different reader, and compared.
+     */
+    const declared = new Map(SHOT_DIRS.map((d) => [d, [] as string[]]));
+    for (const file of readdirSync(resolve(ROOT, 'design')).filter((f) => /^capture.*\.mjs$/.test(f))) {
+      for (const [, out] of readFileSync(resolve(ROOT, 'design', file), 'utf8').matchAll(
+        /const OUT = new URL\('\.\/([a-z-]+)\//g,
+      )) {
+        declared.get(`design/${out}`)?.push(`design/${file}`);
+      }
+    }
+    for (const [d, scripts] of declared) {
+      expect(
+        [...(by.get(d) ?? [])].sort(),
+        `design/unread.mjs judges ${d} against a different set of capture scripts than the ones that file into it`,
+      ).toEqual([...scripts].sort());
+    }
+
+    /*
+     * **Every** directory exactly one capture script files into, not the first one found.
+     *
+     * Measured, not assumed. With the plant going into only the first — `design/web`, by the
+     * order of `SHOT_DIRS` — a census that returned `false` for `design/real-screens` and
+     * judged everything else correctly passed all eleven clauses of this file. Seventeen
+     * shots exempt from the whole census, silently, and nothing here could see it, because
+     * the clause was written against *a* directory rather than against the directories.
+     *
+     * `design/screens` is left out on purpose: two scripts file into it, so its cutoff is the
+     * conservative earliest rather than an exact date, and the clause below owns that case.
+     */
+    const single = here.filter((d) => (by.get(d) ?? []).length === 1);
+    expect(single.length, 'no shot directory has exactly one capture script filing into it')
+      .toBeGreaterThan(0);
+
+    for (const dir of single) {
+      const cutoff = staleBefore(dir);
+      expect(cutoff, `nothing says when ${dir}'s capture script last changed`).toBeGreaterThan(0);
+
+      const past = resolve(ROOT, dir, 'zz-census-plant-stale.png');
+      const fresh = resolve(ROOT, dir, 'zz-census-plant-unread.png');
+      try {
+        for (const file of [past, fresh]) writeFileSync(file, '');
+        // An hour before the capture script last changed, and now. Nothing subtle: the two
+        // cases are meant to be unmistakable, because a fixture that only just separates
+        // tests the arithmetic rather than the rule.
+        const before = new Date(cutoff - 3_600_000);
+        utimesSync(past, before, before);
+
+        const { stale, unread } = census();
+        expect(stale, `${dir}/zz-census-plant-stale.png predates its own capture script and the census calls it backlog`)
+          .toContain(`${dir}/zz-census-plant-stale.png`);
+        expect(unread, `${dir}/zz-census-plant-unread.png is unread and the census does not say so`)
+          .toContain(`${dir}/zz-census-plant-unread.png`);
+        // And the other way, because a census that called everything stale would pass the two
+        // clauses above on the first one alone.
+        expect(stale, `${dir}/zz-census-plant-unread.png was taken after its capture script and is not a photograph of the past`)
+          .not.toContain(`${dir}/zz-census-plant-unread.png`);
+        expect(unread, `${dir}/zz-census-plant-stale.png is a photograph of the past and must not be counted as backlog`)
+          .not.toContain(`${dir}/zz-census-plant-stale.png`);
+      } finally {
+        for (const file of [past, fresh]) rmSync(file, { force: true });
+      }
+    }
+  });
+
+  /**
+   * Where two capture scripts share a directory, the cutoff is the **earlier** of them.
+   *
+   * Nothing in a `.png` says which script walked to it, so the only claim `design/screens`
+   * supports is *this shot predates every script that could have taken it*. Take the later
+   * one instead and every shot from whichever script had not changed is accused of
+   * photographing a build that still exists — a census that is confidently wrong about
+   * sixty-one shots, which is worse than the one it replaced.
+   *
+   * The two spellings differ on exactly one window: a shot stamped **between** the earlier
+   * script's last change and the later one's. `min` calls it current, `max` calls it a
+   * photograph of the past, and no assertion about totals can see the difference. So a shot
+   * is planted in that window.
+   *
+   * Skipped, with the reason, when the window is empty — two scripts committed together
+   * have the same date and there is nothing to tell apart. That is a real state of the
+   * repository rather than a failure, and a clause that went red for it would be a rule
+   * firing on a correct change.
+   */
+  it('judges a directory two capture scripts share against the earlier of them', () => {
+    shots();
+    const by = filedBy();
+    const dir = SHOT_DIRS.find(
+      (d) => !missingShotDirs().includes(d) && (by.get(d) ?? []).length > 1,
+    );
+    if (!dir) return; // No shared directory in this checkout, so there is no window.
+
+    const dates = (by.get(dir) ?? []).map(scriptChangedAt);
+    const [earliest, latest] = [Math.min(...dates), Math.max(...dates)];
+    if (latest - earliest < 2000) return; // Committed together; the window is empty.
+
+    const between = resolve(ROOT, dir, 'zz-census-plant-between.png');
+    try {
+      writeFileSync(between, '');
+      const at = new Date((earliest + latest) / 2);
+      utimesSync(between, at, at);
+      expect(
+        census().stale,
+        `${dir}/zz-census-plant-between.png is newer than the earliest script filing into ${dir}, ` +
+          'so nothing establishes it photographs a build that is gone',
+      ).not.toContain(`${dir}/zz-census-plant-between.png`);
+    } finally {
+      rmSync(between, { force: true });
+    }
   });
 });

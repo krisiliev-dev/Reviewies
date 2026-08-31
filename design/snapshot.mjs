@@ -173,6 +173,32 @@ await api('/trending/all/week');
 await api('/configuration');
 
 /*
+ * The genre table, which is two responses and the second fact on every box.
+ *
+ * `TmdbProvider.genres()` fetches these once per provider and keeps the id → name map for
+ * its life, because a **list** endpoint answers with `genre_ids: [18, 10765]` and only this
+ * table turns those into words. It was missing here for as long as this file has existed,
+ * and nothing said so: the provider is written to treat a failure here as *not* a search
+ * failure, so it swallows the 404s, hands back an empty map, and every result carries no
+ * genres at all.
+ *
+ * What that cost is a hole neither design pass could show alone. `boxUnder` composes the
+ * line under a box's title as genre, then year — `core/src/ui/box.ts` argues for those being
+ * the two facts a spine carries besides the name. The fixture pass photographs *Drama · 2024*
+ * under a blank monogram plate, because `FixtureProvider` invents genres and no artwork; this
+ * pass photographs a real poster under *2001*, because it has the artwork and no genres. Two
+ * passes, thirty sprints, and a box carrying both has never been photographed.
+ *
+ * The lesson is this file's own, one altitude up. §6.151 wrote that a snapshot is a copy of
+ * the **questions** rather than of the data, about a query key that did not match. The same
+ * sentence covers a question that was never asked at all — and that one is quieter, because
+ * a wrong key 404s on a screen somebody is looking at, while a missing endpoint the provider
+ * degrades around simply draws a slightly emptier screen for ever.
+ */
+await api('/genre/tv/list');
+await api('/genre/movie/list');
+
+/*
  * And the artwork, which is the half of this that the fixture cannot fake at all. Three
  * sizes, because `poster`, `backdrop` and `still` each ask for a different one and a
  * screenshot of the wrong size is a screenshot of a different design.

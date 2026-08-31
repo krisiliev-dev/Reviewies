@@ -21,9 +21,26 @@
  * somebody to assume, and it is the honest direction to be wrong in — this over-counts what
  * has been read, so the real backlog is at least this big.
  *
+ * ## Unread is not the only way a shot can fail to be backlog
+ *
+ * Thirty-eight shots in `design/web-real` and seventeen in `design/real-screens`
+ * photographed the **five**-tab bar, a Search destination, `/calendar`, and Discover as a
+ * list of rows with two buttons. The information-architecture rework deleted all four at
+ * 21:22 on 2026-08-30; the shots were taken at 06:34 that morning. Every one of them was
+ * counted here as unread backlog, and the backlog number was reported that way for a
+ * sprint — so the number was not merely large, it was **the wrong shape**. A photograph of
+ * a build nobody can reach is not something anybody should go and read. Task 228, and
+ * written without a § because the section that will hold it is not in doc 9 yet.
+ *
+ * So the census has two categories now, and `stale()` is the one that says which shots are
+ * photographs of the past. The direction of the split matters: a stale shot is subtracted
+ * from the backlog rather than added to it, because the answer to it is *re-run the pass*,
+ * not *go and look*.
+ *
  * Run: `node design/unread.mjs`
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -101,10 +118,154 @@ export function unnamed(doc = readFileSync(resolve(ROOT, 'docs/research/09-app-f
   });
 }
 
-if (process.argv[1] === import.meta.filename) {
+/**
+ * Which capture scripts file into which directory — read out of the scripts, not typed here.
+ *
+ * **The mapping is not one-to-one and assuming it is gives a confidently wrong census.**
+ * `design/screens` is written by *two* scripts: `capture.mjs` (the phone pass) and
+ * `capture-signedin.mjs` (the signed-in pass). Attribute all sixty-one of its shots to
+ * `capture.mjs` and every signed-in shot older than `capture.mjs`'s last commit is accused
+ * of photographing a build that still exists; attribute them all to `capture-signedin.mjs`
+ * and the phone's are excused. Either way the number is stated with a confidence nothing in
+ * it earns, which is worse than the number it replaces.
+ *
+ * So the `OUT` literal is read from each `capture*.mjs`, exactly as
+ * `app/src/wiring/docsReferences.test.ts` already reads it to check `SHOT_DIRS` against the
+ * harness. One `const OUT = new URL('./<dir>/'` per script, in source, always readable —
+ * and a *fifth* capture script filing into a fifth directory appears here the day it is
+ * written rather than the day somebody remembers this table exists.
+ */
+export function filedBy() {
+  const by = new Map(SHOT_DIRS.map((d) => [d, []]));
+  for (const file of readdirSync(resolve(ROOT, 'design')).filter((f) => /^capture.*\.mjs$/.test(f))) {
+    const source = readFileSync(resolve(ROOT, 'design', file), 'utf8');
+    for (const [, dir] of source.matchAll(/const OUT = new URL\('\.\/([a-z-]+)\//g)) {
+      by.get(`design/${dir}`)?.push(`design/${file}`);
+    }
+  }
+  return by;
+}
+
+/**
+ * When a capture script last **changed**, as epoch milliseconds.
+ *
+ * The last commit that touched it, rather than its mtime on disk, and the difference is the
+ * whole reason this is a git call and not a `statSync`. Every file in a fresh clone has the
+ * mtime of the clone, so an mtime rule would report the entire design record as stale to
+ * anybody who had just checked the repository out — §6.187's shape exactly, where a device
+ * agent found `verify` red for three reasons and none of them the code.
+ *
+ * ## Why not `max(commit, mtime)`, which looks more complete
+ *
+ * Because it inverts on the ordinary sequence. Edit a capture script, re-run its pass, then
+ * commit: the commit lands *after* the shots, `max` picks it, and every shot the run just
+ * took is called a photograph of the past. A rule that fires on the correct sequence is a
+ * rule people learn to ignore.
+ *
+ * What the commit-only rule costs instead is stated rather than hidden: between editing a
+ * capture script and committing it, shots taken with the *old* script are not yet called
+ * stale. That is the direction to be wrong in — this never accuses a shot that is current,
+ * so `stale` is a floor and the backlog it is subtracted from is a ceiling, which is the
+ * same direction the naming proxy at the head of this file already errs in.
+ *
+ * An uncommitted script — a new pass not yet added — has no commit to read. Its own mtime
+ * answers then, because a script that has never been committed cannot have shots older than
+ * a commit it does not have, and reporting `0` would silently excuse every shot in its
+ * directory for ever.
+ */
+const changedCache = new Map();
+export function scriptChangedAt(script) {
+  if (changedCache.has(script)) return changedCache.get(script);
+  let at = 0;
+  try {
+    const out = execFileSync('git', ['log', '-1', '--format=%ct', '--', script], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    at = out ? Number(out) * 1000 : 0;
+  } catch {
+    at = 0;
+  }
+  if (!at) {
+    try {
+      at = statSync(resolve(ROOT, script)).mtimeMs;
+    } catch {
+      at = 0;
+    }
+  }
+  changedCache.set(script, at);
+  return at;
+}
+
+/**
+ * The moment before which a shot in this directory is a photograph of the past.
+ *
+ * One script files here: that script's own last change, and the answer is exact.
+ *
+ * **Two or more: the earliest of them.** Not the latest, and this is the conservative half
+ * of the mapping above. `design/screens` takes shots from both the phone pass and the
+ * signed-in pass, and nothing in a `.png` on disk says which walked to it — so the only
+ * claim the directory supports is *this shot predates every script that could have taken
+ * it*, which is unarguable. The latest would accuse shots from whichever script had not
+ * changed. `ambiguous` in the census counts how many shots are being judged this way, so
+ * the softness is a number in the report rather than a footnote nobody reads.
+ */
+export function staleBefore(dir, by = filedBy()) {
+  const scripts = by.get(dir) ?? [];
+  if (!scripts.length) return 0;
+  return Math.min(...scripts.map(scriptChangedAt));
+}
+
+/**
+ * Shots older than the capture script that took them.
+ *
+ * A shot's mtime is when the shutter fired: `page.screenshot` writes the file, and nothing
+ * else in this repository rewrites one. That is a real property of the disk rather than a
+ * proxy, which is what makes this half of the census firmer than the naming half above.
+ */
+export function stale(all = shots()) {
+  const by = filedBy();
+  const before = new Map(SHOT_DIRS.map((d) => [d, staleBefore(d, by)]));
+  return all.filter((p) => {
+    const dir = p.slice(0, p.lastIndexOf('/'));
+    const cutoff = before.get(dir) ?? 0;
+    if (!cutoff) return false;
+    try {
+      return statSync(resolve(ROOT, p)).mtimeMs < cutoff;
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
+ * The two numbers, separated — and the third that says how much of it is soft.
+ *
+ * `unread` is what the backlog actually is: never named in doc 9 **and** not a photograph of
+ * a build that no longer exists. Stale comes out first because the answer to a stale shot is
+ * to re-run its pass, and reading it would be reading the past.
+ */
+export function census() {
   const all = shots();
-  const left = unnamed();
-  console.log(`${all.length} shots, ${left.length} never named in doc 9\n`);
+  const past = new Set(stale(all));
+  const neverNamed = new Set(unnamed());
+  const by = filedBy();
+  return {
+    all,
+    stale: [...past],
+    unread: all.filter((p) => neverNamed.has(p) && !past.has(p)),
+    /** Shots in a directory more than one capture script files into. */
+    ambiguous: all.filter((p) => (by.get(p.slice(0, p.lastIndexOf('/'))) ?? []).length > 1).length,
+  };
+}
+
+if (process.argv[1] === import.meta.filename) {
+  const { all, stale: past, unread, ambiguous } = census();
+  console.log(
+    `${all.length} shots: ${unread.length} unread, ${past.length} stale — ` +
+      `${all.length - unread.length - past.length} read and current\n`,
+  );
   if (missingShotDirs().length) {
     console.error(
       `Could not look in ${missingShotDirs().length} of ${SHOT_DIRS.length} directories — ` +
@@ -112,5 +273,24 @@ if (process.argv[1] === import.meta.filename) {
         'this checkout can see, which is not the same as what exists.',
     );
   }
-  for (const p of left) console.log(p);
+  const by = filedBy();
+  for (const dir of SHOT_DIRS) {
+    const cutoff = staleBefore(dir, by);
+    console.log(
+      `  ${dir} ← ${(by.get(dir) ?? []).join(', ') || 'nothing'}` +
+        `${cutoff ? ` (stale before ${new Date(cutoff).toISOString()})` : ''}`,
+    );
+  }
+  if (ambiguous) {
+    console.log(
+      `\n${ambiguous} shots sit in a directory more than one capture script files into, so ` +
+        'they are judged against the earliest of those scripts and this count is a floor.',
+    );
+  }
+  if (past.length) {
+    console.log(`\nstale — re-run the pass, do not read these (${past.length}):`);
+    for (const p of past) console.log(`  ${p}`);
+  }
+  console.log(`\nunread — never named in doc 9 (${unread.length}):`);
+  for (const p of unread) console.log(`  ${p}`);
 }
