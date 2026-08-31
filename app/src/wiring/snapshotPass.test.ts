@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { stripComments } from '@reviewies/core/test/source';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { queryKey } from '../../../design/tmdbKey.mjs';
@@ -147,9 +148,17 @@ describe('the real-data pass', () => {
        * which questions it copies and why, so a bare `toContain(path)` would be answered by
        * a comment describing the endpoint it forgot to fetch — which is the failure one
        * altitude up from the one this whole clause is about.
+       *
+       * **And comments are stripped first, which the call-shaped needle alone did not do.**
+       * A re-plant in the main checkout commented the fetch out — `// await
+       * api('/genre/tv/list');` — and this clause passed, because a commented-out call is
+       * still a call as far as a regex is concerned. That is the likelier real form than a
+       * paragraph mentioning an endpoint: somebody silences a fetch to debug something and
+       * the line stays. `stripComments` is what every other file here uses for this, and it
+       * was the missing half.
        */
       expect(
-        snapshot,
+        stripComments(snapshot),
         `design/snapshot.mjs never fetches ${path}, which TmdbProvider asks for on every run — ` +
           'so the real-data design passes photograph a screen the product would not draw',
       ).toMatch(new RegExp(`api\\(\\s*'${path.replace(/\//g, '\\/')}'`));
