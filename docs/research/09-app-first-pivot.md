@@ -15286,10 +15286,10 @@ satisfied while the value it binds is overridden one line along — is not close
 
 ### 6.189 The frameworks convict, and acquit
 
-**This entry is open.** Three of four agents are still out — an interaction-cost instrument, a
-reading pass over the surfaces that shipped unseen, and a calm-technology decision. It will be
-extended rather than replaced, and this paragraph is the marker, because an entry that grows
-silently is what §6.186 is about.
+**This entry was open for most of the sprint and is closed now.** All four agents are in, all
+four merged, every finding re-planted in the main checkout, and `verify` run once on a machine
+with nothing else on it. The marker stayed while it grew, because an entry that grows silently
+is what §6.186 is about.
 
 The standing instruction changed shape this sprint: keep working in parallel sweeps, make the
 design *perfect*, and **innovate using the frameworks the HCI field built for that purpose**.
@@ -15556,6 +15556,95 @@ the sync probe that answered "configured" on every build there has ever been. Th
 specific enough to name: **a measurement with one number is not a measurement.** It needs the
 bound it is being compared against, in the same breath, or it is a figure that happened to come
 out positive.
+
+#### The fourth agent, and a control nothing here has ever measured correctly
+
+Interaction cost, with every constant cited: touch pointing at `MT = ID/6.95 bit/s` (MacKenzie
+2015), the mouse line from Card, English & Burr 1978, `M` at Kieras's 1.2s printed beside CMN's
+own 0.6–1.35 range, keystrokes from Palin et al.'s 37,370 people. `design/cost.mjs` prints and
+does not assert, which is the right shape for a model.
+
+**What it refused is the useful half again.** There is **no scroll operator** — KLM has none, and
+no source it could read publishes a unit time that applies here — so scrolls are counted, measured
+in points, and left unpriced rather than estimated. The steering law does not fill the gap, because
+Accot & Zhai is for a *constrained path* and a flick is ballistic; **this product has no steering
+task at all**, recorded as an absence. **Hick's law applies nowhere here** and the file says so
+with numbers: at the 4–32 ms/bit slopes Liu et al. (CHI 2020) actually measure, two tabs versus
+four is at most 32 milliseconds.
+
+**And the answer is smaller than the sprint expected, which is why it is worth having.** The tab
+bar — the thing a design review argues about — costs a sixth of a second between its dearest and
+cheapest journey. The two places nobody had looked cost three and eight and a half: a title page
+that **cannot track the show it is describing** on either platform, and a web build that **forgets
+your search when you press back**.
+
+The repair is the one this record will keep. `mobile/src/ui/StarRating.tsx` placed each star's
+second half with `right: { left: undefined, right: 0 }`. Yoga reads the undefined edge as *unset*;
+**react-native-web omits an `undefined` declaration entirely**, leaving `left: 0` standing, so the
+box resolved against `right` and **five pairs of touch targets drew on one rectangle** — x at 16,
+66, 116, 166, 216 where the web draws ten. The later button won every tap, so half-star values were
+unreachable in the export **every screenshot, smoke check and measurement this project has ever
+taken of its own rating control** comes from. Fifth renderer difference in that list, and the first
+found by asking what something *costs* rather than what it looks like.
+
+Its guard failed twice on correct code before it was right — a `styles.rowBody : undefined` inside
+a ternary, and the repaired file's own comment quoting the line it replaced — and both times the
+rule was fixed rather than the file.
+
+**My own second plant against it found nothing, and nothing is the answer.** The guard bans a
+*spelling*, so I built the version that satisfies it and should still stack the targets:
+`{ left: MIN_HALF, right: 0 }`, over-constrained with `half`'s `width`. Built the export with it in
+and measured rather than reasoned — spacings 24 / 26 / 24, identical to the correct code, because
+CSS ignores `right` when `left` and `width` are both set and Yoga does the same. The rule is a
+spelling and no other spelling in that class reaches the geometry, so the rule is the right width.
+Recorded because a plant that finds nothing is a result, and skipping it is how a guard's width
+becomes an assumption.
+
+#### The seam repairs, and the one that changed shape under examination
+
+`seams.md` filed three. All three done, and two of them were not what the document said.
+
+**Listening had five unowned sentences, not two** — and two had already drifted. *"Nobody has
+mapped this episode yet"* ended *"Sync by hand and you can contribute one"* on the web and *"you
+could be the first"* on the phone: one names the action, the other names the reward. §6.51's
+better-version-wins does not apply when neither is better, so the sentence now carries both halves.
+The confidence pair gets one noun where it had two, and stays a percentage deliberately, with the
+reasoning at the line.
+
+**The tenth seam changed under the criterion.** Filed as "one line pointing at the bridge docs".
+That is wrong, and the criterion is what says so: for a stranger on a deployed URL, running a
+bridge is not actionable — and neither is the phone app, which is on no store. A sentence ending in
+an instruction would over-promise. So it does what `localFirst` does instead: says where the
+capability lives, shown only where the capability is absent. Written down at the line as the
+weakest of the three and why, because a repair made because a document said to is not a repair.
+
+**And a guard that was not written, for a reason worth more than the guard.** I assumed
+`copy.test.ts` could not see a sentence typed on one platform only — the bridge's three were
+exactly that. Planted one back into the screen and watched *"a sentence has more than one owner"*
+fail on it. The guard catches drift **away from** `COPY`, not absence **from** it, and that is the
+right width: a check cannot know a sentence ought to have an owner until somebody decides it does.
+No new guard, and the assumption corrected by planting rather than by reading.
+
+The guard that *is* worth having holds the decision that could be silently improved later: no
+duration derived from an uncalibrated confidence. Two clauses, because the obvious plant keeps the
+percentage and appends a tolerance beside it.
+
+#### What is not done
+
+- **The 38 stale shots.** `design/web-real` and `design/real-screens` photograph a build that no
+  longer exists, and they are counted in the backlog. #228, with a fix to the census so a count of
+  unread shots cannot again include shots of a deleted architecture.
+- **Up Next arrives at the clamp**, and the repair is a decision about the bottom of the longest
+  screen in the product rather than a line. `look.mjs` exits 1 on it deliberately.
+- **The shelf is a dead end.** A box has one press and its back offers Track, Watchlist, Done —
+  no route to where-to-watch, warnings, seasons or cast, which a search result still has. Nothing
+  in the architecture's eight refusals says the title page should become unreachable from Discover.
+- **The title page cannot track anything**, on either platform, which the cost pass priced at
+  +3.16s / +8.53s and nothing else had noticed.
+- **The confidence calibration** — matches at known offsets, across confidences, positional error
+  recorded — which is what would let the percentage become an extent honestly.
+- **Seven of eleven device questions**, plus fifteen in the second brief. Question A is one
+  photograph and settles the largest open thing on the list.
 
 
 ## 7. What is still not known
@@ -16608,6 +16697,25 @@ and which single claim in this document could not be checked at all:
   unread of 146 that #225 is the queue for. §6.146's rule is that a decision made without a
   picture is reasoning, and the rule one layer along — §6.150's — is that an unread picture
   is not evidence either.
+
+- **Half a star has never been reachable in any measurement this project has taken.** The
+  newest instrument found it: `mobile/src/ui/StarRating.tsx` placed a star's second half with
+  `right: { left: undefined, right: 0 }`, which Yoga reads as *unset* and **react-native-web omits
+  entirely** — leaving `left: 0` standing, so five pairs of touch targets drew on one rectangle and
+  the later button won every tap. Repaired, and guarded by
+  `app/src/ui/phoneStyleUnset.test.ts`.
+
+  **What stays open is everything taken before the repair.** Every screenshot, every smoke check
+  and every measurement of the rating control, back to the day it shipped, was taken against an
+  export where half-stars could not be pressed. Nothing here can say which of those readings the
+  defect changed, because the instrument that would answer is the one that found it. The shots are
+  not retracted — they are pictures of what the export drew, which is what they always claimed —
+  but any *conclusion* drawn from a rating control's geometry before this sprint is a conclusion
+  about a stacked pair.
+
+  This is the fifth react-native-web difference on the list and the first found by asking what
+  something **costs** rather than what it looks like, which is a direction the design track did not
+  have until this sprint.
 
 - **The year shot asserted the heading and never the figures, and the defect lived in the
   gap.** This is the same entry one layer in, and it is worth its own line because the
