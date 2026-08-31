@@ -942,6 +942,124 @@ export const COPY = {
     /** What the band above the pad is, for somebody who cannot see it moving. */
     reactionsHeading: 'Reactions from other viewers',
     streamResting: 'Other people’s reactions appear here as you reach their moments',
+
+    /*
+     * What listening says. Five sentences that were typed on each platform separately —
+     * `app/src/watching/ListenSync.tsx` and `mobile/src/fingerprint/listen.ts` — and two
+     * of them had already drifted apart before anybody looked.
+     *
+     * `docs/design/seams.md` is why they are here rather than in `waiting` above. Every
+     * one of these is the product describing a **seam**: the join between a microphone in
+     * a room and a timeline somebody else contributed. Chalmers & Galani's rule is that a
+     * seam is revealed *selectively*, and the CHI 2019 test is whether the person can act
+     * on the revelation — so each of these either names an action or says plainly that
+     * there is not one. They are the hardest sentences in the product to word, and they
+     * were the ones with no owner.
+     */
+
+    /**
+     * The reference store could not be reached. Distinct from there being no reference,
+     * because the wrong one of these sends somebody off to spend a whole episode recording
+     * a timeline that may already exist — §6.57's rule in the flagship.
+     *
+     * Both platforms already typed this one identically, which is the case the copy layer
+     * exists for and the case that looks safest right up until it isn't.
+     */
+    listenLookupFailed: (why: string) =>
+      `Could not check for a timeline (${why}). Sync by hand for now.`,
+    /**
+     * No reference exists yet. The two platforms said different things: the web named the
+     * action and the phone named the reward — *"Sync by hand and you can contribute one"*
+     * against *"you could be the first"*. §6.51's rule is that the better version wins, and
+     * here neither was: one sentence has both halves, because what to do now and why it is
+     * worth doing are two different questions and a person standing in front of an
+     * unmapped episode has both.
+     */
+    listenUnmapped: 'Nobody has mapped this episode yet. Sync by hand, and you could be the first.',
+    /** Listening ran and matched nothing. Names the two things that actually help. */
+    listenNoMatch: 'Could not place that. Try again somewhere quieter, or sync by hand.',
+    /** The microphone is open and has heard nothing it recognises yet. Not a failure. */
+    listenNothingYet: 'Listening — nothing recognised yet',
+    /**
+     * How sure the match is, and the honest state of it.
+     *
+     * Two events, so two sentences: `listenPlaced` is the one-shot sync and
+     * `listenFollowing` is continuous listening correcting drift. One **noun** across
+     * both, which is the fix — the web said "confident" and the phone said "sure" for the
+     * same quantity out of the same function.
+     *
+     * **The percentage is known to be the wrong shape and is kept deliberately.**
+     * `seams.md` §7: Chalmers' own prescription is a sensed position shown as an *extent*
+     * rather than a point, and an extent would pass the agency test where a percentage
+     * does not — nobody does anything different at 73% than at 62%, but "within about two
+     * seconds" tells you whether to nudge.
+     *
+     * It is not derivable here. `confidence` is the share of matched landmarks agreeing on
+     * one offset, and `core/src/fingerprint/agreement.ts` records the same audio measuring
+     * 0.46 one way and 0.17 the other purely from which microphone was worse — a number
+     * that halves while the position is identical is not describing the position. The only
+     * positional bound available is the frame, `HOP_SIZE / SAMPLE_RATE` = 23.22ms, far
+     * below anything a person can perceive. The `toleranceMs` of 5,000 in that file is a
+     * trap: it bounds two *contributors'* reaction times, not this match.
+     *
+     * So the percentage stays until somebody runs the calibration — matches at known
+     * offsets, across confidences, positional error recorded. A plausible-looking "± 2s"
+     * derived from an uncalibrated number would be a fabricated seam, which is worse than
+     * an honest one of the wrong shape.
+     */
+    listenPlaced: (percent: number) => `Synced, ${percent}% sure.`,
+    listenFollowing: (percent: number) => `Following along, ${percent}% sure`,
+
+    /*
+     * The bridge, which is three states and only one of them has an action.
+     *
+     * These are the most carefully reasoned seam sentences in the product and until now
+     * they were typed in `app/src/remote/RemoteDrawer.tsx` with no owner. `seams.md` §5.
+     *
+     * The phone has no second renderer for them — it talks to the television directly over
+     * the Wi-Fi and needs no bridge at all — and that is exactly the condition under which
+     * a sentence gets typed locally and drifts a year later, so they are here now rather
+     * than when a second reader appears.
+     *
+     * The split between the last two is the whole point and §6.171 is the entry: a relay
+     * that closes with **1008** has *declined* the connection and will decline the next one
+     * for the same reason. "It will reconnect on its own" was said for that, every five
+     * seconds — a promise the app cannot keep. One of these two states has something a
+     * person can do about it and the other does not, and they say so differently.
+     */
+    bridgeConnecting: 'Connecting to your bridge…',
+    bridgeRefused:
+      'The relay would not accept this connection. Check the address and token in your ' +
+      'settings, then reload.',
+    bridgeOffline: 'Bridge offline. It will reconnect on its own.',
+    /**
+     * The tenth seam, and the one nothing said anything about at all.
+     *
+     * On a web build without the two `VITE_` variables, `RemoteDrawer` returns `null`: no
+     * handle, no edge tab, no sentence. The capability is simply not there, and §6.167
+     * decided to *keep* that edge tab on the argument that it is the web's only route to
+     * the remote — a decision about a control nobody on such a build can see.
+     *
+     * Hiding the **controls** is right. A build-time variable is not something a person
+     * can act on, and a dead remote panel is worse than none. But what that conceals is not
+     * "this connection is down"; it is *"this product has a remote"*, and those are
+     * different seams stacked at the same place. `seams.md` §10.
+     *
+     * **This is the weakest of the three repairs that document filed, and the reason is
+     * worth keeping.** For the person who runs this repository the bridge is entirely
+     * actionable — a documented process they can start. For a stranger on a deployed URL it
+     * is not, and neither is the phone app, which is not on any store. So this sentence
+     * cannot end in an instruction without over-promising. What it can honestly do is what
+     * `localFirst` two lines up does: answer the question before it is asked, and say where
+     * the thing lives rather than pretend it is one press away.
+     *
+     * Shown only when the bridge is unconfigured — the seam is visible exactly where it
+     * exists and nowhere else, which is Weiser's "literally visible, effectively invisible"
+     * read as narrowly as it will go.
+     */
+    bridgeAbsent:
+      'This build has no remote. The phone app drives a television over your Wi-Fi ' +
+      'directly; the web needs a small bridge running on a machine of your own.',
   },
 
   title: {

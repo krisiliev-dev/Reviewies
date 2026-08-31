@@ -150,4 +150,40 @@ describe('the refusals in calm.md', () => {
     );
     expect(said.map(([key]) => key), 'copy.ts has grown a "you are behind" sentence').toEqual([]);
   });
+
+  it('says how sure the match is as a share, and never as a duration nobody has measured', () => {
+    /*
+     * Not a calm refusal — a **seam** one, and it is here because this file is where
+     * refusals live rather than because it is about attention. `docs/design/seams.md` §7.
+     *
+     * The finding is that a percentage is the wrong shape: Chalmers & Galani's own
+     * prescription for a sensed position is an *extent* rather than a point, and nobody
+     * does anything different at 73% than at 62% while "within about two seconds" tells you
+     * whether to nudge. So the obvious improvement is to convert it, and this clause exists
+     * to stop that happening before it is true.
+     *
+     * `confidence` is the share of matched landmarks agreeing on one offset.
+     * `core/src/fingerprint/agreement.ts` records the same audio measuring 0.46 one way and
+     * 0.17 the other, "for no reason except which microphone was worse" — a number that
+     * halves while the position is identical is not measuring the position. The only
+     * derivable positional bound is one frame, HOP_SIZE / SAMPLE_RATE = 23.22ms, far below
+     * perception. And `toleranceMs` of 5,000 in that same file is a trap: it bounds two
+     * *contributors'* reaction times.
+     *
+     * So a duration here would be **fabricated**, which is worse than an honest number of
+     * the wrong shape. What lifts this clause is the calibration: matches at known offsets
+     * across a range of confidences, positional error recorded. Delete it then, not before.
+     *
+     * The needle is the unit and not the wording — both sentences are free to be reworded,
+     * and neither may start reporting seconds.
+     */
+    const said = [COPY.watching.listenPlaced(73), COPY.watching.listenFollowing(73)];
+    for (const text of said) {
+      expect(text, `a listening sentence reports a share: ${text}`).toMatch(/73%/);
+      expect(
+        /\d+(\.\d+)?\s*(s|sec|second|ms|millisecond|minute)|within about|give or take|±/i.test(text),
+        `a listening sentence reports a duration derived from an uncalibrated confidence: ${text}`,
+      ).toBe(false);
+    }
+  });
 });

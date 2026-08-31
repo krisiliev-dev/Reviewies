@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { COPY } from '@reviewies/core/copy';
 import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
+import { bridgeConfigured } from '../remote/useBridge';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { Chevron } from '../ui/Mark';
@@ -48,6 +49,17 @@ export function More() {
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>{COPY.app.localFirst}</Note>
+        {/*
+          The tenth seam. `seams.md` §10: `RemoteDrawer` returns `null` on a build without
+          the bridge variables, so the web's only route to the remote is not merely closed —
+          it leaves no trace that it exists. Hiding the control is right; hiding the
+          capability is a different seam at the same place.
+
+          Only when it is absent, and never a control: the sentence appears exactly where the
+          thing does not, which is as narrow as "literally visible, effectively invisible"
+          goes. On a configured build this renders nothing and the drawer speaks for itself.
+        */}
+        {!bridgeConfigured() && <Note className="mt-3">{COPY.watching.bridgeAbsent}</Note>}
         {/* Four, in two columns. Three was this screen's count and four was Settings'
             copy of the same block; the copy is gone (§6.133) and Reactions came here
             rather than out of the product. Two columns because four across a phone is a

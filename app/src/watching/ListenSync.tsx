@@ -46,23 +46,23 @@ export function ListenSync({
       // Two different things to say, and the wrong one sends somebody off to spend an
       // episode recording a timeline that may already exist.
       if (found.failed) {
-        setNote(`Could not check for a timeline (${found.failed}). Sync by hand for now.`);
+        setNote(COPY.watching.listenLookupFailed(found.failed));
         return;
       }
       const stored = found.reference;
       if (!stored) {
-        setNote('Nobody has mapped this episode yet. Sync by hand and you can contribute one.');
+        setNote(COPY.watching.listenUnmapped);
         return;
       }
 
       const result = await syncByListening(stored.reference);
       if (!result) {
-        setNote('Could not place that. Try again somewhere quieter, or sync by hand.');
+        setNote(COPY.watching.listenNoMatch);
         return;
       }
 
       onSynced(result.positionMs);
-      setNote(`Synced, ${Math.round(result.confidence * 100)}% confident.`);
+      setNote(COPY.watching.listenPlaced(Math.round(result.confidence * 100)));
     } catch (err) {
       setNote(err instanceof Error ? err.message : 'Listening failed.');
     } finally {

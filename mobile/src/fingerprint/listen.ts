@@ -1,3 +1,4 @@
+import { COPY } from '@reviewies/core/copy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getRecordingPermissionsAsync,
@@ -232,12 +233,12 @@ export function useListenSync({
       // recording a timeline that may already exist.
       if (found.failed) {
         setState('failed');
-        setNote(`Could not check for a timeline (${found.failed}). Sync by hand for now.`);
+        setNote(COPY.watching.listenLookupFailed(found.failed));
         return;
       }
       if (!found.reference) {
         setState('no-reference');
-        setNote('Nobody has mapped this episode yet — you could be the first.');
+        setNote(COPY.watching.listenUnmapped);
         return;
       }
       reference = found.reference.reference;

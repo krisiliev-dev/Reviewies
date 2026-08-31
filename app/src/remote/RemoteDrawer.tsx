@@ -252,10 +252,10 @@ function Status({ bridge }: { bridge: ReturnType<typeof useBridge> }) {
             app cannot keep, made every five seconds. `useBridge` tells them apart now.
           */}
           {bridge.status === 'connecting'
-            ? 'Connecting to your bridge…'
+            ? COPY.watching.bridgeConnecting
             : bridge.status === 'refused'
-              ? 'The relay would not accept this connection. Check the address and token in your settings, then reload.'
-              : 'Bridge offline. It will reconnect on its own.'}
+              ? COPY.watching.bridgeRefused
+              : COPY.watching.bridgeOffline}
         </p>
         {/* The detail, under the sentence it belongs to rather than under the keys. */}
         {bridge.error && <p className="mt-1 text-ink-tertiary">{bridge.error}</p>}

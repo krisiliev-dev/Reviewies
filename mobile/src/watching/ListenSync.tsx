@@ -58,9 +58,9 @@ export function ListenSync({
         {listening && (
           <Text style={styles.status}>
             {listen.lastMatch
-              ? `Following along, ${Math.round(listen.lastMatch.confidence * 100)}% sure`
+              ? COPY.watching.listenFollowing(Math.round(listen.lastMatch.confidence * 100))
               : listen.misses > 0
-                ? 'Listening — nothing recognised yet'
+                ? COPY.watching.listenNothingYet
                 : COPY.waiting.listening}
           </Text>
         )}

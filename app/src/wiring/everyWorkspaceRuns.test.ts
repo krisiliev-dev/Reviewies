@@ -232,7 +232,9 @@ describe('every workspace', () => {
     // reported total, which is a different quantity: this counts `it()` cases in source and
     // vitest counts what executed, and reading one as the other is how a floor gets set to a
     // number no file ever had.
-    core: 989, app: 732, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 733, up one: the seam repairs' clause in `calm.test.ts` — the one that stops a
+    // duration nobody has measured being derived from a confidence that is not a position.
+    core: 989, app: 733, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
