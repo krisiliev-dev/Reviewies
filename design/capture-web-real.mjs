@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
-import { longerScreens, shoot } from './shoot.mjs';
+import { longerScreens, shoot, unusedGround } from './shoot.mjs';
 import { PROSE_CHARACTERS } from '../core/src/ui/screen.ts';
 
 /**
@@ -167,13 +167,116 @@ for (const [label, width] of WIDTHS) {
     await page.waitForTimeout(2000);
     await page.getByRole('button', { name: /^More about / }).first().click({ timeout: 15000 });
     await page.waitForTimeout(700);
-    await shoot(page, {
+    const turned = await shoot(page, {
       out: OUT,
       name: `${label}-discover-back`,
       mustContain: 'Track',
       problems,
       scrolls,
     });
+
+    /*
+     * And whether the shelf moved, which this pass had the two numbers for and never
+     * subtracted.
+     *
+     * A grid row is as tall as its tallest item, so a back whose paragraph is in the flow
+     * pushes its own row out — and then measures the pushed-out row, and clamps to it, and
+     * grows again. The first build of the measured clamp did exactly that and drew 396-point
+     * panels on a 333-point shelf; both shots were of a screen that had loaded, `unusedGround`
+     * found no spare ground because the box had grown to fit, and the pass was green.
+     *
+     * `scrolls` already held `${label}-discover` and `${label}-discover-back` and the run
+     * printed them a line apart — 4850 and 4850 — with nothing comparing them. The phone's
+     * pass learned this the other way round and names the same rule: a back is the front
+     * turned over and is exactly as tall as it.
+     */
+    const flat = scrolls.find((s) => s.name === `${label}-discover`)?.overflow;
+    if (flat === undefined) {
+      problems.push(
+        `design/capture-web-real.mjs at ${label}: no ${label}-discover reading to compare the ` +
+          `turned-over shelf against, so nothing here can say whether it moved`,
+      );
+    } else if (turned !== flat) {
+      problems.push(
+        `app/src/ui/Browse.tsx at ${label}: turning a box over moved the shelf — ` +
+          `${label}-discover scrolls ${flat}pt against ${label}-discover-back's ${turned}, a ` +
+          `difference of ${turned - flat}pt. A back is the front turned over and is exactly ` +
+          `as tall as it.`,
+      );
+    } else {
+      console.log(`  the shelf holds still at ${label} when a box turns over: ${flat}pt either way`);
+    }
+
+    /*
+     * And the ground the panel has against the ground it used, which is the reading the two
+     * photographs above could not be trusted for.
+     *
+     * `BOX.backLines: 6` was a constant clamped into a panel that is 333 points at 420 and
+     * 383 at 1280, so on real synopses the back **truncated** and left 40 to 90 points of
+     * itself empty underneath — a third of the box, at the wide width. Both shots are of a
+     * screen that loaded and both were filed clean.
+     *
+     * The rule is the pair rather than either half: a paragraph may stop early because the
+     * provider wrote a short one, and a panel may have a point or two spare because a line
+     * box does not divide a height exactly. What cannot be right is **empty ground under a
+     * paragraph that was cut**, and the bound is one line of it: less than that is the
+     * remainder of the division, more than that is a line the box had room for and did not
+     * draw.
+     */
+
+    /*
+     * The shot is filed; now turn the rest of the shelf over, because one back is one
+     * synopsis and one synopsis is not a distribution. Whether a paragraph was cut depends on
+     * how long the provider wrote it, so a single box can report a clean ground on a build
+     * where every other box on the screen is truncating.
+     *
+     * After the shutter rather than before it, so the photograph is still of one back among
+     * its neighbours' fronts — which is the only arrangement that answers whether it reads as
+     * the other side of one object.
+     */
+    for (const button of await page.getByRole('button', { name: /^More about / }).all()) {
+      await button.click({ timeout: 4000 }).catch(() => {});
+    }
+    await page.waitForTimeout(600);
+    const grounds = await unusedGround(page);
+
+    const halfDrawn = grounds.filter((g) => g.truncated && g.overhang > 1);
+    if (halfDrawn.length) {
+      problems.push(
+        `app/src/ui/Browse.tsx at ${label}: ${halfDrawn.length} of ${grounds.length} backs draw part of the ` +
+        `line after the one they clamped to — ` +
+          halfDrawn
+            .slice(0, 3)
+            .map((g) => `${g.name} overhangs its ${g.shown} lines by ${g.overhang}pt`)
+            .join('; ') +
+          `. A clamped paragraph's box is the lines it shows.`,
+      );
+    }
+    const wasted = grounds.filter((g) => g.truncated && g.spare >= g.line);
+    if (wasted.length) {
+      problems.push(
+        `app/src/ui/Browse.tsx at ${label}: ${wasted.length} of ${grounds.length} backs cut ` +
+          `the synopsis with room left under it — ` +
+          wasted
+            .slice(0, 3)
+            .map((g) => `${g.name} shows ${g.shown} of ${g.wants} lines with ${g.spare}pt spare`)
+            .join('; ') +
+          `. The bound is one ${Math.round(grounds[0]?.line ?? 0)}pt line.`,
+      );
+    } else if (grounds.length) {
+      const most = grounds.reduce((a, b) => (b.spare > a.spare ? b : a));
+      console.log(
+        `  ${grounds.length} backs at ${label}: the most ground any of them leaves under a ` +
+          `cut paragraph is ${most.truncated ? most.spare : 0}pt, against a ` +
+          `${Math.round(most.line)}pt line`,
+      );
+    } else {
+      problems.push(
+        `design/capture-web-real.mjs at ${label}: no turned-over box had a synopsis this ` +
+          `measure could find, so it has nothing to say about the clamp and must not report ` +
+          `a clean one. It looks for the flex child of a back panel that clips its overflow.`,
+      );
+    }
   } catch (e) {
     problems.push(`could not turn a box over at ${label}: ${e.message.split('\n')[0].slice(0, 80)}`);
   }

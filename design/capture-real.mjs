@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
-import { longerScreens, shoot } from './shoot.mjs';
+import { longerScreens, shoot, unusedGround } from './shoot.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
 
@@ -99,7 +99,7 @@ await shot('r3-upnext');
 
 await page.goto(`${BASE}/(tabs)/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(3000);
-await shot('r4-discover');
+const shelf = await shot('r4-discover');
 
 /*
  * And the box turned over, which is the half of the shelf no real-data pass has ever seen.
@@ -121,7 +121,104 @@ await page.waitForTimeout(3000);
 try {
   await page.getByRole('button', { name: /^More about / }).first().click({ timeout: 15000 });
   await page.waitForTimeout(700);
-  await shot('r4-discover-back', 'Track');
+  const turned = await shot('r4-discover-back', 'Track');
+
+  /*
+   * And how far the shelf scrolls, before and after, which is the only instrument that can
+   * see this one.
+   *
+   * The web's grid gives a turned-over box its row's height for nothing — the back is
+   * `h-full` — and the phone lays its shelf out with `flexWrap`, which has no such thing.
+   * `mobile/src/ui/Browse.tsx` had a floor for that, written when the back was **shorter**
+   * than its neighbours and the row collapsed; the floor was the plate's height, 260 points
+   * of a 304-point front, so it sat under the thing it was matching and could not bind. With
+   * a real synopsis in it the back had gone the other way and this pass measured it: 2720pt
+   * of shelf against 2746, twenty-six points appearing under the thumb that pressed it.
+   *
+   * Two photographs could not have shown that. They are the same shelf a fold apart, and the
+   * difference is a number at the bottom of a column neither frame contains — which is
+   * `architecture.md` §8's whole subject, and why the shots and the readings are taken by the
+   * same act.
+   *
+   * Exactly equal, not a tolerance: both numbers come from the same content in the same
+   * browser at the same width, and anything at all between them is a row that changed height.
+   */
+  if (turned !== shelf) {
+    problems.push(
+      `mobile/src/ui/Browse.tsx: turning a box over moved the shelf — r4-discover scrolls ` +
+        `${shelf}pt against r4-discover-back's ${turned}, a difference of ` +
+        `${turned - shelf}pt. A back is the front turned over and is exactly as tall as it.`,
+    );
+  } else {
+    console.log(`  the shelf holds still when a box turns over: ${shelf}pt either way`);
+  }
+
+  /*
+   * And the other half of the same repair, which the shelf's own height cannot see.
+   *
+   * A back that is exactly as tall as its front and still clamps its paragraph to a number
+   * would pass the clause above and be the defect this sprint was about: `BOX.backLines: 6`
+   * left 40 to 90 points of the web's panel empty under a cut synopsis, and on this platform
+   * the same six lines were 26 points *more* than the box had. So the ground is read here
+   * too, by the reading `design/shoot.mjs` holds for both passes — `react-native-web` draws
+   * `numberOfLines` as the same `-webkit-line-clamp` the web writes, so it is one act.
+   *
+   * The bound is one line of ground under a paragraph that was cut. Less is the remainder of
+   * a division; more is a line the box had room for and did not draw.
+   */
+
+  /*
+   * The shot is filed; now turn the rest of the shelf over, because one back is one
+   * synopsis and one synopsis is not a distribution. Whether a paragraph was cut depends on
+   * how long the provider wrote it, so a single box can report a clean ground on a build
+   * where every other box on the screen is truncating.
+   *
+   * After the shutter rather than before it, so the photograph is still of one back among
+   * its neighbours' fronts — which is the only arrangement that answers whether it reads as
+   * the other side of one object.
+   */
+  for (const button of await page.getByRole('button', { name: /^More about / }).all()) {
+    await button.click({ timeout: 4000 }).catch(() => {});
+  }
+  await page.waitForTimeout(600);
+  const grounds = await unusedGround(page);
+
+  const halfDrawn = grounds.filter((g) => g.truncated && g.overhang > 1);
+  if (halfDrawn.length) {
+    problems.push(
+      `mobile/src/ui/Browse.tsx: ${halfDrawn.length} of ${grounds.length} backs draw part of the ` +
+        `line after the one they clamped to — ` +
+        halfDrawn
+          .slice(0, 3)
+          .map((g) => `${g.name} overhangs its ${g.shown} lines by ${g.overhang}pt`)
+          .join('; ') +
+        `. A clamped paragraph's box is the lines it shows.`,
+    );
+  }
+  const wasted = grounds.filter((g) => g.truncated && g.spare >= g.line);
+  if (wasted.length) {
+    problems.push(
+      `mobile/src/ui/Browse.tsx: ${wasted.length} of ${grounds.length} backs cut the synopsis ` +
+        `with room left under it — ` +
+        wasted
+          .slice(0, 3)
+          .map((g) => `${g.name} shows ${g.shown} of ${g.wants} lines with ${g.spare}pt spare`)
+          .join('; ') +
+        `. The bound is one ${Math.round(grounds[0]?.line ?? 0)}pt line.`,
+    );
+  } else if (grounds.length) {
+    const most = grounds.reduce((a, b) => (b.spare > a.spare ? b : a));
+    console.log(
+      `  ${grounds.length} backs: the most ground any of them leaves under a cut paragraph ` +
+        `is ${most.truncated ? most.spare : 0}pt, against a ${Math.round(most.line)}pt line`,
+    );
+  } else {
+    problems.push(
+      `design/capture-real.mjs: no turned-over box had a synopsis this measure could find, ` +
+        `so it has nothing to say about the clamp and must not report a clean one. It looks ` +
+        `for the flex child of a back panel that clips its overflow.`,
+    );
+  }
 } catch (e) {
   problems.push(`could not turn a box over: ${e.message.split('\n')[0].slice(0, 80)}`);
 }

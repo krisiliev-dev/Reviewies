@@ -5,11 +5,12 @@ import { db } from '@reviewies/core/data/db';
 import { addToLibrary, addToWatchlist } from '@reviewies/core/data/repo';
 import { getEpisodesCached } from '@reviewies/core/metadata/index';
 import type { Suggestion } from '@reviewies/core/discover/recommend';
-import { BOX, BOX_COLUMNS, boxFacts, boxUnder } from '@reviewies/core/ui/box';
+import { BOX, BOX_COLUMNS, backLines, boxFacts, boxUnder } from '@reviewies/core/ui/box';
+import { NOTE } from '@reviewies/core/ui/note';
 import { POSTER_GLYPH_SCALES, POSTER_PLATE, posterInitials } from '@reviewies/core/ui/poster';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
-import { radius, theme } from './theme';
+import { leadingOf, radius, theme } from './theme';
 import { Button } from './Button';
 import { Note } from './Note';
 import { Section } from './Section';
@@ -42,11 +43,23 @@ export function Browse({
    * from `BOX.ratio`, which is `ratio.poster`, which is the one number `poster.ts` records a
    * whole sprint being written out by hand instead.
    */
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const columns = BOX_COLUMNS.phone;
   const boxWidth = Math.floor(
     (width - SCREEN.edge * 2 - BOX.gap * (columns - 1)) / columns,
   );
+
+  /*
+   * The synopsis's line box, in the points `onLayout` reports.
+   *
+   * Not a `lineHeight` being written, which is the property `phoneTextScaling.test.ts`
+   * refuses a font scale on: this is a **box**, the same allowance `TAB_BAR_HEIGHT` takes
+   * and for the same reason. React Native draws a stored leading at `lineHeight * fontScale`
+   * and `onLayout` hands back real points, so the number of lines that fit in a measured
+   * height is only right if the multiplier is in it. `NOTE.footnote` rather than a 12 and a
+   * 1.43 typed here, because `Note` is what draws this paragraph.
+   */
+  const line = leadingOf(NOTE.footnote.size, NOTE.footnote.leading) * fontScale;
 
   return (
     <View style={styles.shelf}>
@@ -58,7 +71,7 @@ export function Browse({
           {because ? <Section>{because}</Section> : null}
           <View style={styles.grid}>
             {group.map((item) => (
-              <Box key={item.id} item={item} width={boxWidth} onActed={onActed} />
+              <Box key={item.id} item={item} width={boxWidth} line={line} onActed={onActed} />
             ))}
           </View>
         </View>
@@ -95,15 +108,30 @@ function groupsOf(items: readonly Suggestion[]): Array<[string, Suggestion[]]> {
 function Box({
   item,
   width,
+  line,
   onActed,
 }: {
   item: Suggestion;
   width: number;
+  line: number;
   onActed: () => void;
 }) {
   /** Which face is up. A reveal, registered in `core/src/ui/reveals.ts`. */
   const [over, setOver] = useState(false);
   const [added, setAdded] = useState<'library' | 'watchlist'>();
+  /**
+   * The height of the face this box was showing a moment ago, and the height of the other
+   * one.
+   *
+   * `h-full` is what the web's grid gives the back for nothing: a grid item is as tall as
+   * its row, so a box that turns over cannot change the shelf. The phone lays its shelf out
+   * with `flexWrap`, which has no such thing, and this is that fact measured rather than
+   * computed — the front's own laid-out height, which is already the row's, taken from the
+   * face that was up before the press.
+   */
+  const [face, setFace] = useState<number>();
+  /** The ground the back's own layout left the synopsis, and what fits in it. */
+  const [ground, setGround] = useState<number>();
 
   async function cache() {
     await db.titles.put({
@@ -140,15 +168,25 @@ function Box({
 
   if (over) {
     return (
-      <View style={[styles.back, { width, minHeight: Math.round(width / BOX.ratio) }]}>
+      <View style={[styles.back, { width, height: face ?? Math.round(width / BOX.ratio) }]}>
         <Text style={styles.title}>{item.name}</Text>
         <Text style={styles.under}>{boxFacts(item)}</Text>
-        {/* The synopsis, which is the reason the back exists. Line-limited, because a box in
-            a grid whose height is its neighbours' cannot take a paragraph of any length. */}
+        {/* The synopsis, which is the reason the back exists. Line-limited to the ground the
+            panel has, because a box in a grid whose height is its neighbours' cannot take a
+            paragraph of any length — `backLines` in `core/src/ui/box.ts` carries what that
+            used to be spelled as, and what one number cost at each width. */}
         {item.overview ? (
-          <Note level="footnote" numberOfLines={BOX.backLines}>
-            {item.overview}
-          </Note>
+          <View
+            style={styles.ground}
+            onLayout={(e) => setGround(e.nativeEvent.layout.height)}
+          >
+            <Note
+              level="footnote"
+              numberOfLines={ground === undefined ? undefined : backLines(ground, line)}
+            >
+              {item.overview}
+            </Note>
+          </View>
         ) : null}
         {/* The two actions, here rather than on the front — `box.ts` has the argument. */}
         <View style={styles.actions}>
@@ -210,6 +248,8 @@ function Box({
       onPress={() => setOver(true)}
       accessibilityRole="button"
       accessibilityLabel={COPY.controls.turnOver(item.name)}
+      // The row's own height, read off the face that is up. See `face` above.
+      onLayout={(e) => setFace(e.nativeEvent.layout.height)}
       style={[styles.front, { width }]}
     >
       <Art url={item.posterUrl} name={item.name} width={width} />
@@ -262,18 +302,29 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: BOX.gap },
   front: { gap: 6 },
   /*
-   * At least as tall as the artwork it replaced.
+   * Exactly as tall as the face it replaced — a height, not a floor.
    *
-   * `05-discover-back.png` is what asked for this: the turned-over box was shorter than its
-   * neighbours' fronts, so the row it sits in collapsed and the shelf jumped under the
-   * thumb that had just pressed it. The web gets this from the grid — a grid item stretches
-   * to its row and the back is `h-full` — and the phone lays its shelf out with
-   * `flexWrap`, which has no such thing, so the floor is stated.
+   * `05-discover-back.png` asked for a floor: the turned-over box was shorter than its
+   * neighbours' fronts, so the row collapsed and the shelf jumped under the thumb that had
+   * just pressed it. The floor written for that was **the plate's height**, on the argument
+   * that the title and the line under it grow with the reader's setting and a minimum
+   * computed from them would be a second guess at a number `Row` already owns.
    *
-   * The plate's height rather than the whole front's: the title and the line under it are
-   * one and two lines of type that grow with the reader's setting, and a minimum computed
-   * from them would be a second guess at a number `Row` already owns. The artwork is the
-   * part that is fixed, and it is most of the box.
+   * The first reading with real artwork measured what that bought. The plate is 260 points
+   * of a 304-point front, so the floor sat 44 points under the thing it was meant to match
+   * and could not bind; and with a real synopsis in it the back had gone the other way, to
+   * **330** — `r4-discover` scrolls 2720pt against `r4-discover-back`'s 2746, twenty-six
+   * points of shelf appearing under the thumb. The same defect the floor was written for,
+   * from the other side, with the floor still in the file describing a fix the screen did
+   * not show.
+   *
+   * The argument against computing the height was right, and the answer is not to compute
+   * it: `onLayout` on the front hands back the row's own height, already scaled, already
+   * stretched, with no second guess at anything. The web has had exactly this from its grid
+   * — the back is `h-full` — since the shelf was built.
+   *
+   * `width / BOX.ratio` survives as the value before a face has ever been laid out, which
+   * on this screen cannot happen: a box is turned over by pressing its front.
    */
   back: {
     gap: 6,
@@ -281,6 +332,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.plate,
     backgroundColor: theme.groundRaised,
   },
+  /**
+   * The room the synopsis is measured in, and clipped by.
+   *
+   * `flex: 1` is what makes the ground a thing that can be measured at all: the panel has a
+   * height now, so this child is handed whatever the title, the fact line and the four
+   * controls did not take, and `onLayout` reports it. `overflow: 'hidden'` covers the one
+   * layout pass between that measurement and the `numberOfLines` it produces.
+   */
+  ground: { flex: 1, overflow: 'hidden' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   /**
    * The two ways off the back: to the title's page, and back to the front.

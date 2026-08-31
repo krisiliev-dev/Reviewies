@@ -192,6 +192,10 @@ export default function TitleScreen() {
                   name={COPY.title.tryAgain}
                 />
             )}
+            {/* The year alone and not the genre beside it, for the reason
+                `app/src/screens/TitleDetail.tsx` states in full and `core/src/ui/box.ts`
+                argues across all four surfaces: this page draws the synopsis whole, and
+                this line is a figure. */}
             {title?.year ? <Data value={title.year} style={styles.year} /> : null}
           </View>
         </View>

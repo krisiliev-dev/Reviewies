@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { NoteLevel } from '@reviewies/core/ui/note';
 
 /**
@@ -24,6 +24,16 @@ export function Note({
   level?: NoteLevel;
   /** Margins, padding and layout only — the type and the ink belong to the table. */
   className?: string;
+  /**
+   * The same slot the phone's twin has carried since it was written, and for the same one
+   * sentence: **margins and layout only**, never the type and never the ink.
+   *
+   * It exists here because Tailwind compiles from source text and so cannot be handed a
+   * number — `Browse.tsx`'s `grid-cols` table and `Choice.tsx`'s `GAP` both record what
+   * happens when somebody assembles a class name at runtime — and the browse box's synopsis
+   * clamp is a number the layout measures.
+   */
+  style?: CSSProperties;
   /**
    * `span` inside a sentence, `dt`/`dd` in a definition list, `li` in a list, `footer` for
    * the page's own small print. The element is the document's business; the type is not.
