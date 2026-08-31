@@ -15649,8 +15649,8 @@ percentage and appends a tolerance beside it.
 
 ### 6.190 Product work, and three guards that were wrong about the defect they imagined
 
-**This entry is open.** One of three agents is still out — Up Next's arrival and the web's lost
-search. It grows rather than being replaced; §6.186 is why the marker is here.
+All three agents in, merged, every finding re-planted, and the close-out run on an unloaded
+machine. The marker stayed while the entry grew; §6.186 is why.
 
 Sprint 101 turned from instruments to the product. The last four sprints built the means to see,
 and an interaction-cost pass then found two holes that had been there the whole time.
@@ -15761,6 +15761,94 @@ numbers are kept and branched rather than merged.
 
 That is most of the standing "`verify` is red on a credential-free checkout" item, closed from the
 smoke side.
+
+#### Up Next arrives at the present now, and the repair is a floor rather than a spacer
+
+| | before | after |
+| --- | --- | --- |
+| web `scrollTop`, of its own maximum | **450 of 450** | 1065 of 1161 |
+| web, where the present begins in an 844pt frame | **615pt**, bound 133pt (one row) | **0pt** |
+| phone `scrollTop`, of its own maximum | **359 of 359** | 994 of 1010 |
+| phone, where the present begins in a 784pt frame | never measured | **19pt**, bound 83pt |
+
+The phone's clamp is a new number — `lookPhone.mjs` had never taken it, so the retraction §6.189
+wrote for the web had a silent twin.
+
+**A trailing spacer is the obvious spelling and it is the wrong one.** `pb-dvh` adds an empty
+screen to Up Next in *every* state, including the fifty-row one §9 names as the thing to watch. A
+**floor** — the present block at least one frame tall — is the same repair where it is needed and
+inert where it is not. With many rows it never binds, so the screen §9 worries about is untouched;
+with one live row that row lands at the top with a screen of quiet under it, bought against sitting
+two thirds down under a wall of struck ones; caught up, it is a repair rather than a cost, because
+nothing can clip against a floor. And with no past there is no floor at all, because there is no
+arrival to make room for.
+
+A renderer note worth keeping: the brief said `scrollIntoView` at both call sites. Only the web has
+one. The phone is `scrollTo({ y })`, which does not refuse — it clamps. Same end-stop, two different
+APIs, and it is the sixth entry here where a fact about one renderer was written down as a fact
+about the product.
+
+**And the search is in the address.** `?q=` beside `?on=` in `segments.ts`, both platforms reading
+and writing it, the web with `replace` so a keystroke is not a history entry. `findAndTrackViaTitle`
+on the web: 18.47s → 13.82s, 8 characters → 4. Both platforms now cost the same 5 presses, 4
+characters, 5 M — the difference between them on this task is zero rather than four characters, a
+press and a mental operation.
+
+#### The close-out found two defects in an instrument, and both were mine
+
+The phone design pass **crashed**, and the cause was a change I made in §6.189.
+
+`pressReadings` read `targets.count()` once, before a loop that **presses things**. A press on this
+product is not inert — marking an episode watched removes its row — so the list being indexed got
+shorter while the loop ran, and `nth(5)` on a page with five controls does not fail fast:
+`evaluate` waits thirty seconds for an element that will never attach, and takes the run with it.
+§6.189 lifted the cap of six so the instrument could finally reach a `Button`, and left the cached
+count where it was. It survived several green runs because the walk had not yet reached a screen
+where a press removed enough. **A cached count against a mutating page is wrong on every run and
+visible on some**, which is the worst kind of wrong.
+
+The deeper one is underneath it. `pressReadings` did `mouse.down()` and then `mouse.up()` **on the
+same point**, which is a *click*. So an instrument whose entire job is to read what a control looks
+like while it is held was **activating every control it measured** — marking episodes watched,
+parking films on the watchlist, turning boxes over. At the cap of six that was survivable, because
+six controls from the top of a list screen are six rows. Lifting the cap handed it every control on
+every screen the walk visits. It surfaced as `05-discover-back: nothing on the screen matches
+/More about /i` — the shelf was empty by the time the reveal ran, because this had emptied it.
+
+Released at the origin now. A browser fires `click` only when the press and the release land on the
+same element, so the `:active` reading survives and the handler does not run. **A reading instrument
+that changes what the next reading sees** is the same defect as a census that drops the runs it was
+sent to measure, one layer in — and it is the sixth of that family here.
+
+#### A guard that cannot fail for the defect it is named after
+
+`wrongWay` compares each measured press against `rgbOf(color.dark[PRESS])` — read from the **same
+token the components render from**. A change to `PRESS` moves the app and the check together, and
+the two agree however wrong they both are. Proved by planting `PRESS = elevation.raised`, which is
+precisely the defect §6.122 got wrong: *presses measured: 32*, exit 0.
+
+That does not make it useless — it catches a component that hardcodes a colour instead of asking
+the token, which is real and different. It makes its **name** a larger claim than its body, which
+is §6.120's whole subject.
+
+What can be checked without reference to itself is the **direction**: a press sinks, so `PRESS` must
+be darker than the ground it sits on. `surface.ts` argues that in prose and nothing held it. Two
+grounds, because a press on the raised plate and a press on the base are both real. Green on the
+correct token, red on `raised` (naming both grounds) and on `base`.
+
+#### What is not done
+
+- **The 38 stale shots are still stale here.** #228's source changes merged; the re-shot images
+  live only in the agent's worktree, and the census still reports 55 stale in this checkout.
+  Re-running needs `design/real/api/genre/{tv,movie}/list.json` fetched first.
+- **`/tmp/metro-cache` is shared across checkouts**, and a poisoned one silently changes what gets
+  built: an export picked up another worktree's `tmdbBase` even with `--clear` passed, and the
+  result looked exactly like a broken screen. `TMPDIR=<worktree>/.tmp` avoids it. So is
+  `/tmp/claude-0/…/scratchpad`, which is shared between agents rather than per-session — one agent's
+  log interleaved with another's and read like a build resolving into someone else's worktree.
+- **The matcher's second signal** (#230), which is the honest repair for a 12-minute wrong placement
+  reported at 93% sure.
+- **Stop-tracking has no writer**, so the title page offers no way to undo what its new control does.
 
 
 ## 7. What is still not known
