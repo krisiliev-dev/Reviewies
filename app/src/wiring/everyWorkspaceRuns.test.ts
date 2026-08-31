@@ -249,7 +249,14 @@ describe('every workspace', () => {
     // reads a `never`'s reason instead of only requiring one, and `tabPress.test.ts` (3),
     // which asks whether a control has a press rule rather than whether its press goes the
     // right way.
-    core: 1024, app: 760, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 1030, up six, and app 762, up two: §6.191's merge of the real-artwork pass —
+    // `box.test.ts`'s ground-derived clamp, the year the back was dropping and the one
+    // function a search row's fact line comes from, and `browse.test.ts`'s two call-site
+    // clauses under them. Counted rather than added up from three reports.
+    // app 763, up one: the box's press clause in `browse.test.ts`, which asks whether the
+    // shelf box has a press rule at all rather than whether the one it has goes the right
+    // way — the phone's had none.
+    core: 1030, app: 763, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

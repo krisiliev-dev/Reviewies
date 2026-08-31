@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PRESS } from '@reviewies/core/ui/surface';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { COPY } from '@reviewies/core/copy';
 import { db } from '@reviewies/core/data/db';
@@ -250,7 +251,21 @@ function Box({
       accessibilityLabel={COPY.controls.turnOver(item.name)}
       // The row's own height, read off the face that is up. See `face` above.
       onLayout={(e) => setFace(e.nativeEvent.layout.height)}
-      style={[styles.front, { width }]}
+      /*
+       * The press, which this box did not draw. Its web twin has `active:bg-ground-well`
+       * on the same element and has since it was written; this passed a static array and
+       * had no `({ pressed })` branch at all, so turning a box over on the phone gave
+       * nothing back until the face changed. Found by §6.191's mid-press instrument on the
+       * same run that found the web tab bar had no press either — a sweep over the controls
+       * that already sink cannot see the ones that do not.
+       *
+       * `theme[PRESS]` and not the token spelled out. `surface.test.ts` refused
+       * `theme.groundWell` here — correctly, and on the first full run: a hardcoded colour
+       * agrees with the token today and drifts from it silently, which is §6.122's defect
+       * and exactly what that sweep is for. `Row`, `Choice`, `Key` and `PadCell` all write
+       * `theme[PRESS]`; this is the fifth.
+       */
+      style={({ pressed }) => [styles.front, { width }, pressed && styles.pressed]}
     >
       <Art url={item.posterUrl} name={item.name} width={width} />
       <Text style={styles.title} numberOfLines={BOX.lines.title}>
@@ -301,6 +316,7 @@ const styles = StyleSheet.create({
   shelf: { gap: 24 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: BOX.gap },
   front: { gap: 6 },
+  pressed: { backgroundColor: theme[PRESS] },
   /*
    * Exactly as tall as the face it replaced — a height, not a floor.
    *

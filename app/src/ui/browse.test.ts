@@ -31,6 +31,54 @@ describe('the browse shelf', () => {
     }
   });
 
+  /*
+   * Whether the box answers a press at all, which is a different question from whether its
+   * press goes the right way.
+   *
+   * `surface.test.ts` asks the second and cannot ask the first: it iterates the controls
+   * that already carry a press rule, so one with none is not wrong, it is absent from the
+   * set. §6.191's mid-press instrument asked by pressing, and found the phone's box giving
+   * nothing back — `style={[styles.front, { width }]}`, a static array with no
+   * `({ pressed })` branch — where the web twin has carried `active:bg-ground-well` on the
+   * same element since it was written. The same run found the web tab bar in the same state,
+   * which is what makes this a class rather than an oversight.
+   *
+   * Both spellings name the same token, `ground.well`, which is the 1.046 step down from the
+   * ground the box is drawn on. A press that *rose* would satisfy a looser needle and be
+   * §6.122's defect, so each platform's destination is named rather than the shape of a
+   * press rule.
+   */
+  it('sinks when it is pressed, on both platforms', () => {
+    expect(read(BROWSE.web), 'the web box has no press state').toContain(
+      'active:bg-ground-well',
+    );
+    const phone = read(BROWSE.phone);
+    expect(phone, 'the phone box takes a static style and cannot draw a press').toMatch(
+      /style=\{\(\{ pressed \}\)/,
+    );
+    /*
+     * Two corrections in this one assertion, both found by running rather than reasoning.
+     *
+     * It was `toContain('backgroundColor: theme.groundWell')` and **passed with the press
+     * painted the wrong colour** — `styles.fallback` names the same token for the monogram
+     * plate, so the whole-file needle found that one and reported a press it had never
+     * looked at. Caught by constructing the plant that satisfies the guard while breaking
+     * the behaviour, rather than by assuming it could not exist.
+     *
+     * Then the *renderer* was wrong too, and `surface.test.ts` said so on the first full
+     * run: the phone must write `theme[PRESS]`, never the token spelled out, because a
+     * hardcoded colour agrees with the token today and drifts silently. So this names the
+     * press style and `surface.test.ts` holds what that style resolves to — one fact, one
+     * owner, rather than this file having a second opinion about the colour.
+     */
+    expect(phone, 'the phone box press is not wired to a style').toMatch(
+      /pressed && styles\.pressed/,
+    );
+    expect(phone, 'the phone box presses to a hardcoded colour').toMatch(
+      /pressed: \{ backgroundColor: theme\[PRESS\] \}/,
+    );
+  });
+
   it('never prints the crowd score, on either platform', () => {
     /*
      * `architecture.md`'s third refusal, and the one thing in this sprint that a reviewer

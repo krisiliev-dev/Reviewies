@@ -16185,6 +16185,93 @@ It is a per-screen count taken at a moment, and what a screen has painted when i
 that is a plausible cause and not an established one, and it is written here as unexplained rather
 than explained away. The 16–24ms answer and 155–254ms settle are unchanged.
 
+#### The third agent is in: one constant that was wrong in both directions at once
+
+The real-artwork pass, and its best finding is that **F1 and F4 were the same defect seen from two
+ends.** `BOX.backLines: 6` was justified as *"a box in a grid whose height is its column width times
+`BOX.ratio`"* — and that height differs at every breakpoint, so one number could not be right
+anywhere:
+
+| | box | panel | ground for the paragraph | what six lines did |
+| --- | --- | --- | --- | --- |
+| phone, 390pt | 173 | 304pt | 76pt → 4 lines | **overran the row by 26pt** |
+| web, 420pt | 188 | 333pt | 143pt → 8 lines | left 40pt empty |
+| web, 1280pt | 221 | 383pt | 193pt → 11 lines | left 90pt empty |
+
+The phone's six lines were never free; they *were* the 26 points F4 measured as the row jumping
+under the thumb. `backLines(ground, lineHeight)` turns a measured height into a count, and each
+renderer measures the room its own layout gave the paragraph — `ResizeObserver` on the web,
+`onLayout` on the phone — because whether the two verbs stack, and how far the reader has turned
+the type up, are facts only the laid-out screen has. After: unused ground under a *cut* paragraph
+4–8pt against a one-line bound at all three widths; truncating boxes **9/10 → 5/10** at 420 and
+**6/10 → 0/10** at 1280.
+
+**F2 was refused on a measurement, which is the outcome the brief most wanted to be possible.**
+`box.ts` says *"110 is a thumbnail"*, but that is a floor for a *shelf*, and the row poster is 44
+without anybody calling it a defect. What settles it is what a bigger plate costs, and on the title
+page the plate shares its line with the only running prose in the product. Three candidates built
+and photographed:
+
+```
+                         plate     420pt          1280pt
+detail: 96 (today)       96x144    39–44 chars    63–71
+detail: 128              128x192   35–37          63–71
+detail: 173 (the shelf)  173x260   29–32          63–71
+```
+
+The comfortable measure is 45–75 and the page is **already below it at 420**; every enlargement
+moves it further the way it is already failing. `poster.ts` gains the argument and the change that
+would actually settle the question — freeing the web's synopsis the way the phone already does —
+written down rather than taken out of a poster size.
+
+**F3 was four answers to *two facts under a name*, and the honest split is one defect, one
+duplication, two reasoned.** The shelf back dropped the year, which is nowhere else on that face
+(defect, repaired). Both Discover screens hand-composed the search row's fact line character for
+character — *which went unnoticed because the two copies agreed*, the exact failure `boxUnder`
+exists to prevent — so `boxFacts(result)` **is** that string now and both call sites read it. Four
+answers → three. The title page's bare `2022` is **not** a defect: it draws the synopsis whole and
+its line under the name is a `Data`, a figure rather than a phrase, and `CachedTitle.genres`' comment
+asks that *a box* say three things while the title page does not build a box.
+
+**Re-planted here, and all three source-level findings hold**: the year accepted and never printed
+(2 clauses red), a Discover call site hand-composing the line again (red, and the import dropped
+with it so the plant compiles clean), and both platforms clamped back to a fixed six (red on each).
+F4 and the ellipsis clause are design-pass findings measured in a browser; **those two I read rather
+than re-planted, and say so** — the phone's floor now comes from the front's own `onLayout` height
+rather than the plate's 260, which is what the repair claims.
+
+The agent's own two hardest moments are worth keeping. A plant that satisfies every source guard —
+`backLines(103, line)`, a *constant* ground — is caught only by the design pass, naming *"Band of
+Brothers shows 6 of 16 lines with 90pt spare"*. And its own repair had a defect only looking found:
+`absolute inset-0` gives the paragraph a box six points taller than the lines it clamps, so the top
+of the ninth line printed under the ellipsis, photographed at 6× before it was believed.
+
+#### The phone's shelf box had no press either, and my repair for it was wrong twice
+
+Deferred while that checkout was open, taken up after the merge: `mobile/src/ui/Browse.tsx` passed a
+static `style={[styles.front, { width }]}` where its web twin has carried `active:bg-ground-well` on
+the same element since it was written. Same component, one platform drawing the press — and the
+same absence-shaped hole `surface.test.ts` cannot see.
+
+Then two corrections, both from running rather than reasoning:
+
+1. **The clause I wrote for it was too loose.** `toContain('backgroundColor: theme.groundWell')`
+   **passed with the press painted the wrong colour**, because `styles.fallback` names the same
+   token for the monogram plate — the whole-file needle found *that* one and reported on a press it
+   had never looked at. Caught by constructing the plant that satisfies the guard while breaking the
+   behaviour, which is the half of the method that is easy to skip because it usually finds nothing.
+2. **The renderer was wrong too, and this repository said so on the first full run.**
+   `surface.test.ts` refused `theme.groundWell`: the phone must write `theme[PRESS]`, never the
+   token spelled out, because a hardcoded colour agrees with the token today and drifts from it
+   silently. That is §6.122's defect, and the guard caught me committing it in the same hour I wrote
+   a document about it. Repaired to `styles.pressed: { backgroundColor: theme[PRESS] }`, the fifth
+   phone control to write it that way.
+
+Two guards in this repository caught two different mistakes of mine this sprint —
+`clauses.test.ts` on a loose needle, `surface.test.ts` on a hardcoded colour — neither of which any
+amount of re-reading had found. That is the strongest single argument in `docs/design/agents.md`,
+arriving after the document was written.
+
 #### What is not done
 
 - **`paused` still has no writer**, named in `NO_WRITER_YET` rather than quietly left. Three readers
@@ -16202,10 +16289,14 @@ than explained away. The 16–24ms answer and 155–254ms settle are unchanged.
 - **The scent pass's two filed findings** (#233, #234) are untouched here, deliberately: the third
   agent is editing `Discover.tsx`, `Browse.tsx` and `Note.tsx` on both platforms as this is written,
   and finding B lives in exactly those files.
-- **The phone's shelf box still draws no press.** `mobile/src/ui/Browse.tsx` passes a static
-  `style={[styles.front, { width }]}` with no `({ pressed })` branch where its web twin has
-  `active:bg-ground-well` — the same component, one platform drawing the press. Confirmed by
-  reading and left alone for the same reason: that file is open in another checkout.
+- ~~**The phone's shelf box still draws no press.**~~ Done above, after the merge freed the file.
+- **F4 and the ellipsis clause were read, not re-planted.** Both are design-pass findings that need
+  a browser and a built export to reproduce; the repairs were read in the source and match what
+  they claim. That is a weaker check than every other finding in this entry got, and it is written
+  down as weaker rather than counted with them.
+- **The design passes were not re-run after this merge.** Whoever does it next: they write into
+  `design/real-screens` and `design/web-real`, and `docsReferences.test.ts` fails on a *half*-built
+  run — so run all five or clear those two directories first.
 - **#235 and #236**, the single-frame `Loading…` and the title page's head arriving after its tail.
   Both are decisions with a real tension in them — §6.104 requires *nothing* to be distinguishable
   from *I could not look*, so the loading branch cannot simply be deleted — and taking them quickly
