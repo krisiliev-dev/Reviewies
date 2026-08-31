@@ -6,7 +6,7 @@ What actually changed the quality of design work in this repository, measured ra
 
 Almost every design decision in this product was made by a Claude agent. Some of that work was
 good and some of it was confidently wrong, and the record is long enough to tell which practices
-moved the line and which were decoration: 231 tasks, 190 numbered entries in
+moved the line and which were decoration: 239 tasks, 194 numbered entries in
 `docs/research/09-app-first-pivot.md`, and three findings retracted in writing after the shot or
 the fixture turned out to be the defect rather than the design.
 
@@ -88,7 +88,7 @@ not looked at. That is the actual disease, and every practice below is a treatme
 
 ### 1. Give it an instrument before you give it an opinion
 
-`design/` is 19 programs and 7,834 lines that exist only so an agent can perceive something. They
+`design/` is 23 programs and 9,794 lines that exist only so an agent can perceive something. They
 photograph every route in both themes at two widths, on the web and on a phone; they measure
 contrast, target size, text scaling, layout and colour; they seed a real library from a CSV so the
 screens are not empty; they run the matcher 300 times and correlate its confidence against its
@@ -235,6 +235,14 @@ re-read the report — re-run the violation and watch the merged guard fail. Thi
 guards across three sprints** whose authoring agent believed them correct, plus the 38-stale-shots
 error above.
 
+Two later results are worth adding, because they change what the rule is *for*. On one merge the
+re-plant **confirmed a limit the agent had reported against itself** — a deliberate-discard plant
+that its guard could not catch, exactly as it said. And on another it caught **my own** repair
+twice: a needle loose enough to pass with the press painted the wrong colour, and a renderer writing
+a hardcoded token where this repository's own sweep demands the symbol. So the rule is not really
+about distrusting subagents. It is that **a claim and its check have to be re-run by somebody who
+did not write either**, and that includes re-running your own.
+
 This is also, unexpectedly, Nielsen's own result pointed at agents. One evaluator finds 20–51%; the
 yield comes from aggregation. Three agents on the same screens with *different frames* — one on
 information scent, one on what happens between press and settle, one on real artwork — find
@@ -258,8 +266,13 @@ and was believed:
 | `pressReadings` again | cached a control count against a page that mutated under it |
 | `pressReadings` a third time | clicked every control it was measuring, changing the screen |
 | `wrongWay` | compared a press against the very token the press renders from |
+| `response.mjs` | truncated each control's name to 40 characters, then looked it up with `exact: true` — so every control with a longer name was filed *"was there a moment ago and is not now"*, a line that reads as a finding about the app and is a fact about the file. One whole screen contributed **zero** measured interactions for that reason alone: 18 interactions became 24 when the truncation was removed |
+| `capture.mjs`'s import wait | tested for four samples with **no `Matching…` on screen**, then reloaded. The button offered while no match is running reads *"Match imported shows"* — which contains no `Matching…` — so two seconds of an idle screen satisfied it, and the reload restarted an import that lands over minutes. Three runs, three answers: `77 more episodes`, `75`, `72`. A number still moving, photographed as a state |
+| `capture-web-real.mjs` | claimed *"nothing here can pass against an empty app"* while four of its seven routes carried `undefined` needles — so four of the 42 shots in the pass whose stated purpose is judging the design against **real content** are of an empty screen |
+| `capture.mjs`'s census | printed which shots were taken off the top of their screen **with 8 of the pass's 33 shots still to come**, so it reported 1 where there were 3. Built by the previous sprint to fix exactly this class, and broken within it by a correct change to the other half of the file |
 
-Nine instances, three in one file. The pattern is not carelessness; it is that measuring something
+**Twelve instances, five in one file, and the last of them is the one to remember**: it was written
+*to catch this defect* and committed it inside a sprint. The pattern is not carelessness; it is that measuring something
 usually requires touching it, and the touch is invisible from inside the measurement. The
 countermeasures that work are mechanical: release the mouse at the origin (`page.mouse.move(0, 0)`
 before `mouse.up()`) so a press is measured without activating; re-count on every iteration instead
@@ -291,11 +304,25 @@ What has worked, in order of how much it matters:
    because the brief asked it to.
 5. **Require the plant.** Every new guard proved by planting the violation it claims to catch, with
    the pre-change run recorded.
-6. **Give the environment's traps by name.** Worktrees have no `node_modules` (`cp -al`, never a
-   symlink farm, or Metro breaks). `/tmp/metro-cache` is shared across checkouts and will silently
-   poison an export even with `--clear` — use `TMPDIR=<worktree>/.tmp`. The scratchpad is shared
-   between agents, not per-session. Distinct port pairs per agent. An agent that loses a day to one
-   of these produces nothing, and none of them are discoverable from the code.
+6. **Give the environment's traps by name, and check the ones you are handing on.** Worktrees have
+   no `node_modules` (`cp -al`, never a symlink farm, or Metro breaks) — and **not only the root
+   one**: `app/`, `core/` and `mobile/` have their own, and `mobile/node_modules` holds an
+   un-hoisted `react-native-svg` without which every export dies at one component. Any large
+   gitignored fixture directory needs hardlinking too. `/tmp/metro-cache` is shared across
+   checkouts and will silently poison an export even with `--clear`, so each agent needs its own
+   `TMPDIR` — but **a path inside the worktree pushes Chromium's singleton socket past the 108-byte
+   `sockaddr_un` limit**, and it fails as `Socket path too long` surfacing as SIGTRAP and *"Target
+   page, context or browser has been closed"*, which reads as a browser problem and is not. A short
+   unique path (`/tmp/rv-<agent>`) satisfies both. The scratchpad is shared between agents, not
+   per-session. Distinct port pairs per agent — and check whether the scripts actually take them,
+   because a hand-rolled `npx serve` **falls back to a random port silently** when its port is held,
+   so a pass can appear to run and photograph another checkout's build.
+
+   That `TMPDIR` line is in this document because I wrote the wrong version of it into three briefs
+   in one sprint and it cost the first agent an hour. **A trap list is a brief's most copied
+   paragraph and therefore the one most worth re-deriving** — mine had been carried forward
+   unexamined for four sprints. An agent that loses a day to one of these produces nothing, and none
+   of them are discoverable from the code.
 7. **Ask for the close-out in the same message**: the record entry with its own *What is not done*,
    floors set to exact measured counts with no margin, and the commit.
 
@@ -307,9 +334,10 @@ What has worked, in order of how much it matters:
 - **An instrument measures what somebody thought to measure.** Nothing timed a press for a year.
   There is no way to know what the current 19 programs are still blind to, except by the same slow
   route: use the thing until it lies.
-- **`design/` has 7,834 lines and zero tests.** The instruments are the least-guarded code in the
-  repository, which is precisely why nine of them were caught measuring the wrong thing — every one
-  by inspection, none by a suite. That is an open weakness, not a solved problem.
+- **`design/` has 9,794 lines and zero tests.** The instruments are the least-guarded code in the
+  repository, which is precisely why **twelve** of them were caught measuring the wrong thing — and
+  every one by inspection or by a *different* instrument, never by a suite. That is an open
+  weakness, not a solved problem, and it is getting worse rather than better as `design/` grows.
 - **The sample is one product and one evaluator.** Guerino's caution applies here too: this is a
   reading of a single long experiment, not a controlled comparison. Where a claim above has a
   denominator, it is measured; where it does not, it is a judgement.
