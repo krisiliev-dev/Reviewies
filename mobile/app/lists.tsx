@@ -165,7 +165,19 @@ function ListCard({
   onToggle: () => void;
   onChanged: () => void;
 }) {
-  const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
+  /**
+   * The row, with the one field that makes it choosable.
+   *
+   * `ListItem` is what the server holds and none of its four fields is a title; the name
+   * comes from the local title cache below. **Required rather than optional**, and that is
+   * the guard rather than a preference: optional, it is satisfied by its own absence, so a
+   * bare `ListItem[]` is assignable and any path that forgets the lookup compiles. The web
+   * had such a path — its Remove handler re-read the list and set the raw rows, redrawing
+   * every remaining row as its provider id. This platform filters the rows it already
+   * holds and never had the bug; it carries the type anyway, because a guard that reads
+   * one of a pair proves nothing about the other. `app/src/ui/listNames.test.ts`.
+   */
+  const [items, setItems] = useState<Array<ListItem & { name: string | undefined }>>();
   const [itemsFailed, setItemsFailed] = useState<string>();
   const [changeFailed, setChangeFailed] = useState(false);
 

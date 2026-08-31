@@ -21,16 +21,23 @@ import { Masthead } from '../ui/Masthead';
  * because how many tabs a product has is a decision about the product rather than a
  * layout bug to fix while passing a check.
  *
- * This is that decision, and it is the one the phone already made: the same five
- * primaries, and everything else here. The order matches `mobile/app/(tabs)/more.tsx`
+ * This is that decision, and it is the one the phone already made: the same primaries —
+ * `TAB_BAR`'s, and the count is that table's to state rather than this comment's — and
+ * everything else here. The order matches `mobile/app/(tabs)/more.tsx`
  * so the two screens agree rather than each having an opinion. Nothing moved URL — every
  * one of these is still at the address it was, which is what the smoke suite, the
  * in-app links and anybody's bookmark rely on.
  */
 /**
- * The five rows are `MORE_INDEX`'s now — both platforms carried this array with the same
+ * The four rows are `MORE_INDEX`'s now — both platforms carried this array with the same
  * labels and the same descriptions typed out separately, which §6.176 measured as ten
  * agreeing-by-hand strings on the screen whose job is saying what the product contains.
+ *
+ * Four, not five: `Upcoming` left when `architecture.md` section 4 folded what is airing
+ * into the second half of Up Next, and `moreIndex.ts` records that the report which
+ * prompted it — *"I am unsure what the difference between the Watchlist and Upcoming
+ * is"* — was answered by removing the destination rather than by writing a better
+ * description of it.
  */
 const LINKS = MORE_INDEX;
 

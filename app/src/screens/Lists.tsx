@@ -135,6 +135,24 @@ export function Lists() {
   );
 }
 
+/**
+ * A row of a list, with the one field that makes it choosable.
+ *
+ * `ListItem` is what the server holds — `titleId`, `kind`, `note`, `rank` — and none of
+ * those is a title. The name is resolved here against the local title cache, which is the
+ * only place it exists, and `item.name ?? item.titleId` is the fallback for a title this
+ * device has never opened (a list somebody shared with you, which is a real state and is
+ * what `18-lists-open.png` is a photograph of).
+ */
+type NamedItem = ListItem & { name: string | undefined };
+
+/** Every path that renders rows goes through here, so none of them can forget. */
+async function withNames(items: ListItem[]): Promise<NamedItem[]> {
+  return Promise.all(
+    items.map(async (item) => ({ ...item, name: (await db.titles.get(item.titleId))?.name })),
+  );
+}
+
 function ListCard({
   list,
   open,
@@ -150,7 +168,13 @@ function ListCard({
   // on the one screen whose entire content is titles somebody chose by hand. The phone
   // has resolved it against the local titles table since it was written; this is the
   // parity gap the migration walked past before noticing it.
-  const [items, setItems] = useState<Array<ListItem & { name?: string }>>();
+  //
+  // `name` is **required** rather than optional, and that is the guard rather than a
+  // preference. Optional, it is satisfied by its own absence, so `ListItem[]` is
+  // assignable to this and every path that forgets the lookup compiles — which is how
+  // the Remove handler below came to redraw the whole list as provider ids. Required,
+  // the compiler names the path. `listNames.test.ts` has the measurement.
+  const [items, setItems] = useState<NamedItem[]>();
   const [itemsFailed, setItemsFailed] = useState<string>();
   const [changeFailed, setChangeFailed] = useState(false);
 
@@ -161,14 +185,7 @@ function ListCard({
     // because a request came back empty-handed. §6.57.
     void fetchListItems(list.id).then(async (r) => {
       setItemsFailed(r.failed);
-      setItems(
-        await Promise.all(
-          r.items.map(async (item) => ({
-            ...item,
-            name: (await db.titles.get(item.titleId))?.name,
-          })),
-        ),
-      );
+      setItems(await withNames(r.items));
     });
   }, [open, list.id]);
 
@@ -258,8 +275,14 @@ function ListCard({
                           setChangeFailed(true);
                           return;
                         }
+                        // Through `withNames`, like the path that opened the list.
+                        // Straight from the fetch, this set four machine fields back into
+                        // the row state and every *remaining* row on the list redrew as
+                        // its provider id — including the ones nobody touched. Removing
+                        // one thing from a list is not a claim about what the others are
+                        // called. `listNames.test.ts`.
                         const reloaded = await fetchListItems(list.id);
-                        setItems(reloaded.items);
+                        setItems(await withNames(reloaded.items));
                         setItemsFailed(reloaded.failed);
                         onChanged();
                       }}
