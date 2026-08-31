@@ -16767,6 +16767,150 @@ is exactly the trap the brief warned about, working.
   television.
 - **The fourth off-the-top shot** the repaired census now reports has not been read.
 
+### 6.195 The scroll position is the product working, and the count was settled by running it
+
+Sprint 105's scroll-trace agent. **The question §6.193 opened is closed**, and the answer is the one
+nobody had guessed: it is not the harness.
+
+#### `Present` arriving, and a residual that is arithmetic
+
+`design/found/why-off-the-top.mjs` (new, committed) loads Up Next once and touches nothing
+afterwards — no press, no fill, no reveal, no foot shot. Playwright's only contact is `evaluate`,
+which does not scroll. Both numbers appear on their own:
+
+| | timeline | rest | frame | left below |
+| --- | --- | --- | --- | --- |
+| phone 390×844 | nothing overflows for ~0.5–3.0s, then | **3484 of 3500** | 784 | 16pt |
+| web 420×900 | nothing overflows at 1ms, then | **3795 of 3891** | 900 | 96pt |
+
+…and held for the remaining ten seconds of sampling.
+
+It is `app/src/screens/UpNext.tsx:453` (`scrollIntoView({ block: 'start' })`) and
+`mobile/app/(tabs)/index.tsx:497` (`scrollTo({ y })`) putting **the present at the top of the
+column** once the past has loaded — `architecture.md` §3, working exactly as written. The probe
+reports which block the rest position lands on: phone `3484 + 784` against a 784pt frame, web
+`3795 + 900` against a 900pt frame. **The marker's own top, to the point.** So the arrival is
+*honoured*, not clamped — which is precisely the distinction §6.183's `scrollTop 450` against a
+`maxScroll` of 450 was missing.
+
+The residual is arithmetic, which is why it is a constant rather than a range. A marker floored at
+one frame and parked at the frame's top leaves whatever is below it:
+
+- **Phone: 16 = `SCREEN.edge`** (`screen.ts` → `space.s16`). Verified here.
+- **Web: 16** (below the marker, inside the column) **+ 80** — `<main>` carries
+  `pb-[calc(var(--tabbar,5rem)+1rem)]`, and `App.tsx:209` sets `--tabbar` from the nav's own
+  `offsetHeight`, measured 64px, so 64 + 16 = 80 — **= 96.** Verified here.
+
+**Why two different libraries give one number: `HISTORY_LIMIT = 40`** (`repo.ts:371`). The seed CSV
+is 122 watches and the caught-up CSV 131; both draw the same forty rows and both land at 3484/3500.
+The finished CSV is 12, under the cap, and lands at 1160/1176. **Why `capture-web-real.mjs` reports
+none:** that pass tracks titles and never marks a watch, so there is no history, no `Past`, no
+floor, and no arrival.
+
+**And the agent caught its own probe reading a different screen.** `Present` asks
+`writing ? [] : getHistory()`, so while rows are unmatched the past is empty; its first run landed
+there, printed *"nothing on the page overflows"* at every sample to 10s, and its photograph has
+*Match imported shows* on screen with the heading at y=16. It now waits for `Tracked 3` the way
+`capture.mjs` does. A probe measuring the right route in the wrong state, caught by looking at the
+picture.
+
+So: **the shots are of a real state a person reaches**, produced by a deliberate behaviour this
+product is designed around. The instrument was never wrong about where it stood — it simply never
+said. And the three retractions (§§6.172, 6.174, 6.175) were findings written about a genuinely
+scrolled screen without knowing it was scrolled, which is a different and more forgivable error than
+the one they were recorded as.
+
+#### Two agents disagreed about a count, and running it settled it
+
+The scroll agent reported **3 off the top and 14 longer**; §6.194's agent, after repairing the
+early census, reported **4 and 15**. Neither could resolve it — the scroll agent flagged it rather
+than guessing, and deliberately did not touch `capture.mjs` to avoid conflicting with a fix it could
+see coming.
+
+Run here, on the merged tree, once:
+
+```
+shots not taken at the top of their screen: 03-upnext at 3484pt, 03-upnext-catchup at 3484pt,
+  00-caughtup-upnext at 3484pt, 00-caughtup-finished at 1160pt
+```
+
+**Four, and 15 longer.** The fourth is `03-upnext-catchup` — **the catch-up sheet shot §6.194's
+agent added in the same sprint**, which did not exist in the scroll agent's worktree. Not run
+variance, not a census bug: a new shot, taken by a parallel agent, of a screen the other agent was
+explaining. And it is on Up Next, so it is off the top for exactly the reason the explanation above
+gives. Both agents were right about the tree they could see, and neither could have known.
+
+This is the clearest case yet for the merge protocol being a *measurement* rather than a courtesy.
+Two honest reports, one number, and the only way to get it was to run the thing in the tree that has
+both.
+
+#### The synopsis leaves the poster's column, and it is not free
+
+Re-derived with the committed probe before the change and again after, on real builds both times,
+all six snapshot titles at both widths — and re-run here independently:
+
+| | x | box | measure |
+| --- | --- | --- | --- |
+| 420, before | 128 | 276px | **36** |
+| 420, after | 16 | 388px | **50** |
+| 1280, before | 408 | 460px | 59 |
+| 1280, after | 296 | 460px | 59 |
+
+At 1280 `SCREEN.prose` binds first, so the measure does not move — **and the page grows 84px on five
+of six titles** (One Piece 11,277 → 11,361; Shōgun 2,090 → 2,174; the film is under one window and
+unchanged). The agent shipped it anyway and said so, inviting disagreement.
+
+**I agree with shipping it**, and the reason is what the 1280 column buys rather than what it costs.
+84px is 0.7% of One Piece's page and 3.9% of Shōgun's — a fraction of one screen. What it removes is
+a paragraph hanging **112px inside the content column's own left edge**, for no reason: the poster
+ended lines above it, and the indent is a side effect of the flex row rather than a decision anybody
+took. The page now has one left edge instead of two. `AddToList` travels with the paragraph and
+stays underneath it (§6.62); it renders `null` in this build, so it is in no measurement above, and
+leaving it behind would have put it *over* the synopsis in every configured build.
+
+#### The plant that satisfied the guard, and what it forced
+
+Re-planted here — the paragraph put back inside the poster's column, type-clean — and the probe
+exits 1 naming **all six titles at 420**:
+
+```
+420, One Piece: the synopsis sets 36 characters to a line in a 276px column,
+  outside the 45–75 band TitleDetail.tsx cites
+420, One Piece: the synopsis is set in the poster's column and runs 271px past the
+  poster's foot — 12 of its 15 lines keep an indent past nothing
+```
+
+The second sentence is there because of the agent's own method-4 plant: setting the column's text at
+`text-s12` fits **47** characters, which satisfies a measure-only clause **with the defect entirely
+intact**, and fails at 1280 only because `SCREEN.prose` is a pixel cap. So the guard also checks the
+finding's own sentence — how far the paragraph runs past the poster's foot — and that half catches
+it on all six at 420 and on two at 1280. Both files carry the limits neither clause can see.
+
+Restored, rebuilt, probe green: 50 characters at 420 and 59 at 1280 on all six.
+
+#### Two things measured and deliberately not filed
+
+On arrival the first live row sits at **y=0 with no `SCREEN.edge` above it**, where every other
+screen insets 16. And the Out now / Upcoming control — the only route to the screen's other half —
+is **3468pt (phone) / 3779pt (web) above the window** once the present has arrived. Both are
+judgements about whether the arrival should land where it lands, not facts about whether it is
+wrong, and the agent left them as measurements.
+
+`offTheTop` was kept as a **list rather than a verdict**, and `shoot.mjs`'s header corrected: it had
+said *"the 3891 belongs to something the pass's walk creates and this has not found it"*, which is
+now known to be false in both halves. A `reveal` is off the top for a different and equally
+legitimate reason, so the list names positions and lets the reader judge.
+
+#### What is not done
+
+- **The two arrival judgements above.** They belong to whoever decides what Up Next should do when
+  the past lands, and that is a product question.
+- **`FLOOR` is unchanged** — this sprint's guards live in `design/`, which no vitest floor counts.
+  That is a gap in the floor's own coverage rather than an accident of this sprint, and it is not
+  closed.
+- **The phone's doubled heading and Discover's sentence-as-eyebrow** (§6.194) are still filed, not
+  fixed.
+
 
 ## 7. What is still not known
 
