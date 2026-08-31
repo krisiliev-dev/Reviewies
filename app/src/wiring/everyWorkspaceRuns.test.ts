@@ -243,7 +243,9 @@ describe('every workspace', () => {
     // core 1024, up thirteen, and app 752, up one: §6.191's `stopTracking.test.ts` — the
     // writer, the shelf rule, the Search label and the every-status-has-a-writer clause —
     // and `decide.test.ts`'s way-out-of-tracking clause.
-    core: 1024, app: 752, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // app 754, up two: §6.191's merge of the scent pass — `listNames.test.ts`'s omission
+    // clause and the required-name clause under it.
+    core: 1024, app: 754, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

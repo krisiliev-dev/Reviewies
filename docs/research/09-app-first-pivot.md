@@ -16030,6 +16030,71 @@ Four things it does not fix are written down, including that **`design/` is 7,83
 tests** — the least-guarded code in the repository, which is precisely why nine of its programs were
 caught measuring the wrong thing, every one by inspection and none by a suite.
 
+#### The first agent is in, and the re-plant confirmed its limit as well as its findings
+
+The information-scent pass (Pirolli & Card, with the framework's quantitative core refused — see
+below). Its finding: **removing one item from a list renamed every other item on it.**
+`core/src/social/lists.ts`'s `ListItem` is four machine fields and no name; the effect that *opens*
+a list widens the rows against the title cache, and the Remove handler did not — `setItems(reloaded
+.items)` put raw rows back. Driven on a signed-in web build:
+
+```
+before  Open The Long Dark, on Sunday nights    Open Quiet Harbour, on Sunday nights
+after   Open tmdb:tv:1, on Sunday nights        Open tmdb:movie:4, on Sunday nights
+```
+
+The **untouched** row loses its name too, drawn and announced. `Lists.tsx`'s own comment already
+called a provider id *"a machine string on the one screen whose entire content is titles somebody
+chose by hand"* — it fixed the first render and left the second. The phone got it right by a
+different route, filtering rows it already holds.
+
+The old guards, measured against the shipping defect before the repair: **8 files, 66 clauses, all
+green**, plus `lists.test.ts`'s 5 and a clean `tsc -b`. Seventy-one clauses and a compiler, vacuous
+against it.
+
+**Re-planted here, in the main checkout, as the merge protocol requires**, and all three of the
+agent's claims hold — including the one against itself:
+
+| re-plant | result |
+| --- | --- |
+| the shipping defect restored (`setItems(reloaded.items)`) | red, naming `app/src/screens/Lists.tsx`; `tsc` also rejects it |
+| the name made optional again (`name?: string`) | red — an optional property is satisfied by its own absence, so a bare `ListItem[]` would compile |
+| **a deliberate discard** (`.map((i) => ({ ...i, name: undefined }))`) | **green, and `tsc` clean** |
+
+The third is the agent's own stated limit and it is real: the guard takes the class of *omission*,
+not of deliberate discard. Reported rather than glossed, which is the behaviour the re-plant exists
+to check for and the first time in five merges that it confirmed a limit instead of overturning a
+claim.
+
+Two findings filed rather than fixed, both decisions rather than defects, both queued: **a control
+announced *"Add {name} to your watchlist"* that adds nothing at two of its five sites**, opening an
+uncancellable note composer that also hides Track and Add-to-list; and **two More rows describing
+contents that do not exist on the build the product ships as**, leading to a gate that names nowhere
+to go while `copy.ts` already holds `signInToMake(where)` for exactly that.
+
+And a **fifth refusal** for `hci.md`, on the same ground as Fitts: foraging theory's quantitative
+core — Charnov's marginal value theorem and Pirolli & Card's rate equations — needs measured gain
+and time-in-patch from real foragers, and this product is local-first by architecture and stores
+nothing about navigation. What survives is the qualitative half, *does the cue predict what is
+behind it*, which is checkable by reading the cue and pressing it. The agent went further and said
+that on Lists and More even that is really Norman's gulf of execution in cheaper words, because
+there is no uncertainty about yield to estimate on a record you wrote or a table of four fixed rows.
+Foraging theory chose which screens to walk and licensed none of the conclusions.
+
+#### An instrument that collected three other checkouts
+
+Found while raising the floors. `npx vitest run app/src/wiring/everyWorkspaceRuns.test.ts` **from the
+repository root** goes red — in `.claude/worktrees/agent-a2629859155fe71f0/app/src/wiring/`. The
+path is a substring filter, not a path, so a root-level single-file run collects every worktree's
+copy of that file as well as the one being edited. Scoped to its workspace (`cd app && npx vitest
+run src/wiring/…`) it is 1 file, 9 tests, green.
+
+Nothing here was wrong because of it — a plant that fires still names the file it fired on, and the
+workspace-scoped totals (core 1024, app 794, mobile 47) were taken with `cd`. But the *counts* from
+root-level single-file runs are sums over checkouts, which is one more instance of the family this
+sprint is otherwise about: **an instrument that quietly includes something other than its subject.**
+Run per workspace.
+
 #### What is not done
 
 - **`paused` still has no writer**, named in `NO_WRITER_YET` rather than quietly left. Three readers
@@ -16044,6 +16109,9 @@ caught measuring the wrong thing, every one by inspection and none by a suite.
   is where that would go.
 - **Neither renderer was run against the change in a browser.** The clauses and the compiler agree;
   a walk has not been done, and §6.190's lesson is that those are different.
+- **The scent pass's two filed findings** (#233, #234) are untouched here, deliberately: the third
+  agent is editing `Discover.tsx`, `Browse.tsx` and `Note.tsx` on both platforms as this is written,
+  and finding B lives in exactly those files.
 
 
 ## 7. What is still not known
