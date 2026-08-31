@@ -223,7 +223,9 @@ describe('every workspace', () => {
     // landed beside it. The web smoke went from 108 executing checks to 279 in the same file,
     // which is not counted here — this table counts `it()` clauses, and the hundred and
     // seventy that had stopped running were behind a click on a tab that no longer exists.
-    core: 971, app: 710, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 975: §6.189's year clauses, from an HCI evaluation that found Year in Review
+    // answering the same episode count under three different year headings on the phone.
+    core: 974, app: 710, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {

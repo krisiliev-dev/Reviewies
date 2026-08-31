@@ -137,6 +137,26 @@ describe('every test', () => {
     expect(total).toBeGreaterThan(1000);
   });
 
+/*
+ * The two clauses below read and parse **every test file in every workspace** — about a
+ * thousand `it()` bodies across ninety files, with a regex sweep over each. That is
+ * legitimately slow: alone they take six and a half seconds of test time.
+ *
+ * §6.189 gave them an explicit budget, because vitest's default is 5,000ms and the pair had
+ * been **failing under full-suite load and passing alone** — a check that answers differently
+ * depending on what else the machine is doing. This session reported `verify` green several
+ * times on runs where they happened to win the race, which is the whole problem: a clause
+ * nobody can rely on is worse than one that is simply absent, because it is still consulted.
+ * §6.161 fixed four checks of exactly this kind and this pair was not among them.
+ *
+ * The budget is not a loosening. What each clause asserts is unchanged; the default was a
+ * claim that reading a thousand test bodies is fast, and that claim was false. Thirty seconds
+ * is six times the measured cost under load, which is slack against a busy machine rather
+ * than against a slow clause — if either ever approaches it, the sweep has grown a real
+ * problem and should be read rather than re-budgeted.
+ */
+const READS_EVERY_TEST_FILE = 30_000;
+
   it('asserts something', () => {
     const silent: string[] = [];
     for (const file of files) {
@@ -148,7 +168,7 @@ describe('every test', () => {
       }
     }
     expect(silent).toEqual([]);
-  });
+  }, READS_EVERY_TEST_FILE);
 
   it('keeps no exemption for a test that asserts after all', () => {
     const live = new Set(
@@ -160,5 +180,5 @@ describe('every test', () => {
       }),
     );
     expect(Object.keys(ASSERTS_NOTHING).filter((key) => !live.has(key))).toEqual([]);
-  });
+  }, READS_EVERY_TEST_FILE);
 });

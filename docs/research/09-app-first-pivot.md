@@ -15284,6 +15284,99 @@ classes beside them satisfies all four bindings, draws a different grid, and onl
 satisfied while the value it binds is overridden one line along — is not closed.
 
 
+### 6.189 The frameworks convict, and acquit
+
+**This entry is open.** Three of four agents are still out — an interaction-cost instrument, a
+reading pass over the surfaces that shipped unseen, and a calm-technology decision. It will be
+extended rather than replaced, and this paragraph is the marker, because an entry that grows
+silently is what §6.186 is about.
+
+The standing instruction changed shape this sprint: keep working in parallel sweeps, make the
+design *perfect*, and **innovate using the frameworks the HCI field built for that purpose**.
+That is a different order from "fix what is broken", and the first thing it produced was a
+correction to the person giving it.
+
+#### The brief was wrong about its own premise
+
+I wrote that HCI grounding was *"scattered across nine files — Fitts, an affordance, a
+heuristic"*, from a `grep -l` that matched nine files and an inference from the count. Checked
+properly:
+
+| term | occurrences |
+| --- | --- |
+| `Fitts`, `Nielsen`, `Norman`, `Weiser`, `Kahneman`, `signifier`, `gulf of` | **zero** |
+| `heuristic` | four, every one meaning *a guess made by a script* |
+| `affordance` | sixteen files, **all sixteen** meaning what Norman calls a *signifier* |
+
+There was nothing to gather. There was a vocabulary to correct. A matched file is not a matched
+idea, and `grep -l` answers a question about files.
+
+Two more claims in the same brief did not survive: *"a sync outbox, a matcher and a fingerprinter
+that all do invisible work"* is two of three — the fingerprinter turns out to be the
+**best-signified subsystem in the build**, and the frame was brought in to convict it and
+acquitted it. That acquittal is the only reason to believe the same frame about the outbox.
+
+#### What the frameworks were for, and what they refused
+
+Five chosen, four refused, and the refusals are the load-bearing half. **Nielsen's ten were
+refused as a frame** on the method's own published grounds — individual evaluators found 20–51%
+of problems in CHI '90 and the yield comes from aggregating three to five, and this had one
+evaluator; kept as vocabulary. **Fitts was refused** because `MT = a + b·log₂(2A/W)` predicts a
+movement time nothing here can measure, and the repo's real standard is a 44pt floor from the
+HIG and WCAG 2.5.5 — citing Fitts for it would be precisely the unchecked citation the document
+exists to prevent. **Slow technology** was refused because its unit is years of presence and it
+would produce unfalsifiable assertions.
+
+That is a document turning down four of the nine things it was handed, which is the behaviour a
+brief full of framework names most needed.
+
+#### The finding: this repository computes a fact about somebody and does not show it to them
+
+Three of six findings are that one sentence, and the first is a live product defect.
+
+**Year in Review answered the wrong year on the phone.** `getSummary(window, { year })` honoured
+`year` only when `window === 'year'`. Measured on both builds against a 122-watch library, the
+phone reported **Episodes 50 for 2026, 2025 and 2024 alike**, under headings reading `Your 2026`,
+`Your 2025`, `Your 2024`. The web reported 50 / 66 / 6.
+
+Norman's gulf of evaluation named it; the **peak–end rule** said why *that* screen was the one to
+fix first rather than another — the memory of a year is the end of it, and the end was a number
+that did not move. Fixed in `core/src/stats/compute.ts`, no screen touched, and confirmed on a
+re-exported build rather than only in a test: 50 / 66 / 6 on both.
+
+The other two of the three: `acceptMatch` computes a `MigrationReport` with an `orphanedWatches`
+count that **both call sites discard**, on the one irreversible write in the product, which has
+no inverse and auto-starts in the first minute. And the set-aside sync queue is broadcast to all
+subscribers and read by one screen of three.
+
+#### A check nobody could rely on, and I had been relying on it
+
+`assertions.test.ts` reads and parses every test file in every workspace — about a thousand
+`it()` bodies across ninety files. Alone it takes 6.45 seconds of test time. Vitest's default
+timeout is 5,000ms.
+
+So it **failed under full-suite load and passed alone**, and this session reported `verify` green
+several times on runs where it happened to win the race. §6.161 fixed four checks of exactly this
+kind — *"four checks that are sometimes red are four checks nobody believes"* — and this pair was
+not among them, because a check that is usually green does not announce itself.
+
+Budgeted rather than loosened: what each clause asserts is unchanged, and the default was itself
+a claim — that reading a thousand test bodies is fast — which was false.
+
+**And two more of the same kind, which this sprint caused rather than found.** With three agents
+building exports and driving browsers on the same machine, `core/src/data/scale.test.ts` and
+`core/src/fingerprint/agreement.test.ts` both failed; alone, and with the full core suite alone,
+all 974 pass. Those two are *timing assertions about the product* rather than slow sweeps — one
+is about not reading a row twice, the other about a reference converging — so budgeting them
+would be loosening what they measure, and they are left exactly as they are.
+
+The operational fact is the one to write down: **`npm run verify` is not trustworthy while a
+parallel sweep is running**, and I ran it that way repeatedly this sprint before noticing. A
+suite that shares a machine with four agents is measuring the machine. This is the third
+distinct way this record has found a green or red result that was about the conditions rather
+than the code, after a container's missing directory and a renderer's missing behaviour.
+
+
 ## 7. What is still not known
 
 Unchanged from §6 and worth restating in one place, because the list has not shortened.
