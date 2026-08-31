@@ -811,8 +811,27 @@ async function pressReadings(page) {
    * The cap was there for time. Twelve routes at a fifth of a second each is a cost worth
    * paying for a check that can reach more than one component.
    */
-  const n = await targets.count();
-  for (let i = 0; i < n; i++) {
+  /*
+   * Re-counted every iteration, and that is a repair rather than a flourish.
+   *
+   * §6.189 lifted the cap of six so this could reach a `Button` — and left `count()` where
+   * it was, read **once** before a loop that then *presses things*. A press on this product
+   * is not inert: marking an episode watched removes its row, so the list this loop is
+   * indexing into gets shorter while the loop is running. `nth(5)` on a page that now has
+   * five controls does not fail fast; `evaluate` waits thirty seconds for an element that
+   * will never attach and throws, which took the whole phone pass down.
+   *
+   * It survived several green runs because the walk had not yet reached a screen where a
+   * press removed enough. §6.190's Up Next floor and the title page's new Track control
+   * changed what the walk reaches, and the latent defect surfaced — a cached count against a
+   * mutating page is wrong on every run and only visible on some.
+   *
+   * `live` is asked each pass and the loop stops when the page has fewer controls than it
+   * started with, rather than reaching for one that is gone.
+   */
+  for (let i = 0; ; i++) {
+    const live = await targets.count();
+    if (i >= live) break;
     const el = targets.nth(i);
     const box = await el.boundingBox().catch(() => null);
     if (!box || box.width < 60 || box.height < 20) continue;
@@ -854,6 +873,25 @@ async function pressReadings(page) {
     await page.mouse.down();
     await page.waitForTimeout(120);
     const held = await read();
+    /*
+     * **Released somewhere else, so the control is measured and not activated.**
+     *
+     * This was `mouse.down()` … `mouse.up()` on the same point, which is a *click*. So an
+     * instrument whose whole job is to read what a control looks like while held was also
+     * pressing every one of them: marking episodes watched, parking films on the watchlist,
+     * turning boxes over. At §6.122's cap of six that was survivable, because six controls
+     * from the top of a list screen are six rows. §6.189 lifted the cap so this could finally
+     * reach a `Button` — and thereby handed it every control on every screen the walk visits.
+     *
+     * It showed up as `05-discover-back: nothing on the screen matches /More about /i` — the
+     * shelf was empty by the time the reveal ran, because this had already parked its
+     * contents. A reading instrument that changes what the next reading sees is the same
+     * defect as a census that drops the runs it was sent to measure, one layer in.
+     *
+     * A browser fires `click` only when the press and the release land on the same element,
+     * so releasing at the origin leaves the `:active` reading intact and the handler unrun.
+     */
+    await page.mouse.move(0, 0);
     await page.mouse.up();
     await page.waitForTimeout(60);
     if (held.own === rest.own) continue; // not a control that paints on press
@@ -947,6 +985,41 @@ const rgbOf = (hex) => {
 };
 const PRESS_RGB = rgbOf(color.dark[PRESS]);
 const PRESS_FILL_RGB = rgbOf(color.dark[PRESS_FILL]);
+
+/*
+ * **`wrongWay` cannot fail for the defect it is named after, and this is the clause that can.**
+ *
+ * Its expectation is `rgbOf(color.dark[PRESS])` — read from the same token the components
+ * render from. So a change to `PRESS` moves the app and the check together, and the two agree
+ * however wrong they both are. Proved by planting `PRESS = elevation.raised`, the exact defect
+ * §6.122 got wrong: the phone pass reported *presses measured: 32* and exited 0.
+ *
+ * That does not make `wrongWay` useless — it catches a component that hardcodes a colour
+ * instead of asking the token, which is a real and different thing. It makes its **name** a
+ * larger claim than its body, which is §6.120's subject.
+ *
+ * What can be checked without reference to itself is the *direction*: a press sinks, so the
+ * step it names must be darker than the ground it sits on. `surface.ts` argues that in prose
+ * and nothing held it. Two grounds, because a press on the raised plate and a press on the
+ * base are both real.
+ */
+{
+  const lum = (c) => {
+    const [r, g, b] = rgbOf(c).match(/\d+/g).map(Number);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const sunk = lum(color.dark[PRESS]);
+  for (const ground of ['ground', 'groundRaised']) {
+    if (color.dark[ground] === undefined) continue;
+    if (sunk >= lum(color.dark[ground])) {
+      console.error(
+        `PRESS (${PRESS}) is not darker than ${ground} — a press that sinks must sink. ` +
+          `surface.ts says so in prose and this is the clause that holds it.`,
+      );
+      process.exitCode = 1;
+    }
+  }
+}
 
 /**
  * Which of the two a given press should land on, decided from the reading itself.

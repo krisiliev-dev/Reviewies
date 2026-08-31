@@ -234,7 +234,10 @@ describe('every workspace', () => {
     // number no file ever had.
     // app 733, up one: the seam repairs' clause in `calm.test.ts` — the one that stops a
     // duration nobody has measured being derived from a confidence that is not a position.
-    core: 989, app: 733, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 995, app 745: sprint 101's three branches — the title page's Track control and
+    // the shelf's route out, the census that tells stale from unread, and Up Next's floor
+    // with the search in the address.
+    core: 995, app: 745, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
