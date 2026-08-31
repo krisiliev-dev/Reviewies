@@ -182,17 +182,33 @@ for (let trial = 0; trial < trials; trial++) {
   /*
    * And the *other* copy, which this file counted for a whole sprint without ever saying so.
    *
-   * `inRepeat` asks whether the probe landed in the later copy, because that is where a
-   * wrong placement shows up as a large error. But the earlier copy is duplicated audio
-   * too — a probe inside it is exactly as undecidable, and the matcher is exactly as much
-   * guessing. Those probes simply happen to be *scored* correct, because the offset it
-   * guessed was the one they were taken from.
+   * **Two agents found this independently in one sprint and repaired it the same way**, which
+   * is worth recording on its own: the omission was legible from the outside, because
+   * `copiedFrom` was computed on the line above and never read and oxlint had been saying so.
    *
-   * `copiedFrom` was computed here and never read, which is how the omission looked from
-   * the outside: the instrument had the number it needed to notice half its own subject
-   * and did not use it. Counting both is what shows that of the 65 probes in duplicated
-   * audio, 33 were placed wrong and 32 were right by luck — and "right by luck" and
-   * "right" are the two things a calibration exists to distinguish.
+   * `inRepeat` asks whether the probe landed in the *later* copy, because that is where a
+   * wrong placement shows up as a large error, and the downstream tables still want that
+   * distinction. But the copy runs `full[to + i] = full[from + i]`, which leaves the same
+   * audio in **two** places: a probe taken from the stretch at 5% has an identical twin at
+   * 60%, exactly as one taken from 60% has a twin at 5%. Both have two equally good homes in
+   * the reference, and having two homes is the whole of what "a case that can be confidently
+   * wrong" means here. So `inCopy` is the subject and `inRepeat` is the half of it that shows.
+   *
+   * Measured on this file's own arithmetic, replayed against the same seeds: at `--trials 400`
+   * the old predicate reported **44** where **91** probes were in doubled audio. At
+   * `--trials 90` it reported 9 against a true 19.
+   *
+   * **The error was in the safe direction** — `repeatUntested` fired more readily than it
+   * needed to, never less — so nothing this file has printed was ever a claim about a case
+   * that did not occur. What was wrong is the number on the one line whose job is to say how
+   * much of its own subject a run reached. The header tells the story one turn earlier: the
+   * first version "reported '0 wrong at 25% repeat' while never once testing the case", and
+   * `inRepeat` was the repair for that. **A repair that counts half is the same defect at half
+   * scale.**
+   *
+   * Counting both is what shows that of the 65 probes in duplicated audio, 33 were placed
+   * wrong and 32 were right by luck — and "right by luck" and "right" are the two things a
+   * calibration exists to tell apart.
    */
   const inCopy = repeat > 0 && (inRepeat || wholly(copiedFrom));
 

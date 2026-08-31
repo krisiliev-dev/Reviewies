@@ -754,11 +754,27 @@ const THEN = {
  * Measured rather than grepped, for the §6.120 reason: a class name is not an edge.
  * `border-b` is present and correct in both renderers, and the defect is entirely in what
  * contains them — which no clause reading `Row.tsx` could ever see.
+ *
+ * ## And how many rules it looked at, which the count of offenders does not say
+ *
+ * `full-bleed: 0 inset rules across 12 routes` reads as a claim about the rules. It is a
+ * claim about the *offenders*, and a page with no rules on it at all produces the same
+ * line — so the sentence this instrument exists to hold, `Row.tsx`'s "full bleed and ruled,
+ * not a card", would go on being printed as satisfied by a build that had stopped drawing
+ * rules altogether.
+ *
+ * Planted rather than argued, and planted at the page because this is a pure function of
+ * one rendered document: with `* { border-bottom-width: 0 }` injected — a renderer that
+ * stopped emitting `border-b`, or a component that moved its rule onto a wrapper, arrive at
+ * the same place — the old spelling printed its best possible answer, `0 inset rules`, and
+ * nothing else. Measured on this build the twelve routes carry **65** rules between them
+ * and none is inset. `0 of 65` and `0 of 0` are now different sentences.
  */
 async function insetRules(page) {
   return page.evaluate(() => {
     const width = document.documentElement.clientWidth;
     const out = [];
+    let rules = 0;
     for (const el of document.querySelectorAll('*')) {
       const cs = getComputedStyle(el);
       const w = parseFloat(cs.borderBottomWidth);
@@ -768,12 +784,13 @@ async function insetRules(page) {
       if (parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0) continue;
       const r = el.getBoundingClientRect();
       if (r.width < 80 || r.height < 8) continue;
+      rules++;
       if (Math.abs(r.left) > 1 || Math.abs(r.right - width) > 1) {
         out.push(`${Math.round(r.left)}..${Math.round(r.right)} of ${width}: ` +
           (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 32));
       }
     }
-    return out;
+    return { inset: out, rules };
   });
 }
 
@@ -797,6 +814,33 @@ async function insetRules(page) {
  */
 async function pressReadings(page) {
   const out = [];
+  /*
+   * How many controls were actually held down, beside how many of them painted.
+   *
+   * **`out.length` alone cannot tell "nothing was wrong" from "nothing was pressed", and
+   * that is this instrument's own version of the defect it was built to find.** The line
+   * below discards every control whose colour did not move — correctly, because a control
+   * that paints no press is not a reading about press *direction*. But the caller only ever
+   * saw what survived that filter, so three different worlds printed the same page:
+   *
+   * 1. every control painted, and every one of them the right way — the good run;
+   * 2. no control painted at all, which is the exact regression `core/src/ui/surface.ts`
+   *    exists to prevent and which §6.122 and §6.184 spent two sprints measuring;
+   * 3. no control was *pressed*, because this locator stopped matching — one
+   *    react-native-web release away, and indistinguishable from (2) in the output.
+   *
+   * Measured rather than argued. With the `pressed` style deleted from `Row`, `Button`,
+   * `Choice`, `Key` and `PadCell` — a build with no press feedback anywhere, which
+   * typechecks — this pass walked its twelve routes and printed `presses measured: 0` with
+   * no `invisible`, no `wrongWay` and no `illegible` line. Against the same build unplanted
+   * it prints 32. Nothing said the number had gone to zero.
+   *
+   * So the tally is returned with the readings, the caller prints both, and worlds (2) and
+   * (3) get different sentences — `look.mjs`'s rule, which that file paid for twice: a
+   * failure that cannot be told from its neighbour is one somebody has to reproduce before
+   * they can read it.
+   */
+  let pressed = 0;
   const targets = page.locator('[role=link], a, [role=button], button');
   /*
    * Every candidate, not the first six.
@@ -894,10 +938,13 @@ async function pressReadings(page) {
     await page.mouse.move(0, 0);
     await page.mouse.up();
     await page.waitForTimeout(60);
+    // Counted before the filter below, because "held and did not paint" is the reading
+    // the filter throws away and the caller has to be able to see the shape of.
+    pressed++;
     if (held.own === rest.own) continue; // not a control that paints on press
     out.push({ ...held, rest: rest.own });
   }
-  return out;
+  return { readings: out, pressed };
 }
 
 
@@ -955,6 +1002,16 @@ const inset = [];
 const floating = [];
 /** Every press that repaints, and the ones that repaint to the colour behind them. */
 const presses = [];
+/** How many rules the full-bleed measure examined, whatever it found wrong with them. */
+let rulesSeen = 0;
+/**
+ * How many controls were held down across the whole walk, whatever they did about it.
+ *
+ * The companion to `presses`, and the reason is in `pressReadings`'s own header: a run that
+ * pressed nothing and a run in which nothing painted print the same `presses measured: 0`,
+ * and only one of those is a defect in the product.
+ */
+let pressedControls = 0;
 const invisible = [];
 /**
  * Presses that repaint to something other than `PRESS`.
@@ -1075,7 +1132,9 @@ for (const [name, path, via] of routes) {
     const body = await page.locator('body').innerText();
     if (!want.test(body)) hollow.push(`${name} (${path}) does not show ${want}`);
   }
-  for (const rule of await insetRules(page)) inset.push(`${name}: ${rule}`);
+  const ruled = await insetRules(page);
+  rulesSeen += ruled.rules;
+  for (const rule of ruled.inset) inset.push(`${name}: ${rule}`);
   const below = await floatingContent(page);
   /*
    * A quarter of the viewport. Ordinary screens put their first words twelve to forty
@@ -1086,7 +1145,9 @@ for (const [name, path, via] of routes) {
   if (below && below.gap > 844 * 0.25) {
     floating.push(`${name}: "${below.what}" sits ${below.gap}pt below the title`);
   }
-  for (const p of await pressReadings(page)) {
+  const held = await pressReadings(page);
+  pressedControls += held.pressed;
+  for (const p of held.readings) {
     presses.push(`${name}: "${p.name}" ${p.rest} -> ${p.own} on ${p.behind}`);
     if (p.own === p.behind) {
       invisible.push(`${name}: "${p.name}" presses to ${p.own}, which is what it sits on`);
@@ -1124,8 +1185,51 @@ if (inset.length) {
   console.error(`Rules that stop short of the edge, so the row reads as a card:\n  ${inset.join('\n  ')}`);
   process.exitCode = 1;
 }
-console.log(`\nfull-bleed: ${inset.length} inset rules across ${routes.length} routes`);
-console.log(`presses measured: ${presses.length}`);
+console.log(
+  `\nfull-bleed: ${inset.length} inset of ${rulesSeen} rules across ${routes.length} routes`,
+);
+if (!rulesSeen) {
+  console.error(
+    `design/capture.mjs: not one rule was found on any of the ${routes.length} routes, so ` +
+      `"0 inset" is this pass having no subject rather than a full-bleed screen. ` +
+      `\`insetRules\` wants a bottom border of 2pt or less on a box at least 80x8 with no ` +
+      `top or left border; a screen that stopped drawing rules, or a renderer that started ` +
+      `drawing them on a wrapper, both land here.`,
+  );
+  process.exitCode = 1;
+}
+/*
+ * The press census, with the denominator that says whether it is a census at all.
+ *
+ * `presses measured: 0` was a clean line for as long as this file has existed. Planted — the
+ * `pressed` style deleted from `Row`, `Button`, `Choice`, `Key` and `PadCell`, a build with
+ * no press feedback anywhere and one that typechecks — this pass printed exactly that and
+ * said nothing else about presses, against 32 on the same build unplanted. The three checks
+ * below are all `if (list.length)`, so an empty subject is silence in every one of them.
+ *
+ * `capture-web-real.mjs` learned the same lesson this sprint about its prose measure,
+ * `measure.mjs` says "found none of N names. That is not a measurement", and
+ * `calibrate.mjs` prints NOT TESTED rather than a row about a case that did not occur. This
+ * is that rule, on the instrument that produced three of the four defects it is named after.
+ */
+console.log(`presses measured: ${presses.length} of ${pressedControls} controls held`);
+if (!pressedControls) {
+  console.error(
+    `design/capture.mjs: no control on any of the ${routes.length} routes was held down. ` +
+      `That is not "no press defects" — it is this pass having no subject, and the likely ` +
+      `cause is the locator (\`[role=link], a, [role=button], button\`) or the 60x20 floor ` +
+      `no longer matching what the export renders.`,
+  );
+  process.exitCode = 1;
+} else if (!presses.length) {
+  console.error(
+    `design/capture.mjs: ${pressedControls} controls were held down and not one of them ` +
+      `changed colour, so the three clauses below measured nothing. \`core/src/ui/surface.ts\` ` +
+      `decided that a press steps the control's own surface; a build where no control paints ` +
+      `a press at all is that decision gone, not that decision kept.`,
+  );
+  process.exitCode = 1;
+}
 if (floating.length) {
   console.error(`Screens whose message floats instead of beginning where content begins:\n  ${floating.join('\n  ')}`);
   process.exitCode = 1;
