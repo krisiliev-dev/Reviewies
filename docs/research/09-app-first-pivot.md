@@ -16626,6 +16626,147 @@ relearning from the other side: a guard that fails on a correct change is wrong,
   to run and photograph somebody else's build. One run did exactly that. `scripts/portFree.mjs`
   reports a held port and does not free it.
 
+### 6.194 The pass said where its shots were standing eight shots before it had taken them
+
+Sprint 105's shot-reading agent. Census on arrival in a fresh worktree: **`0 shots: 0 unread,
+0 stale` — "Could not look in 4 of 4 directories"**, because the shots are gitignored and had never
+existed there. After re-running all five passes: **158 shots, 80 unread, 0 stale**, reproducing this
+checkout's number independently rather than taking it from the brief. **31 read, 5 filed,
+6 acquitted.**
+
+#### The instrument §6.193 built was already lying, one sprint later
+
+§6.193 gave `design/shoot.mjs` the ability to say **where** a shot was taken. `capture.mjs` printed
+that census **with 8 of the pass's 33 shots still to come.** The block sat at what was once the end
+of the file, and the trailing walks were later moved below it for a good reason — so a correct
+change to one half of a file silently gutted the other.
+
+Measured against the file as it shipped: **4 of the 14 shots with overflow missing from the first
+line, and 2 of the 3 off-the-top shots missing from the second** — `00-caughtup-upnext at 3484pt`
+and `00-caughtup-finished at 1160pt`. Those are *precisely* the two the brief I wrote had named by
+hand, from a previous sprint's manual measurement. **The brief knew and the instrument did not**,
+and nothing would have told the next reader which of the two to believe.
+
+Re-planted here, and independently re-measured. Running the new clause against
+`git show ba4f1e4:design/capture.mjs` — the file exactly as it shipped — names **8** late calls:
+
+```
+AssertionError: a shot is filed after the pass has already said what it photographed:
+  expected [ …(8) ] to deeply equal []
++   "capture.mjs: reveal( at 24501, after the census",  …
+```
+
+And planted forward: moving the census back above the three trailing `shoot(done, …)` /
+`shoot(over, …)` calls turns it red again, type-clean. After the repair the phone pass reports
+**15 longer screens (was 10) and 4 off the top (was 1)** — so there is a fourth off-the-top shot
+that no report, including mine, had ever mentioned.
+
+The agent also built the plant that satisfies the source-order rule while still breaking the
+behaviour — trailing walks inside a function *declared* above the census — confirmed it passes, and
+wrote that limit into the clause's own header rather than leaving it implied.
+
+This is the twelfth entry in `docs/design/agents.md`'s catalogue, and the first where the omitting
+instrument was **built by the previous sprint to fix exactly this class**.
+
+#### An anomaly of my own, resolved rather than waved away
+
+My first run of the merged clause reported **1 failed | 12 passed**; every run after it, on an
+unchanged file, reported 13 passed. I did not have an explanation and did not want to file
+"flaky". The `git show` run above supplies one: the clause **does** fail on the pre-merge
+`capture.mjs`, with that exact signature and clause name. A first invocation reading the pre-merge
+file — a stale transform, a fast-forward still settling — produces precisely what was observed. That
+is consistent rather than proven, and it is recorded as consistent.
+
+#### Two things the phone draws twice, and one it shouts
+
+**The title page prints the show's name twice, in identical type.** The navigator title
+(`headerTitleStyle` from `MASTHEAD.sub.face` and `.size`, `mobile/app/_layout.tsx`) and the body
+heading (`<Masthead level="sub">`, `title/[id].tsx:198`) resolve to the same size, face and weight,
+at heading depths 1 and 2. Measured off the pixels by `design/found/measure-heading-twice.mjs`
+(committed): `15-title.png` — both bands **37px tall, 298px wide**, 122 device px apart;
+`r6-title-severance.png` — both **28×159**. Two builds, two titles, identical to the pixel. **The
+web draws it once.** Not changed: whether the body heading should exist on the phone is a
+judgement. That the duplication existed was known; that the two are pixel-identical was not.
+
+**Discover's group heading is a sentence set as a label.** `COPY.discover.because(...)` is assembled
+at runtime from show names and goes through `Section`'s `section` level — which `section.ts` itself
+calls *"the eyebrow"* (`size: text.s12, caps: true, track: t83, ink: inkSecondary`) and which its
+other ~20 sites use for two-word labels. Measured on the built web app at 420: the same string is
+**388×36, two line boxes** as an eyebrow and **388×18, one** set as written. And `caps: true`
+destroys the capitalisation that marks a title — **`BECAUSE YOU TRACK SHŌGUN`**, `BECAUSE YOU
+WATCHED HOLLOW CROWN SAGA AND THE LONG DARK`, on both platforms. The alternative was photographed
+before it was proposed. Not changed, and the reason is the good one: `SECTION.group` also brings
+full ink and different tracking, so this is a nesting decision rather than a level swap. Second
+site: `CatchUp.tsx` sends *"Last episode you watched in season N"* through the same level.
+
+#### Two registers each believed the other held the catch-up sheet
+
+`emptyStates.ts` excused two of its sentences — `catchUp.nothingToMark`, `catchUp.nothingAired` —
+with *"`reveals.ts` owns the shot of it."* **It did not.** No entry, no capture script pressed the
+control, and across all 158 shots there was **no photograph of the sheet in any state**. It sits
+behind one of exactly two controls under every row of Up Next, the screen `direction.md` stakes the
+product on, and `COPY.catchUp` holds seven sentences for it that had never been seen.
+
+Registered, and photographed for the first time.
+
+The part worth keeping is why the self-maintaining half of the register did not catch it: the
+sweep's needle wants `false` or `*_OPEN`, and this sheet's closed state is `undefined`. **The agent
+declined to broaden it and measured why** — matching every argument-less `useState` finds 49 names,
+about 45 of which are data (`error`, `items`, `summary`); a tighter press-and-gate variant finds 8,
+none of them a reveal, and `catchingUp` not among them because its setter travels as a prop. The
+limit went into the register instead of a looser needle. That is the §6.146 rule applied to a guard
+rather than to a fixture.
+
+**And a second register correction**: `05-discover-filters.png` carries **KIND** and **STANDING**,
+and the entry claimed **three groups** for as long as it has existed. GENRE needs `genres.length > 1`
+and the fixture shelf offers one box with one genre — unreachable by the pass that owns the shot,
+twice over, since the shelf is also emptied by then. The genre group is the only `Choice` besides
+Stats' years taking `scroll`, argued at length in `choice.ts` **against a control no shot shows.**
+
+#### Six things looked at and left alone
+
+The year spine's contrast — my eye said the dark mark was too faint; measured **3.44:1** mark-vs-track
+dark and **6.08:1** light, both above WCAG 1.4.11's 3:1. The same shape as last sprint's
+36pt-that-measured-58×44, and the second time in two sprints that an eye lost to a number.
+`markCrossOff` being warm grey in dark and navy in light — `tokens.ts` says *"The pen. Pencil in
+dark, biro in light."* `00-stats-empty` offering no "Show all time" — both platforms gate it on
+`years.length > 0`, and on a genuinely empty library the control would be a lie. `Rate` appearing on
+the phone's episode row and not the web's — both are `watched && …`, and the two fixtures differ;
+*"the offer's presence is a state."* The disabled remote fascia — both renderers agree with
+`key.ts`; no shot of the *enabled* fascia exists because the harness has no television, which is a
+registered-absence candidate rather than a defect. And **the clipped first line of
+`00-caughtup-upnext.png`**, correctly declined: the shot is 16pt short of its scroller's end, which
+is exactly the trap the brief warned about, working.
+
+#### Four environment traps, three of which my brief got wrong
+
+- **`TMPDIR=<worktree>/.tmp` breaks Playwright**, and I had told all three of this sprint's agents to
+  use it. The worktree path pushes Chromium's singleton socket past the 108-byte `sockaddr_un`
+  limit — `FATAL:process_singleton_posix.cc:313 Socket path too long` — surfacing as SIGTRAP/SIGABRT
+  and *"Target page, context or browser has been closed"*, which reads as a browser problem and is
+  not. A short unique path (`/tmp/rv-<agent>`) satisfies Metro and Chromium at once. **This cost the
+  first hour**, and the pinned chromium-1194 was never the problem. Corrected to the two agents
+  still running as soon as it was reported.
+- **The `node_modules` list in my brief was incomplete.** `app/`, `core/` and `mobile/` have their
+  own; `mobile/node_modules` holds the un-hoisted `react-native-svg`, without which *every* expo
+  export dies at `TabIcon.tsx`.
+- **`design/real` is 534 MB and gitignored**, and must be hardlinked too or the real passes cannot
+  run.
+- The design scripts **hardcode ports 4200–4206** rather than taking an agent's assigned pair — but
+  `portFree.mjs` refuses a taken port, so this fails loudly instead of photographing another agent's
+  build. The silent-fallback trap is real for a hand-rolled `npx serve`, not for the scripts.
+
+#### What is not done
+
+- **Findings 2 and 3 are filed, not fixed.** The phone's doubled heading is a judgement about
+  whether the body heading should exist; Discover's group heading is a nesting decision that also
+  moves ink and tracking. Neither should be taken by whoever happens to be holding the file.
+- **The genre filter group has never been photographed.** Reaching it needs a filters reveal in the
+  real-artwork pass, which does not have one.
+- **No shot of the enabled remote fascia exists**, and cannot until something stands in for a
+  television.
+- **The fourth off-the-top shot** the repaired census now reports has not been read.
+
 
 ## 7. What is still not known
 
