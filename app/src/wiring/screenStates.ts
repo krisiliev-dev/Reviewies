@@ -99,6 +99,20 @@ export const SCREEN_STATES: ScreenStates[] = [
     states: [
       { name: 'a series with seasons and episodes', verdict: 'suite' },
       { name: 'an imported series, matched', verdict: 'suite' },
+      /*
+       * The two faces of the decision this page exists to inform. Until this sprint the
+       * page had neither: `Track`, `addToLibrary` and `watchlist` appeared nowhere on it,
+       * so the screen you open to decide could not act on the decision. The first is
+       * driven by the walk that comes off the shelf, presses `Details` and then `Track`;
+       * the second by the imported series above it, which arrives already in the library.
+       */
+      { name: 'untracked: the decision offered', verdict: 'suite' },
+      { name: 'already tracking: the decision spent', verdict: 'suite' },
+      {
+        name: 'saved to the watchlist, not yet tracked',
+        verdict: 'never',
+        why: 'nothing in the suite opens this page for a title that is on the watchlist and not in the library',
+      },
       { name: 'rated, and with a poster override', verdict: 'suite' },
       { name: 'where to watch, per region', verdict: 'suite' },
       { name: 'add-to-list offered', verdict: 'suite' },
@@ -340,6 +354,23 @@ export const SCREEN_STATES: ScreenStates[] = [
       { name: 'a series with seasons and episodes', verdict: 'suite' },
       { name: 'rated, and with a poster override', verdict: 'suite' },
       { name: 'add-to-list offered', verdict: 'never', why: 'the phone build carries no credentials' },
+      { name: 'already tracking: the decision spent', verdict: 'suite' },
+      /*
+       * The state the control was *added* for, and this suite cannot reach it. Said out
+       * loud rather than left off the list: the web's walk covers it end to end and this
+       * one does not, so a defect that renders the control only for a tracked title would
+       * be caught on one platform and not on the other.
+       */
+      {
+        name: 'untracked: the decision offered',
+        verdict: 'never',
+        why: 'this suite reaches the page only from an Up Next row, which is by definition a show already in the library; it never turns a shelf box over to follow the route that opens an untracked one',
+      },
+      {
+        name: 'saved to the watchlist, not yet tracked',
+        verdict: 'never',
+        why: 'same route: nothing here opens this page for a title on the watchlist',
+      },
     ],
   },
   {

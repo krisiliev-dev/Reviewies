@@ -1024,8 +1024,34 @@ try {
     'a custom poster can be set',
     (await page.getByText('Use a different poster').count()) > 0,
   );
+  /*
+   * And the decision itself, which this page could not carry at all until this sprint.
+   *
+   * `Track`, `addToLibrary` and `watchlist` appeared nowhere on either title screen: you
+   * could read the synopsis, the seasons, where to watch it and its warnings, and then had
+   * to go back to the row you came from to act on any of it. `design/cost.mjs` priced that
+   * detour at **+2 presses and +3.16s here**, +3 presses and +8.53s on the web.
+   *
+   * Reached from an Up Next row, this show is already in the library — so what is checked
+   * is the *spent* face: the word says `Tracking` rather than `Track`, and the control is
+   * unavailable. The untracked face is the one this suite cannot reach and
+   * `app/src/wiring/screenStates.ts` says so in as many words rather than leaving it off
+   * the list; the web's walk covers it from the shelf.
+   */
+  const spent = await page.getByRole('button', { name: 'Track The Long Dark' });
+  check(
+    'the title page says whether you are tracking this show',
+    (await spent.count()) === 1,
+    `${await spent.count()} for “Track The Long Dark”`,
+  );
+  check(
+    'and says it is already tracked rather than offering it again',
+    /Tracking/.test(title),
+    title.slice(0, 120),
+  );
   // Eighteen episodes, each with React, Talk and Mark; plus the stars, the poster
-  // override, where-to-watch and the content warnings.
+  // override, where-to-watch, the content warnings, and the two the decision takes —
+  // Track (spent) and Watchlist.
   await audit('the title page', 30);
   await noGhosts('the title page');
   await scaled('the title page');

@@ -226,6 +226,94 @@ it is filed there rather than taken here. `design/look.mjs` reports both numbers
 on the clamp rather than passing on it**; it currently exits 1 with exactly this one problem, which
 is the honest state of this section.
 
+## 8b. Two things this document did not decide, found by pricing a task
+
+Section 8 is about what *looking* found. This is about what **counting** found, which is a
+different instrument: `design/cost.mjs` walks a task on both builds and prints the presses,
+the distances, the target sizes and a modelled time. Neither of the two below is visible in
+a screenshot — both screens photograph correctly — and neither was visible to any guard in
+the repository, for a reason worth stating: the closest check, `app/src/wiring/offers.test.ts`,
+compares the two platforms against each other, and **both platforms were missing the same
+thing**. A parity guard is silent when the sides agree, and this product is built to make
+them agree.
+
+### The title page could not track the show it was describing
+
+`Track`, `addToLibrary` and `watchlist` appeared in neither `app/src/screens/TitleDetail.tsx`
+nor `mobile/app/title/[id].tsx`. Everything that would change your mind was on that page —
+the synopsis, the seasons, where to watch it, its content warnings — and the only way to act
+on it was to go back to the row you came from. `findAndTrackViaTitle` against `findAndTrack`:
+
+| | presses | typed | modelled |
+|---|---|---|---|
+| phone, from the search row | 3 | 4 | 6.04s |
+| phone, via the page — before | 5 | 4 | 9.19s (**+3.16s**) |
+| phone, via the page — after | 4 | 4 | 7.40s (**+1.37s**) |
+| web, from the search row | 3 | 4 | 9.94s |
+| web, via the page — before | 6 + 1 unpriced | 8 | 18.47s (**+8.53s**) |
+| web, via the page — after | 4 | 4 | 12.48s (**+2.54s**) |
+
+What is left of the detour is one press and one deliberation on each platform, and that
+press is the row that opens the page — which is not a cost of the route, it *is* the route.
+The web keeps a larger residue than the phone for a reason the model is explicit about and
+this table should not be read as hiding: a `P` is charged Kieras's `BB` and a homing
+operator a finger is not, so the two columns are not the same kind of number. The
+comparison that means something is each platform against itself.
+
+The web is worse than the phone by more than the platform's own constants explain, and the
+reason is a second finding inside the first: **going back on the web loses the query.**
+`Discover.tsx` holds it in `useState`, so a back navigation remounts the screen on the shelf
+and the search is typed again; `expo-router` keeps the phone's results screen in the stack.
+The seventh press is the browser's own Back, above the viewport — counted and deliberately
+not priced, because its size and distance are not properties of this build.
+
+The repair is the search row's own two controls, moved onto the page: same tones, same
+labels, same announced names, same `shelf` conditional. Nothing is invented, so there is
+nothing new to keep in step. It sits under the synopsis and above the rating, which is the
+back of a browse box's own order.
+
+**Refused: a third control, and a *stop tracking*.** §6.178 is a row that grew to eight, and
+this screen already carries a rating, a poster override, Add to list, Where to watch, content
+warnings and a season list. `repo.ts` has no writer that removes a library row, and inventing
+one on the screen that would have to explain what becomes of your watch history is a larger
+decision than this one.
+
+### The shelf was a dead end, and this document never said it should be
+
+Before section 5's rework a Discover row was `open={{ name: 'Open …', to: '/title/…' }}` plus
+Track and Watchlist — `e09ac85^:app/src/screens/Discover.tsx:143`. Two of those three came
+over to the back of the box; the third did not. **That was dropped, not decided.** The
+evidence, since the question is exactly the sort this document exists to answer:
+
+- `core/src/ui/box.ts`'s argument is *"a shelf of twenty boxes each carrying Track and
+  Watchlist is forty controls with two names between them"* — a rule about how many **verbs**
+  a shelf may repeat. A destination is not a verb, and the back already carries three
+  controls, so the "one control with two faces" line describes the *front*.
+- Section 7's eight refusals do not contain it, and a redesign with no refusals has not made
+  a decision — the corollary being that something refused nowhere was not refused.
+- `e09ac85`'s own message does not mention it.
+- The search half of the same screen kept its route the whole time, so the same title was
+  one press from its page as a result and unreachable as a box.
+- The only place in the repository where the removal was written down at all was a comment
+  in `app/smoke.mjs` explaining an audit count, which read *"the shelf offers fewer controls
+  on purpose"* — an inference about a decision nobody had made, and now corrected in place.
+
+So it is back, drawn `Details` and announced `Open {name}` — the sentence every other route
+to that page already announces — beside `Done` at the bottom of the back, in the same quiet
+inline register. The shelf's front-facing control count is unchanged, because a back is not
+drawn until a box is turned over.
+
+### What holds them now
+
+`app/src/wiring/decide.test.ts` states three rules absolutely rather than comparatively:
+every control announced `Track {name}` is wired through its `onPress` to a writer that
+tracks; the title page carries one; and every surface that carries one offers `/title` or is
+it. A source guard cannot evaluate a render condition — a plant that draws the control only
+for a title you already track passes all three — so `app/smoke.mjs` walks the whole route in
+a browser: the shelf, the back of a box, `Details`, the page, `Track`, and the label
+changing. That last step is the only one of the six that a file-reading check could not have
+made.
+
 ## 9. What this costs, said plainly
 
 Up Next now carries three jobs — the past, the present, and what is coming — and it was

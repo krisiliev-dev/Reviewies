@@ -1965,11 +1965,19 @@ try {
   check('discover explains why', reason?.includes('Because you watched The Long Dark') === true, reason ?? 'no reason heading');
   /*
    * Eight, and every one of them is accounted for: four tabs, the skip link, the filter
-   * row, and one box per suggestion. `docs/design/architecture.md` section 5 is the whole
-   * of the drop — a box is **one** control with two faces, where a row carried Track and
-   * Watchlist and an Open link, so the shelf offers fewer controls on purpose and
-   * `core/src/ui/box.ts` argues why: twenty rows each carrying both verbs is forty controls
-   * with two names between them.
+   * row, and one box per suggestion. `docs/design/architecture.md` section 5 is most of the
+   * drop — a box is **one** control with two faces, where a row carried Track and Watchlist
+   * as well, and `core/src/ui/box.ts` argues why: twenty rows each carrying both verbs is
+   * forty controls with two names between them.
+   *
+   * **The Open link was not part of that argument, and this comment used to say it was.**
+   * It read "the shelf offers fewer controls on purpose", counting the destination in with
+   * the two verbs — and this was the only place in the repository where the shelf losing
+   * its route to `/title` was written down at all, as an inference rather than a decision.
+   * `box.ts` is about how many *verbs* a shelf may carry; neither it nor
+   * `architecture.md`'s eight refusals says the page becomes unreachable. It is back, on
+   * the back of the box, and the count here is unchanged because a back is not drawn until
+   * a box is turned over.
    *
    * Lowered to what is there rather than to a number that passes. A floor is a claim that a
    * screen has not quietly emptied itself, and a floor set above the count is a claim that
@@ -1979,6 +1987,116 @@ try {
   await noGhosts('Discover');
   await scaled('Discover');
   await page.screenshot({ path: OUT + '09-discover.png' });
+
+  // --- The shelf's way to the page, and the page's own decision ----------------
+  /*
+   * The one thing a source guard cannot say, walked in a browser.
+   *
+   * `app/src/wiring/decide.test.ts` holds two rules by reading source: that the title page
+   * carries a control announced `Track {name}`, and that every surface offering that
+   * control also offers a route to `/title`. Both were written against real holes and both
+   * catch a deletion. Neither can catch the third shape, and it was planted: wrap the
+   * control in `{title && libraryItem && …}` and every clause in that file still passes —
+   * the control is in the source, wired to `addToLibrary`, and renders only for a title you
+   * are already tracking, which is exactly the one case it is useless in. A source guard
+   * cannot evaluate a render condition. This can.
+   *
+   * So the walk is the whole route, end to end: the shelf, the back of a box, the link the
+   * IA rework dropped, the page, the control, and the write. Each step is checked rather
+   * than assumed, because a walk that only asserts at the end reports "could not reach" as
+   * a failure of the last thing it touched (§6.57).
+   *
+   * In a context of its own, which is not tidiness either: this tracks a show, and the
+   * clause forty lines above it is *"discover excludes what you already track"*. Running it
+   * in the main walk would change the set that clause is about, from underneath it.
+   */
+  const deciding = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const decide = await deciding.newPage();
+  try {
+    await decide.goto(new URL('discover', BASE + '/').href, { waitUntil: 'networkidle' });
+    await decide.waitForTimeout(1500);
+    const box = decide.getByRole('button', { name: /^More about / }).first();
+    const named = ((await box.getAttribute('aria-label').catch(() => '')) ?? '').replace(
+      /^More about /,
+      '',
+    );
+    // Non-vacuity first: every check below is about a box, and there is no box on a shelf
+    // that came back empty. An empty library falls through to the trending chart, which
+    // the fixture provider answers with all of its shows.
+    check('an empty library still has a shelf to look along', named.length > 0, named || 'no boxes');
+    await box.click();
+    await decide.waitForTimeout(500);
+
+    const toPage = decide.getByRole('link', { name: `Open ${named}` });
+    /*
+     * Counted before it is pressed, and pressed only if it is there.
+     *
+     * Both plants that this block exists for — the route present in the source but rendered
+     * only after you have already tracked the title, and the Track control rendered only for
+     * a title you already track — leave a locator that matches nothing, and clicking one
+     * throws thirty seconds later into the outer handler, which ends the run. The first time
+     * that happened it suppressed a hundred and twenty later checks and printed `152/154`,
+     * a denominator that looked like a measurement. §6.57.
+     */
+    const routed = (await toPage.count()) === 1;
+    check(
+      'the back of a box offers the title’s own page',
+      routed,
+      `${await toPage.count()} for “Open ${named}”`,
+    );
+    if (routed) {
+      await toPage.click();
+      await decide.waitForTimeout(2000);
+    }
+    check(
+      'and pressing it lands there',
+      routed && /\/title\//.test(decide.url()),
+      routed ? decide.url() : 'not pressed: no route on the back of the box',
+    );
+
+    const track = decide.getByRole('button', { name: `Track ${named}` });
+    const offered = (await track.count()) === 1;
+    check(
+      'the title page offers to track the title it describes',
+      offered,
+      `${await track.count()} for “Track ${named}” at ${decide.url()}`,
+    );
+    // Offered *and* pressable. The planted defect renders the control only when the title
+    // is already tracked, where it arrives disabled — so the enabled state is the half of
+    // this that the plant fails on.
+    const live = offered && (await track.isEnabled().catch(() => false));
+    check('with the control live rather than already spent', live);
+
+    /*
+     * Pressed only if it is there, and the clause below says which of the two it is
+     * reporting.
+     *
+     * Clicking a locator that matches nothing throws, and a throw here reaches the outer
+     * handler and ends the run — so the plant that proved this block works also suppressed
+     * the thirty checks after it and printed a total that looked like a measurement. §6.57
+     * is the rule: could not reach is not zero, and it is not a smaller denominator either.
+     */
+    if (live) {
+      await track.click();
+      await decide.waitForTimeout(1200);
+    }
+    /*
+     * The label, because the label is the read.
+     *
+     * `Tracking` is drawn from `shelf === 'library'`, and `shelf` comes from a live query on
+     * `db.library` — so the word changing is the library row existing, observed through the
+     * screen rather than by reaching into IndexedDB behind it. The button also goes
+     * disabled, which is the same fact said the way a screen reader hears it.
+     */
+    const after = live ? (await track.innerText().catch(() => '')).trim() : '';
+    check(
+      'and pressing it tracks the show without leaving the page',
+      live && /Tracking/.test(after) && (await track.isDisabled().catch(() => false)),
+      live ? `${after || 'no label'} at ${decide.url()}` : 'not pressed: no live control to press',
+    );
+  } finally {
+    await deciding.close();
+  }
 
   // --- Stats -----------------------------------------------------------------
   await viaMore(/Stats/);
@@ -2080,25 +2198,56 @@ try {
       : /needs? an account/i.test(listsText),
     listsText.slice(0, 130),
   );
-  // Four when there is a session and a create box; the signed-out screen is a sentence
-  // and the navigation, which is what it should be rather than a form that cannot work.
-  // Signed out, the create box is not there, so there is one fewer control to name.
-  //
-  // Both are one lower than they were, and neither is about this screen: the navigation
-  // each of them counts is the tab bar, and the bar is four tabs rather than five since
-  // `architecture.md` section 2. Every floor in this file that includes the bar moved by
-  // exactly one; these two are the ones that were tight enough to notice.
-  await audit('Lists', /Sign in .* to make lists/.test(listsText) ? 5 : 6);
+  /*
+   * Four when there is a session and a create box; the signed-out screen is a sentence
+   * and the navigation, which is what it should be rather than a form that cannot work.
+   * Signed out, the create box is not there, so there is one fewer control to name.
+   *
+   * Both are one lower than they were, and neither is about this screen: the navigation
+   * each of them counts is the tab bar, and the bar is four tabs rather than five since
+   * `architecture.md` section 2. Every floor in this file that includes the bar moved by
+   * exactly one; these two are the ones that were tight enough to notice.
+   *
+   * ## And `configured`, because there are two signed-out screens and this knew one
+   *
+   * This branched on `Sign in … to make lists` alone — the wording of the screen a
+   * **configured** build shows to somebody who is not signed in. A credential-free build
+   * shows the other one, *"needs an account"*, which the check three lines above already
+   * branches on `configured` to expect — and which has no create box either. So the floor
+   * resolved to 6 against a screen with 5 on it, and this has been failing on a correct
+   * screen. The same defect as the People needle above and found in the same run: a clause
+   * keyed to one build's wording, evaluated on the other's.
+   *
+   * The floor is now the union of the two signed-out shapes rather than one of them.
+   */
+  const listsSignedOut = !configured || /Sign in .* to make lists/.test(listsText);
+  await audit('Lists', listsSignedOut ? 5 : 6);
   await noGhosts('Lists');
   await scaled('Lists');
   await page.screenshot({ path: OUT + '08c-lists.png' });
 
   await viaMore(/Your data/);
   await page.waitForSelector('text=Choose files', { timeout: 5000 });
-  // 11, down from 12: §6.133 deleted this screen's People row, which was a second copy of
-  // a destination already on More — and the `offers.test.ts` exemption that excused it
-  // gave a reason ("the web has no More tab") that had not been true since §6.79.
-  await audit('Your data', 11);
+  /*
+   * 11, down from 12: §6.133 deleted this screen's People row, which was a second copy of
+   * a destination already on More — and the `offers.test.ts` exemption that excused it gave
+   * a reason ("the web has no More tab") that had not been true since §6.79.
+   *
+   * ## Nine when the build has no credentials, and this had one number for two screens
+   *
+   * `AccountPanel` renders inside this page, and what it renders is the branch the probe
+   * fifty lines up already named: *"Sync across devices"* with a way in, or *"Not
+   * configured. Reviewies works fully offline"* with nothing to press. Two of the eleven
+   * are that way in, so on a credential-free checkout — which is what this one is, and what
+   * `screenStates.ts` calls `NO_ACCOUNT` — the screen correctly has nine, and an
+   * unconditional floor of eleven fails on it. Third clause in this file found doing that
+   * in one run, all three the same shape.
+   *
+   * Nine is measured here; eleven is the number the configured build was measured at when
+   * the floor was written, and it is kept rather than merged into one loose number, because
+   * a floor that passes on both builds is a floor that is checking neither.
+   */
+  await audit('Your data', configured ? 11 : 9);
   await noGhosts('Your data');
   await scaled('Your data');
 
@@ -2291,9 +2440,27 @@ try {
   // box that can never return anything. The two reasons are different — the feature is
   // unavailable in this build, or it is available and you are signed out — and telling
   // someone the wrong one sends them looking for a setting that is not there.
+  /*
+   * The unconfigured needle comes from `COPY` now, and this is a repair rather than a
+   * widening: **the check has been failing on a correct screen.**
+   *
+   * It looked for the literal `works without it`, which was the end of *"Following needs
+   * sync configured. Everything else works without it."* §6.72's copy-audit found that
+   * sentence to be false — comments and shared reactions need sync as well — and rewrote it
+   * to *"…as do comments and shared reactions. Your history, ratings, lists of what to
+   * watch, stats and the whole import **work** without it."* One letter of the needle, and
+   * the check has reported a screen that is saying exactly the right thing ever since.
+   *
+   * A guard that fires on a correct change is as wrong as one that passes on a defect, and
+   * the fix is not a looser regex: it is that the sentence has an owner, `copy.ts`, and this
+   * file already imports it and was not reading it. Now a rewrite of that sentence moves the
+   * needle with it, and there is no second copy of it to drift.
+   */
   check(
     'people screen explains what it needs',
-    configured ? /Sign in/i.test(peopleText) : /works without it/.test(peopleText),
+    configured
+      ? /Sign in/i.test(peopleText)
+      : peopleText.includes(COPY.people.withoutAccount.replace(/\s+/g, ' ')),
     peopleText.slice(0, 140),
   );
   // Five: the bar below is four tabs rather than five since `architecture.md` section 2,

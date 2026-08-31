@@ -161,13 +161,40 @@ function Box({ item, onActed }: { item: Suggestion; onActed: () => void }) {
             name={COPY.controls.addToWatchlist(item.name)}
           />
         </div>
-        <Button
-          size="inline"
-          tone="quiet"
-          onPress={() => setOver(false)}
-          label={COPY.controls.done}
-          name={COPY.controls.turnBack(item.name)}
-        />
+        {/*
+          The way out of the box, and the way off the shelf.
+
+          Before the rework a Discover row was `open={{ name: 'Open …', to: '/title/…' }}`
+          plus Track and Watchlist — `e09ac85^:app/src/screens/Discover.tsx:143`. Two of
+          those three came over to the back of the box and the third did not, so a title on
+          the shelf had no route to where it is streaming, what it warns you about, how
+          many seasons it runs to or who is in it, while the *same title* in the results
+          list one keystroke away still had one. `box.ts`'s argument for putting the verbs
+          on the back is about **twenty boxes each carrying two of them**; it is not an
+          argument against a destination, and `architecture.md`'s eight refusals do not
+          contain this one. It was dropped rather than decided.
+
+          Beside `Done` and in its register — quiet, inline — rather than up with the two
+          filled verbs: this is the way to *read more*, and the box's whole thesis is that
+          the front sells nothing and the back is where you decide. Four controls on a
+          back, two of them the size of a word. §6.178 is the row that grew to eight.
+        */}
+        <div className="flex flex-wrap items-center gap-4">
+          <Button
+            size="inline"
+            tone="quiet"
+            to={`/title/${encodeURIComponent(item.id)}`}
+            label={COPY.controls.details}
+            name={`Open ${item.name}`}
+          />
+          <Button
+            size="inline"
+            tone="quiet"
+            onPress={() => setOver(false)}
+            label={COPY.controls.done}
+            name={COPY.controls.turnBack(item.name)}
+          />
+        </div>
       </div>
     );
   }

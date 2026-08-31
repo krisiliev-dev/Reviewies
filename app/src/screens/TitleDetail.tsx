@@ -3,13 +3,17 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useParams } from 'react-router-dom';
 import { db } from '../data/db';
 import {
+  addToLibrary,
+  addToWatchlist,
   clearRating,
   markWatched,
   rate,
   setPosterOverride,
+  startWatching,
   unwatchLatest,
   watchedEpisodeIds,
 } from '@reviewies/core/data/repo';
+import type { Shelf } from '@reviewies/core/data/already';
 import { getEpisodesCached, getTitleCached } from '@reviewies/core/metadata/index';
 import { hasAired } from '@reviewies/core/data/repo';
 import { Poster } from '../ui/Poster';
@@ -53,7 +57,43 @@ export function TitleDetail() {
   const watched = useLiveQuery(() => watchedEpisodeIds(titleId), [titleId], new Set<string>());
   const rating = useLiveQuery(() => db.ratings.get(titleId), [titleId]);
   const libraryItem = useLiveQuery(() => db.library.get(titleId), [titleId]);
+  const savedItem = useLiveQuery(() => db.watchlist.get(titleId), [titleId]);
   const [posterDraft, setPosterDraft] = useState<string>();
+
+  /*
+   * Which shelf this title is already on — `already.ts`'s two values, read from the two
+   * rows rather than from a `useState` set by this session's presses.
+   *
+   * `alreadyHave()`/`shelfFor()` is not used here and the difference is the whole reason
+   * that module exists: it resolves a *search result* against the library by name as well
+   * as by ID, because an imported row is `local:tv:…` and a result is `tmdb:tv:…` and the
+   * two never meet. This screen is already at one ID — whichever the row that opened it
+   * carried — so `get` is the exact question, and asking the wider one would scan two
+   * tables to answer something a key lookup answers.
+   *
+   * The library wins when both rows exist, which is `shelfFor`'s own rule: *"Tracking is
+   * the stronger statement, and a watchlist entry for something you are already watching
+   * is the leftover rather than the fact."*
+   */
+  const shelf: Shelf | undefined = libraryItem ? 'library' : savedItem ? 'watchlist' : undefined;
+
+  /**
+   * Start tracking, from the page that told you what it is.
+   *
+   * `startWatching` when it was on the watchlist, `addToLibrary` when it was not, which is
+   * `repo.ts`'s distinction rather than a new one: the first is *"track it and take it off
+   * the list, one act, not two"* and it enqueues a watchlist tombstone, so calling it for a
+   * title that was never saved would send a deletion for a row that never existed.
+   *
+   * No `getEpisodesCached` behind it, unlike the search row and the shelf's box. This
+   * screen's own effect has already asked for the episodes and is rendering them; the two
+   * call sites that fetch here do so because nothing else on those screens ever will.
+   */
+  async function track() {
+    if (!title) return;
+    if (shelf === 'watchlist') await startWatching(titleId, title.kind);
+    else await addToLibrary(titleId, title.kind);
+  }
   /** Which season is open: `undefined` follows the rule, `null` is closed. §6.156. */
   const [chosen, setChosen] = useState<number | null>();
   const counts = useLiveQuery(async () => {
@@ -189,6 +229,67 @@ export function TitleDetail() {
           {title && <AddToList titleId={titleId} kind={title.kind} />}
         </div>
       </div>
+
+      {/*
+        The decision, on the page you opened to make it.
+
+        ## The hole
+
+        `Track`, `addToLibrary` and `watchlist` appeared nowhere on either title screen.
+        You could read the synopsis, the seasons, where to watch it and what it warns you
+        about — everything the product knows that would change your mind — and then had to
+        leave and find the row again to act on it. `design/cost.mjs` walked both routes and
+        priced the detour against tracking from the search row: **+2 presses and +3.16s on
+        the phone**, **+3 presses, +4 retyped characters and +8.53s on the web**, plus one
+        web press it counts and refuses to price because it is the browser's own Back,
+        above the viewport. The web is worse because going back also loses the query —
+        `Discover.tsx` holds it in `useState` — so the search is typed twice.
+
+        ## Why it is these two controls and not a new one
+
+        They are the search row's, moved: same tones, same labels, same announced names,
+        same `shelf` conditional. That is the point rather than laziness — a page reached
+        *from* that row should not offer a differently-shaped version of the same decision,
+        and `copy.ts` records what happens when two screens each write their own words for
+        one act. Nothing new is invented here, so there is nothing new to keep in step.
+
+        ## Where it sits, and what is refused
+
+        Under the synopsis, above the rating: the back of a browse box puts its two verbs
+        after the blurb for the same reason — `box.ts`'s *"the front of the box sells
+        nothing; the back is where you decide"* — and this screen is the long form of that
+        back. Its own full-width line rather than the column beside the poster, which is
+        the mistake the rating block below records having made once already.
+
+        **Refused: a third control.** `docs/research/09-app-first-pivot.md` §6.178 is about
+        a row that grew to eight, and this screen already carries a rating, a poster
+        override, Add to list, Where to watch, content warnings and a season list. Two is
+        what the decision needs. In particular there is no *stop tracking* — `repo.ts` has
+        no such writer, and inventing one on the screen that would need to explain what
+        happens to your watch history is a bigger decision than this one.
+      */}
+      {title && (
+        <div className="mb-5 flex flex-wrap gap-1.5">
+          <Button
+            onPress={track}
+            disabled={shelf === 'library'}
+            tone="primary"
+            label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
+            name={COPY.controls.trackTitle(title.name)}
+          />
+          {/* No note composer behind this one, unlike the search row's. The note is *why
+              you saved it*, and the watchlist row itself offers "Add a note…" — so the
+              field is one press away where it belongs rather than a third state on the
+              longest screen in the product. §6.167 gave the row that control. */}
+          <Button
+            onPress={() => addToWatchlist(titleId, title.kind)}
+            disabled={shelf === 'watchlist'}
+            tone="secondary"
+            label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
+            name={COPY.controls.addToWatchlist(title.name)}
+          />
+        </div>
+      )}
 
       {/* Its own line, not beside the poster. Ten targets at 24px each is 240 wide and
           does not bend: in the column left of the poster it was pushed off the right of
