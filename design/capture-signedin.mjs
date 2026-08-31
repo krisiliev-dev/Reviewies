@@ -200,18 +200,59 @@ await page.goto(`${BASE}/discover`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2000);
 await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
 await page.waitForTimeout(2500);
-const small = await page.evaluate(() => {
+/*
+ * ## And the control it is named for has to be on the screen
+ *
+ * This printed *"signed-in Search: every control is big enough to hit"* whenever nothing was
+ * under the floor, and nothing is under the floor on a screen with no controls on it. The
+ * subject named in the paragraph above is `AddToList`'s trigger — the 47x16 link §6.166
+ * widened — and it is on this screen only when the search has a **result**.
+ *
+ * Planted rather than argued. With the query changed to one the fixture provider cannot
+ * match, this pass printed exactly that sentence and **exited 0**: signed-in Search carried
+ * five controls, and all five were the filter row and the four tabs. Measured on the same
+ * build with the real query it carries ten, and one of them is `Add to list` at **47x24** —
+ * sitting exactly on the 24pt floor in the axis that decides it, with no margin at all. That
+ * is the reading this clause exists to take, and the empty screen took it of nothing.
+ *
+ * ## Why the floor names the control rather than counting them
+ *
+ * A count needs a number, and the first version of this took one from the tab bar — four —
+ * which is wrong by one, because `Filters — Everything` is furniture too. That is this
+ * repository's own recurring mistake: a bound picked by reasoning about the screen instead
+ * of read off it. The subject is not "some controls"; it is one named control that only a
+ * signed-in build with a result draws. So the clause asks for it by name, which cannot be
+ * off by one and cannot fire on a correct build.
+ *
+ * Both smoke suites already have the rule in the counting form and say why.
+ * `mobile/smoke.mjs`'s `audit` carries it in as many words — *"the guard above passes
+ * trivially on a screen where nothing declares itself a control at all, which is the more
+ * common bug of the two"* — and takes an `atLeast` per screen. The design harness has the
+ * same measurement in three places and had a floor under none of them: this one,
+ * `capture.mjs`'s press census, and its full-bleed count.
+ */
+const measured = await page.evaluate(() => {
   const out = [];
+  const all = [];
   for (const el of document.querySelectorAll('[role=button], button, [role=link], a')) {
     const r = el.getBoundingClientRect();
     const label = (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30);
     if (!label || r.width === 0) continue;
+    all.push(`${label} ${Math.round(r.width)}x${Math.round(r.height)}`);
     if (r.height < 24 || r.width < 24) out.push(`${label} ${Math.round(r.width)}x${Math.round(r.height)}`);
   }
-  return out;
+  return { small: out, all };
 });
+const small = measured.small;
 if (small.length) hollow.push(`signed-in Search has controls under the 24pt floor: ${small.join(', ')}`);
-else console.log('signed-in Search: every control is big enough to hit');
+else console.log(`signed-in Search: all ${measured.all.length} controls are big enough to hit`);
+if (!measured.all.some((c) => /^Add to list/i.test(c))) {
+  hollow.push(
+    `design/capture-signedin.mjs: "Add to list" was not on signed-in Search, so the 24pt floor ` +
+      `was applied to a screen without the control it exists for (#166). The ${measured.all.length} ` +
+      `controls it did measure were: ${measured.all.join(', ')}`,
+  );
+}
 
 /*
  * The two reveals that need an account. §6.158.

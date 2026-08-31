@@ -176,8 +176,33 @@ for (let trial = 0; trial < trials; trial++) {
   const copiedFrom = Math.floor(EPISODE_FRAMES * 0.05);
   const copiedTo = Math.floor(EPISODE_FRAMES * 0.6);
   const copiedSpan = Math.floor(EPISODE_FRAMES * repeat);
-  const inRepeat =
-    repeat > 0 && truth >= copiedTo && truth + CAPTURE_FRAMES <= copiedTo + copiedSpan;
+  /*
+   * **Both copies, and the second half of that sentence is a repair.**
+   *
+   * This asked only about `copiedTo`, and `copiedFrom` was computed on the line above and
+   * never read — oxlint has been saying so. But the copy runs `full[to + i] = full[from + i]`,
+   * which leaves the *same audio in two places*: a probe taken from the stretch at 5% has an
+   * identical twin at 60%, exactly as a probe taken from 60% has one at 5%. Both have two
+   * equally good homes in the reference, and having two homes is the whole of what "a case
+   * that can be confidently wrong" means here. Counting one of them is counting half the
+   * subject.
+   *
+   * Measured on this file's own arithmetic, replayed verbatim against the same seeds: at
+   * `--trials 400` the old predicate reports **44**, and **47 more** probes landed in the
+   * earlier copy and were not counted — 91 of 400 probes were in doubled audio and the line
+   * under the table said 44. At `--trials 90` it is 9 against a true 19.
+   *
+   * The error was in the safe direction — `repeatUntested` fired more readily than it needed
+   * to, never less — so nothing this file has ever printed was a claim about a case that did
+   * not occur. What was wrong is the number itself, on the one line whose job is to say how
+   * much of its own subject a run reached. This file's header already tells the story one
+   * turn earlier: the first version "reported '0 wrong at 25% repeat' while never once
+   * testing the case", and `inRepeat` is the repair for that. A repair that counts half is
+   * the same defect at half scale.
+   */
+  const inCopy = (start) =>
+    truth >= start && truth + CAPTURE_FRAMES <= start + copiedSpan;
+  const inRepeat = repeat > 0 && (inCopy(copiedTo) || inCopy(copiedFrom));
 
   const probe = heard(full.slice(truth, truth + CAPTURE_FRAMES), noise, seed * 13 + 5);
   const match = matchSample(hashPeaks(findPeaks(probe, PEAKS_PER_FRAME)), reference);

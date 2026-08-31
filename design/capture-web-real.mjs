@@ -56,6 +56,17 @@ const problems = [];
 const scrolls = [];
 const offOrigin = new Set();
 
+/**
+ * Title pages whose synopsis this pass could actually measure, and the ones it could not.
+ *
+ * Two lists rather than a count, because the interesting failure is partial: five titles
+ * read and one not is a fact about that title's provider, and none read is a fact about
+ * this instrument. See the clause below `longestProseLine` for the plant that proved a
+ * single count could not tell those apart.
+ */
+const proseRead = [];
+const proseUnread = [];
+
 /** Widths, and what each is for. */
 const WIDTHS = [
   ['narrow', 420],
@@ -164,8 +175,44 @@ for (const [label, width] of WIDTHS) {
        * It found the defect it exists for: before `SCREEN.prose`, Shōgun's synopsis set at
        * **89 characters** here and at 44 in the same build at 420. The row's measure had
        * been doing a paragraph's job because it was the only number in the table.
+       *
+       * ## The reading is tallied, because `-1` is not a measurement
+       *
+       * `longestProseLine` returns `-1` when there is no paragraph it can read, and says so
+       * in its own header: *"so a title with no synopsis is not reported as a paragraph that
+       * passed. §6.57's distinction: nothing to read is not a good reading."* That sentence
+       * described a contract **nothing implemented**. The only rule here was
+       * `longest > PROSE_CHARACTERS`, and `-1` satisfies it silently — so a run in which the
+       * measure could see nothing at all printed the same clean page as a run in which every
+       * paragraph was inside its ceiling.
+       *
+       * Proved by planting, not argued. `SCREEN.prose` widened to 1200 makes the synopsis
+       * genuinely overset, and this pass failed correctly and named five titles at 82–89
+       * characters. Wrapping `{title.overview}` in a `<span>` — which is all it takes, and
+       * which one paragraph on this very screen already does — leaves the overset in place
+       * and moves the text node one level down, past `el.firstChild`. The pass then walked
+       * the same ten title pages — five shows at two widths — discarded ten `-1`s, printed
+       * nothing about prose and **exited 0**. Repaired, on that same build, it fails and
+       * names the file; on the correct one it prints `prose measured on 10 of 10 title
+       * pages; widest line 71 characters (One Piece at wide) against the 75 ceiling`, which
+       * is a reading nothing printed before.
+       *
+       * So the readings are counted and the count is printed on a green run, which is
+       * `capture.mjs`'s `presses measured:` and `measure.mjs`'s "found none of N names" and
+       * `calibrate.mjs`'s `repeatUntested` — this repository already has the rule three
+       * times and this clause did not have it.
+       *
+       * The floor is **none of them**, not all of them, and that is deliberate: a title
+       * whose provider has no synopsis is a real and correct case, and a clause that failed
+       * on one would be the tenth guard here to go red on something that was right. What
+       * cannot be a correct build is every paragraph on every title page at both widths
+       * going unreadable at once — that is a fact about this instrument, not about TMDB.
+       * The pages it could not read are named either way, so a drift from six to one is
+       * visible on a run that still passes.
        */
       const longest = await longestProseLine(page);
+      if (longest < 0) proseUnread.push(`${show.name} at ${label}`);
+      else proseRead.push({ what: `${show.name} at ${label}`, longest });
       if (longest > PROSE_CHARACTERS) {
         problems.push(
           `${show.name} at ${label}: the synopsis sets ${longest} characters to a line, ` +
@@ -223,6 +270,34 @@ async function longestProseLine(page) {
 
 const longer = longerScreens(scrolls);
 if (longer) console.log(`\nshots that are the top of a longer screen: ${longer}`);
+
+/*
+ * The prose reading, as a number on every run rather than as silence on a good one.
+ *
+ * `widest` is printed beside the ceiling it is being held to, which is the rule §6.157 and
+ * the Up Next arrival clause both had to learn twice: a measurement with no bound beside it
+ * cannot be read, and a bound with no measurement beside it cannot be trusted.
+ */
+const widest = proseRead.reduce((a, b) => (b.longest > a.longest ? b : a), { longest: -1, what: 'nothing' });
+console.log(
+  `\nprose measured on ${proseRead.length} of ${proseRead.length + proseUnread.length} title pages` +
+    (proseRead.length
+      ? `; widest line ${widest.longest} characters (${widest.what}) against the ${PROSE_CHARACTERS} ceiling`
+      : ''),
+);
+if (proseUnread.length) {
+  console.log(`  no paragraph this measure could read on: ${proseUnread.join(', ')}`);
+}
+if (!proseRead.length) {
+  problems.push(
+    `design/capture-web-real.mjs: the prose measure read no paragraph on any of the ` +
+      `${proseUnread.length} title pages it walked, so it has nothing to say about ` +
+      `SCREEN.prose and must not report a clean one. ` +
+      `\`longestProseLine\` finds a <p> whose first child is a text node of 120 characters ` +
+      `or more; if the synopsis grew a wrapper — a "read more", an italic lead-in, a link — ` +
+      `the words moved one level down and this pass went blind rather than red.`,
+  );
+}
 
 if (offOrigin.size) {
   problems.push(`the build reached hosts nothing accounts for: ${[...offOrigin].join(', ')}`);
