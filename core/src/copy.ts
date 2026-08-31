@@ -1020,13 +1020,45 @@ export const COPY = {
      * below anything a person can perceive. The `toleranceMs` of 5,000 in that file is a
      * trap: it bounds two *contributors'* reaction times, not this match.
      *
-     * So the percentage stays until somebody runs the calibration — matches at known
-     * offsets, across confidences, positional error recorded. A plausible-looking "± 2s"
-     * derived from an uncalibrated number would be a fabricated seam, which is worse than
-     * an honest one of the wrong shape.
+     * **The calibration has now been run, and the percentage stays permanently rather
+     * than provisionally.** `docs/research/12-what-a-match-knows.md`: 300 probes at known
+     * offsets through the real matcher, and confidence and positional error turn out to be
+     * *orthogonal* — noise moves the number and leaves the position alone, self-similar
+     * audio destroys the position and leaves the number alone, r = 0.030. Every confidence
+     * band carries the same worst error. So a "± 2s" derived from this number would not
+     * merely be uncalibrated, it would be **anti-correlated with the truth in the one case
+     * that matters**: the worst placement in the whole run, twelve minutes out, reported
+     * 93%. There is no measurement that lifts this. The extent is refused for good.
      */
     listenPlaced: (percent: number) => `Synced, ${percent}% sure.`,
     listenFollowing: (percent: number) => `Following along, ${percent}% sure`,
+
+    /**
+     * The second state, which is what the calibration turned up in place of the extent.
+     *
+     * `seams.md` §7 wanted a sensed position shown as an *extent* rather than a point, and
+     * could not have one because nothing in the matcher knew how wrong it might be. The
+     * runner-up offset does. When the same audio occurs twice in an episode — a title
+     * sequence, a reprise, a reused sting — both copies collect nearly the whole vote and
+     * which one is reported is a rounding difference. `matchSample` computes that and used
+     * to throw it away; `MatchResult.ambiguous` is it kept.
+     *
+     * So the honest sentence here is not a tolerance but a **second place**, and it passes
+     * the agency test the percentage fails: at 73% versus 62% there is nothing to do, and
+     * at *this might be the other one* there is exactly one thing to do, which the sentence
+     * names. Same two events as above, so the same two sentences, and the same noun.
+     *
+     * **Neither may acquire a duration**, and `app/src/ui/calm.test.ts` holds all four to
+     * that. A number of seconds here would be the fabrication doc 12 ruled out, and it
+     * would be *more* tempting on these two, because a sentence admitting uncertainty
+     * invites quantifying it. The quantity does not exist. Where the audio repeats is a
+     * property of the episode, not of this match, and the distance between two copies is
+     * whatever the editor happened to do.
+     */
+    listenPlacedTwice: (percent: number) =>
+      `Synced, ${percent}% sure — but this audio repeats, so it could be the other one. Nudge if it is.`,
+    listenFollowingTwice: (percent: number) =>
+      `Following along, ${percent}% sure — this audio repeats, so holding here rather than jumping`,
 
     /*
      * The bridge, which is three states and only one of them has an action.

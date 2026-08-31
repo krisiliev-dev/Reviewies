@@ -58,7 +58,12 @@ export function ListenSync({
         {listening && (
           <Text style={styles.status}>
             {listen.lastMatch
-              ? COPY.watching.listenFollowing(Math.round(listen.lastMatch.confidence * 100))
+              ? // Which sentence depends on whether the match named one place or two. The
+                // second is not a failure and must not read like one: it is following
+                // along, it is simply not going to move on a vote that was split.
+                (listen.lastMatch.ambiguous
+                  ? COPY.watching.listenFollowingTwice
+                  : COPY.watching.listenFollowing)(Math.round(listen.lastMatch.confidence * 100))
               : listen.misses > 0
                 ? COPY.watching.listenNothingYet
                 : COPY.waiting.listening}

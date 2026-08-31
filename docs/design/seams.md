@@ -174,6 +174,11 @@ The extent would pass. *"Following along, within about two seconds"* tells you w
 > twelve minutes wrong**. So the extent is not merely underivable: mapping this number to a bound
 > would be *anti-correlated with the truth in the case that matters*. The paragraphs below reasoned
 > to the right decision from an incomplete argument, and are kept as written.
+>
+> **And then repaired, which this section did not expect either.** The runner-up offset the matcher
+> was discarding does what confidence cannot: it says when the same audio occurs in two places. So
+> the extent arrives as *a second place* rather than a tolerance — see the second entry under
+> *Filed, not fixed*, which is no longer filed.
 
 **And this repository cannot currently produce that number, which is the honest finding.**
 `confidence` is the share of landmark votes the winning offset took (`core/src/fingerprint/`), not
@@ -288,6 +293,17 @@ Three, each with what it would take.
    measured wrong placement is 12.1 minutes, and confidence is *high* in that case, so nothing in
    the product can tell a repeated-audio mismatch from a legitimate recap skip. Filed there with
    the honest repair named (the runner-up offset, which `matchSample` computes and discards).
+
+   **Now built, and it brought this section's own revelation with it.** `matchSample` reports the
+   runner-up and whether it was close enough to leave the answer undecided; `shouldCorrect` puts an
+   undecided match to the clock, which cannot have been in two places. Measured over the same 300
+   probes: all 33 twelve-minute jumps refused, all 267 legitimate recap skips still followed, the
+   clean case untouched. And the extent this section wanted arrives from the opposite end — not a
+   tolerance in seconds, which the calibration proved would be a fabrication, but **a second
+   place**. `COPY.watching.listenPlacedTwice` and `listenFollowingTwice` say *this audio repeats,
+   so it could be the other one*, which is a sensed position shown as something other than a point
+   and passes the agency test the percentage fails: at 73% against 62% there is nothing to do, and
+   at *it might be the other one* there is exactly one thing, which the sentence names.
 3. **The bridge's three sentences belong in `COPY`, and the missing tenth seam belongs in More.**
    Both are edits to files three agents are working in as this is written; deferred to after the
    merge rather than raced.

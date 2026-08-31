@@ -151,7 +151,10 @@ describe('the refusals in calm.md', () => {
     expect(said.map(([key]) => key), 'copy.ts has grown a "you are behind" sentence').toEqual([]);
   });
 
-  it('says how sure the match is as a share, and never as a duration nobody has measured', () => {
+  // Renamed with the clause below: "a duration nobody has measured" was true until the
+  // calibration ran, and reads afterwards as though running it would settle the matter.
+  // It did run, and it ruled the duration out rather than supplying one.
+  it('says how sure the match is as a share, and never as a duration the calibration ruled out', () => {
     /*
      * Not a calm refusal — a **seam** one, and it is here because this file is where
      * refusals live rather than because it is about attention. `docs/design/seams.md` §7.
@@ -171,13 +174,42 @@ describe('the refusals in calm.md', () => {
      * *contributors'* reaction times.
      *
      * So a duration here would be **fabricated**, which is worse than an honest number of
-     * the wrong shape. What lifts this clause is the calibration: matches at known offsets
-     * across a range of confidences, positional error recorded. Delete it then, not before.
+     * the wrong shape.
      *
-     * The needle is the unit and not the wording — both sentences are free to be reworded,
-     * and neither may start reporting seconds.
+     * **The clause said "what lifts this is the calibration: matches at known offsets
+     * across a range of confidences, positional error recorded. Delete it then, not
+     * before." The calibration has now been run. It does not lift this clause; it makes it
+     * permanent, and that sentence was the wrong half of the rule.**
+     * `design/calibrate.mjs`, written up in `docs/research/12-what-a-match-knows.md`: 300
+     * probes at known offsets through the real matcher, and confidence and positional error
+     * are **orthogonal**. Noise takes the number from 0.90 to 0.24 and never moves the
+     * position; self-similar audio moves the position twelve minutes and never touches the
+     * number. Every confidence band carries the same worst error, r = 0.030, and the single
+     * worst placement in the run — 725,995ms out — reported **93%**. A derived tolerance
+     * would therefore have been *anti-correlated with the truth in exactly the case that
+     * matters*: "93% sure, within about 0.2 seconds" over a placement twelve minutes wrong.
+     * Written as a condition to be met, the rule would have expired into the fabrication it
+     * exists to prevent, the moment somebody ran the measurement and did not read the
+     * answer. Nothing lifts it.
+     *
+     * **What the calibration did produce is a second state, and it is covered here too.**
+     * The runner-up offset `matchSample` used to discard says when the audio occurs in two
+     * places, so `listenPlacedTwice` and `listenFollowingTwice` can say *this could be the
+     * other one* — the honest revelation §7 wanted, arrived at from the opposite end, and
+     * not a duration. They are held to the same needle and want it more than the first two
+     * do: a sentence that admits doubt invites quantifying the doubt, and the quantity
+     * still does not exist. How far apart two copies of a title sequence sit is a fact
+     * about that episode's editing, not about this match.
+     *
+     * The needle is the unit and not the wording — all four sentences are free to be
+     * reworded, and none may start reporting seconds.
      */
-    const said = [COPY.watching.listenPlaced(73), COPY.watching.listenFollowing(73)];
+    const said = [
+      COPY.watching.listenPlaced(73),
+      COPY.watching.listenFollowing(73),
+      COPY.watching.listenPlacedTwice(73),
+      COPY.watching.listenFollowingTwice(73),
+    ];
     for (const text of said) {
       expect(text, `a listening sentence reports a share: ${text}`).toMatch(/73%/);
       expect(

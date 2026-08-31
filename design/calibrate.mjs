@@ -46,6 +46,7 @@ import {
   findPeaks,
   matchSample,
 } from '../core/src/fingerprint/fingerprint.ts';
+import { shouldCorrect } from '../core/src/fingerprint/continuous.ts';
 
 const args = process.argv.slice(2);
 const asJson = args.includes('--json');
@@ -176,28 +177,86 @@ for (let trial = 0; trial < trials; trial++) {
   const copiedFrom = Math.floor(EPISODE_FRAMES * 0.05);
   const copiedTo = Math.floor(EPISODE_FRAMES * 0.6);
   const copiedSpan = Math.floor(EPISODE_FRAMES * repeat);
-  const inRepeat =
-    repeat > 0 && truth >= copiedTo && truth + CAPTURE_FRAMES <= copiedTo + copiedSpan;
+  const wholly = (start) => truth >= start && truth + CAPTURE_FRAMES <= start + copiedSpan;
+  const inRepeat = repeat > 0 && wholly(copiedTo);
+  /*
+   * And the *other* copy, which this file counted for a whole sprint without ever saying so.
+   *
+   * `inRepeat` asks whether the probe landed in the later copy, because that is where a
+   * wrong placement shows up as a large error. But the earlier copy is duplicated audio
+   * too — a probe inside it is exactly as undecidable, and the matcher is exactly as much
+   * guessing. Those probes simply happen to be *scored* correct, because the offset it
+   * guessed was the one they were taken from.
+   *
+   * `copiedFrom` was computed here and never read, which is how the omission looked from
+   * the outside: the instrument had the number it needed to notice half its own subject
+   * and did not use it. Counting both is what shows that of the 65 probes in duplicated
+   * audio, 33 were placed wrong and 32 were right by luck — and "right by luck" and
+   * "right" are the two things a calibration exists to distinguish.
+   */
+  const inCopy = repeat > 0 && (inRepeat || wholly(copiedFrom));
 
   const probe = heard(full.slice(truth, truth + CAPTURE_FRAMES), noise, seed * 13 + 5);
   const match = matchSample(hashPeaks(findPeaks(probe, PEAKS_PER_FRAME)), reference);
 
   if (!match) {
-    rows.push({ trial, noise, repeat, inRepeat, truth, refused: true });
+    rows.push({ trial, noise, repeat, inRepeat, inCopy, truth, refused: true });
     continue;
   }
   const errFrames = Math.abs(match.offsetFrames - truth);
+
+  /*
+   * What Watching Mode would actually *do* with this match, which is the question the
+   * first version of this file never asked.
+   *
+   * Measuring the placement alone understates the defect and overstates the repair. A
+   * wrong placement only hurts if something acts on it, and a guard only costs something
+   * if it refuses a placement that was right — so both have to be run through the real
+   * `shouldCorrect` rather than reasoned about. Two clocks per probe, because the guard
+   * behaves differently against each and they are the two situations that matter:
+   *
+   *  - **following**: the clock is where playback really is, which is the steady state.
+   *    A correct match proposes no change; a wrong one proposes a twelve-minute jump, and
+   *    whether that is taken is the defect.
+   *  - **after a skip**: the clock is 90 seconds behind, because the viewer just skipped
+   *    a recap and nothing has caught up yet. Every match now proposes a real jump, and
+   *    whether it is taken is the *cost* — a guard that refuses here has broken the
+   *    feature to fix the defect.
+   *
+   * `before` passes no ambiguity, which is precisely the old two-clause guard; `after`
+   * passes what the matcher now reports. Same function, so the comparison cannot drift
+   * away from the shipped one.
+   */
+  const positionOf = (frames) => framesToMs(frames + CAPTURE_FRAMES, HOP_SIZE, SAMPLE_RATE);
+  const matchMs = positionOf(match.offsetFrames);
+  const truthMs = positionOf(truth);
+  const flags = {
+    ambiguous: match.ambiguous,
+    alternativeGapMs: match.alternative
+      ? framesToMs(match.alternative.offsetFrames - match.offsetFrames, HOP_SIZE, SAMPLE_RATE)
+      : undefined,
+  };
+  const skippedMs = truthMs - 90_000;
+
   rows.push({
     trial,
     noise,
     repeat,
     inRepeat,
+    inCopy,
     truth,
     refused: false,
     confidence: match.confidence,
     score: match.score,
     errFrames,
     errMs: framesToMs(errFrames, HOP_SIZE, SAMPLE_RATE),
+    ambiguous: match.ambiguous,
+    /** Runner-up vote as a share of the winner's — 0 when nothing else got a vote. */
+    rivalShare: match.alternative ? match.alternative.score / match.score : 0,
+    followedBefore: shouldCorrect(truthMs, matchMs),
+    followedAfter: shouldCorrect(truthMs, matchMs, flags),
+    skipBefore: shouldCorrect(skippedMs, matchMs),
+    skipAfter: shouldCorrect(skippedMs, matchMs, flags),
   });
 }
 
@@ -283,8 +342,45 @@ const repeatUntested = REPEAT_FRACTIONS.some((f) => f > 0) && inRepeat.length ==
 
 const r = correlation(placed.map((p) => p.confidence), placed.map((p) => p.errMs));
 
+/**
+ * The runner-up, and what acting on it costs — the second half of this instrument.
+ *
+ * The tables above establish that confidence cannot see the failure. This one asks
+ * whether anything else can, and then whether using it breaks the good case.
+ *
+ * Split by whether the placement was *right*, rather than by whether the audio repeated,
+ * because those are the two things a guard can get wrong and they need separate rows: a
+ * guard is judged by how many wrong placements it stops and how many right ones it
+ * refuses, and one number over the whole set would trade them against each other
+ * invisibly. The flagged column against the correct row is the interesting one — those
+ * are matches that were genuinely undecidable and happened to win at the right offset,
+ * and the point of the last table is that flagging them costs them nothing.
+ */
+const wrongPlaced = placed.filter((p) => p.errFrames !== 0);
+const rightPlaced = placed.filter((p) => p.errFrames === 0);
+const share = (rows) => {
+  const xs = rows.map((x) => x.rivalShare).sort((a, b) => a - b);
+  return { n: rows.length, min: xs[0] ?? NaN, median: quantile(xs, 0.5), max: xs[xs.length - 1] ?? NaN };
+};
+const guard = [
+  { label: 'placed correctly', rows: rightPlaced },
+  { label: 'placed wrong', rows: wrongPlaced },
+];
+
 if (asJson) {
-  console.log(JSON.stringify({ trials, refused, repeatUntested, inRepeat: inRepeat.length, byBand, byNoise, byRepeat, r }, null, 2));
+  console.log(JSON.stringify({
+    trials, refused, repeatUntested, inRepeat: inRepeat.length,
+    inCopy: rows.filter((x) => x.inCopy).length, byBand, byNoise, byRepeat, r,
+    guard: guard.map((g) => ({
+      label: g.label,
+      ...share(g.rows),
+      flagged: g.rows.filter((x) => x.ambiguous).length,
+      followedBefore: g.rows.filter((x) => x.followedBefore).length,
+      followedAfter: g.rows.filter((x) => x.followedAfter).length,
+      skipBefore: g.rows.filter((x) => x.skipBefore).length,
+      skipAfter: g.rows.filter((x) => x.skipAfter).length,
+    })),
+  }, null, 2));
 } else {
   const frameMs = framesToMs(1, HOP_SIZE, SAMPLE_RATE);
   console.log(`\n${trials} probes, 6.0s each, against a 22-minute reference. One frame = ${frameMs.toFixed(2)}ms.`);
@@ -316,7 +412,12 @@ if (asJson) {
     console.log('  NOT TESTED — no probe landed inside a copied stretch in this run.');
     console.log('  Rows below would be a statement about a case that did not occur. Raise --trials.');
   } else {
-    console.log(`  ${inRepeat.length} of ${rows.length} probes landed inside a copied stretch.`);
+    console.log(`  ${inRepeat.length} of ${rows.length} probes landed inside the later copy.`);
+    console.log(
+      `  ${rows.filter((r) => r.inCopy).length} landed inside one copy or the other, which is the` +
+      ` number\n  of probes the matcher was actually guessing on — the rest of that group is` +
+      ` scored\n  correct only because the copy it guessed is the one they came from.`,
+    );
   }
   console.log('  repeat    n  refused   exact   wrong    worst   sure-while-wrong');
   for (const b of byRepeat) {
@@ -324,6 +425,39 @@ if (asJson) {
       `  ${(b.repeat * 100).toFixed(0).padStart(4)}%  ${String(b.n).padStart(3)}  ${String(b.refused).padStart(7)}  ` +
       `${String(b.exact).padStart(6)}  ${String(b.wrong).padStart(6)}  ${b.worstMs.toFixed(0).padStart(7)}ms  ` +
       `${b.confidentWrong ? (b.confidentWrong * 100).toFixed(0) + '%' : '—'}`,
+    );
+  }
+
+  console.log('\nThe runner-up, which is the signal confidence is not:');
+  console.log('  placement            n   flagged   rival vote / winner: min   median      max');
+  for (const g of guard) {
+    const s = share(g.rows);
+    if (s.n === 0) { console.log(`  ${g.label.padEnd(18)}   0         —                          —        —        —`); continue; }
+    console.log(
+      `  ${g.label.padEnd(18)} ${String(s.n).padStart(3)}  ${String(g.rows.filter((x) => x.ambiguous).length).padStart(8)}   ` +
+      `${s.min.toFixed(4).padStart(24)} ${s.median.toFixed(4).padStart(8)} ${s.max.toFixed(4).padStart(8)}`,
+    );
+  }
+
+  console.log('\nWhat Watching Mode does with them, through the real shouldCorrect:');
+  console.log('  Following steadily — the clock is where playback actually is.');
+  console.log('  A jump taken here is a jump the viewer did not make.');
+  console.log('  placement            n   corrected before   corrected after');
+  for (const g of guard) {
+    console.log(
+      `  ${g.label.padEnd(18)} ${String(g.rows.length).padStart(3)}   ` +
+      `${String(g.rows.filter((x) => x.followedBefore).length).padStart(16)}   ` +
+      `${String(g.rows.filter((x) => x.followedAfter).length).padStart(15)}`,
+    );
+  }
+  console.log('\n  Just after a 90-second recap skip — every match now proposes a real jump.');
+  console.log('  A jump refused here is the feature failing at the moment it is wanted.');
+  console.log('  placement            n   corrected before   corrected after');
+  for (const g of guard) {
+    console.log(
+      `  ${g.label.padEnd(18)} ${String(g.rows.length).padStart(3)}   ` +
+      `${String(g.rows.filter((x) => x.skipBefore).length).padStart(16)}   ` +
+      `${String(g.rows.filter((x) => x.skipAfter).length).padStart(15)}`,
     );
   }
 
