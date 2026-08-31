@@ -53,7 +53,26 @@ export interface StatsSummary {
   lastWatch?: number;
 }
 
+/**
+ * What a period actually asks for, once a year has been named.
+ *
+ * A year reaches this file from exactly one control — the Year in Review picker — and the
+ * two screens that draw it did not agree on how to say so. `app/src/screens/Stats.tsx`
+ * passed `'year'`; `mobile/app/stats.tsx` passed whichever *window* chip had last been
+ * pressed and the year beside it, and the year fell on the floor: on the phone 2026, 2025
+ * and 2024 all reported the same fifty episodes, under three different headings, over a
+ * library that held 122. `docs/design/hci.md` finding 1 has the measurement.
+ *
+ * Repaired here rather than at the call site, because the call site is two files and the
+ * next one will be a third. A caller that names a year is asking for that year; there is
+ * no reading of this product under which the honest answer is a different one, silently.
+ */
+function askedFor(window: Window, year?: number): Window {
+  return year === undefined ? window : 'year';
+}
+
 export function windowStart(window: Window, now: number, year?: number): number {
+  window = askedFor(window, year);
   if (window === '30d') return now - 30 * 24 * 60 * 60 * 1000;
   if (window === 'ytd') return new Date(new Date(now).getFullYear(), 0, 1).getTime();
   if (window === 'year') return new Date(year ?? new Date(now).getFullYear(), 0, 1).getTime();
@@ -61,6 +80,7 @@ export function windowStart(window: Window, now: number, year?: number): number 
 }
 
 export function windowEnd(window: Window, now: number, year?: number): number {
+  window = askedFor(window, year);
   if (window === 'year') return new Date((year ?? new Date(now).getFullYear()) + 1, 0, 1).getTime();
   // Unbounded, not `now`. Bounding at the current millisecond drops an event
   // watched in this exact tick — mark an episode watched, open stats, and it

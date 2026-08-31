@@ -177,6 +177,41 @@ describe('windows', () => {
   it('and ends at local midnight on the first of January after it', () => {
     expect(windowEnd('year', now, 2025)).toBe(new Date(2026, 0, 1).getTime());
   });
+
+  /**
+   * A year given is a year meant — whatever window sits beside it.
+   *
+   * `year` reaches these two functions from exactly one place in the product, the Year in
+   * Review picker, and the two screens that draw that picker did not agree on how to say
+   * so. The web passed `'year'`; the phone passed whichever *window* chip had last been
+   * pressed and the year alongside it, so `windowStart` took the `'ytd'` branch and threw
+   * the year away. Measured rather than reasoned about: on the phone, with the design
+   * harness's 122 imported watches, 2026, 2025 and 2024 all reported `Episodes 50` — the
+   * current year's figure, three times, under three different headings — where the web
+   * reported 50, 66 and 6. `docs/design/hci.md` finding 1.
+   *
+   * The rule is stated here rather than repaired at the call site, because a decision made
+   * at two call sites is a decision the third one will make differently. Nothing in the
+   * product wants a year ignored; a caller that supplies one is asking for that year, and
+   * silently answering a different one is the worst of the three available behaviours.
+   *
+   * Every window, not just the phone's `'ytd'`: a clause naming the one that was wrong is
+   * a clause that passes again the moment the phone's default changes.
+   */
+  it('answers the year it was given, whatever window sits beside it', () => {
+    for (const beside of ['30d', 'ytd', 'all', 'year'] as const) {
+      expect(windowStart(beside, now, 2025), `${beside} with a year`)
+        .toBe(new Date(2025, 0, 1).getTime());
+      expect(windowEnd(beside, now, 2025), `${beside} with a year`)
+        .toBe(new Date(2026, 0, 1).getTime());
+    }
+  });
+
+  /** And a window with no year beside it is still that window. The other half. */
+  it('leaves a window alone when no year is given', () => {
+    expect(windowStart('30d', now, undefined)).toBe(now - 30 * DAY);
+    expect(windowEnd('30d', now, undefined)).toBe(Infinity);
+  });
 });
 
 describe('against the database', () => {
@@ -251,6 +286,28 @@ describe('against the database', () => {
     ]);
     const s = await getSummary('year', { year: 2025, now: Date.parse('2026-08-01T00:00:00Z') });
     expect(s.episodes).toBe(1);
+  });
+
+  /**
+   * The phone's call, exactly as `mobile/app/stats.tsx` makes it.
+   *
+   * The clause above holds the two window functions; this one holds the summary, because
+   * the defect was only ever visible from here — the screen calls `getSummary(window,
+   * { year })` and reads four figures off the result. Written as the call site writes it
+   * so that the guard fails on the phone's shape and not only on an argument list nothing
+   * uses.
+   */
+  it('scopes a year handed to it beside a window, which is how the phone asks', async () => {
+    await db.watches.bulkAdd([
+      ev({ watchedAt: Date.parse('2025-06-01T00:00:00Z') }),
+      ev({ watchedAt: Date.parse('2026-06-01T00:00:00Z') }),
+      ev({ watchedAt: Date.parse('2026-07-01T00:00:00Z') }),
+    ]);
+    const now = Date.parse('2026-08-01T00:00:00Z');
+    expect((await getSummary('ytd', { year: 2025, now })).episodes).toBe(1);
+    expect((await getSummary('ytd', { year: 2026, now })).episodes).toBe(2);
+    // And with no year, `ytd` is still this year — the state the picker starts in.
+    expect((await getSummary('ytd', { now })).episodes).toBe(2);
   });
 
   it('lists years containing watches, newest first', async () => {
