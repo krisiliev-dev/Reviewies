@@ -117,8 +117,20 @@ const LONGEST = [...SHOWS].sort((a, b) => b.name.length - a.name.length)[0];
  *
  * A needle per route, for `capture.mjs`'s reason: a screenshot of a screen that did not
  * load is a photograph of a spinner, and a design review of it reviews nothing. The needles
- * are the library's own names rather than invented ones, so nothing here can pass against
- * an empty app.
+ * are the library's own names rather than invented ones.
+ *
+ * **Three of the seven, and the sentence that used to end this paragraph was false.** It
+ * read *"nothing here can pass against an empty app"*, and `discover`, `calendar`, `stats`
+ * and `watchlist` carry `undefined`, so `shoot` skips the check on four of seven routes.
+ * §6.193 measured what that costs: `narrow-stats` and `wide-stats` read *"Nothing watched
+ * in this period yet."* and `narrow-watchlist` and `wide-watchlist` read *"Nothing saved
+ * yet."* — **four of the 42 shots in the pass whose stated purpose is judging the design
+ * against real content are of an empty screen.**
+ *
+ * They are named here rather than quietly absent, and the reason they are not simply given
+ * needles is that they cannot have one: this pass tracks titles and never marks a watch, so
+ * Stats has nothing to count and the watchlist nothing saved. Giving them content is a
+ * change to what the pass *is* — a decision, filed as such — not a missing argument.
  */
 const ROUTES = [
   ['upnext', '/', LONGEST.name],

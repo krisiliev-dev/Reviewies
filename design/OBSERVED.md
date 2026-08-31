@@ -1,7 +1,20 @@
 # Seen directly while briefing the design team
 
+> **This describes a build that no longer exists, and the shots it names have been
+> re-taken many times since.** It was written when `design/screens/` held **14** images of
+> the build as it stood before the design track began; the directory now holds 35, and the
+> product has been through the token layer, the component layer, the type layer, the
+> architecture rework and the real-artwork pass. The pink pill in §3 below is gone — §6.90
+> replaced that tint with a rule — and the fixture titles have changed.
+>
+> It is kept rather than deleted because it is the founding document of the design track
+> and every finding in it was acted on. **Read it as a record of what was once true, not as
+> a description of a screenshot on disk today.** §6.193 found it still reading as current
+> and added this line.
+
 Recorded here so they do not depend on being rediscovered. Each was observed in the
-14 screenshots in `design/screens/`, captured from the shipping build.
+14 screenshots in `design/screens/`, captured from the shipping build **as it stood in
+§6.108** — not from any shot taken since.
 
 ## Stats opens on a period the imported history cannot fill
 

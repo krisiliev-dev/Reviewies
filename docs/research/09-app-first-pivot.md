@@ -16456,6 +16456,150 @@ What changed is what those frames *say*, not how many there are. That distinctio
 - **One agent killed another's server** with `pkill -f "serve dist"`, which matched
   `serve dist-real -p 4492`. Reported it itself. Ports are per-agent; process patterns are not.
 
+### 6.193 An instrument that never said where it was standing, and what it saw the moment it did
+
+The third agent of sprint 104. All five passes re-run here on the merged tree afterwards, so the
+numbers below are this checkout's rather than a report's.
+
+#### The census, and a number of mine that was wrong
+
+Measured in this checkout, before and after re-running all five passes on the merged tree:
+
+| | before | after |
+| --- | --- | --- |
+| stale | **159** | **0** |
+| unread | 0 | 80 |
+| total | 158 | 158 |
+
+61 phone, 36 web, 19 phone-real, 42 web-real. One shot was deleted rather than re-taken —
+`design/screens/04-search-noting.png`, the note composer §6.192 removed from the product: **the
+state does not exist any more, so there is nothing to photograph.**
+
+My brief said "87 unread". `design/unread.mjs` at the agent's base said **44**, and it said so. The
+87 is what the number became *after* re-shooting turned 61 stale shots into backlog, so the figure I
+handed it was a prediction of the outcome dressed as a starting condition.
+
+#### `shoot.mjs` reported how far a screen *could* travel and never where it was standing
+
+That is the whole finding, and everything below is a consequence.
+
+The phone's `03-upnext.png` is **taken 3484pt down a scroller with 3500pt of travel.** The screen's
+name and its Out now / Upcoming control are above the shutter and the first poster is clipped at
+y=0. `09-calendar.png` — the same screen, same run, at 0 — carries both. Three of 35 phone shots are
+off the top and **all three are Up Next**: `03-upnext` 3484/3500, `00-caughtup-upnext` 3484/3500,
+`00-caughtup-finished` 1160/1176 — each **16pt short of its scroller's end**, in three browser
+contexts, three libraries, four runs. A fresh load of the same build with the same library puts the
+heading at y=16 with **no element in the document overflowing at all**. So the walk creates the
+state and a person does not reach it. **The cause is not established and the agent refused to guess
+at one.**
+
+`shoot.mjs` now reads `{ overflow, at }` in one traversal off one element, prints it on every shot
+line, and gathers it as `offTheTop` in each pass's close-out.
+
+**And the first run with it on found the same defect on the other platform**, which nobody had seen
+in a hundred sprints of looking at these exact images:
+
+```
+dark shots not taken at the top of their screen: dark-01-upnext at 3795pt, dark-11-remote at 3795pt
+light shots not taken at the top of their screen: light-01-upnext at 3795pt, light-11-remote at 3795pt
+```
+
+Four of the web's fixture shots, 3795 of 3891 — **96pt short of the end**, the same signature at a
+different magnitude. `capture-web-real.mjs` reports none. Every finding ever written from
+`01-upnext` or `11-remote` was written from a photograph of the bottom of the screen, and the three
+retractions in this document (§§6.172, 6.174, 6.175) were all this defect caught one image at a
+time. It is now caught by the instrument, on every run, before anybody reads anything.
+
+#### An instrument whose wait could not fail, photographing a moving number as a state
+
+`capture.mjs`'s wait for the import to finish tested for **four samples with no `Matching…` on
+screen**, then reloaded, twelve times. The button offered while a match run is *not* in flight reads
+`Match imported shows` — which contains no `Matching…` — so **two seconds of an idle screen
+satisfied the test**, and the reload restarted an import that lands over minutes. Three runs, three
+answers: `77 more episodes`, `75`, `72`. A number still moving, photographed as a state.
+
+Repaired to one load and one *positive* sentence. The identical loop below it was repaired too — it
+had only ever passed because its fixture is one show of twelve episodes. `npm run design:phone` is
+green here.
+
+That is the tenth and eleventh entries in `docs/design/agents.md`'s catalogue, both in the same
+file, both testing for the **absence** of a word that is also absent when nothing is happening.
+
+#### A clause that outlived the walk that satisfied it, by two hours
+
+§6.192's commit landed on the shared branch *during* this agent's sprint. It removed the search
+row's note composer and the two lines of `capture.mjs` that typed `Ana recommended` into it — and
+left `MUST_SHOW['06-watchlist'] = /Ana recommended/`. Planted and observed: with that commit merged
+and nothing else changed, the pass printed *"06-watchlist (/watchlist) does not show
+/Ana recommended/"*. **The clause was right and the walk was wrong**, so the walk moved to where the
+note moved — `watchlist.tsx`'s *Add a note*.
+
+#### Two filed, not fixed
+
+**The web title page sets the synopsis inside the poster's column, and at 420 that costs four
+lines.** One Piece, 583 characters: `x=128, width 276px, 15 lines, 343px tall`. Moved onto its own
+line under the poster row — which is not an invention, it is what `mobile/app/title/[id].tsx:203`
+has always done — `x=16, width 388px, 11 lines`. The poster ends after line 3, so twelve lines keep
+an indent past nothing. **583/15 ≈ 39 characters a line against the 45–75 band `TitleDetail.tsx`
+itself cites**; moved, 583/11 ≈ 53. At 1280 it costs nothing — `SCREEN.prose` binds first — so it is
+a narrow-window defect only. The phone's own comment gives the reason in as many words: *"Its own
+line rather than the column beside the poster … in a column narrowed by a poster … the last stars
+fall off the end"* — applied to the rating and to `AddToList`, on one platform, and not to the
+paragraph. Two images and `design/found/measure-title-synopsis.mjs`, committed so the numbers are
+re-derivable.
+
+**`capture-web-real.mjs` claimed a needle per route and four of its seven had none.** Its comment
+read *"the needles are the library's own names rather than invented ones, so nothing here can pass
+against an empty app"*; `discover`, `calendar`, `stats` and `watchlist` all carry `undefined`. Two
+of the four are empty in every run: `narrow-stats`/`wide-stats` read *"Nothing watched in this
+period yet."* and `narrow-watchlist`/`wide-watchlist` read *"Nothing saved yet."* — **four of the 42
+shots in the pass whose stated purpose is judging the design against real content are of an empty
+screen.**
+
+Not fixable without changing what the pass is: it tracks titles and never marks a watch, so Stats
+has nothing to count. **The false sentence was fixable and is fixed here** — the comment now names
+the four routes, the four empty shots, and why they cannot simply be given needles. A gap that is
+written down is a decision; a gap covered by a sentence claiming it is closed is §6.106.
+
+#### The agent retracted itself, which is the behaviour worth naming
+
+Its first commit added a fourth condition to the scroller search and attributed
+`dark-01-upnext +3891pt` to `RemoteDrawer`'s always-mounted panel. It then **measured** it: the
+closed panel's box is `left 420, right 708` of a 420pt window and its `scrollHeight` *equals* its
+`clientHeight`, so it was never a candidate. The condition stayed on its own terms; the story was
+deleted from the comment and the 3891 recorded as an open question. That is the same move as
+§6.191's *"read rather than re-planted, and say so"*, made by an agent against its own work an hour
+after making it.
+
+#### Read and acquitted, which is half the report
+
+The box's two faces disagreeing (`Drama · 2024` front, `Film · 2024` back) — deliberate, argued
+across four surfaces in `box.ts`. `Details`/`Done` against `Open {name}` — a WCAG 2.5.3 case already
+refused in writing. People's control sizes — my eye said 36pt, the measurement said `58x44` and
+`72x44`, on the floor rather than under it. Lists rows drawn as `tmdb:tv:1` — real, and already
+named in the renderer with this exact shot cited as the state it is the fallback for. `SEASON
+FINALE` on an eight-episode drop — `classify` documents "ending beats starting". **31 of 158 shots
+read, seven things looked at and left alone.**
+
+#### What is not done
+
+- **The 3484-of-3500 on the phone and the 3795-of-3891 on the web are measured and untraced.** The
+  instrument now refuses to let a finding be written from one without saying so; nothing yet
+  explains why the walk leaves a scroller near its end.
+- **The web title page's synopsis column is filed, not fixed.** `TitleDetail.tsx` is unchanged.
+- **The four needle-less routes are named, not filled.** Giving them a watch history is a change to
+  what that pass is.
+- **`design/OBSERVED.md` described a build that no longer exists** and read as current — pink pills,
+  14 shots, fixture titles that have changed. Dated in place rather than deleted: it is the founding
+  document of the design track and every finding in it was acted on, but a reader comparing it to
+  today's `design/screens/` would be misled.
+- **Two agents of this sprint ran in the main checkout rather than a worktree**, because I did not
+  force isolation on the launch. One spent real time chasing a "finding" that was the other's
+  uncommitted work, and caught it only by checking `git show HEAD:` against the working file.
+- **`npx serve` silently falls back to a random port when its port is taken**, so a pass can appear
+  to run and photograph somebody else's build. One run did exactly that. `scripts/portFree.mjs`
+  reports a held port and does not free it.
+
 
 ## 7. What is still not known
 
