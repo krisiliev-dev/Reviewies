@@ -1631,15 +1631,22 @@ try {
   await page.getByRole('link', { name: /Discover/ }).click();
   await page.getByPlaceholder('Shows, films, anime…').fill('quiet');
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
+  // The press adds it. It used to open a note composer instead — a control announced
+  // "Add Quiet Harbour to your watchlist" that added nothing until a second button was
+  // found — and the note has moved to the row it describes.
   await page.getByRole('button', { name: 'Add Quiet Harbour to your watchlist' }).click();
-  // `COPY.watchlist.notePlaceholder`, spelled out because this file cannot import it.
-  // The web's search row asked its own third question — "Why? e.g. Ana recommended" —
-  // which nothing owned; §6.106 moved it onto the owner and this locator with it.
-  await page.getByPlaceholder(/Why did you save/).fill('Ana recommended');
-  await page.getByRole('button', { name: 'Save Quiet Harbour to your watchlist' }).click();
+  await page.waitForSelector('text=On watchlist', { timeout: 5000 });
 
   await page.getByRole('link', { name: /Watchlist/ }).click();
   await page.waitForSelector('text=Quiet Harbour', { timeout: 5000 });
+  // Where the note is written now: §6.167 gave the row its own control, and
+  // `watchlist.empty` — "Add something from Discover, then say why you saved it" — names
+  // the two screens that each do their half. This is the second half.
+  // `COPY.watchlist.notePlaceholder`, spelled out because this file cannot import it.
+  await page.getByRole('button', { name: 'Add a note for Quiet Harbour' }).click();
+  await page.getByPlaceholder(/Why did you save/).fill('Ana recommended');
+  await page.getByRole('button', { name: 'Save note for Quiet Harbour' }).click();
+  await page.waitForTimeout(600);
   const noteShown = await page
     .getByText('Ana recommended')
     .first()

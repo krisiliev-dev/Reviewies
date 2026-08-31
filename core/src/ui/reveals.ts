@@ -91,12 +91,27 @@ export const REVEALS: readonly Reveal[] = [
     shot: '15-title-addtolist',
   },
   {
-    states: ['noting', 'noting'],
-    screens: ['app/src/screens/Discover.tsx', 'mobile/app/(tabs)/discover.tsx'],
-    shows: 'the "why you saved it" note, written at the moment of saving',
-    shot: '04-search-noting',
-  },
-  {
+    /**
+     * ## The reveal that left, and why the register is one shorter
+     *
+     * `noting` was here: the search row's note composer, on both platforms, photographed as
+     * `04-search-noting`. It is gone because the control that opened it is announced
+     * *"Add {name} to your watchlist"* and opening a field is not adding. Six controls carry
+     * that name; four wrote the row on the press and these two did not, and the state they
+     * opened instead hid Track, Seen it and Add to list with no Cancel offered.
+     *
+     * The register is the right place to record that, because the reveal rule cuts both
+     * ways. §6.129 — *composing is revealed, not resident* — is about a screen whose purpose
+     * is **reading**, and a search result row is not that screen: the row exists to be acted
+     * on, its three controls are the point of it, and a reveal that replaces them is not
+     * moving a composer out of the way but taking the row away. The note is still revealed,
+     * on the watchlist row where §6.167 put it — `06-watchlist-editing` below is that shot,
+     * and it is the same field.
+     *
+     * This entry's removal was not noticed by reading, either. `reveals.test.ts`'s first
+     * clause failed the moment `noting` left the two screens, which is the register working:
+     * a state cannot be deleted from the product and left standing here.
+     */
     /** Found by the sweep, not by reading — see the clause's third case. */
     states: ['editing', 'editing'],
     screens: ['app/src/screens/Watchlist.tsx', 'mobile/app/(tabs)/watchlist.tsx'],

@@ -298,8 +298,17 @@ export const COPY = {
      * what would stop. §6.191.
      */
     stopTrackingTitle: (name: string) => `Stop tracking ${name}`,
+    /**
+     * The only sentence for this act now.
+     *
+     * `saveToWatchlist` — *"Save {name} to your watchlist"* — stood beside it and was read
+     * by exactly two controls, the Save buttons behind the two search rows' note
+     * composers. Those composers are gone: a control announced *"Add {name} to your
+     * watchlist"* now adds at all six of the places it is announced, so nothing presses a
+     * second button to finish the first one's sentence, and a second sentence for one act
+     * is what §6.167 was already calling out when it made *Track* one word.
+     */
     addToWatchlist: (name: string) => `Add ${name} to your watchlist`,
-    saveToWatchlist: (name: string) => `Save ${name} to your watchlist`,
     removeFromWatchlist: (name: string) => `Remove ${name} from your watchlist`,
     /**
      * The two faces of a browse box. `docs/design/architecture.md` section 5.

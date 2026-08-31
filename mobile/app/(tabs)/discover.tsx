@@ -265,8 +265,6 @@ export default function DiscoverScreen() {
  */
 function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave }) {
   const [added, setAdded] = useState<'library' | 'watchlist' | 'logged'>();
-  const [note, setNote] = useState('');
-  const [noting, setNoting] = useState(false);
   /*
    * What you already have, from the store rather than from this session.
    *
@@ -328,22 +326,31 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
   }
 
   /**
-   * Saved *with* the reason, which this screen could not do.
+   * Adds on the press, which is what the control has always been called.
    *
-   * The web's search row has opened a note field since the watchlist shipped and the
-   * phone's called `addToWatchlist` with nothing — so the phone's own empty watchlist
-   * said "Add something from Discover, then say why you saved it" over a screen with no
-   * way to say why. A screen naming a way out it does not have is §6.50's class, and
-   * this one was naming it about itself.
+   * This screen and the web's twin opened a note field instead. Six controls in the
+   * product are announced `COPY.controls.addToWatchlist(name)` — *"Add {name} to your
+   * watchlist"* — and four of them wrote the row when you pressed them; the two search
+   * rows wrote nothing. Photographed in `design/screens/04-search-noting.png`: the press
+   * replaced Track, Seen it and Add to list with a field and a Save, offered **no
+   * Cancel**, and left two ways out — commit an entry you may not have wanted, or leave
+   * the screen. `AddToList` sat on the same row as a reversible disclosure, so one row
+   * carried two disclosures and only one could be backed out of.
    *
-   * The note is most of what a watchlist is for — doc 4: *"I have ZERO memory for why
-   * they're there"* — and a note you can read but never write is a note nobody has.
+   * The composer arrived here to answer a real complaint — the phone's empty watchlist
+   * said *"Add something from Discover, then say why you saved it"* over a screen with no
+   * way to say why, and doc 4's *"I have ZERO memory for why they're there"* is what the
+   * note is for. That complaint is still answered, one screen along: §6.167 gave the
+   * watchlist row its own "Add a note", so the sentence names two screens and both of them
+   * do their half. Which is the reasoning `title/[id].tsx` already wrote down for its own
+   * Watchlist button — *"the field is one press away where it belongs rather than a third
+   * state"* — and this row was the site that made that comment's "unlike the search row's"
+   * true.
    */
   async function watchlist() {
     await cacheTitle();
-    await addToWatchlist(result.id, result.kind, note.trim() || undefined);
+    await addToWatchlist(result.id, result.kind);
     setAdded('watchlist');
-    setNoting(false);
   }
 
   /**
@@ -390,32 +397,6 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
         to: `/title/${encodeURIComponent(result.id)}`,
       }}
       under={
-        noting ? (
-          <View style={styles.editor}>
-            {/*
-              `size="row"`, not `page`: this is the note beside a result rather than the
-              search box at the top of the screen, and a note field wearing the page density
-              read as a second place to search.
-            */}
-            <Field
-              size="row"
-              label={COPY.controls.noteFor(result.name)}
-              value={note}
-              onChange={setNote}
-              placeholder={COPY.watchlist.notePlaceholder}
-              autoFocus
-              onSubmitEditing={watchlist}
-              style={styles.grow}
-            />
-            <Button
-              size="inline"
-              tone="primary"
-              label="Save"
-              name={COPY.controls.saveToWatchlist(result.name)}
-              onPress={watchlist}
-            />
-          </View>
-        ) : (
         <View style={styles.under}>
           {/* Three actions, each naming its own row. The direction's "one action" is a
               naming rule rather than a counting one — see `Row`'s `under` — and each of
@@ -431,8 +412,10 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
             label={shelf === 'library' ? COPY.controls.tracking : COPY.controls.track}
             name={COPY.controls.trackTitle(result.name)}
           />
+          {/* Adds, rather than revealing a field that then adds. `watchlist` above has the
+              argument and the photograph. */}
           <Button
-            onPress={() => setNoting(true)}
+            onPress={watchlist}
             disabled={shelf === 'watchlist'}
             tone="secondary"
             label={shelf === 'watchlist' ? COPY.watchlist.alreadyOn : COPY.controls.watchlist}
@@ -456,19 +439,14 @@ function ResultRow({ result, have }: { result: SearchResult; have?: AlreadyHave 
               which compares what each screen renders, could. */}
           <AddToList titleId={result.id} kind={result.kind} />
         </View>
-        )
       }
     />
   );
 }
 
 const styles = StyleSheet.create({
-  /** A field that shares its row with a button. Layout, which the call site owns. */
-  grow: { flex: 1, minWidth: 0 },
   screen: { flex: 1, backgroundColor: theme.ground },
   content: { padding: SCREEN.edge, gap: 12 },
-  // The watchlist screen's note field, because it is the same field.
-  editor: { gap: 6, flexDirection: 'row', alignItems: 'center' },
   loading: { marginTop: 12 },
   failed: { gap: 12, alignItems: 'flex-start' },
   error: { color: theme.trouble, fontSize: text.s14, fontFamily: type.family.body.name },

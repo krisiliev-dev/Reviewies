@@ -620,27 +620,34 @@ try {
   // with a title in it is a template rather than a quoted string. §6.106.
   await page.getByLabel('Add Hollow Crown Saga to your watchlist').click();
 
-  /*
-   * The composer this screen did not have.
-   *
-   * The phone's empty watchlist says "Add something from Discover, then say why you saved
-   * it" and its Search called `addToWatchlist` with no note — so the screen was naming a
-   * way out that did not exist, about itself. The reason is most of what a watchlist is
-   * for: "I have ZERO memory for why they're there".
-   */
-  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam.');
-  await page.getByLabel('Save Hollow Crown Saga to your watchlist').click();
+  // The press adds it, and says so. It used to open a note composer instead, replacing
+  // Track and Add to list with a field and a Save and offering no Cancel.
   await page.waitForSelector('text=On watchlist', { timeout: 15000 });
 
   await page.getByText('Watchlist', { exact: true }).first().click();
   await page.waitForTimeout(1500);
+
+  /*
+   * The reason, written where it lives.
+   *
+   * The phone's empty watchlist says "Add something from Discover, then say why you saved
+   * it", and for a while its Search called `addToWatchlist` with no note — a screen naming
+   * a way out it did not have, about itself. The way out is real and it is here: §6.167
+   * gave the row its own control, so that sentence names two screens and each does its
+   * half. The reason is most of what a watchlist is for: "I have ZERO memory for why
+   * they're there".
+   */
+  await page.getByLabel('Add a note for Hollow Crown Saga').click();
+  await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam.');
+  await page.getByText('Save', { exact: true }).first().click();
+  await page.waitForTimeout(1200);
   check(
-    'a reason written on Search arrives on the watchlist',
+    'a reason written on the watchlist row is kept',
     (await text()).includes('Recommended by Sam.'),
     (await text()).slice(0, 140),
   );
 
-  // And is still editable where it lives, which is the half the phone already had.
+  // And is still editable, which is the half the phone already had.
   await page.getByLabel('Edit note for Hollow Crown Saga').click();
   await page.getByPlaceholder('Why did you save this?').fill('Recommended by Sam and Ana.');
   await page.getByText('Save', { exact: true }).first().click();

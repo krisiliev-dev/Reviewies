@@ -43,6 +43,19 @@ function filesUnder(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/** The phone's own trees, walked so the rule below can find its own subjects. */
+function phoneFilesUnder(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'dist-signedin', 'dist-real', '.expo'].includes(entry.name)) {
+      continue;
+    }
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory()) phoneFilesUnder(path, out);
+    else if (/\.tsx$/.test(entry.name) && !entry.name.includes('.test.')) out.push(path);
+  }
+  return out;
+}
+
 describe('a watchlist row', () => {
   it('offers the verb the list exists for, on both platforms', () => {
     for (const file of WATCHLISTS) {
@@ -112,7 +125,28 @@ describe('a watchlist row', () => {
      * wrong — the pair is what §6.51 says has to agree, and one of them agreeing by
      * accident is how they parted the first time.
      */
-    const PHONE_NOTE_EDITORS = ['mobile/app/(tabs)/watchlist.tsx', 'mobile/app/(tabs)/discover.tsx'];
+    /*
+     * Found, not listed. This was two hardcoded paths, and the sentence three paragraphs up
+     * — *"a field and its Save are one line wherever the phone draws that pair, which is why
+     * this reads a list of editors rather than a list of screens"* — was true of the
+     * intention and false of the code. So when the search row's composer was removed (a
+     * control announced *"Add {name} to your watchlist"* has to add, not reveal a field),
+     * this clause failed on a correct change with *"has no editor style for this clause to
+     * read"*. `docs/design/agents.md` §4: fix the rule.
+     *
+     * The rule reads the phone for the pair itself — a screen that draws
+     * `COPY.watchlist.notePlaceholder` — so a third one is held to it the day it appears and
+     * a removed one takes its obligation with it. The floor under it is what stops the list
+     * emptying to nothing and the clause passing about no screens at all, which is the
+     * failure §6.176 walked into on `navigationLabels`.
+     */
+    const PHONE_NOTE_EDITORS = phoneFilesUnder('mobile/app')
+      .concat(phoneFilesUnder('mobile/src'))
+      .filter((file) => withoutProse(read(file)).includes('COPY.watchlist.notePlaceholder'));
+    expect(
+      PHONE_NOTE_EDITORS,
+      'the phone draws no note editor at all, so every clause below is about nothing',
+    ).toEqual(['mobile/app/(tabs)/watchlist.tsx']);
     const stacked: string[] = [];
     for (const file of PHONE_NOTE_EDITORS) {
       const source = withoutProse(read(file));
