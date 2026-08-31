@@ -5,6 +5,7 @@ import {
   availableYears,
   DEFAULT_STATS_WINDOW,
   formatDuration,
+  getSpine,
   getSummary,
   type StatsSummary,
   type Window,
@@ -17,6 +18,7 @@ import { Note } from '../ui/Note';
 import { Progress } from '../ui/Progress';
 import { Masthead } from '../ui/Masthead';
 import { Button } from '../ui/Button';
+import { YearSpine } from '../ui/YearSpine';
 
 /**
  * Stats and Year in Review.
@@ -38,6 +40,7 @@ export function Stats() {
   const [year, setYear] = useState<number>();
 
   const years = useLiveQuery(() => availableYears(), [], []);
+  const spine = useLiveQuery(() => getSpine(), [], undefined);
   const summary = useLiveQuery(
     () => (year ? getSummary('year', { year }) : getSummary(window)),
     [window, year],
@@ -61,6 +64,22 @@ export function Stats() {
   return (
     <div className="p-s16">
       <Masthead level="page" className="px-1">{COPY.screens.stats}</Masthead>
+
+      {/*
+       * The record, above the question about it.
+       *
+       * The spine is all-time by construction — a row is a year — so it sits outside the
+       * period control rather than under it, and it is the first thing on the screen
+       * because it is what the screen is a picture of. The figures below answer *how much,
+       * in which stretch*; this answers *what have I watched*, which is the question
+       * `docs/design/architecture.md` says a surface has to be nameable by.
+       *
+       * It renders before the empty branch as well as after it, and that is deliberate:
+       * somebody who has marked nothing gets one row for this year with one cell open in
+       * it, which is `docs/design/calm.md`'s whole argument arriving on day one instead of
+       * in year two.
+       */}
+      {spine !== undefined && <div className="mb-5"><YearSpine years={spine} /></div>}
 
       {/*
        * One question, drawn on two rows.

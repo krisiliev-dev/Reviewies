@@ -113,6 +113,27 @@ function cases(source: string): Case[] {
   return found;
 }
 
+/**
+ * One file, read and parsed once.
+ *
+ * It was read and parsed *per clause* and blanked **per test case** — `asserts(one.body,
+ * blankLiterals(source))` inside the loop over a file's own cases, so a suite of forty
+ * clauses blanked its own source forty times. Across 1,200 cases that is 1,200 passes over
+ * the whole tree instead of ninety-odd, and the cost grows with every test anybody adds:
+ * this clause spent 5.8s of a 5s budget and began timing out on a loaded machine the sprint
+ * two test files were added to `app` and `core`.
+ *
+ * That is a guard failing on a correct change, which is the shape this repository has now
+ * found six times in four sprints, and the rule rather than the file is what is wrong: a
+ * check whose cost is quadratic in the thing it is counting will always eventually fail on
+ * somebody who did nothing but write tests. Same reading, one parse.
+ */
+interface Parsed {
+  file: string;
+  blanked: string;
+  cases: Case[];
+}
+
 /** Does this body assert — directly, or through a helper in the same file that does? */
 function asserts(body: string, whole: string): boolean {
   if (/\bexpect\s*\(/.test(body)) return true;
@@ -125,6 +146,23 @@ function asserts(body: string, whole: string): boolean {
 
 describe('every test', () => {
   const files = WORKSPACES.flatMap((name) => testFiles(join(ROOT, name)));
+  /*
+   * Once, at collection, for all three clauses. `blankLiterals` is the expensive half and
+   * every clause below wants the same answer from it — see `Parsed` above for what reading
+   * it three times per file and blanking it once per *case* was costing.
+   */
+  const parsed: Parsed[] = files.map((file) => {
+    const source = readFileSync(join(ROOT, file), 'utf8');
+    return { file, blanked: blankLiterals(source), cases: cases(source) };
+  });
+
+  /** Every case that does not assert, keyed the way `ASSERTS_NOTHING` keys them. */
+  const silent = (): string[] =>
+    parsed.flatMap((one) =>
+      one.cases
+        .filter((each) => !asserts(each.body, one.blanked))
+        .map((each) => `${one.file} :: ${each.name}`),
+    );
 
   it('is found, in every workspace, rather than an empty list being cleared', () => {
     expect(files.length).toBeGreaterThan(50);
@@ -133,32 +171,15 @@ describe('every test', () => {
     }
     // And the bodies parse. A brace matcher that gives up returns nothing, which would
     // read as "no test asserts nothing" just as loudly as a clean sweep.
-    const total = files.reduce((n, f) => n + cases(readFileSync(join(ROOT, f), 'utf8')).length, 0);
-    expect(total).toBeGreaterThan(1000);
+    expect(parsed.reduce((n, one) => n + one.cases.length, 0)).toBeGreaterThan(1000);
   });
 
   it('asserts something', () => {
-    const silent: string[] = [];
-    for (const file of files) {
-      const source = readFileSync(join(ROOT, file), 'utf8');
-      for (const one of cases(source)) {
-        if (asserts(one.body, blankLiterals(source))) continue;
-        const key = `${file} :: ${one.name}`;
-        if (!(key in ASSERTS_NOTHING)) silent.push(key);
-      }
-    }
-    expect(silent).toEqual([]);
+    expect(silent().filter((key) => !(key in ASSERTS_NOTHING))).toEqual([]);
   });
 
   it('keeps no exemption for a test that asserts after all', () => {
-    const live = new Set(
-      files.flatMap((file) => {
-        const source = readFileSync(join(ROOT, file), 'utf8');
-        return cases(source)
-          .filter((one) => !asserts(one.body, blankLiterals(source)))
-          .map((one) => `${file} :: ${one.name}`);
-      }),
-    );
+    const live = new Set(silent());
     expect(Object.keys(ASSERTS_NOTHING).filter((key) => !live.has(key))).toEqual([]);
   });
 });
