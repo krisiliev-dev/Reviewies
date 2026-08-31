@@ -69,16 +69,26 @@ describe('the two feeds Discover can be showing', () => {
        * question the feed already answers, and §6.138 is the entry about what happens when
        * two things answer one question.
        *
-       * The needle is `[0]?.trending` and not `?.[0]?.trending`, which is the seventh guard
-       * in this repository to fail on a correct change and the second in this file — its own
-       * header is the entry about the last one. The blurb moved behind
-       * `shownShelf.length > 0`, so the array it reads is the one the shelf actually draws
-       * and is no longer optional; `shownShelf[0]?.trending` is the same rule spelled
-       * without a `?.` that now has nothing to guard. What is asserted is *which* thing the
-       * mode is read from, and a leading question mark was never part of that.
+       * The needle **names the array**, and that is the correction. It was `?.[0]?.trending`,
+       * which failed on a correct change — the blurb moved behind `shownShelf.length > 0`, so
+       * the array is no longer optional and the leading `?.` had nothing left to guard. That
+       * is the seventh guard here to fail on a correct change and the second in this file;
+       * its own header is the entry about the last one.
+       *
+       * It was then loosened to `[0]?.trending`, and a re-plant in the main checkout walked
+       * straight through it: `shelf[0]?.trending` matches, and is wrong. The condition above
+       * the sentence is `shownShelf.length > 0` and the boxes drawn are `shownShelf`, so
+       * reading the mode off the *unfiltered* `shelf` puts the trending blurb over a filtered
+       * shelf and the ordinary one over a trending shelf — the exact thing the comment in
+       * `Discover.tsx` says this is for, in its own words, "so the condition and the sentence
+       * are about the same boxes".
+       *
+       * So: not `?.[0]`, which was too tight, and not `[0]`, which was too loose. The rule is
+       * *which* thing the mode is read from, and the only way to assert that is to say its
+       * name. Both platforms spell it `shownShelf`.
        */
-      expect(source, `${file} decides its mode from something other than the feed`).toMatch(
-        /\[0\]\?\.trending/,
+      expect(source, `${file} decides its mode from something other than the shelf it draws`).toMatch(
+        /shownShelf\[0\]\?\.trending/,
       );
     }
   });

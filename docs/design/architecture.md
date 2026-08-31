@@ -205,8 +205,26 @@ another pass without either taking the other's port.
 Neither is a criticism of the guards. A source guard can say that a rule is stated and a
 type-check can say that a call compiles; neither can say that a screen arrived where it
 meant to. `docs/design/on-a-device.md` opens with *"'It looked fine' is not an answer"*, and
-the answer here was a number: `scrollTop 450` on the web, and on the phone the same number
-the export had been reporting as 0.
+the answer here was a number: ~~`scrollTop 450` on the web, and on the phone the same number
+the export had been reporting as 0.~~
+
+**RETRACTED, and by the sentence immediately above it.** `scrollTop 450` was written down as
+proof that Up Next reaches the present. The reading pass measured the other number: **`maxScroll`
+is also 450.** The column cannot scroll further, so 450 is exactly what a screen that ignored the
+request entirely would have produced. A figure that happened to be positive was read as a
+measurement, and the clause that read it could not have failed — the same defect this section is
+about, one layer up, in the paragraph claiming to have fixed it.
+
+What is actually true: `scrollIntoView({ block: 'start' })` is honoured only while a frame of
+content remains *below* the target, and Up Next's present is a few rows. The first live row sits
+**615pt down an 844pt frame**, under seven struck ones. On the phone the caught-up arrival lands
+47pt short of its own bottom and clips "Find something to watch" under the tab bar.
+
+The repair is a screenful of trailing room under the present, which is a decision about the bottom
+of the longest screen in the product — and §9 below already names that as the thing to watch, so
+it is filed there rather than taken here. `design/look.mjs` reports both numbers now and **fails
+on the clamp rather than passing on it**; it currently exits 1 with exactly this one problem, which
+is the honest state of this section.
 
 ## 9. What this costs, said plainly
 
