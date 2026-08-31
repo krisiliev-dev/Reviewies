@@ -225,7 +225,14 @@ describe('every workspace', () => {
     // seventy that had stopped running were behind a click on a tab that no longer exists.
     // core 975: §6.189's year clauses, from an HCI evaluation that found Year in Review
     // answering the same episode count under three different year headings on the phone.
-    core: 974, app: 710, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // core 989, app 732: §6.189's three parallel branches merged — the year spine and its
+    // calm clauses, the shelf's centring and the two walks that had never started, and the
+    // phone style property that meant "unset" to Yoga and nothing at all to
+    // react-native-web. Counted from the clause's own measurement rather than from vitest's
+    // reported total, which is a different quantity: this counts `it()` cases in source and
+    // vitest counts what executed, and reading one as the other is how a floor gets set to a
+    // number no file ever had.
+    core: 989, app: 732, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
