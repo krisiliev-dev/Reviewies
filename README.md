@@ -571,6 +571,14 @@ Read in order; later documents revise earlier ones where evidence changed.
    account of what was built afterwards: continuous listening, mapping episodes from the
    phone, cross-validating contributions, and a run of bugs that all turned out to share
    one cause — test fixtures smaller than the values production produces
+10. [An evening with it](docs/research/10-an-evening-with-it.md) — one continuous session
+    with the product rather than a structural question about the repository: import a TV
+    Time export, resolve what did not match, watch, react, catch up, rate, read Stats
+11. [What a task costs](docs/research/11-what-a-task-costs.md) — the first measurement of
+    an *interaction* rather than a control. Fitts's law, the Keystroke-Level Model and
+    their touch-adapted constants applied to the four tasks the product exists for, with
+    the two places Hick's law and the steering law do **not** apply stated rather than
+    assumed
 
 ## Attribution
 
