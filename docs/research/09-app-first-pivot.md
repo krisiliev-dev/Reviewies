@@ -15376,6 +15376,115 @@ suite that shares a machine with four agents is measuring the machine. This is t
 distinct way this record has found a green or red result that was about the conditions rather
 than the code, after a container's missing directory and a renderer's missing behaviour.
 
+#### The §7 pass, which found the largest stale claim on the list
+
+Doc 9 is off-limits to every agent, so with three of them out the §7 sweep is the one piece of
+close-out work that cannot collide. Five entries had stopped being true, and one of them had been
+false for a fortnight with nobody saying so — including me, repeatedly.
+
+**"Nothing has run on a physical device"** led two entries. It has run, twice, on an iPhone 13 Pro
+Max on iOS 26.5.2, and `docs/device/findings.md` has the build log. The sentence meant *"nothing
+can run on a device from here"* and never said that, and the **user had to correct it in as many
+words** before it was noticed. The same shape as §6.188's three: a fact about a container, written
+down as a fact about the world. Both entries are amended — one to record what the device changed,
+the other reworded to what it was always actually about, which is that every check here runs on
+the export.
+
+**"Two browser checks are flaky"** was closed in §6.161 with the note that the count was four, not
+two. It was not four either: the `assertions.test.ts` pair above is the same defect from the
+opposite direction — not a probe sampling too early, but a check whose own work outgrew a budget
+it never set. §6.161 swept the browser suites because that is where flakes had been *seen*, and
+never asked which vitest clauses were near the default.
+
+**"Two states the design harness cannot reach"** are both reachable — `08-stats-year` and
+`-11-remote`. Closed as photographs and explicitly **not** as judgements: neither shot has been
+read by anyone, and both sit inside the 78 unread of 146. §6.146's rule is that a decision without
+a picture is reasoning; §6.150's is that an unread picture is not evidence either.
+
+**And one new entry, which is the year shot's own failure.** `08-stats-year` was *there* while
+Year in Review was wrong. It presses a year and then asserts two things: that the body matches
+`/Your \d{4}/`, and that the pressed radio reports `aria-checked="true"`. Both are about the
+**control**. Neither reads a number — and `COPY.stats.yourYear(year)` renders from the screen's own
+`year` state, so the heading was satisfied by state that never reached `getSummary`. The shot was
+taken, the assertions ran, they passed, and three years reported the same fifty episodes. The
+instrument that would catch it — a clause comparing a figure across two years and requiring it to
+differ — does not exist, and writing one means deciding what a fixture guarantees about its own
+distribution, which is §6.146's question rather than a line of code. Third instance this fortnight
+of a check that names a state and measures its label.
+
+#### A second device brief, built from the wrong list's replacement
+
+The first brief was written from the list of **known rendering asymmetries** — places the phone and
+the export are understood to draw differently. It is a good list; question 2 found text *clipped*
+where sixteen sprints of export work had predicted text *overflowing*, which is the best return a
+device has paid here and could not have come from the export.
+
+It is still the wrong list to have written a brief from. The right one is the open §7 items, and
+the gap cost a question: Stats' year scroller has sat here since §6.109 as a gesture conflict
+nobody has felt, only a finger can answer it, and it was **not among the eleven asked** — because a
+nested scroller inside a vertical scroller is not a rendering difference. It is a difference in
+what the export can be asked to do at all.
+
+`docs/device/on-the-phone-2.md` is organised by which open §7 entry each answer closes, and every
+question names one. Fifteen: the eight still `NOT YET CHECKED`, plus the leading, the tracking, the
+years scroller, a deep link, the image picker's native branch, the unmatched route, and wa-sqlite's
+transactions on the real store. Its numbers were checked against source rather than memory — the
+scheme is `reviewies`, all five `Haptics` call sites fire on an action completing and none on a
+press, `REACH` is `{ inline: 8, dark: 12 }` with eighteen sites at 8 and one at 12.
+
+#### Seamful design, which convicts three things and acquits seven
+
+The one framework left that fits this product's actual shape. Chalmers & Galani (DIS 2004) read
+from the primary text rather than the popular version of it: Weiser's phrase is **"literally
+visible, effectively invisible"**, and the prescription is *selective and careful* revelation, with
+overwhelming the reader named as the failure mode. The operative criterion comes from Inman & Ribes
+(CHI 2019), who argue seamful and seamless are complements rather than rivals, and that the axis
+between them is **downstream user agency**. Reveal a seam the person can act on; conceal one they
+cannot; where they can act, name the action.
+
+`docs/design/seams.md` runs it over ten joins. **Seven are already right**, and the record shows
+each was arrived at empirically — a device found the Wi-Fi scan message that blamed a television it
+had never contacted, a plant found the sealed-comment sentence nothing could reach, a relay's 1008
+found the *"it will reconnect on its own"* promise the app could not keep. So the honest summary is
+not that a framework repaired the product. It is that **this repository has been doing seamful
+design for twenty sprints without the name, and paying full price each time by rediscovering the
+rule.** `COPY.app.clockWrong` is the high-water mark: it splits one infrastructural fact into the
+half concealed because you cannot act on it and the half revealed because you can, at a finer grain
+than anything else here, written before anyone had read the literature.
+
+The three it convicts:
+
+- **The audio match's confidence is the wrong shape.** *"Synced, 73% confident"* on the web,
+  *"Following along, 73% sure"* on the phone, neither in `COPY`. A percentage is the one revelation
+  on the list with no action behind it — nobody does anything different at 73% than at 62%.
+  Chalmers' own prescription is an *extent, not a point*, and the finding is that **the extent is
+  not derivable here**: confidence is the share of matched landmarks agreeing on an offset, and
+  `agreement.ts` records the same audio measuring 0.46 one way and 0.17 the other purely from
+  microphone quality. A number that halves because of the microphone while the position is
+  identical is not describing the position. The only derivable positional bound is the frame
+  resolution, 512/22,050 = **23.22ms**, far below perception. Filed rather than guessed: a
+  plausible-looking "± 2s" would be a fabricated seam, which is worse than the percentage. The
+  `toleranceMs` of 5,000 in the same file is a trap — it bounds two contributors' reaction times.
+- **The bridge's three sentences have no owner.** They are the most carefully reasoned seam copy in
+  the product and they are typed in a web screen. The phone has no bridge path at all — it talks to
+  the television directly over Wi-Fi — which is exactly the condition under which a sentence gets
+  typed locally and drifts a year later.
+- **`bridgeConfigured()` conceals one layer too high.** Hiding the controls is right; a build-time
+  `VITE_` variable is not something a person can act on. But the seam actually hidden is *that the
+  product has a remote at all*, and running a bridge is a documented thing somebody can choose to
+  do.
+
+And four refusals, which is again the load-bearing half. **"Reveal everything"** is not the paper's
+argument. **A persistent network indicator** is the most tempting single addition and the most
+clearly wrong: this product's stance, drawn at the top of More, is that the network's state is not
+the app's state, and an indicator makes the seam the subject of every screen with nothing to do
+about it on any of them. **A live outbox counter** is the same argument one level in — a draining
+queue is not actionable, a stuck one is, and §6.71 already says so with a number and a button.
+And **the paper's appropriation agenda** — Dourish's computational reflection, the Speakeasy
+project, users recombining services — is a genuine research programme and is not this product.
+The criterion is taken and the agenda is left, and saying which half of a framework is in use is
+the point of writing it down.
+
 
 ## 7. What is still not known
 
