@@ -87,10 +87,60 @@ export const FOOT = 120;
  * so it was never a candidate for `overflow` in the first place. On a fresh load of that
  * build no element in the document overflows at all.
  *
- * So the 3891 belongs to something the pass's walk creates and this has not found it, and
- * the same is true of the phone's `03-upnext at 3484 of 3500`. Recorded as an open
- * question, because *"an instrument measures what somebody thought to measure"* and a
- * plausible story attached to a number nobody has traced is how the 2-of-7 happened.
+ * ## And what the 3891 turned out to be, which is not the walk
+ *
+ * Traced by `design/found/why-off-the-top.mjs`, which loads Up Next once and then touches
+ * nothing — no press, no fill, no reveal, no foot shot — and samples the scroller from the
+ * navigation onward. Both numbers appear on their own, with no hand on the page:
+ *
+ *   phone, 390x844   nothing overflows for the first second, then `at 3484 of 3500`, frame 784
+ *   web,   420x900   nothing overflows at 1ms, then `at 3795 of 3891`, frame 900
+ *
+ * — and it then holds that position for the remaining ten seconds of sampling. How long the
+ * first half lasts is the query answering, so it moves between runs (0.5s and 3.0s on two
+ * runs of the same build); that it happens with nothing driving the page does not.
+ *
+ * It is the screen arriving. `app/src/screens/UpNext.tsx`'s `Present` and its twin in
+ * `mobile/app/(tabs)/index.tsx` scroll the present to the top of the column once the past
+ * has loaded — `architecture.md` section 3, *"the history belongs up, and the app has to
+ * open on the episodes you can mark"* — and the past here is the forty entries
+ * `HISTORY_LIMIT` allows. The probe reports which block the scroll came to rest on, and on both
+ * platforms it is the present marker's own top, to the point: phone `3484 +784` against a
+ * 784pt frame, web `3795 +900` against a 900pt frame. So the arrival is **honoured**, not
+ * a request the browser refused and clamped — which is the distinction §8 of
+ * `architecture.md` recorded `scrollTop 450` without.
+ *
+ * The residual each platform is short of its own foot is that arithmetic and nothing else:
+ * a marker floored at exactly one frame and parked at the top of it leaves whatever is
+ * *below* the marker, which is the column's trailing room. Phone: `SCREEN.edge` is 16 and
+ * the reading is 16. Web: 16 below the marker inside the column, plus `<main>`'s own
+ * `pb-[calc(var(--tabbar,5rem)+1rem)]` — measured on this build as `--tabbar: 64px` and a
+ * computed `padding-bottom: 80px` — is 96, and the reading is 96.
+ *
+ * And that is also why **two different libraries produce the same number**, which is the
+ * part that made this look like an artefact of the harness rather than a property of the
+ * screen. `core/src/data/repo.ts` caps the past: `HISTORY_LIMIT = 40`. `CSV` is 122
+ * watches and `CAUGHT_UP_CSV` is 131, so both draw the same forty rows and both arrive at
+ * `3484 of 3500`; `FINISHED_CSV` is 12, under the cap, and arrives at `1160 of 1176` —
+ * a different column, the same 16. Three libraries, two answers, one constant.
+ *
+ * And `capture-web-real.mjs` reports none of this for the reason that completes the case:
+ * `design/realLibrary.mjs` **tracks** its six shows and marks nothing watched, so there is
+ * no history, `Present` has no past, no floor is drawn and there is no arrival to make.
+ * §6.193 read `narrow-stats` as *"Nothing watched"* on that same build and did not connect
+ * the two.
+ *
+ * ## The control reading that made it look like the walk, and why it was not one
+ *
+ * *"A fresh load of the same build with the same library puts the phone's heading at y=16
+ * with no element in the document overflowing at all"* is a true reading of a **different
+ * screen**. `Present` asks for `writing ? [] : getHistory()`, so while an import is in
+ * flight or rows are still unmatched the past is empty — no past, no floor, no arrival,
+ * nothing overflowing. The probe's own first run landed in exactly that state and printed
+ * `nothing on the page overflows` at every sample out to ten seconds; its photograph has
+ * *Match imported shows* still on the screen. `capture.mjs` waits for `Tracked 3` before
+ * it photographs and the control did not, so the two were looking at the same URL in two
+ * different conditions. The probe now waits for the same sentence the pass waits for.
  *
  * `at` is reported and never refused. `reveal` presses controls that Playwright scrolls
  * into view, so a reveal below the fold is legitimately not at the top, and a rule that
@@ -358,6 +408,22 @@ export function longerScreens(scrolls) {
  * questions and a pass may want to say one without the other: *how much is below this* and
  * *where was this taken from*. A shot with no overflow can still be off the top — that is
  * exactly the state a page left scrolled by a previous step is in.
+ *
+ * **Up Next belongs on this line, and the reason is in this file's header.** A full
+ * `capture.mjs` run on this build files 33 shots; 3 of them are not at the top, and all
+ * three are Up Next — `03-upnext` and `00-caughtup-upnext` at 3484 of 3500,
+ * `00-caughtup-finished` at 1160 of 1176. On the web it is `01-upnext` and `11-remote`,
+ * which arrives at `/`, in both themes. Every one of those is the screen arriving at the
+ * present over its own history, traced on a load nothing touches by
+ * `design/found/why-off-the-top.mjs`. A reading of one of them as a clipped row is the
+ * retraction this whole file exists to prevent, and a rule that convicted them would be the
+ * overfiring guard §6.190 corrected three of.
+ *
+ * Which is why the list stays a **list and not a verdict**. A `reveal` is off the top for a
+ * different and equally legitimate reason — Playwright scrolls a control into view to press
+ * it — and none of the seven reveals in that run happened to be, on that run. What the line
+ * is for is the reader's next question: *was this position asked for by anything?* The two
+ * answers that are fine are named above; a third name appearing here is the one to trace.
  */
 export function offTheTop(scrolls) {
   const moved = scrolls.filter((s) => s.at > 0);
