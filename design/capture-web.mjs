@@ -35,7 +35,7 @@ import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { CSV } from './library.mjs';
-import { longerScreens, reveal, shoot } from './shoot.mjs';
+import { longerScreens, offTheTop, reveal, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4202';
 const OUT = new URL('./web/', import.meta.url).pathname;
@@ -325,6 +325,8 @@ async function pass(theme) {
       ? `${name ?? 'dark'} shots that are the top of a longer screen: ${longer}`
       : `${name ?? 'dark'}: every shot is a whole screen`,
   );
+  const off = offTheTop(scrolls);
+  if (off) console.log(`${name ?? 'dark'} shots not taken at the top of their screen: ${off}`);
 
   await context.close();
 }

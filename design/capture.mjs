@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { longerScreens, reveal, shoot } from './shoot.mjs';
+import { longerScreens, offTheTop, reveal, shoot } from './shoot.mjs';
 import { chromiumOptions } from '../scripts/browser.mjs';
 import { mkdirSync } from 'node:fs';
 import { color } from '../core/src/tokens.ts';
@@ -726,6 +726,42 @@ const THEN = {
     // places it is drawn, and the note is written on the watchlist row it describes.
     await add.click();
     await page.waitForTimeout(900);
+
+    /*
+     * And the reason, on the row that holds it now.
+     *
+     * `06-watchlist`'s clause asks for the **note** rather than the affordance to write
+     * one, and its own comment says why: *"a clause naming the note is the strongest thing
+     * this screen can be asked for — it can only pass if a row exists, was saved through
+     * the app, and kept what was said about it."* Until the composer went, the note was
+     * typed into the field the search row opened; the commit that removed that composer
+     * removed the two lines that typed it and left the clause standing, so the pass went
+     * red with a correct app in front of it — `06-watchlist (/watchlist) does not show
+     * /Ana recommended/`, measured on this build before this block existed.
+     *
+     * §6.190's rule from the other side: when a guard fails on a correct change the answer
+     * is to fix the rule, and the rule here is right — what was wrong is the walk. So the
+     * walk moves to where the note moved. `watchlist.empty` names two screens on purpose —
+     * *"Add something from Discover, then say why you saved it"* — and this is a person
+     * doing exactly that, which is also the claim the removing commit made about it.
+     *
+     * The field is announced `Your note about {name}` and the button `Save note for {name}`
+     * — `watchlist.tsx` names both by title because every row on the screen otherwise says
+     * the same two words. Named rather than reached by placeholder for that reason.
+     */
+    await page.goto('http://localhost:4200/watchlist');
+    await page.waitForTimeout(1200);
+    const write = page.getByRole('button', { name: /^Add a note for Quiet Harbour$/i }).first();
+    if (!(await write.count())) {
+      console.error('05-discover: the watchlist row offers nowhere to say why, so 06 has no note.');
+      process.exitCode = 1;
+      return;
+    }
+    await write.click();
+    await page.waitForTimeout(600);
+    await page.getByLabel(/^Your note about Quiet Harbour$/i).fill('Ana recommended');
+    await page.getByRole('button', { name: /^Save note for Quiet Harbour$/i }).click();
+    await page.waitForTimeout(900);
   },
 };
 
@@ -1437,6 +1473,8 @@ const longer = longerScreens(scrolls);
 console.log(
   longer ? `shots that are the top of a longer screen: ${longer}` : 'every shot is a whole screen',
 );
+const off = offTheTop(scrolls);
+if (off) console.log(`shots not taken at the top of their screen: ${off}`);
 
 /*
  * The other three, each on the screen that owns it. §6.158.
@@ -1639,16 +1677,36 @@ try {
     await done.waitForTimeout(500);
   }
 
-  // Now Up Next, which starts matching by being mounted, and wait for it to finish.
-  for (let attempt = 0; attempt < 12; attempt++) {
+  /*
+   * Now Up Next, which starts matching by being mounted — and wait for the **sentence**,
+   * not for the absence of a spinner.
+   *
+   * What was here waited for four consecutive samples with no `Matching…` on the screen and
+   * then reloaded, twelve times over. Both halves were wrong in the way `capture-web.mjs`
+   * had already written down one file across: *"'not showing the working state' includes
+   * 'has not started yet'"* — the button this screen offers while a match run is **not**
+   * in flight reads `Match imported shows`, which contains no `Matching…`, so two seconds of
+   * an idle screen satisfied the quiet test and the loop moved on. And then it reloaded,
+   * which is the second half: this library is 139 rows and lands over minutes, so a reload
+   * every two seconds is an instrument taking its subject apart faster than the subject can
+   * assemble. Three runs, three different answers — `77 more episodes`, `75`, `72` — a
+   * moving number being photographed as though it were a state.
+   *
+   * One load and one positive condition, with a budget that matches how long the work takes.
+   * `Bringing in n shows from your import` and `Match imported shows` are the two sentences
+   * that say plainly it is not finished; `All caught up` is the one this shot exists for.
+   * The reload survives only as the stall handler it was never used as.
+   */
+  for (let attempt = 0; attempt < 3; attempt++) {
     await done.goto('http://localhost:4200/');
     await done.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
-    let quiet = 0;
-    for (let i = 0; i < 60 && quiet < 4; i++) {
-      quiet = /Matching…/.test(await done.locator('body').innerText()) ? 0 : quiet + 1;
+    let screen = '';
+    for (let i = 0; i < 240; i++) {
+      screen = await done.locator('body').innerText();
+      if (/All caught up/.test(screen)) break;
       await done.waitForTimeout(500);
     }
-    if (/All caught up/.test(await done.locator('body').innerText())) break;
+    if (/All caught up/.test(screen)) break;
   }
   await shoot(done, {
     out: OUT,
@@ -1731,15 +1789,23 @@ try {
     if (/Your history is in/.test(await over.locator('body').innerText())) break;
     await over.waitForTimeout(500);
   }
-  for (let attempt = 0; attempt < 12; attempt++) {
+  /*
+   * The same wait as its sibling above, and it is here for the reason a latent defect is
+   * worth repairing beside an active one: this loop is the same quiet-then-reload and it
+   * only ever passed because `FINISHED_CSV` is one show of twelve episodes, which lands
+   * inside the two seconds the old test mistook for finished. One row's difference between
+   * a green loop and a red one is not a passing loop, it is an unexercised one.
+   */
+  for (let attempt = 0; attempt < 3; attempt++) {
     await over.goto('http://localhost:4200/');
     await over.getByText('Up Next', { exact: true }).first().waitFor({ timeout: 30000 });
-    let quiet = 0;
-    for (let i = 0; i < 60 && quiet < 4; i++) {
-      quiet = /Matching…/.test(await over.locator('body').innerText()) ? 0 : quiet + 1;
+    let screen = '';
+    for (let i = 0; i < 240; i++) {
+      screen = await over.locator('body').innerText();
+      if (/nothing has aired that you have not seen/.test(screen)) break;
       await over.waitForTimeout(500);
     }
-    if (/nothing has aired that you have not seen/.test(await over.locator('body').innerText())) break;
+    if (/nothing has aired that you have not seen/.test(screen)) break;
   }
   await shoot(over, {
     out: OUT,

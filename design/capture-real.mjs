@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { chromiumOptions } from '../scripts/browser.mjs';
-import { longerScreens, shoot, unusedGround } from './shoot.mjs';
+import { longerScreens, offTheTop, shoot, unusedGround } from './shoot.mjs';
 import { mkdirSync } from 'node:fs';
 import { FILM, SHOWS, manifest, track } from './realLibrary.mjs';
 
@@ -242,6 +242,8 @@ for (const show of SHOWS) {
 
 const longer = longerScreens(scrolls);
 if (longer) console.log(`\nshots that are the top of a longer screen: ${longer}`);
+const off = offTheTop(scrolls);
+if (off) console.log(`shots not taken at the top of their screen: ${off}`);
 if (problems.length) {
   console.error(`\nreal pass could not photograph what it went for:\n  ${problems.join('\n  ')}`);
   process.exitCode = 1;

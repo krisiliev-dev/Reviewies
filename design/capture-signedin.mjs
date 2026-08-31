@@ -25,7 +25,7 @@ import {
   signIn,
   stubBackend,
 } from './signedIn.mjs';
-import { longerScreens, reveal, shoot } from './shoot.mjs';
+import { longerScreens, offTheTop, reveal, shoot } from './shoot.mjs';
 
 const BASE = 'http://localhost:4201';
 const OUT = new URL('./screens/', import.meta.url).pathname;
@@ -455,6 +455,8 @@ console.log(
     ? `signed-in shots that are the top of a longer screen: ${longer}`
     : 'every signed-in shot is a whole screen',
 );
+const off = offTheTop(scrolls);
+if (off) console.log(`signed-in shots not taken at the top of their screen: ${off}`);
 
 await browser.close();
 if (hollow.length) {

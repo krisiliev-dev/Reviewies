@@ -13,3 +13,13 @@ real-screens/
 # close-out, 38 files and 6.3 MB, because this list was written before the directory
 # existed and `git add -A` does not know what a convention is. §6.158.
 web-real/
+
+# Photographs taken to make one finding checkable — a before and an after of one screen
+# — rather than a pass over every route. Same convention as the four above and for the
+# same reason: an image committed here is an image somebody will still be reading after
+# the build it is of has gone. The finding names the file and its hash.
+#
+# The **probe** beside them is not ignored, and that is the point of naming the pattern
+# rather than the directory: a number nobody can re-derive is a number nobody can check,
+# so the script that produced the measurement is committed and the pictures are not.
+found/*.png
