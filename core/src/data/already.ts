@@ -62,8 +62,9 @@ export async function alreadyHave(): Promise<AlreadyHave> {
   // still labelling it **Tracking** with the button disabled — the state `stopTracking`
   // exists to get out of, and no way back into it from the screen you found it on.
   //
-  // Only `dropped`. `paused` is still a show you are tracking; it is Up Next that should
-  // leave it alone, and Up Next asks the database directly. §6.191.
+  // Only `dropped`, which is the only status that means you are not tracking it. `paused`
+  // was the other candidate and is no longer a status: the pause ruling took it out for
+  // want of a writer, and `domain/types.ts` has why. §6.191.
   for (const row of library) {
     if (row.status === 'dropped') continue;
     add('library', row.titleId);
@@ -101,9 +102,9 @@ export function shelfFor(
  * somebody had just stopped. The button would have said *Stop tracking* for ever and the
  * press would have written `dropped` over `dropped`.
  *
- * `paused` is deliberately still `library`. It means *not right now*, not *not any more*;
- * Up Next and the calendar leave a paused show alone by asking the database themselves,
- * and the title page should still say you are tracking it.
+ * Written as *not `dropped`* rather than as a list of the statuses that are the library,
+ * which is what kept it right through the pause ruling: `paused` used to be the third and was
+ * deliberately `library` too, and taking it out of the union changed nothing here.
  *
  * The library wins when both rows exist — `shelfFor`'s rule above, for the same reason.
  * A dropped title that is also on the watchlist falls through to `watchlist`, which is

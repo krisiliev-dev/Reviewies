@@ -146,8 +146,11 @@ export async function airedSeasonSizes(
  * unwatching one episode of a completed show would leave it out of Up Next forever,
  * which turns a convenience into a trap.
  *
- * `paused` and `dropped` are left alone in both directions. Those are decisions the
- * user made, and overriding them is not housekeeping.
+ * `dropped` is left alone in both directions. That is a decision the user made, and
+ * overriding it is not housekeeping. It read `paused` and `dropped` until the pause ruling removed
+ * `paused` from the union for want of a writer; the guard below still asks for the two
+ * statuses this *does* housekeep rather than excluding the one it does not, so a status
+ * added tomorrow is left alone until somebody decides otherwise.
  */
 export async function syncSeriesStatus(seriesId: InternalId, now = Date.now()): Promise<boolean> {
   const item = await db.library.get(seriesId);
@@ -572,15 +575,19 @@ export async function startWatching(titleId: InternalId, kind: MediaKind): Promi
 /**
  * Stop tracking a show, without losing the part of it you watched.
  *
- * `LibraryStatus` has had four values since the schema was written and the product could
+ * `LibraryStatus` had four values from the day the schema was written and the product could
  * only ever produce two of them. `Track` writes `watching`; Discover's *seen it* writes
- * `completed`; nothing anywhere — on either platform, on any screen — has ever written
- * `paused` or `dropped`. Three readers already honour them and were written to:
- * `syncSeriesStatus` above skips them entirely with the comment *"Those are decisions the
- * user made, and overriding them is not housekeeping"*, `getUpNext` asks only for
- * `watching`, and `calendar/refresh.ts` filters to `watching` or `completed`. Careful
- * handling of a decision the interface gave nobody a way to make: the title page's button
- * disabled itself, read **Tracking**, and stayed that way for the life of the row.
+ * `completed`; nothing anywhere — on either platform, on any screen — had ever written
+ * `paused` or `dropped`. Three readers already honoured them and were written to:
+ * `syncSeriesStatus` above skips them entirely with the comment *"a decision the user made,
+ * and overriding it is not housekeeping"*, `getUpNext` asks only for `watching`, and
+ * `calendar/refresh.ts` filters to `watching` or `completed`. Careful handling of a decision
+ * the interface gave nobody a way to make: the title page's button disabled itself, read
+ * **Tracking**, and stayed that way for the life of the row.
+ *
+ * This function is what settled that for `dropped`. The pause ruling settled the other half
+ * the other way and `paused` is gone from the union — three values now, all three written, the
+ * exception list in `stopTracking.test.ts` empty. `domain/types.ts` carries the argument.
  *
  * `dropped` rather than a deleted row, and the difference is what happens to the history.
  * A watch is an event keyed by `targetId`; it does not belong to the library row and is

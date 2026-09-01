@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { COPY } from '@reviewies/core/copy';
 import { NOTIFY_OPTIONS, UPCOMING_DAYS } from '@reviewies/core/calendar/upcoming';
 import { TAB_BAR } from '@reviewies/core/ui/tabIcon';
-import { componentPairs, PAIRS, ROOT } from './pairs';
+import { componentPairs, PAIRS, phoneScreenFiles, ROOT, webScreenFiles } from './pairs';
 import { stripComments } from '@reviewies/core/test/source';
 
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -677,6 +677,110 @@ describe('the words, on both platforms', () => {
     expect(NOTIFY_OPTIONS.map((o) => o.key)).toEqual(['off', 'milestones', 'all']);
     for (const option of NOTIFY_OPTIONS) {
       expect(option.hint.length, option.key).toBeGreaterThan(10);
+    }
+  });
+});
+
+/**
+ * The stance sentence, and the build on which the account it mentions does not exist.
+ *
+ * ## What was wrong, and what this can and cannot check
+ *
+ * `COPY.app.localFirst` is drawn unconditionally at the top of both More screens. Until
+ * this sprint it said *"Nothing here needs an account, and nothing is withheld"*, while
+ * `COPY.lists.needsAccount` 653 lines along the same file said *"Lists need an account"* —
+ * both true of the shipping product, on every build, for the whole life of both sentences.
+ * The ruling is in `copy.ts`'s note on `localFirst`: **"here" is your own record**, an
+ * account adds the parts that involve other people, and the gates are outside the claim
+ * rather than exceptions to it.
+ *
+ * The half of that ruling a guard can hold is not the wording. A clause that read the
+ * stance sentence and asserted which words are in it would be `agents.md` §3's `wrongWay`:
+ * the expectation taken from the very constant under test, so the two move together and
+ * agree however wrong they both are. **What is checkable from a different source** is the
+ * structural half. On a build where sync is not configured there is no account to have at
+ * all, and `seams.md` §10's repair is that the sentence for an absent capability appears
+ * exactly where the capability is not, and never as a control. So: wherever the stance is
+ * made, the absence is said beside it; nowhere else; and only when it is absent.
+ *
+ * What this cannot see, said plainly: it reads source, so a note rendered inside a branch
+ * nothing reaches would satisfy every clause below. The plant that shows the clauses are
+ * not merely spelling checks is the inverted condition — `syncConfigured() && …` in place
+ * of `!syncConfigured() && …` — which reads correctly in a diff, is wrong on every build,
+ * and which the third clause fails.
+ */
+describe('the stance sentence and the absence under it', () => {
+  const sourceFiles = (): string[] => [
+    ...webScreenFiles().map((f) => `app/src/screens/${f}`),
+    ...phoneScreenFiles().map((f) => `mobile/app/${f}`),
+  ];
+
+  /** The screens that make the stance, and the screens that qualify it. */
+  const drawing = (needle: string): string[] =>
+    sourceFiles().filter((file) => strip(read(file)).includes(needle));
+
+  /** Every rendered gate on the build's sync configuration, screens and components alike. */
+  const gates = (): string[] => {
+    const out: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(resolve(ROOT, dir), { withFileTypes: true })) {
+        const path = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) walk(path);
+        else if (entry.name.endsWith('.tsx') && !entry.name.includes('.test.')) {
+          if (/!\s*syncConfigured\(\)/.test(strip(read(path)))) out.push(path);
+        }
+      }
+    };
+    for (const root of ['app/src', 'mobile/app', 'mobile/src']) walk(root);
+    return out.sort();
+  };
+
+  it('finds the stance and the gates rather than passing on an empty sweep', () => {
+    /*
+     * The denominator, and the §6.121 half of every sweep in this file: both clauses below
+     * are satisfied by a repository in which none of these strings occurs at all. Two
+     * stance screens, one per platform, and the rendered gates that made the old sentence
+     * false. At-least rather than equal on the gates: one added is not this clause's
+     * business, and one deleted to make a clause pass is.
+     */
+    expect(drawing('COPY.app.localFirst').sort()).toEqual([
+      'app/src/screens/More.tsx',
+      'mobile/app/(tabs)/more.tsx',
+    ]);
+    expect(
+      gates().length,
+      'no rendered sync gate found, so the stance qualifies nothing',
+    ).toBeGreaterThanOrEqual(6);
+  });
+
+  it('says the absence exactly where the stance is made, and nowhere else', () => {
+    /*
+     * Set equality in both directions. One way round catches a platform that dropped the
+     * note; the other catches the sentence being scattered onto a screen that never made
+     * the claim it qualifies — the same defect `seams.md` §10 convicted the bridge for,
+     * read in reverse: a sentence living somewhere other than where its thing is missing.
+     */
+    expect(drawing('COPY.app.syncAbsent').sort()).toEqual(drawing('COPY.app.localFirst').sort());
+  });
+
+  it('says it only on a build where sync is absent', () => {
+    /*
+     * The condition, not merely the sentence. Drawn unconditionally it would tell a
+     * configured build that it has no sync; drawn on `syncConfigured()` it would say it on
+     * exactly the builds where it is false. Both read correctly in a diff, neither is
+     * caught by the clause above, and that is why this one exists.
+     *
+     * A window rather than a whole file: `!syncConfigured()` anywhere in a long screen
+     * would satisfy a file-wide search while the note itself hung off nothing.
+     */
+    for (const file of drawing('COPY.app.syncAbsent')) {
+      const src = strip(read(file));
+      const at = src.indexOf('COPY.app.syncAbsent');
+      const before = src.slice(Math.max(0, at - 120), at);
+      expect(
+        before,
+        `${file} draws the absent-sync sentence without the condition`,
+      ).toMatch(/!\s*syncConfigured\(\)\s*&&/);
     }
   });
 });

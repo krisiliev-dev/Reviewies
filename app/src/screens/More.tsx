@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { COPY } from '@reviewies/core/copy';
 import { MORE_INDEX } from '@reviewies/core/ui/moreIndex';
 import { bridgeConfigured } from '../remote/useBridge';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import { db } from '../data/db';
 import { Row as BaseRow } from '../ui/Row';
 import { Chevron } from '../ui/Mark';
@@ -56,6 +57,21 @@ export function More() {
 
       <section className="rounded-plate bg-ground-raised p-4">
         <Note>{COPY.app.localFirst}</Note>
+        {/*
+          The other half of the stance, and the same shape as the bridge note below it.
+
+          `copy.ts`'s note on `localFirst` is the ruling: "here" is your own record, an
+          account adds the parts that involve other people, and the gates on Lists and
+          People are outside the claim rather than exceptions to it. That sentence is now
+          true on every build — but on a build with no Supabase variables the account it
+          points at does not exist, and the two rows below still lead to gates whose own
+          sentence names nowhere to go.
+
+          Only when it is absent, and never a control: `seams.md` §10's repair, applied to
+          the seam one layer up from the one it was written for. On a configured build this
+          renders nothing.
+        */}
+        {!syncConfigured() && <Note className="mt-3">{COPY.app.syncAbsent}</Note>}
         {/*
           The tenth seam. `seams.md` §10: `RemoteDrawer` returns `null` on a build without
           the bridge variables, so the web's only route to the remote is not merely closed —

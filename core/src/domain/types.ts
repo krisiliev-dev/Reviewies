@@ -50,7 +50,51 @@ export interface ExternalIds {
 // User data — ours, permanent, fully exportable.
 // ---------------------------------------------------------------------------
 
-export type LibraryStatus = 'watching' | 'completed' | 'paused' | 'dropped';
+/**
+ * What a title is to you, once it is in the library.
+ *
+ * ## Three, and `paused` is the one that left
+ *
+ * This union carried four values from the day the schema was written until this note, and the
+ * product could only ever produce two of them. §6.191 gave `dropped` a writer —
+ * `stopTracking`, the way out of the library that had never existed. **`paused` never got
+ * one**, on either platform, on any screen, in the whole life of the product, and
+ * `stopTracking.test.ts` named it as the exception in a list whose comment promised the list
+ * would lose it when somebody decided what a pause meant.
+ *
+ * This is that decision, and it is *no*. The reasoning, so nobody has to derive it again:
+ *
+ * **What the fourth value bought.** One label. `paused` and `dropped` differ in exactly one
+ * observable: `shelfOf` answers `library` for a paused row, so the title page's button reads
+ * **Stop tracking** and a search row reads **Tracking**. Every other difference the readers
+ * appear to make is empty in practice. `syncSeriesStatus` skips `paused` and `dropped` at the
+ * same line, and the auto-complete it protects them from only fires for a show TMDB reports
+ * as ended whose aired episodes are *all* watched — which is not the state of a show somebody
+ * has paused. `getUpNext` and `calendar/refresh.ts` exclude both.
+ *
+ * **Where it would have been seen.** Nowhere. Outside the title page there are five reads of
+ * `db.library` in the product: three `count()`, one `where('status').equals('watching')`, and
+ * `recommend`'s `toArray()` for what you have already met. **No screen on either platform
+ * renders a library status**, and there is no *Currently watching / On hold* list here to put
+ * a paused show in. That is the difference between this product and the trackers whose
+ * five-status model this schema was written against.
+ *
+ * **What it would have cost.** A writer, a control, both renderers, copy with one owner, and
+ * a third face on a decision row that §6.178 cut from eight controls to two and §6.191 kept
+ * at two on purpose.
+ *
+ * **And what already says it.** *Not right now, and I mean to come back* is two presses of
+ * controls the title page already has: **Stop tracking**, then **Watchlist**. `shelfOf` has a
+ * deliberate rule for that pair, with a test — a dropped title that is also saved answers
+ * `watchlist`, *"you stopped watching it and you still mean to, and both are true."*
+ *
+ * **What would reopen it.** A screen that groups the library by status. With one, a pause has
+ * somewhere to be seen and the label stops being the whole payload; without one it is a value
+ * nothing can produce and nothing can show. `supabase/migrations/0015_library_status.sql`
+ * narrowed the server's check constraint with this union, so the two agree rather than the
+ * type quietly claiming a range the database still allows.
+ */
+export type LibraryStatus = 'watching' | 'completed' | 'dropped';
 
 /** A show or film the user is tracking. */
 export interface LibraryItem {

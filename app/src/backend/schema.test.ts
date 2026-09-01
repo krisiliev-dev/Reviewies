@@ -435,7 +435,15 @@ describe('the SQLSTATE a bad write actually gets', () => {
     ).toBe('23502');
   });
 
-  it('a library status outside the four → 23514', async () => {
+  /*
+   * Three since `0015_library_status.sql`. `paused` had no writer on either platform for
+   * the life of the product and the pause ruling took it out of `LibraryStatus`; the constraint was
+   * narrowed with it, because the check is the contract every client of this database
+   * shares and a type claiming a range the server still accepts is the silent kind of
+   * defect. `core/src/data/stopTracking.test.ts` holds the two lists to each other; this
+   * is the clause that says the constraint is real rather than written down.
+   */
+  it('a library status outside the three → 23514', async () => {
     expect(
       await raises(
         `insert into library (user_id, title_id, kind, status, added_at)
@@ -572,7 +580,9 @@ describe('what the server does with a device’s idea of the time', () => {
   });
 
   it('still accepts a newer write, so this is a clamp and not a wall', async () => {
-    await put("now() - interval '1 hour'", 'paused');
+    // `paused` until `0015_library_status.sql` narrowed the constraint under it — any status that is not the
+    // one written second does the job, and `dropped` is one the check accepts.
+    await put("now() - interval '1 hour'", 'dropped');
     await put('now()', 'completed');
     expect((await stored()).status).toBe('completed');
   });
@@ -637,9 +647,12 @@ describe('notification scheduler', () => {
     expect(await queued()).toHaveLength(0);
   });
 
-  it('ignores shows the user paused', async () => {
+  /* `paused` until the pause ruling removed it from the union and from the constraint. The
+     scheduler asks for `status = 'watching'`, so what this needs is a status that is not
+     that; `dropped` is the one the product can produce. */
+  it('ignores shows the user has stopped', async () => {
     await seedUpcoming('premiere');
-    await asAdmin("update library set status = 'paused' where user_id = $1", [ALICE]);
+    await asAdmin("update library set status = 'dropped' where user_id = $1", [ALICE]);
     await asAdmin('select queue_todays_notifications(0)');
     expect(await queued()).toHaveLength(0);
   });

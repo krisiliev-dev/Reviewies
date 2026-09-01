@@ -16911,6 +16911,147 @@ legitimate reason, so the list names positions and lets the reader judge.
 - **The phone's doubled heading and Discover's sentence-as-eyebrow** (§6.194) are still filed, not
   fixed.
 
+### 6.196 A position on what "here" claims, a status removed, and a floor I emptied by hand
+
+Sprint 105's third agent. Two decisions that two previous sprints had examined and declined, both
+taken, and one defect of my own found while merging them.
+
+#### "Here" is your own record, and that is the whole product for one person
+
+`COPY.app.localFirst` said *"Nothing here needs an account, and nothing is withheld"* while 12
+`!syncConfigured()` gates stood across 11 rendered files. §6.192 filed the contradiction and
+refused to guess at the position. The position taken:
+
+> **What you have watched, are watching, mean to watch and thought of lives on this device, needs
+> no account, and is never withheld. What needs an account is not a withheld part of your record —
+> it is *other people*.**
+
+A list somebody else can open, a person you follow, a comment somebody else wrote: none of those can
+be local, because the other person is not on this device. The other reading — that the gates are the
+defect — was **refused in writing, in `copy.ts` itself**, on the ground that there is nothing behind
+them to un-gate: a local *following* is not a smaller feature but a different one, and the
+private-collection need a local Lists would serve is already served, locally and ungated, by the
+watchlist.
+
+**The position was not invented for the sentence.** It is the one the rest of the product had
+already taken while this sentence disagreed: `people.withoutAccount` (which `seams.md` §9 scores as
+the most legible form a boundary takes), `lists.needsAccount`, and the phone's own More row
+*"Optional — adds sync and the shared layer"*. **Four agreeing, one dissenting, so the dissenter
+moved** — which is the right way round, and worth naming because the tempting move was to soften all
+five.
+
+```
+Everything you track lives on this device. None of it needs an account and none of it is
+withheld — this is the whole point of the app. An account adds the parts that involve other
+people, and takes nothing away.
+```
+
+Narrowed by two words rather than hedged, and it does **not** re-enumerate the two sides, because
+`people.withoutAccount` already owns that list.
+
+And a third state that no `detail` line could have answered. `MORE_INDEX`'s own comment had
+identified it — *configured and signed in*: the row is true; *configured and signed out*:
+`signInToMake` names a place; **unconfigured: the gate names nowhere**. New `COPY.app.syncAbsent`,
+drawn beside the stance on both More screens and only behind `!syncConfigured()`:
+
+```
+This build has no sync, so the parts that involve other people are not here at all — not
+signed out, absent. Sync is set when the app is built, against a server of your own.
+```
+
+That is `bridgeAbsent`'s shape (`seams.md` §10) one layer up, and **`MORE_INDEX` is untouched**, as
+its comment argued it should be. The comment itself was rewritten from *"waiting on a ruling"* to
+the ruling, because a spent excuse is the next thing to mislead somebody. `seams.md` §9 was amended
+too: its *correct* verdict had been taken on `people.withoutAccount` and never read `localFirst`
+against the gates — **seven of ten still right, one of the seven only after amendment.**
+
+Re-planted here. The phone's More stripped of the note fails *"says the absence exactly where the
+stance is made"*; the web drawing it unconditionally fails *"says it only on a build where sync is
+absent"*. Both name the file.
+
+#### `paused` is out of the union
+
+The other decision, and the brief said plainly that removing it was a good outcome. The measurement
+that settles it:
+
+- **`paused` and `dropped` differ in exactly one observable** — `shelfOf` answers `library` for one
+  and not the other. Every apparent behavioural difference is empty: `syncSeriesStatus` skips both
+  *at the same line*, and the auto-complete it shields them from only fires for an **ended** show
+  whose aired episodes are all watched, which is not the state of a paused show. `getUpNext` and
+  `calendar/refresh.ts` exclude both.
+- **Where it would have been seen: nowhere.** Outside the title page there are five reads of
+  `db.library` in the whole product — three `count()`, one `where('status').equals('watching')`, one
+  `recommend` `toArray()`. **No screen on either platform renders a library status.** There is no
+  *Currently watching / On hold* list here, and that is exactly what separates this product from the
+  five-status trackers the schema was written against.
+- Neither TV Time importer can produce one: both map archived → `dropped`, up-to-date →
+  `completed`.
+- And *not right now, I mean to come back* is **already two presses of two controls the page has** —
+  Stop tracking, then Watchlist — which `shelfOf` resolves on purpose, with a test.
+
+`supabase/migrations/0015_library_status.sql` narrows the check constraint to match, because the
+constraint is the contract every client shares and **a type claiming a range the server still
+accepts is the silent kind of defect**. Verified against real Postgres via PGlite with every
+migration applied: one `library_status_check`, three values, `paused` → 23514.
+
+Re-planted here: the constraint left with a fourth value the union has dropped fails *"accepts
+exactly the values the server does"*. And **what would reopen the decision is named in the type**,
+so nobody re-derives it: a screen that groups the library by status.
+
+#### The plant that passes, stated as the limit it is
+
+The agent constructed it rather than assuming it could not exist: a fifth status added to the union,
+to the exhaustive record and to the constraint, with a writer of `String(id).length > 9999` in
+`repo.ts`. **It passes — 13 of 13, and the whole app suite.** A writer is a string in a source file,
+so an unreachable one satisfies the clause. That was true of the clause §6.191 wrote and is true of
+its successor, and it is now written into the guard rather than left for somebody to discover.
+
+#### Three things the agent caught in its own work, and one I caught in mine
+
+It wrote **`§6.192` into 18 places** — a section number that already exists and is about something
+else. `docsReferences.test.ts` **passed**: it checks that a cited section *exists*, not that it is
+the right one, which is the exact failure its own header describes. All 18 were rewritten to prose
+with no sigil, for the merger to number. It also found that its correct copy change would have
+broken `app/smoke.mjs`'s `/Everything lives on this device/` — and **fixed the needle rather than
+the sentence**, which is §6.78's lesson and the mirror of the mistake I made yesterday. Three of
+this repository's own guards then caught real gaps in its work and were right.
+
+**And I emptied the floor table by hand.** Resolving the merge conflict between two branches that
+had each raised `FLOOR`, I replaced the conflicted region with its comments and **dropped the
+values**. `tsc` was clean. The suite was green. Nothing anywhere said the floor had stopped
+measuring — because `Object.entries({})` iterates nothing, so **an empty `FLOOR` passes 9 of 9.**
+
+Proved by doing it again deliberately: table emptied, compiles, 9 of 9 pass. The guard whose whole
+subject is *"a file cannot be silently overwritten"* could itself be silently gutted, and the
+failure looks exactly like success. That is `agents.md` practice 9 in its purest form, committed by
+the person merging the sprint that catalogued it.
+
+Repaired with a clause that derives rather than lists: **every root directory holding a `*.test.*`
+file must have a floor.** Planted twice — the whole table emptied names all six workspaces, one
+workspace quietly dropped names `mobile`.
+
+#### One count I could not reproduce, recorded as unexplained
+
+The agent measured `npm run smoke --workspace app` at **274/274** in its worktree and reported one
+flake. Here, on the merged tree: **285/285, with no failure**, which is the figure I measured myself
+at this sprint's base. Eleven checks' difference between two trees at the same commit, and I have no
+account of it. The merged tree is the one that ships and it is green; the discrepancy is written
+down rather than resolved, because the alternative was to pick the number I liked.
+
+Phone: **217/217** here, matching its report exactly.
+
+#### What is not done
+
+- **No third state on the title page's decision row**, and the refusal is now recorded *on* that
+  row, where the next person will be tempted. §6.178 cut it from eight controls to two.
+- **No behavioural assertion of the absent-sync note on the web smoke.** Its build script does not
+  blank the Supabase variables, so an unconfigured assertion there would be about the machine rather
+  than the product. The phone's script blanks them itself, which is why the behavioural proof lives
+  there — stated in both the guard and the smoke.
+- **`app/smoke.mjs` carries 163 sites against a `SUITE_FLOOR` of 152** — pre-existing slack nothing
+  in this sprint changed, left alone and named.
+- **The 274-against-285 difference** above.
+
 
 ## 7. What is still not known
 

@@ -74,10 +74,11 @@ describe('a library somebody has actually used', () => {
         titleId: seriesId,
         kind: 'show' as const,
         // A real library is mostly things you are part-way through, with a tail of
-        // finished and abandoned ones.
-        status: (s % 5 === 0 ? 'completed' : s % 7 === 0 ? 'paused' : 'watching') as
+        // finished and abandoned ones. `paused` was the third of these until the
+        // pause ruling removed it from the union; `dropped` is what an abandoned one is now.
+        status: (s % 5 === 0 ? 'completed' : s % 7 === 0 ? 'dropped' : 'watching') as
           | 'completed'
-          | 'paused'
+          | 'dropped'
           | 'watching',
         addedAt: NOW - (s % 10) * YEAR,
       });

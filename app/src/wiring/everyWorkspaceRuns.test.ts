@@ -273,10 +273,52 @@ describe('every workspace', () => {
     // census after the last shot it files. `capture.mjs` did not — it read `scrolls` with
     // eight of its thirty-three shots still to come, so four of the fourteen with anything
     // below the fold, and two of the three not taken at the top of their screen, were absent
-    // from the two lines a design reviewer is told to read before opening any image. Counted
-    // from the tree rather than added to the number above.
-    core: 1030, app: 775, mobile: 47, relay: 24, bridge: 24, extension: 21,
+    // from the two lines a design reviewer is told to read before opening any image.
+    // app 778, up three more: the local-first stance clauses in `copy.test.ts` — the
+    // denominator (two screens make the stance, and the rendered `!syncConfigured()` gates
+    // that made its old wording false), the set equality that says the absent-sync sentence
+    // lives exactly where the stance is made, and the one that requires the condition rather
+    // than the sentence. Core stays at 1030: the same sprint removed the
+    // `shelfOf({ status: 'paused' })` case with `paused` itself and added the clause holding
+    // the union to the server's check constraint — one out, one in.
+    //
+    // Two passes landed in parallel and each raised this line from a different base. The
+    // number below is counted from the merged tree, which is the whole rule; neither branch's
+    // arithmetic would have reached it.
+    // app 779, up one more: the clause above this table, which asks whether the table has
+    // anything in it. An empty `FLOOR` passed 9 of 9 and compiled — found by producing it,
+    // in a merge resolution, in the file whose subject is that a file cannot be silently
+    // overwritten.
+    core: 1030, app: 779, mobile: 47, relay: 24, bridge: 24, extension: 21,
   };
+
+  /**
+   * That the table above has anything in it, which nothing asked.
+   *
+   * `Object.entries({})` iterates nothing, so **an empty `FLOOR` passes the clause below,
+   * 9 of 9, and compiles.** The guard that exists to stop a test file being silently
+   * deleted can itself be silently gutted, and the failure looks exactly like success.
+   *
+   * Found by doing it. Resolving a merge conflict between two branches that had each raised
+   * this line, I replaced the conflicted region with its comments and dropped the values —
+   * `tsc` was clean, the suite was green, and nothing anywhere said the floor had stopped
+   * measuring. `agents.md` practice 9 in its purest form: an instrument that omits its own
+   * subject, in the one file whose subject is *"a file cannot be silently overwritten"*.
+   *
+   * Derived rather than listed, so a new workspace with tests joins by existing: every
+   * directory at the root that holds a `*.test.*` file must have a floor. That is the
+   * question the missing values would have failed and the hardcoded list would not.
+   */
+  it('has a floor for every workspace that has tests at all', () => {
+    const withTests = readdirSync(ROOT, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith('.') && e.name !== 'node_modules')
+      .map((e) => e.name)
+      .filter((name) => testFiles(resolve(ROOT, name)).length > 0)
+      .sort();
+    expect(withTests.length, 'no workspace has tests, so this proved nothing').toBeGreaterThan(3);
+    const missing = withTests.filter((name) => !(name in FLOOR));
+    expect(missing, 'a workspace with tests and no floor').toEqual([]);
+  });
 
   it('holds at least as many checks as it did, so a file cannot be silently overwritten', () => {
     const shrunk: string[] = [];
@@ -332,8 +374,17 @@ describe('every workspace', () => {
     /* 83, up two: §6.173 measured the fourth of the five keys §6.172 converted — the two
        checks on a control that has become unavailable, one for what a reader is told and
        one for what actually stops the press. Same reason as the three below them: they
-       could not have passed before, which is why they were never written. */
-    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 83 },
+       could not have passed before, which is why they were never written.
+
+       88, counted rather than incremented. Two of the five are this sprint's: the phone's
+       More screen says the local-first stance, and says that the account that stance
+       mentions is not on this build — which the phone's smoke can assert and the web's
+       cannot, because this script blanks the two Supabase variables itself and the web's
+       builds with whatever the environment has. The other three were already there and the
+       number had not moved with them, which is the slack this ratchet is not supposed to
+       carry. `app/smoke.mjs` above still has some: 163 sites against a floor of 152, left
+       alone because nothing in this sprint changed that count. */
+    'mobile/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 88 },
     'app/failures.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 12 },
     'extension/smoke.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 21 },
     'bridge/e2e.mjs': { pattern: /^\s*(?:await )?check\(/gm, least: 22 },

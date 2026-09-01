@@ -142,11 +142,14 @@ describe('keeping the calendar current', () => {
     expect(asked).toEqual([]);
   });
 
-  it('skips shows that are paused or dropped', async () => {
-    await db.library.bulkPut([
-      item({ titleId: 'tmdb:tv:1', status: 'paused' }),
-      item({ titleId: 'tmdb:tv:2', status: 'dropped' }),
-    ]);
+  /*
+   * `paused` was the other status here until the pause ruling took it out for want of a
+   * writer. The clause is about the filter asking for `watching` or `completed` and nothing
+   * else, so what it needs is a row whose status is neither — `dropped` is the one the
+   * product can produce, and `domain/types.ts` has why it is now the only one.
+   */
+  it('skips shows that have been stopped', async () => {
+    await db.library.bulkPut([item({ titleId: 'tmdb:tv:2', status: 'dropped' })]);
 
     const { asked, spy } = lookup();
     await refreshTracked({ now: NOW, lookup: spy });

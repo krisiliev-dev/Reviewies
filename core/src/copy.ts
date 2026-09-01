@@ -80,10 +80,86 @@ export const COPY = {
     /**
      * The product's stance, drawn at the top of More on both platforms — where somebody
      * arriving from a shut-down service goes looking for the catch.
+     *
+     * ## What "here" means, ruled rather than assumed
+     *
+     * This sentence used to read *"Nothing here needs an account, and nothing is withheld"*.
+     * `lists.needsAccount`, 600-odd lines below it in this file, reads *"Lists need an
+     * account"*. Both were true of the shipping product on **every** build, configured or
+     * not, signed in or out: twelve `syncConfigured()` gates render across eleven files, and
+     * two of the four rows in `MORE_INDEX` — the contents page this sentence sits at the top
+     * of — lead straight to one of them. `moreIndex.ts` recorded the contradiction and
+     * declined to repair it in a `detail` line, which was right: a row that is correct in
+     * two of its destination's three states is not a wording problem. The question underneath
+     * it was what *here* claims, and nobody had ruled on it.
+     *
+     * **The ruling: "here" is your own record, and that is the whole product for one
+     * person.** What you have watched, are watching, mean to watch, and what you thought of
+     * it: that lives on this device, needs no account, and is never withheld. What needs an
+     * account is not a withheld part of your record. It is *other people* — a list somebody
+     * else can open, a person you follow, a comment somebody else wrote, a reaction shared
+     * with a stranger. None of those can be local, because the other person is not on this
+     * device.
+     *
+     * **The other reading was considered and refused.** If *here* meant everything on the
+     * contents page, then Lists and People being gated would be the defect and the repair
+     * would be to un-gate them. There is nothing behind those gates to un-gate: following is
+     * a relation to somebody who is not here, a comment is somebody else's writing, and a
+     * list is built to be opened by a reader who is not you. A local version of any of them
+     * is not a smaller feature, it is a different one — and the private-collection need such
+     * a feature would serve is already served, locally and ungated, by the watchlist.
+     *
+     * This is not a position invented for this sentence; it is the one the rest of the
+     * product already took while this sentence disagreed. `people.withoutAccount` draws the
+     * boundary as a list of what is on each side of it, which `docs/design/seams.md` §9
+     * scores as the most legible form a boundary can take. `lists.needsAccount` gives the
+     * reason. The phone's own More screen calls an account *"Optional — adds sync and the
+     * shared layer"*. Four sentences agreeing with each other and one disagreeing is why
+     * this is the one that moved.
+     *
+     * So the claim is narrowed to its subject — **you track** — and the reassurance is kept
+     * whole by naming what an account does instead: it adds, and it subtracts nothing, which
+     * is what somebody arriving from a shut-down service is actually asking. What it
+     * deliberately does *not* do is enumerate the two sides again. `people.withoutAccount`
+     * owns that list, and a second enumeration of one boundary is §6.175's defect with the
+     * two copies agreeing by hand until they stop.
+     *
+     * `syncAbsent` below is the other half of the ruling: this sentence is true on every
+     * build, and on a build with no sync at all there is a second seam under it.
      */
     localFirst:
-      'Everything lives on this device. Nothing here needs an account, and nothing is ' +
-      'withheld — this is the whole point of the app.',
+      'Everything you track lives on this device. None of it needs an account and none of ' +
+      'it is withheld — this is the whole point of the app. An account adds the parts that ' +
+      'involve other people, and takes nothing away.',
+    /**
+     * The same stance one layer down, on a build that has no server to have an account on.
+     *
+     * `localFirst` above ends by saying what an account adds. On a build without the two
+     * Supabase variables there is no account to be had — not signed out, *absent* — and the
+     * two rows that lead to `!syncConfigured()` gates are still on the contents page under
+     * it. `moreIndex.ts` measured that third state and named it the one where the gate
+     * sentence *"names nowhere to go"*, unlike `lists.signInToMake(where)`, which names a
+     * destination.
+     *
+     * The shape is `watching.bridgeAbsent`'s, deliberately: `seams.md` §10 convicted
+     * `bridgeConfigured()` for concealing at the wrong layer, and the repair was **the
+     * sentence appears exactly where the thing does not, and never a control**. Drawn beside
+     * `localFirst` and only when sync is unconfigured, so on a configured build this renders
+     * nothing and the gates downstream speak for themselves.
+     *
+     * It does not end in an instruction, for `bridgeAbsent`'s reason. For whoever runs this
+     * repository the absence is entirely actionable — two variables at build time. For a
+     * stranger on somebody else's deployed URL it is not, and a sentence that told them to
+     * go and configure a server would be over-promising to the larger half of the readers.
+     * What it can honestly do is say where the thing lives.
+     *
+     * It also does not list what is missing. `people.withoutAccount` owns that list and is
+     * drawn on the gate itself; repeating it here would be the same two-copies defect
+     * `localFirst`'s note above refuses.
+     */
+    syncAbsent:
+      'This build has no sync, so the parts that involve other people are not here at all — ' +
+      'not signed out, absent. Sync is set when the app is built, against a server of your own.',
     /**
      * What a crashed screen says. The heading names what happened to *this screen*
      * rather than to the app, and the sentence under it is about the data, because the
@@ -701,8 +777,25 @@ export const COPY = {
   },
 
   lists: {
-    /** The phone's, which says why rather than reciting the build's configuration. */
-    needsAccount: 'Lists need an account — they are meaningful mainly when they can be shared.',
+    /**
+     * The phone's, which says why rather than reciting the build's configuration.
+     *
+     * *"Meaningful mainly when they can be shared"* was the hedge of a sentence written
+     * before anybody had ruled on what `app.localFirst` claims. The ruling is in that
+     * sentence's note: an account adds the parts that involve other people, and a list is
+     * built to be opened by a reader who is not you. So the reason given here is the same
+     * one, in the same frame — *where the thing lives* — rather than a judgement about how
+     * meaningful a private list would be.
+     *
+     * The tail is `signInToMake`'s tail, word for word. They are the two faces of one gate,
+     * three lines apart in this file, and a person who meets both should not meet two
+     * voices; the only thing that differs between the states is whether there is a place to
+     * go, which is exactly what the other one adds.
+     */
+    needsAccount:
+      'Lists need an account, because a list lives on the server rather than on this ' +
+      'device — it is made to be opened by somebody else. Everything else on this device ' +
+      'works either way.',
     empty: 'No lists yet. Make one above, then add titles to it.',
     /**
      * The web's: "Empty so far" does not say what the list is empty of — and until §6.163 it

@@ -9,6 +9,7 @@ import { formatDuration } from '@reviewies/core/stats/compute';
 import { db } from '@reviewies/core/data/db';
 import { ATTRIBUTION_ORDER, attributionLines } from '@reviewies/core/ui/attribution';
 import { usingFixtures } from '@reviewies/core/metadata/index';
+import { syncConfigured } from '@reviewies/core/sync/auth';
 import { radius, theme } from '../../src/ui/theme';
 import { SCREEN } from '@reviewies/core/ui/screen';
 import { text, type } from '@reviewies/core/tokens';
@@ -63,6 +64,11 @@ export default function MoreScreen() {
 
         <View style={styles.card}>
           <Note>{COPY.app.localFirst}</Note>
+          {/* The other half of the stance. The web's copy of this carries the reasoning:
+              `localFirst` is true on every build, and a build with no Supabase variables
+              has no account for it to point at — not signed out, absent. `seams.md` §10's
+              shape, drawn only where the thing is not. */}
+          {!syncConfigured() && <Note>{COPY.app.syncAbsent}</Note>}
           {counts && (
             <View style={styles.stats}>
               <Stat label={COPY.stats.watches} value={counts.watches} />

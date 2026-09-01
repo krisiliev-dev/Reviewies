@@ -211,7 +211,10 @@ describe('Up Next', () => {
 
   it('ignores shows that are not currently being watched', async () => {
     await seedSeries(3);
-    await db.library.update(SERIES, { status: 'paused' });
+    // `paused` until the pause ruling took it out of the union for want of a writer. The
+    // clause is about `getUpNext` asking for `watching` and nothing else, so any status
+    // that is not `watching` does the job; `dropped` is the one the product can produce.
+    await db.library.update(SERIES, { status: 'dropped' });
 
     expect(await getUpNext()).toHaveLength(0);
   });
@@ -474,7 +477,7 @@ describe('a finished show leaves "watching" on its own', () => {
     expect(await getUpNext()).toHaveLength(1);
   });
 
-  it('does not override a show the user paused or dropped', async () => {
+  it('does not override a show the user dropped', async () => {
     await seedEnded(3);
     await db.library.update(SERIES, { status: 'dropped' });
     await catchUpTo(SERIES, 1, 3);

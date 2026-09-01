@@ -3044,7 +3044,13 @@ try {
       ['watchlist', /Nothing saved yet/],
       ['stats', /Stats/],
       ['?on=coming', /Upcoming/],
-      ['more', /Everything lives on this device/],
+      // The claim, not the whole sentence — the §6.78 lesson two lines down, applied to
+      // this needle before it could bite. The stance sentence used to open "Everything
+      // lives on this device"; the ruling on what "here" means narrowed it to "Everything
+      // you track lives on this device", and a needle pinned to the old opening would have
+      // failed a copy change that was correct. What is being checked is that More still
+      // makes the local claim with no network, which is the clause's whole subject.
+      ['more', /lives on this device/],
       // The two that ask a server. Signed out they say so; the failure mode being
       // guarded against is either of them rendering as "you have nothing".
       // The sentence, not the noun in it: which destination it names is checked exactly
