@@ -126,7 +126,7 @@ describe('opening a database an older build wrote', () => {
       'library',
       ['titleId', 'kind', 'addedAt'],
       ['tmdb:1', 'show', 1000],
-      { titleId: 'tmdb:1', kind: 'show', status: 'paused', addedAt: 1000 },
+      { titleId: 'tmdb:1', kind: 'show', status: 'dropped', addedAt: 1000 },
     );
 
     await SqliteDatabase.open(driver);
@@ -134,7 +134,7 @@ describe('opening a database an older build wrote', () => {
     const again = await SqliteDatabase.open(driver);
 
     expect(await db.table('library').count()).toBe(1);
-    expect((await again.table('library').get('tmdb:1'))?.status).toBe('paused');
+    expect((await again.table('library').get('tmdb:1'))?.status).toBe('dropped');
     // And the backfill has not overwritten a value written since the upgrade.
     await again.table('library').update('tmdb:1', { status: 'completed' });
     await SqliteDatabase.open(driver);

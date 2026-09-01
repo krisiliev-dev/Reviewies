@@ -197,7 +197,7 @@ async function pass(theme) {
     ['06-stats', '/stats', /Watched|Episodes/],
     ['07-lists', '/lists', /Lists/],
     ['08-people', '/people', /People/],
-    ['09-more', '/more', /More|Everything lives on this device/i],
+    ['09-more', '/more', /More|lives on this device/i],
     ['10-settings', '/settings', /Your data|Watching|People/i],
   ];
 

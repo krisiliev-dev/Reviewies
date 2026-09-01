@@ -213,7 +213,7 @@ about the world that it only knows about itself.** Sprint 100's §7 pass found t
 third time, in a different medium — a screenshot assertion that read a heading instead of a
 figure.
 
-### 9. Sync not configured at all — **correct**
+### 9. Sync not configured at all — **correct in the sentence that was read, and wrong in the one that was not**
 
 `COPY.app.localFirst` at the top of More, and *"Following needs sync configured, as do comments
 and shared reactions. Your history, ratings, lists of what to watch, stats and the whole import
@@ -221,7 +221,34 @@ work without it."*
 
 The second sentence is a seam drawn as a **list of which features are on which side of it**,
 which is the most legible form a boundary can take. Somebody arriving from a shut-down service is
-looking for exactly this catch, and it is answered before they ask.
+looking for exactly this catch, and it is answered before they ask. That verdict stands.
+
+**Amended.** The verdict was taken on `people.withoutAccount`, and the entry names
+`COPY.app.localFirst` in the same breath without reading it against the gates. It said
+*"Nothing here needs an account, and nothing is withheld"* — on **every** build, configured or
+not, signed in or out, while twelve `!syncConfigured()` gates rendered across eleven files and
+two of the four rows on the contents page it sits at the top of led to one. So this census
+recorded seven of ten right with one of the seven half-examined, which is worth more as a
+correction than as a tidy number: an acquittal is only as good as the sentence it was taken on.
+
+Two things changed, and neither is a new seam.
+
+**The claim was narrowed to its subject rather than hedged.** The ruling is written where the
+sentence lives, in `copy.ts`'s note on `localFirst`: *here* is your own record, which is the
+whole product for one person; an account adds the parts that involve **other people** and takes
+nothing away. The alternative reading — that the gates are the defect — was refused in writing:
+a list built to be opened by somebody else, a person you follow and a comment somebody else wrote
+have no local version to un-gate, and the private-collection need is already served, locally and
+ungated, by the watchlist.
+
+**And the third state got its sentence.** Configured and signed in, the rows are true; configured
+and signed out, `lists.signInToMake` names a destination; **unconfigured, there is no account to
+be had at all** and the gate named nowhere to go. `COPY.app.syncAbsent` is drawn beside the
+stance on both More screens and only when `!syncConfigured()` — #10's own repair, applied one
+layer up from the seam it was written for, and for the same reason: the sentence appears exactly
+where the thing does not, and never as a control. It ends by saying where sync lives rather than
+in an instruction, because for whoever runs this repository the absence is actionable and for a
+stranger on a deployed URL it is not.
 
 ### 10. `bridgeConfigured()` false, on the web — **concealed at the wrong layer**
 
@@ -240,9 +267,10 @@ scope — a line in More's list of what the app can do, not a control that does 
 
 ## What this does and does not change
 
-**Seven of ten are right already**, and the record shows each one arrived at empirically: a device
-found the scan message, a plant found the sealed sentence, a relay's 1008 found the reconnect
-promise. So the honest summary of applying this framework is not that it repaired the product. It
+**Seven of ten are right already** — six of them cleanly, and #9 only after the amendment above,
+which found that the entry had acquitted a pair of sentences having read one of them. The record
+shows each of the rest arrived at empirically: a device found the scan message, a plant found the
+sealed sentence, a relay's 1008 found the reconnect promise. So the honest summary of applying this framework is not that it repaired the product. It
 is that **the product had been doing seamful design for twenty sprints without the name, and
 paying full price each time by discovering the rule again.**
 

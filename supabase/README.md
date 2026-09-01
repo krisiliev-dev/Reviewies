@@ -42,6 +42,7 @@ directory.
 | `0012_expo_push_tokens.sql` | `push_tokens`, so a phone can be notified at all — Web Push cannot reach one |
 | `0013_notification_timezone.sql` | `notification_preferences.time_zone`, so "airs today" means the person's today rather than UTC's |
 | `0014_server_clock.sql` | `synced_at` on every syncable table, and a trigger that clamps a future `updated_at` and refuses a stale write — so one device's wrong clock cannot silence everybody else's sync |
+| `0015_library_status.sql` | `library.status` narrowed to the three values the product can write — `paused` never had a writer on either platform, and the pause ruling in `core/src/domain/types.ts` took it out of `LibraryStatus` rather than leaving a value nothing can produce |
 
 ## Push notifications
 

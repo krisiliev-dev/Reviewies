@@ -116,33 +116,42 @@ import { COPY } from '../copy.ts';
  * person the deployed app serves, and a fix aimed at the wrong one of those is `§6.189`'s
  * `grep -l` premise again.
  *
- * ### What this decision is actually waiting on, which a sprint cannot supply
+ * ### What this decision was waiting on, and how it was settled
  *
- * The row is downstream of a sentence nobody has ruled on. `COPY.app.localFirst` is drawn
- * unconditionally at the top of both More screens and says *"Nothing here needs an account"*.
+ * The row was downstream of a sentence nobody had ruled on. `COPY.app.localFirst` is drawn
+ * unconditionally at the top of both More screens and said *"Nothing here needs an account"*.
  * `COPY.lists.needsAccount`, 653 lines along the same file, says *"Lists need an account"*.
- * Those two contradict each other on **every build**, configured or not, signed in or out —
- * the screenshot only makes it visible. Any honest `detail` line for these two rows has to
- * agree with whichever of those sentences is the product's position, and that is a question
+ * Those two contradicted each other on **every build**, configured or not, signed in or out —
+ * the screenshot only made it visible. Any honest `detail` line for these two rows has to
+ * agree with whichever of those sentences is the product's position, and that was a question
  * about what "here" means in the stance sentence: the local core, or the whole contents page
  * under it. `agents.md` is explicit that the instruments make judgement cheaper to check and
- * not unnecessary, and this is judgement: rewriting the stance to hedge is a bigger change
- * than the defect, and rewriting the two rows while the stance still contradicts them moves
- * the contradiction rather than settling it.
+ * not unnecessary, and that was judgement.
  *
- * Recorded here rather than left silent, on the same grounds
- * `docs/research/11-what-a-task-costs.md` files the steering law as an absence: a row nobody
- * changed and nobody explained is indistinguishable from a row nobody read.
+ * **It has been taken, and it is written where the sentences live** — the note on
+ * `COPY.app.localFirst`. "Here" is your own record; an account adds the parts that involve
+ * other people and subtracts nothing; Lists and People are outside the claim rather than
+ * exceptions to it. The stance sentence was narrowed to its subject rather than hedged, and
+ * the alternative — that the gates are the defect — was refused in writing, because a list
+ * built to be opened by somebody else has no local version to un-gate.
  *
- * ### The cheapest thing that does not need the stance decision
+ * **This table still does not change, and now for a better reason than deferral.** With the
+ * stance narrowed, the `detail` lines are not in tension with it: *"Film and television in
+ * the same list"* and *"Your handle, following, blocking"* describe destinations the ruling
+ * puts on the other side of a boundary the stance sentence now names. The three-state
+ * argument above stands unaltered, and the build-independence argument stands with it.
  *
- * For whoever takes it next: it is not in this file. `app/src/screens/More.tsx` already draws
+ * ### What was done instead, where the stance is made
+ *
+ * `app/src/screens/More.tsx` already drew
  * `{!bridgeConfigured() && <Note>{COPY.watching.bridgeAbsent}</Note>}` — `seams.md` §10, *the
- * sentence appears exactly where the thing does not, and never a control*. The same shape
- * against `syncConfigured()`, beside `localFirst` rather than inside a `detail` line, would
- * qualify the stance where the stance is made instead of hedging four words per row, and it
- * would leave this table alone. It still needs somebody to decide what the stance sentence
- * means, which is why it is written down here and not done.
+ * sentence appears exactly where the thing does not, and never a control*. Both More screens
+ * now draw the same shape against `syncConfigured()`, beside `localFirst`: the sentence
+ * `COPY.app.syncAbsent`, which says that on this build the account the stance sentence
+ * mentions does not exist at all — not signed out, absent. That is the third state above, answered one
+ * layer up from the `detail` line, where a single unconditional string could never have said
+ * it. This table is untouched and both guards that read it at module scope stay
+ * build-independent.
  */
 export const MORE_INDEX = [
   {

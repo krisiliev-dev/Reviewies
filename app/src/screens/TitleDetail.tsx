@@ -334,6 +334,15 @@ export function TitleDetail() {
         was deferring: `dropped`, not a deleted row, so the history is not the question. It
         also found that `repo.ts` and `calendar/refresh.ts` had been honouring `dropped` and
         `paused` for their whole existence, for a person who could not write either.
+
+        **Still two after the pause ruling, which is where the third face was actually refused.**
+        `paused` was the obvious candidate for one — *not right now* against `dropped`'s *not
+        any more* — and it is gone from `LibraryStatus` rather than sitting in the union
+        waiting for a control. The measurement is in `core/src/domain/types.ts`: it differed
+        from `dropped` in one observable, which is the label on this very button, and no
+        screen on either platform renders a library status at all. What it would have meant
+        — *I mean to come back* — is already two presses of the two controls below: stop,
+        then watchlist, which `shelfOf` resolves on purpose.
       */}
       {title && (
         <div className="mb-5 flex flex-wrap gap-1.5">

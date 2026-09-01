@@ -781,6 +781,45 @@ try {
   }
   await page.screenshot({ path: OUT + '6-more.png' });
 
+  /*
+   * --- The stance, and the seam under it on a build with no sync ----------------
+   *
+   * `COPY.app.localFirst` says an account adds the parts that involve other people. This
+   * export is built with `EXPO_PUBLIC_SUPABASE_URL=` and `EXPO_PUBLIC_SUPABASE_ANON_KEY=`
+   * blanked by this script's own npm command, so there is no account to be had here at all
+   * — not signed out, *absent* — and `COPY.app.syncAbsent` is drawn beside the stance to
+   * say so. Two rows below it lead to gates that name nowhere to go.
+   *
+   * This is the clause the source guard in `app/src/wiring/copy.test.ts` cannot be: that
+   * one reads the two More screens and asks whether the sentence is drawn behind
+   * `!syncConfigured()`, and says in as many words that a note inside a branch nothing
+   * reaches would satisfy it. This runs the build and reads the screen. It is on the phone
+   * and not the web because the phone's smoke script is what blanks the two variables; the
+   * web's builds with whatever the environment has, and asserting an unconfigured screen
+   * there would be asserting something about the machine rather than about the product.
+   *
+   * The opening clause, not the whole sentence — `app/smoke.mjs`'s §6.78 lesson, which is
+   * that pinning a whole phrase turns the next correct copy change into a smoke failure.
+   */
+  {
+    /*
+     * `isVisible()` rather than a match against `text()`. Every tab screen stays mounted in
+     * this navigator — the tab loop above records what that cost once already — so a body
+     * match says the string is *somewhere in the document*, which is a weaker claim than
+     * the one being made. Both sentences are unique to More, so a body match would in fact
+     * have been sound today; it would have stopped being sound the moment either sentence
+     * was drawn anywhere else, which is not a property a clause should depend on.
+     */
+    const stance = page.getByText(/lives on this device/).first();
+    check('More says the local-first stance', await stance.isVisible(), await stance.innerText());
+    const absent = page.getByText(/This build has no sync/).first();
+    check(
+      'and says the account it mentions is not on this build',
+      await absent.isVisible(),
+      await absent.innerText().catch(() => 'not drawn'),
+    );
+  }
+
   // --- The rest of More --------------------------------------------------------
   // Every link has to lead somewhere. A route that does not exist is a dead end that
   // only shows up when someone taps it, which is how the title page shipped broken.
